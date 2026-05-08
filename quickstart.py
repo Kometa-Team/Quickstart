@@ -10422,7 +10422,7 @@ def _inject_config_path_for_command(command, config_name=None):
     cleaned = _normalize_cli_whitespace(command)
     if not cleaned:
         return ""
-    if ("<config>" not in cleaned and "--config" not in cleaned and "-c" not in cleaned and not str(config_name or "").strip()):
+    if "<config>" not in cleaned and "--config" not in cleaned and "-c" not in cleaned and not str(config_name or "").strip():
         return cleaned
     config_path = _resolve_config_path_for_command(config_name=config_name)
     quoted = _quote_cli_value(config_path)
@@ -10715,7 +10715,9 @@ def _build_imagemaid_progress_snapshot(summary=None):
 
     restore_found = int(analysis_counts.get("imagemaid_restore_found_files") or 0) if isinstance(analysis_counts.get("imagemaid_restore_found_files"), (int, float)) else 0
     restore_removed = int(analysis_counts.get("imagemaid_restore_removed_files") or 0) if isinstance(analysis_counts.get("imagemaid_restore_removed_files"), (int, float)) else 0
-    restore_recovered = int(analysis_counts.get("imagemaid_restore_recovered_bytes") or 0) if isinstance(analysis_counts.get("imagemaid_restore_recovered_bytes"), (int, float)) else 0
+    restore_recovered = (
+        int(analysis_counts.get("imagemaid_restore_recovered_bytes") or 0) if isinstance(analysis_counts.get("imagemaid_restore_recovered_bytes"), (int, float)) else 0
+    )
     restore_enabled = mode in {"clear", "restore"} or "restore_dir_scan" in section_runtimes or "restore_dir_action" in section_runtimes or restore_found > 0 or restore_removed > 0
     restore_items = ""
     if restore_removed > 0:
@@ -10738,7 +10740,13 @@ def _build_imagemaid_progress_snapshot(summary=None):
     photo_found = int(analysis_counts.get("imagemaid_photo_found_files") or 0) if isinstance(analysis_counts.get("imagemaid_photo_found_files"), (int, float)) else 0
     photo_removed = int(analysis_counts.get("imagemaid_photo_removed_files") or 0) if isinstance(analysis_counts.get("imagemaid_photo_removed_files"), (int, float)) else 0
     photo_recovered = int(analysis_counts.get("imagemaid_photo_recovered_bytes") or 0) if isinstance(analysis_counts.get("imagemaid_photo_recovered_bytes"), (int, float)) else 0
-    photo_enabled = bool(analysis_counts.get("imagemaid_photo_transcoder_enabled")) or "photo_transcoder_scan" in section_runtimes or "photo_transcoder_remove" in section_runtimes or photo_found > 0 or photo_removed > 0
+    photo_enabled = (
+        bool(analysis_counts.get("imagemaid_photo_transcoder_enabled"))
+        or "photo_transcoder_scan" in section_runtimes
+        or "photo_transcoder_remove" in section_runtimes
+        or photo_found > 0
+        or photo_removed > 0
+    )
     photo_items = ""
     if photo_removed > 0:
         photo_items = f"Removed {_format_compact_count_brief(photo_removed)}"
@@ -10807,7 +10815,9 @@ def _build_imagemaid_progress_snapshot(summary=None):
             f"Removed {_format_compact_count_brief(total_removed)}" if total_removed > 0 else "",
             _format_imagemaid_bytes_brief(total_recovered) if total_recovered > 0 else "",
         ],
-        "total_label": _format_duration_brief(summary.get("run_time_seconds")) if isinstance(summary.get("run_time_seconds"), (int, float)) and summary.get("run_time_seconds") else "",
+        "total_label": (
+            _format_duration_brief(summary.get("run_time_seconds")) if isinstance(summary.get("run_time_seconds"), (int, float)) and summary.get("run_time_seconds") else ""
+        ),
     }
 
 
@@ -11553,11 +11563,7 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
         )
     progress_snapshot = summary.get("progress_snapshot") if isinstance(summary.get("progress_snapshot"), dict) else {}
     if not progress_snapshot:
-        progress_snapshot = (
-            cache_entry.get("resume_progress_snapshot")
-            if isinstance(cache_entry.get("resume_progress_snapshot"), dict)
-            else {}
-        )
+        progress_snapshot = cache_entry.get("resume_progress_snapshot") if isinstance(cache_entry.get("resume_progress_snapshot"), dict) else {}
     return {
         "run_key": run_key,
         "tool_name": tool_name,
@@ -11599,11 +11605,7 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
         "current_library": cache_entry.get("current_library"),
         "current_collection": cache_entry.get("current_collection"),
         "progress_snapshot": progress_snapshot,
-        "resume_progress_snapshot": (
-            progress_snapshot
-            if isinstance(progress_snapshot, dict)
-            else {}
-        ),
+        "resume_progress_snapshot": (progress_snapshot if isinstance(progress_snapshot, dict) else {}),
         "resume_reason": cache_entry.get("resume_reason") or "Run appears incomplete. Open the report for more detail or download the log for investigation.",
         "resume_primary": cache_entry.get("resume_primary") or "",
         "resume_recommendations": cache_entry.get("resume_recommendations") if isinstance(cache_entry.get("resume_recommendations"), list) else [],
