@@ -89,6 +89,7 @@ $(document).ready(function () {
   let allIncompleteRuns = []
   let allTableRuns = []
   const sectionDetailsByRunKey = new Map()
+  const expandedProgressRunKeys = new Set()
   let currentFilteredRuns = []
   let currentTableRuns = []
   let allRunsTotal = 0
@@ -461,6 +462,116 @@ $(document).ready(function () {
     }
     const title = detailParts.join(' | ')
     return `<span title="${escapeHtml(title)}">${escapeHtml(parts.join(' • '))}</span>`
+  }
+
+  function getProgressSnapshot (run) {
+    if (getRunToolName(run) !== 'kometa') return null
+    const snapshot = run && run.progress_snapshot && typeof run.progress_snapshot === 'object'
+      ? run.progress_snapshot
+      : (run && run.resume_progress_snapshot && typeof run.resume_progress_snapshot === 'object'
+          ? run.resume_progress_snapshot
+          : null)
+    if (!snapshot) return null
+    const columns = Array.isArray(snapshot.columns) ? snapshot.columns : []
+    const rows = Array.isArray(snapshot.rows) ? snapshot.rows : []
+    if (!columns.length || !rows.length) return null
+    return snapshot
+  }
+
+  function renderProgressSnapshotCellLabel (cell) {
+    const safeCell = cell && typeof cell === 'object' ? cell : {}
+    if (!safeCell.label) return '<span class="text-muted small">—</span>'
+    const tone = String(safeCell.tone || '').trim().toLowerCase()
+    const badgeClass = tone === 'primary' ? 'text-bg-primary' : 'text-bg-success'
+    return `<span class="badge ${badgeClass}">${escapeHtml(safeCell.label)}</span>`
+  }
+
+  function renderProgressSnapshotPanel (run, snapshot) {
+    const columns = Array.isArray(snapshot.columns) ? snapshot.columns : []
+    const rows = Array.isArray(snapshot.rows) ? snapshot.rows : []
+    const footerCells = Array.isArray(snapshot.footer_cells) ? snapshot.footer_cells : []
+    const preparationLabel = snapshot.preparation_label || ''
+    const totalLabel = snapshot.total_label || ''
+    const maintenance = getMaintenanceSummary(run)
+    const prepRow = preparationLabel
+      ? `<div class="logscan-progress-inline-row"><span class="fw-semibold">Preparation</span><span class="badge text-bg-primary">${escapeHtml(preparationLabel)}</span></div>`
+      : ''
+    let maintenanceRow = ''
+    if (maintenance.hadPause) {
+      const maintText = maintenance.pauseSeconds > 0
+        ? formatSeconds(maintenance.pauseSeconds)
+        : `${maintenance.pauseCount || 1} pause${(maintenance.pauseCount || 1) === 1 ? '' : 's'}`
+      const maintDetails = maintenance.window ? ` <span class="text-muted small">(${escapeHtml(maintenance.window)})</span>` : ''
+      maintenanceRow = `<div class="logscan-progress-inline-row"><span class="fw-semibold">Maintenance</span><span class="badge text-bg-primary">${escapeHtml(maintText)}</span>${maintDetails}</div>`
+    }
+    const headCells = columns.map(column => `<th scope="col" class="text-end">${escapeHtml(column.label || column.key || '')}</th>`).join('')
+    const bodyRows = rows.map(row => {
+      const phaseCells = Array.isArray(row.phase_cells) ? row.phase_cells : []
+      const statusClass = row.status_class ? ` ${escapeHtml(row.status_class)}` : ''
+      const phaseHtml = columns.map((column, index) => `<td class="text-end">${renderProgressSnapshotCellLabel(phaseCells[index])}</td>`).join('')
+      return `
+        <tr>
+          <td>${escapeHtml(row.name || '—')}</td>
+          <td>${escapeHtml(row.type || '—')}</td>
+          <td><span class="badge${statusClass}">${escapeHtml(row.status || 'Pending')}</span></td>
+          ${phaseHtml}
+        </tr>
+      `
+    }).join('')
+    const footerHtml = columns.map((column, index) => {
+      const label = footerCells[index] || ''
+      return `<td class="text-end">${label ? renderProgressSnapshotCellLabel({ label, tone: 'success' }) : '<span class="text-muted small">—</span>'}</td>`
+    }).join('')
+    return `
+      <div class="logscan-progress-panel-inner">
+        ${prepRow}
+        ${maintenanceRow}
+        <div class="table-responsive logscan-progress-table-wrap" data-qs-sticky-first="true">
+          <table class="table table-sm table-striped mb-0 qs-incomplete-progress-table qs-analytics-progress-table">
+            <thead>
+              <tr>
+                <th scope="col">Library</th>
+                <th scope="col">Type</th>
+                <th scope="col">Status</th>
+                ${headCells}
+              </tr>
+            </thead>
+            <tbody>
+              ${bodyRows}
+            </tbody>
+            <tfoot>
+              <tr class="table-group-divider">
+                <th scope="row" class="fw-semibold">Total</th>
+                <td><span class="text-muted small">—</span></td>
+                <td>${totalLabel ? renderProgressSnapshotCellLabel({ label: totalLabel, tone: 'success' }) : '<span class="text-muted small">—</span>'}</td>
+                ${footerHtml}
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    `
+  }
+
+  function renderProgressSnapshotCell (run, runKey) {
+    const snapshot = getProgressSnapshot(run)
+    if (!snapshot) return '<span class="text-muted">n/a</span>'
+    const expanded = expandedProgressRunKeys.has(runKey)
+    const buttonLabel = expanded ? 'Hide matrix' : 'View matrix'
+    return `
+      <div class="logscan-progress-head">
+        <span class="logscan-card-label">Progress matrix ${renderInfoDot('Inline final progress snapshot for this run, including preparation, maintenance context, and per-library phase status.')}</span>
+        <button type="button"
+          class="btn nav-button btn-sm logscan-action-btn logscan-progress-toggle"
+          data-run-key="${escapeHtml(runKey)}"
+          aria-expanded="${expanded ? 'true' : 'false'}">
+          ${buttonLabel}
+        </button>
+      </div>
+      <div class="logscan-progress-panel${expanded ? '' : ' d-none'}" data-run-key="${escapeHtml(runKey)}">
+          ${renderProgressSnapshotPanel(run, snapshot)}
+      </div>
+    `
   }
 
   function getQuietPeriodSummary (run) {
@@ -1879,6 +1990,7 @@ $(document).ready(function () {
           ${renderRunCardCell('Version', 'Detected tool version for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
           ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
+          <td data-label="Progress matrix" class="logscan-progress-cell">${renderProgressSnapshotCell(run, runKey)}</td>
           ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per run section when available.', sectionCell)}
           ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
           ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
@@ -3601,6 +3713,16 @@ $(document).ready(function () {
   $tableBody.on('click', '.logscan-run-details', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showRunDetails(runKey)
+  })
+  $tableBody.on('click', '.logscan-progress-toggle', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    if (!runKey) return
+    if (expandedProgressRunKeys.has(runKey)) {
+      expandedProgressRunKeys.delete(runKey)
+    } else {
+      expandedProgressRunKeys.add(runKey)
+    }
+    renderTable(currentTableRuns)
   })
   $tableBody.on('change', '.logscan-select-toggle-input', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')

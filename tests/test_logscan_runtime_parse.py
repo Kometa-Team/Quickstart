@@ -72,6 +72,27 @@ def test_extract_progress_playlist_runtime_when_logged_from_playlists_module():
     assert progress.get("playlists_detected") is True
 
 
+def test_extract_progress_accepts_string_run_started_at():
+    analyzer = LogscanAnalyzer()
+    content = "\n".join(
+        [
+            "[2026-04-18 10:00:00,000] [kometa.py:100] [INFO] | Processing Library: Movies |",
+            "[2026-04-18 10:00:05,000] [operations.py:100] [INFO] | Movies Library Operations |",
+            "[2026-04-18 10:00:10,000] [kometa.py:522] [INFO] | Finished Run |",
+        ]
+    )
+
+    progress = analyzer.extract_progress(
+        content,
+        library_list=[{"name": "Movies", "type": "movie"}],
+        run_started_at="2026-04-18 09:59:50",
+    )
+
+    assert progress.get("current_library") in (None, "Movies")
+    assert isinstance(progress.get("libraries"), list)
+    assert progress["libraries"][0]["name"] == "Movies"
+
+
 def test_analyze_content_extracts_quickstart_maintenance_summary():
     analyzer = LogscanAnalyzer()
     content = "\n".join(

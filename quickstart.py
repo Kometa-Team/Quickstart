@@ -3083,7 +3083,7 @@ logscan_reingest_state = {
 # Bump this integer when a release needs a one-time Analytics reset + log reingest
 # on startup. Quickstart persists the highest successful level to config/.env so
 # skipped releases still catch up automatically.
-REQUIRED_LOGSCAN_MIGRATION_LEVEL = 5
+REQUIRED_LOGSCAN_MIGRATION_LEVEL = 8
 LOGSCAN_STARTUP_MIGRATIONS_ENV = "QS_LOGSCAN_STARTUP_MIGRATIONS"
 LOGSCAN_MIGRATION_LEVEL_DONE_ENV = "QS_LOGSCAN_MIGRATION_LEVEL_DONE"
 LOGSCAN_STARTUP_MIGRATION_JOB_ID = "startup-logscan-migration"
@@ -8613,6 +8613,11 @@ def logscan_analyze():
         data["cached"] = True
         return jsonify(data)
 
+    try:
+        content = log_path.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
+
     analyzer = logscan.LogscanAnalyzer()
     result = analyzer.analyze_log_file(
         log_path,
@@ -8627,6 +8632,12 @@ def logscan_analyze():
         can_ingest = run_complete and has_finish and not is_running
         result["ingest_skipped"] = not can_ingest
         if can_ingest:
+            if str(summary.get("tool_name") or "kometa").strip().lower() == "kometa":
+                summary["progress_snapshot"] = _build_completed_log_progress_snapshot(
+                    summary=summary,
+                    content=content,
+                    analyzer=analyzer,
+                )
             ingest_cache = _load_logscan_ingest_cache()
             cache_logs = ingest_cache["logs"]
             cache_key = str(log_path.resolve())
@@ -8699,9 +8710,23 @@ def _get_progress_run_order(config_data=None):
     return normalized
 
 
-def _get_progress_library_list(selected_libraries=None, config_path=None, config_data=None):
-    settings = persistence.retrieve_settings("025-libraries")
-    library_settings = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+def _get_progress_library_list(selected_libraries=None, config_path=None, config_data=None, config_name=None):
+    library_settings = {}
+    if has_request_context():
+        settings = persistence.retrieve_settings("025-libraries")
+        library_settings = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    elif config_name:
+        try:
+            _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+            if not isinstance(stored, dict):
+                _validated, _user_entered, stored = database.retrieve_section_data(config_name, "025-libraries")
+            if isinstance(stored, dict):
+                if isinstance(stored.get("libraries"), dict):
+                    library_settings = stored.get("libraries", {})
+                else:
+                    library_settings = stored
+        except Exception:
+            library_settings = {}
     libraries = []
     type_by_name = {}
     if isinstance(library_settings, dict):
@@ -10249,17 +10274,6 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
     return {"renamed": renamed, "skipped": skipped, "errors": errors}
 
 
-logscan_archive_result = _normalize_logscan_archive_filenames()
-if logscan_archive_result.get("renamed"):
-    helpers.ts_log(
-        f"Normalized {logscan_archive_result['renamed']} archived log file(s) to the canonical archive layout.",
-        level="INFO",
-    )
-if logscan_archive_result.get("errors"):
-    for msg in logscan_archive_result["errors"]:
-        helpers.ts_log(msg, level="WARNING")
-
-
 def _normalize_cli_whitespace(command):
     return re.sub(r"\s+", " ", str(command or "")).strip()
 
@@ -10388,7 +10402,10 @@ def _should_suppress_recovery_for_completed_scope(original_command, progress_lib
 def _resolve_config_path_for_command(config_name=None):
     normalized_name = str(config_name or "").strip().lower().replace(" ", "_")
     if not normalized_name:
-        normalized_name = str(session.get("config_name") or "default").strip().lower().replace(" ", "_") or "default"
+        if has_request_context():
+            normalized_name = str(session.get("config_name") or "default").strip().lower().replace(" ", "_") or "default"
+        else:
+            normalized_name = "default"
     return str((helpers.get_kometa_root_path() / "config" / f"{normalized_name}_config.yml").resolve())
 
 
@@ -10396,6 +10413,8 @@ def _inject_config_path_for_command(command, config_name=None):
     cleaned = _normalize_cli_whitespace(command)
     if not cleaned:
         return ""
+    if ("<config>" not in cleaned and "--config" not in cleaned and "-c" not in cleaned and not str(config_name or "").strip()):
+        return cleaned
     config_path = _resolve_config_path_for_command(config_name=config_name)
     quoted = _quote_cli_value(config_path)
     if "<config>" in cleaned:
@@ -10623,7 +10642,7 @@ def _build_maintenance_event_rows(maintenance_summary=None):
     return rows
 
 
-def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_data=None, original_command=""):
+def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_data=None, original_command="", config_name=None):
     progress = progress if isinstance(progress, dict) else {}
     libraries = progress.get("libraries") if isinstance(progress.get("libraries"), list) else []
     if not libraries:
@@ -10652,12 +10671,56 @@ def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_
     elif "playlists" not in allowed_phases:
         allowed_phases = allowed_phases + ["playlists"]
     columns = [{"key": key, "label": phase_lookup.get(key, key.title())} for key in allowed_phases]
+    configured_library_entries = []
+    configured_library_names = []
+    configured_type_by_name = {}
+    config_path = _extract_cli_option_value(original_command, "--config")
+    selected_libraries = _extract_selected_libraries(original_command)[1]
+    for entry in _get_progress_library_list(
+        selected_libraries=selected_libraries,
+        config_path=config_path,
+        config_data=config_data,
+        config_name=config_name,
+    ):
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name") or "").strip()
+        lib_type = str(entry.get("type") or "").strip()
+        if name:
+            configured_type_by_name[name] = lib_type or None
+    if isinstance(config_data, dict):
+        config_libraries = config_data.get("libraries")
+        if isinstance(config_libraries, dict):
+            configured_library_names = [str(name).strip() for name in config_libraries.keys() if str(name).strip()]
+            configured_library_entries = [{"name": name, "type": configured_type_by_name.get(name)} for name in configured_library_names]
+    elif configured_type_by_name:
+        configured_library_names = list(configured_type_by_name.keys())
+        configured_library_entries = [{"name": name, "type": configured_type_by_name.get(name)} for name in configured_library_names]
+
+    def _normalize_snapshot_library_name(raw_name):
+        name = str(raw_name or "").strip()
+        if not name:
+            return ""
+        if configured_library_entries:
+            matched = logscan.LogscanAnalyzer()._match_library_name(name, configured_library_entries)
+            if matched:
+                return matched
+            if name.lower().startswith("finished "):
+                alternate = name[9:].strip()
+                matched = logscan.LogscanAnalyzer()._match_library_name(alternate, configured_library_entries)
+                if matched:
+                    return matched
+        if name.lower().startswith("finished "):
+            return name[9:].strip()
+        return name
+
+    current_library = _normalize_snapshot_library_name(current_library)
 
     rows = []
     totals = {column["key"]: 0 for column in columns}
     visible_libraries = [entry for entry in libraries if str((entry or {}).get("status") or "").strip() != "Skipped"]
     for entry in visible_libraries:
-        name = str(entry.get("name") or "").strip()
+        name = _normalize_snapshot_library_name(entry.get("name"))
         status = str(entry.get("status") or "Pending").strip() or "Pending"
         status_class = "text-bg-secondary"
         if status == "Done":
@@ -10697,10 +10760,11 @@ def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_
                 totals[phase_key] = totals.get(phase_key, 0) + int(seconds or 0)
             phase_cells.append({"label": label, "tone": tone})
 
+        row_type = configured_type_by_name.get(name) or entry.get("type")
         rows.append(
             {
                 "name": name,
-                "type": str(entry.get("type") or "—").strip() or "—",
+                "type": str(row_type or "—").strip() or "—",
                 "status": status,
                 "status_class": status_class,
                 "phase_cells": phase_cells,
@@ -10728,6 +10792,54 @@ def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_
         ],
         "total_label": _format_duration_brief(total_seconds) if total_seconds > 0 else "",
     }
+
+
+def _build_completed_log_progress_snapshot(summary=None, content="", analyzer=None):
+    summary = summary if isinstance(summary, dict) else {}
+    if not content:
+        return {}
+    tool_name = str(summary.get("tool_name") or "kometa").strip().lower() or "kometa"
+    if tool_name != "kometa":
+        return {}
+
+    original_command = summary.get("run_command") or ""
+    if not original_command:
+        return {}
+    config_name = str(summary.get("config_name") or "").strip()
+    original_command = _inject_config_path_for_command(
+        original_command,
+        config_name=config_name,
+    )
+    config_path = _extract_cli_option_value(original_command, "--config")
+    if not config_path and config_name:
+        config_path = _resolve_config_path_for_command(config_name=config_name)
+    config_data = _load_progress_config(config_path) if config_path else {}
+    selected_libraries = _extract_selected_libraries(original_command)[1]
+    progress_analyzer = analyzer if analyzer is not None else logscan.LogscanAnalyzer()
+    progress = progress_analyzer.extract_progress(
+        content,
+        library_list=_get_progress_library_list(
+            selected_libraries=selected_libraries,
+            config_path=config_path,
+            config_data=config_data,
+            config_name=config_name,
+        ),
+        selected_libraries=selected_libraries,
+        previous=None,
+        run_started_at=summary.get("started_at"),
+        now_ts=datetime.now(timezone.utc),
+        is_running=False,
+    )
+    snapshot = _build_incomplete_progress_snapshot(
+        progress=progress,
+        last_log_at=summary.get("finished_at") or summary.get("started_at"),
+        config_data=config_data,
+        original_command=original_command,
+        config_name=config_name,
+    )
+    if not snapshot:
+        return {}
+    return snapshot
 
 
 def _build_incomplete_resume_message(phase_current=None, current_library=None, finished_at=None):
@@ -11179,6 +11291,21 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
             original_command,
             config_name=summary.get("config_name") or config_name,
         )
+    progress_snapshot = summary.get("progress_snapshot") if isinstance(summary.get("progress_snapshot"), dict) else {}
+    if not progress_snapshot:
+        progress_snapshot = (
+            cache_entry.get("resume_progress_snapshot")
+            if isinstance(cache_entry.get("resume_progress_snapshot"), dict)
+            else {}
+        )
+    if tool_name == "kometa" and not progress_snapshot:
+        reparsed = _analyze_incomplete_log_for_resume(path, cache_entry=cache_entry, config_name=summary.get("config_name") or config_name)
+        if isinstance(reparsed, dict):
+            progress_snapshot = (
+                reparsed.get("resume_progress_snapshot")
+                if isinstance(reparsed.get("resume_progress_snapshot"), dict)
+                else {}
+            )
     return {
         "run_key": run_key,
         "tool_name": tool_name,
@@ -11219,6 +11346,12 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
         "phase_current": cache_entry.get("phase_current"),
         "current_library": cache_entry.get("current_library"),
         "current_collection": cache_entry.get("current_collection"),
+        "progress_snapshot": progress_snapshot,
+        "resume_progress_snapshot": (
+            progress_snapshot
+            if isinstance(progress_snapshot, dict)
+            else {}
+        ),
         "resume_reason": cache_entry.get("resume_reason") or "Run appears incomplete. Open the report for more detail or download the log for investigation.",
         "resume_primary": cache_entry.get("resume_primary") or "",
         "resume_recommendations": cache_entry.get("resume_recommendations") if isinstance(cache_entry.get("resume_recommendations"), list) else [],
@@ -11620,6 +11753,12 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
                 cache_dirty = True
                 continue
 
+            if tool_name == "kometa":
+                summary["progress_snapshot"] = _build_completed_log_progress_snapshot(
+                    summary=summary,
+                    content=content,
+                    analyzer=analyzer,
+                )
             cached_run_key = cached_entry.get("run_key")
             if not (cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")):
                 if database.save_log_run(summary, recommendations=recommendations):
@@ -11703,6 +11842,17 @@ def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
         return dest
     except Exception:
         return None
+
+
+logscan_archive_result = _normalize_logscan_archive_filenames()
+if logscan_archive_result.get("renamed"):
+    helpers.ts_log(
+        f"Normalized {logscan_archive_result['renamed']} archived log file(s) to the canonical archive layout.",
+        level="INFO",
+    )
+if logscan_archive_result.get("errors"):
+    for msg in logscan_archive_result["errors"]:
+        helpers.ts_log(msg, level="WARNING")
 
 
 def _archive_finished_live_meta_log_if_idle(log_dir=None):
@@ -12045,6 +12195,12 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 if skip_save_if_cached and cached_run_key == summary.get("run_key"):
                     duplicates += 1
                 else:
+                    if tool_name == "kometa":
+                        summary["progress_snapshot"] = _build_completed_log_progress_snapshot(
+                            summary=summary,
+                            content=content,
+                            analyzer=analyzer,
+                        )
                     if database.save_log_run(summary, recommendations=result.get("recommendations")):
                         ingested += 1
                     else:

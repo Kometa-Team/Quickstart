@@ -2477,21 +2477,21 @@ div#loading {
     overflow: visible;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table {
     display: block;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table thead {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > thead {
     display: none;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tbody {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 1fr));
     gap: 0.75rem;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tr {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr {
     display: block;
     border: 1px solid var(--theme-border);
     border-radius: 8px;
@@ -2500,47 +2500,49 @@ div#loading {
     transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td {
     display: grid;
-    grid-template-columns: minmax(7.5rem, 10.5rem) minmax(0, 1fr);
-    gap: 0.45rem 0.75rem;
+    grid-template-columns: minmax(6.4rem, 8.75rem) minmax(0, 1fr);
+    gap: 0.3rem 0.55rem;
     align-items: center;
     border: 0;
     border-radius: 0.5rem;
-    padding: 0.32rem 0.4rem;
+    padding: 0.34rem 0.42rem;
     text-align: left !important;
-    transition: background-color 0.18s ease;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td::before {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td::before {
     content: none;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td > * {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td > * {
     min-width: 0;
     align-self: center;
     justify-self: start;
     text-align: left !important;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td .align-items-center {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td .align-items-center {
     align-items: center !important;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tr:hover {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr:hover {
     border-color: rgba(0, 188, 140, 0.32);
     box-shadow: 0 0 0 1px rgba(0, 188, 140, 0.12);
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td:hover,
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td:focus-within {
-    background: rgba(255, 255, 255, 0.03);
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td:hover,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td:focus-within {
+    background: rgba(255, 255, 255, 0.045);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .logscan-card-label {
     color: var(--theme-text-muted);
     display: inline-flex;
     align-items: center;
+    align-self: center;
     gap: 0.35rem;
     font-size: 0.72rem;
     letter-spacing: 0.02em;
@@ -2551,7 +2553,9 @@ div#loading {
 
 .logscan-card-value {
     color: var(--theme-text);
-    display: block;
+    display: flex;
+    align-items: center;
+    align-self: center;
     font-weight: 700;
     line-height: 1.35;
     min-width: 0;
@@ -2624,14 +2628,18 @@ div#loading {
 }
 
 @media (max-width: 768px) {
-    .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td {
+    .qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td {
         grid-template-columns: minmax(0, 1fr);
         gap: 0.2rem;
-        padding: 0.42rem 0.45rem;
+        padding: 0.46rem 0.5rem;
     }
 
     .logscan-card-label {
         white-space: normal;
+    }
+
+    .logscan-card-value {
+        align-items: flex-start;
     }
 }
 
@@ -2639,6 +2647,71 @@ div#loading {
     color: var(--theme-text);
     font-size: inherit;
     font-weight: 700;
+}
+
+.logscan-progress-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    margin-bottom: 0.55rem;
+}
+
+.logscan-progress-panel {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.6rem;
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.logscan-progress-panel-inner {
+    padding: 0.65rem;
+}
+
+.logscan-progress-inline-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+    color: #ffd56a;
+    font-size: 0.95rem;
+}
+
+.logscan-progress-table-wrap {
+    overflow-x: auto;
+}
+
+.qs-analytics-progress-table {
+    min-width: 34rem;
+}
+
+.qs-analytics-progress-table th,
+.qs-analytics-progress-table td {
+    vertical-align: middle;
+}
+
+.qs-analytics-progress-table tfoot td,
+.qs-analytics-progress-table tfoot th {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell {
+    display: block;
+    padding: 0.5rem 0.42rem 0.42rem;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell > * {
+    min-width: 0;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell .logscan-card-label {
+    display: inline-flex;
+    margin: 0;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell .logscan-action-btn {
+    min-width: 6.25rem;
 }
 
 .logscan-counts-inline {
@@ -2729,15 +2802,26 @@ div#loading {
     color: var(--theme-primary);
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Report"] .logscan-action-btn,
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Section runtimes"] .logscan-action-btn {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td[data-label="Report"] .logscan-action-btn,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td[data-label="Section runtimes"] .logscan-action-btn {
     min-width: 72px;
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Log"] .logscan-action-btn,
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Report"] .logscan-action-btn,
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Section runtimes"] .logscan-action-btn {
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td[data-label="Log"] .logscan-action-btn,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td[data-label="Report"] .logscan-action-btn,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td[data-label="Section runtimes"] .logscan-action-btn,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td[data-label="Progress matrix"] .logscan-action-btn {
     min-width: 5.75rem;
+}
+
+@media (max-width: 768px) {
+    .logscan-progress-panel-inner {
+        padding: 0.5rem;
+    }
+
+    .qs-analytics-progress-table {
+        min-width: 30rem;
+    }
 }
 
 .logscan-sort-button {
@@ -5040,8 +5124,8 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.24);
     background: rgba(255, 255, 255, 0.08);
@@ -5049,7 +5133,7 @@ body {
 }
 
 .qs-step-group-state i {
-    font-size: 0.52rem;
+    font-size: 0.56rem;
     color: inherit !important;
 }
 
@@ -5057,8 +5141,8 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.24);
     margin-right: 0.45rem;
@@ -5067,7 +5151,7 @@ body {
 }
 
 .qs-step-dropdown-state i {
-    font-size: 0.5rem;
+    font-size: 0.56rem;
     color: inherit !important;
 }
 

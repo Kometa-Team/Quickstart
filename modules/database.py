@@ -253,6 +253,7 @@ def log_runs_table_create():
         maintenance_summary TEXT,
         maintenance_had_pause INTEGER,
         quiet_period_summary TEXT,
+        progress_snapshot TEXT,
         quickstart_run_marker INTEGER,
         start_mode TEXT,
         config_line_count INTEGER,
@@ -285,6 +286,7 @@ def _ensure_log_runs_columns(cursor):
         "maintenance_summary": "TEXT",
         "maintenance_had_pause": "INTEGER",
         "quiet_period_summary": "TEXT",
+        "progress_snapshot": "TEXT",
         "quickstart_run_marker": "INTEGER",
         "start_mode": "TEXT",
         "config_line_count": "INTEGER",
@@ -324,6 +326,9 @@ def save_log_run(summary, recommendations=None):
     quiet_period_summary = summary.get("quiet_period_summary")
     if isinstance(quiet_period_summary, dict):
         quiet_period_summary = json.dumps(quiet_period_summary, ensure_ascii=True)
+    progress_snapshot = summary.get("progress_snapshot")
+    if isinstance(progress_snapshot, dict):
+        progress_snapshot = json.dumps(progress_snapshot, ensure_ascii=True)
     quickstart_run_marker = 1 if summary.get("quickstart_run_marker") else 0
     start_mode = str(summary.get("start_mode") or "").strip().lower() or None
     config_line_count = summary.get("config_line_count")
@@ -360,12 +365,13 @@ def save_log_run(summary, recommendations=None):
                     maintenance_summary,
                     maintenance_had_pause,
                     quiet_period_summary,
+                    progress_snapshot,
                     quickstart_run_marker,
                     start_mode,
                     config_line_count,
                     cache_line_count,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     run_key,
                     tool_name,
@@ -393,6 +399,7 @@ def save_log_run(summary, recommendations=None):
                     maintenance_summary,
                     maintenance_had_pause,
                     quiet_period_summary,
+                    progress_snapshot,
                     quickstart_run_marker,
                     start_mode,
                     config_line_count,
@@ -457,6 +464,12 @@ def _decode_log_run_row(row):
             decoded["quiet_period_summary"] = json.loads(quiet_period_summary)
         except json.JSONDecodeError:
             decoded["quiet_period_summary"] = None
+    progress_snapshot = decoded.get("progress_snapshot")
+    if isinstance(progress_snapshot, str):
+        try:
+            decoded["progress_snapshot"] = json.loads(progress_snapshot)
+        except json.JSONDecodeError:
+            decoded["progress_snapshot"] = None
     decoded["maintenance_had_pause"] = bool(decoded.get("maintenance_had_pause"))
     decoded["quickstart_run_marker"] = bool(decoded.get("quickstart_run_marker"))
     decoded["start_mode"] = str(decoded.get("start_mode") or "").strip().lower() or None
@@ -473,7 +486,7 @@ def get_log_runs(limit=100):
                                config_name, config_hash, run_command, command_signature, section_runtimes,
                                recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
                                error_count, critical_count, trace_count, analysis_counts, library_counts,
-                               maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker, start_mode,
+                               maintenance_summary, maintenance_had_pause, quiet_period_summary, progress_snapshot, quickstart_run_marker, start_mode,
                                config_line_count, cache_line_count, created_at
                         FROM log_runs
                         ORDER BY created_at DESC"""
@@ -498,7 +511,7 @@ def get_log_run(run_key):
                           config_name, config_hash, run_command, command_signature, section_runtimes,
                           recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
                           error_count, critical_count, trace_count, analysis_counts, library_counts,
-                          maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker, start_mode,
+                          maintenance_summary, maintenance_had_pause, quiet_period_summary, progress_snapshot, quickstart_run_marker, start_mode,
                           config_line_count, cache_line_count, created_at
                    FROM log_runs
                    WHERE run_key == ?

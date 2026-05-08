@@ -2397,6 +2397,24 @@ class LogscanAnalyzer:
         return None
 
     def extract_progress(self, content, library_list=None, selected_libraries=None, previous=None, run_started_at=None, now_ts=None, is_running=False):
+        def _coerce_local_naive_datetime(value):
+            if value in (None, ""):
+                return None
+            if isinstance(value, datetime):
+                try:
+                    if value.tzinfo is not None:
+                        return value.astimezone().replace(tzinfo=None)
+                except Exception:
+                    pass
+                return value
+            try:
+                ts = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+                if ts.tzinfo is not None:
+                    ts = ts.astimezone().replace(tzinfo=None)
+                return ts
+            except Exception:
+                return None
+
         library_entries = []
         if library_list:
             for entry in library_list:
@@ -2528,14 +2546,8 @@ class LogscanAnalyzer:
         self.set_global_divider(content)
         lines = content.splitlines()
 
-        effective_started_at = run_started_at
-        effective_now = now_ts
-        if effective_now is not None:
-            try:
-                if effective_now.tzinfo is not None:
-                    effective_now = effective_now.astimezone().replace(tzinfo=None)
-            except Exception:
-                effective_now = None
+        effective_started_at = _coerce_local_naive_datetime(run_started_at)
+        effective_now = _coerce_local_naive_datetime(now_ts)
         if effective_started_at is None:
             marker_re = re.compile(r"\[Quickstart\]\s+Run marker:\s+started=([^\s]+)")
             for line in lines:

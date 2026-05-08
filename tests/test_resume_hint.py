@@ -161,6 +161,47 @@ def test_build_incomplete_progress_snapshot_exposes_rows_and_totals(qs_module):
     assert snapshot["total_label"] == "7m 30s"
 
 
+def test_build_completed_log_progress_snapshot_does_not_require_request_context(qs_module, isolated_config_dir, monkeypatch):
+    kometa_root = isolated_config_dir / "kometa"
+    config_dir = kometa_root / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "default_config.yml").write_text("libraries: {}\n", encoding="utf-8")
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+
+    class _FakeProgressAnalyzer:
+        def extract_progress(self, *_args, **_kwargs):
+            return {
+                "phase_current": "operations",
+                "current_library": "Movies",
+                "completed_count": 0,
+                "total_count": 1,
+                "preparation_seconds": 12,
+                "libraries": [
+                    {
+                        "name": "Movies",
+                        "type": "movie",
+                        "status": "In progress",
+                        "durations": {},
+                    }
+                ],
+            }
+
+    snapshot = qs_module._build_completed_log_progress_snapshot(
+        summary={
+            "tool_name": "kometa",
+            "config_name": "",
+            "run_command": "kometa.py --run --config <config>",
+            "started_at": "2026-05-05 01:00:00",
+            "finished_at": "2026-05-05 01:05:00",
+        },
+        content="[2026-05-05 01:05:00,000] [operations.py:1] [INFO] | Done |",
+        analyzer=_FakeProgressAnalyzer(),
+    )
+
+    assert snapshot["preparation_label"] == "12s"
+    assert snapshot["rows"][0]["name"] == "Movies"
+
+
 def test_resume_explanation_calls_out_resume_not_used_for_operations(qs_module):
     lines = qs_module._build_resume_explanation(
         original_command="kometa.py --run --operations-only --config <config>",
