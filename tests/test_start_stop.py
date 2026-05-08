@@ -294,6 +294,76 @@ def test_start_imagemaid_surfaces_immediate_exit(client, monkeypatch, qs_module)
     assert "exited immediately" in data["error"]
 
 
+def test_launch_imagemaid_command_resets_runtime_env_before_start(tmp_path, monkeypatch, qs_module):
+    imagemaid_root = tmp_path / "imagemaid"
+    config_dir = imagemaid_root / "config"
+    venv_dir = imagemaid_root / "imagemaid-venv" / "Scripts"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    venv_dir.mkdir(parents=True, exist_ok=True)
+    (imagemaid_root / "imagemaid.py").write_text("print('imagemaid')\n", encoding="utf-8")
+    (venv_dir / "python.exe").write_text("", encoding="utf-8")
+    env_path = config_dir / ".env"
+    env_path.write_text("EMPTY_TRASH=True\nOPTIMIZE_DB=True\n", encoding="utf-8")
+    pid_file = tmp_path / "imagemaid.pid"
+    launch_log = tmp_path / "imagemaid-launch.log"
+
+    popen_calls = {}
+
+    class FakeProc:
+        pid = 4321
+
+        def poll(self):
+            return None
+
+    def fake_popen(command_parts, cwd=None, stdout=None, stderr=None, start_new_session=None):
+        popen_calls["command_parts"] = command_parts
+        popen_calls["cwd"] = cwd
+        popen_calls["start_new_session"] = start_new_session
+        return FakeProc()
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid_file", lambda: str(pid_file))
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_launch_log_file", lambda: str(launch_log))
+    monkeypatch.setattr(qs_module.helpers, "ts_log", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(qs_module.time, "sleep", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module, "_schedule_quickstart_imagemaid_run_marker", lambda *_args, **_kwargs: None)
+
+    ok, result = qs_module._launch_imagemaid_command("python imagemaid.py --mode report", mode="report", config_name="cfg")
+
+    assert ok is True
+    assert result == 4321
+    assert env_path.read_text(encoding="utf-8") == ""
+    assert pid_file.read_text(encoding="utf-8") == "4321"
+    assert popen_calls["cwd"] == str(imagemaid_root)
+    assert popen_calls["start_new_session"] is True
+
+
+def test_launch_imagemaid_command_aborts_when_runtime_env_reset_fails(tmp_path, monkeypatch, qs_module):
+    imagemaid_root = tmp_path / "imagemaid"
+    venv_dir = imagemaid_root / "imagemaid-venv" / "Scripts"
+    venv_dir.mkdir(parents=True, exist_ok=True)
+    (imagemaid_root / "imagemaid.py").write_text("print('imagemaid')\n", encoding="utf-8")
+    (venv_dir / "python.exe").write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    monkeypatch.setattr(
+        qs_module,
+        "_reset_imagemaid_runtime_env",
+        lambda *_args, **_kwargs: (False, "Quickstart could not reset ImageMaid env file before launch: denied"),
+    )
+    monkeypatch.setattr(
+        qs_module.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("launch should not continue when env reset fails")),
+    )
+
+    ok, result = qs_module._launch_imagemaid_command("python imagemaid.py --mode report", mode="report", config_name="cfg")
+
+    assert ok is False
+    assert "could not reset ImageMaid env file before launch" in result
+
+
 def test_start_imagemaid_blocked_during_maintenance(client, tmp_path, monkeypatch, qs_module):
     imagemaid_root = tmp_path / "imagemaid"
     log_dir = imagemaid_root / "config" / "logs"

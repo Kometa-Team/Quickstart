@@ -29,6 +29,27 @@
     --accent-color-hover: rgba(0, 188, 140, 0.8);
     --arr-queue-color: #00bc8c;
     --plex-poster-unwatched: #e5a00d;
+    --logscan-sem-cache: #8b5cf6;
+    --logscan-sem-cache-ink: #c4b5fd;
+    --logscan-sem-cache-soft: rgba(139, 92, 246, 0.14);
+    --logscan-sem-debug: #6b7280;
+    --logscan-sem-debug-ink: #d1d5db;
+    --logscan-sem-debug-soft: rgba(107, 114, 128, 0.18);
+    --logscan-sem-info: #43aa8b;
+    --logscan-sem-info-ink: #5bd3ad;
+    --logscan-sem-info-soft: rgba(67, 170, 139, 0.14);
+    --logscan-sem-warning: #f9c74f;
+    --logscan-sem-warning-ink: #f9c74f;
+    --logscan-sem-warning-soft: rgba(249, 199, 79, 0.14);
+    --logscan-sem-error: #f3722c;
+    --logscan-sem-error-ink: #ffb38a;
+    --logscan-sem-error-soft: rgba(243, 114, 44, 0.16);
+    --logscan-sem-critical: #f94144;
+    --logscan-sem-critical-ink: #ff8588;
+    --logscan-sem-critical-soft: rgba(249, 65, 68, 0.16);
+    --logscan-sem-trace: #4cc9f0;
+    --logscan-sem-trace-ink: #4cc9f0;
+    --logscan-sem-trace-soft: rgba(76, 201, 240, 0.14);
 }
 
 [data-theme="kometa"] {
@@ -2444,6 +2465,16 @@ div#loading {
     justify-content: space-between;
 }
 
+.logscan-table-filter-shell {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logscan-table-filter-note {
+    margin-bottom: 0.5rem;
+}
+
 .logscan-table-actions {
     justify-content: flex-end;
 }
@@ -2498,6 +2529,10 @@ div#loading {
     padding: 0.7rem 0.85rem;
     background: var(--theme-bg-card);
     transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr.logscan-row-progress-expanded {
+    grid-column: 1 / -1;
 }
 
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td {
@@ -2655,14 +2690,15 @@ div#loading {
     justify-content: space-between;
     gap: 0.75rem;
     width: 100%;
-    margin-bottom: 0.55rem;
 }
 
 .logscan-progress-panel {
     width: 100%;
+    margin-top: 0.55rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0.6rem;
     background: rgba(0, 0, 0, 0.14);
+    overflow: hidden;
 }
 
 .logscan-progress-panel-inner {
@@ -2679,16 +2715,21 @@ div#loading {
 }
 
 .logscan-progress-table-wrap {
+    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
 }
 
 .qs-analytics-progress-table {
-    min-width: 34rem;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
 }
 
 .qs-analytics-progress-table th,
 .qs-analytics-progress-table td {
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .qs-analytics-progress-table tfoot td,
@@ -2696,18 +2737,12 @@ div#loading {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell {
-    display: block;
-    padding: 0.5rem 0.42rem 0.42rem;
-}
-
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell > * {
-    min-width: 0;
-}
-
-.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell .logscan-card-label {
-    display: inline-flex;
-    margin: 0;
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell .logscan-card-value {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.55rem;
+    justify-self: stretch;
+    width: 100%;
 }
 
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table > table > tbody > tr > td.logscan-progress-cell .logscan-action-btn {
@@ -2748,38 +2783,38 @@ div#loading {
 }
 
 .logscan-count-chip--warning {
-    background: rgba(249, 199, 79, 0.14);
-    color: #f9c74f;
+    background: var(--logscan-sem-warning-soft);
+    color: var(--logscan-sem-warning-ink);
 }
 
 .logscan-count-chip--cache {
-    background: rgba(139, 92, 246, 0.14);
-    color: #c4b5fd;
+    background: var(--logscan-sem-cache-soft);
+    color: var(--logscan-sem-cache-ink);
 }
 
 .logscan-count-chip--debug {
-    background: rgba(107, 114, 128, 0.18);
-    color: #d1d5db;
+    background: var(--logscan-sem-debug-soft);
+    color: var(--logscan-sem-debug-ink);
 }
 
 .logscan-count-chip--info {
-    background: rgba(56, 189, 248, 0.14);
-    color: #7dd3fc;
+    background: var(--logscan-sem-info-soft);
+    color: var(--logscan-sem-info-ink);
 }
 
 .logscan-count-chip--error {
-    background: rgba(249, 65, 68, 0.14);
-    color: #ff6b6e;
+    background: var(--logscan-sem-error-soft);
+    color: var(--logscan-sem-error-ink);
 }
 
 .logscan-count-chip--critical {
-    background: rgba(244, 63, 94, 0.18);
-    color: #fda4af;
+    background: var(--logscan-sem-critical-soft);
+    color: var(--logscan-sem-critical-ink);
 }
 
 .logscan-count-chip--trace {
-    background: rgba(76, 201, 240, 0.14);
-    color: #4cc9f0;
+    background: var(--logscan-sem-trace-soft);
+    color: var(--logscan-sem-trace-ink);
 }
 
 .logscan-count-chip--movie {
@@ -3068,31 +3103,31 @@ div#loading {
 }
 
 .logscan-stack-warning {
-    background: #f9c74f;
+    background: var(--logscan-sem-warning);
 }
 
 .logscan-stack-error {
-    background: #f94144;
+    background: var(--logscan-sem-error);
 }
 
 .logscan-stack-trace {
-    background: #4cc9f0;
+    background: var(--logscan-sem-trace);
 }
 
 .logscan-stack-cache {
-    background: #90be6d;
+    background: var(--logscan-sem-cache);
 }
 
 .logscan-stack-debug {
-    background: #577590;
+    background: var(--logscan-sem-debug);
 }
 
 .logscan-stack-info {
-    background: #43aa8b;
+    background: var(--logscan-sem-info);
 }
 
 .logscan-stack-critical {
-    background: #f3722c;
+    background: var(--logscan-sem-critical);
 }
 
 .logscan-stack-runtime {
@@ -3163,6 +3198,54 @@ div#loading {
 .logscan-series-toggle.active {
     background: rgba(255, 255, 255, 0.14);
     color: var(--theme-text);
+}
+
+.logscan-series-toggle[data-series-key="cache_line_count"] {
+    --logscan-series-color: var(--logscan-sem-cache);
+    --logscan-series-ink: var(--logscan-sem-cache-ink);
+    --logscan-series-soft: var(--logscan-sem-cache-soft);
+}
+
+.logscan-series-toggle[data-series-key="debug_count"] {
+    --logscan-series-color: var(--logscan-sem-debug);
+    --logscan-series-ink: var(--logscan-sem-debug-ink);
+    --logscan-series-soft: var(--logscan-sem-debug-soft);
+}
+
+.logscan-series-toggle[data-series-key="info_count"] {
+    --logscan-series-color: var(--logscan-sem-info);
+    --logscan-series-ink: var(--logscan-sem-info-ink);
+    --logscan-series-soft: var(--logscan-sem-info-soft);
+}
+
+.logscan-series-toggle[data-series-key="warning_count"] {
+    --logscan-series-color: var(--logscan-sem-warning);
+    --logscan-series-ink: var(--logscan-sem-warning-ink);
+    --logscan-series-soft: var(--logscan-sem-warning-soft);
+}
+
+.logscan-series-toggle[data-series-key="error_count"] {
+    --logscan-series-color: var(--logscan-sem-error);
+    --logscan-series-ink: var(--logscan-sem-error-ink);
+    --logscan-series-soft: var(--logscan-sem-error-soft);
+}
+
+.logscan-series-toggle[data-series-key="critical_count"] {
+    --logscan-series-color: var(--logscan-sem-critical);
+    --logscan-series-ink: var(--logscan-sem-critical-ink);
+    --logscan-series-soft: var(--logscan-sem-critical-soft);
+}
+
+.logscan-series-toggle[data-series-key="trace_count"] {
+    --logscan-series-color: var(--logscan-sem-trace);
+    --logscan-series-ink: var(--logscan-sem-trace-ink);
+    --logscan-series-soft: var(--logscan-sem-trace-soft);
+}
+
+.logscan-series-toggle.active[data-series-key] {
+    border-color: var(--logscan-series-color, var(--theme-border));
+    background: var(--logscan-series-soft, rgba(255, 255, 255, 0.14));
+    color: var(--logscan-series-ink, var(--theme-text));
 }
 
 .logscan-kpi-grid {

@@ -199,6 +199,72 @@
         </button>
       </div>
     </div>
+    <div class="logscan-table-filter-shell">
+      <div class="small text-muted logscan-table-filter-note">These filters mirror the controls above.</div>
+      <div class="logscan-control-grid">
+        <div class="logscan-filter-row logscan-filter-row-primary">
+          <select id="logscan-trends-limit-bottom" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Display limit only. Does not affect reingest.">
+            <option value="10">Last 10 runs</option>
+            <option value="25">Last 25 runs</option>
+            <option value="50">Last 50 runs</option>
+            <option value="100">Last 100 runs</option>
+            <option value="500" selected>Last 500 runs</option>
+            <option value="all">All runs</option>
+          </select>
+          <div class="input-group input-group-sm w-auto logscan-app-filter">
+            <span class="input-group-text">App</span>
+            <select id="logscan-trends-tool-filter-bottom" class="form-select form-select-sm logscan-control-field"
+              title="Filter visuals by app.">
+              <option value="">All apps</option>
+            </select>
+          </div>
+          <select id="logscan-trends-config-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter visuals by tracked config.">
+            <option value="">All configs</option>
+          </select>
+          <div class="input-group input-group-sm w-auto logscan-time-range">
+            <span class="input-group-text">Time range</span>
+            <select id="logscan-trends-time-range-bottom" class="form-select form-select-sm logscan-control-field"
+              title="Filter visuals by time window.">
+              <option value="all" selected>All time</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="custom">Custom range</option>
+            </select>
+          </div>
+          <div id="logscan-trends-count-bottom" class="small text-muted logscan-run-count"></div>
+        </div>
+        <div class="logscan-filter-row logscan-filter-row-custom d-none" id="logscan-trends-custom-date-row-bottom">
+          <div class="input-group input-group-sm w-auto logscan-date-range">
+            <span class="input-group-text">From</span>
+            <input id="logscan-trends-date-start-bottom" type="date" class="form-control form-control-sm"
+              title="Start date">
+            <span class="input-group-text">To</span>
+            <input id="logscan-trends-date-end-bottom" type="date" class="form-control form-control-sm" title="End date">
+          </div>
+          <div id="logscan-trends-date-hint-bottom" class="small text-muted logscan-date-hint"></div>
+        </div>
+        <div class="logscan-filter-row logscan-filter-row-secondary">
+          <select id="logscan-trends-command-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter visuals by run command.">
+            <option value="">All commands</option>
+          </select>
+          <select id="logscan-trends-library-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter library inventory by library.">
+            <option value="">All libraries</option>
+          </select>
+          <button id="logscan-trends-preferences-bottom" class="btn nav-button btn-sm logscan-control-action" type="button"
+            data-bs-toggle="modal" data-bs-target="#logscan-preferences-modal">
+            Customize
+          </button>
+          <button id="logscan-trends-reset-filters-bottom" class="btn nav-button btn-sm logscan-control-action" type="button">
+            Reset filters
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="collapse" id="logscan-recent-runs-collapse">
       <div class="logscan-table-toolbar">
         <div class="logscan-table-bulk-actions">

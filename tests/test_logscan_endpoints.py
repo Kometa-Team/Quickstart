@@ -349,6 +349,10 @@ def test_logscan_trends_uses_cached_incomplete_summary_without_reparse(client, i
                         "analysis_counts": {"playlist_errors": 1},
                     },
                     "recommendations": [{"first_line": "INFO - Run incomplete", "message": "Review the log"}],
+                    "resume_progress_snapshot": {
+                        "columns": [{"key": "collections", "label": "Collections"}],
+                        "rows": [{"name": "Movies", "type": "movie", "status": "Done", "phase_cells": [{"label": "4m 11s", "tone": "primary"}]}],
+                    },
                 }
             },
         },
@@ -364,6 +368,7 @@ def test_logscan_trends_uses_cached_incomplete_summary_without_reparse(client, i
     assert row["warning_count"] == 2
     assert row["error_count"] == 1
     assert row["recommendations_count"] == 1
+    assert row["progress_snapshot"]["rows"][0]["name"] == "Movies"
 
 
 def test_logscan_trends_recommendations_support_incomplete_run(client, isolated_config_dir, monkeypatch, qs_module):
@@ -1269,6 +1274,9 @@ def test_logscan_reingest_ingests_imagemaid_clear_runtime_log_with_restore_stats
                 "[2026-04-29 21:53:15,701] [imagemaid.py:93]           [INFO]     |====================================================================================================|",
                 "[2026-04-29 21:53:16,088] [imagemaid.py:93]           [INFO]     |     Version: 1.1.1-build8 (Python 3.12.1)                                                          |",
                 "[2026-04-29 21:53:16,716] [imagemaid.py:93]           [DEBUG]    | Run Command: C:\\Users\\bullmoose20\\Quickstart\\config\\imagemaid\\imagemaid.py --url (redacted) --token (redacted) --plex P:\\plex --mode clear --photo-transcoder --local --timeout 600 --sleep 60 |",
+                "[2026-04-29 21:53:16,717] [imagemaid.py:93]           [DEBUG]    | --empty-trash (EMPTY_TRASH): False                                                                 |",
+                "[2026-04-29 21:53:16,718] [imagemaid.py:93]           [DEBUG]    | --clean-bundles (CLEAN_BUNDLES): False                                                             |",
+                "[2026-04-29 21:53:16,719] [imagemaid.py:93]           [DEBUG]    | --optimize-db (OPTIMIZE_DB): False                                                                 |",
                 "[2026-04-29 21:53:16,726] [imagemaid.py:118]          [INFO]     | Running in Clear Mode with PhotoTrancoder set to True                                              |",
                 "[2026-04-29 21:53:16,739] [imagemaid.py:385]          [INFO]     | Scanning ImageMaid Restore for Bloat Images to Remove                                              |",
                 "[2026-04-29 22:05:43,127] [imagemaid.py:387]          [INFO]     | Scanning Complete: Found 93440 Bloat Images in the ImageMaid Directory to Remove                   |",
@@ -1318,10 +1326,21 @@ def test_logscan_reingest_ingests_imagemaid_clear_runtime_log_with_restore_stats
     assert run["analysis_counts"]["imagemaid_restore_recovered_bytes"] == 25544317992
     assert run["analysis_counts"]["imagemaid_photo_recovered_bytes"] == 6742343
     assert run["analysis_counts"]["imagemaid_total_recovered_bytes"] == 25551060335
+    assert run["analysis_counts"]["imagemaid_empty_trash_enabled"] == 0
+    assert run["analysis_counts"]["imagemaid_clean_bundles_enabled"] == 0
+    assert run["analysis_counts"]["imagemaid_optimize_db_enabled"] == 0
     assert run["section_runtimes"]["restore_dir_scan"] == 746
     assert run["section_runtimes"]["restore_dir_action"] == 3743
     assert run["section_runtimes"]["photo_transcoder_scan"] == 1
     assert run["section_runtimes"]["photo_transcoder_remove"] == 1
+    assert run["progress_snapshot"]["name_label"] == "Operation"
+    assert run["progress_snapshot"]["type_label"] == "Area"
+    assert run["progress_snapshot"]["total_label"] == "1h 14m 52s"
+    progress_rows = {row["name"]: row for row in run["progress_snapshot"]["rows"]}
+    assert progress_rows["Restore Cache"]["phase_cells"][0]["label"] == "12m 26s"
+    assert progress_rows["Restore Cache"]["phase_cells"][1]["label"] == "1h 2m 23s"
+    assert progress_rows["Restore Cache"]["phase_cells"][2]["label"] == "Removed 93.4K"
+    assert progress_rows["PhotoTranscoder"]["phase_cells"][2]["label"] == "Removed 126"
 
 
 def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_at(qs_module):
@@ -1383,6 +1402,15 @@ def test_analyze_imagemaid_log_content_parses_summary_section_runtimes(qs_module
     assert section_runtimes["report_bloat_action"] == 0
     assert section_runtimes["photo_transcoder_scan"] == 1
     assert section_runtimes["photo_transcoder_remove"] == 0
+    progress_snapshot = result["summary"]["progress_snapshot"]
+    assert progress_snapshot["name_label"] == "Operation"
+    assert progress_snapshot["type_label"] == "Area"
+    assert progress_snapshot["columns"][0]["label"] == "Scan Time"
+    assert progress_snapshot["columns"][2]["label"] == "Observed"
+    row_names = [row["name"] for row in progress_snapshot["rows"]]
+    assert "Database Prep" in row_names
+    assert "Bloat Report" in row_names
+    assert "PhotoTranscoder" in row_names
 
 
 def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_for_started_at(qs_module, isolated_config_dir, monkeypatch):
