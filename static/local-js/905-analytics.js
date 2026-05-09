@@ -334,6 +334,23 @@ $(document).ready(function () {
     return getRunToolName(run) === 'imagemaid' ? 'ImageMaid' : 'Kometa'
   }
 
+  function getRunToolIconPath (run) {
+    return getRunToolName(run) === 'imagemaid'
+      ? '/static/images/app-icons/imagemaid.png'
+      : '/static/images/app-icons/kometa.png'
+  }
+
+  function renderRunToolIndicator (run) {
+    const label = getRunToolLabel(run)
+    const iconPath = getRunToolIconPath(run)
+    return `
+      <span class="logscan-app-indicator">
+        <img src="${escapeHtml(iconPath)}" alt="" class="logscan-app-indicator__icon" aria-hidden="true">
+        <span>${escapeHtml(label)}</span>
+      </span>
+    `
+  }
+
   function getKometaStartMode (run) {
     if (!run || getRunToolName(run) !== 'kometa') return ''
     const mode = String(run.start_mode || '').trim().toLowerCase()
@@ -1940,7 +1957,6 @@ $(document).ready(function () {
       }
       sectionCell += `<span class="logscan-section-summary">${escapeHtml(sectionSummary)}</span>`
       sectionCell += '</div>'
-      const toolLabel = getRunToolLabel(run)
       const isImageMaidRun = getRunToolName(run) === 'imagemaid'
       const progressLabel = getRunToolName(run) === 'imagemaid' ? 'Operation matrix' : 'Progress matrix'
       const progressHelpText = getRunToolName(run) === 'imagemaid'
@@ -2020,8 +2036,8 @@ $(document).ready(function () {
           ${renderRunCardCell('Finished', 'Timestamp of the run finishing. Incomplete logs are shown here for investigation only and are excluded from charts.', finishedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
           ${renderRunCardCell('Config', 'Config name detected for the run.', escapeHtml(run.config_name || 'default'))}
-          ${renderRunCardCell('App', 'App that produced this run.', escapeHtml(toolLabel))}
-          ${renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
+          ${renderRunCardCell('App', 'App that produced this run.', renderRunToolIndicator(run))}
+          ${isImageMaidRun ? '' : renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
           ${renderRunCardCell('Command', 'Sanitized command line captured for the run.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
           ${renderRunCardCell('Counts', 'Kometa: C cache, D debug, I info, W warnings, E errors, Cr critical, T tracebacks, plus M movies, S shows, Ep episodes, and Items total. ImageMaid: C D I W E Cr T plus Items total.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
           ${renderRunCardCell('Version', 'Detected tool version for the run, plus newest version when different.', escapeHtml(kometaDisplay))}

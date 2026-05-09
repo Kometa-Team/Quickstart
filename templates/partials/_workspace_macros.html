@@ -12,6 +12,44 @@ Sponsor
 {% endif %}
 {%- endmacro %}
 
+{% macro step_nav_icon(template_key, label, compact=False) -%}
+{% set image_icon_map = {
+  '001-start': 'favicon.png',
+  '010-plex': 'images/service-icons/plex.png',
+  '020-tmdb': 'images/service-icons/tmdb.png',
+  '030-tautulli': 'images/service-icons/tautulli.png',
+  '040-github': 'images/service-icons/github.png',
+  '050-omdb': 'images/service-icons/omdb.png',
+  '060-mdblist': 'images/service-icons/mdblist.png',
+  '070-notifiarr': 'images/service-icons/notifiarr.png',
+  '080-gotify': 'images/service-icons/gotify.png',
+  '085-ntfy': 'images/service-icons/ntfy.png',
+  '100-anidb': 'images/service-icons/anidb.png',
+  '110-radarr': 'images/service-icons/radarr.png',
+  '120-sonarr': 'images/service-icons/sonarr.png',
+  '130-trakt': 'images/service-icons/trakt.png',
+  '140-mal': 'images/service-icons/mal.png',
+  '900-kometa': 'images/app-icons/kometa.png',
+  '915-imagemaid': 'images/app-icons/imagemaid.png'
+} %}
+{% set glyph_icon_map = {
+  '025-libraries': 'bi bi-collection-fill',
+  '090-webhooks': 'bi bi-diagram-3-fill',
+  '150-settings': 'bi bi-sliders',
+  '905-analytics': 'bi bi-graph-up-arrow',
+  '910-sponsor': 'bi bi-heart-fill'
+} %}
+{% set image_icon = image_icon_map.get(template_key) %}
+{% set glyph_icon = glyph_icon_map.get(template_key) %}
+{% if image_icon %}
+<img src="{{ url_for('static', filename=image_icon) }}" alt="" class="qs-step-link-icon{% if compact %} qs-step-link-icon--compact{% endif %}" aria-hidden="true">
+{% elif glyph_icon %}
+<i class="{{ glyph_icon }} qs-step-link-glyph{% if compact %} qs-step-link-glyph--compact{% endif %}" aria-hidden="true"></i>
+{% else %}
+<span class="qs-step-link-fallback{% if compact %} qs-step-link-fallback--compact{% endif %}">{{ label[:1] }}</span>
+{% endif %}
+{%- endmacro %}
+
 {% macro status_icon(status, state_class='qs-step-link-state') -%}
 {% set state = status if status in ['unknown', 'ok', 'warn', 'error'] else 'warn' %}
 <span class="{{ state_class }} {{ state_class }}--{{ state }}" aria-hidden="true">
@@ -65,8 +103,13 @@ Sponsor
 <button type="button" class="qs-step-link {% if template_key == page_info['template_name'] %}is-active{% endif %}"
   data-step-key="{{ template_key }}"
   onclick="jumpTo('{{ template_key }}')" title="{{ label }}">
-  <span class="qs-step-link-short">{{ label[:1] }}</span>
-  <span class="qs-step-link-label">{{ label }}</span>
+  <span class="qs-step-link-short">{{ step_nav_icon(template_key, label, True) }}</span>
+  <span class="qs-step-link-label">
+    <span class="qs-step-link-label-wrap">
+      {{ step_nav_icon(template_key, label) }}
+      <span class="qs-step-link-label-text">{{ label }}</span>
+    </span>
+  </span>
   {{ status_icon(step_state, 'qs-step-link-state') }}
 </button>
 {%- endmacro %}

@@ -42,7 +42,10 @@
             <div class="col-lg-6">
               <div class="start-app-card start-app-card-state-{{ 'ready' if kometa_ready else 'pending' }} h-100">
                 <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                  <div class="fw-semibold">Kometa workflow</div>
+                  <div class="start-app-title">
+                    <img src="{{ url_for('static', filename='images/app-icons/kometa.png') }}" alt="" class="start-app-title__icon" aria-hidden="true">
+                    <div class="fw-semibold">Kometa workflow</div>
+                  </div>
                   <span class="start-app-state start-app-state-{{ 'ready' if kometa_ready else 'pending' }}">
                     {{ 'Ready' if kometa_ready else 'Setup needed' }}
                   </span>
@@ -62,7 +65,10 @@
             <div class="col-lg-6">
               <div class="start-app-card start-app-card-state-{{ 'ready' if imagemaid_ready else 'pending' }} h-100">
                 <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                  <div class="fw-semibold">ImageMaid workflow</div>
+                  <div class="start-app-title">
+                    <img src="{{ url_for('static', filename='images/app-icons/imagemaid.png') }}" alt="" class="start-app-title__icon" aria-hidden="true">
+                    <div class="fw-semibold">ImageMaid workflow</div>
+                  </div>
                   <span class="start-app-state start-app-state-{{ 'ready' if imagemaid_ready else 'pending' }}">
                     {{ 'Ready' if imagemaid_ready else 'Setup needed' }}
                   </span>

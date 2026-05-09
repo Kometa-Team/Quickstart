@@ -9,6 +9,9 @@
   {% set insight_keys = ['905-analytics'] %}
   {% set other_keys = ['910-sponsor'] %}
   {% set service_icon_map = {
+    '001-start': 'favicon.png',
+    '900-kometa': 'images/app-icons/kometa.png',
+    '915-imagemaid': 'images/app-icons/imagemaid.png',
     '010-plex': 'images/service-icons/plex.png',
     '020-tmdb': 'images/service-icons/tmdb.png',
     '030-tautulli': 'images/service-icons/tautulli.png',
@@ -24,7 +27,15 @@
     '130-trakt': 'images/service-icons/trakt.png',
     '140-mal': 'images/service-icons/mal.png'
   } %}
+  {% set service_icon_class_map = {
+    '025-libraries': 'bi bi-collection-fill',
+    '090-webhooks': 'bi bi-diagram-3-fill',
+    '905-analytics': 'bi bi-graph-up-arrow',
+    '910-sponsor': 'bi bi-heart-fill',
+    '150-settings': 'bi bi-sliders'
+  } %}
   {% set service_icon = service_icon_map.get(page_info['template_name']) %}
+  {% set service_icon_class = service_icon_class_map.get(page_info['template_name']) %}
   {% if optional_keys is defined %}
   {% set optional_ns = namespace(keys=optional_keys) %}
   {% else %}
@@ -273,6 +284,8 @@
               <span class="qs-main-page-title-wrap">
                 {% if service_icon %}
                 <img src="{{ url_for('static', filename=service_icon) }}" alt="" class="qs-main-page-service-mark" aria-hidden="true">
+                {% elif service_icon_class %}
+                <i class="{{ service_icon_class }} qs-main-page-service-glyph" aria-hidden="true"></i>
                 {% endif %}
                 <span>{{ page_info['title'] }}</span>
               </span>

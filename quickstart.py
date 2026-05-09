@@ -8449,7 +8449,7 @@ def kometa_status():
             start_mode=_normalize_kometa_start_mode(ctx.get("start_mode")),
             active_command=ctx.get("command"),
         )
-    except psutil.NoSuchProcess:
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
         _clear_process_metric_cache(pid, "kometa")
         try:
             os.remove(helpers.get_kometa_pid_file())
