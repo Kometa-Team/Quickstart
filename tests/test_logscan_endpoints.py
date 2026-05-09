@@ -1413,6 +1413,52 @@ def test_analyze_imagemaid_log_content_parses_summary_section_runtimes(qs_module
     assert "PhotoTranscoder" in row_names
 
 
+def test_logscan_reingest_preserves_incomplete_imagemaid_progress_snapshot(client, isolated_config_dir, monkeypatch, qs_module):
+    imagemaid_root = isolated_config_dir / "imagemaid"
+    log_dir = imagemaid_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    runtime_log = log_dir / "imagemaid.log"
+    runtime_log.write_text(
+        "\n".join(
+            [
+                "[2026-05-06 07:45:19,459] [imagemaid.py:244]          [INFO]     | Downloading Database via the Plex API. First Plex will make a backup of your database.             |",
+                "[2026-05-06 07:50:48,649] [imagemaid.py:290]          [INFO]     | Runtime: 0:05:29                                                                                   |",
+                "[2026-05-06 07:50:48,779] [imagemaid.py:297]          [INFO]     | Database Opened Querying For In-Use Images                                                         |",
+                "[2026-05-06 07:50:49,327] [imagemaid.py:304]          [INFO]     | Runtime: 0:00:00                                                                                   |",
+                "[2026-05-06 07:50:49,330] [imagemaid.py:311]          [INFO]     | Scanning Metadata Directory For Bloat Images: p:\\Plex\\Metadata                                     |",
+                "[2026-05-06 07:56:08,253] [imagemaid.py:317]          [INFO]     | Runtime: 0:05:18                                                                                   |",
+                "[2026-05-06 07:56:08,253] [imagemaid.py:322]          [INFO]     | Reporting Bloat Images                                                                             |",
+                "[2026-05-06 07:56:08,404] [imagemaid.py:354]          [INFO]     | Runtime: 0:00:00                                                                                   |",
+                "[2026-05-06 07:56:08,407] [imagemaid.py:415]          [INFO]     | Scanning for PhotoTranscoder Images                                                                |",
+                "[2026-05-06 07:56:09,910] [imagemaid.py:418]          [INFO]     | Runtime: 0:00:01                                                                                   |",
+                "[2026-05-06 07:56:09,911] [imagemaid.py:421]          [INFO]     | Removing PhotoTranscoder Images                                                                    |",
+                "[2026-05-06 07:56:09,913] [imagemaid.py:435]          [INFO]     | Runtime: 0:00:00                                                                                   |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: isolated_config_dir / "kometa")
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
+
+    resp = client.post("/logscan/trends/reingest", json={"reset": True})
+    assert resp.status_code == 200
+
+    incomplete_runs = qs_module._get_logscan_incomplete_runs(limit=10)
+    imagemaid_runs = [run for run in incomplete_runs if run.get("tool_name") == "imagemaid"]
+    assert imagemaid_runs
+    snapshot = imagemaid_runs[0]["progress_snapshot"]
+    assert snapshot["name_label"] == "Operation"
+    assert snapshot["type_label"] == "Area"
+    assert snapshot["rows"]
+    row_names = [row["name"] for row in snapshot["rows"]]
+    assert "Database Prep" in row_names
+    assert "Bloat Report" in row_names
+    assert "PhotoTranscoder" in row_names
+
+
 def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_for_started_at(qs_module, isolated_config_dir, monkeypatch):
     log_path = isolated_config_dir / "kometa" / "config" / "logs" / "meta.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)

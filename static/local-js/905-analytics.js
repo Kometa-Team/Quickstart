@@ -7,6 +7,7 @@ $(document).ready(function () {
   const $tableSortKey = $('#logscan-table-sort-key')
   const $tableSortDir = $('#logscan-table-sort-dir')
   const $tablePageSize = $('#logscan-table-page-size')
+  const $tableFilterCount = $('#logscan-table-filter-count')
   const $tablePageInfo = $('#logscan-table-page-info')
   const $tablePrev = $('#logscan-table-prev')
   const $tableNext = $('#logscan-table-next')
@@ -1861,12 +1862,21 @@ $(document).ready(function () {
   function updateTableSummary (total, pageSize, pageCount) {
     const totalComplete = Number.isFinite(allRunsTotal) ? allRunsTotal : allRuns.length
     const totalIncomplete = Number.isFinite(allIncompleteRunsTotal) ? allIncompleteRunsTotal : allIncompleteRuns.length
+    const loaded = allTableRuns.length
+    const grandTotal = totalComplete + totalIncomplete
     if ($tableSummary.length) {
       if (!total) {
         $tableSummary.text('No runs match the current filters.')
       } else {
         $tableSummary.text(`Ingested: ${totalComplete}. Incomplete: ${totalIncomplete}. Showing: ${total}. Page size: ${pageSize}.`)
       }
+    }
+    if ($tableFilterCount.length) {
+      let filterText = `Filtered: ${total} of ${loaded} loaded`
+      if (grandTotal > loaded) {
+        filterText += ` (${grandTotal} total)`
+      }
+      $tableFilterCount.text(filterText)
     }
     if (!$tablePageInfo.length) return
     if (!total) {

@@ -12465,6 +12465,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                             "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
                             "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
                             "quiet_period_summary": summary.get("quiet_period_summary") if isinstance(summary.get("quiet_period_summary"), dict) else {},
+                            "progress_snapshot": summary.get("progress_snapshot") if isinstance(summary.get("progress_snapshot"), dict) else {},
                             "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
                             "start_mode": summary.get("start_mode"),
                             "config_line_count": summary.get("config_line_count"),
