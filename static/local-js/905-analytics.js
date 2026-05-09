@@ -1927,7 +1927,7 @@ $(document).ready(function () {
         details: sectionDetails
       })
       let sectionCell = `
-        <div class="logscan-card-inline2">
+        <div class="logscan-card-inline">
       `
       if (sectionDetails.length) {
         sectionCell += `
