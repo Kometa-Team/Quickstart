@@ -1941,6 +1941,7 @@ $(document).ready(function () {
       sectionCell += `<span class="logscan-section-summary">${escapeHtml(sectionSummary)}</span>`
       sectionCell += '</div>'
       const toolLabel = getRunToolLabel(run)
+      const isImageMaidRun = getRunToolName(run) === 'imagemaid'
       const progressLabel = getRunToolName(run) === 'imagemaid' ? 'Operation matrix' : 'Progress matrix'
       const progressHelpText = getRunToolName(run) === 'imagemaid'
         ? 'Stored ImageMaid operation matrix for this run, including observed scan/action timings, item counts, and outcomes.'
@@ -2027,7 +2028,7 @@ $(document).ready(function () {
           ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
           ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
           ${renderRunCardCell(progressLabel, progressHelpText, renderProgressSnapshotCell(run, runKey), 'class="logscan-progress-cell"')}
-          ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per run section when available.', sectionCell)}
+          ${isImageMaidRun ? '' : renderRunCardCell('Section runtimes', 'Runtime totals parsed per run section when available.', sectionCell)}
           ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
           ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
           ${renderRunCardCell('Report', run.is_incomplete ? 'Open recommendations and diagnostics captured for this incomplete log.' : 'Open the recommendations recorded for the run.', `
