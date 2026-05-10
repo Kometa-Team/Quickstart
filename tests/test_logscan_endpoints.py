@@ -985,6 +985,8 @@ def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isol
         {
             "mtime": stats.st_mtime,
             "size": stats.st_size,
+            "sidecar_mtime": None,
+            "sidecar_size": None,
             "data": {
                 "current_library": "Movies",
                 "phase_current": "collections",
@@ -992,13 +994,13 @@ def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isol
                 "libraries": [{"name": "Movies", "type": "movie", "status": "In progress", "durations": {"collections": 12}}],
                 "playlist_running": True,
                 "playlist_started_at": playlist_started_at,
-                "playlist_total_seconds": 5,
-                "preparation_seconds": None,
-                "preparation_elapsed_seconds": None,
-                "run_started_at": started_at,
-            },
-        }
-    )
+                    "playlist_total_seconds": 5,
+                    "preparation_seconds": None,
+                    "preparation_elapsed_seconds": None,
+                    "run_started_at": datetime.fromisoformat(started_at),
+                },
+            }
+        )
     with qs_module.RUN_CONTEXT_LOCK:
         qs_module.RUN_CONTEXT["started_at"] = datetime.fromisoformat(started_at)
         qs_module.RUN_CONTEXT["selected_libraries"] = ["Movies"]
@@ -1022,6 +1024,117 @@ def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isol
     assert payload["preparation_elapsed_seconds"] == 900
     assert payload["current_phase_elapsed_seconds"] == 612
     assert payload["playlist_elapsed_seconds"] == 305
+
+
+def test_logscan_progress_size_all_bypasses_matching_stale_cache(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-04-01 01:13:24,670] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
+                "[2026-04-01 01:13:25,670] [kometa.py:730] [INFO]     |================================== Mapping TV Shows Library ===================================|",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    stats = log_path.stat()
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: True)
+    monkeypatch.setattr(qs_module, "_load_progress_config", lambda *_args, **_kwargs: {})
+
+    analyzer_calls = {"count": 0}
+
+    class _FakeProgressAnalyzer:
+        def extract_progress(self, content, **kwargs):
+            analyzer_calls["count"] += 1
+            return {
+                "phase_current": "collections",
+                "phases_completed": [],
+                "libraries": [
+                    {"name": "Movies", "type": "movie", "status": "Done", "durations": {}},
+                    {"name": "TV Shows", "type": "show", "status": "In progress", "durations": {}},
+                ],
+                "current_library": "TV Shows",
+                "completed_count": 1,
+                "total_count": 2,
+            }
+
+        def extract_maintenance_summary(self, content):
+            return {"had_pause": False, "pause_count": 0, "pause_seconds": 0, "open_pause": False, "window": None, "events": []}
+
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", _FakeProgressAnalyzer)
+    qs_module.LOGSCAN_PROGRESS_CACHE.update(
+        {
+            "mtime": stats.st_mtime,
+            "size": stats.st_size,
+            "sidecar_mtime": None,
+            "sidecar_size": None,
+            "data": {
+                "run_started_at": None,
+                "current_library": "Movies",
+                "phase_current": "operations",
+                "libraries": [
+                    {"name": "Movies", "type": "movie", "status": "In progress", "durations": {}},
+                    {"name": "TV Shows", "type": "show", "status": "Pending", "durations": {}},
+                ],
+                "total_count": 2,
+                "completed_count": 0,
+            },
+        }
+    )
+
+    resp = client.get("/logscan/progress?size=all")
+    assert resp.status_code == 200
+    assert analyzer_calls["count"] == 1
+    payload = resp.get_json()
+    statuses = {entry["name"]: entry["status"] for entry in payload["libraries"]}
+    assert statuses["Movies"] == "Done"
+    assert statuses["TV Shows"] == "In progress"
+
+
+def test_logscan_progress_includes_maintenance_sidecar_and_invalidates_cache(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    sidecar_path = log_dir / "meta.quickstart-maintenance.log"
+    log_path.write_text(
+        "[Quickstart] Run marker: started=2026-04-24T21:00:00Z config=demo quickstart=1.0.0 branch=develop maintenance_markers=1 start_mode=current\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: True)
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"libraries": {}})
+
+    qs_module.LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "sidecar_mtime": None, "sidecar_size": None, "data": None})
+
+    first = client.get("/logscan/progress")
+    assert first.status_code == 200
+    first_payload = first.get_json()
+    assert first_payload["maintenance_had_pause"] is False
+
+    sidecar_path.write_text(
+        "\n".join(
+            [
+                "[Quickstart] Maintenance marker: event=paused at=2026-04-24T21:10:00Z local_at=2026-04-24_17:10:00 window=03:00-05:00",
+                "[Quickstart] Maintenance marker: event=resumed at=2026-04-24T21:12:00Z local_at=2026-04-24_17:12:00 window=03:00-05:00 paused_seconds=120",
+            ]
+        ) + "\n",
+        encoding="utf-8",
+    )
+
+    second = client.get("/logscan/progress")
+    assert second.status_code == 200
+    second_payload = second.get_json()
+    assert second_payload["maintenance_had_pause"] is True
+    assert second_payload["maintenance_summary"]["had_pause"] is True
+    assert second_payload["maintenance_summary"]["pause_count"] == 1
+    assert second_payload["maintenance_summary"]["pause_seconds"] == 120
 
 
 def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, monkeypatch, qs_module):

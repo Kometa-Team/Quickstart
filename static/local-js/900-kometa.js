@@ -1936,6 +1936,9 @@ $(document).ready(function () {
     const maintenanceRow = document.getElementById('run-maintenance-row')
     if (maintenanceRow) {
       const statusData = latestKometaStatusPayload || {}
+      const progressMaintenance = payload && payload.maintenance_summary && typeof payload.maintenance_summary === 'object'
+        ? payload.maintenance_summary
+        : {}
       const windowLabel = statusData.maintenance_window ? ` (${statusData.maintenance_window})` : ''
       if (statusData.maintenance_paused) {
         let pauseLabel = 'Paused'
@@ -1954,6 +1957,20 @@ $(document).ready(function () {
         maintenanceRow.innerHTML = `
           <span class="me-2 fw-semibold">Maintenance</span>
           <span class="badge text-bg-warning text-dark">Window Active${windowLabel}</span>
+        `
+        maintenanceRow.classList.remove('d-none')
+      } else if (progressMaintenance.had_pause) {
+        const summaryWindow = progressMaintenance.window ? ` (${progressMaintenance.window})` : ''
+        const pauseCount = Number(progressMaintenance.pause_count || 0)
+        const pauseSeconds = Number(progressMaintenance.pause_seconds || 0)
+        const summaryLabel = pauseSeconds > 0
+          ? (formatRunSeconds(pauseSeconds) || `${pauseCount || 1} pause${(pauseCount || 1) === 1 ? '' : 's'}`)
+          : `${pauseCount || 1} pause${(pauseCount || 1) === 1 ? '' : 's'}`
+        const stateLabel = progressMaintenance.open_pause ? 'Paused (log)' : 'Completed'
+        maintenanceRow.innerHTML = `
+          <span class="me-2 fw-semibold">Maintenance</span>
+          <span class="badge text-bg-primary">${stateLabel}${summaryWindow}</span>
+          <span class="badge text-bg-secondary">${summaryLabel}</span>
         `
         maintenanceRow.classList.remove('d-none')
       } else {
