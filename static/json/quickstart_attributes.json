@@ -469,6 +469,16 @@
           "Fetch content rating from <b>MDB</b>."
         ],
         [
+          "plex_csm",
+          "Use Plex CommonSense",
+          "Use <b>Common Sense Media</b> rating from <b>Plex</b> (string)."
+        ],
+        [
+          "plex_csm0",
+          "Use Plex CommonSense (0)",
+          "Use <b>Common Sense Media</b> rating from <b>Plex</b> (number)."
+        ],
+        [
           "mdb_commonsense",
           "Use MDB CommonSense",
           "Use <b>Common Sense Media</b> rating from MDB (string)."
