@@ -51,9 +51,16 @@ $(document).ready(function () {
   const $runCount = $('#logscan-trends-count, #logscan-trends-count-bottom')
   const $reset = $('#logscan-trends-reset')
   const $reingest = $('#logscan-trends-reingest')
+  const $clearInvalidArchived = $('#logscan-trends-clear-invalid')
   const $confirmReset = $('#logscan-confirm-reset')
   const $confirmReingest = $('#logscan-confirm-reingest')
   const $missingDownload = $('#logscan-trends-missing-download')
+  const $invalidLogBody = $('#logscan-invalid-log-body')
+  const $invalidLogStatus = $('#logscan-invalid-log-status')
+  const $invalidLogSuccess = $('#logscan-invalid-log-success')
+  const $invalidLogError = $('#logscan-invalid-log-error')
+  const $confirmInvalidLog = $('#logscan-confirm-invalid-log')
+  const $cancelInvalidLog = $('#logscan-cancel-invalid-log')
   const $confirmMissingDownload = $('#logscan-confirm-missing-download')
   const $deleteLogBody = $('#logscan-delete-log-body')
   const $deleteLogStatus = $('#logscan-delete-log-status')
@@ -75,12 +82,14 @@ $(document).ready(function () {
   const $preferencesInputs = $('.logscan-pref-input')
   const resetModalEl = document.getElementById('logscan-reset-modal')
   const reingestModalEl = document.getElementById('logscan-reingest-modal')
+  const invalidLogModalEl = document.getElementById('logscan-invalid-log-modal')
   const missingDownloadModalEl = document.getElementById('logscan-missing-download-modal')
   const deleteLogModalEl = document.getElementById('logscan-delete-log-modal')
   const compressLogModalEl = document.getElementById('logscan-compress-log-modal')
   const runDetailsModalEl = document.getElementById('logscan-run-details-modal')
   const preferencesModalEl = document.getElementById('logscan-preferences-modal')
   let missingDownloadUrl = ''
+  let pendingInvalidLogCleanup = null
   let pendingDeleteRun = null
   let pendingCompressRun = null
   let reingestPollTimer = null
@@ -2385,6 +2394,28 @@ $(document).ready(function () {
 
   function renderIngestHealth (state) {
     if (!$ingest.length) return
+    const invalidArchivedCount = Number.isFinite(state && state.invalid_archived_count) ? state.invalid_archived_count : 0
+    const invalidArchivedSample = Array.isArray(state && state.invalid_archived_sample) ? state.invalid_archived_sample : []
+
+    if ($clearInvalidArchived.length) {
+      if (invalidArchivedCount > 0) {
+        $clearInvalidArchived
+          .removeClass('d-none')
+          .prop('disabled', false)
+          .text(invalidArchivedCount > 1 ? `Clear invalid archived logs (${invalidArchivedCount})` : 'Clear invalid archived log')
+        pendingInvalidLogCleanup = {
+          count: invalidArchivedCount,
+          sample: invalidArchivedSample
+        }
+      } else {
+        $clearInvalidArchived
+          .addClass('d-none')
+          .prop('disabled', true)
+          .text('Clear invalid archived logs')
+        pendingInvalidLogCleanup = null
+      }
+    }
+
     if (!state) {
       $ingest.text('No ingest history yet.')
       return
@@ -2461,6 +2492,12 @@ $(document).ready(function () {
     }
     if (Array.isArray(state.incomplete_sample) && state.incomplete_sample.length) {
       lines.push(`Incomplete samples: ${state.incomplete_sample.join(', ')}`)
+    }
+    if (invalidArchivedCount > 0) {
+      lines.push(`Invalid archived logs: ${invalidArchivedCount}. Use Clear invalid archived logs to remove them.`)
+    }
+    if (invalidArchivedSample.length) {
+      lines.push(`Invalid archived samples: ${invalidArchivedSample.join(', ')}`)
     }
     const linesHtml = lines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
     $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${linesHtml}</div>`)
@@ -2873,6 +2910,14 @@ $(document).ready(function () {
     }
   }
 
+  function setInvalidLogModalBusy (busy) {
+    $confirmInvalidLog.prop('disabled', busy)
+    $cancelInvalidLog.prop('disabled', busy)
+    if (invalidLogModalEl) {
+      $(invalidLogModalEl).find('.btn-close').prop('disabled', busy)
+    }
+  }
+
   function setCompressModalBusy (busy) {
     $confirmCompressLog.prop('disabled', busy)
     $cancelCompressLog.prop('disabled', busy)
@@ -2884,6 +2929,7 @@ $(document).ready(function () {
   function setControlsDisabled (disabled) {
     $reset.prop('disabled', disabled)
     $reingest.prop('disabled', disabled)
+    $clearInvalidArchived.prop('disabled', disabled || $clearInvalidArchived.hasClass('d-none'))
     $limit.prop('disabled', disabled)
     $tableSortKey.prop('disabled', disabled)
     $tableSortDir.prop('disabled', disabled)
@@ -2897,6 +2943,7 @@ $(document).ready(function () {
     $dateEnd.prop('disabled', disabled)
     $confirmReset.prop('disabled', disabled)
     $confirmReingest.prop('disabled', disabled)
+    $confirmInvalidLog.prop('disabled', disabled)
     $confirmMissingDownload.prop('disabled', disabled)
     $tableSelectAll.prop('disabled', disabled || getSelectableRuns(currentTableRuns).length === 0)
     $tableSelectComplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, false).length === 0)
@@ -3502,6 +3549,39 @@ $(document).ready(function () {
     }
   }
 
+  function openInvalidLogModal () {
+    if (!pendingInvalidLogCleanup || !Number.isFinite(pendingInvalidLogCleanup.count) || pendingInvalidLogCleanup.count <= 0) {
+      return
+    }
+    const invalidCount = pendingInvalidLogCleanup.count
+    const sample = Array.isArray(pendingInvalidLogCleanup.sample) ? pendingInvalidLogCleanup.sample : []
+    if ($invalidLogBody.length) {
+      const sampleHtml = sample.length
+        ? `<div class="small text-muted mt-2">Samples: ${escapeHtml(sample.join(', '))}</div>`
+        : ''
+      $invalidLogBody.html(
+        invalidCount === 1
+          ? `Delete <strong>1 invalid archived log</strong> from disk?${sampleHtml}`
+          : `Delete <strong>${invalidCount} invalid archived logs</strong> from disk?${sampleHtml}`
+      )
+    }
+    setModalAlert($invalidLogStatus, '')
+    setModalAlert($invalidLogSuccess, '')
+    setModalAlert($invalidLogError, '')
+    $confirmInvalidLog.text('Delete')
+    setInvalidLogModalBusy(false)
+    if (invalidLogModalEl) {
+      bootstrap.Modal.getOrCreateInstance(invalidLogModalEl).show()
+      return
+    }
+    const confirmText = invalidCount === 1
+      ? 'Delete 1 invalid archived log?'
+      : `Delete ${invalidCount} invalid archived logs?`
+    if (window.confirm(confirmText)) {
+      handleInvalidLogDelete()
+    }
+  }
+
   function handleDeleteLog () {
     if (!pendingDeleteRun || !Array.isArray(pendingDeleteRun.runKeys) || !pendingDeleteRun.runKeys.length) {
       hideModal(deleteLogModalEl)
@@ -3553,6 +3633,54 @@ $(document).ready(function () {
         if (!deleteSucceeded) {
           $confirmDeleteLog.text('Delete')
           setDeleteModalBusy(false)
+        }
+      })
+  }
+
+  function handleInvalidLogDelete () {
+    if (!pendingInvalidLogCleanup || !Number.isFinite(pendingInvalidLogCleanup.count) || pendingInvalidLogCleanup.count <= 0) {
+      hideModal(invalidLogModalEl)
+      return
+    }
+    let deleteSucceeded = false
+    const invalidCount = pendingInvalidLogCleanup.count
+    setModalAlert($invalidLogSuccess, '')
+    setModalAlert($invalidLogError, '')
+    setModalAlert($invalidLogStatus, invalidCount > 1 ? `Deleting ${invalidCount} invalid archived logs...` : 'Deleting invalid archived log...')
+    setInvalidLogModalBusy(true)
+    setButtonSpinner($confirmInvalidLog, 'Deleting...')
+    fetch('/logscan/trends/log/invalid/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error((data && data.error) || 'Delete failed')
+        }
+        const deletedCount = Number.isFinite(data && data.deleted) ? data.deleted : invalidCount
+        deleteSucceeded = true
+        pendingInvalidLogCleanup = null
+        setModalAlert($invalidLogStatus, '')
+        setModalAlert($invalidLogSuccess, deletedCount > 1 ? `${deletedCount} invalid archived logs deleted. Updating Analytics...` : 'Invalid archived log deleted. Updating Analytics...')
+        if (Array.isArray(data && data.failures) && data.failures.length) {
+          updateStatus(`${deletedCount} invalid archived logs deleted. ${data.failures.length} failed.`)
+        } else {
+          updateStatus(deletedCount > 1 ? `${deletedCount} invalid archived logs deleted.` : 'Invalid archived log deleted.')
+        }
+        window.setTimeout(() => hideModal(invalidLogModalEl), 650)
+        fetchRuns({ suppressStatus: true })
+      })
+      .catch(err => {
+        console.error(err)
+        setModalAlert($invalidLogStatus, '')
+        setModalAlert($invalidLogError, err && err.message ? err.message : 'Failed to delete invalid archived logs.')
+        updateStatus(err && err.message ? err.message : 'Failed to delete invalid archived logs.', true)
+      })
+      .finally(() => {
+        if (!deleteSucceeded) {
+          $confirmInvalidLog.text('Delete')
+          setInvalidLogModalBusy(false)
         }
       })
   }
@@ -3750,6 +3878,11 @@ $(document).ready(function () {
   })
   $confirmReset.on('click', handleReset)
   $confirmReingest.on('click', handleReingest)
+  $clearInvalidArchived.on('click', function () {
+    if ($clearInvalidArchived.hasClass('d-none')) return
+    openInvalidLogModal()
+  })
+  $confirmInvalidLog.on('click', handleInvalidLogDelete)
   $confirmDeleteLog.on('click', handleDeleteLog)
   $confirmCompressLog.on('click', handleCompressLog)
   $missingDownload.on('click', function (event) {

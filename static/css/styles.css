@@ -4605,6 +4605,10 @@ body {
     justify-content: flex-start;
 }
 
+.qs-sidebar-control-grid .btn > i {
+    color: var(--theme-primary);
+}
+
 .qs-sidebar-config {
     gap: 0.3rem;
 }

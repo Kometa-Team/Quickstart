@@ -96,6 +96,50 @@ def test_logscan_trends_empty(client, isolated_config_dir):
     assert payload["archive_storage"]["imagemaid_retention_label"] == "Keep all archived logs"
 
 
+def test_logscan_trends_reports_invalid_archived_log_candidates(client, isolated_config_dir):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "imagemaid"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    invalid_path = archive_dir / "imagemaid-20260506-042838Z-53.log.gz"
+    with gzip.open(invalid_path, "wt", encoding="utf-8") as handle:
+        handle.write("")
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["ingest_health"]["invalid_archived_count"] == 1
+    assert payload["ingest_health"]["invalid_archived_sample"] == [invalid_path.name]
+
+
+def test_logscan_invalid_archived_log_delete_route_removes_only_invalid_archives(client, isolated_config_dir):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "imagemaid"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+
+    invalid_path = archive_dir / "imagemaid-20260506-042838Z-53.log.gz"
+    with gzip.open(invalid_path, "wt", encoding="utf-8") as handle:
+        handle.write("")
+
+    valid_path = archive_dir / "imagemaid-20260506-120000Z-200.log.gz"
+    with gzip.open(valid_path, "wt", encoding="utf-8") as handle:
+        handle.write(
+            "\n".join(
+                [
+                    "[Quickstart] Run marker: started=2026-04-28T20:13:55Z config=demo tool=imagemaid mode=report",
+                    "[2026-04-28 20:17:00,274] [imagemaid.py:453]          [INFO]     |======================================== ImageMaid Finished ========================================|",
+                    "[2026-04-28 20:17:00,275] [imagemaid.py:453]          [INFO]     | Total Runtime      | 0:03:05                                                                       |",
+                    "[2026-04-28 20:17:00,275] [imagemaid.py:453]          [INFO]     |====================================================================================================|",
+                ]
+            )
+        )
+
+    resp = client.post("/logscan/trends/log/invalid/delete")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["deleted"] == 1
+    assert payload["results"][0]["name"] == invalid_path.name
+    assert not invalid_path.exists()
+    assert valid_path.exists()
+
+
 def test_logscan_trends_limit_all_returns_all_saved_runs(client, isolated_config_dir, qs_module):
     for idx in range(3):
         timestamp = f"2026-04-2{idx}T10:00:00Z"

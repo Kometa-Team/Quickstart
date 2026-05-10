@@ -76,6 +76,9 @@
           <a id="logscan-trends-missing-download" class="btn nav-button btn-sm d-none logscan-control-action" href="/logscan/trends/people-missing">
             Download missing people log
           </a>
+          <button id="logscan-trends-clear-invalid" class="btn nav-button nav-button-danger btn-sm d-none logscan-control-action" type="button">
+            Clear invalid archived logs
+          </button>
           <button id="logscan-trends-reingest" class="btn nav-button btn-sm logscan-control-action" type="button"
             data-bs-toggle="modal" data-bs-target="#logscan-reingest-modal">Reingest new logs</button>
           <button id="logscan-trends-reset" class="btn nav-button btn-sm logscan-control-action" type="button"
@@ -576,6 +579,30 @@
       <div class="modal-footer">
         <button type="button" class="btn nav-button btn-sm" id="logscan-cancel-compress-log" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn nav-button btn-sm" id="logscan-confirm-compress-log">Compress</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-invalid-log-modal" tabindex="-1" aria-labelledby="logscan-invalid-log-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered logscan-confirm-modal-dialog">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-invalid-log-title">Clear Invalid Archived Logs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="logscan-invalid-log-body">Delete invalid archived logs from disk?</div>
+        <div class="small text-muted mt-2">This only targets archived log files that Analytics currently cannot parse into a run. Live runtime logs are never touched by this action.</div>
+        <div id="logscan-invalid-log-status" class="alert alert-info d-none py-2 small mt-3 mb-0" role="status"></div>
+        <div id="logscan-invalid-log-success" class="alert alert-success d-none py-2 small mt-3 mb-0" role="status"></div>
+        <div id="logscan-invalid-log-error" class="alert alert-danger d-none py-2 small mt-3 mb-0" role="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" id="logscan-cancel-invalid-log" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-invalid-log">Delete</button>
       </div>
     </div>
   </div>
