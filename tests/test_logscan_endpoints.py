@@ -1038,13 +1038,13 @@ def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isol
                 "libraries": [{"name": "Movies", "type": "movie", "status": "In progress", "durations": {"collections": 12}}],
                 "playlist_running": True,
                 "playlist_started_at": playlist_started_at,
-                    "playlist_total_seconds": 5,
-                    "preparation_seconds": None,
-                    "preparation_elapsed_seconds": None,
-                    "run_started_at": datetime.fromisoformat(started_at),
-                },
-            }
-        )
+                "playlist_total_seconds": 5,
+                "preparation_seconds": None,
+                "preparation_elapsed_seconds": None,
+                "run_started_at": datetime.fromisoformat(started_at),
+            },
+        }
+    )
     with qs_module.RUN_CONTEXT_LOCK:
         qs_module.RUN_CONTEXT["started_at"] = datetime.fromisoformat(started_at)
         qs_module.RUN_CONTEXT["selected_libraries"] = ["Movies"]
@@ -1168,7 +1168,8 @@ def test_logscan_progress_includes_maintenance_sidecar_and_invalidates_cache(cli
                 "[Quickstart] Maintenance marker: event=paused at=2026-04-24T21:10:00Z local_at=2026-04-24_17:10:00 window=03:00-05:00",
                 "[Quickstart] Maintenance marker: event=resumed at=2026-04-24T21:12:00Z local_at=2026-04-24_17:12:00 window=03:00-05:00 paused_seconds=120",
             ]
-        ) + "\n",
+        )
+        + "\n",
         encoding="utf-8",
     )
 
