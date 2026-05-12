@@ -155,6 +155,7 @@ VALIDATION_DOCS = {
     "github": f"{VALIDATION_DOC_BASE}040-github",
     "gotify": f"{VALIDATION_DOC_BASE}080-gotify",
     "ntfy": f"{VALIDATION_DOC_BASE}085-ntfy",
+    "apprise": f"{VALIDATION_DOC_BASE}087-apprise",
     "mal": f"{VALIDATION_DOC_BASE}140-mal",
     "anidb": f"{VALIDATION_DOC_BASE}100-anidb",
     "webhooks": f"{VALIDATION_DOC_BASE}090-webhooks",
@@ -173,6 +174,7 @@ VALIDATION_REASON_LABELS = {
     "no_webhooks": "No webhooks configured",
     "disabled": "Disabled",
     "missing_settings": "Settings missing",
+    "missing_location": "Missing location",
     "missing_tokens": "Missing tokens",
     "token_invalid": "Invalid tokens",
     "account_locked": "Account locked",
@@ -370,6 +372,7 @@ QS_VALIDATION_STEP_KEYS = {
     "070-notifiarr",
     "080-gotify",
     "085-ntfy",
+    "087-apprise",
     "090-webhooks",
     "100-anidb",
     "110-radarr",
@@ -1226,6 +1229,12 @@ def _has_meaningful_optional_input(template_key, payload):
     if template_key == "100-anidb":
         anidb = payload.get("anidb", {})
         return isinstance(anidb, dict) and helpers.booler(anidb.get("enable"))
+
+    if template_key == "087-apprise":
+        apprise = payload.get("apprise", {})
+        if not isinstance(apprise, dict):
+            return False
+        return _is_meaningful_optional_status_input(apprise.get("location"))
 
     simple_key_requirements = {
         "030-tautulli": ("tautulli", ("url", "apikey")),
@@ -6181,6 +6190,7 @@ def step(name):
         page_info["notifiarr_available"],
         page_info["gotify_available"],
         page_info["ntfy_available"],
+        page_info["apprise_available"],
     ) = persistence.notification_systems_available()
 
     # Ensure template variables exist
@@ -7205,6 +7215,12 @@ def validate_ntfy():
     return validations.validate_ntfy_server(data)
 
 
+@app.route("/validate_apprise", methods=["POST"])
+def validate_apprise():
+    data = request.get_json(silent=True) or {}
+    return validations.validate_apprise_server(data)
+
+
 @app.route("/validate_plex", methods=["POST"])
 def validate_plex():
     data = request.get_json(silent=True) or {}
@@ -7738,6 +7754,13 @@ def validate_all_services():
             ["ntfy_url", "ntfy_token", "ntfy_topic"],
         ),
         (
+            "087-apprise",
+            "apprise",
+            validations.validate_apprise_server,
+            lambda s: {"apprise_location": s.get("apprise", {}).get("location")},
+            ["apprise_location"],
+        ),
+        (
             "110-radarr",
             "radarr",
             validations.validate_radarr_server,
@@ -7760,6 +7783,18 @@ def validate_all_services():
         settings = persistence.retrieve_settings(template_key)
         validated_at = settings.get("validated_at")
         payload = payload_builder(settings) or {}
+        if section == "apprise":
+            apprise_settings = settings.get("apprise", {}) if isinstance(settings, dict) else {}
+            apprise_location = apprise_settings.get("location") if isinstance(apprise_settings, dict) else None
+            if is_blank_value(apprise_location):
+                results[template_key] = {
+                    "status": "skipped",
+                    "validated_at": validated_at or "",
+                    "reason": "missing_location",
+                }
+                persist_validation_metadata(section, "skipped", reason="missing_location")
+                summary["skipped"] += 1
+                continue
         if not has_required_credentials(payload, required_keys):
             results[template_key] = {
                 "status": "skipped",

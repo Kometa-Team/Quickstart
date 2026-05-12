@@ -2270,6 +2270,28 @@ def build_config(header_style="standard", config_name=None):
             if "webhooks" not in config_data:
                 helpers.ts_log(f"Webhooks section completely removed.", level="DEBUG")
 
+    if "apprise" in config_data:
+        apprise_data = config_data["apprise"]
+        apprise_location = None
+
+        if isinstance(apprise_data, dict):
+            if "apprise" in apprise_data:
+                nested_apprise = apprise_data["apprise"]
+                if isinstance(nested_apprise, dict):
+                    apprise_location = nested_apprise.get("location")
+                else:
+                    apprise_location = nested_apprise
+            elif "location" in apprise_data:
+                apprise_location = apprise_data.get("location")
+        elif isinstance(apprise_data, str):
+            apprise_location = apprise_data
+
+        apprise_location = str(apprise_location).strip() if apprise_location is not None else ""
+        if apprise_location:
+            config_data["apprise"] = {"apprise": {"config": apprise_location}}
+        else:
+            config_data.pop("apprise", None)
+
     # Initialize movie and show libraries
     movie_libraries = {}
     show_libraries = {}
@@ -2577,6 +2599,7 @@ def build_config(header_style="standard", config_name=None):
                     "notifiarr",
                     "gotify",
                     "ntfy",
+                    "apprise",
                     "anidb",
                     "radarr",
                     "sonarr",
@@ -2608,6 +2631,7 @@ def build_config(header_style="standard", config_name=None):
             "notifiarr",
             "gotify",
             "ntfy",
+            "apprise",
             "anidb",
             "radarr",
             "sonarr",
@@ -2736,6 +2760,7 @@ def build_config(header_style="standard", config_name=None):
         ("notifiarr", "070-notifiarr"),
         ("gotify", "080-gotify"),
         ("ntfy", "085-ntfy"),
+        ("apprise", "087-apprise"),
         ("anidb", "090-anidb"),
         ("radarr", "100-radarr"),
         ("sonarr", "110-sonarr"),

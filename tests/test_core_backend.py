@@ -65,6 +65,86 @@ def test_step_rejects_invalid_path_payload(client, isolated_config_dir):
     assert user_entered is False
 
 
+def test_validate_apprise_rejects_bad_url(client):
+    resp = client.post("/validate_apprise", json={"apprise_location": "not-a-url"})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+
+
+def test_validate_apprise_accepts_existing_local_file(client, tmp_path):
+    apprise_file = tmp_path / "apprise.yml"
+    apprise_file.write_text("urls:\n  - discord://token\n", encoding="utf-8")
+
+    resp = client.post("/validate_apprise", json={"apprise_location": str(apprise_file)})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+
+
+def test_validate_apprise_rejects_non_yaml_extension(client, tmp_path):
+    apprise_file = tmp_path / "apprise.txt"
+    apprise_file.write_text("urls:\n  - discord://token\n", encoding="utf-8")
+
+    resp = client.post("/validate_apprise", json={"apprise_location": str(apprise_file)})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert ".yml or .yaml" in payload["error"]
+
+
+def test_validate_apprise_rejects_invalid_local_yaml(client, tmp_path):
+    apprise_file = tmp_path / "apprise.yml"
+    apprise_file.write_text("urls: [broken\n", encoding="utf-8")
+
+    resp = client.post("/validate_apprise", json={"apprise_location": str(apprise_file)})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "valid YAML" in payload["error"]
+
+
+def test_validate_apprise_rejects_empty_local_yaml(client, tmp_path):
+    apprise_file = tmp_path / "apprise.yml"
+    apprise_file.write_text("", encoding="utf-8")
+
+    resp = client.post("/validate_apprise", json={"apprise_location": str(apprise_file)})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "must not be empty" in payload["error"]
+
+
+def test_validate_apprise_rejects_invalid_remote_yaml(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 200
+        reason = "OK"
+        text = "urls: [broken\n"
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", lambda *_args, **_kwargs: _Resp())
+
+    resp = client.post("/validate_apprise", json={"apprise_location": "https://example.com/apprise.yml"})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "valid YAML" in payload["error"]
+
+
+def test_validate_apprise_rejects_empty_remote_yaml(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 200
+        reason = "OK"
+        text = ""
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", lambda *_args, **_kwargs: _Resp())
+
+    resp = client.post("/validate_apprise", json={"apprise_location": "https://example.com/apprise.yml"})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "must not be empty" in payload["error"]
+
+
 def test_update_quickstart_settings_supports_independent_imagemaid_log_retention(client, qs_module, isolated_config_dir, monkeypatch):
     from modules import helpers
 

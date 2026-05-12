@@ -15,6 +15,7 @@ SIMPLE_SECTIONS = {
     "notifiarr",
     "gotify",
     "ntfy",
+    "apprise",
     "github",
     "radarr",
     "sonarr",
@@ -979,6 +980,31 @@ def prepare_import_payload(
             continue
         section_payload = config_data.get(section)
         if section == "playlist_files":
+            continue
+
+        if section == "apprise":
+            apprise_location = None
+            if isinstance(section_payload, dict):
+                if "config" in section_payload:
+                    apprise_location = section_payload.get("config")
+                elif "location" in section_payload:
+                    apprise_location = section_payload.get("location")
+                elif "apprise" in section_payload:
+                    nested_apprise = section_payload.get("apprise")
+                    if isinstance(nested_apprise, dict):
+                        apprise_location = nested_apprise.get("config") or nested_apprise.get("location")
+                    else:
+                        apprise_location = nested_apprise
+            elif isinstance(section_payload, str):
+                apprise_location = section_payload
+
+            apprise_location = str(apprise_location).strip() if apprise_location is not None else ""
+            if apprise_location:
+                normalized_apprise = {"location": apprise_location}
+                payload[section] = {section: normalized_apprise}
+                _flatten_dict(section, normalized_apprise, report)
+            else:
+                report.add("unmapped", section, "Unsupported section format.")
             continue
 
         if isinstance(section_payload, dict):

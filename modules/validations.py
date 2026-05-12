@@ -3,11 +3,12 @@ import urllib.parse
 from json import JSONDecodeError
 
 import requests
+from ruamel.yaml import YAML
 from flask import current_app as app
 from flask import jsonify, flash
 from plexapi.server import PlexServer
 
-from modules import iso, helpers, url_validation
+from modules import iso, helpers, path_validation, url_validation
 
 
 def validate_iso3166_1(code):
@@ -30,6 +31,24 @@ def _validate_service_url(raw_url, label, allow_local=True):
     valid, message = url_validation.validate_url(raw_url, allow_local=allow_local)
     if not valid:
         return False, f"{label} URL: {message}"
+    return True, None
+
+
+def _validate_yaml_text(raw_text, label):
+    if not isinstance(raw_text, str) or not raw_text.strip():
+        return False, f"{label} must not be empty."
+    parser = YAML(typ="safe", pure=True)
+    try:
+        parser.load(raw_text)
+    except Exception as exc:
+        return False, f"{label} must contain valid YAML. {exc}"
+    return True, None
+
+
+def _validate_yaml_location_suffix(location, label):
+    lowered = str(location or "").strip().lower()
+    if not lowered.endswith((".yml", ".yaml")):
+        return False, f"{label} must end with .yml or .yaml."
     return True, None
 
 
@@ -273,6 +292,54 @@ def validate_ntfy_server(data):
 
     except requests.RequestException as e:
         return jsonify({"valid": False, "error": f"Connection error: {str(e)}"})
+
+
+def validate_apprise_server(data):
+    apprise_location = str(data.get("apprise_location") or "").strip()
+    if not apprise_location:
+        return jsonify({"valid": False, "error": "Apprise YAML path or URL is required."}), 400
+
+    valid, message = _validate_yaml_location_suffix(apprise_location, "Apprise location")
+    if not valid:
+        return jsonify({"valid": False, "error": message}), 400
+
+    if apprise_location.lower().startswith(("http://", "https://")):
+        valid, message = url_validation.validate_url(apprise_location, allow_local=True)
+        if not valid:
+            return jsonify({"valid": False, "error": f"Apprise URL: {message}"}), 400
+
+        try:
+            response = requests.get(apprise_location, timeout=10)
+        except requests.RequestException as e:
+            return jsonify({"valid": False, "error": f"Connection error: {str(e)}"}), 400
+
+        if response.status_code >= 400:
+            return jsonify({"valid": False, "error": f"Failed to fetch Apprise YAML ({response.status_code} [{response.reason}])."}), 400
+
+        valid, message = _validate_yaml_text(response.text, "Apprise URL")
+        if not valid:
+            return jsonify({"valid": False, "error": message}), 400
+
+        return jsonify({"valid": True})
+
+    valid, message = path_validation.validate_path(
+        apprise_location,
+        {"allow_relative": True, "must_exist": True, "mode": "input_file"},
+    )
+    if not valid:
+        return jsonify({"valid": False, "error": f"Apprise path: {message}"}), 400
+
+    try:
+        with open(apprise_location, "r", encoding="utf-8") as handle:
+            yaml_text = handle.read()
+    except OSError as exc:
+        return jsonify({"valid": False, "error": f"Apprise path: Unable to read file. {exc}"}), 400
+
+    valid, message = _validate_yaml_text(yaml_text, "Apprise file")
+    if not valid:
+        return jsonify({"valid": False, "error": message}), 400
+
+    return jsonify({"valid": True})
 
 
 def validate_mal_server(data):

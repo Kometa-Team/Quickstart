@@ -1,0 +1,29 @@
+{% extends "000-base.html" %} {% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+<div class="input-group mb-2">
+  <span class="input-group-text" id="apprise_location_text" style="width: 240px; justify-content: space-between;">
+    Apprise YAML Path or URL
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter a local file path or URL to your Apprise YAML configuration file.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" id="apprise_location" name="apprise_location"
+    value="{{ data['apprise']['location'] | string if data['apprise']['location'] else '' }}"
+    title="Apprise YAML Path or URL" aria-describedby="apprise_location_text">
+  <button class="btn btn-success" id="validateButton" type="button">
+    Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
+
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="apprise_validated" name="apprise_validated"
+    value="{{ data['validated'] }}" title="">
+  <label for="apprise_validated">Apprise Validated</label>
+</div>
+<input type="hidden" id="apprise_validated_at" name="apprise_validated_at" value="{{ data['validated_at'] or '' }}">
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
+</form>
+{% endblock %}

@@ -41,3 +41,10 @@ def test_annotate_yaml_with_report_unmapped_reason():
     report_lines = ["unmapped: plex.url - Bad URL"]
     annotated = importer.annotate_yaml_with_report(raw, report_lines)
     assert "unmapped - Bad URL" in annotated
+
+
+def test_prepare_import_payload_maps_apprise_config_to_location():
+    payload, report = importer.prepare_import_payload({"apprise": {"config": "/config/apprise.yml"}}, set(), set())
+
+    assert payload["apprise"]["apprise"]["location"] == "/config/apprise.yml"
+    assert report.counts["imported"] >= 1

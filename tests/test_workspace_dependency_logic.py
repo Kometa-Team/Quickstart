@@ -33,6 +33,7 @@ def _template_list():
         ("030-tautulli.html", "Tautulli"),
         ("050-omdb.html", "OMDb"),
         ("060-mdblist.html", "MDBList"),
+        ("087-apprise.html", "Apprise"),
         ("100-anidb.html", "AniDB"),
         ("110-radarr.html", "Radarr"),
         ("120-sonarr.html", "Sonarr"),
@@ -928,6 +929,43 @@ def test_webhooks_optional_without_selection_stays_unknown(qs_module):
     }
 
     state = qs_module._derive_step_status("090-webhooks", "optional", section_rows, config_exists=True)
+    assert state == "unknown"
+
+
+def test_apprise_optional_with_validated_location_is_ok(qs_module):
+    section_rows = {
+        "apprise": {
+            "validated": True,
+            "user_entered": True,
+            "data": {
+                "validation_status": "validated",
+                "apprise": {
+                    "location": "/config/apprise.yml",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("087-apprise", "optional", section_rows, config_exists=True)
+    assert state == "ok"
+
+
+def test_apprise_optional_without_location_stays_unknown(qs_module):
+    section_rows = {
+        "apprise": {
+            "validated": False,
+            "user_entered": False,
+            "data": {
+                "validation_status": "skipped",
+                "validation_reason": "missing_location",
+                "apprise": {
+                    "location": "",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("087-apprise", "optional", section_rows, config_exists=True)
     assert state == "unknown"
 
 
