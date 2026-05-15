@@ -310,6 +310,16 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             id="sonarr_template_collection_enabled",
         ),
         pytest.param(
+            "_libraries_data_sonarr_dependency_reasons",
+            {
+                "sho-library_tv-library": "TV Shows",
+                "sho-library_tv-template_collection_other_chart_sonarr_add_missing_metacritic": True,
+            },
+            True,
+            "sonarr_add_missing_metacritic enabled",
+            id="sonarr_metacritic_template_collection_enabled",
+        ),
+        pytest.param(
             "_libraries_data_trakt_dependency_reasons",
             {
                 "sho-library_tv-library": "TV Shows",

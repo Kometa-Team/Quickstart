@@ -13384,13 +13384,10 @@
           },
           {
             "key": "use_metacritic",
-            "label": "Metacritic Must See Movies",
-            "tooltip": "Collection of Metacritic Must See Movies.",
+            "label": "Metacritic Must See",
+            "tooltip": "Collection of Metacritic Must See Movies/Shows.",
             "type": "toggle",
-            "default": true,
-            "media_types": [
-              "movie"
-            ]
+            "default": true
           },
           {
             "key": "radarr_add_missing_metacritic",
@@ -13400,6 +13397,16 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing_metacritic",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
             ]
           },
           {
