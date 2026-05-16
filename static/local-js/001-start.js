@@ -2083,7 +2083,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Elapsed time shown inside the button label (no DOM rebuilds)
   let elapsedTimer = null
   let startedAt = 0
-  let baseBtnMsg = '' // e.g., "Downloading… 1.2 GB • 20 MB/s"
+  let baseBtnMsg = '' // e.g., "Downloading... 1.2 GB • 20 MB/s"
   function startElapsedTimer (resumeAt) {
     startedAt = Number.isFinite(resumeAt) ? resumeAt : Date.now()
     clearInterval(elapsedTimer)
@@ -2427,23 +2427,23 @@ document.addEventListener('DOMContentLoaded', function () {
             lastDownloaded = prog.downloaded || 0
             lastTs = now
 
-            setPhase('Downloading…')
+            setPhase('Downloading...')
 
             if (pct === null || estimateTooSmall) {
               const speedNote = speedStr ? `• ${speedStr}` : ''
               const sizeNote = estimateTooSmall ? '• estimate too small' : '• size unknown'
-              setProgress(40, `Downloading… ${bytes(prog.downloaded || 0)} ${speedNote} ${sizeNote}`, { indeterminate: true })
+              setProgress(40, `Downloading... ${bytes(prog.downloaded || 0)} ${speedNote} ${sizeNote}`, { indeterminate: true })
             } else {
               const totalStr = hasTotal ? ` / ${bytes(prog.total)}` : ''
               const estimateLabel = ''
-              setProgress(pct, `Downloading… ${bytes(prog.downloaded || 0)}${totalStr} (${pct}%) ${speedStr ? `• ${speedStr}` : ''}${estimateLabel}`)
+              setProgress(pct, `Downloading... ${bytes(prog.downloaded || 0)}${totalStr} (${pct}%) ${speedStr ? `• ${speedStr}` : ''}${estimateLabel}`)
             }
           } else if (phase === 'extract') {
-            setPhase('Extracting…')
-            setProgress(prog.pct || 0, `Extracting… ${prog.files_done || 0}/${prog.files_total || 0} files`)
+            setPhase('Extracting...')
+            setProgress(prog.pct || 0, `Extracting... ${prog.files_done || 0}/${prog.files_total || 0} files`)
           } else if (phase === 'finalize') {
-            setPhase('Finalizing…')
-            setProgress(prog.pct || 95, 'Finalizing…')
+            setPhase('Finalizing...')
+            setProgress(prog.pct || 95, 'Finalizing...')
           } else if (phase === 'done') {
             setPhase('Completed.')
             setProgress(100, 'Completed.')
@@ -2479,12 +2479,12 @@ document.addEventListener('DOMContentLoaded', function () {
       running = true
 
       const isUpdate = updateRow && !updateRow.classList.contains('d-none')
-      baseBtnMsg = isUpdate ? 'Updating…' : 'Downloading…'
+      baseBtnMsg = isUpdate ? 'Updating...' : 'Downloading...'
 
       setButtonBusy(`${baseBtnMsg} (00:00)`)
       if (updateBtn) updateBtn.disabled = true
       resetProgress()
-      setProgress(0, isUpdate ? 'Preparing update…' : 'Preparing download…')
+      setProgress(0, isUpdate ? 'Preparing update...' : 'Preparing download...')
       startElapsedTimer()
 
       // 1) Start job
@@ -2531,11 +2531,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Resume any in-flight job after refresh/navigation
     function resumeJob (jobId, startedAtMs) {
       running = true
-      baseBtnMsg = 'Resuming…'
+      baseBtnMsg = 'Resuming...'
       setButtonBusy(`${baseBtnMsg} (00:00)`)
       if (updateBtn) updateBtn.disabled = true
       resetProgress()
-      setProgress(40, 'Resuming download…', { indeterminate: true })
+      setProgress(40, 'Resuming download...', { indeterminate: true })
       startElapsedTimer(Number.isFinite(startedAtMs) ? startedAtMs : undefined)
 
       fetch(`/background-jobs/${encodeURIComponent(jobId)}`)

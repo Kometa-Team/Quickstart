@@ -70,7 +70,7 @@ function getWorkspaceLoadingHost () {
 }
 
 const QS_NAV_LOADING_QUOTES = [
-  'Downloading more RAM…',
+  'Downloading more RAM...',
   'Downloading more RAM.',
   'Now in technicolor.',
   'Previously on Quickstart...',
@@ -87,15 +87,15 @@ const QS_NAV_LOADING_QUOTES = [
   'Negotiating with your hard drive. It\'s asking for a coffee break.',
   'Buffering... because time travel is still in beta.',
   'We\'re not stuck. We\'re just... thinking about our life choices.',
-  'This would be faster in Python… probably.',
-  'Polishing pixels for maximum shininess…',
-  'Untangling cable spaghetti…',
-  'Reticulating splines…',
-  'Calibrating the matrix…',
-  'Negotiating with APIs…',
-  'Aligning bits and vibes…',
-  'Warming up the hamsters…',
-  'Summoning config gremlins…',
+  'This would be faster in Python... probably.',
+  'Polishing pixels for maximum shininess...',
+  'Untangling cable spaghetti...',
+  'Reticulating splines...',
+  'Calibrating the matrix...',
+  'Negotiating with APIs...',
+  'Aligning bits and vibes...',
+  'Warming up the hamsters...',
+  'Summoning config gremlins...',
   'Congratulations! You are the 1000th visitor.',
   'HELP! I\'m being held hostage and forced to write these stupid lines!',
   'RE-calibrating the internet...',
@@ -123,37 +123,37 @@ const QS_NAV_LOADING_QUOTES = [
   'Adjusting the dilithium crystal converter assembly, please wait...',
   'Reversing the shield polarity, please wait...',
   'Disrupting warp fields with an inverse graviton burst, please wait...',
-  'Compiling infinite wisdom… almost done.',
-  'Reversing the bits… because why not?',
+  'Compiling infinite wisdom... almost done.',
+  'Reversing the bits... because why not?',
   'Fetching more coffee for the CPU.',
-  'Allocating some humor memory… nearly full.',
-  'Defragging your patience… please hold.',
-  'Overclocking the hamsters… success imminent.',
-  'Optimizing quantum entanglement for page load…',
-  'Executing sudo patience command… don\'t panic.',
-  'Patching reality… ETA unknown.',
-  'Waiting for the flux capacitor to stabilize…',
-  'Summoning Gandalf for assistance…',
+  'Allocating some humor memory... nearly full.',
+  'Defragging your patience... please hold.',
+  'Overclocking the hamsters... success imminent.',
+  'Optimizing quantum entanglement for page load...',
+  'Executing sudo patience command... don\'t panic.',
+  'Patching reality... ETA unknown.',
+  'Waiting for the flux capacitor to stabilize...',
+  'Summoning Gandalf for assistance...',
   'We\'re engaging cloaking device, please stand by.',
-  'Trying to remember the words to the Cantina song…',
-  'Calculating the odds like C-3PO…',
-  'Asking Yoda: \'Patience, you must have…\'',
-  'Decrypting the Matrix… red pill or blue pill…?',
-  'Teleporting the data from a parallel dimension…',
-  'Counting invisible unicorns… half done.',
-  'Waiting for the penguins to align…',
-  'Negotiating with the Wi-Fi spirits…',
-  'Polishing pixels… carefully…',
-  'Training squirrels to deliver your data…',
-  'Washing imaginary dishes… almost there.',
-  'Inflating your patience balloon… watch out for pop!',
-  'Calibrating toaster for maximum browning… do not touch.',
-  'This message will self-destruct in 3… 2… 1…',
+  'Trying to remember the words to the Cantina song...',
+  'Calculating the odds like C-3PO...',
+  'Asking Yoda: \'Patience, you must have...\'',
+  'Decrypting the Matrix... red pill or blue pill...?',
+  'Teleporting the data from a parallel dimension...',
+  'Counting invisible unicorns... half done.',
+  'Waiting for the penguins to align...',
+  'Negotiating with the Wi-Fi spirits...',
+  'Polishing pixels... carefully...',
+  'Training squirrels to deliver your data...',
+  'Washing imaginary dishes... almost there.',
+  'Inflating your patience balloon... watch out for pop!',
+  'Calibrating toaster for maximum browning... do not touch.',
+  'This message will self-destruct in 3... 2... 1...',
   'Congratulations, you discovered a loading joke!',
   'If you are reading this, you are officially patient.',
   'Almost finished, but now I’m thinking about snacks.',
-  'Loading… your expectations may vary.',
-  'Please wait… our developers are dancing while waiting too.',
+  'Loading... your expectations may vary.',
+  'Please wait... our developers are dancing while waiting too.',
   'You’re not stuck, the page is just contemplating existence.',
   'This text is taking longer to write than the page.',
   'It\'s only typing...',
@@ -187,7 +187,7 @@ function refillNavLoadingQuotePool () {
 }
 
 function nextNavLoadingQuote () {
-  if (!QS_NAV_LOADING_QUOTES.length) return 'Loading…'
+  if (!QS_NAV_LOADING_QUOTES.length) return 'Loading...'
   if (QS_NAV_LOADING_QUOTES.length === 1) return QS_NAV_LOADING_QUOTES[0]
   if (!qsNavLoadingQuotePool.length) {
     refillNavLoadingQuotePool()
@@ -260,8 +260,8 @@ function ensureNavigationLoadingOverlay () {
     <div class="qs-nav-loading-card" role="status" aria-live="polite">
       <div class="qs-nav-loading-spinner" aria-hidden="true"></div>
       <div class="qs-nav-loading-text">
-        <div class="qs-nav-loading-label">Opening step…</div>
-        <div class="qs-nav-loading-quote">Downloading more RAM…</div>
+        <div class="qs-nav-loading-label">Opening step...</div>
+        <div class="qs-nav-loading-quote">Downloading more RAM...</div>
       </div>
     </div>
   `
@@ -275,21 +275,21 @@ function showNavigationLoadingOverlay (action, targetLabel) {
 
   const label = overlay.querySelector('.qs-nav-loading-label')
   const actionText = {
-    prev: 'Opening previous step…',
-    next: 'Opening next step…',
-    jump: 'Opening selected step…',
-    'library-initial': 'Loading first library…',
-    'library-switch': 'Switching library…',
-    'kometa-check': 'Validating Kometa…',
-    'header-style': 'Regenerating section style…',
-    'config-switch': 'Saving current page…'
+    prev: 'Opening previous step...',
+    next: 'Opening next step...',
+    jump: 'Opening selected step...',
+    'library-initial': 'Loading first library...',
+    'library-switch': 'Switching library...',
+    'kometa-check': 'Validating Kometa...',
+    'header-style': 'Regenerating section style...',
+    'config-switch': 'Saving current page...'
   }
   const normalizedTarget = String(targetLabel || '').trim()
   if (label) {
     if (normalizedTarget) {
-      label.textContent = `Opening ${normalizedTarget}…`
+      label.textContent = `Opening ${normalizedTarget}...`
     } else {
-      label.textContent = actionText[action] || 'Loading…'
+      label.textContent = actionText[action] || 'Loading...'
     }
   }
 

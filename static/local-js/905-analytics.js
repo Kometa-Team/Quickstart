@@ -2885,7 +2885,7 @@ $(document).ready(function () {
     const extMatch = text.match(/(\.log(?:\.gz)?)$/i)
     const ext = extMatch ? extMatch[1] : ''
     const suffixLength = ext ? Math.max(24, ext.length + 20) : 24
-    return `${text.slice(0, 56)}…${text.slice(-suffixLength)}`
+    return `${text.slice(0, 56)}...${text.slice(-suffixLength)}`
   }
 
   function setButtonSpinner ($button, text) {

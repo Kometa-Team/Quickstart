@@ -15729,7 +15729,7 @@ def clone_test_libraries_start():
             set_job_progress(
                 phase="download",
                 pct=0 if total_size else None,  # None => indeterminate until we know size
-                text="Downloading zip…",
+                text="Downloading zip...",
                 downloaded=0,
                 total=total_size,
                 estimated=estimated,
@@ -15783,7 +15783,7 @@ def clone_test_libraries_start():
                                 set_job_progress(
                                     phase="download",
                                     pct=pct,
-                                    text="Downloading zip…",
+                                    text="Downloading zip...",
                                     downloaded=downloaded,
                                     total=total_size,
                                     estimated=estimated,
@@ -15795,7 +15795,7 @@ def clone_test_libraries_start():
                 set_job_progress(
                     phase="extract",
                     pct=0,
-                    text="Extracting…",
+                    text="Extracting...",
                     files_done=0,
                     files_total=0,
                 )
@@ -15815,7 +15815,7 @@ def clone_test_libraries_start():
                             set_job_progress(
                                 phase="extract",
                                 pct=pct,
-                                text=f"Extracting… {files_done}/{total_files} files",
+                                text=f"Extracting... {files_done}/{total_files} files",
                                 files_done=files_done,
                                 files_total=total_files,
                             )
@@ -15824,7 +15824,7 @@ def clone_test_libraries_start():
                 extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
 
                 # Finalize (replace folder)
-                set_job_progress(phase="finalize", pct=95, text="Finalizing…")
+                set_job_progress(phase="finalize", pct=95, text="Finalizing...")
                 if os.path.exists(target_path):
                     if not _safe_to_replace_test_libraries(target_path):
                         raise RuntimeError("Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.")

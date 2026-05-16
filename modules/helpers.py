@@ -2128,7 +2128,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str], venv_name: str = "kometa-ven
     # Create venv if needed
     if not venv_dir.exists() or not _venv_ok():
         if venv_dir.exists() and not _venv_ok():
-            logs.append(f"⚠️ Existing {venv_name} looks invalid; recreating…")
+            logs.append(f"⚠️ Existing {venv_name} looks invalid; recreating...")
             try:
                 shutil.rmtree(venv_dir, ignore_errors=True)
             except Exception as e:
@@ -2192,7 +2192,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str], venv_name: str = "kometa-ven
 def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str], requirements_file: str = "requirements.txt") -> bool:
     is_windows = os.name == "nt"
 
-    logs.append("⬆️ Upgrading pip…")
+    logs.append("⬆️ Upgrading pip...")
     p = subprocess.run(
         [str(python_bin), "-m", "pip", "install", "--upgrade", "pip"],
         capture_output=True,
@@ -2206,7 +2206,7 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str], requiremen
         logs.append((p.stderr or p.stdout or "").strip() or "pip upgrade failed")
         return False
 
-    logs.append("📦 Installing requirements…")
+    logs.append("📦 Installing requirements...")
     p = subprocess.run(
         [str(python_bin), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", requirements_file],
         capture_output=True,

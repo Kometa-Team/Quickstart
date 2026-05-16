@@ -335,7 +335,7 @@ def test_background_jobs_active_and_status_routes(client, qs_module):
         phase="download",
         status="running",
         pct=25,
-        text="Downloading zip…",
+        text="Downloading zip...",
         started_epoch=123.0,
     )
 
@@ -368,7 +368,7 @@ def test_clone_test_libraries_routes_use_shared_background_job(client, qs_module
         phase="download",
         status="running",
         pct=40,
-        text="Downloading zip…",
+        text="Downloading zip...",
         downloaded=2048,
         total=4096,
         started_epoch=456.0,

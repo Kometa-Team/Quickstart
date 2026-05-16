@@ -16,7 +16,7 @@ body:
     attributes:
       label: What problem are you trying to solve?
       description: Describe the pain point or limitation you’re facing.
-      placeholder: I’m trying to…
+      placeholder: I’m trying to...
     validations:
       required: true
 
@@ -25,7 +25,7 @@ body:
     attributes:
       label: Proposed solution
       description: How would you like Quickstart to behave?
-      placeholder: It would be great if Quickstart could…
+      placeholder: It would be great if Quickstart could...
     validations:
       required: true
 
