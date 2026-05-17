@@ -60,7 +60,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -90,7 +90,7 @@ jobs:
           build_value=$(cat BUILDNUM)
           next_build_value="$((${build_value} + 1))"
           part_value=$(cat PART)
-        
+
           old_msg=$(git log -1 HEAD --pretty=format:%s)
           new_msg="[${next_build_value}] ${old_msg}"
 
@@ -107,11 +107,11 @@ jobs:
           git add PART
           git commit -m "${new_msg}" --amend
           git push origin develop --force-with-lease
-          
+
           hash=$(git rev-parse HEAD)
           echo "$hash"
           echo "commit-hash=${hash}" >> $GITHUB_OUTPUT
-          
+
 
   create-pre-release:
     name: Create Pre-Release
@@ -120,7 +120,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -150,12 +150,12 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "${{ steps.build-changelog.outputs.changelog }}"
-                    
+
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
             sleep 60
           fi
-          
+
           gh release create prerelease --prerelease \
             --title "${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}" \
             --notes "${{ steps.build-changelog.outputs.changelog }}" \
@@ -184,4 +184,3 @@ jobs:
       branch: develop
       branch_name: develop
       tag_name: develop
-

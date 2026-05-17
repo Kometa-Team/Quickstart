@@ -30,14 +30,14 @@ jobs:
         run: |
           repo_name=${{ github.event.pull_request.head.repo.full_name }}
           base_name="${repo_name%/*}"
-        
+
           if [[ "${base_name}" != "Kometa-Team" ]]; then
               echo "ERROR: Pull Requests must be approved before they can run workflows"
               exit 1
           fi
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -61,7 +61,7 @@ jobs:
 
       - name: Get Changes
         id: get-changes
-        run: | 
+        run: |
           git remote add -f upstream https://github.com/Kometa-Team/${{ vars.REPO_NAME }}.git
           git remote update
           if [[ ${{ github.event.action }} == "labeled" ]]; then
@@ -100,7 +100,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -132,34 +132,34 @@ jobs:
           branch_name=${{ github.event.pull_request.head.ref }}
           repo_name=${{ github.event.pull_request.head.repo.full_name }}
           base_name="${repo_name%/*}"
-          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then 
+          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
               tag_name="${base_name}"
           else
               tag_name="${branch_name}"
           fi
           echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
-        
+
           if [[ "${base_name}" == "Kometa-Team" ]]; then
               extra=""
           else
               extra=" from the ${{ github.event.pull_request.head.repo.full_name }} repo"
           fi
           echo "extra-text=${extra}" >> $GITHUB_OUTPUT
-          
+
           old_msg=$(git log -1 HEAD --pretty=format:%s)
           echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
-        
+
           part=$(cat PART)
           if [ -n "$part" ]; then
               new_value="$((${part} + 1))"
           else
               new_value="1"
           fi
-    
+
           echo "part_value=${new_value}" >> $GITHUB_OUTPUT
-    
+
           echo "$new_value" > "PART"
-        
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
@@ -193,7 +193,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -211,7 +211,7 @@ jobs:
         run: |
           branch_name=${{ github.event.pull_request.head.ref }}
           base_name="${repo_name%/*}"
-          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then 
+          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
               tag_name="${base_name}"
           else
               tag_name="${branch_name}"
@@ -220,7 +220,7 @@ jobs:
           echo "version=$(cat VERSION)-build$(cat BUILDNUM)" >> $GITHUB_OUTPUT
           part=$(cat PART)
           echo "part=${part}" >> $GITHUB_OUTPUT
-          
+
 
   docker-build-pull:
     name: Docker
@@ -234,7 +234,7 @@ jobs:
       branch_name: ${{ needs.get-version.outputs.tag-name }}
       tag_name: ${{ needs.get-version.outputs.tag-name }}
       full_build: ${{ contains(github.event.pull_request.labels.*.name, 'build-full') }}
-          
+
 
   build-executable:
     name: Build ${{ matrix.os_upper }} Executable
@@ -300,7 +300,7 @@ jobs:
         run: |
           link_text=$"[${{ steps.build-executable.outputs.filename }}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
           echo "${{ matrix.os }}=${link_text}" >> $GITHUB_OUTPUT
-          
+
 
   add-links:
     name: Add Links to PR
@@ -309,7 +309,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -333,7 +333,7 @@ jobs:
           ${{ github.event.pull_request.body }}
           EOF
           )
-          
+
           PR_BODY=$(echo "$PR_BODY" | sed -z 's/\n## Executables.*//')
           PR_BODY+=$'\n\n## Executables'
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.windows }}**'
@@ -341,7 +341,7 @@ jobs:
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.macos }}**'
           PR_BODY+=$'\n\n## Docker Image'
           PR_BODY+=$'\n\n**`${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}`**'
-          
+
           gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
 
   failure-notification:

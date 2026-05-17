@@ -52,7 +52,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -118,28 +118,28 @@ jobs:
           manifest_command="docker manifest create \
             ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }} \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-amd64"
-      
+
           if ${{ inputs.full_build }}; then
             manifest_command+=" --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-arm64 \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-armv7"
           fi
-      
+
           echo "$manifest_command"
           eval "$manifest_command"
-          
+
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}
 
       - name: Delete Extra Images
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          
+
           curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ inputs.tag_name }}-amd64/
-          
+
           if ${{ inputs.full_build }}; then
             curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
             https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ inputs.tag_name }}-arm64/
-            
+
             curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
             https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ inputs.tag_name }}-armv7/
           fi
@@ -183,4 +183,3 @@ jobs:
           avatar_url: ${{ vars.BOT_IMAGE }}
           author: ${{ vars.DOCKER_NAME }}
           author_icon_url: ${{ vars.DOCKER_IMAGE }}
-

@@ -13,7 +13,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -31,13 +31,13 @@ jobs:
           version=$(cat VERSION)
           echo "CURRENT_VERSION: '${version}'"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
-          
+
           NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH+1))"
-          
+
           echo "NEW_VERSION='${NEW_VERSION}'"
           echo "new_ver=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "$NEW_VERSION" > "VERSION"
-          
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add VERSION
@@ -52,4 +52,3 @@ jobs:
           git checkout develop
           git rebase origin/master
           git push origin develop --force-with-lease
-
