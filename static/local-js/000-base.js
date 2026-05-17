@@ -219,8 +219,8 @@ function startNavLoadingQuoteLoop (overlay) {
     setNavLoadingQuote(overlay)
     qsNavLoadingQuoteTimer = setInterval(() => {
       setNavLoadingQuote(overlay)
-    }, 2800)
-  }, 1400)
+    }, 4200)
+  }, 2200)
 }
 
 function stopNavLoadingQuoteLoop () {
