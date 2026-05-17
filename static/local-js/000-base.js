@@ -104,6 +104,7 @@ const QS_NAV_LOADING_QUOTES = [
   'I\'ll be here all week',
   'If you are reading this, you are officially patient.',
   'Inflating your patience balloon... watch out for pop!',
+  'Installing the update that fixes the update...',
   'It is dark. You\'re likely to be eaten by a grue.',
   'It\'s 10:00pm somewhere. Do you know where your children are?',
   'It\'s not you. It\'s me.',
