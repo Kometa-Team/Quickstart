@@ -5982,7 +5982,10 @@ def step(name):
     page_info["template_name"] = name
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
+    if "restart_nonce" not in session:
+        session["restart_nonce"] = secrets.token_urlsafe(16)
     page_info["shutdown_nonce"] = session["shutdown_nonce"]
+    page_info["restart_nonce"] = session["restart_nonce"]
     if name == "905-analytics":
         return redirect(url_for("logscan_trends_page"))
 
@@ -13107,6 +13110,8 @@ def logscan_trends_page():
     persistence.ensure_session_config_name()
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
+    if "restart_nonce" not in session:
+        session["restart_nonce"] = secrets.token_urlsafe(16)
 
     page_info = {
         "title": "Analytics",
@@ -13122,6 +13127,7 @@ def logscan_trends_page():
         "qs_session_lifetime_days": app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
         "qs_flask_session_dir": app.config.get("QS_FLASK_SESSION_DIR", ""),
         "shutdown_nonce": session["shutdown_nonce"],
+        "restart_nonce": session["restart_nonce"],
         "hide_step_nav": False,
     }
 
@@ -16056,6 +16062,13 @@ def purge_test_libraries():
 @app.route("/restart", methods=["POST"])
 def restart_quickstart():
     data = request.get_json(silent=True) or {}
+    nonce = data.get("nonce")
+    session_nonce = session.get("restart_nonce")
+
+    if not nonce or nonce != session_nonce:
+        return jsonify(success=False, message="Restart not authorized."), 403
+
+    session.pop("restart_nonce", None)
     reason = data.get("reason")
     if reason == "update":
         helpers.set_restart_notice(

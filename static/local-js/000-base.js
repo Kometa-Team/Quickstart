@@ -2394,11 +2394,12 @@ function trackModifiedSelects () {
 }
 
 function restartQuickstart (reason) {
-  const payload = (typeof reason === 'string' && reason.trim()) ? { reason: reason.trim() } : null
-  const options = { method: 'POST' }
-  if (payload) {
-    options.headers = { 'Content-Type': 'application/json' }
-    options.body = JSON.stringify(payload)
+  const payload = { nonce: window.pageInfo?.restart_nonce }
+  if (typeof reason === 'string' && reason.trim()) payload.reason = reason.trim()
+  const options = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   }
   fetch('/restart', options)
     .then(res => res.json())
@@ -3213,7 +3214,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setStatus('Restarting Quickstart...', false)
         showToast('info', 'Restarting Quickstart...')
-        await fetch('/restart', { method: 'POST' })
+        await fetch('/restart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nonce: window.pageInfo?.restart_nonce })
+        })
 
         if (data.theme) {
           document.documentElement.setAttribute('data-theme', data.theme)

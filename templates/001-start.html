@@ -221,7 +221,8 @@
     quickstart_root: "{{ page_info.quickstart_root | escape | replace('\\', '\\\\') }}",
     install_type: "{{ version_info.running_on }}",
     config_name: "{{ page_info.config_name }}",
-    shutdown_nonce: "{{ page_info.shutdown_nonce }}"
+    shutdown_nonce: "{{ page_info.shutdown_nonce }}",
+    restart_nonce: "{{ page_info.restart_nonce }}"
   };
 </script>
 {% endblock %}
