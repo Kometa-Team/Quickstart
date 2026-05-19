@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, MutationObserver, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -103,6 +103,202 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     let dependencyHintRefreshTimer = null
     let dependencyHintRequestToken = 0
+
+    function normalizeMetadataFileEntry (entry) {
+      if (!entry || typeof entry !== 'object') return null
+      const type = String(entry.type || '').trim().toLowerCase()
+      const location = String(entry.location || '').trim()
+      if (!type && !location) return null
+      return { type, location }
+    }
+
+    function parseMetadataFilesValue (rawValue) {
+      if (!rawValue) return []
+      try {
+        const parsed = JSON.parse(String(rawValue))
+        if (!Array.isArray(parsed)) return []
+        return parsed
+          .map(normalizeMetadataFileEntry)
+          .filter(Boolean)
+      } catch (_error) {
+        return []
+      }
+    }
+
+    function buildMetadataFileRow (entry = {}) {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'card bg-body-tertiary border-secondary'
+      wrapper.setAttribute('data-metadata-file-row', 'true')
+      wrapper.innerHTML = `
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label small text-muted">Type</label>
+              <select class="form-select form-select-sm" data-metadata-file-type>
+                <option value="file">file</option>
+                <option value="url">url</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label small text-muted">Path or URL</label>
+              <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml or https://example.com/metadata.yml">
+            </div>
+            <div class="col-md-3 d-flex gap-2 justify-content-md-end">
+              <button type="button" class="btn btn-outline-info btn-sm" data-validate-metadata-file>Validate</button>
+              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-metadata-file>Remove</button>
+            </div>
+          </div>
+          <div class="mt-2 small d-none" data-metadata-file-status></div>
+        </div>
+      `
+      const typeSelect = wrapper.querySelector('[data-metadata-file-type]')
+      const locationInput = wrapper.querySelector('[data-metadata-file-location]')
+      if (typeSelect && entry.type === 'url') {
+        typeSelect.value = 'url'
+      }
+      if (locationInput && entry.location) {
+        locationInput.value = entry.location
+      }
+      return wrapper
+    }
+
+    function setMetadataFileStatus (row, kind, message) {
+      if (!row) return
+      const target = row.querySelector('[data-metadata-file-status]')
+      if (!target) return
+      target.className = 'mt-2 small'
+      if (!message) {
+        target.classList.add('d-none')
+        target.textContent = ''
+        return
+      }
+      target.classList.remove('d-none')
+      if (kind === 'success') {
+        target.classList.add('text-success')
+      } else {
+        target.classList.add('text-warning')
+      }
+      target.textContent = message
+    }
+
+    function syncMetadataFilesEditor (editor, emitEvents = true) {
+      if (!editor) return []
+      const hidden = editor.querySelector('input[type="hidden"][name$="-metadata_files"]')
+      if (!hidden) return []
+      const rows = Array.from(editor.querySelectorAll('[data-metadata-file-row]'))
+      const entries = rows.map(row => {
+        const type = row.querySelector('[data-metadata-file-type]')?.value
+        const location = row.querySelector('[data-metadata-file-location]')?.value
+        return normalizeMetadataFileEntry({ type, location })
+      }).filter(Boolean)
+      hidden.value = JSON.stringify(entries)
+      if (emitEvents) {
+        hidden.dispatchEvent(new Event('input', { bubbles: true }))
+        hidden.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      return entries
+    }
+
+    function renderMetadataFilesEditor (editor) {
+      if (!editor) return
+      const hidden = editor.querySelector('input[type="hidden"][name$="-metadata_files"]')
+      const list = editor.querySelector('[data-metadata-files-list]')
+      if (!hidden || !list) return
+      const entries = parseMetadataFilesValue(hidden.value)
+      list.replaceChildren()
+      entries.forEach(entry => list.appendChild(buildMetadataFileRow(entry)))
+      syncMetadataFilesEditor(editor, false)
+    }
+
+    function initMetadataFilesEditors (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-metadata-files-editor]').forEach(editor => {
+        if (editor.dataset.metadataFilesReady === 'true') return
+        renderMetadataFilesEditor(editor)
+        editor.dataset.metadataFilesReady = 'true'
+      })
+    }
+
+    document.addEventListener('click', async function (event) {
+      const addButton = event.target.closest('[data-add-metadata-file]')
+      if (addButton) {
+        const editor = addButton.closest('[data-metadata-files-editor]')
+        const list = editor?.querySelector('[data-metadata-files-list]')
+        if (!editor || !list) return
+        list.appendChild(buildMetadataFileRow({ type: 'file', location: '' }))
+        syncMetadataFilesEditor(editor)
+        return
+      }
+
+      const removeButton = event.target.closest('[data-remove-metadata-file]')
+      if (removeButton) {
+        const row = removeButton.closest('[data-metadata-file-row]')
+        const editor = removeButton.closest('[data-metadata-files-editor]')
+        if (!row || !editor) return
+        row.remove()
+        syncMetadataFilesEditor(editor)
+        return
+      }
+
+      const validateButton = event.target.closest('[data-validate-metadata-file]')
+      if (validateButton) {
+        const row = validateButton.closest('[data-metadata-file-row]')
+        const editor = validateButton.closest('[data-metadata-files-editor]')
+        if (!row || !editor) return
+        const type = row.querySelector('[data-metadata-file-type]')?.value || ''
+        const location = row.querySelector('[data-metadata-file-location]')?.value || ''
+        syncMetadataFilesEditor(editor, false)
+        validateButton.disabled = true
+        setMetadataFileStatus(row, '', 'Validating...')
+        try {
+          const response = await fetch('/validate_metadata_file', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata_file_type: type,
+              metadata_file_location: location
+            })
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok || !payload.valid) {
+            setMetadataFileStatus(row, 'warning', payload.error || 'Validation failed.')
+          } else {
+            setMetadataFileStatus(row, 'success', 'Metadata file looks valid.')
+          }
+        } catch (_error) {
+          setMetadataFileStatus(row, 'warning', 'Validation request failed.')
+        } finally {
+          validateButton.disabled = false
+        }
+      }
+    })
+
+    document.addEventListener('input', function (event) {
+      const target = event.target
+      if (!target || !target.closest('[data-metadata-files-editor]')) return
+      if (!target.matches('[data-metadata-file-type], [data-metadata-file-location]')) return
+      const row = target.closest('[data-metadata-file-row]')
+      const editor = target.closest('[data-metadata-files-editor]')
+      setMetadataFileStatus(row, '', '')
+      syncMetadataFilesEditor(editor)
+    })
+
+    document.addEventListener('change', function (event) {
+      const target = event.target
+      if (!target || !target.closest('[data-metadata-files-editor]')) return
+      if (!target.matches('[data-metadata-file-type], [data-metadata-file-location]')) return
+      const row = target.closest('[data-metadata-file-row]')
+      const editor = target.closest('[data-metadata-files-editor]')
+      setMetadataFileStatus(row, '', '')
+      syncMetadataFilesEditor(editor)
+    })
+
+    initMetadataFilesEditors(document)
+    if (libraryContainer && typeof MutationObserver !== 'undefined') {
+      const metadataObserver = new MutationObserver(() => initMetadataFilesEditors(libraryContainer))
+      metadataObserver.observe(libraryContainer, { childList: true, subtree: true })
+    }
 
     // Ensure hidden "false" inputs don't submit alongside checked checkboxes with the same name
     function syncHiddenCheckboxPairs (scope) {

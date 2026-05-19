@@ -1268,6 +1268,43 @@ def prepare_import_payload(
             elif overlay_files is not None:
                 report.add("unmapped", f"libraries.{lib_name}.overlay_files", "Unsupported overlay_files format.")
 
+            metadata_files = lib_cfg.get("metadata_files")
+            if isinstance(metadata_files, list):
+                imported_metadata_files = []
+                for idx, entry in enumerate(metadata_files):
+                    entry_type = None
+                    location = None
+                    if isinstance(entry, dict):
+                        if "file" in entry:
+                            entry_type = "file"
+                            location = entry.get("file")
+                        elif "url" in entry:
+                            entry_type = "url"
+                            location = entry.get("url")
+                    if entry_type not in {"file", "url"}:
+                        report.add(
+                            "unmapped",
+                            f"libraries.{lib_name}.metadata_files[{idx}]",
+                            "Only file and url metadata files are supported.",
+                        )
+                        continue
+                    location = str(location or "").strip()
+                    if not location:
+                        report.add(
+                            "unmapped",
+                            f"libraries.{lib_name}.metadata_files[{idx}]",
+                            "Metadata file location is required.",
+                        )
+                        continue
+                    imported_metadata_files.append({"type": entry_type, "location": location})
+                    report.add("imported", f"libraries.{lib_name}.metadata_files[{idx}].{entry_type}")
+
+                if imported_metadata_files:
+                    libraries_data[f"{lib_id}-metadata_files"] = json.dumps(imported_metadata_files, ensure_ascii=True)
+                    report.add("imported", f"libraries.{lib_name}.metadata_files")
+            elif metadata_files is not None:
+                report.add("unmapped", f"libraries.{lib_name}.metadata_files", "Unsupported metadata_files format.")
+
             # Library settings
             settings_section = lib_cfg.get("settings")
             if isinstance(settings_section, dict):
@@ -1362,7 +1399,7 @@ def prepare_import_payload(
             elif operations is not None:
                 report.add("unmapped", f"libraries.{lib_name}.operations", "Unsupported operations format.")
 
-            handled_keys = {"collection_files", "overlay_files", "template_variables", "settings", "operations"}
+            handled_keys = {"collection_files", "overlay_files", "metadata_files", "template_variables", "settings", "operations"}
             handled_keys.update(top_level_map.keys())
             for key in lib_cfg.keys():
                 if key in handled_keys:

@@ -145,6 +145,79 @@ def test_validate_apprise_rejects_empty_remote_yaml(client, monkeypatch, qs_modu
     assert "must not be empty" in payload["error"]
 
 
+def test_validate_metadata_file_accepts_existing_local_file(client, tmp_path):
+    metadata_file = tmp_path / "metadata.yml"
+    metadata_file.write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "file", "metadata_file_location": str(metadata_file)},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+
+
+def test_validate_metadata_file_rejects_invalid_type(client):
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "git", "metadata_file_location": "config/metadata.yml"},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "file or url" in payload["error"]
+
+
+def test_validate_metadata_file_rejects_url_in_file_mode(client):
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "file", "metadata_file_location": "https://example.com/metadata.yml"},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "local file path" in payload["error"]
+
+
+def test_validate_metadata_file_rejects_invalid_local_yaml(client, tmp_path):
+    metadata_file = tmp_path / "metadata.yml"
+    metadata_file.write_text("metadata: [broken\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "file", "metadata_file_location": str(metadata_file)},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "valid YAML" in payload["error"]
+
+
+def test_output_metadata_file_entries_are_sorted():
+    import json
+
+    from modules import output
+
+    parsed = output._parse_metadata_file_entries(
+        json.dumps(
+            [
+                {"type": "url", "location": "https://example.com/zeta.yml"},
+                {"type": "file", "location": "config/beta.yml"},
+                {"type": "file", "location": "config/alpha.yml"},
+                {"type": "url", "location": "https://example.com/alpha.yml"},
+            ]
+        )
+    )
+
+    assert parsed == [
+        {"file": "config/alpha.yml"},
+        {"file": "config/beta.yml"},
+        {"url": "https://example.com/alpha.yml"},
+        {"url": "https://example.com/zeta.yml"},
+    ]
+
+
 def test_update_quickstart_settings_supports_independent_imagemaid_log_retention(client, qs_module, isolated_config_dir, monkeypatch):
     from modules import helpers
 
@@ -874,3 +947,76 @@ def test_retrieve_settings_sanitizes_already_persisted_transient_fields(client, 
     assert "configSelector" not in stored["anidb"]
     assert "newConfigName" not in stored["anidb"]
     assert "importMode" not in stored["anidb"]
+
+
+def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_dir, monkeypatch, app, qs_module):
+    import json
+
+    from modules import database
+    from flask import session
+
+    config_name = "pytest_copy_metadata_files"
+    source_metadata_files = json.dumps(
+        [
+            {"type": "file", "location": "config/metadata/movies.yml"},
+            {"type": "url", "location": "https://example.com/movie-metadata.yml"},
+        ]
+    )
+
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-metadata_files": source_metadata_files,
+                "mov-library_target-library": "Other Movies",
+                "libraries": "Movies,Other Movies",
+            },
+            "validated": False,
+        },
+    )
+
+    monkeypatch.setattr(
+        qs_module,
+        "_build_library_lists",
+        lambda: (
+            [
+                {"id": "mov-library_movies", "name": "Movies"},
+                {"id": "mov-library_target", "name": "Other Movies"},
+            ],
+            [],
+            {},
+        ),
+    )
+
+    with app.test_request_context("/copy_library_settings"):
+        session["config_name"] = config_name
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/copy_library_settings",
+        json={
+            "source_library_id": "mov-library_movies",
+            "target_library_ids": ["mov-library_target"],
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-metadata_files": source_metadata_files,
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    assert validated is False
+    assert user_entered is True
+    libraries = stored["libraries"]
+    assert libraries["mov-library_movies-metadata_files"] == source_metadata_files
+    assert libraries["mov-library_target-metadata_files"] == source_metadata_files

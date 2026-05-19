@@ -170,6 +170,7 @@ VALIDATION_REASON_LABELS = {
     "invalid_paths": "Invalid paths",
     "missing_library_defaults": "Missing library defaults",
     "missing_placeholder_imdb": "Missing placeholder IMDb ID",
+    "invalid_metadata_files": "Invalid metadata files",
     "invalid_fields": "Invalid fields",
     "no_webhooks": "No webhooks configured",
     "disabled": "Disabled",
@@ -397,6 +398,7 @@ QS_ERROR_REASONS = {
     "validation_error",
     "invalid_paths",
     "invalid_fields",
+    "invalid_metadata_files",
     "missing_library_defaults",
     "missing_placeholder_imdb",
 }
@@ -537,6 +539,63 @@ def _parse_json_array(value):
     except (TypeError, ValueError):
         return []
     return parsed if isinstance(parsed, list) else []
+
+
+def _parse_metadata_file_entries(value):
+    if isinstance(value, list):
+        raw_entries = value
+    elif isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        try:
+            raw_entries = json.loads(text)
+        except (TypeError, ValueError):
+            return None
+    else:
+        return []
+
+    if not isinstance(raw_entries, list):
+        return None
+
+    entries = []
+    for entry in raw_entries:
+        if not isinstance(entry, dict):
+            continue
+        entry_type = str(entry.get("type") or "").strip().lower()
+        location = str(entry.get("location") or "").strip()
+        if not entry_type and not location:
+            continue
+        entries.append({"type": entry_type, "location": location})
+    return entries
+
+
+def _validate_library_metadata_files(libraries_data, selected_library_ids):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    errors = []
+    for lib_id in selected_library_ids or []:
+        raw_value = libraries_data.get(f"{lib_id}-metadata_files")
+        if raw_value in [None, "", "[]"]:
+            continue
+
+        entries = _parse_metadata_file_entries(raw_value)
+        if entries is None:
+            errors.append(f"{lib_id}: metadata_files must be a valid list.")
+            continue
+
+        for idx, entry in enumerate(entries, start=1):
+            valid, message = validations.validate_metadata_file_payload(
+                {
+                    "metadata_file_type": entry.get("type"),
+                    "metadata_file_location": entry.get("location"),
+                }
+            )
+            if not valid:
+                errors.append(f"{lib_id} metadata_files[{idx}]: {message}")
+
+    return errors
 
 
 def _library_prefix_from_key(key):
@@ -7941,12 +8000,15 @@ def validate_all_services():
         else:
             libraries_reason = None
             path_errors = path_validation.validate_payload(libraries_data)
+            metadata_file_errors = _validate_library_metadata_files(libraries_data, selected_library_ids)
             if path_errors:
                 libraries_reason = "invalid_paths"
+            elif metadata_file_errors:
+                libraries_reason = "invalid_metadata_files"
             else:
 
                 def has_minimal_library_yaml_selection(lib_id):
-                    allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_")
+                    allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_", "-metadata_files")
                     for key, value in libraries_data.items():
                         if not isinstance(key, str) or not key.startswith(f"{lib_id}-"):
                             continue
@@ -16057,6 +16119,12 @@ def purge_test_libraries():
 
     except Exception as e:
         return jsonify(success=False, message=f"Failed to delete folder:\n{str(e)}")
+
+
+@app.route("/validate_metadata_file", methods=["POST"])
+def validate_metadata_file():
+    data = request.get_json(silent=True) or {}
+    return validations.validate_metadata_file_server(data)
 
 
 @app.route("/restart", methods=["POST"])

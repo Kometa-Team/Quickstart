@@ -952,6 +952,37 @@ def _collapse_collection_data_template_vars(config_data):
     return config_data
 
 
+def _parse_metadata_file_entries(raw_value):
+    if isinstance(raw_value, list):
+        entries = raw_value
+    elif isinstance(raw_value, str):
+        text = raw_value.strip()
+        if not text:
+            return []
+        try:
+            entries = json.loads(text)
+        except Exception:
+            return []
+    else:
+        return []
+
+    if not isinstance(entries, list):
+        return []
+
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        entry_type = str(entry.get("type") or "").strip().lower()
+        location = str(entry.get("location") or "").strip()
+        if entry_type not in {"file", "url"} or not location:
+            continue
+        normalized.append({entry_type: location})
+
+    normalized.sort(key=lambda item: (next(iter(item.keys())), next(iter(item.values())).casefold()))
+    return normalized
+
+
 def build_libraries_section(
     movie_libraries,
     show_libraries,
@@ -961,6 +992,8 @@ def build_libraries_section(
     show_overlays,
     movie_attributes,
     show_attributes,
+    movie_metadata_files,
+    show_metadata_files,
     movie_templates,
     show_templates,
     movie_top_level,
@@ -1817,6 +1850,13 @@ def build_libraries_section(
 
                     entry["overlay_files"] = overlay_entries
 
+        metadata_group = movie_metadata_files.get(helpers.extract_library_name(library_key), {}) if library_type == "mov" else show_metadata_files.get(
+            helpers.extract_library_name(library_key), {}
+        )
+        metadata_entries = _parse_metadata_file_entries(metadata_group.get(f"{library_key}-metadata_files"))
+        if metadata_entries:
+            entry["metadata_files"] = metadata_entries
+
         # Template Variables
         template_key = helpers.extract_library_name(library_key)
         template_data = templates.get(template_key, {})
@@ -2365,6 +2405,8 @@ def build_config(header_style="standard", config_name=None):
         show_overlays = group_by_library("overlay_", show_library_names, normalize_overlays=True)
         movie_attributes = group_by_library("attribute_", movie_library_names)
         show_attributes = group_by_library("attribute_", show_library_names)
+        movie_metadata_files = group_by_library("metadata_files", movie_library_names)
+        show_metadata_files = group_by_library("metadata_files", show_library_names)
         movie_templates = group_by_library("template_variables", movie_library_names)
         show_templates = group_by_library("template_variables", show_library_names)
         movie_top_level = group_by_library("top_level_", movie_library_names)
@@ -2380,6 +2422,8 @@ def build_config(header_style="standard", config_name=None):
             helpers.ts_log(f"Extracted Show Overlays: {show_overlays}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Attributes: {movie_attributes}", level="DEBUG")
             helpers.ts_log(f"Extracted Show Attributes: {show_attributes}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Metadata Files: {movie_metadata_files}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Metadata Files: {show_metadata_files}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Templates: {movie_templates}", level="DEBUG")
             helpers.ts_log(f"Extracted Show Templates: {show_templates}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Top Level: {movie_top_level}", level="DEBUG")
@@ -2395,6 +2439,8 @@ def build_config(header_style="standard", config_name=None):
             show_overlays,
             movie_attributes,
             show_attributes,
+            movie_metadata_files,
+            show_metadata_files,
             movie_templates,
             show_templates,
             movie_top_level,
@@ -2563,6 +2609,8 @@ def build_config(header_style="standard", config_name=None):
 
             elif stripped.startswith("collection_files:"):
                 output.append(art("Collections"))
+            elif stripped.startswith("metadata_files:"):
+                output.append(art("Metadata Files"))
             elif stripped.startswith("overlay_files:"):
                 output.append(art("Overlays"))
 

@@ -52,6 +52,71 @@ def _validate_yaml_location_suffix(location, label):
     return True, None
 
 
+def _validate_yaml_location(location, label):
+    valid, message = _validate_yaml_location_suffix(location, label)
+    if not valid:
+        return False, message
+
+    if str(location).strip().lower().startswith(("http://", "https://")):
+        valid, message = url_validation.validate_url(location, allow_local=True)
+        if not valid:
+            return False, f"{label}: {message}"
+
+        try:
+            response = requests.get(location, timeout=10)
+        except requests.RequestException as exc:
+            return False, f"Connection error: {str(exc)}"
+
+        if response.status_code >= 400:
+            return False, f"Failed to fetch {label} ({response.status_code} [{response.reason}])."
+
+        return _validate_yaml_text(response.text, label)
+
+    valid, message = path_validation.validate_path(
+        location,
+        {"allow_relative": True, "must_exist": True, "mode": "input_file"},
+    )
+    if not valid:
+        return False, f"{label}: {message}"
+
+    try:
+        with open(location, "r", encoding="utf-8") as handle:
+            yaml_text = handle.read()
+    except OSError as exc:
+        return False, f"{label}: Unable to read file. {exc}"
+
+    return _validate_yaml_text(yaml_text, label)
+
+
+def validate_metadata_file_payload(data):
+    metadata_file_type = str(data.get("metadata_file_type") or "").strip().lower()
+    metadata_file_location = str(data.get("metadata_file_location") or "").strip()
+
+    if metadata_file_type not in {"file", "url"}:
+        return False, "Metadata file type must be file or url."
+
+    if not metadata_file_location:
+        return False, "Metadata file path or URL is required."
+
+    if metadata_file_type == "url":
+        if not metadata_file_location.lower().startswith(("http://", "https://")):
+            return False, "Metadata file URL must start with http:// or https://."
+        label = "Metadata file URL"
+    else:
+        if metadata_file_location.lower().startswith(("http://", "https://")):
+            return False, "Metadata file path must be a local file path."
+        label = "Metadata file path"
+
+    return _validate_yaml_location(metadata_file_location, label)
+
+
+def validate_metadata_file_server(data):
+    valid, message = validate_metadata_file_payload(data)
+    if not valid:
+        return jsonify({"valid": False, "error": message}), 400
+    return jsonify({"valid": True})
+
+
 def validate_plex_server(data):
     plex_url = data.get("plex_url")
     plex_token = data.get("plex_token")
@@ -299,43 +364,7 @@ def validate_apprise_server(data):
     if not apprise_location:
         return jsonify({"valid": False, "error": "Apprise YAML path or URL is required."}), 400
 
-    valid, message = _validate_yaml_location_suffix(apprise_location, "Apprise location")
-    if not valid:
-        return jsonify({"valid": False, "error": message}), 400
-
-    if apprise_location.lower().startswith(("http://", "https://")):
-        valid, message = url_validation.validate_url(apprise_location, allow_local=True)
-        if not valid:
-            return jsonify({"valid": False, "error": f"Apprise URL: {message}"}), 400
-
-        try:
-            response = requests.get(apprise_location, timeout=10)
-        except requests.RequestException as e:
-            return jsonify({"valid": False, "error": f"Connection error: {str(e)}"}), 400
-
-        if response.status_code >= 400:
-            return jsonify({"valid": False, "error": f"Failed to fetch Apprise YAML ({response.status_code} [{response.reason}])."}), 400
-
-        valid, message = _validate_yaml_text(response.text, "Apprise URL")
-        if not valid:
-            return jsonify({"valid": False, "error": message}), 400
-
-        return jsonify({"valid": True})
-
-    valid, message = path_validation.validate_path(
-        apprise_location,
-        {"allow_relative": True, "must_exist": True, "mode": "input_file"},
-    )
-    if not valid:
-        return jsonify({"valid": False, "error": f"Apprise path: {message}"}), 400
-
-    try:
-        with open(apprise_location, "r", encoding="utf-8") as handle:
-            yaml_text = handle.read()
-    except OSError as exc:
-        return jsonify({"valid": False, "error": f"Apprise path: Unable to read file. {exc}"}), 400
-
-    valid, message = _validate_yaml_text(yaml_text, "Apprise file")
+    valid, message = _validate_yaml_location(apprise_location, "Apprise location")
     if not valid:
         return jsonify({"valid": False, "error": message}), 400
 
