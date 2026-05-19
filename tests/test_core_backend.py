@@ -218,6 +218,13 @@ def test_output_metadata_file_entries_are_sorted():
     ]
 
 
+def test_helpers_extract_library_name_supports_metadata_files():
+    from modules import helpers
+
+    assert helpers.extract_library_name("mov-library_movies-metadata_files") == "movies"
+    assert helpers.extract_library_name("sho-library_tv_shows-metadata_files") == "tv_shows"
+
+
 def test_update_quickstart_settings_supports_independent_imagemaid_log_retention(client, qs_module, isolated_config_dir, monkeypatch):
     from modules import helpers
 

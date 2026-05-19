@@ -346,7 +346,7 @@ def extract_library_name(key):
     # known section marker. This avoids greedy matches when template variable
     # keys themselves contain hyphens (e.g. `use_South-Eastern Asia`).
     match = re.match(
-        r"^(?:mov|sho)-library_(.+?)-(?:library$|collection_|template_|attribute_|overlay_|top_level_)",
+        r"^(?:mov|sho)-library_(.+?)-(?:library$|collection_|template_|attribute_|overlay_|top_level_|metadata_files$)",
         key,
     )
     return match.group(1) if match else None
