@@ -1853,7 +1853,8 @@ def build_libraries_section(
         metadata_group = movie_metadata_files.get(helpers.extract_library_name(library_key), {}) if library_type == "mov" else show_metadata_files.get(
             helpers.extract_library_name(library_key), {}
         )
-        metadata_entries = _parse_metadata_file_entries(metadata_group.get(f"{library_key}-metadata_files"))
+        library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
+        metadata_entries = _parse_metadata_file_entries(metadata_group.get(f"{library_prefix}-metadata_files"))
         if metadata_entries:
             entry["metadata_files"] = metadata_entries
 
@@ -2127,6 +2128,8 @@ def reorder_library_section(library_data):
     - `report_path` appears first.
     - `remove_overlays` and `reset_overlays` come next.
     - `template_variables` next.
+    - `metadata_files` appears before `collection_files`.
+    - `collection_files` appears before `overlay_files`.
     - `settings` appears before `operations`.
     - Keys inside `operations` are ordered as per Kometa Wiki.
     - Other keys retain their natural order.
@@ -2147,11 +2150,19 @@ def reorder_library_section(library_data):
     if "template_variables" in library_data:
         reordered_data["template_variables"] = library_data["template_variables"]
 
-    # 4. Then library settings
+    # 4. Then library-level metadata/collections/overlays in explicit YAML order
+    if "metadata_files" in library_data:
+        reordered_data["metadata_files"] = library_data["metadata_files"]
+    if "collection_files" in library_data:
+        reordered_data["collection_files"] = library_data["collection_files"]
+    if "overlay_files" in library_data:
+        reordered_data["overlay_files"] = library_data["overlay_files"]
+
+    # 5. Then library settings
     if "settings" in library_data:
         reordered_data["settings"] = library_data["settings"]
 
-    # 5. Reorder operations
+    # 6. Reorder operations
     operations_order = [
         "assets_for_all",
         "assets_for_all_collections",
@@ -2196,7 +2207,7 @@ def reorder_library_section(library_data):
                 ordered_ops[k] = v
         reordered_data["operations"] = ordered_ops
 
-    # 6. Finally add any other keys that weren't handled
+    # 7. Finally add any other keys that weren't handled
     for key, value in library_data.items():
         if key not in reordered_data:
             reordered_data[key] = value

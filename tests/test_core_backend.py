@@ -194,6 +194,27 @@ def test_validate_metadata_file_rejects_invalid_local_yaml(client, tmp_path):
     assert "valid YAML" in payload["error"]
 
 
+def test_autosave_library_rejects_invalid_metadata_files(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 404
+        reason = "Not Found"
+        text = ""
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", lambda *_args, **_kwargs: _Resp())
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-metadata_files": '[{"type":"url","location":"https://example.com/missing.yml"}]',
+        },
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "Invalid metadata files" in payload["error"]
+
+
 def test_output_metadata_file_entries_are_sorted():
     import json
 
@@ -216,6 +237,195 @@ def test_output_metadata_file_entries_are_sorted():
         {"url": "https://example.com/alpha.yml"},
         {"url": "https://example.com/zeta.yml"},
     ]
+
+
+def test_build_libraries_section_emits_metadata_files(app):
+    import json
+
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-metadata_files": json.dumps(
+                        [
+                            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+                            {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+                        ]
+                    )
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    assert libraries_section["libraries"]["Movies"]["metadata_files"] == [
+        {"file": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+        {"url": "https://example.com/movies_refresh.yml"},
+    ]
+    assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "metadata_files"]
+
+
+def test_build_config_includes_saved_library_metadata_files(app, isolated_config_dir, monkeypatch):
+    import json
+
+    from flask import session
+    from modules import database, output
+
+    config_name = "pytest_library_metadata_output"
+    metadata_value = json.dumps(
+        [
+            {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+        ]
+    )
+
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-metadata_files": metadata_value,
+                "mov-template_variables": {},
+                "sho-template_variables": {},
+            },
+            "validated_at": "2026-05-19T00:00:00Z",
+        },
+    )
+
+    monkeypatch.setattr(output.helpers, "ensure_json_schema", lambda: None)
+    monkeypatch.setattr(
+        output.helpers,
+        "check_for_update",
+        lambda: {
+            "kometa_branch": "nightly",
+            "branch": "develop",
+            "local_version": "0.10.3-build2",
+            "running_on": "Local-Windows",
+        },
+    )
+    monkeypatch.setattr(output.helpers, "get_plex_summary", lambda: "Plex summary unavailable")
+    monkeypatch.setattr(output.helpers, "get_quickstart_settings_summary", lambda: [])
+    monkeypatch.setattr(output.helpers, "get_library_summaries", lambda _names: "Library summary unavailable")
+    monkeypatch.setattr(output.jsonschema.Draft7Validator, "iter_errors", lambda self, parsed: [])
+    monkeypatch.setitem(app.config, "QS_OPTIMIZE_DEFAULTS", False)
+
+    with app.test_request_context("/step/900-kometa"):
+        session["config_name"] = config_name
+        _validated, _validation_error, _config_data, yaml_content, _validation_errors = output.build_config("single line", config_name=config_name)
+
+    assert "metadata_files:" in yaml_content
+    assert "godzilla.yml" in yaml_content
+    assert "movies_refresh.yml" in yaml_content
+
+
+def test_step_post_from_libraries_persists_metadata_files(client, isolated_config_dir, monkeypatch, qs_module):
+    import json
+
+    from modules import database
+
+    config_name = "pytest_step_save_metadata_files"
+    metadata_value = json.dumps(
+        [
+            {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+        ]
+    )
+
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (True, None, {}, "test: true\n", []))
+    monkeypatch.setattr(qs_module.validations, "validate_metadata_file_payload", lambda _payload: (True, ""))
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+
+    resp = client.post(
+        "/step/900-kometa",
+        data={
+            "configSelector": config_name,
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-metadata_files": metadata_value,
+        },
+        headers={"Referer": "http://localhost/step/025-libraries"},
+    )
+
+    assert resp.status_code == 200
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    assert validated is False
+    assert user_entered is True
+    assert stored["libraries"]["mov-library_movies-library"] == "Movies"
+    assert stored["libraries"]["mov-library_movies-metadata_files"] == metadata_value
+
+
+def test_step_post_from_libraries_rejects_invalid_metadata_files(client, isolated_config_dir, monkeypatch, qs_module):
+    from modules import database
+
+    class _Resp:
+        status_code = 404
+        reason = "Not Found"
+        text = ""
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", lambda *_args, **_kwargs: _Resp())
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (True, None, {}, "test: true\n", []))
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+
+    config_name = "pytest_invalid_step_metadata_files"
+    resp = client.post(
+        "/step/900-kometa",
+        data={
+            "configSelector": config_name,
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-metadata_files": '[{"type":"url","location":"https://example.com/missing.yml"}]',
+        },
+        headers={"Referer": "http://localhost/step/025-libraries"},
+    )
+
+    assert resp.status_code == 200
+    assert b"Invalid values:" in resp.data
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    assert stored is None
+    assert validated is False
+    assert user_entered is False
 
 
 def test_helpers_extract_library_name_supports_metadata_files():
@@ -985,7 +1195,6 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
             "validated": False,
         },
     )
-
     monkeypatch.setattr(
         qs_module,
         "_build_library_lists",
@@ -996,8 +1205,9 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
             ],
             [],
             {},
-        ),
+            ),
     )
+    monkeypatch.setattr(qs_module.validations, "validate_metadata_file_payload", lambda _payload: (True, ""))
 
     with app.test_request_context("/copy_library_settings"):
         session["config_name"] = config_name

@@ -598,6 +598,17 @@ def _validate_library_metadata_files(libraries_data, selected_library_ids):
     return errors
 
 
+def _selected_library_ids_from_libraries_data(libraries_data):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    return [
+        key[: -len("-library")]
+        for key, value in libraries_data.items()
+        if isinstance(key, str) and key.startswith(("mov-library_", "sho-library_")) and key.endswith("-library") and _is_truthy_setting_value(value)
+    ]
+
+
 def _library_prefix_from_key(key):
     if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
         return None
@@ -5939,10 +5950,15 @@ def step(name):
         path_errors = path_validation.validate_payload(request.form)
         url_errors = url_validation.validate_payload(request.form)
         validation_errors = path_errors + url_errors
+        save_source, save_source_name = persistence.extract_names(request.referrer or name)
+        if save_source_name == "libraries":
+            clean_payload = persistence.clean_form_data(request.form)
+            incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+            selected_library_ids = _selected_library_ids_from_libraries_data(incoming_libraries)
+            validation_errors += _validate_library_metadata_files(incoming_libraries, selected_library_ids)
         if validation_errors:
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
-            save_source, save_source_name = persistence.extract_names(request.referrer or name)
             if save_source_name == "imagemaid":
                 request_payload = request.form.to_dict(flat=True)
                 request_payload["config_name"] = session.get("config_name") or request_payload.get("config_name") or request_payload.get("configSelector")
@@ -6799,6 +6815,12 @@ def autosave_library(library_id):
         errors = path_validation.validate_payload(incoming)
         if errors:
             return jsonify({"success": False, "error": "Invalid path values.", "errors": errors}), 400
+        clean_payload = persistence.clean_form_data(MultiDict(incoming))
+        incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+        selected_library_ids = _selected_library_ids_from_libraries_data(incoming_libraries)
+        metadata_errors = _validate_library_metadata_files(incoming_libraries, selected_library_ids)
+        if metadata_errors:
+            return jsonify({"success": False, "error": "Invalid metadata files.", "errors": metadata_errors}), 400
         persistence.save_settings("025-libraries", incoming)
         return jsonify({"success": True})
     except Exception as e:
@@ -7041,6 +7063,7 @@ def copy_library_settings():
 
         source_items = {k: v for k, v in libraries_data.items() if k.startswith(f"{source_prefix}-")}
         source_errors = path_validation.validate_payload(source_items)
+        source_metadata_errors = _validate_library_metadata_files(libraries_data, [source_prefix])
         if source_errors:
             return (
                 jsonify(
@@ -7048,6 +7071,17 @@ def copy_library_settings():
                         "success": False,
                         "error": "Invalid path values found in source library: " + " ".join(source_errors),
                         "errors": source_errors,
+                    }
+                ),
+                400,
+            )
+        if source_metadata_errors:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Invalid metadata files found in source library: " + " ".join(source_metadata_errors),
+                        "errors": source_metadata_errors,
                     }
                 ),
                 400,

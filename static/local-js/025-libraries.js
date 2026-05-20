@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, MutationObserver, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, MutationObserver, jumpTo, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
     let activeLibraryId = null
     let loadRequestId = 0
+    let allowNextStepNavigation = false
     const dependencyHintConfigs = {
       tautulli: {
         stepKey: '030-tautulli',
@@ -166,19 +167,75 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!row) return
       const target = row.querySelector('[data-metadata-file-status]')
       if (!target) return
+      row.dataset.metadataFileState = kind || ''
       target.className = 'mt-2 small'
       if (!message) {
         target.classList.add('d-none')
         target.textContent = ''
+        const editor = row.closest('[data-metadata-files-editor]')
+        if (editor) updateMetadataFilesAccordionState(editor)
         return
       }
       target.classList.remove('d-none')
       if (kind === 'success') {
         target.classList.add('text-success')
+      } else if (kind === 'error') {
+        target.classList.add('text-danger')
       } else {
         target.classList.add('text-warning')
       }
       target.textContent = message
+      const editor = row.closest('[data-metadata-files-editor]')
+      if (editor) updateMetadataFilesAccordionState(editor)
+    }
+
+    function updateMetadataFilesAccordionState (editor) {
+      if (!editor) return
+      const accordionItem = editor.closest('.accordion-item')
+      const accordionHeader = accordionItem?.querySelector(':scope > .accordion-header')
+      if (!accordionHeader) return
+
+      const rows = Array.from(editor.querySelectorAll('[data-metadata-file-row]'))
+      const hasEntries = rows.some(row => {
+        const type = row.querySelector('[data-metadata-file-type]')?.value || ''
+        const location = row.querySelector('[data-metadata-file-location]')?.value || ''
+        return Boolean(normalizeMetadataFileEntry({ type, location }))
+      })
+      const hasInvalid = rows.some(row => {
+        const state = String(row.dataset.metadataFileState || '').trim().toLowerCase()
+        return state === 'error' || state === 'warning'
+      })
+
+      accordionHeader.classList.remove('invalid')
+      if (hasInvalid) {
+        accordionHeader.classList.add('invalid')
+        return
+      }
+
+      accordionHeader.classList.remove('warning')
+      if (hasEntries) {
+        accordionHeader.classList.add('selected')
+      } else {
+        accordionHeader.classList.remove('selected')
+      }
+    }
+
+    function applyMetadataFileServerErrors (editor, errors) {
+      if (!editor || !Array.isArray(errors) || !errors.length) return false
+      const rows = Array.from(editor.querySelectorAll('[data-metadata-file-row]'))
+      rows.forEach(row => setMetadataFileStatus(row, '', ''))
+      let applied = false
+      errors.forEach(error => {
+        const text = String(error || '').trim()
+        const match = text.match(/metadata_files\[(\d+)\]:\s*(.+)$/i)
+        if (!match) return
+        const index = Number(match[1]) - 1
+        const message = match[2] || 'Validation failed.'
+        if (!Number.isInteger(index) || index < 0 || index >= rows.length) return
+        setMetadataFileStatus(rows[index], 'error', message)
+        applied = true
+      })
+      return applied
     }
 
     function syncMetadataFilesEditor (editor, emitEvents = true) {
@@ -208,6 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
       list.replaceChildren()
       entries.forEach(entry => list.appendChild(buildMetadataFileRow(entry)))
       syncMetadataFilesEditor(editor, false)
+      updateMetadataFilesAccordionState(editor)
     }
 
     function initMetadataFilesEditors (scope) {
@@ -262,12 +320,12 @@ document.addEventListener('DOMContentLoaded', function () {
           })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok || !payload.valid) {
-            setMetadataFileStatus(row, 'warning', payload.error || 'Validation failed.')
+            setMetadataFileStatus(row, 'error', payload.error || 'Validation failed.')
           } else {
             setMetadataFileStatus(row, 'success', 'Metadata file looks valid.')
           }
         } catch (_error) {
-          setMetadataFileStatus(row, 'warning', 'Validation request failed.')
+          setMetadataFileStatus(row, 'error', 'Validation request failed.')
         } finally {
           validateButton.disabled = false
         }
@@ -1630,6 +1688,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const payload = buildPayloadFromCard(card)
+      const metadataEditor = card.querySelector('[data-metadata-files-editor]')
       const option = libraryPicker?.querySelector(`option[value="${activeLibraryId}"]`)
       const friendlyName = option?.dataset.label || option?.textContent?.trim() || activeLibraryId
 
@@ -1640,7 +1699,15 @@ document.addEventListener('DOMContentLoaded', function () {
         body: JSON.stringify(payload)
       })
         .then(res => {
-          if (!res.ok) throw new Error(`Autosave failed: ${res.status}`)
+          if (!res.ok) {
+            return res.json().catch(() => ({})).then(body => {
+              if (metadataEditor) {
+                applyMetadataFileServerErrors(metadataEditor, body && body.errors)
+              }
+              const message = body && body.error ? body.error : `Autosave failed: ${res.status}`
+              throw new Error(message)
+            })
+          }
           return res.json().catch(() => ({}))
         })
         .then(data => {
@@ -1656,7 +1723,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(err => {
           console.error('[Autosave] Failed to save library', activeLibraryId, err)
           if (typeof showToast === 'function') {
-            showToast('error', `Autosave failed for ${friendlyName}.`)
+            showToast('error', err.message || `Autosave failed for ${friendlyName}.`)
           }
           throw err
         })
@@ -1806,6 +1873,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadLibrary (libraryId, context = 'switch') {
       if (libraryId === activeLibraryId) return
       const requestId = ++loadRequestId
+      const previousLibraryId = activeLibraryId
       const setLoading = (flag) => {
         if (libraryLoading) {
           libraryLoading.classList.toggle('d-none', !flag)
@@ -1824,7 +1892,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       setLoading(true)
       autosaveActiveLibrary()
-        .finally(() => {
+        .then(() => {
           if (requestId !== loadRequestId) return
 
           if (!libraryId) {
@@ -1865,6 +1933,13 @@ document.addEventListener('DOMContentLoaded', function () {
               setLoading(false)
             })
         })
+        .catch(() => {
+          if (requestId !== loadRequestId) return
+          if (libraryPicker && previousLibraryId) {
+            libraryPicker.value = previousLibraryId
+          }
+          setLoading(false)
+        })
     }
 
     if (libraryPicker) {
@@ -1886,6 +1961,27 @@ document.addEventListener('DOMContentLoaded', function () {
         libraryPicker.value = ''
       }
     }
+
+    document.addEventListener('qs:before-step-navigation', (event) => {
+      const detail = (event && event.detail) || {}
+      if (allowNextStepNavigation) {
+        allowNextStepNavigation = false
+        return
+      }
+      if (!activeLibraryId || !libraryContainer || !libraryContainer.firstElementChild) return
+      if (!detail.targetPage || detail.targetPage === '025-libraries') return
+
+      event.preventDefault()
+
+      autosaveActiveLibrary()
+        .then(() => {
+          allowNextStepNavigation = true
+          jumpTo(detail.targetPage, detail.targetLabel)
+        })
+        .catch(() => {
+          allowNextStepNavigation = false
+        })
+    })
 
     if (typeof setupParentChildToggleSync === 'function') {
       setupParentChildToggleSync()
