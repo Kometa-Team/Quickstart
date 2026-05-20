@@ -145,8 +145,8 @@ document.addEventListener('DOMContentLoaded', function () {
               <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml or https://example.com/metadata.yml">
             </div>
             <div class="col-md-3 d-flex gap-2 justify-content-md-end">
-              <button type="button" class="btn btn-outline-info btn-sm" data-validate-metadata-file>Validate</button>
-              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-metadata-file>Remove</button>
+              <button type="button" class="btn btn-success btn-sm" data-validate-metadata-file>Validate</button>
+              <button type="button" class="btn btn-danger btn-sm" data-remove-metadata-file>Remove</button>
             </div>
           </div>
           <div class="mt-2 small d-none" data-metadata-file-status></div>
@@ -160,7 +160,18 @@ document.addEventListener('DOMContentLoaded', function () {
       if (locationInput && entry.location) {
         locationInput.value = entry.location
       }
+      updateMetadataFileValidateButton(wrapper, false)
       return wrapper
+    }
+
+    function updateMetadataFileValidateButton (row, isValidated) {
+      if (!row) return
+      const button = row.querySelector('[data-validate-metadata-file]')
+      if (!button) return
+      button.disabled = Boolean(isValidated)
+      button.classList.toggle('btn-success', !isValidated)
+      button.classList.toggle('btn-secondary', isValidated)
+      button.textContent = isValidated ? 'Validated' : 'Validate'
     }
 
     function setMetadataFileStatus (row, kind, message) {
@@ -172,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!message) {
         target.classList.add('d-none')
         target.textContent = ''
+        updateMetadataFileValidateButton(row, false)
         const editor = row.closest('[data-metadata-files-editor]')
         if (editor) updateMetadataFilesAccordionState(editor)
         return
@@ -185,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
         target.classList.add('text-warning')
       }
       target.textContent = message
+      updateMetadataFileValidateButton(row, kind === 'success')
       const editor = row.closest('[data-metadata-files-editor]')
       if (editor) updateMetadataFilesAccordionState(editor)
     }
@@ -327,7 +340,9 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (_error) {
           setMetadataFileStatus(row, 'error', 'Validation request failed.')
         } finally {
-          validateButton.disabled = false
+          if (row.dataset.metadataFileState !== 'success') {
+            updateMetadataFileValidateButton(row, false)
+          }
         }
       }
     })
