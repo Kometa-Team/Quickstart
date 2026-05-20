@@ -161,12 +161,74 @@ def test_validate_metadata_file_accepts_existing_local_file(client, tmp_path):
 def test_validate_metadata_file_rejects_invalid_type(client):
     resp = client.post(
         "/validate_metadata_file",
-        json={"metadata_file_type": "git", "metadata_file_location": "config/metadata.yml"},
+        json={"metadata_file_type": "folder", "metadata_file_location": "config/metadata.yml"},
     )
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "file or url" in payload["error"]
+    assert "file, url, git, or repo" in payload["error"]
+
+
+def test_validate_metadata_file_accepts_git(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 200
+        reason = "OK"
+        text = "metadata:\n  test:\n    title: Example\n"
+
+    captured = {}
+
+    def _fake_get(url, timeout=10):
+        captured["url"] = url
+        return _Resp()
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", _fake_get)
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "git", "metadata_file_location": "bullmoose20/godzilla.yml"},
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["valid"] is True
+    assert captured["url"] == "https://raw.githubusercontent.com/Kometa-Team/Community-Configs/master/bullmoose20/godzilla.yml"
+
+
+def test_validate_metadata_file_rejects_repo_without_custom_repo(client):
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "repo", "metadata_file_location": "bullmoose20/godzilla.yml"},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert payload["error"] == "Metadata file repo entries require Custom Repo to be configured and saved first within the Settings page."
+
+
+def test_validate_metadata_file_accepts_repo_with_saved_custom_repo(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 200
+        reason = "OK"
+        text = "metadata:\n  test:\n    title: Example\n"
+
+    captured = {}
+
+    def _fake_get(url, timeout=10):
+        captured["url"] = url
+        return _Resp()
+
+    monkeypatch.setattr(
+        qs_module.validations.persistence,
+        "retrieve_settings",
+        lambda _section: {"settings": {"custom_repo": "https://github.com/example/custom-repo/tree/master"}},
+    )
+    monkeypatch.setattr(qs_module.validations.requests, "get", _fake_get)
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "repo", "metadata_file_location": "bullmoose20/godzilla.yml"},
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["valid"] is True
+    assert captured["url"] == "https://raw.githubusercontent.com/example/custom-repo/master/bullmoose20/godzilla.yml"
 
 
 def test_validate_metadata_file_rejects_url_in_file_mode(client):
@@ -224,7 +286,9 @@ def test_output_metadata_file_entries_are_sorted():
         json.dumps(
             [
                 {"type": "url", "location": "https://example.com/zeta.yml"},
+                {"type": "repo", "location": "custom/movies.yml"},
                 {"type": "file", "location": "config/beta.yml"},
+                {"type": "git", "location": "community/alpha.yml"},
                 {"type": "file", "location": "config/alpha.yml"},
                 {"type": "url", "location": "https://example.com/alpha.yml"},
             ]
@@ -234,6 +298,8 @@ def test_output_metadata_file_entries_are_sorted():
     assert parsed == [
         {"file": "config/alpha.yml"},
         {"file": "config/beta.yml"},
+        {"git": "community/alpha.yml"},
+        {"repo": "custom/movies.yml"},
         {"url": "https://example.com/alpha.yml"},
         {"url": "https://example.com/zeta.yml"},
     ]
@@ -259,7 +325,9 @@ def test_build_libraries_section_emits_metadata_files(app):
                     "mov-library_movies-metadata_files": json.dumps(
                         [
                             {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+                            {"type": "repo", "location": "custom/movies_meta.yml"},
                             {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+                            {"type": "git", "location": "bullmoose20/collections/godzilla.yml"},
                         ]
                     )
                 }
@@ -271,10 +339,12 @@ def test_build_libraries_section_emits_metadata_files(app):
             {},
         )
 
-    assert libraries_section["libraries"]["Movies"]["metadata_files"] == [
-        {"file": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
-        {"url": "https://example.com/movies_refresh.yml"},
-    ]
+        assert libraries_section["libraries"]["Movies"]["metadata_files"] == [
+            {"file": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+            {"git": "bullmoose20/collections/godzilla.yml"},
+            {"repo": "custom/movies_meta.yml"},
+            {"url": "https://example.com/movies_refresh.yml"},
+        ]
     assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "metadata_files"]
 
 

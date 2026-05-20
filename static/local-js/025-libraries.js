@@ -126,6 +126,19 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    const metadataCustomRepoRaw = String(window.QS_SETTINGS_CUSTOM_REPO || '').trim()
+    const metadataCustomRepoBase = String(window.QS_SETTINGS_CUSTOM_REPO_BASE || '').trim()
+    const metadataRepoDependencyMessage = 'Metadata file repo entries require Custom Repo to be configured and saved first within the Settings page.'
+
+    function appendMetadataSettingsLink (target, className = 'link-light fw-semibold text-decoration-underline') {
+      const link = document.createElement('a')
+      link.href = '/step/150-settings#custom_repo'
+      link.textContent = 'Settings'
+      link.className = className
+      target.appendChild(link)
+      return link
+    }
+
     function buildMetadataFileRow (entry = {}) {
       const wrapper = document.createElement('div')
       wrapper.className = 'card bg-body-tertiary border-secondary'
@@ -137,12 +150,14 @@ document.addEventListener('DOMContentLoaded', function () {
               <label class="form-label small text-muted">Type</label>
               <select class="form-select form-select-sm" data-metadata-file-type>
                 <option value="file">file</option>
+                <option value="git">git</option>
+                <option value="repo">repo</option>
                 <option value="url">url</option>
               </select>
             </div>
             <div class="col-md-7">
-              <label class="form-label small text-muted">Path or URL</label>
-              <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml or https://example.com/metadata.yml">
+              <label class="form-label small text-muted">Location</label>
+              <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml, user/file.yml, or https://example.com/metadata.yml">
             </div>
             <div class="col-md-3 d-flex gap-2 justify-content-md-end">
               <button type="button" class="btn btn-success btn-sm" data-validate-metadata-file>Validate</button>
@@ -154,8 +169,8 @@ document.addEventListener('DOMContentLoaded', function () {
       `
       const typeSelect = wrapper.querySelector('[data-metadata-file-type]')
       const locationInput = wrapper.querySelector('[data-metadata-file-location]')
-      if (typeSelect && entry.type === 'url') {
-        typeSelect.value = 'url'
+      if (typeSelect && ['file', 'git', 'repo', 'url'].includes(entry.type)) {
+        typeSelect.value = entry.type
       }
       if (locationInput && entry.location) {
         locationInput.value = entry.location
@@ -168,10 +183,124 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!row) return
       const button = row.querySelector('[data-validate-metadata-file]')
       if (!button) return
-      button.disabled = Boolean(isValidated)
-      button.classList.toggle('btn-success', !isValidated)
-      button.classList.toggle('btn-secondary', isValidated)
-      button.textContent = isValidated ? 'Validated' : 'Validate'
+      const state = String(row.dataset.metadataFileButtonState || '').trim() || (isValidated ? 'success' : 'idle')
+      button.classList.remove('btn-success', 'btn-secondary')
+      if (state === 'success') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validated'
+        return
+      }
+      if (state === 'blocked') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Needs Repo'
+        return
+      }
+      if (state === 'loading') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validating...'
+        return
+      }
+      button.disabled = false
+      button.classList.add('btn-success')
+      button.textContent = 'Validate'
+    }
+
+    function setMetadataFileButtonState (row, state) {
+      if (!row) return
+      row.dataset.metadataFileButtonState = state || 'idle'
+      updateMetadataFileValidateButton(row, state === 'success')
+    }
+
+    function updateMetadataCustomRepoStatus (editor) {
+      if (!editor) return
+      const target = editor.querySelector('[data-metadata-custom-repo-status]')
+      if (!target) return
+
+      target.replaceChildren()
+      target.className = 'alert small mb-3'
+      if (!metadataCustomRepoBase) {
+        target.classList.add('alert-warning')
+        target.append('Custom Repo is not configured. ')
+        target.append('Use ')
+        appendMetadataSettingsLink(target, 'alert-link fw-semibold')
+        target.append(' to configure and save it before using ')
+        const code = document.createElement('code')
+        code.textContent = 'repo'
+        target.appendChild(code)
+        target.append(' metadata files.')
+        return
+      }
+
+      target.classList.add('alert-secondary')
+      const label = document.createElement('div')
+      label.className = 'fw-semibold mb-1'
+      label.textContent = 'Custom Repo base used for repo entries'
+      target.appendChild(label)
+
+      const baseValue = document.createElement('code')
+      baseValue.textContent = metadataCustomRepoBase
+      target.appendChild(baseValue)
+
+      if (metadataCustomRepoRaw && metadataCustomRepoRaw !== metadataCustomRepoBase) {
+        const savedValue = document.createElement('div')
+        savedValue.className = 'mt-2'
+        savedValue.append('Saved Custom Repo value: ')
+        const savedCode = document.createElement('code')
+        savedCode.textContent = metadataCustomRepoRaw
+        savedValue.appendChild(savedCode)
+        target.appendChild(savedValue)
+      }
+
+      const hint = document.createElement('div')
+      hint.className = 'mt-2'
+      hint.append('Change it in ')
+      appendMetadataSettingsLink(hint, 'alert-link fw-semibold')
+      hint.append('.')
+      target.appendChild(hint)
+    }
+
+    function applyMetadataFileDependencyState (row, opts = {}) {
+      if (!row) return false
+      const skipStatus = Boolean(opts.skipStatus)
+      const type = row.querySelector('[data-metadata-file-type]')?.value || ''
+      if (type !== 'repo') {
+        if (row.dataset.metadataFileDependency === 'repo-missing') {
+          row.dataset.metadataFileDependency = ''
+        }
+        return false
+      }
+
+      if (metadataCustomRepoBase) {
+        if (row.dataset.metadataFileDependency === 'repo-missing') {
+          row.dataset.metadataFileDependency = ''
+        }
+        return false
+      }
+
+      row.dataset.metadataFileDependency = 'repo-missing'
+      setMetadataFileButtonState(row, 'blocked')
+      if (!skipStatus) {
+        setMetadataFileStatus(row, 'error', metadataRepoDependencyMessage)
+      }
+      return true
+    }
+
+    function renderMetadataFileStatusMessage (target, message) {
+      const text = String(message || '').trim()
+      target.replaceChildren()
+      if (!text) return
+
+      if (text === metadataRepoDependencyMessage) {
+        target.append('Metadata file repo entries require Custom Repo to be configured and saved first within the ')
+        appendMetadataSettingsLink(target)
+        target.append(' page.')
+        return
+      }
+
+      target.textContent = text
     }
 
     function setMetadataFileStatus (row, kind, message) {
@@ -183,7 +312,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!message) {
         target.classList.add('d-none')
         target.textContent = ''
-        updateMetadataFileValidateButton(row, false)
+        if (applyMetadataFileDependencyState(row, { skipStatus: true })) {
+          setMetadataFileButtonState(row, 'blocked')
+        } else {
+          setMetadataFileButtonState(row, 'idle')
+        }
         const editor = row.closest('[data-metadata-files-editor]')
         if (editor) updateMetadataFilesAccordionState(editor)
         return
@@ -196,8 +329,14 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         target.classList.add('text-warning')
       }
-      target.textContent = message
-      updateMetadataFileValidateButton(row, kind === 'success')
+      renderMetadataFileStatusMessage(target, message)
+      if (kind === 'success') {
+        setMetadataFileButtonState(row, 'success')
+      } else if (row.dataset.metadataFileDependency === 'repo-missing') {
+        setMetadataFileButtonState(row, 'blocked')
+      } else {
+        setMetadataFileButtonState(row, 'idle')
+      }
       const editor = row.closest('[data-metadata-files-editor]')
       if (editor) updateMetadataFilesAccordionState(editor)
     }
@@ -266,6 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
         hidden.dispatchEvent(new Event('input', { bubbles: true }))
         hidden.dispatchEvent(new Event('change', { bubbles: true }))
       }
+      updateMetadataFilesAccordionState(editor)
       return entries
     }
 
@@ -274,9 +414,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const hidden = editor.querySelector('input[type="hidden"][name$="-metadata_files"]')
       const list = editor.querySelector('[data-metadata-files-list]')
       if (!hidden || !list) return
+      updateMetadataCustomRepoStatus(editor)
       const entries = parseMetadataFilesValue(hidden.value)
       list.replaceChildren()
       entries.forEach(entry => list.appendChild(buildMetadataFileRow(entry)))
+      list.querySelectorAll('[data-metadata-file-row]').forEach(row => {
+        if (applyMetadataFileDependencyState(row)) return
+        setMetadataFileButtonState(row, 'idle')
+      })
       syncMetadataFilesEditor(editor, false)
       updateMetadataFilesAccordionState(editor)
     }
@@ -316,11 +461,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = validateButton.closest('[data-metadata-file-row]')
         const editor = validateButton.closest('[data-metadata-files-editor]')
         if (!row || !editor) return
+        if (applyMetadataFileDependencyState(row)) return
         const type = row.querySelector('[data-metadata-file-type]')?.value || ''
         const location = row.querySelector('[data-metadata-file-location]')?.value || ''
         syncMetadataFilesEditor(editor, false)
-        validateButton.disabled = true
         setMetadataFileStatus(row, '', 'Validating...')
+        setMetadataFileButtonState(row, 'loading')
         try {
           const response = await fetch('/validate_metadata_file', {
             method: 'POST',
@@ -340,8 +486,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (_error) {
           setMetadataFileStatus(row, 'error', 'Validation request failed.')
         } finally {
-          if (row.dataset.metadataFileState !== 'success') {
-            updateMetadataFileValidateButton(row, false)
+          if (row.dataset.metadataFileState !== 'success' && row.dataset.metadataFileDependency !== 'repo-missing') {
+            setMetadataFileButtonState(row, 'idle')
           }
         }
       }
@@ -354,6 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const row = target.closest('[data-metadata-file-row]')
       const editor = target.closest('[data-metadata-files-editor]')
       setMetadataFileStatus(row, '', '')
+      applyMetadataFileDependencyState(row)
       syncMetadataFilesEditor(editor)
     })
 
@@ -364,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const row = target.closest('[data-metadata-file-row]')
       const editor = target.closest('[data-metadata-files-editor]')
       setMetadataFileStatus(row, '', '')
+      applyMetadataFileDependencyState(row)
       syncMetadataFilesEditor(editor)
     })
 

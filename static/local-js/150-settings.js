@@ -100,6 +100,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function focusFieldFromHash () {
+    const hash = String(window.location.hash || '').trim()
+    if (!hash || hash.length < 2) return
+    const field = document.getElementById(hash.slice(1))
+    if (!field) return
+
+    showAccordionForField(field)
+    window.setTimeout(() => {
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (typeof field.focus === 'function') {
+        field.focus({ preventScroll: true })
+      }
+    }, 200)
+  }
+
   function validateField (field, regex, errorMessage) {
     const value = field.value.trim()
     console.log(`Validating field: ${field.name}, Value: "${value}"`) // Debug log
@@ -317,4 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setSettingsValidated(true)
     }
   })
+
+  focusFieldFromHash()
+  window.addEventListener('hashchange', focusFieldFromHash)
 })

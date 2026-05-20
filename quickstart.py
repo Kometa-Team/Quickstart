@@ -6055,6 +6055,12 @@ def step(name):
     page_info["header_style"] = header_style
     page_info["save_error"] = save_error
     page_info["template_name"] = name
+    settings_payload = persistence.retrieve_settings("150-settings") or {}
+    settings_section = settings_payload.get("settings", {}) if isinstance(settings_payload, dict) else {}
+    custom_repo_setting = str(settings_section.get("custom_repo") or "").strip()
+    custom_repo_base = validations._normalize_custom_repo_base(custom_repo_setting) or ""
+    page_info["settings_custom_repo"] = custom_repo_setting
+    page_info["settings_custom_repo_base"] = custom_repo_base
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
     if "restart_nonce" not in session:

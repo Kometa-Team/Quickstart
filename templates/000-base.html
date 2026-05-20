@@ -60,6 +60,8 @@
     window.QS_FLASK_SESSION_DIR = {{ config.get('QS_FLASK_SESSION_DIR', '') | tojson }};
     window.QS_RESTART_NOTICE = {{ config.get('QS_RESTART_NOTICE') | tojson }};
     window.QS_CURRENT_TEMPLATE = {{ (page_info.get('template_name', '') if page_info else '') | tojson }};
+    window.QS_SETTINGS_CUSTOM_REPO = {{ (page_info.get('settings_custom_repo', '') if page_info else '') | tojson }};
+    window.QS_SETTINGS_CUSTOM_REPO_BASE = {{ (page_info.get('settings_custom_repo_base', '') if page_info else '') | tojson }};
     window.QS_REQUIRED_KEYS = {{ (required_keys if required_keys is defined else []) | tojson }};
     window.QS_OPTIONAL_KEYS = {{ (optional_keys if optional_keys is defined else []) | tojson }};
     window.QS_REVIEW_KEYS = {{ (review_keys if review_keys is defined else []) | tojson }};

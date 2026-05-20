@@ -8,7 +8,7 @@ from flask import current_app as app
 from flask import jsonify, flash
 from plexapi.server import PlexServer
 
-from modules import iso, helpers, path_validation, url_validation
+from modules import iso, helpers, path_validation, persistence, url_validation
 
 
 def validate_iso3166_1(code):
@@ -88,26 +88,65 @@ def _validate_yaml_location(location, label):
     return _validate_yaml_text(yaml_text, label)
 
 
+def _normalize_custom_repo_base(custom_repo):
+    repo = str(custom_repo or "").strip()
+    if not repo or repo.lower() == "none":
+        return None
+    if "https://github.com/" in repo:
+        repo = repo.replace("https://github.com/", "https://raw.githubusercontent.com/").replace("/tree/", "/")
+        if not repo.endswith("/"):
+            repo += "/"
+    return repo
+
+
+def _saved_custom_repo_base():
+    settings_data = persistence.retrieve_settings("150-settings") or {}
+    settings_section = settings_data.get("settings", {}) if isinstance(settings_data, dict) else {}
+    return _normalize_custom_repo_base(settings_section.get("custom_repo"))
+
+
 def validate_metadata_file_payload(data):
     metadata_file_type = str(data.get("metadata_file_type") or "").strip().lower()
     metadata_file_location = str(data.get("metadata_file_location") or "").strip()
 
-    if metadata_file_type not in {"file", "url"}:
-        return False, "Metadata file type must be file or url."
+    if metadata_file_type not in {"file", "url", "git", "repo"}:
+        return False, "Metadata file type must be file, url, git, or repo."
 
     if not metadata_file_location:
-        return False, "Metadata file path or URL is required."
+        return False, "Metadata file location is required."
 
     if metadata_file_type == "url":
         if not metadata_file_location.lower().startswith(("http://", "https://")):
             return False, "Metadata file URL must start with http:// or https://."
         label = "Metadata file URL"
-    else:
+        return _validate_yaml_location(metadata_file_location, label)
+
+    if metadata_file_type == "file":
         if metadata_file_location.lower().startswith(("http://", "https://")):
             return False, "Metadata file path must be a local file path."
         label = "Metadata file path"
+        return _validate_yaml_location(metadata_file_location, label)
 
-    return _validate_yaml_location(metadata_file_location, label)
+    if metadata_file_location.lower().startswith(("http://", "https://")):
+        return False, f"Metadata file {metadata_file_type} value must not be a full URL."
+
+    if metadata_file_type == "git":
+        valid, message = _validate_yaml_location_suffix(metadata_file_location, "Metadata file git path")
+        if not valid:
+            return False, message
+        return _validate_yaml_location(
+            f"https://raw.githubusercontent.com/Kometa-Team/Community-Configs/master/{metadata_file_location}",
+            "Metadata file git path",
+        )
+
+    custom_repo_base = _saved_custom_repo_base()
+    if not custom_repo_base:
+        return False, "Metadata file repo entries require Custom Repo to be configured and saved first within the Settings page."
+    valid, message = _validate_yaml_location_suffix(metadata_file_location, "Metadata file repo path")
+    if not valid:
+        return False, message
+    resolved_repo_location = f"{custom_repo_base}{metadata_file_location}"
+    return _validate_yaml_location(resolved_repo_location, "Metadata file repo path")
 
 
 def validate_metadata_file_server(data):

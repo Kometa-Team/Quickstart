@@ -1278,14 +1278,20 @@ def prepare_import_payload(
                         if "file" in entry:
                             entry_type = "file"
                             location = entry.get("file")
+                        elif "git" in entry:
+                            entry_type = "git"
+                            location = entry.get("git")
+                        elif "repo" in entry:
+                            entry_type = "repo"
+                            location = entry.get("repo")
                         elif "url" in entry:
                             entry_type = "url"
                             location = entry.get("url")
-                    if entry_type not in {"file", "url"}:
+                    if entry_type not in {"file", "url", "git", "repo"}:
                         report.add(
                             "unmapped",
                             f"libraries.{lib_name}.metadata_files[{idx}]",
-                            "Only file and url metadata files are supported.",
+                            "Only file, url, git, and repo metadata files are supported.",
                         )
                         continue
                     location = str(location or "").strip()
