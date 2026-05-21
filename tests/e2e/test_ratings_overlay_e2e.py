@@ -233,8 +233,7 @@ def _enable_overlay_group(page, template):
 
 
 def _ensure_overlay_test_hooks(page):
-    page.evaluate(
-        """() => {
+    page.evaluate("""() => {
           const handler = typeof OverlayHandler !== 'undefined'
             ? OverlayHandler
             : window.OverlayHandler
@@ -243,8 +242,7 @@ def _ensure_overlay_test_hooks(page):
               typeof handler.initializeOverlayBoards === 'function') {
             handler.initializeOverlayBoards(document)
           }
-        }"""
-    )
+        }""")
     page.wait_for_function(
         """() => !!window.__qsOverlayTestHooks &&
           typeof window.__qsOverlayTestHooks.syncRatingSources === 'function'""",
