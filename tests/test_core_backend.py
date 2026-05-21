@@ -158,6 +158,34 @@ def test_validate_metadata_file_accepts_existing_local_file(client, tmp_path):
     assert payload["valid"] is True
 
 
+def test_validate_metadata_file_rejects_missing_top_level_metadata(client, tmp_path):
+    metadata_file = tmp_path / "metadata.yml"
+    metadata_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "file", "metadata_file_location": str(metadata_file)},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "non-empty top-level metadata mapping" in payload["error"]
+
+
+def test_validate_metadata_file_rejects_empty_top_level_metadata(client, tmp_path):
+    metadata_file = tmp_path / "metadata.yml"
+    metadata_file.write_text("metadata: {}\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "file", "metadata_file_location": str(metadata_file)},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "non-empty top-level metadata mapping" in payload["error"]
+
+
 def test_validate_metadata_file_rejects_invalid_type(client):
     resp = client.post(
         "/validate_metadata_file",
@@ -218,6 +246,41 @@ def test_validate_metadata_folder_does_not_recurse_into_subfolders(client, tmp_p
     assert payload["valid"] is True
     assert payload["validated_files"] == 1
     assert payload["files"] == ["godzilla.yml"]
+
+
+def test_validate_metadata_folder_rejects_top_level_yaml_without_metadata(client, tmp_path):
+    metadata_dir = tmp_path / "metadata"
+    metadata_dir.mkdir()
+    (metadata_dir / "godzilla.yml").write_text("metadata:\n  test:\n    title: Godzilla\n", encoding="utf-8")
+    (metadata_dir / "broken.yml").write_text("templates:\n  sample:\n    test: true\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "folder", "metadata_file_location": str(metadata_dir)},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "broken.yml" in payload["error"]
+    assert "non-empty top-level metadata mapping" in payload["error"]
+
+
+def test_validate_metadata_url_rejects_missing_top_level_metadata(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 200
+        reason = "OK"
+        text = "templates:\n  sample:\n    default: true\n"
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", lambda *_args, **_kwargs: _Resp())
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "url", "metadata_file_location": "https://example.com/metadata.yml"},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "non-empty top-level metadata mapping" in payload["error"]
 
 
 def test_validate_metadata_file_accepts_git(client, monkeypatch, qs_module):

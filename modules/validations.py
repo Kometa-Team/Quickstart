@@ -40,9 +40,25 @@ def _validate_yaml_text(raw_text, label):
         return False, f"{label} must not be empty."
     parser = YAML(typ="safe", pure=True)
     try:
-        parser.load(raw_text)
+        parsed = parser.load(raw_text)
     except Exception as exc:
         return False, f"{label} must contain valid YAML. {exc}"
+    return True, None, parsed
+
+
+def _validate_metadata_yaml_text(raw_text, label):
+    result = _validate_yaml_text(raw_text, label)
+    if len(result) == 2:
+        valid, message = result
+        return False, message
+    valid, message, parsed = result
+    if not valid:
+        return False, message
+    if not isinstance(parsed, dict):
+        return False, f"{label} must contain a top-level metadata mapping."
+    metadata = parsed.get("metadata")
+    if not isinstance(metadata, dict) or not metadata:
+        return False, f"{label} must contain a non-empty top-level metadata mapping."
     return True, None
 
 
@@ -71,7 +87,11 @@ def _validate_yaml_location(location, label):
         if response.status_code >= 400:
             return False, f"Failed to fetch {label} ({response.status_code} [{response.reason}])."
 
-        return _validate_yaml_text(response.text, label)
+        result = _validate_yaml_text(response.text, label)
+        if len(result) == 2:
+            return result
+        valid, message, _parsed = result
+        return valid, message
 
     valid, message = path_validation.validate_path(
         location,
@@ -86,7 +106,47 @@ def _validate_yaml_location(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read file. {exc}"
 
-    return _validate_yaml_text(yaml_text, label)
+    result = _validate_yaml_text(yaml_text, label)
+    if len(result) == 2:
+        return result
+    valid, message, _parsed = result
+    return valid, message
+
+
+def _validate_metadata_yaml_location(location, label):
+    valid, message = _validate_yaml_location_suffix(location, label)
+    if not valid:
+        return False, message
+
+    if str(location).strip().lower().startswith(("http://", "https://")):
+        valid, message = url_validation.validate_url(location, allow_local=True)
+        if not valid:
+            return False, f"{label}: {message}"
+
+        try:
+            response = requests.get(location, timeout=10)
+        except requests.RequestException as exc:
+            return False, f"Connection error: {str(exc)}"
+
+        if response.status_code >= 400:
+            return False, f"Failed to fetch {label} ({response.status_code} [{response.reason}])."
+
+        return _validate_metadata_yaml_text(response.text, label)
+
+    valid, message = path_validation.validate_path(
+        location,
+        {"allow_relative": True, "must_exist": True, "mode": "input_file"},
+    )
+    if not valid:
+        return False, f"{label}: {message}"
+
+    try:
+        with open(location, "r", encoding="utf-8") as handle:
+            yaml_text = handle.read()
+    except OSError as exc:
+        return False, f"{label}: Unable to read file. {exc}"
+
+    return _validate_metadata_yaml_text(yaml_text, label)
 
 
 def _validate_yaml_folder(location, label):
@@ -113,7 +173,7 @@ def _validate_yaml_folder(location, label):
         except OSError as exc:
             return False, f"{label}: Unable to read file {os.path.basename(yaml_file)}. {exc}"
 
-        valid, message = _validate_yaml_text(yaml_text, f"{label} file {os.path.basename(yaml_file)}")
+        valid, message = _validate_metadata_yaml_text(yaml_text, f"{label} file {os.path.basename(yaml_file)}")
         if not valid:
             return False, message
 
@@ -165,7 +225,7 @@ def validate_metadata_file_payload(data):
         if not metadata_file_location.lower().startswith(("http://", "https://")):
             return False, "Metadata file URL must start with http:// or https://.", {}
         label = "Metadata file URL"
-        return _normalize_metadata_validation_result(_validate_yaml_location(metadata_file_location, label))
+        return _normalize_metadata_validation_result(_validate_metadata_yaml_location(metadata_file_location, label))
 
     if metadata_file_type == "folder":
         if metadata_file_location.lower().startswith(("http://", "https://")):
@@ -177,7 +237,7 @@ def validate_metadata_file_payload(data):
         if metadata_file_location.lower().startswith(("http://", "https://")):
             return False, "Metadata file path must be a local file path.", {}
         label = "Metadata file path"
-        return _normalize_metadata_validation_result(_validate_yaml_location(metadata_file_location, label))
+        return _normalize_metadata_validation_result(_validate_metadata_yaml_location(metadata_file_location, label))
 
     if metadata_file_location.lower().startswith(("http://", "https://")):
         return False, f"Metadata file {metadata_file_type} value must not be a full URL.", {}
@@ -187,7 +247,7 @@ def validate_metadata_file_payload(data):
         if not valid:
             return False, message, {}
         return _normalize_metadata_validation_result(
-            _validate_yaml_location(
+            _validate_metadata_yaml_location(
                 f"https://raw.githubusercontent.com/Kometa-Team/Community-Configs/master/{metadata_file_location}",
                 "Metadata file git path",
             )
@@ -200,7 +260,7 @@ def validate_metadata_file_payload(data):
     if not valid:
         return False, message, {}
     resolved_repo_location = f"{custom_repo_base}{metadata_file_location}"
-    return _normalize_metadata_validation_result(_validate_yaml_location(resolved_repo_location, "Metadata file repo path"))
+    return _normalize_metadata_validation_result(_validate_metadata_yaml_location(resolved_repo_location, "Metadata file repo path"))
 
 
 def validate_metadata_file_server(data):
