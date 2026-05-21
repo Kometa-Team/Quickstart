@@ -737,17 +737,20 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!accordionHeader) return
 
       const rows = Array.from(editor.querySelectorAll('[data-collection-file-row]'))
+      const hasEntries = rows.some(row => normalizeMetadataFileEntry({
+        type: row.querySelector('[data-collection-file-type]')?.value || '',
+        location: row.querySelector('[data-collection-file-location]')?.value || ''
+      }))
       const hasInvalid = rows.some(row => {
         const state = String(row.dataset.collectionFileState || '').trim().toLowerCase()
         return state === 'error' || state === 'warning'
       })
 
       accordionHeader.classList.toggle('invalid', hasInvalid)
-      if (!hasInvalid && rows.some(row => normalizeMetadataFileEntry({
-        type: row.querySelector('[data-collection-file-type]')?.value || '',
-        location: row.querySelector('[data-collection-file-location]')?.value || ''
-      }))) {
+      if (!hasInvalid && hasEntries) {
         accordionHeader.classList.add('selected')
+      } else if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
+        EventHandler.updateAccordionHighlights()
       }
     }
 
