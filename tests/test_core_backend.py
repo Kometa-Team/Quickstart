@@ -1334,7 +1334,7 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
             ],
             [],
             {},
-            ),
+        ),
     )
     monkeypatch.setattr(qs_module.validations, "validate_metadata_file_payload", lambda _payload: (True, ""))
 

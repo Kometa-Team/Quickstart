@@ -1850,8 +1850,10 @@ def build_libraries_section(
 
                     entry["overlay_files"] = overlay_entries
 
-        metadata_group = movie_metadata_files.get(helpers.extract_library_name(library_key), {}) if library_type == "mov" else show_metadata_files.get(
-            helpers.extract_library_name(library_key), {}
+        metadata_group = (
+            movie_metadata_files.get(helpers.extract_library_name(library_key), {})
+            if library_type == "mov"
+            else show_metadata_files.get(helpers.extract_library_name(library_key), {})
         )
         library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
         metadata_entries = _parse_metadata_file_entries(metadata_group.get(f"{library_prefix}-metadata_files"))

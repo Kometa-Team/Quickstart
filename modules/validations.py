@@ -102,11 +102,7 @@ def _validate_yaml_folder(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [
-        os.path.join(location, entry)
-        for entry in entries
-        if os.path.isfile(os.path.join(location, entry)) and entry.lower().endswith((".yml", ".yaml"))
-    ]
+    yaml_files = [os.path.join(location, entry) for entry in entries if os.path.isfile(os.path.join(location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
@@ -124,11 +120,7 @@ def _validate_yaml_folder(location, label):
     validated_files = len(yaml_files)
     file_names = [os.path.basename(yaml_file) for yaml_file in yaml_files]
     suffix = "" if validated_files == 1 else "s"
-    return True, None, {
-        "validated_files": validated_files,
-        "files": file_names,
-        "message": f"Validated {validated_files} YAML file{suffix} in folder."
-    }
+    return True, None, {"validated_files": validated_files, "files": file_names, "message": f"Validated {validated_files} YAML file{suffix} in folder."}
 
 
 def _normalize_custom_repo_base(custom_repo):

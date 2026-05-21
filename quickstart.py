@@ -586,12 +586,14 @@ def _validate_library_metadata_files(libraries_data, selected_library_ids):
             continue
 
         for idx, entry in enumerate(entries, start=1):
-            valid, message, _details = validations._normalize_metadata_validation_result(validations.validate_metadata_file_payload(
-                {
-                    "metadata_file_type": entry.get("type"),
-                    "metadata_file_location": entry.get("location"),
-                }
-            ))
+            valid, message, _details = validations._normalize_metadata_validation_result(
+                validations.validate_metadata_file_payload(
+                    {
+                        "metadata_file_type": entry.get("type"),
+                        "metadata_file_location": entry.get("location"),
+                    }
+                )
+            )
             if not valid:
                 errors.append(f"{lib_id} metadata_files[{idx}]: {message}")
 
