@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
               <label class="form-label small text-muted">Type</label>
               <select class="form-select form-select-sm" data-metadata-file-type>
                 <option value="file">file</option>
+                <option value="folder">folder</option>
                 <option value="git">git</option>
                 <option value="repo">repo</option>
                 <option value="url">url</option>
@@ -157,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="col-md-7">
               <label class="form-label small text-muted">Location</label>
-              <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml, user/file.yml, or https://example.com/metadata.yml">
+              <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml, config/metadata/, user/file.yml, or https://example.com/metadata.yml">
             </div>
             <div class="col-md-3 d-flex gap-2 justify-content-md-end">
               <button type="button" class="btn btn-success btn-sm" data-validate-metadata-file>Validate</button>
@@ -169,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
       `
       const typeSelect = wrapper.querySelector('[data-metadata-file-type]')
       const locationInput = wrapper.querySelector('[data-metadata-file-location]')
-      if (typeSelect && ['file', 'git', 'repo', 'url'].includes(entry.type)) {
+      if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
         typeSelect.value = entry.type
       }
       if (locationInput && entry.location) {
@@ -289,8 +290,53 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderMetadataFileStatusMessage (target, message) {
-      const text = String(message || '').trim()
       target.replaceChildren()
+      if (!message) return
+
+      if (typeof message === 'object' && message !== null) {
+        const text = String(message.text || message.message || '').trim()
+        const files = Array.isArray(message.files) ? message.files.filter(Boolean) : []
+        if (text) {
+          const summary = document.createElement('div')
+          summary.textContent = text
+          target.appendChild(summary)
+        }
+        if (files.length) {
+          if (files.length <= 5) {
+            const list = document.createElement('ul')
+            list.className = 'mb-0 mt-1 ps-3'
+            files.forEach(file => {
+              const item = document.createElement('li')
+              const code = document.createElement('code')
+              code.textContent = file
+              item.appendChild(code)
+              list.appendChild(item)
+            })
+            target.appendChild(list)
+          } else {
+            const details = document.createElement('details')
+            details.className = 'mt-1'
+            const summary = document.createElement('summary')
+            summary.className = 'cursor-pointer'
+            summary.textContent = 'Show files'
+            details.appendChild(summary)
+            const list = document.createElement('ul')
+            list.className = 'mb-0 mt-1 ps-3'
+            files.forEach(file => {
+              const item = document.createElement('li')
+              const code = document.createElement('code')
+              code.textContent = file
+              item.appendChild(code)
+              list.appendChild(item)
+            })
+            details.appendChild(list)
+            target.appendChild(details)
+          }
+        }
+        return
+      }
+
+      const text = String(message || '').trim()
       if (!text) return
 
       if (text === metadataRepoDependencyMessage) {
@@ -481,7 +527,10 @@ document.addEventListener('DOMContentLoaded', function () {
           if (!response.ok || !payload.valid) {
             setMetadataFileStatus(row, 'error', payload.error || 'Validation failed.')
           } else {
-            setMetadataFileStatus(row, 'success', 'Metadata file looks valid.')
+            setMetadataFileStatus(row, 'success', {
+              text: payload.message || 'Metadata source looks valid.',
+              files: Array.isArray(payload.files) ? payload.files : []
+            })
           }
         } catch (_error) {
           setMetadataFileStatus(row, 'error', 'Validation request failed.')

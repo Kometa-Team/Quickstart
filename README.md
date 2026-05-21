@@ -45,7 +45,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Dependency-Aware Optional Pages:** Optional pages such as Tautulli, OMDb, MDBList, AniDB, Radarr, Sonarr, Trakt, and MyAnimeList become required when selected library features need them
 - **TODO Sidebar:** Outstanding dependency and validation tasks are grouped into clickable cards that save the current page and open the affected setup page
 - **Library-Scoped Playlists:** Playlist file selection now lives on the Libraries page so playlists stay tied to the libraries included in the generated YAML
-- **Library Metadata Files:** Add multiple `metadata_files` entries per library with mixed `file`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to a non-empty YAML file before output
+- **Library Metadata Files:** Add multiple `metadata_files` entries per library with mixed `file`, `folder`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to non-empty YAML before output
 - **Custom Repo Awareness:** `repo` metadata files are dependency-aware and point back to `Settings -> Custom Repo` when that base path is missing
 - **Filtered Page Search:** Find matches on Libraries and Settings pages and auto-expand matching sections
 - **Settings Cog:** Quick access to runtime controls like debug mode and port changes from anywhere
@@ -137,7 +137,7 @@ How it works:
 - **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`imported / not imported`) with filters (All/Imported/Not Imported/Comments) and a downloadable report.
 - **Plex credentials prompt:** If the import contains libraries, Plex validation is required for mapping. Quickstart will prompt for Plex URL/token if none are present; if the credentials in the file fail validation, you’ll be prompted to correct them and re‑run Preview.
 - **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import; you can re‑preview after mapping.
-- **Metadata file import:** Library `metadata_files` import supports `file`, `url`, `git`, and `repo` entries. Quickstart currently validates file resolution and YAML parsing, but it does not fully validate Kometa metadata schema yet.
+- **Metadata file import:** Library `metadata_files` import supports `file`, `folder`, `url`, `git`, and `repo` entries. Quickstart currently validates file or folder resolution and YAML parsing, but it does not fully validate Kometa metadata schema yet.
 - **After import:** Quickstart stays on the Welcome page, runs bulk validation automatically, then refreshes the workspace status for the imported config.
 
 #### What happens after import?

@@ -975,7 +975,7 @@ def _parse_metadata_file_entries(raw_value):
             continue
         entry_type = str(entry.get("type") or "").strip().lower()
         location = str(entry.get("location") or "").strip()
-        if entry_type not in {"file", "url", "git", "repo"} or not location:
+        if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
             continue
         normalized.append({entry_type: location})
 

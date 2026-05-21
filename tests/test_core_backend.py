@@ -161,12 +161,63 @@ def test_validate_metadata_file_accepts_existing_local_file(client, tmp_path):
 def test_validate_metadata_file_rejects_invalid_type(client):
     resp = client.post(
         "/validate_metadata_file",
-        json={"metadata_file_type": "folder", "metadata_file_location": "config/metadata.yml"},
+        json={"metadata_file_type": "default", "metadata_file_location": "config/metadata.yml"},
     )
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "file, url, git, or repo" in payload["error"]
+    assert "file, folder, url, git, or repo" in payload["error"]
+
+
+def test_validate_metadata_folder_accepts_top_level_yaml_files(client, tmp_path):
+    metadata_dir = tmp_path / "metadata"
+    metadata_dir.mkdir()
+    (metadata_dir / "godzilla.yml").write_text("metadata:\n  test:\n    title: Godzilla\n", encoding="utf-8")
+    (metadata_dir / "refresh.yaml").write_text("metadata:\n  refresh:\n    title: Refresh\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "folder", "metadata_file_location": str(metadata_dir)},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["validated_files"] == 2
+    assert payload["files"] == ["godzilla.yml", "refresh.yaml"]
+    assert payload["message"] == "Validated 2 YAML files in folder."
+
+
+def test_validate_metadata_folder_rejects_empty_folder(client, tmp_path):
+    metadata_dir = tmp_path / "metadata"
+    metadata_dir.mkdir()
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "folder", "metadata_file_location": str(metadata_dir)},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "at least one top-level .yml or .yaml file" in payload["error"]
+
+
+def test_validate_metadata_folder_does_not_recurse_into_subfolders(client, tmp_path):
+    metadata_dir = tmp_path / "metadata"
+    metadata_dir.mkdir()
+    (metadata_dir / "godzilla.yml").write_text("metadata:\n  test:\n    title: Godzilla\n", encoding="utf-8")
+    nested_dir = metadata_dir / "nested"
+    nested_dir.mkdir()
+    (nested_dir / "broken.yml").write_text("metadata: [broken\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_metadata_file",
+        json={"metadata_file_type": "folder", "metadata_file_location": str(metadata_dir)},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["validated_files"] == 1
+    assert payload["files"] == ["godzilla.yml"]
 
 
 def test_validate_metadata_file_accepts_git(client, monkeypatch, qs_module):
@@ -288,8 +339,10 @@ def test_output_metadata_file_entries_are_sorted():
                 {"type": "url", "location": "https://example.com/zeta.yml"},
                 {"type": "repo", "location": "custom/movies.yml"},
                 {"type": "file", "location": "config/beta.yml"},
+                {"type": "folder", "location": "config/zeta"},
                 {"type": "git", "location": "community/alpha.yml"},
                 {"type": "file", "location": "config/alpha.yml"},
+                {"type": "folder", "location": "config/alpha"},
                 {"type": "url", "location": "https://example.com/alpha.yml"},
             ]
         )
@@ -298,6 +351,8 @@ def test_output_metadata_file_entries_are_sorted():
     assert parsed == [
         {"file": "config/alpha.yml"},
         {"file": "config/beta.yml"},
+        {"folder": "config/alpha"},
+        {"folder": "config/zeta"},
         {"git": "community/alpha.yml"},
         {"repo": "custom/movies.yml"},
         {"url": "https://example.com/alpha.yml"},
@@ -327,6 +382,7 @@ def test_build_libraries_section_emits_metadata_files(app):
                             {"type": "url", "location": "https://example.com/movies_refresh.yml"},
                             {"type": "repo", "location": "custom/movies_meta.yml"},
                             {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+                            {"type": "folder", "location": "config\\metadata\\movies"},
                             {"type": "git", "location": "bullmoose20/collections/godzilla.yml"},
                         ]
                     )
@@ -341,6 +397,7 @@ def test_build_libraries_section_emits_metadata_files(app):
 
         assert libraries_section["libraries"]["Movies"]["metadata_files"] == [
             {"file": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+            {"folder": "config\\metadata\\movies"},
             {"git": "bullmoose20/collections/godzilla.yml"},
             {"repo": "custom/movies_meta.yml"},
             {"url": "https://example.com/movies_refresh.yml"},
@@ -358,6 +415,7 @@ def test_build_config_includes_saved_library_metadata_files(app, isolated_config
     metadata_value = json.dumps(
         [
             {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+            {"type": "folder", "location": "config\\metadata\\movies"},
             {"type": "url", "location": "https://example.com/movies_refresh.yml"},
         ]
     )
@@ -401,6 +459,7 @@ def test_build_config_includes_saved_library_metadata_files(app, isolated_config
 
     assert "metadata_files:" in yaml_content
     assert "godzilla.yml" in yaml_content
+    assert "config\\metadata\\movies" in yaml_content
     assert "movies_refresh.yml" in yaml_content
 
 

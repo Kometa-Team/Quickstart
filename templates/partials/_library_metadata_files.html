@@ -14,7 +14,7 @@
                     <div>Quickstart does not fully validate Kometa metadata file schema yet, so a file that passes here may still fail later and cause Kometa to abort during a run.</div>
                 </div>
                 <div class="alert alert-info small mb-0" role="alert">
-                    <div>Use one or more <code>file</code>, <code>url</code>, <code>git</code>, or <code>repo</code> entries. These are written to library-level <code>metadata_files</code>.</div>
+                    <div>Use one or more <code>file</code>, <code>folder</code>, <code>url</code>, <code>git</code>, or <code>repo</code> entries. These are written to library-level <code>metadata_files</code>.</div>
                 </div>
                 <div class="metadata-files-editor" data-metadata-files-editor data-library-id="{{ library.id }}">
                 <div class="alert small mb-4" role="alert" data-metadata-custom-repo-status></div>
@@ -25,7 +25,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-add-metadata-file>
                         <i class="bi bi-plus-circle me-1"></i>Add Metadata File
                     </button>
-                    <span class="text-muted small">Supports mixed local files, raw URLs, Community-Configs git paths, and custom_repo-backed repo paths.</span>
+                    <span class="text-muted small">Supports mixed local files and folders, raw URLs, Community-Configs git paths, and custom_repo-backed repo paths.</span>
                 </div>
                 </div>
             </div>
