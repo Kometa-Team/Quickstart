@@ -1111,14 +1111,27 @@ def prepare_import_payload(
             # Collections
             collection_files = lib_cfg.get("collection_files")
             if isinstance(collection_files, list):
+                imported_collection_files = []
                 for idx, entry in enumerate(collection_files):
                     default_value = None
                     template_values = None
+                    raw_entry_type = None
+                    raw_entry_location = None
                     if isinstance(entry, dict):
                         default_value = entry.get("default")
                         template_values = entry.get("template_variables")
+                        for candidate in ("file", "folder", "url", "git", "repo"):
+                            location = entry.get(candidate)
+                            if location:
+                                raw_entry_type = candidate
+                                raw_entry_location = str(location)
+                                break
                     elif isinstance(entry, str):
                         default_value = entry
+                    if raw_entry_type and raw_entry_location:
+                        imported_collection_files.append({"type": raw_entry_type, "location": raw_entry_location})
+                        report.add("imported", f"libraries.{lib_name}.collection_files[{idx}].{raw_entry_type}")
+                        continue
                     if not default_value:
                         report.add("unmapped", f"libraries.{lib_name}.collection_files[{idx}]", "Missing default.")
                         continue
@@ -1177,6 +1190,10 @@ def prepare_import_payload(
                                     f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
                                     "Template variable not available in Quickstart.",
                                 )
+
+                if imported_collection_files:
+                    libraries_data[f"{lib_id}-collection_files"] = json.dumps(imported_collection_files, ensure_ascii=True)
+                    report.add("imported", f"libraries.{lib_name}.collection_files")
 
             elif collection_files is not None:
                 report.add("unmapped", f"libraries.{lib_name}.collection_files", "Unsupported collection_files format.")

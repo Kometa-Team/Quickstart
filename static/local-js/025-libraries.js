@@ -129,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const metadataCustomRepoRaw = String(window.QS_SETTINGS_CUSTOM_REPO || '').trim()
     const metadataCustomRepoBase = String(window.QS_SETTINGS_CUSTOM_REPO_BASE || '').trim()
     const metadataRepoDependencyMessage = 'Metadata file repo entries require Custom Repo to be configured and saved first within the Settings page.'
+    const collectionRepoDependencyMessage = 'Collection file repo entries require Custom Repo to be configured and saved first within the Settings page.'
 
     function appendMetadataSettingsLink (target, className = 'link-light fw-semibold text-decoration-underline') {
       const link = document.createElement('a')
@@ -481,6 +482,338 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function buildCollectionFileRow (entry = {}) {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'card bg-body-tertiary border-secondary'
+      wrapper.setAttribute('data-collection-file-row', 'true')
+      wrapper.innerHTML = `
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label small text-muted">Type</label>
+              <select class="form-select form-select-sm" data-collection-file-type>
+                <option value="file">file</option>
+                <option value="folder">folder</option>
+                <option value="git">git</option>
+                <option value="repo">repo</option>
+                <option value="url">url</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label small text-muted">Location</label>
+              <input type="text" class="form-control form-control-sm" data-collection-file-location placeholder="config/collections.yml, config/collections/, user/file.yml, or https://example.com/collections.yml">
+            </div>
+            <div class="col-md-3 d-flex gap-2 justify-content-md-end">
+              <button type="button" class="btn btn-success btn-sm" data-validate-collection-file>Validate</button>
+              <button type="button" class="btn btn-danger btn-sm" data-remove-collection-file>Remove</button>
+            </div>
+          </div>
+          <div class="mt-2 small d-none" data-collection-file-status></div>
+        </div>
+      `
+      const typeSelect = wrapper.querySelector('[data-collection-file-type]')
+      const locationInput = wrapper.querySelector('[data-collection-file-location]')
+      if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
+        typeSelect.value = entry.type
+      }
+      if (locationInput && entry.location) {
+        locationInput.value = entry.location
+      }
+      updateCollectionFileValidateButton(wrapper, false)
+      return wrapper
+    }
+
+    function updateCollectionFileValidateButton (row, isValidated) {
+      if (!row) return
+      const button = row.querySelector('[data-validate-collection-file]')
+      if (!button) return
+      const state = String(row.dataset.collectionFileButtonState || '').trim() || (isValidated ? 'success' : 'idle')
+      button.classList.remove('btn-success', 'btn-secondary')
+      if (state === 'success') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validated'
+        return
+      }
+      if (state === 'blocked') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Needs Repo'
+        return
+      }
+      if (state === 'loading') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validating...'
+        return
+      }
+      button.disabled = false
+      button.classList.add('btn-success')
+      button.textContent = 'Validate'
+    }
+
+    function setCollectionFileButtonState (row, state) {
+      if (!row) return
+      row.dataset.collectionFileButtonState = state || 'idle'
+      updateCollectionFileValidateButton(row, state === 'success')
+    }
+
+    function updateCollectionCustomRepoStatus (editor) {
+      if (!editor) return
+      const target = editor.querySelector('[data-collection-custom-repo-status]')
+      if (!target) return
+
+      target.replaceChildren()
+      target.className = 'alert small mb-3'
+      if (!metadataCustomRepoBase) {
+        target.classList.add('alert-warning')
+        target.append('Custom Repo is not configured. ')
+        target.append('Use ')
+        appendMetadataSettingsLink(target, 'alert-link fw-semibold')
+        target.append(' to configure and save it before using ')
+        const code = document.createElement('code')
+        code.textContent = 'repo'
+        target.appendChild(code)
+        target.append(' collection files.')
+        return
+      }
+
+      target.classList.add('alert-secondary')
+      const label = document.createElement('div')
+      label.className = 'fw-semibold mb-1'
+      label.textContent = 'Custom Repo base used for repo entries'
+      target.appendChild(label)
+
+      const baseValue = document.createElement('code')
+      baseValue.textContent = metadataCustomRepoBase
+      target.appendChild(baseValue)
+
+      if (metadataCustomRepoRaw && metadataCustomRepoRaw !== metadataCustomRepoBase) {
+        const savedValue = document.createElement('div')
+        savedValue.className = 'mt-2'
+        savedValue.append('Saved Custom Repo value: ')
+        const savedCode = document.createElement('code')
+        savedCode.textContent = metadataCustomRepoRaw
+        savedValue.appendChild(savedCode)
+        target.appendChild(savedValue)
+      }
+
+      const hint = document.createElement('div')
+      hint.className = 'mt-2'
+      hint.append('Change it in ')
+      appendMetadataSettingsLink(hint, 'alert-link fw-semibold')
+      hint.append('.')
+      target.appendChild(hint)
+    }
+
+    function applyCollectionFileDependencyState (row, opts = {}) {
+      if (!row) return false
+      const skipStatus = Boolean(opts.skipStatus)
+      const type = row.querySelector('[data-collection-file-type]')?.value || ''
+      if (type !== 'repo') {
+        if (row.dataset.collectionFileDependency === 'repo-missing') {
+          row.dataset.collectionFileDependency = ''
+        }
+        return false
+      }
+
+      if (metadataCustomRepoBase) {
+        if (row.dataset.collectionFileDependency === 'repo-missing') {
+          row.dataset.collectionFileDependency = ''
+        }
+        return false
+      }
+
+      row.dataset.collectionFileDependency = 'repo-missing'
+      setCollectionFileButtonState(row, 'blocked')
+      if (!skipStatus) {
+        setCollectionFileStatus(row, 'error', collectionRepoDependencyMessage)
+      }
+      return true
+    }
+
+    function renderCollectionFileStatusMessage (target, message) {
+      target.replaceChildren()
+      if (!message) return
+
+      if (typeof message === 'object' && message !== null) {
+        const text = String(message.text || message.message || '').trim()
+        const files = Array.isArray(message.files) ? message.files.filter(Boolean) : []
+        if (text) {
+          const summary = document.createElement('div')
+          summary.textContent = text
+          target.appendChild(summary)
+        }
+        if (files.length) {
+          if (files.length <= 5) {
+            const list = document.createElement('ul')
+            list.className = 'mb-0 mt-1 ps-3'
+            files.forEach(file => {
+              const item = document.createElement('li')
+              const code = document.createElement('code')
+              code.textContent = file
+              item.appendChild(code)
+              list.appendChild(item)
+            })
+            target.appendChild(list)
+          } else {
+            const details = document.createElement('details')
+            details.className = 'mt-1'
+            const summary = document.createElement('summary')
+            summary.className = 'cursor-pointer'
+            summary.textContent = 'Show files'
+            details.appendChild(summary)
+            const list = document.createElement('ul')
+            list.className = 'mb-0 mt-1 ps-3'
+            files.forEach(file => {
+              const item = document.createElement('li')
+              const code = document.createElement('code')
+              code.textContent = file
+              item.appendChild(code)
+              list.appendChild(item)
+            })
+            details.appendChild(list)
+            target.appendChild(details)
+          }
+        }
+        return
+      }
+
+      const text = String(message || '').trim()
+      if (!text) return
+
+      if (text === collectionRepoDependencyMessage) {
+        target.append('Collection file repo entries require Custom Repo to be configured and saved first within the ')
+        appendMetadataSettingsLink(target)
+        target.append(' page.')
+        return
+      }
+
+      target.textContent = text
+    }
+
+    function setCollectionFileStatus (row, kind, message) {
+      if (!row) return
+      const target = row.querySelector('[data-collection-file-status]')
+      if (!target) return
+      row.dataset.collectionFileState = kind || ''
+      target.className = 'mt-2 small'
+      if (!message) {
+        target.classList.add('d-none')
+        target.textContent = ''
+        if (applyCollectionFileDependencyState(row, { skipStatus: true })) {
+          setCollectionFileButtonState(row, 'blocked')
+        } else {
+          setCollectionFileButtonState(row, 'idle')
+        }
+        const editor = row.closest('[data-collection-files-editor]')
+        if (editor) updateCollectionFilesAccordionState(editor)
+        return
+      }
+      target.classList.remove('d-none')
+      if (kind === 'success') {
+        target.classList.add('text-success')
+      } else if (kind === 'error') {
+        target.classList.add('text-danger')
+      } else {
+        target.classList.add('text-warning')
+      }
+      renderCollectionFileStatusMessage(target, message)
+      if (kind === 'success') {
+        setCollectionFileButtonState(row, 'success')
+      } else if (row.dataset.collectionFileDependency === 'repo-missing') {
+        setCollectionFileButtonState(row, 'blocked')
+      } else {
+        setCollectionFileButtonState(row, 'idle')
+      }
+      const editor = row.closest('[data-collection-files-editor]')
+      if (editor) updateCollectionFilesAccordionState(editor)
+    }
+
+    function updateCollectionFilesAccordionState (editor) {
+      if (!editor) return
+      const accordionItem = editor.closest('.accordion-item')
+      const accordionHeader = accordionItem?.querySelector(':scope > .accordion-header')
+      if (!accordionHeader) return
+
+      const rows = Array.from(editor.querySelectorAll('[data-collection-file-row]'))
+      const hasInvalid = rows.some(row => {
+        const state = String(row.dataset.collectionFileState || '').trim().toLowerCase()
+        return state === 'error' || state === 'warning'
+      })
+
+      accordionHeader.classList.toggle('invalid', hasInvalid)
+      if (!hasInvalid && rows.some(row => normalizeMetadataFileEntry({
+        type: row.querySelector('[data-collection-file-type]')?.value || '',
+        location: row.querySelector('[data-collection-file-location]')?.value || ''
+      }))) {
+        accordionHeader.classList.add('selected')
+      }
+    }
+
+    function applyCollectionFileServerErrors (editor, errors) {
+      if (!editor || !Array.isArray(errors) || !errors.length) return false
+      const rows = Array.from(editor.querySelectorAll('[data-collection-file-row]'))
+      rows.forEach(row => setCollectionFileStatus(row, '', ''))
+      let applied = false
+      errors.forEach(error => {
+        const text = String(error || '').trim()
+        const match = text.match(/collection_files\[(\d+)\]:\s*(.+)$/i)
+        if (!match) return
+        const index = Number(match[1]) - 1
+        const message = match[2] || 'Validation failed.'
+        if (!Number.isInteger(index) || index < 0 || index >= rows.length) return
+        setCollectionFileStatus(rows[index], 'error', message)
+        applied = true
+      })
+      return applied
+    }
+
+    function syncCollectionFilesEditor (editor, emitEvents = true) {
+      if (!editor) return []
+      const hidden = editor.querySelector('input[type="hidden"][name$="-collection_files"]')
+      if (!hidden) return []
+      const rows = Array.from(editor.querySelectorAll('[data-collection-file-row]'))
+      const entries = rows.map(row => {
+        const type = row.querySelector('[data-collection-file-type]')?.value
+        const location = row.querySelector('[data-collection-file-location]')?.value
+        return normalizeMetadataFileEntry({ type, location })
+      }).filter(Boolean)
+      hidden.value = JSON.stringify(entries)
+      if (emitEvents) {
+        hidden.dispatchEvent(new Event('input', { bubbles: true }))
+        hidden.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      updateCollectionFilesAccordionState(editor)
+      return entries
+    }
+
+    function renderCollectionFilesEditor (editor) {
+      if (!editor) return
+      const hidden = editor.querySelector('input[type="hidden"][name$="-collection_files"]')
+      const list = editor.querySelector('[data-collection-files-list]')
+      if (!hidden || !list) return
+      updateCollectionCustomRepoStatus(editor)
+      const entries = parseMetadataFilesValue(hidden.value)
+      list.replaceChildren()
+      entries.forEach(entry => list.appendChild(buildCollectionFileRow(entry)))
+      list.querySelectorAll('[data-collection-file-row]').forEach(row => {
+        if (applyCollectionFileDependencyState(row)) return
+        setCollectionFileButtonState(row, 'idle')
+      })
+      syncCollectionFilesEditor(editor, false)
+      updateCollectionFilesAccordionState(editor)
+    }
+
+    function initCollectionFilesEditors (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-collection-files-editor]').forEach(editor => {
+        if (editor.dataset.collectionFilesReady === 'true') return
+        renderCollectionFilesEditor(editor)
+        editor.dataset.collectionFilesReady = 'true'
+      })
+    }
+
     document.addEventListener('click', async function (event) {
       const addButton = event.target.closest('[data-add-metadata-file]')
       if (addButton) {
@@ -568,6 +901,95 @@ document.addEventListener('DOMContentLoaded', function () {
     if (libraryContainer && typeof MutationObserver !== 'undefined') {
       const metadataObserver = new MutationObserver(() => initMetadataFilesEditors(libraryContainer))
       metadataObserver.observe(libraryContainer, { childList: true, subtree: true })
+    }
+
+    document.addEventListener('click', async function (event) {
+      const addButton = event.target.closest('[data-add-collection-file]')
+      if (addButton) {
+        const editor = addButton.closest('[data-collection-files-editor]')
+        const list = editor?.querySelector('[data-collection-files-list]')
+        if (!editor || !list) return
+        list.appendChild(buildCollectionFileRow({ type: 'file', location: '' }))
+        syncCollectionFilesEditor(editor)
+        return
+      }
+
+      const removeButton = event.target.closest('[data-remove-collection-file]')
+      if (removeButton) {
+        const row = removeButton.closest('[data-collection-file-row]')
+        const editor = removeButton.closest('[data-collection-files-editor]')
+        if (!row || !editor) return
+        row.remove()
+        syncCollectionFilesEditor(editor)
+        return
+      }
+
+      const validateButton = event.target.closest('[data-validate-collection-file]')
+      if (validateButton) {
+        const row = validateButton.closest('[data-collection-file-row]')
+        const editor = validateButton.closest('[data-collection-files-editor]')
+        if (!row || !editor) return
+        if (applyCollectionFileDependencyState(row)) return
+        const type = row.querySelector('[data-collection-file-type]')?.value || ''
+        const location = row.querySelector('[data-collection-file-location]')?.value || ''
+        syncCollectionFilesEditor(editor, false)
+        setCollectionFileStatus(row, '', 'Validating...')
+        setCollectionFileButtonState(row, 'loading')
+        try {
+          const response = await fetch('/validate_collection_file', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              collection_file_type: type,
+              collection_file_location: location
+            })
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok || !payload.valid) {
+            setCollectionFileStatus(row, 'error', payload.error || 'Validation failed.')
+          } else {
+            setCollectionFileStatus(row, 'success', {
+              text: payload.message || 'Collection source looks valid.',
+              files: Array.isArray(payload.files) ? payload.files : []
+            })
+          }
+        } catch (_error) {
+          setCollectionFileStatus(row, 'error', 'Validation request failed.')
+        } finally {
+          if (row.dataset.collectionFileState !== 'success' && row.dataset.collectionFileDependency !== 'repo-missing') {
+            setCollectionFileButtonState(row, 'idle')
+          }
+        }
+      }
+    })
+
+    document.addEventListener('input', function (event) {
+      const target = event.target
+      if (!target || !target.closest('[data-collection-files-editor]')) return
+      if (!target.matches('[data-collection-file-type], [data-collection-file-location]')) return
+      const row = target.closest('[data-collection-file-row]')
+      const editor = target.closest('[data-collection-files-editor]')
+      setCollectionFileStatus(row, '', '')
+      applyCollectionFileDependencyState(row)
+      syncCollectionFilesEditor(editor)
+    })
+
+    document.addEventListener('change', function (event) {
+      const target = event.target
+      if (!target || !target.closest('[data-collection-files-editor]')) return
+      if (!target.matches('[data-collection-file-type], [data-collection-file-location]')) return
+      const row = target.closest('[data-collection-file-row]')
+      const editor = target.closest('[data-collection-files-editor]')
+      setCollectionFileStatus(row, '', '')
+      applyCollectionFileDependencyState(row)
+      syncCollectionFilesEditor(editor)
+    })
+
+    initCollectionFilesEditors(document)
+    if (libraryContainer && typeof MutationObserver !== 'undefined') {
+      const collectionObserver = new MutationObserver(() => initCollectionFilesEditors(libraryContainer))
+      collectionObserver.observe(libraryContainer, { childList: true, subtree: true })
     }
 
     // Ensure hidden "false" inputs don't submit alongside checked checkboxes with the same name
@@ -1900,6 +2322,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const payload = buildPayloadFromCard(card)
+      const collectionEditor = card.querySelector('[data-collection-files-editor]')
       const metadataEditor = card.querySelector('[data-metadata-files-editor]')
       const option = libraryPicker?.querySelector(`option[value="${activeLibraryId}"]`)
       const friendlyName = option?.dataset.label || option?.textContent?.trim() || activeLibraryId
@@ -1913,6 +2336,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => {
           if (!res.ok) {
             return res.json().catch(() => ({})).then(body => {
+              if (collectionEditor) {
+                applyCollectionFileServerErrors(collectionEditor, body && body.errors)
+              }
               if (metadataEditor) {
                 applyMetadataFileServerErrors(metadataEditor, body && body.errors)
               }

@@ -983,11 +983,44 @@ def _parse_metadata_file_entries(raw_value):
     return normalized
 
 
+def _parse_collection_file_block_entries(raw_value):
+    if isinstance(raw_value, list):
+        entries = raw_value
+    elif isinstance(raw_value, str):
+        text = raw_value.strip()
+        if not text:
+            return []
+        try:
+            entries = json.loads(text)
+        except Exception:
+            return []
+    else:
+        return []
+
+    if not isinstance(entries, list):
+        return []
+
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        entry_type = str(entry.get("type") or "").strip().lower()
+        location = str(entry.get("location") or "").strip()
+        if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
+            continue
+        normalized.append({entry_type: location})
+
+    normalized.sort(key=lambda item: (next(iter(item.keys())), next(iter(item.values())).casefold()))
+    return normalized
+
+
 def build_libraries_section(
     movie_libraries,
     show_libraries,
     movie_collections,
     show_collections,
+    movie_collection_files,
+    show_collection_files,
     movie_overlays,
     show_overlays,
     movie_attributes,
@@ -1349,6 +1382,14 @@ def build_libraries_section(
 
                 collection_files.append(file_entry)
 
+            raw_collection_group = (
+                movie_collection_files.get(collection_key, {})
+                if library_type == "mov"
+                else show_collection_files.get(collection_key, {})
+            )
+            library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
+            raw_collection_entries = _parse_collection_file_block_entries(raw_collection_group.get(f"{library_prefix}-collection_files"))
+
             if collection_files:
 
                 def is_collectionless(item):
@@ -1356,6 +1397,11 @@ def build_libraries_section(
                     return default_name in {"collectionless", "collection_collectionless"} or default_name.endswith("collectionless")
 
                 collection_files.sort(key=lambda item: (is_collectionless(item)))
+
+            if raw_collection_entries:
+                collection_files.extend(raw_collection_entries)
+
+            if collection_files:
                 entry["collection_files"] = collection_files
 
             # Process Overlays
@@ -2412,6 +2458,8 @@ def build_config(header_style="standard", config_name=None):
         # Group collections, overlays, attributes, and templates only for selected libraries
         movie_collections = group_by_library("collection_", movie_library_names)
         show_collections = group_by_library("collection_", show_library_names)
+        movie_collection_files = group_by_library("collection_files", movie_library_names)
+        show_collection_files = group_by_library("collection_files", show_library_names)
         # movie_overlays = group_by_library("overlay_", movie_library_names)
         # show_overlays = group_by_library("overlay_", show_library_names)
         movie_overlays = group_by_library("overlay_", movie_library_names, normalize_overlays=True)
@@ -2431,6 +2479,8 @@ def build_config(header_style="standard", config_name=None):
             helpers.ts_log(f"Extracted Show Libraries: {show_libraries}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Collections: {movie_collections}", level="DEBUG")
             helpers.ts_log(f"Extracted Show Collections: {show_collections}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Collection Files: {movie_collection_files}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Collection Files: {show_collection_files}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Overlays: {movie_overlays}", level="DEBUG")
             helpers.ts_log(f"Extracted Show Overlays: {show_overlays}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Attributes: {movie_attributes}", level="DEBUG")
@@ -2448,6 +2498,8 @@ def build_config(header_style="standard", config_name=None):
             show_libraries,
             movie_collections,
             show_collections,
+            movie_collection_files,
+            show_collection_files,
             movie_overlays,
             show_overlays,
             movie_attributes,

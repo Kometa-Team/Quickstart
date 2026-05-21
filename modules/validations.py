@@ -62,6 +62,22 @@ def _validate_metadata_yaml_text(raw_text, label):
     return True, None
 
 
+def _validate_collection_yaml_text(raw_text, label):
+    result = _validate_yaml_text(raw_text, label)
+    if len(result) == 2:
+        valid, message = result
+        return False, message
+    valid, message, parsed = result
+    if not valid:
+        return False, message
+    if not isinstance(parsed, dict):
+        return False, f"{label} must contain a top-level collections mapping."
+    collections = parsed.get("collections")
+    if not isinstance(collections, dict) or not collections:
+        return False, f"{label} must contain a non-empty top-level collections mapping."
+    return True, None
+
+
 def _validate_yaml_location_suffix(location, label):
     lowered = str(location or "").strip().lower()
     if not lowered.endswith((".yml", ".yaml")):
@@ -149,6 +165,42 @@ def _validate_metadata_yaml_location(location, label):
     return _validate_metadata_yaml_text(yaml_text, label)
 
 
+def _validate_collection_yaml_location(location, label):
+    valid, message = _validate_yaml_location_suffix(location, label)
+    if not valid:
+        return False, message
+
+    if str(location).strip().lower().startswith(("http://", "https://")):
+        valid, message = url_validation.validate_url(location, allow_local=True)
+        if not valid:
+            return False, f"{label}: {message}"
+
+        try:
+            response = requests.get(location, timeout=10)
+        except requests.RequestException as exc:
+            return False, f"Connection error: {str(exc)}"
+
+        if response.status_code >= 400:
+            return False, f"Failed to fetch {label} ({response.status_code} [{response.reason}])."
+
+        return _validate_collection_yaml_text(response.text, label)
+
+    valid, message = path_validation.validate_path(
+        location,
+        {"allow_relative": True, "must_exist": True, "mode": "input_file"},
+    )
+    if not valid:
+        return False, f"{label}: {message}"
+
+    try:
+        with open(location, "r", encoding="utf-8") as handle:
+            yaml_text = handle.read()
+    except OSError as exc:
+        return False, f"{label}: Unable to read file. {exc}"
+
+    return _validate_collection_yaml_text(yaml_text, label)
+
+
 def _validate_yaml_folder(location, label):
     valid, message = path_validation.validate_path(
         location,
@@ -174,6 +226,40 @@ def _validate_yaml_folder(location, label):
             return False, f"{label}: Unable to read file {os.path.basename(yaml_file)}. {exc}"
 
         valid, message = _validate_metadata_yaml_text(yaml_text, f"{label} file {os.path.basename(yaml_file)}")
+        if not valid:
+            return False, message
+
+    validated_files = len(yaml_files)
+    file_names = [os.path.basename(yaml_file) for yaml_file in yaml_files]
+    suffix = "" if validated_files == 1 else "s"
+    return True, None, {"validated_files": validated_files, "files": file_names, "message": f"Validated {validated_files} YAML file{suffix} in folder."}
+
+
+def _validate_collection_yaml_folder(location, label):
+    valid, message = path_validation.validate_path(
+        location,
+        {"allow_relative": True, "must_exist": True, "mode": "input_dir"},
+    )
+    if not valid:
+        return False, f"{label}: {message}"
+
+    try:
+        entries = sorted(os.listdir(location), key=str.casefold)
+    except OSError as exc:
+        return False, f"{label}: Unable to read folder. {exc}"
+
+    yaml_files = [os.path.join(location, entry) for entry in entries if os.path.isfile(os.path.join(location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    if not yaml_files:
+        return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
+
+    for yaml_file in yaml_files:
+        try:
+            with open(yaml_file, "r", encoding="utf-8") as handle:
+                yaml_text = handle.read()
+        except OSError as exc:
+            return False, f"{label}: Unable to read file {os.path.basename(yaml_file)}. {exc}"
+
+        valid, message = _validate_collection_yaml_text(yaml_text, f"{label} file {os.path.basename(yaml_file)}")
         if not valid:
             return False, message
 
@@ -263,8 +349,74 @@ def validate_metadata_file_payload(data):
     return _normalize_metadata_validation_result(_validate_metadata_yaml_location(resolved_repo_location, "Metadata file repo path"))
 
 
+def validate_collection_file_payload(data):
+    collection_file_type = str(data.get("collection_file_type") or "").strip().lower()
+    collection_file_location = str(data.get("collection_file_location") or "").strip()
+
+    if collection_file_type not in {"file", "folder", "url", "git", "repo"}:
+        return False, "Collection file type must be file, folder, url, git, or repo.", {}
+
+    if not collection_file_location:
+        return False, "Collection file location is required.", {}
+
+    if collection_file_type == "url":
+        if not collection_file_location.lower().startswith(("http://", "https://")):
+            return False, "Collection file URL must start with http:// or https://.", {}
+        label = "Collection file URL"
+        return _normalize_metadata_validation_result(_validate_collection_yaml_location(collection_file_location, label))
+
+    if collection_file_type == "folder":
+        if collection_file_location.lower().startswith(("http://", "https://")):
+            return False, "Collection folder path must be a local folder path.", {}
+        label = "Collection folder path"
+        return _normalize_metadata_validation_result(_validate_collection_yaml_folder(collection_file_location, label))
+
+    if collection_file_type == "file":
+        if collection_file_location.lower().startswith(("http://", "https://")):
+            return False, "Collection file path must be a local file path.", {}
+        label = "Collection file path"
+        return _normalize_metadata_validation_result(_validate_collection_yaml_location(collection_file_location, label))
+
+    if collection_file_location.lower().startswith(("http://", "https://")):
+        return False, f"Collection file {collection_file_type} value must not be a full URL.", {}
+
+    if collection_file_type == "git":
+        valid, message = _validate_yaml_location_suffix(collection_file_location, "Collection file git path")
+        if not valid:
+            return False, message, {}
+        return _normalize_metadata_validation_result(
+            _validate_collection_yaml_location(
+                f"https://raw.githubusercontent.com/Kometa-Team/Community-Configs/master/{collection_file_location}",
+                "Collection file git path",
+            )
+        )
+
+    custom_repo_base = _saved_custom_repo_base()
+    if not custom_repo_base:
+        return False, "Collection file repo entries require Custom Repo to be configured and saved first within the Settings page.", {}
+    valid, message = _validate_yaml_location_suffix(collection_file_location, "Collection file repo path")
+    if not valid:
+        return False, message, {}
+    resolved_repo_location = f"{custom_repo_base}{collection_file_location}"
+    return _normalize_metadata_validation_result(_validate_collection_yaml_location(resolved_repo_location, "Collection file repo path"))
+
+
 def validate_metadata_file_server(data):
     valid, message, details = validate_metadata_file_payload(data)
+    if not valid:
+        return jsonify({"valid": False, "error": message}), 400
+    payload = {"valid": True}
+    if details.get("message"):
+        payload["message"] = details["message"]
+    if "validated_files" in details:
+        payload["validated_files"] = details["validated_files"]
+    if isinstance(details.get("files"), list):
+        payload["files"] = details["files"]
+    return jsonify(payload)
+
+
+def validate_collection_file_server(data):
+    valid, message, details = validate_collection_file_payload(data)
     if not valid:
         return jsonify({"valid": False, "error": message}), 400
     payload = {"valid": True}
