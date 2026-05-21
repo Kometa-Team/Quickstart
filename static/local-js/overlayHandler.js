@@ -1237,6 +1237,14 @@ const OverlayHandler = {
       return (label.textContent || '').trim()
     }
 
+    const getCurrentMassToggleValue = (libraryId, group) => {
+      if (!libraryId || !group) return null
+      const inputPrefix = `${libraryId}-attribute_${group}_`
+      const toggles = Array.from(document.querySelectorAll(`input.form-check-input[id^="${inputPrefix}"]`))
+      const checked = toggles.find(input => input.checked)
+      return checked ? checked.id.replace(inputPrefix, '') : null
+    }
+
     const setStatusTooltip = (el, message) => {
       if (!el) return
       el.setAttribute('title', message)
@@ -1865,14 +1873,22 @@ const OverlayHandler = {
           ? RATING_SOURCE_MAP_EPISODE[imageKey]
           : RATING_SOURCE_MAP[imageKey]
         const source = sourceMap ? (sourceMap[ratingValRaw] || sourceMap.any || null) : null
-        if (!source) {
+        const currentSource = getCurrentMassToggleValue(libraryId, group)
+        const effectiveSource = currentSource || source
+        if (!effectiveSource) {
           setStatusIcon(statusEl, 'neutral', `${slot.label} (${ratingLabel} + ${imageLabel}) has no matching rating source.`)
           return
         }
         const groupLabel = RATING_GROUP_LABEL_MAP[group] || group
-        const toggleLabel = getMassToggleLabel(libraryId, group, source) || RATING_SOURCE_LABEL_MAP[source] || source
+        const toggleLabel = currentSource
+          ? (getCurrentMassToggleLabel(libraryId, group) || getMassToggleLabel(libraryId, group, currentSource) || RATING_SOURCE_LABEL_MAP[currentSource] || currentSource)
+          : (getMassToggleLabel(libraryId, group, source) || RATING_SOURCE_LABEL_MAP[source] || source)
         let message = `${slot.label} (${ratingLabel} + ${imageLabel}) → ${groupLabel}: ${toggleLabel}`
-        const service = RATING_SOURCE_SERVICE_MAP[source] || null
+        if (currentSource && source && currentSource !== source) {
+          const defaultLabel = getMassToggleLabel(libraryId, group, source) || RATING_SOURCE_LABEL_MAP[source] || source
+          message = `${slot.label} (${ratingLabel} + ${imageLabel}) preserves ${groupLabel}: ${toggleLabel}. Default for this badge would be ${defaultLabel}.`
+        }
+        const service = RATING_SOURCE_SERVICE_MAP[effectiveSource] || null
         if (!service) {
           message += '. No service required.'
           setStatusIcon(statusEl, 'neutral', message)
@@ -1936,8 +1952,12 @@ const OverlayHandler = {
       }
     }
 
-    const setMassRatingSource = (libraryId, prefix, source) => {
+    const setMassRatingSource = (libraryId, prefix, source, opts = {}) => {
       if (!libraryId || !prefix) return
+      const preserveExisting = Boolean(opts.preserveExisting)
+      const current = getCurrentMassToggleValue(libraryId, prefix)
+      if (preserveExisting && current) return current
+      if (current && current === source) return current
       const inputPrefix = `${libraryId}-attribute_${prefix}_`
       const toggles = document.querySelectorAll(`input.form-check-input[id^="${inputPrefix}"]`)
       toggles.forEach(input => {
@@ -1952,9 +1972,10 @@ const OverlayHandler = {
         target.checked = true
         target.dispatchEvent(new Event('change', { bubbles: true }))
       }
+      return source
     }
 
-    const syncRatingSources = (cfg, slot) => {
+    const syncRatingSources = (cfg, slot, opts = {}) => {
       if (!cfg?.container) return
       const overlayType = cfg.container.dataset.overlayType || ''
       if (!['movie', 'show', 'episode'].includes(overlayType)) return
@@ -1973,7 +1994,13 @@ const OverlayHandler = {
         ? RATING_SOURCE_MAP_EPISODE[imageKey]
         : RATING_SOURCE_MAP[imageKey]
       const source = sourceMap ? (sourceMap[ratingVal] || sourceMap.any || null) : null
-      setMassRatingSource(libraryId, group, source)
+      setMassRatingSource(libraryId, group, source, opts)
+    }
+
+    if (typeof window !== 'undefined') {
+      window.__qsOverlayTestHooks = window.__qsOverlayTestHooks || {}
+      window.__qsOverlayTestHooks.syncRatingSources = syncRatingSources
+      window.__qsOverlayTestHooks.getCurrentMassToggleValue = getCurrentMassToggleValue
     }
 
     const sortRatingImageOptions = (input) => {
@@ -4291,7 +4318,7 @@ const OverlayHandler = {
         }
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
-          const runRatingsUpdate = (event, forceSync = false) => {
+          const runRatingsUpdate = (event, forceSync = false, preserveExistingSources = false) => {
             if (cfg.container?.dataset?.resetting === 'true') return
             enforceUniqueRatingTypes(cfg)
             if (event && event.target && cfg.container) {
@@ -4313,7 +4340,7 @@ const OverlayHandler = {
                 { ratingKey: 'rating2', imageKey: 'rating2_image' },
                 { ratingKey: 'rating3', imageKey: 'rating3_image' }
               ]
-              slots.forEach(slot => syncRatingSources(cfg, slot))
+              slots.forEach(slot => syncRatingSources(cfg, slot, { preserveExisting: preserveExistingSources }))
             }
             const positionInput = cfg.container.querySelector(`[name="${templateName}[horizontal_position]"]`)
             const verticalInput = cfg.container.querySelector(`[name="${templateName}[vertical_position]"]`)
@@ -4347,21 +4374,25 @@ const OverlayHandler = {
               applyPosition(cfg)
             })
           }
-          const scheduleRatingsUpdate = (event, forceSync = false) => {
+          const scheduleRatingsUpdate = (event, forceSync = false, preserveExistingSources = false) => {
             if (!cfg.container) return
             if (cfg.container.dataset.ratingRefreshScheduled === 'true') {
               if (forceSync) cfg.container.dataset.ratingRefreshForce = 'true'
+              if (preserveExistingSources) cfg.container.dataset.ratingRefreshPreserve = 'true'
               return
             }
             cfg.container.dataset.ratingRefreshScheduled = 'true'
             if (forceSync) cfg.container.dataset.ratingRefreshForce = 'true'
+            if (preserveExistingSources) cfg.container.dataset.ratingRefreshPreserve = 'true'
             requestAnimationFrame(() => {
               const doForce = cfg.container?.dataset?.ratingRefreshForce === 'true'
+              const doPreserve = cfg.container?.dataset?.ratingRefreshPreserve === 'true'
               if (cfg.container) {
                 delete cfg.container.dataset.ratingRefreshScheduled
                 delete cfg.container.dataset.ratingRefreshForce
+                delete cfg.container.dataset.ratingRefreshPreserve
               }
-              runRatingsUpdate(null, doForce)
+              runRatingsUpdate(null, doForce, doPreserve)
             })
           }
           const templateName = cfg.container.dataset.overlayTemplate
@@ -4420,12 +4451,12 @@ const OverlayHandler = {
             cfg.toggle.dataset.ratingSyncBound = 'true'
             cfg.toggle.addEventListener('change', () => {
               if (cfg.toggle.checked) {
-                scheduleRatingsUpdate(null, true)
+                scheduleRatingsUpdate(null, true, true)
               }
             })
           }
           if (cfg.toggle && cfg.toggle.checked) {
-            scheduleRatingsUpdate(null, true)
+            scheduleRatingsUpdate(null, true, true)
           } else {
             scheduleRatingsUpdate()
           }

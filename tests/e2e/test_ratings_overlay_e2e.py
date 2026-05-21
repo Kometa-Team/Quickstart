@@ -232,6 +232,108 @@ def _enable_overlay_group(page, template):
     )
 
 
+def _ensure_overlay_test_hooks(page):
+    page.evaluate(
+        """() => {
+          const handler = typeof OverlayHandler !== 'undefined'
+            ? OverlayHandler
+            : window.OverlayHandler
+          if (!window.__qsOverlayTestHooks &&
+              handler &&
+              typeof handler.initializeOverlayBoards === 'function') {
+            handler.initializeOverlayBoards(document)
+          }
+        }"""
+    )
+    page.wait_for_function(
+        """() => !!window.__qsOverlayTestHooks &&
+          typeof window.__qsOverlayTestHooks.syncRatingSources === 'function'""",
+        timeout=10000,
+    )
+
+
+def _ensure_rating_source_harness(page):
+    return page.evaluate("""() => {
+      const existing = document.querySelector('[data-test-ratings-source-harness="true"]')
+      if (existing) {
+        return {
+          templateName: existing.dataset.templateName,
+          libraryId: existing.dataset.libraryId
+        }
+      }
+
+      const templateName = 'test_ratings_source_overlay'
+      const libraryId = 'test_library'
+      const host = document.createElement('div')
+      host.setAttribute('data-test-ratings-source-harness', 'true')
+      host.dataset.templateName = templateName
+      host.dataset.libraryId = libraryId
+      host.style.display = 'none'
+
+      const container = document.createElement('div')
+      container.className = 'template-toggle-group'
+      container.dataset.overlayTemplate = templateName
+      container.dataset.overlayType = 'show'
+      container.dataset.libraryId = libraryId
+      host.appendChild(container)
+
+      const addSelect = (name, value, options) => {
+        const select = document.createElement('select')
+        select.name = `${templateName}[${name}]`
+        options.forEach(opt => {
+          const option = document.createElement('option')
+          option.value = opt
+          option.textContent = opt || 'None'
+          if (opt === value) option.selected = true
+          select.appendChild(option)
+        })
+        select.dataset.default = String(value)
+        container.appendChild(select)
+        return select
+      }
+
+      const addToggle = (group, value, checked = false) => {
+        const input = document.createElement('input')
+        input.type = 'checkbox'
+        input.className = 'form-check-input'
+        input.id = `${libraryId}-attribute_${group}_${value}`
+        input.checked = checked
+        host.appendChild(input)
+        const label = document.createElement('label')
+        label.setAttribute('for', input.id)
+        label.textContent = value
+        host.appendChild(label)
+        return input
+      }
+
+      addSelect('rating1', 'user', ['', 'user', 'critic', 'audience'])
+      addSelect('rating1_image', 'imdb', ['', 'rt_tomato', 'rt_popcorn', 'imdb'])
+      addSelect('rating2', 'critic', ['', 'user', 'critic', 'audience'])
+      addSelect('rating2_image', 'rt_tomato', ['', 'rt_tomato', 'rt_popcorn', 'imdb'])
+      addSelect('rating3', 'audience', ['', 'user', 'critic', 'audience'])
+      addSelect('rating3_image', 'rt_popcorn', ['', 'rt_tomato', 'rt_popcorn', 'imdb'])
+
+      addToggle('mass_critic_rating_update', 'plex_tomatoes', true)
+      addToggle('mass_critic_rating_update', 'mdb_tomatoes', false)
+      addToggle('mass_audience_rating_update', 'plex_tomatoesaudience', true)
+      addToggle('mass_audience_rating_update', 'mdb_tomatoesaudience', false)
+      addToggle('mass_user_rating_update', 'imdb', true)
+
+      document.body.appendChild(host)
+      return { templateName, libraryId }
+    }""")
+
+
+def _rating_toggle_map(page):
+    return page.evaluate("""() => {
+      return Array.from(document.querySelectorAll('[data-test-ratings-source-harness="true"] input.form-check-input'))
+        .reduce((acc, el) => {
+          acc[el.id] = !!el.checked
+          return acc
+        }, {})
+    }""")
+
+
 def _slot_offsets(page, template):
     return {
         "rating1": {
@@ -458,3 +560,53 @@ def test_ratings_slot_order_across_position_combos(page, live_server, enabled_sl
                     else:
                         assert single["h"] == expected_h
                         assert single["v"] == expected_v
+
+
+@pytest.mark.e2e
+def test_ratings_toggle_preserves_existing_rt_mass_sources(page, live_server):
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_selector("#libraryPicker", timeout=10000)
+    _ensure_overlay_test_hooks(page)
+    ctx = _ensure_rating_source_harness(page)
+    library_id = ctx["libraryId"]
+
+    page.evaluate(
+        """(libraryId) => {
+          const container = document.querySelector('[data-test-ratings-source-harness="true"] [data-overlay-template]')
+          const sync = window.__qsOverlayTestHooks.syncRatingSources
+          sync({ container }, { ratingKey: 'rating2', imageKey: 'rating2_image' }, { preserveExisting: true })
+          sync({ container }, { ratingKey: 'rating3', imageKey: 'rating3_image' }, { preserveExisting: true })
+          return {
+            critic: window.__qsOverlayTestHooks.getCurrentMassToggleValue(libraryId, 'mass_critic_rating_update'),
+            audience: window.__qsOverlayTestHooks.getCurrentMassToggleValue(libraryId, 'mass_audience_rating_update')
+          }
+        }""",
+        library_id,
+    )
+
+    checked = _rating_toggle_map(page)
+    assert checked[f"{library_id}-attribute_mass_critic_rating_update_plex_tomatoes"] is True
+    assert checked.get(f"{library_id}-attribute_mass_critic_rating_update_mdb_tomatoes", False) is False
+    assert checked[f"{library_id}-attribute_mass_audience_rating_update_plex_tomatoesaudience"] is True
+    assert checked.get(f"{library_id}-attribute_mass_audience_rating_update_mdb_tomatoesaudience", False) is False
+    assert checked[f"{library_id}-attribute_mass_user_rating_update_imdb"] is True
+
+    page.evaluate(
+        """(libraryId) => {
+          const container = document.querySelector('[data-test-ratings-source-harness="true"] [data-overlay-template]')
+          document.getElementById(`${libraryId}-attribute_mass_critic_rating_update_plex_tomatoes`).checked = false
+          document.getElementById(`${libraryId}-attribute_mass_critic_rating_update_mdb_tomatoes`).checked = false
+          document.getElementById(`${libraryId}-attribute_mass_audience_rating_update_plex_tomatoesaudience`).checked = false
+          document.getElementById(`${libraryId}-attribute_mass_audience_rating_update_mdb_tomatoesaudience`).checked = false
+          const sync = window.__qsOverlayTestHooks.syncRatingSources
+          sync({ container }, { ratingKey: 'rating2', imageKey: 'rating2_image' }, { preserveExisting: true })
+          sync({ container }, { ratingKey: 'rating3', imageKey: 'rating3_image' }, { preserveExisting: true })
+        }""",
+        library_id,
+    )
+
+    checked = _rating_toggle_map(page)
+    assert checked[f"{library_id}-attribute_mass_critic_rating_update_mdb_tomatoes"] is True
+    assert checked.get(f"{library_id}-attribute_mass_critic_rating_update_plex_tomatoes", False) is False
+    assert checked[f"{library_id}-attribute_mass_audience_rating_update_mdb_tomatoesaudience"] is True
+    assert checked.get(f"{library_id}-attribute_mass_audience_rating_update_plex_tomatoesaudience", False) is False
