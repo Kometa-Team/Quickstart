@@ -325,10 +325,7 @@ def test_validate_metadata_folder_rejects_top_level_yaml_without_metadata(client
     assert payload["valid"] is False
     assert payload["error"] == "Metadata folder path: Scanned 3 top-level YAML files and found 2 invalid files."
     assert payload["error_details"]["text"] == payload["error"]
-    assert payload["files"] == [
-        "Top-level `metadata:` was not found in `broken.yml`.",
-        "Top-level `metadata:` in `empty.yml` must be a non-empty mapping."
-    ]
+    assert payload["files"] == ["Top-level `metadata:` was not found in `broken.yml`.", "Top-level `metadata:` in `empty.yml` must be a non-empty mapping."]
 
 
 def test_validate_collection_folder_rejects_top_level_yaml_without_collections(client, tmp_path):
@@ -347,10 +344,7 @@ def test_validate_collection_folder_rejects_top_level_yaml_without_collections(c
     assert payload["valid"] is False
     assert payload["error"] == "Collection folder path: Scanned 3 top-level YAML files and found 2 invalid files."
     assert payload["error_details"]["text"] == payload["error"]
-    assert payload["files"] == [
-        "Top-level `collections:` was not found in `broken.yml`.",
-        "Top-level `collections:` in `empty.yml` must be a non-empty mapping."
-    ]
+    assert payload["files"] == ["Top-level `collections:` was not found in `broken.yml`.", "Top-level `collections:` in `empty.yml` must be a non-empty mapping."]
 
 
 def test_validate_metadata_url_rejects_missing_top_level_metadata(client, monkeypatch, qs_module):
@@ -633,17 +627,19 @@ def test_build_libraries_section_emits_collection_files(app):
             {},
             {"movies": {"mov-library_movies-collection_collectionless": True}},
             {},
-            {"movies": {
-                "mov-library_movies-collection_files": json.dumps(
-                    [
-                        {"type": "url", "location": "https://example.com/movies_refresh.yml"},
-                        {"type": "repo", "location": "custom/movies_meta.yml"},
-                        {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
-                        {"type": "folder", "location": "config\\metadata\\movies"},
-                        {"type": "git", "location": "bullmoose20/collections/godzilla.yml"},
-                    ]
-                )
-            }},
+            {
+                "movies": {
+                    "mov-library_movies-collection_files": json.dumps(
+                        [
+                            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+                            {"type": "repo", "location": "custom/movies_meta.yml"},
+                            {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
+                            {"type": "folder", "location": "config\\metadata\\movies"},
+                            {"type": "git", "location": "bullmoose20/collections/godzilla.yml"},
+                        ]
+                    )
+                }
+            },
             {},
             {},
             {},

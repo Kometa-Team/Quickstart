@@ -436,10 +436,7 @@ def validate_metadata_file_server(data):
     if not valid:
         payload = {"valid": False, "error": message}
         if details.get("message") or isinstance(details.get("files"), list):
-            payload["error_details"] = {
-                "text": details.get("message") or message,
-                "files": details.get("files") if isinstance(details.get("files"), list) else []
-            }
+            payload["error_details"] = {"text": details.get("message") or message, "files": details.get("files") if isinstance(details.get("files"), list) else []}
         if isinstance(details.get("files"), list):
             payload["files"] = details["files"]
         return jsonify(payload), 400
@@ -458,10 +455,7 @@ def validate_collection_file_server(data):
     if not valid:
         payload = {"valid": False, "error": message}
         if details.get("message") or isinstance(details.get("files"), list):
-            payload["error_details"] = {
-                "text": details.get("message") or message,
-                "files": details.get("files") if isinstance(details.get("files"), list) else []
-            }
+            payload["error_details"] = {"text": details.get("message") or message, "files": details.get("files") if isinstance(details.get("files"), list) else []}
         if isinstance(details.get("files"), list):
             payload["files"] = details["files"]
         return jsonify(payload), 400
