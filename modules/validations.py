@@ -46,36 +46,43 @@ def _validate_yaml_text(raw_text, label):
     return True, None, parsed
 
 
-def _validate_metadata_yaml_text(raw_text, label):
-    result = _validate_yaml_text(raw_text, label)
-    if len(result) == 2:
-        valid, message = result
-        return False, message
-    valid, message, parsed = result
-    if not valid:
-        return False, message
+def _display_yaml_source_name(source_name, label):
+    source = str(source_name or "").strip()
+    if source:
+        return f"`{source}`"
+    return label
+
+
+def _validate_required_top_level_mapping(raw_text, label, source_name, mapping_name):
+    subject = _display_yaml_source_name(source_name, label)
+    if not isinstance(raw_text, str) or not raw_text.strip():
+        return False, f"{subject} must not be empty."
+
+    parser = YAML(typ="safe", pure=True)
+    try:
+        parsed = parser.load(raw_text)
+    except Exception as exc:
+        return False, f"Invalid YAML in {subject}. {exc}"
+
     if not isinstance(parsed, dict):
-        return False, f"{label} must contain a top-level metadata mapping."
-    metadata = parsed.get("metadata")
-    if not isinstance(metadata, dict) or not metadata:
-        return False, f"{label} must contain a non-empty top-level metadata mapping."
+        return False, f"Top-level `{mapping_name}:` was not found in {subject}."
+
+    if mapping_name not in parsed:
+        return False, f"Top-level `{mapping_name}:` was not found in {subject}."
+
+    mapping = parsed.get(mapping_name)
+    if not isinstance(mapping, dict) or not mapping:
+        return False, f"Top-level `{mapping_name}:` in {subject} must be a non-empty mapping."
+
     return True, None
 
 
-def _validate_collection_yaml_text(raw_text, label):
-    result = _validate_yaml_text(raw_text, label)
-    if len(result) == 2:
-        valid, message = result
-        return False, message
-    valid, message, parsed = result
-    if not valid:
-        return False, message
-    if not isinstance(parsed, dict):
-        return False, f"{label} must contain a top-level collections mapping."
-    collections = parsed.get("collections")
-    if not isinstance(collections, dict) or not collections:
-        return False, f"{label} must contain a non-empty top-level collections mapping."
-    return True, None
+def _validate_metadata_yaml_text(raw_text, label, source_name=None):
+    return _validate_required_top_level_mapping(raw_text, label, source_name, "metadata")
+
+
+def _validate_collection_yaml_text(raw_text, label, source_name=None):
+    return _validate_required_top_level_mapping(raw_text, label, source_name, "collections")
 
 
 def _validate_yaml_location_suffix(location, label):
@@ -134,6 +141,8 @@ def _validate_metadata_yaml_location(location, label):
     if not valid:
         return False, message
 
+    source_name = os.path.basename(urllib.parse.urlparse(str(location)).path) or os.path.basename(str(location)) or label
+
     if str(location).strip().lower().startswith(("http://", "https://")):
         valid, message = url_validation.validate_url(location, allow_local=True)
         if not valid:
@@ -147,7 +156,7 @@ def _validate_metadata_yaml_location(location, label):
         if response.status_code >= 400:
             return False, f"Failed to fetch {label} ({response.status_code} [{response.reason}])."
 
-        return _validate_metadata_yaml_text(response.text, label)
+        return _validate_metadata_yaml_text(response.text, label, source_name)
 
     valid, message = path_validation.validate_path(
         location,
@@ -162,7 +171,7 @@ def _validate_metadata_yaml_location(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read file. {exc}"
 
-    return _validate_metadata_yaml_text(yaml_text, label)
+    return _validate_metadata_yaml_text(yaml_text, label, source_name)
 
 
 def _validate_collection_yaml_location(location, label):
@@ -170,6 +179,8 @@ def _validate_collection_yaml_location(location, label):
     if not valid:
         return False, message
 
+    source_name = os.path.basename(urllib.parse.urlparse(str(location)).path) or os.path.basename(str(location)) or label
+
     if str(location).strip().lower().startswith(("http://", "https://")):
         valid, message = url_validation.validate_url(location, allow_local=True)
         if not valid:
@@ -183,7 +194,7 @@ def _validate_collection_yaml_location(location, label):
         if response.status_code >= 400:
             return False, f"Failed to fetch {label} ({response.status_code} [{response.reason}])."
 
-        return _validate_collection_yaml_text(response.text, label)
+        return _validate_collection_yaml_text(response.text, label, source_name)
 
     valid, message = path_validation.validate_path(
         location,
@@ -198,7 +209,16 @@ def _validate_collection_yaml_location(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read file. {exc}"
 
-    return _validate_collection_yaml_text(yaml_text, label)
+    return _validate_collection_yaml_text(yaml_text, label, source_name)
+
+
+def _summarize_folder_validation_failures(label, yaml_files, failures):
+    scanned_files = len(yaml_files)
+    invalid_files = len(failures)
+    suffix = "" if scanned_files == 1 else "s"
+    invalid_suffix = "" if invalid_files == 1 else "s"
+    summary = f"{label}: Scanned {scanned_files} top-level YAML file{suffix} and found {invalid_files} invalid file{invalid_suffix}."
+    return False, summary, {"message": summary, "files": failures}
 
 
 def _validate_yaml_folder(location, label):
@@ -218,16 +238,21 @@ def _validate_yaml_folder(location, label):
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
+    failures = []
     for yaml_file in yaml_files:
         try:
             with open(yaml_file, "r", encoding="utf-8") as handle:
                 yaml_text = handle.read()
         except OSError as exc:
-            return False, f"{label}: Unable to read file {os.path.basename(yaml_file)}. {exc}"
+            failures.append(f"Unable to read `{os.path.basename(yaml_file)}`. {exc}")
+            continue
 
-        valid, message = _validate_metadata_yaml_text(yaml_text, f"{label} file {os.path.basename(yaml_file)}")
+        valid, message = _validate_metadata_yaml_text(yaml_text, label, os.path.basename(yaml_file))
         if not valid:
-            return False, message
+            failures.append(message)
+
+    if failures:
+        return _summarize_folder_validation_failures(label, yaml_files, failures)
 
     validated_files = len(yaml_files)
     file_names = [os.path.basename(yaml_file) for yaml_file in yaml_files]
@@ -252,16 +277,21 @@ def _validate_collection_yaml_folder(location, label):
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
+    failures = []
     for yaml_file in yaml_files:
         try:
             with open(yaml_file, "r", encoding="utf-8") as handle:
                 yaml_text = handle.read()
         except OSError as exc:
-            return False, f"{label}: Unable to read file {os.path.basename(yaml_file)}. {exc}"
+            failures.append(f"Unable to read `{os.path.basename(yaml_file)}`. {exc}")
+            continue
 
-        valid, message = _validate_collection_yaml_text(yaml_text, f"{label} file {os.path.basename(yaml_file)}")
+        valid, message = _validate_collection_yaml_text(yaml_text, label, os.path.basename(yaml_file))
         if not valid:
-            return False, message
+            failures.append(message)
+
+    if failures:
+        return _summarize_folder_validation_failures(label, yaml_files, failures)
 
     validated_files = len(yaml_files)
     file_names = [os.path.basename(yaml_file) for yaml_file in yaml_files]
@@ -404,7 +434,15 @@ def validate_collection_file_payload(data):
 def validate_metadata_file_server(data):
     valid, message, details = validate_metadata_file_payload(data)
     if not valid:
-        return jsonify({"valid": False, "error": message}), 400
+        payload = {"valid": False, "error": message}
+        if details.get("message") or isinstance(details.get("files"), list):
+            payload["error_details"] = {
+                "text": details.get("message") or message,
+                "files": details.get("files") if isinstance(details.get("files"), list) else []
+            }
+        if isinstance(details.get("files"), list):
+            payload["files"] = details["files"]
+        return jsonify(payload), 400
     payload = {"valid": True}
     if details.get("message"):
         payload["message"] = details["message"]
@@ -418,7 +456,15 @@ def validate_metadata_file_server(data):
 def validate_collection_file_server(data):
     valid, message, details = validate_collection_file_payload(data)
     if not valid:
-        return jsonify({"valid": False, "error": message}), 400
+        payload = {"valid": False, "error": message}
+        if details.get("message") or isinstance(details.get("files"), list):
+            payload["error_details"] = {
+                "text": details.get("message") or message,
+                "files": details.get("files") if isinstance(details.get("files"), list) else []
+            }
+        if isinstance(details.get("files"), list):
+            payload["files"] = details["files"]
+        return jsonify(payload), 400
     payload = {"valid": True}
     if details.get("message"):
         payload["message"] = details["message"]

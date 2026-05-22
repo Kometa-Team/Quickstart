@@ -182,7 +182,8 @@ def test_validate_collection_file_rejects_missing_top_level_collections(client, 
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "non-empty top-level collections mapping" in payload["error"]
+    assert "Top-level `collections:` was not found" in payload["error"]
+    assert "`collections.yml`" in payload["error"]
 
 
 def test_validate_collection_file_rejects_empty_top_level_collections(client, tmp_path):
@@ -196,7 +197,7 @@ def test_validate_collection_file_rejects_empty_top_level_collections(client, tm
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "non-empty top-level collections mapping" in payload["error"]
+    assert "Top-level `collections:` in `collections.yml` must be a non-empty mapping." == payload["error"]
 
 
 def test_validate_metadata_file_rejects_missing_top_level_metadata(client, tmp_path):
@@ -210,7 +211,8 @@ def test_validate_metadata_file_rejects_missing_top_level_metadata(client, tmp_p
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "non-empty top-level metadata mapping" in payload["error"]
+    assert "Top-level `metadata:` was not found" in payload["error"]
+    assert "`metadata.yml`" in payload["error"]
 
 
 def test_validate_metadata_file_rejects_empty_top_level_metadata(client, tmp_path):
@@ -224,7 +226,7 @@ def test_validate_metadata_file_rejects_empty_top_level_metadata(client, tmp_pat
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "non-empty top-level metadata mapping" in payload["error"]
+    assert "Top-level `metadata:` in `metadata.yml` must be a non-empty mapping." == payload["error"]
 
 
 def test_validate_metadata_file_rejects_invalid_type(client):
@@ -312,6 +314,7 @@ def test_validate_metadata_folder_rejects_top_level_yaml_without_metadata(client
     metadata_dir.mkdir()
     (metadata_dir / "godzilla.yml").write_text("metadata:\n  test:\n    title: Godzilla\n", encoding="utf-8")
     (metadata_dir / "broken.yml").write_text("templates:\n  sample:\n    test: true\n", encoding="utf-8")
+    (metadata_dir / "empty.yml").write_text("metadata: {}\n", encoding="utf-8")
 
     resp = client.post(
         "/validate_metadata_file",
@@ -320,8 +323,12 @@ def test_validate_metadata_folder_rejects_top_level_yaml_without_metadata(client
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "broken.yml" in payload["error"]
-    assert "non-empty top-level metadata mapping" in payload["error"]
+    assert payload["error"] == "Metadata folder path: Scanned 3 top-level YAML files and found 2 invalid files."
+    assert payload["error_details"]["text"] == payload["error"]
+    assert payload["files"] == [
+        "Top-level `metadata:` was not found in `broken.yml`.",
+        "Top-level `metadata:` in `empty.yml` must be a non-empty mapping."
+    ]
 
 
 def test_validate_collection_folder_rejects_top_level_yaml_without_collections(client, tmp_path):
@@ -329,6 +336,7 @@ def test_validate_collection_folder_rejects_top_level_yaml_without_collections(c
     collection_dir.mkdir()
     (collection_dir / "godzilla.yml").write_text("collections:\n  test:\n    title: Godzilla\n", encoding="utf-8")
     (collection_dir / "broken.yml").write_text("templates:\n  sample:\n    test: true\n", encoding="utf-8")
+    (collection_dir / "empty.yml").write_text("collections: {}\n", encoding="utf-8")
 
     resp = client.post(
         "/validate_collection_file",
@@ -337,8 +345,12 @@ def test_validate_collection_folder_rejects_top_level_yaml_without_collections(c
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "broken.yml" in payload["error"]
-    assert "non-empty top-level collections mapping" in payload["error"]
+    assert payload["error"] == "Collection folder path: Scanned 3 top-level YAML files and found 2 invalid files."
+    assert payload["error_details"]["text"] == payload["error"]
+    assert payload["files"] == [
+        "Top-level `collections:` was not found in `broken.yml`.",
+        "Top-level `collections:` in `empty.yml` must be a non-empty mapping."
+    ]
 
 
 def test_validate_metadata_url_rejects_missing_top_level_metadata(client, monkeypatch, qs_module):
@@ -356,7 +368,7 @@ def test_validate_metadata_url_rejects_missing_top_level_metadata(client, monkey
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["valid"] is False
-    assert "non-empty top-level metadata mapping" in payload["error"]
+    assert payload["error"] == "Top-level `metadata:` was not found in `metadata.yml`."
 
 
 def test_validate_metadata_file_accepts_git(client, monkeypatch, qs_module):

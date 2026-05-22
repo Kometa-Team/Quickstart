@@ -140,6 +140,31 @@ document.addEventListener('DOMContentLoaded', function () {
       return link
     }
 
+    function appendInlineCodeText (target, text, options = {}) {
+      const value = String(text || '')
+      const wrapPlainInCode = Boolean(options.wrapPlainInCode)
+      const parts = value.split(/(`[^`]+`)/g)
+      const hasInlineCode = parts.some(part => part.startsWith('`') && part.endsWith('`'))
+
+      if (!hasInlineCode && wrapPlainInCode) {
+        const code = document.createElement('code')
+        code.textContent = value
+        target.appendChild(code)
+        return
+      }
+
+      parts.forEach(part => {
+        if (!part) return
+        if (part.startsWith('`') && part.endsWith('`')) {
+          const code = document.createElement('code')
+          code.textContent = part.slice(1, -1)
+          target.appendChild(code)
+        } else {
+          target.appendChild(document.createTextNode(part))
+        }
+      })
+    }
+
     function buildMetadataFileRow (entry = {}) {
       const wrapper = document.createElement('div')
       wrapper.className = 'card bg-body-tertiary border-secondary'
@@ -299,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const files = Array.isArray(message.files) ? message.files.filter(Boolean) : []
         if (text) {
           const summary = document.createElement('div')
-          summary.textContent = text
+          appendInlineCodeText(summary, text)
           target.appendChild(summary)
         }
         if (files.length) {
@@ -308,9 +333,7 @@ document.addEventListener('DOMContentLoaded', function () {
             list.className = 'mb-0 mt-1 ps-3'
             files.forEach(file => {
               const item = document.createElement('li')
-              const code = document.createElement('code')
-              code.textContent = file
-              item.appendChild(code)
+              appendInlineCodeText(item, file, { wrapPlainInCode: true })
               list.appendChild(item)
             })
             target.appendChild(list)
@@ -325,9 +348,7 @@ document.addEventListener('DOMContentLoaded', function () {
             list.className = 'mb-0 mt-1 ps-3'
             files.forEach(file => {
               const item = document.createElement('li')
-              const code = document.createElement('code')
-              code.textContent = file
-              item.appendChild(code)
+              appendInlineCodeText(item, file, { wrapPlainInCode: true })
               list.appendChild(item)
             })
             details.appendChild(list)
@@ -347,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return
       }
 
-      target.textContent = text
+      appendInlineCodeText(target, text)
     }
 
     function setMetadataFileStatus (row, kind, message) {
@@ -641,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const files = Array.isArray(message.files) ? message.files.filter(Boolean) : []
         if (text) {
           const summary = document.createElement('div')
-          summary.textContent = text
+          appendInlineCodeText(summary, text)
           target.appendChild(summary)
         }
         if (files.length) {
@@ -650,9 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
             list.className = 'mb-0 mt-1 ps-3'
             files.forEach(file => {
               const item = document.createElement('li')
-              const code = document.createElement('code')
-              code.textContent = file
-              item.appendChild(code)
+              appendInlineCodeText(item, file, { wrapPlainInCode: true })
               list.appendChild(item)
             })
             target.appendChild(list)
@@ -667,9 +686,7 @@ document.addEventListener('DOMContentLoaded', function () {
             list.className = 'mb-0 mt-1 ps-3'
             files.forEach(file => {
               const item = document.createElement('li')
-              const code = document.createElement('code')
-              code.textContent = file
-              item.appendChild(code)
+              appendInlineCodeText(item, file, { wrapPlainInCode: true })
               list.appendChild(item)
             })
             details.appendChild(list)
@@ -689,7 +706,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return
       }
 
-      target.textContent = text
+      appendInlineCodeText(target, text)
     }
 
     function setCollectionFileStatus (row, kind, message) {
@@ -861,7 +878,10 @@ document.addEventListener('DOMContentLoaded', function () {
           })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok || !payload.valid) {
-            setMetadataFileStatus(row, 'error', payload.error || 'Validation failed.')
+            setMetadataFileStatus(row, 'error', payload.error_details || {
+              text: payload.error || 'Validation failed.',
+              files: Array.isArray(payload.files) ? payload.files : []
+            })
           } else {
             setMetadataFileStatus(row, 'success', {
               text: payload.message || 'Metadata source looks valid.',
@@ -950,7 +970,10 @@ document.addEventListener('DOMContentLoaded', function () {
           })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok || !payload.valid) {
-            setCollectionFileStatus(row, 'error', payload.error || 'Validation failed.')
+            setCollectionFileStatus(row, 'error', payload.error_details || {
+              text: payload.error || 'Validation failed.',
+              files: Array.isArray(payload.files) ? payload.files : []
+            })
           } else {
             setCollectionFileStatus(row, 'success', {
               text: payload.message || 'Collection source looks valid.',
