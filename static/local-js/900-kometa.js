@@ -2326,7 +2326,8 @@ $(document).ready(function () {
             $('#kometa-update-box').addClass('d-none')
             syncUpdateButtonLabel()
             const elapsed = formatElapsed(Date.now() - startTs)
-            if (progress.update_success) {
+            const updateSucceeded = progress.update_success ?? progress.success
+            if (updateSucceeded) {
               if (progress.up_to_date) {
                 showToast('info', 'Kometa is already up to date.')
                 postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'

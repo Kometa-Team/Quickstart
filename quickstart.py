@@ -13222,6 +13222,7 @@ def background_job_status(job_id):
         lines=logs[start_idx:],
         next_index=len(logs),
         done=job.get("status") in {"complete", "error"},
+        update_success=bool(job.get("success")),
     )
 
 

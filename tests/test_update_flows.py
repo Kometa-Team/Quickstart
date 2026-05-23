@@ -358,7 +358,35 @@ def test_background_jobs_active_and_status_routes(client, qs_module):
     assert status_payload["success"] is True
     assert status_payload["job"]["phase"] == "download"
     assert status_payload["job"]["pct"] == 25
+    assert status_payload["update_success"] is False
     qs_module._complete_background_job(job["job_id"])
+
+    completed_status_resp = client.get(f"/background-jobs/{job['job_id']}")
+    assert completed_status_resp.status_code == 200
+    completed_status_payload = completed_status_resp.get_json()
+    assert completed_status_payload["done"] is True
+    assert completed_status_payload["update_success"] is False
+
+
+def test_background_job_status_exposes_success_alias(client, qs_module):
+    job = qs_module._create_background_job(
+        "kometa_update",
+        trigger="manual",
+        phase="running",
+        status="running",
+        success=False,
+        logs=["Starting update..."],
+    )
+
+    qs_module._complete_background_job(job["job_id"], success=True, up_to_date=False)
+
+    status_resp = client.get(f"/background-jobs/{job['job_id']}")
+    assert status_resp.status_code == 200
+    status_payload = status_resp.get_json()
+    assert status_payload["success"] is True
+    assert status_payload["done"] is True
+    assert status_payload["update_success"] is True
+    assert status_payload["job"]["success"] is True
 
 
 def test_clone_test_libraries_routes_use_shared_background_job(client, qs_module):
