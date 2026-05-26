@@ -8426,13 +8426,7 @@ def validate_all_services():
                 "libraries",
                 libraries_reason is None,
                 reason=libraries_reason,
-                details=(
-                    missing_placeholders
-                    if libraries_reason == "missing_placeholder_imdb"
-                    else arr_override_errors
-                    if libraries_reason == "invalid_arr_overrides"
-                    else None
-                ),
+                details=(missing_placeholders if libraries_reason == "missing_placeholder_imdb" else arr_override_errors if libraries_reason == "invalid_arr_overrides" else None),
             )
 
     # Bulk validation for settings
