@@ -783,60 +783,70 @@ def validate_webhook_server(data):
 
 
 def validate_radarr_server(data):
-    radarr_url = data.get("radarr_url")
-    radarr_apikey = data.get("radarr_token")
+    result, status_code = validate_radarr_payload(data)
+    if not result.get("valid"):
+        error = result.get("error")
+        if error:
+            flash(f"Invalid Radarr URL or API Key: {error}", "error")
+    return (jsonify(result), status_code) if status_code != 200 else jsonify(result)
+
+
+def validate_sonarr_server(data):
+    result, status_code = validate_sonarr_payload(data)
+    if not result.get("valid"):
+        error = result.get("error")
+        if error:
+            flash(f"Invalid Sonarr URL or API Key: {error}", "error")
+    return (jsonify(result), status_code) if status_code != 200 else jsonify(result)
+
+
+def validate_radarr_payload(data):
+    radarr_url = data.get("radarr_url") or data.get("url")
+    radarr_apikey = data.get("radarr_token") or data.get("token")
 
     ok, msg = _validate_service_url(radarr_url, "Radarr", allow_local=True)
     if not ok:
-        return jsonify({"valid": False, "error": msg}), 400
+        return {"valid": False, "error": msg}, 400
 
     status_api_url = f"{radarr_url}/api/v3/system/status?apikey={radarr_apikey}"
     root_folder_api_url = f"{radarr_url}/api/v3/rootfolder?apikey={radarr_apikey}"
     quality_profile_api_url = f"{radarr_url}/api/v3/qualityprofile?apikey={radarr_apikey}"
 
     try:
-        # Validate API key by checking system status
         response = requests.get(status_api_url, timeout=10)
         response.raise_for_status()
         status_data = response.json()
 
         if "version" not in status_data:
             helpers.ts_log("Radarr connection failed. Invalid response data.")
-            return jsonify({"valid": False, "error": "Invalid Radarr URL or Apikey"})
+            return {"valid": False, "error": "Invalid Radarr URL or Apikey"}, 200
 
-        # Fetch root folders
         response = requests.get(root_folder_api_url, timeout=10)
         response.raise_for_status()
         root_folders = response.json()
 
-        # Fetch quality profiles
         response = requests.get(quality_profile_api_url, timeout=10)
         response.raise_for_status()
         quality_profiles = response.json()
 
         helpers.ts_log("Radarr connection successful.")
-
-        return jsonify(
-            {
-                "valid": True,
-                "root_folders": root_folders,
-                "quality_profiles": quality_profiles,
-            }
-        )
-
+        return {
+            "valid": True,
+            "root_folders": root_folders,
+            "quality_profiles": quality_profiles,
+        }, 200
     except requests.exceptions.RequestException as e:
-        helpers.ts_log("Error validating Radarr connection: {e}", level="ERROR")
-        flash(f"Invalid Radarr URL or API Key: {str(e)}", "error")
-        return jsonify({"valid": False, "error": f"Invalid Radarr URL or Apikey: {str(e)}"})
+        helpers.ts_log(f"Error validating Radarr connection: {e}", level="ERROR")
+        return {"valid": False, "error": f"Invalid Radarr URL or Apikey: {str(e)}"}, 200
 
 
-def validate_sonarr_server(data):
-    sonarr_url = data.get("sonarr_url")
-    sonarr_apikey = data.get("sonarr_token")
+def validate_sonarr_payload(data):
+    sonarr_url = data.get("sonarr_url") or data.get("url")
+    sonarr_apikey = data.get("sonarr_token") or data.get("token")
 
     ok, msg = _validate_service_url(sonarr_url, "Sonarr", allow_local=True)
     if not ok:
-        return jsonify({"valid": False, "error": msg}), 400
+        return {"valid": False, "error": msg}, 400
 
     status_api_url = f"{sonarr_url}/api/v3/system/status?apikey={sonarr_apikey}"
     root_folder_api_url = f"{sonarr_url}/api/v3/rootfolder?apikey={sonarr_apikey}"
@@ -844,45 +854,36 @@ def validate_sonarr_server(data):
     language_profile_api_url = f"{sonarr_url}/api/v3/language?apikey={sonarr_apikey}"
 
     try:
-        # Validate API key by checking system status
         response = requests.get(status_api_url, timeout=10)
         response.raise_for_status()
         status_data = response.json()
 
         if "version" not in status_data:
             helpers.ts_log("Sonarr connection failed. Invalid response data.")
-            return jsonify({"valid": False, "error": "Invalid Sonarr URL or Apikey"})
+            return {"valid": False, "error": "Invalid Sonarr URL or Apikey"}, 200
 
-        # Fetch root folders
         response = requests.get(root_folder_api_url, timeout=10)
         response.raise_for_status()
         root_folders = response.json()
 
-        # Fetch quality profiles
         response = requests.get(quality_profile_api_url, timeout=10)
         response.raise_for_status()
         quality_profiles = response.json()
 
-        # Fetch quality profiles
         response = requests.get(language_profile_api_url, timeout=10)
         response.raise_for_status()
         language_profiles = response.json()
 
         helpers.ts_log("Sonarr connection successful.")
-
-        return jsonify(
-            {
-                "valid": True,
-                "root_folders": root_folders,
-                "quality_profiles": quality_profiles,
-                "language_profiles": language_profiles,
-            }
-        )
-
+        return {
+            "valid": True,
+            "root_folders": root_folders,
+            "quality_profiles": quality_profiles,
+            "language_profiles": language_profiles,
+        }, 200
     except requests.exceptions.RequestException as e:
         helpers.ts_log(f"Error validating Sonarr connection: {e}", level="ERROR")
-        flash(f"Invalid Sonarr URL or API Key: {str(e)}", "error")
-        return jsonify({"valid": False, "error": f"Invalid Sonarr URL or Apikey: {str(e)}"})
+        return {"valid": False, "error": f"Invalid Sonarr URL or Apikey: {str(e)}"}, 200
 
 
 def validate_omdb_server(data):

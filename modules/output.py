@@ -19,6 +19,44 @@ from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers, persistence, database
 
+LIBRARY_RADARR_FIELDS = {
+    "url": "string",
+    "token": "string",
+    "root_folder_path": "string",
+    "quality_profile": "string",
+    "availability": "string",
+    "tag": "string",
+    "monitor": "bool",
+    "search": "bool",
+    "add_missing": "bool",
+    "add_existing": "bool",
+    "upgrade_existing": "bool",
+    "monitor_existing": "bool",
+    "ignore_cache": "bool",
+    "radarr_path": "string",
+    "plex_path": "string",
+}
+LIBRARY_SONARR_FIELDS = {
+    "url": "string",
+    "token": "string",
+    "root_folder_path": "string",
+    "quality_profile": "string",
+    "language_profile": "string",
+    "series_type": "string",
+    "season_folder": "bool",
+    "monitor": "string",
+    "tag": "string",
+    "search": "bool",
+    "cutoff_search": "bool",
+    "add_missing": "bool",
+    "add_existing": "bool",
+    "upgrade_existing": "bool",
+    "monitor_existing": "bool",
+    "ignore_cache": "bool",
+    "sonarr_path": "string",
+    "plex_path": "string",
+}
+
 
 def add_border_to_ascii_art(art):
     lines = art.split("\n")
@@ -1078,6 +1116,7 @@ def build_libraries_section(
             "sonarr_add_all",
         ]
         library_settings = {}
+        service_overrides = {}
         operations = {}
         attr_group = attributes.get(lib_id, {})
         # Begin: Mass Genre Update Section
@@ -1266,6 +1305,19 @@ def build_libraries_section(
             if value not in [None, "", False]:
                 operations[field] = value
 
+        service_field_map = LIBRARY_RADARR_FIELDS if library_type == "mov" else LIBRARY_SONARR_FIELDS
+        service_name = "radarr" if library_type == "mov" else "sonarr"
+        for field, field_type in service_field_map.items():
+            attr_key = f"{library_type}-library_{lib_id}-attribute_{service_name}_{field}"
+            value = attr_group.get(attr_key, None)
+            if field_type == "bool":
+                bool_value = _coerce_bool(value)
+                if bool_value is not None:
+                    service_overrides[field] = bool_value
+                continue
+            if value not in [None, "", False]:
+                service_overrides[field] = value
+
         # Handle nested delete_collections block
         delete_collections = {}
         configured_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_configured"
@@ -1306,6 +1358,9 @@ def build_libraries_section(
 
         if library_settings:
             entry["settings"] = library_settings
+
+        if service_overrides:
+            entry[service_name] = service_overrides
 
         if operations:
             entry["operations"] = operations
@@ -2174,7 +2229,7 @@ def reorder_library_section(library_data):
     - `template_variables` next.
     - `metadata_files` appears before `collection_files`.
     - `collection_files` appears before `overlay_files`.
-    - `settings` appears before `operations`.
+    - `settings` appears before `radarr` / `sonarr` / `operations`.
     - Keys inside `operations` are ordered as per Kometa Wiki.
     - Other keys retain their natural order.
     """
@@ -2206,7 +2261,13 @@ def reorder_library_section(library_data):
     if "settings" in library_data:
         reordered_data["settings"] = library_data["settings"]
 
-    # 6. Reorder operations
+    # 6. Then per-library Arr overrides
+    if "radarr" in library_data:
+        reordered_data["radarr"] = library_data["radarr"]
+    if "sonarr" in library_data:
+        reordered_data["sonarr"] = library_data["sonarr"]
+
+    # 7. Reorder operations
     operations_order = [
         "assets_for_all",
         "assets_for_all_collections",

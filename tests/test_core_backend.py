@@ -663,6 +663,55 @@ def test_build_libraries_section_emits_collection_files(app):
         ]
 
 
+def test_build_libraries_section_emits_library_arr_overrides(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {"sho-library_shows-library": "Shows"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-attribute_radarr_url": "http://radarr.local:7878",
+                    "mov-library_movies-attribute_radarr_quality_profile": "HD-1080p",
+                    "mov-library_movies-attribute_radarr_search": "true",
+                    "mov-library_movies-attribute_radarr_add_existing": "false",
+                }
+            },
+            {
+                "shows": {
+                    "sho-library_shows-attribute_sonarr_url": "http://sonarr.local:8989",
+                    "sho-library_shows-attribute_sonarr_language_profile": "English",
+                    "sho-library_shows-attribute_sonarr_monitor": "future",
+                    "sho-library_shows-attribute_sonarr_season_folder": "true",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    movies = libraries_section["libraries"]["Movies"]["radarr"]
+    shows = libraries_section["libraries"]["Shows"]["sonarr"]
+    assert movies["url"] == "http://radarr.local:7878"
+    assert movies["quality_profile"] == "HD-1080p"
+    assert movies["search"] is True
+    assert movies["add_existing"] is False
+    assert shows["url"] == "http://sonarr.local:8989"
+    assert shows["language_profile"] == "English"
+    assert shows["monitor"] == "future"
+    assert shows["season_folder"] is True
+
+
 def test_build_config_includes_saved_library_metadata_files(app, isolated_config_dir, monkeypatch):
     import json
 
@@ -819,6 +868,65 @@ def test_step_post_from_libraries_persists_collection_files(client, isolated_con
     assert stored["libraries"]["mov-library_movies-collection_files"] == collection_value
 
 
+def test_step_post_from_libraries_persists_library_arr_overrides(client, isolated_config_dir, monkeypatch, qs_module):
+    from modules import database
+
+    config_name = "pytest_step_save_library_arr_overrides"
+
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (True, None, {}, "test: true\n", []))
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_radarr_payload",
+        lambda _payload: ({"valid": True, "root_folders": [{"path": "/movies"}], "quality_profiles": [{"name": "HD-1080p"}]}, 200),
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "110-radarr":
+            return {"radarr": {"url": "http://global-radarr:7878", "token": "global-token"}}
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.post(
+        "/step/900-kometa",
+        data={
+            "configSelector": config_name,
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_assets_for_all": "true",
+            "mov-library_movies-attribute_radarr_root_folder_path": "/movies",
+            "mov-library_movies-attribute_radarr_quality_profile": "HD-1080p",
+            "mov-library_movies-attribute_radarr_search": "true",
+            "mov-library_movies-attribute_radarr_add_existing": "false",
+        },
+        headers={"Referer": "http://localhost/step/025-libraries"},
+    )
+
+    assert resp.status_code == 200
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    assert validated is False
+    assert user_entered is True
+    assert stored["libraries"]["mov-library_movies-attribute_radarr_root_folder_path"] == "/movies"
+    assert stored["libraries"]["mov-library_movies-attribute_radarr_quality_profile"] == "HD-1080p"
+    assert stored["libraries"]["mov-library_movies-attribute_radarr_search"] is True
+    assert stored["libraries"]["mov-library_movies-attribute_radarr_add_existing"] is False
+
+
 def test_step_post_from_libraries_rejects_invalid_metadata_files(client, isolated_config_dir, monkeypatch, qs_module):
     from modules import database
 
@@ -862,6 +970,123 @@ def test_step_post_from_libraries_rejects_invalid_metadata_files(client, isolate
     assert stored is None
     assert validated is False
     assert user_entered is False
+
+
+def test_validate_library_service_overrides_endpoint_returns_options(client, monkeypatch, qs_module):
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "110-radarr":
+            return {"radarr": {"url": "http://global-radarr:7878", "token": "global-token"}}
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_radarr_payload",
+        lambda _payload: (
+            {
+                "valid": True,
+                "root_folders": [{"path": "/movies"}],
+                "quality_profiles": [{"name": "HD-1080p"}],
+            },
+            200,
+        ),
+    )
+
+    resp = client.post(
+        "/validate_library_service_overrides/mov-library_movies",
+        json={
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_radarr_root_folder_path": "/movies",
+            "mov-library_movies-attribute_radarr_quality_profile": "HD-1080p",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["root_folders"][0]["path"] == "/movies"
+    assert payload["quality_profiles"][0]["name"] == "HD-1080p"
+
+
+def test_validate_library_service_overrides_endpoint_rejects_unknown_profile(client, monkeypatch, qs_module):
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "120-sonarr":
+            return {"sonarr": {"url": "http://global-sonarr:8989", "token": "global-token"}}
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_sonarr_payload",
+        lambda _payload: (
+            {
+                "valid": True,
+                "root_folders": [{"path": "/shows"}],
+                "quality_profiles": [{"name": "HD-TV"}],
+                "language_profiles": [{"name": "English"}],
+            },
+            200,
+        ),
+    )
+
+    resp = client.post(
+        "/validate_library_service_overrides/sho-library_shows",
+        json={
+            "sho-library_shows-library": "Shows",
+            "sho-library_shows-attribute_sonarr_quality_profile": "4K-UHD",
+        },
+    )
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert any("unknown quality profile" in error for error in payload["errors"])
+
+
+def test_validate_all_services_flags_invalid_library_arr_overrides(client, monkeypatch, qs_module):
+    import copy
+
+    settings_map = {
+        "010-plex": {"validated": True, "plex": {}},
+        "025-libraries": {
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_assets_for_all": "true",
+                "mov-library_movies-attribute_radarr_url": "http://alt-radarr:7878",
+                "mov-library_movies-attribute_radarr_token": "alt-token",
+                "mov-library_movies-attribute_radarr_root_folder_path": "/bad-root",
+            }
+        },
+    }
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda target: copy.deepcopy(settings_map.get(target, {})))
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_radarr_payload",
+        lambda _payload: (
+            {
+                "valid": True,
+                "root_folders": [{"path": "/movies"}],
+                "quality_profiles": [{"name": "HD-1080p"}],
+            },
+            200,
+        ),
+    )
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "pytest_bulk_invalid_arr"
+
+    resp = client.post("/validate_all_services")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    libraries_result = payload["results"]["025-libraries"]
+    assert libraries_result["status"] == "failed"
+    assert libraries_result["reason"] == "invalid_arr_overrides"
+    assert any("/bad-root" in detail for detail in libraries_result["details"])
 
 
 def test_step_post_from_libraries_rejects_invalid_collection_files(client, isolated_config_dir, monkeypatch, qs_module):

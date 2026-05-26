@@ -3,8 +3,6 @@
   to it's wiki page.</p>
   {% import 'partials/_macros.html' as macros %}
 
-  {% for group in collection_config %}
-  {{ macros.collection_group_section(library, data, version_info, group, telemetry) }}
-  {% endfor %}
-
-{% include "partials/_library_collection_files.html" %}
+{% for group in collection_config %}
+{{ macros.collection_group_section(library, data, version_info, group, telemetry) }}
+{% endfor %}

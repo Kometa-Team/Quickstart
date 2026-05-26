@@ -168,6 +168,7 @@ VALIDATION_REASON_LABELS = {
     "missing_plex_validation": "Plex not validated",
     "no_libraries": "No libraries selected",
     "invalid_paths": "Invalid paths",
+    "invalid_arr_overrides": "Invalid Arr overrides",
     "missing_library_defaults": "Missing library defaults",
     "missing_placeholder_imdb": "Missing placeholder IMDb ID",
     "invalid_metadata_files": "Invalid metadata files",
@@ -398,12 +399,72 @@ QS_ERROR_REASONS = {
     "account_locked",
     "validation_error",
     "invalid_paths",
+    "invalid_arr_overrides",
     "invalid_collection_files",
     "invalid_fields",
     "invalid_metadata_files",
     "missing_library_defaults",
     "missing_placeholder_imdb",
 }
+LIBRARY_RADARR_FIELDS = [
+    "url",
+    "token",
+    "root_folder_path",
+    "quality_profile",
+    "availability",
+    "tag",
+    "monitor",
+    "search",
+    "add_missing",
+    "add_existing",
+    "upgrade_existing",
+    "monitor_existing",
+    "ignore_cache",
+    "radarr_path",
+    "plex_path",
+]
+LIBRARY_RADARR_BOOL_FIELDS = {
+    "monitor",
+    "search",
+    "add_missing",
+    "add_existing",
+    "upgrade_existing",
+    "monitor_existing",
+    "ignore_cache",
+}
+LIBRARY_RADARR_AVAILABILITY_VALUES = {"announced", "cinemas", "released", "db"}
+LIBRARY_SONARR_FIELDS = [
+    "url",
+    "token",
+    "root_folder_path",
+    "quality_profile",
+    "language_profile",
+    "series_type",
+    "season_folder",
+    "monitor",
+    "tag",
+    "search",
+    "cutoff_search",
+    "add_missing",
+    "add_existing",
+    "upgrade_existing",
+    "monitor_existing",
+    "ignore_cache",
+    "sonarr_path",
+    "plex_path",
+]
+LIBRARY_SONARR_BOOL_FIELDS = {
+    "season_folder",
+    "search",
+    "cutoff_search",
+    "add_missing",
+    "add_existing",
+    "upgrade_existing",
+    "monitor_existing",
+    "ignore_cache",
+}
+LIBRARY_SONARR_MONITOR_VALUES = {"all", "none", "future", "missing", "existing", "pilot", "first", "latest"}
+LIBRARY_SONARR_SERIES_TYPE_VALUES = {"standard", "daily", "anime"}
 QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
 QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
 QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
@@ -599,6 +660,158 @@ def _parse_collection_file_entries(value):
             continue
         entries.append({"type": entry_type, "location": location})
     return entries
+
+
+def _is_blank_override_value(value):
+    if value is None:
+        return True
+    if isinstance(value, str):
+        text = value.strip()
+        return text == "" or text.lower() == "none"
+    return False
+
+
+def _coerce_override_bool(value):
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "yes", "1", "on"}:
+            return True
+        if lowered in {"false", "no", "0", "off"}:
+            return False
+    return None
+
+
+def _library_service_definition(service_name):
+    if service_name == "radarr":
+        return {
+            "template_key": "110-radarr",
+            "section_name": "radarr",
+            "fields": LIBRARY_RADARR_FIELDS,
+            "bool_fields": LIBRARY_RADARR_BOOL_FIELDS,
+            "label": "Radarr",
+        }
+    if service_name == "sonarr":
+        return {
+            "template_key": "120-sonarr",
+            "section_name": "sonarr",
+            "fields": LIBRARY_SONARR_FIELDS,
+            "bool_fields": LIBRARY_SONARR_BOOL_FIELDS,
+            "label": "Sonarr",
+        }
+    return None
+
+
+def _extract_library_service_overrides(libraries_data, library_id, service_name):
+    definition = _library_service_definition(service_name)
+    if not definition or not isinstance(libraries_data, dict):
+        return {}
+    overrides = {}
+    for field in definition["fields"]:
+        value = libraries_data.get(f"{library_id}-attribute_{service_name}_{field}")
+        if field in definition["bool_fields"]:
+            bool_value = _coerce_override_bool(value)
+            if bool_value is not None:
+                overrides[field] = bool_value
+            continue
+        if not _is_blank_override_value(value):
+            overrides[field] = str(value).strip() if isinstance(value, str) else value
+    return overrides
+
+
+def _validate_library_service_overrides(library_id, libraries_data, force_validate=False):
+    service_name = "radarr" if str(library_id or "").startswith("mov-library_") else "sonarr" if str(library_id or "").startswith("sho-library_") else None
+    definition = _library_service_definition(service_name)
+    if not definition:
+        return {"valid": True, "skipped": True, "service": None, "errors": []}
+
+    overrides = _extract_library_service_overrides(libraries_data, library_id, service_name)
+    if not overrides and not force_validate:
+        return {"valid": True, "skipped": True, "service": service_name, "overrides": {}, "errors": []}
+
+    settings = persistence.retrieve_settings(definition["template_key"]) or {}
+    global_section = settings.get(definition["section_name"], {}) if isinstance(settings, dict) else {}
+    if not isinstance(global_section, dict):
+        global_section = {}
+
+    effective_url = overrides.get("url") or global_section.get("url")
+    effective_token = overrides.get("token") or global_section.get("token")
+    library_name = libraries_data.get(f"{library_id}-library") if isinstance(libraries_data, dict) else None
+    display_name = str(library_name or library_id or "").strip() or str(library_id or "")
+    scoped_label = f"{display_name} {definition['label']}"
+
+    if _is_blank_override_value(effective_url) or _is_blank_override_value(effective_token):
+        return {
+            "valid": False,
+            "skipped": False,
+            "service": service_name,
+            "overrides": overrides,
+            "errors": [f"{scoped_label}: URL and token are required after applying overrides."],
+        }
+
+    if service_name == "radarr":
+        response_data, _status = validations.validate_radarr_payload({"url": effective_url, "token": effective_token})
+    else:
+        response_data, _status = validations.validate_sonarr_payload({"url": effective_url, "token": effective_token})
+
+    if not response_data.get("valid"):
+        return {
+            "valid": False,
+            "skipped": False,
+            "service": service_name,
+            "overrides": overrides,
+            "errors": [f"{scoped_label}: {response_data.get('error') or 'Validation failed.'}"],
+        }
+
+    errors = []
+    root_folders = response_data.get("root_folders", []) if isinstance(response_data, dict) else []
+    quality_profiles = response_data.get("quality_profiles", []) if isinstance(response_data, dict) else []
+    language_profiles = response_data.get("language_profiles", []) if isinstance(response_data, dict) else []
+
+    root_folder_names = {str(item.get("path") or "").strip() for item in root_folders if isinstance(item, dict)}
+    quality_profile_names = {str(item.get("name") or "").strip() for item in quality_profiles if isinstance(item, dict)}
+    language_profile_names = {str(item.get("name") or "").strip() for item in language_profiles if isinstance(item, dict)}
+
+    root_folder_path = overrides.get("root_folder_path")
+    if root_folder_path and root_folder_path not in root_folder_names:
+        errors.append(f"{scoped_label}: unknown root folder path '{root_folder_path}'.")
+
+    quality_profile = overrides.get("quality_profile")
+    if quality_profile and quality_profile not in quality_profile_names:
+        errors.append(f"{scoped_label}: unknown quality profile '{quality_profile}'.")
+
+    if service_name == "radarr":
+        availability = overrides.get("availability")
+        if availability and availability not in LIBRARY_RADARR_AVAILABILITY_VALUES:
+            errors.append(f"{scoped_label}: unsupported availability '{availability}'.")
+    else:
+        language_profile = overrides.get("language_profile")
+        if language_profile and language_profile not in language_profile_names:
+            errors.append(f"{scoped_label}: unknown language profile '{language_profile}'.")
+
+        series_type = overrides.get("series_type")
+        if series_type and series_type not in LIBRARY_SONARR_SERIES_TYPE_VALUES:
+            errors.append(f"{scoped_label}: unsupported series_type '{series_type}'.")
+
+        monitor_value = overrides.get("monitor")
+        if monitor_value and monitor_value not in LIBRARY_SONARR_MONITOR_VALUES:
+            errors.append(f"{scoped_label}: unsupported monitor value '{monitor_value}'.")
+
+    return {
+        "valid": not errors,
+        "skipped": False,
+        "service": service_name,
+        "overrides": overrides,
+        "errors": errors,
+        "root_folders": root_folders,
+        "quality_profiles": quality_profiles,
+        "language_profiles": language_profiles,
+    }
 
 
 def _validate_library_metadata_files(libraries_data, selected_library_ids):
@@ -6020,6 +6233,10 @@ def step(name):
             selected_library_ids = _selected_library_ids_from_libraries_data(incoming_libraries)
             validation_errors += _validate_library_collection_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_metadata_files(incoming_libraries, selected_library_ids)
+            for lib_id in selected_library_ids:
+                override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
+                if not override_result.get("valid") and not override_result.get("skipped"):
+                    validation_errors += list(override_result.get("errors") or [])
         if validation_errors:
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
@@ -7778,22 +7995,40 @@ def validate_webhook():
 def validate_radarr():
     data = request.json
     result = validations.validate_radarr_server(data)
+    status_code = 200
+    if isinstance(result, tuple):
+        result, status_code = result
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
     else:
-        return jsonify(result.get_json()), 400
+        return jsonify(result.get_json()), status_code or 400
 
 
 @app.route("/validate_sonarr", methods=["POST"])
 def validate_sonarr():
     data = request.json
     result = validations.validate_sonarr_server(data)
+    status_code = 200
+    if isinstance(result, tuple):
+        result, status_code = result
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
     else:
-        return jsonify(result.get_json()), 400
+        return jsonify(result.get_json()), status_code or 400
+
+
+@app.route("/validate_library_service_overrides/<library_id>", methods=["POST"])
+def validate_library_service_overrides(library_id):
+    payload = request.get_json(silent=True) or request.form or {}
+    clean_payload = persistence.clean_form_data(MultiDict(payload))
+    libraries_data = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+    if not isinstance(libraries_data, dict):
+        libraries_data = {}
+    result = _validate_library_service_overrides(library_id, libraries_data, force_validate=True)
+    status_code = 200 if result.get("valid") else 400
+    return jsonify(result), status_code
 
 
 @app.route("/validate_omdb", methods=["POST"])
@@ -8121,6 +8356,7 @@ def validate_all_services():
             path_errors = path_validation.validate_payload(libraries_data)
             collection_file_errors = _validate_library_collection_files(libraries_data, selected_library_ids)
             metadata_file_errors = _validate_library_metadata_files(libraries_data, selected_library_ids)
+            arr_override_errors = []
             if path_errors:
                 libraries_reason = "invalid_paths"
             elif collection_file_errors:
@@ -8177,12 +8413,26 @@ def validate_all_services():
                 if libraries_reason is None and missing_placeholders:
                     libraries_reason = "missing_placeholder_imdb"
 
+                if libraries_reason is None:
+                    for lib_id in selected_library_ids:
+                        override_result = _validate_library_service_overrides(lib_id, libraries_data)
+                        if not override_result.get("valid") and not override_result.get("skipped"):
+                            arr_override_errors.extend(list(override_result.get("errors") or []))
+                if libraries_reason is None and arr_override_errors:
+                    libraries_reason = "invalid_arr_overrides"
+
             update_section_validation(
                 "025-libraries",
                 "libraries",
                 libraries_reason is None,
                 reason=libraries_reason,
-                details=missing_placeholders if libraries_reason == "missing_placeholder_imdb" else None,
+                details=(
+                    missing_placeholders
+                    if libraries_reason == "missing_placeholder_imdb"
+                    else arr_override_errors
+                    if libraries_reason == "invalid_arr_overrides"
+                    else None
+                ),
             )
 
     # Bulk validation for settings
@@ -8322,6 +8572,7 @@ def validate_all_services():
         "missing_plex_validation": "Plex not validated",
         "no_libraries": "No libraries selected",
         "invalid_paths": "Invalid paths",
+        "invalid_arr_overrides": "Invalid Arr overrides",
         "missing_library_defaults": "Missing library defaults",
         "missing_placeholder_imdb": "Missing placeholder IMDb ID",
         "invalid_fields": "Invalid fields",

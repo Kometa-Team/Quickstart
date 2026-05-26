@@ -1,0 +1,16 @@
+<div class="accordion-item library-advanced-section d-none" data-advanced-section>
+    <h2 class="accordion-header">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+            data-bs-target="#{{ library.id }}-collection-files">
+            Collection Files
+        </button>
+    </h2>
+    <div id="{{ library.id }}-collection-files" class="accordion-collapse collapse">
+        <div class="accordion-body">
+            <div class="alert alert-info small mb-3" role="alert">
+                Leave these entries blank unless you want explicit library-level <code>collection_files</code>.
+            </div>
+            {% include "partials/_library_collection_files.html" %}
+        </div>
+    </div>
+</div>

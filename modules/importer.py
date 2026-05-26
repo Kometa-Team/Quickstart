@@ -27,6 +27,44 @@ SIMPLE_SECTIONS = {
     "playlist_files",
 }
 
+LIBRARY_RADARR_IMPORT_FIELDS = {
+    "url": "string",
+    "token": "string",
+    "root_folder_path": "string",
+    "quality_profile": "string",
+    "availability": "string",
+    "tag": "string",
+    "monitor": "bool",
+    "search": "bool",
+    "add_missing": "bool",
+    "add_existing": "bool",
+    "upgrade_existing": "bool",
+    "monitor_existing": "bool",
+    "ignore_cache": "bool",
+    "radarr_path": "string",
+    "plex_path": "string",
+}
+LIBRARY_SONARR_IMPORT_FIELDS = {
+    "url": "string",
+    "token": "string",
+    "root_folder_path": "string",
+    "quality_profile": "string",
+    "language_profile": "string",
+    "series_type": "string",
+    "season_folder": "bool",
+    "monitor": "string",
+    "tag": "string",
+    "search": "bool",
+    "cutoff_search": "bool",
+    "add_missing": "bool",
+    "add_existing": "bool",
+    "upgrade_existing": "bool",
+    "monitor_existing": "bool",
+    "ignore_cache": "bool",
+    "sonarr_path": "string",
+    "plex_path": "string",
+}
+
 
 def sanitize_config_name(raw_name: str | None) -> str:
     if not isinstance(raw_name, str):
@@ -660,6 +698,18 @@ def _flatten_dict(base: str, payload: Any, report: ImportReport, max_depth: int 
             report.add("imported", base)
     else:
         report.add("imported", base)
+
+
+def _coerce_import_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "yes", "1", "on"}:
+            return True
+        if lowered in {"false", "no", "0", "off"}:
+            return False
+    return None
 
 
 def prepare_import_payload(
@@ -1390,6 +1440,53 @@ def prepare_import_payload(
             elif settings_section is not None:
                 report.add("unmapped", f"libraries.{lib_name}.settings", "Unsupported settings format.")
 
+            for service_name, field_map in (
+                ("radarr", LIBRARY_RADARR_IMPORT_FIELDS),
+                ("sonarr", LIBRARY_SONARR_IMPORT_FIELDS),
+            ):
+                service_section = lib_cfg.get(service_name)
+                if not isinstance(service_section, dict):
+                    if service_section is not None:
+                        report.add("unmapped", f"libraries.{lib_name}.{service_name}", "Unsupported service override format.")
+                    continue
+
+                imported_service = False
+                if service_name == "radarr" and not str(lib_id).startswith("mov-library_"):
+                    report.add("unmapped", f"libraries.{lib_name}.radarr", "Radarr overrides are only supported on movie libraries.")
+                    continue
+                if service_name == "sonarr" and not str(lib_id).startswith("sho-library_"):
+                    report.add("unmapped", f"libraries.{lib_name}.sonarr", "Sonarr overrides are only supported on show libraries.")
+                    continue
+
+                for key, value in service_section.items():
+                    field_type = field_map.get(str(key))
+                    if not field_type:
+                        report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Library service override not supported for import.")
+                        continue
+
+                    target_key = f"{lib_id}-attribute_{service_name}_{key}"
+                    if field_type == "bool":
+                        bool_value = _coerce_import_bool(value)
+                        if bool_value is None:
+                            report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Invalid boolean value.")
+                            continue
+                        libraries_data[target_key] = "true" if bool_value else "false"
+                    else:
+                        if isinstance(value, (dict, list)):
+                            report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Unsupported override value format.")
+                            continue
+                        text_value = str(value).strip()
+                        if not text_value:
+                            report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Override value is empty.")
+                            continue
+                        libraries_data[target_key] = text_value
+
+                    report.add("imported", f"libraries.{lib_name}.{service_name}.{key}")
+                    imported_service = True
+
+                if imported_service:
+                    report.add("imported", f"libraries.{lib_name}.{service_name}")
+
             # Operations
             operations = lib_cfg.get("operations")
             if isinstance(operations, dict):
@@ -1425,7 +1522,7 @@ def prepare_import_payload(
             elif operations is not None:
                 report.add("unmapped", f"libraries.{lib_name}.operations", "Unsupported operations format.")
 
-            handled_keys = {"collection_files", "overlay_files", "metadata_files", "template_variables", "settings", "operations"}
+            handled_keys = {"collection_files", "overlay_files", "metadata_files", "template_variables", "settings", "operations", "radarr", "sonarr"}
             handled_keys.update(top_level_map.keys())
             for key in lib_cfg.keys():
                 if key in handled_keys:

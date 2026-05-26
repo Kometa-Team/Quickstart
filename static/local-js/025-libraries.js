@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     let dependencyHintRefreshTimer = null
     let dependencyHintRequestToken = 0
+    const advancedVisibilityStorageKey = 'qsLibrariesAdvancedVisible'
 
     function normalizeMetadataFileEntry (entry) {
       if (!entry || typeof entry !== 'object') return null
@@ -2158,6 +2159,139 @@ document.addEventListener('DOMContentLoaded', function () {
       toggle.dataset.listenerAdded = 'true'
     }
 
+    function hasConfiguredAdvancedValues (card) {
+      if (!card) return false
+      const fields = card.querySelectorAll('.library-advanced-section [name]')
+      return Array.from(fields).some((field) => {
+        if (!field || field.disabled) return false
+        if (field.type === 'checkbox' || field.type === 'radio') return field.checked
+        const value = String(field.value ?? '').trim()
+        if (!value) return false
+        if (field.name.endsWith('-metadata_files') || field.name.endsWith('-collection_files')) {
+          return value !== '[]'
+        }
+        return true
+      })
+    }
+
+    function setAdvancedVisibility (card, visible) {
+      if (!card) return
+      card.querySelectorAll('.library-advanced-section').forEach(section => {
+        section.classList.toggle('d-none', !visible)
+      })
+      const toggle = card.querySelector('.library-advanced-toggle')
+      if (toggle) {
+        toggle.textContent = visible ? 'Hide Advanced' : 'Show Advanced'
+        toggle.setAttribute('aria-expanded', visible ? 'true' : 'false')
+      }
+      card.dataset.advancedVisible = visible ? 'true' : 'false'
+    }
+
+    function wireAdvancedToggle (card) {
+      if (!card || card.dataset.advancedToggleBound === 'true') return
+      const toggle = card.querySelector('.library-advanced-toggle')
+      if (!toggle) return
+
+      let persisted = null
+      try {
+        persisted = window.localStorage ? window.localStorage.getItem(advancedVisibilityStorageKey) : null
+      } catch (_error) {}
+      const initialVisible = persisted === 'true' || (persisted !== 'false' && hasConfiguredAdvancedValues(card))
+      setAdvancedVisibility(card, initialVisible)
+
+      toggle.addEventListener('click', () => {
+        const nextVisible = card.dataset.advancedVisible !== 'true'
+        setAdvancedVisibility(card, nextVisible)
+        try {
+          if (window.localStorage) window.localStorage.setItem(advancedVisibilityStorageKey, nextVisible ? 'true' : 'false')
+        } catch (_error) {}
+      })
+
+      card.dataset.advancedToggleBound = 'true'
+    }
+
+    function setLibraryServiceStatus (card, serviceName, kind, message) {
+      const statusEl = card ? card.querySelector(`[data-library-service-status="${serviceName}"]`) : null
+      if (!statusEl) return
+      const text = String(message || '').trim()
+      if (!text) {
+        statusEl.classList.add('d-none')
+        statusEl.textContent = ''
+        statusEl.classList.remove('alert-success', 'alert-danger', 'alert-info')
+        return
+      }
+      statusEl.textContent = text
+      statusEl.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-info')
+      statusEl.classList.add(kind === 'success' ? 'alert-success' : kind === 'error' ? 'alert-danger' : 'alert-info')
+    }
+
+    function populateOverrideDatalist (card, listId, items, valueField) {
+      const list = card ? card.querySelector(`#${listId}`) : null
+      if (!list) return
+      list.replaceChildren()
+      const normalizedItems = Array.isArray(items) ? items : []
+      normalizedItems.forEach(item => {
+        const value = item && typeof item === 'object' ? item[valueField] : ''
+        if (!value) return
+        const option = document.createElement('option')
+        option.value = value
+        list.appendChild(option)
+      })
+    }
+
+    function validateLibraryServiceOverrides (button) {
+      const serviceName = button?.dataset?.validateLibraryService
+      const libraryId = button?.dataset?.libraryId || activeLibraryId
+      const card = libraryContainer?.firstElementChild
+      if (!button || !serviceName || !libraryId || !card) return
+
+      const payload = buildPayloadFromCard(card)
+      button.disabled = true
+      setLibraryServiceStatus(card, serviceName, 'info', `Validating ${serviceName} overrides...`)
+
+      fetch(`/validate_library_service_overrides/${encodeURIComponent(libraryId)}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok) {
+            const errors = Array.isArray(data.errors) ? data.errors : [data.error || `Validation failed (${res.status})`]
+            throw new Error(errors.filter(Boolean).join(' '))
+          }
+          return data
+        })
+        .then((data) => {
+          if (serviceName === 'radarr') {
+            populateOverrideDatalist(card, `${libraryId}-radarr-root-folders`, data.root_folders, 'path')
+            populateOverrideDatalist(card, `${libraryId}-radarr-quality-profiles`, data.quality_profiles, 'name')
+          } else {
+            populateOverrideDatalist(card, `${libraryId}-sonarr-root-folders`, data.root_folders, 'path')
+            populateOverrideDatalist(card, `${libraryId}-sonarr-quality-profiles`, data.quality_profiles, 'name')
+            populateOverrideDatalist(card, `${libraryId}-sonarr-language-profiles`, data.language_profiles, 'name')
+          }
+          setAdvancedVisibility(card, true)
+          setLibraryServiceStatus(card, serviceName, 'success', `${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} overrides validated.`)
+        })
+        .catch((error) => {
+          setAdvancedVisibility(card, true)
+          setLibraryServiceStatus(card, serviceName, 'error', error.message || 'Validation failed.')
+        })
+        .finally(() => {
+          button.disabled = false
+        })
+    }
+
+    function wireLibraryServiceValidationButtons (card) {
+      if (!card || card.dataset.libraryServiceValidationBound === 'true') return
+      card.querySelectorAll('[data-validate-library-service]').forEach(button => {
+        button.addEventListener('click', () => validateLibraryServiceOverrides(button))
+      })
+      card.dataset.libraryServiceValidationBound = 'true'
+    }
+
     function moveCurrentToCache () {
       const current = libraryContainer.firstElementChild
       if (current) {
@@ -2173,6 +2307,8 @@ document.addEventListener('DOMContentLoaded', function () {
       activeLibraryId = libraryId
       syncHiddenCheckboxPairs(card)
       wireIncludeToggle(card, libraryId)
+      wireAdvancedToggle(card)
+      wireLibraryServiceValidationButtons(card)
       refreshPickerLabels()
       initTooltips(card)
       sortLanguageSelects(card)
