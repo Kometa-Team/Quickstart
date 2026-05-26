@@ -2304,28 +2304,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const syncState = () => {
           const hasValue = String(input.value || '').trim() !== ''
-          input.setAttribute('type', hasValue ? 'password' : 'text')
-          setSecretToggleButtonIcon(button, !hasValue)
+          const forceVisible = button.dataset.secretVisible === 'true'
+          const showPlainText = !hasValue || forceVisible
+          input.setAttribute('type', showPlainText ? 'text' : 'password')
+          setSecretToggleButtonIcon(button, showPlainText)
         }
 
+        button.dataset.secretVisible = 'false'
         syncState()
 
         button.addEventListener('click', () => {
           const currentType = input.getAttribute('type')
-          const nextType = currentType === 'password' ? 'text' : 'password'
-          input.setAttribute('type', nextType)
-          setSecretToggleButtonIcon(button, nextType === 'text')
+          const nextVisible = currentType === 'password'
+          button.dataset.secretVisible = nextVisible ? 'true' : 'false'
+          syncState()
         })
 
         input.addEventListener('input', () => {
-          const currentType = input.getAttribute('type')
           if (String(input.value || '').trim() === '') {
-            input.setAttribute('type', 'text')
-            setSecretToggleButtonIcon(button, true)
-          } else if (currentType !== 'password' && currentType !== 'text') {
-            input.setAttribute('type', 'password')
-            setSecretToggleButtonIcon(button, false)
+            button.dataset.secretVisible = 'false'
           }
+          syncState()
         })
 
         button.dataset.secretToggleBound = 'true'
