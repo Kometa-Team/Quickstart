@@ -62,6 +62,12 @@
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_token', '') | default('', true) }}"
                     placeholder="Leave blank to use global Radarr token"
                     aria-describedby="{{ library.id }}-attribute_radarr_token_text">
+                <button class="btn btn-outline-secondary" type="button"
+                    data-toggle-secret-visibility
+                    data-target-input="{{ library.id }}-attribute_radarr_token"
+                    aria-label="Toggle Radarr API key visibility">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
 
             <div class="input-group mb-2">

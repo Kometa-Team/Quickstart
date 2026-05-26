@@ -2287,6 +2287,51 @@ document.addEventListener('DOMContentLoaded', function () {
       return `[name*="-attribute_${serviceName}_"]`
     }
 
+    function setSecretToggleButtonIcon (button, showPlainText) {
+      if (!button) return
+      const icon = document.createElement('i')
+      icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
+      button.replaceChildren(icon)
+    }
+
+    function initSecretVisibilityToggles (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-toggle-secret-visibility]').forEach(button => {
+        if (button.dataset.secretToggleBound === 'true') return
+        const targetId = button.dataset.targetInput
+        const input = targetId ? root.querySelector(`#${targetId}`) : null
+        if (!input) return
+
+        const syncState = () => {
+          const hasValue = String(input.value || '').trim() !== ''
+          input.setAttribute('type', hasValue ? 'password' : 'text')
+          setSecretToggleButtonIcon(button, !hasValue)
+        }
+
+        syncState()
+
+        button.addEventListener('click', () => {
+          const currentType = input.getAttribute('type')
+          const nextType = currentType === 'password' ? 'text' : 'password'
+          input.setAttribute('type', nextType)
+          setSecretToggleButtonIcon(button, nextType === 'text')
+        })
+
+        input.addEventListener('input', () => {
+          const currentType = input.getAttribute('type')
+          if (String(input.value || '').trim() === '') {
+            input.setAttribute('type', 'text')
+            setSecretToggleButtonIcon(button, true)
+          } else if (currentType !== 'password' && currentType !== 'text') {
+            input.setAttribute('type', 'password')
+            setSecretToggleButtonIcon(button, false)
+          }
+        })
+
+        button.dataset.secretToggleBound = 'true'
+      })
+    }
+
     function populateOverrideDatalist (card, listId, items, valueField) {
       const list = card ? card.querySelector(`#${listId}`) : null
       if (!list) return
@@ -2382,6 +2427,7 @@ document.addEventListener('DOMContentLoaded', function () {
       card.style.display = ''
       libraryContainer.appendChild(card)
       activeLibraryId = libraryId
+      initSecretVisibilityToggles(card)
       syncHiddenCheckboxPairs(card)
       wireIncludeToggle(card, libraryId)
       wireAdvancedToggle(card)
