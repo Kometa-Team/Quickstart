@@ -7,124 +7,234 @@
     </h2>
     <div id="{{ library.id }}-sonarr-overrides" class="accordion-collapse collapse">
         <div class="accordion-body">
+            <div class="alert alert-success small mb-3" role="alert">
+                Enter your Sonarr URL and token override only if this library should use a different Sonarr instance than the global
+                Sonarr page. Then validate the override and complete the rest of the form. The token can be found in
+                Sonarr &gt; Settings &gt; General &gt; Security &gt; API Key.
+                <div class="mt-2">
+                    <a href="https://kometa.wiki/en/nightly/config/sonarr/" target="_blank" rel="noopener noreferrer">
+                        Click Here
+                    </a>
+                    to go to the Kometa wiki for this connector.
+                </div>
+            </div>
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div class="small text-muted">Blank values inherit the global Sonarr page setting.</div>
-                <button type="button" class="btn btn-outline-info btn-sm" data-validate-library-service="sonarr"
+                <button type="button" class="btn btn-success btn-sm" data-validate-library-service="sonarr"
                     data-library-id="{{ library.id }}">
                     Validate Sonarr Overrides
                 </button>
             </div>
+            <input type="hidden" name="{{ library.id }}-library_service_sonarr_validated"
+                value="{{ data['libraries'].get(library.id ~ '-library_service_sonarr_validated', '') }}"
+                data-library-service-validated="sonarr">
+            <input type="hidden" name="{{ library.id }}-library_service_sonarr_validated_at"
+                value="{{ data['libraries'].get(library.id ~ '-library_service_sonarr_validated_at', '') }}"
+                data-library-service-validated-at="sonarr">
             <div class="alert d-none small mb-3" role="alert" data-library-service-status="sonarr"></div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_url">Sonarr URL Override</label>
-                    <input type="text" class="form-control" id="{{ library.id }}-attribute_sonarr_url"
-                        name="{{ library.id }}-attribute_sonarr_url"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_url', '') }}"
-                        placeholder="Leave blank to use global Sonarr URL">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_token">Sonarr Token Override</label>
-                    <input type="password" class="form-control" id="{{ library.id }}-attribute_sonarr_token"
-                        name="{{ library.id }}-attribute_sonarr_token"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_token', '') }}"
-                        placeholder="Leave blank to use global Sonarr token">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_root_folder_path">Root Folder Path</label>
-                    <input type="text" class="form-control" list="{{ library.id }}-sonarr-root-folders"
-                        id="{{ library.id }}-attribute_sonarr_root_folder_path"
-                        name="{{ library.id }}-attribute_sonarr_root_folder_path"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_root_folder_path', '') }}">
-                    <datalist id="{{ library.id }}-sonarr-root-folders"></datalist>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_quality_profile">Quality Profile</label>
-                    <input type="text" class="form-control" list="{{ library.id }}-sonarr-quality-profiles"
-                        id="{{ library.id }}-attribute_sonarr_quality_profile"
-                        name="{{ library.id }}-attribute_sonarr_quality_profile"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_quality_profile', '') }}">
-                    <datalist id="{{ library.id }}-sonarr-quality-profiles"></datalist>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_language_profile">Language Profile</label>
-                    <input type="text" class="form-control" list="{{ library.id }}-sonarr-language-profiles"
-                        id="{{ library.id }}-attribute_sonarr_language_profile"
-                        name="{{ library.id }}-attribute_sonarr_language_profile"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_language_profile', '') }}">
-                    <datalist id="{{ library.id }}-sonarr-language-profiles"></datalist>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_series_type">Series Type</label>
-                    {% set sonarr_series_type = data['libraries'].get(library.id ~ '-attribute_sonarr_series_type', '') %}
-                    <select class="form-select" id="{{ library.id }}-attribute_sonarr_series_type"
-                        name="{{ library.id }}-attribute_sonarr_series_type">
-                        <option value="" {% if not sonarr_series_type %}selected{% endif %}>Inherit</option>
-                        <option value="standard" {% if sonarr_series_type == 'standard' %}selected{% endif %}>standard</option>
-                        <option value="daily" {% if sonarr_series_type == 'daily' %}selected{% endif %}>daily</option>
-                        <option value="anime" {% if sonarr_series_type == 'anime' %}selected{% endif %}>anime</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_monitor">Monitor</label>
-                    {% set sonarr_monitor = data['libraries'].get(library.id ~ '-attribute_sonarr_monitor', '') %}
-                    <select class="form-select" id="{{ library.id }}-attribute_sonarr_monitor"
-                        name="{{ library.id }}-attribute_sonarr_monitor">
-                        <option value="" {% if not sonarr_monitor %}selected{% endif %}>Inherit</option>
-                        <option value="all" {% if sonarr_monitor == 'all' %}selected{% endif %}>all</option>
-                        <option value="none" {% if sonarr_monitor == 'none' %}selected{% endif %}>none</option>
-                        <option value="future" {% if sonarr_monitor == 'future' %}selected{% endif %}>future</option>
-                        <option value="missing" {% if sonarr_monitor == 'missing' %}selected{% endif %}>missing</option>
-                        <option value="existing" {% if sonarr_monitor == 'existing' %}selected{% endif %}>existing</option>
-                        <option value="pilot" {% if sonarr_monitor == 'pilot' %}selected{% endif %}>pilot</option>
-                        <option value="first" {% if sonarr_monitor == 'first' %}selected{% endif %}>first</option>
-                        <option value="latest" {% if sonarr_monitor == 'latest' %}selected{% endif %}>latest</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_tag">Tag</label>
-                    <input type="text" class="form-control" id="{{ library.id }}-attribute_sonarr_tag"
-                        name="{{ library.id }}-attribute_sonarr_tag"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_tag', '') }}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_sonarr_path">Sonarr Path</label>
-                    <input type="text" class="form-control" data-path-rule="sonarr_path"
-                        id="{{ library.id }}-attribute_sonarr_sonarr_path"
-                        name="{{ library.id }}-attribute_sonarr_sonarr_path"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_sonarr_path', '') }}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_plex_path">Plex Path</label>
-                    <input type="text" class="form-control" data-path-rule="plex_path"
-                        id="{{ library.id }}-attribute_sonarr_plex_path"
-                        name="{{ library.id }}-attribute_sonarr_plex_path"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_plex_path', '') }}">
-                </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_url_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Sonarr URL Override
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="You must provide the direct address you use to access your Sonarr server, including the port.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" id="{{ library.id }}-attribute_sonarr_url"
+                    name="{{ library.id }}-attribute_sonarr_url"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_url', '') | default('', true) }}"
+                    placeholder="Leave blank to use global Sonarr URL"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_url_text">
             </div>
-            <div class="row g-3 mt-1">
-                {% for field, label in [
-                    ('season_folder', 'Season Folder'),
-                    ('search', 'Search'),
-                    ('cutoff_search', 'Cutoff Search'),
-                    ('add_missing', 'Add Missing'),
-                    ('add_existing', 'Add Existing'),
-                    ('upgrade_existing', 'Upgrade Existing'),
-                    ('monitor_existing', 'Monitor Existing'),
-                    ('ignore_cache', 'Ignore Cache')
-                ] %}
-                {% set field_value = data['libraries'].get(library.id ~ '-attribute_sonarr_' ~ field, '') %}
-                <div class="col-md-3">
-                    <label class="form-label" for="{{ library.id }}-attribute_sonarr_{{ field }}">{{ label }}</label>
-                    <select class="form-select" id="{{ library.id }}-attribute_sonarr_{{ field }}"
-                        name="{{ library.id }}-attribute_sonarr_{{ field }}">
-                        <option value="" {% if field_value == '' %}selected{% endif %}>Inherit</option>
-                        <option value="true" {% if field_value|string|lower == 'true' %}selected{% endif %}>True</option>
-                        <option value="false" {% if field_value|string|lower == 'false' %}selected{% endif %}>False</option>
-                    </select>
-                </div>
-                {% endfor %}
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_token_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Sonarr API Key Override
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Enter your Sonarr API Key to allow Quickstart to authenticate with Sonarr.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="password" class="form-control" id="{{ library.id }}-attribute_sonarr_token"
+                    name="{{ library.id }}-attribute_sonarr_token"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_token', '') | default('', true) }}"
+                    placeholder="Leave blank to use global Sonarr token"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_token_text">
             </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_root_folder_path_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Root Folder Path
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Select the root folder where Sonarr should store TV shows.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" list="{{ library.id }}-sonarr-root-folders"
+                    id="{{ library.id }}-attribute_sonarr_root_folder_path"
+                    name="{{ library.id }}-attribute_sonarr_root_folder_path"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_root_folder_path', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_root_folder_path_text">
+                <datalist id="{{ library.id }}-sonarr-root-folders"></datalist>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_quality_profile_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Quality Profile
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Choose the quality profile that determines the preferred resolution and format for TV shows.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" list="{{ library.id }}-sonarr-quality-profiles"
+                    id="{{ library.id }}-attribute_sonarr_quality_profile"
+                    name="{{ library.id }}-attribute_sonarr_quality_profile"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_quality_profile', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_quality_profile_text">
+                <datalist id="{{ library.id }}-sonarr-quality-profiles"></datalist>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_language_profile_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Language Profile
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Select the preferred language for downloaded TV shows.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" list="{{ library.id }}-sonarr-language-profiles"
+                    id="{{ library.id }}-attribute_sonarr_language_profile"
+                    name="{{ library.id }}-attribute_sonarr_language_profile"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_language_profile', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_language_profile_text">
+                <datalist id="{{ library.id }}-sonarr-language-profiles"></datalist>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_series_type_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Series Type
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Choose the type of TV series (Standard, Daily, or Anime).">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                {% set sonarr_series_type = data['libraries'].get(library.id ~ '-attribute_sonarr_series_type', '') %}
+                <select class="form-select" id="{{ library.id }}-attribute_sonarr_series_type"
+                    name="{{ library.id }}-attribute_sonarr_series_type"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_series_type_text">
+                    <option value="" {% if not sonarr_series_type %}selected{% endif %}>Inherit</option>
+                    <option value="standard" {% if sonarr_series_type == 'standard' %}selected{% endif %}>Standard (default)</option>
+                    <option value="daily" {% if sonarr_series_type == 'daily' %}selected{% endif %}>Daily</option>
+                    <option value="anime" {% if sonarr_series_type == 'anime' %}selected{% endif %}>Anime</option>
+                </select>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_monitor_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Monitor
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Choose how Sonarr monitors episodes when adding a show.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                {% set sonarr_monitor = data['libraries'].get(library.id ~ '-attribute_sonarr_monitor', '') %}
+                <select class="form-select" id="{{ library.id }}-attribute_sonarr_monitor"
+                    name="{{ library.id }}-attribute_sonarr_monitor"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_monitor_text">
+                    <option value="" {% if not sonarr_monitor %}selected{% endif %}>Inherit</option>
+                    <option value="all" {% if sonarr_monitor == 'all' %}selected{% endif %}>all (default) - monitor all episodes except specials</option>
+                    <option value="none" {% if sonarr_monitor == 'none' %}selected{% endif %}>none - Do not monitor any episodes</option>
+                    <option value="future" {% if sonarr_monitor == 'future' %}selected{% endif %}>future - monitor episodes that have not aired yet</option>
+                    <option value="missing" {% if sonarr_monitor == 'missing' %}selected{% endif %}>missing - monitor episodes that do not have files or have not aired yet</option>
+                    <option value="existing" {% if sonarr_monitor == 'existing' %}selected{% endif %}>existing - monitor episodes that have files or have not aired yet</option>
+                    <option value="pilot" {% if sonarr_monitor == 'pilot' %}selected{% endif %}>pilot - monitor the first episode, all others will be ignored</option>
+                    <option value="first" {% if sonarr_monitor == 'first' %}selected{% endif %}>first - monitor all episodes of the first season only</option>
+                    <option value="latest" {% if sonarr_monitor == 'latest' %}selected{% endif %}>latest - monitor all episodes of the latest season and future seasons</option>
+                </select>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_tag_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Tag
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Enter a tag that will be applied to all shows added through Sonarr.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" id="{{ library.id }}-attribute_sonarr_tag"
+                    name="{{ library.id }}-attribute_sonarr_tag"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_tag', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_tag_text">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_sonarr_path_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Sonarr Path
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Specify the path Sonarr should use when adding shows.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" data-path-rule="sonarr_path"
+                    id="{{ library.id }}-attribute_sonarr_sonarr_path"
+                    name="{{ library.id }}-attribute_sonarr_sonarr_path"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_sonarr_path', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_sonarr_path_text">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_plex_path_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Plex Path
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Set the path where Plex will find the shows added through Sonarr.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" data-path-rule="plex_path"
+                    id="{{ library.id }}-attribute_sonarr_plex_path"
+                    name="{{ library.id }}-attribute_sonarr_plex_path"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_plex_path', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_sonarr_plex_path_text">
+            </div>
+
+            {% for field, label, tooltip in [
+                ('search', 'Search for media when added', 'Automatically searches for episodes when added.'),
+                ('season_folder', 'Use the Season Folder option when adding new media', 'Enables the Season Folder setting when adding new media.'),
+                ('add_missing', 'Add missing media from collections', 'Adds missing TV shows from collections to Sonarr.'),
+                ('add_existing', 'Add existing media from collections', 'Adds already available TV shows from collections to Sonarr.'),
+                ('upgrade_existing', 'Upgrade existing media from collections to the Quality Profile', 'Upgrades existing TV shows to match the assigned quality profile.'),
+                ('monitor_existing', 'Set existing media from collections to monitored', 'Marks all existing media from collections as monitored in Sonarr.'),
+                ('cutoff_search', 'Start search for cutoff unmet episodes when adding new media', "Searches for better quality versions if the current episode doesn't meet the cutoff."),
+                ('ignore_cache', "Ignore Kometa's cache when adding media", "Forces Sonarr to ignore Kometa's cache when adding media, ensuring the latest data is fetched.")
+            ] %}
+            {% set field_name = library.id ~ '-attribute_sonarr_' ~ field %}
+            {% set field_value = data['libraries'].get(field_name, '') %}
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ field_name }}_text"
+                    style="width: 560px; justify-content: space-between;">
+                    {{ label }}
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <select class="form-select" id="{{ field_name }}" name="{{ field_name }}"
+                    aria-describedby="{{ field_name }}_text">
+                    <option value="" {% if field_value == '' %}selected{% endif %}>Inherit</option>
+                    <option value="true" {% if field_value|string|lower == 'true' %}selected{% endif %}>True</option>
+                    <option value="false" {% if field_value|string|lower == 'false' %}selected{% endif %}>False</option>
+                </select>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>

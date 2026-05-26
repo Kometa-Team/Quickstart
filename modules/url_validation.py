@@ -47,6 +47,8 @@ def validate_url(value, allow_local=True):
     text = str(value).strip()
     if text == "":
         return True, None
+    if text.lower() == "none":
+        return True, None
     if is_placeholder(text):
         return False, "URL is incomplete."
     parsed = urlparse(text)

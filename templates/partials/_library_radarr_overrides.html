@@ -7,109 +7,192 @@
     </h2>
     <div id="{{ library.id }}-radarr-overrides" class="accordion-collapse collapse">
         <div class="accordion-body">
+            <div class="alert alert-success small mb-3" role="alert">
+                Enter your Radarr URL and token override only if this library should use a different Radarr instance than the global
+                Radarr page. Then validate the override and complete the rest of the form. The token can be found in
+                Radarr &gt; Settings &gt; General &gt; Security &gt; API Key.
+                <div class="mt-2">
+                    <a href="https://kometa.wiki/en/nightly/config/radarr/" target="_blank" rel="noopener noreferrer">
+                        Click Here
+                    </a>
+                    to go to the Kometa wiki for this connector.
+                </div>
+            </div>
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div class="small text-muted">Blank values inherit the global Radarr page setting.</div>
-                <button type="button" class="btn btn-outline-info btn-sm" data-validate-library-service="radarr"
+                <button type="button" class="btn btn-success btn-sm" data-validate-library-service="radarr"
                     data-library-id="{{ library.id }}">
                     Validate Radarr Overrides
                 </button>
             </div>
+            <input type="hidden" name="{{ library.id }}-library_service_radarr_validated"
+                value="{{ data['libraries'].get(library.id ~ '-library_service_radarr_validated', '') }}"
+                data-library-service-validated="radarr">
+            <input type="hidden" name="{{ library.id }}-library_service_radarr_validated_at"
+                value="{{ data['libraries'].get(library.id ~ '-library_service_radarr_validated_at', '') }}"
+                data-library-service-validated-at="radarr">
             <div class="alert d-none small mb-3" role="alert" data-library-service-status="radarr"></div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_url">Radarr URL Override</label>
-                    <input type="text" class="form-control" id="{{ library.id }}-attribute_radarr_url"
-                        name="{{ library.id }}-attribute_radarr_url"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_url', '') }}"
-                        placeholder="Leave blank to use global Radarr URL">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_token">Radarr Token Override</label>
-                    <input type="password" class="form-control" id="{{ library.id }}-attribute_radarr_token"
-                        name="{{ library.id }}-attribute_radarr_token"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_token', '') }}"
-                        placeholder="Leave blank to use global Radarr token">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_root_folder_path">Root Folder Path</label>
-                    <input type="text" class="form-control" list="{{ library.id }}-radarr-root-folders"
-                        id="{{ library.id }}-attribute_radarr_root_folder_path"
-                        name="{{ library.id }}-attribute_radarr_root_folder_path"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_root_folder_path', '') }}">
-                    <datalist id="{{ library.id }}-radarr-root-folders"></datalist>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_quality_profile">Quality Profile</label>
-                    <input type="text" class="form-control" list="{{ library.id }}-radarr-quality-profiles"
-                        id="{{ library.id }}-attribute_radarr_quality_profile"
-                        name="{{ library.id }}-attribute_radarr_quality_profile"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_quality_profile', '') }}">
-                    <datalist id="{{ library.id }}-radarr-quality-profiles"></datalist>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_availability">Availability</label>
-                    {% set radarr_availability = data['libraries'].get(library.id ~ '-attribute_radarr_availability', '') %}
-                    <select class="form-select" id="{{ library.id }}-attribute_radarr_availability"
-                        name="{{ library.id }}-attribute_radarr_availability">
-                        <option value="" {% if not radarr_availability %}selected{% endif %}>Inherit</option>
-                        <option value="announced" {% if radarr_availability == 'announced' %}selected{% endif %}>announced</option>
-                        <option value="cinemas" {% if radarr_availability == 'cinemas' %}selected{% endif %}>cinemas</option>
-                        <option value="released" {% if radarr_availability == 'released' %}selected{% endif %}>released</option>
-                        <option value="db" {% if radarr_availability == 'db' %}selected{% endif %}>db</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_tag">Tag</label>
-                    <input type="text" class="form-control" id="{{ library.id }}-attribute_radarr_tag"
-                        name="{{ library.id }}-attribute_radarr_tag"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_tag', '') }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_monitor">Monitor When Added</label>
-                    {% set radarr_monitor = data['libraries'].get(library.id ~ '-attribute_radarr_monitor', '') %}
-                    <select class="form-select" id="{{ library.id }}-attribute_radarr_monitor"
-                        name="{{ library.id }}-attribute_radarr_monitor">
-                        <option value="" {% if radarr_monitor == '' %}selected{% endif %}>Inherit</option>
-                        <option value="true" {% if radarr_monitor|string|lower == 'true' %}selected{% endif %}>True</option>
-                        <option value="false" {% if radarr_monitor|string|lower == 'false' %}selected{% endif %}>False</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_radarr_path">Radarr Path</label>
-                    <input type="text" class="form-control" data-path-rule="radarr_path"
-                        id="{{ library.id }}-attribute_radarr_radarr_path"
-                        name="{{ library.id }}-attribute_radarr_radarr_path"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_radarr_path', '') }}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_plex_path">Plex Path</label>
-                    <input type="text" class="form-control" data-path-rule="plex_path"
-                        id="{{ library.id }}-attribute_radarr_plex_path"
-                        name="{{ library.id }}-attribute_radarr_plex_path"
-                        value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_plex_path', '') }}">
-                </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_url_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Radarr URL Override
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Enter your Radarr URL including the port. If Radarr is running in Docker, ensure it&#39;s on the same network as Kometa.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" id="{{ library.id }}-attribute_radarr_url"
+                    name="{{ library.id }}-attribute_radarr_url"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_url', '') | default('', true) }}"
+                    placeholder="Leave blank to use global Radarr URL"
+                    aria-describedby="{{ library.id }}-attribute_radarr_url_text">
             </div>
-            <div class="row g-3 mt-1">
-                {% for field, label in [
-                    ('search', 'Search'),
-                    ('add_missing', 'Add Missing'),
-                    ('add_existing', 'Add Existing'),
-                    ('upgrade_existing', 'Upgrade Existing'),
-                    ('monitor_existing', 'Monitor Existing'),
-                    ('ignore_cache', 'Ignore Cache')
-                ] %}
-                {% set field_value = data['libraries'].get(library.id ~ '-attribute_radarr_' ~ field, '') %}
-                <div class="col-md-4">
-                    <label class="form-label" for="{{ library.id }}-attribute_radarr_{{ field }}">{{ label }}</label>
-                    <select class="form-select" id="{{ library.id }}-attribute_radarr_{{ field }}"
-                        name="{{ library.id }}-attribute_radarr_{{ field }}">
-                        <option value="" {% if field_value == '' %}selected{% endif %}>Inherit</option>
-                        <option value="true" {% if field_value|string|lower == 'true' %}selected{% endif %}>True</option>
-                        <option value="false" {% if field_value|string|lower == 'false' %}selected{% endif %}>False</option>
-                    </select>
-                </div>
-                {% endfor %}
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_token_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Radarr API Key Override
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Enter your Radarr API Key to allow Quickstart to authenticate with Radarr.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="password" class="form-control" id="{{ library.id }}-attribute_radarr_token"
+                    name="{{ library.id }}-attribute_radarr_token"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_token', '') | default('', true) }}"
+                    placeholder="Leave blank to use global Radarr token"
+                    aria-describedby="{{ library.id }}-attribute_radarr_token_text">
             </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_root_folder_path_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Root Folder Path
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Select the root folder where Radarr should store movies.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" list="{{ library.id }}-radarr-root-folders"
+                    id="{{ library.id }}-attribute_radarr_root_folder_path"
+                    name="{{ library.id }}-attribute_radarr_root_folder_path"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_root_folder_path', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_radarr_root_folder_path_text">
+                <datalist id="{{ library.id }}-radarr-root-folders"></datalist>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_quality_profile_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Quality Profile
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Choose the quality profile that determines the preferred resolution and format for movies.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" list="{{ library.id }}-radarr-quality-profiles"
+                    id="{{ library.id }}-attribute_radarr_quality_profile"
+                    name="{{ library.id }}-attribute_radarr_quality_profile"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_quality_profile', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_radarr_quality_profile_text">
+                <datalist id="{{ library.id }}-radarr-quality-profiles"></datalist>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_availability_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Availability
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Select when Radarr should consider a movie available for downloading.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                {% set radarr_availability = data['libraries'].get(library.id ~ '-attribute_radarr_availability', '') %}
+                <select class="form-select" id="{{ library.id }}-attribute_radarr_availability"
+                    name="{{ library.id }}-attribute_radarr_availability"
+                    aria-describedby="{{ library.id }}-attribute_radarr_availability_text">
+                    <option value="" {% if not radarr_availability %}selected{% endif %}>Inherit</option>
+                    <option value="announced" {% if radarr_availability == 'announced' %}selected{% endif %}>Announced (default)</option>
+                    <option value="cinemas" {% if radarr_availability == 'cinemas' %}selected{% endif %}>Cinemas</option>
+                    <option value="released" {% if radarr_availability == 'released' %}selected{% endif %}>Released</option>
+                    <option value="db" {% if radarr_availability == 'db' %}selected{% endif %}>DB</option>
+                </select>
+            </div>
+
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_tag_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Tag
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Enter a tag that will be applied to all movies added through Radarr.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" id="{{ library.id }}-attribute_radarr_tag"
+                    name="{{ library.id }}-attribute_radarr_tag"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_tag', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_radarr_tag_text">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_radarr_path_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Radarr Path
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Specify the path Radarr should use when adding movies.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" data-path-rule="radarr_path"
+                    id="{{ library.id }}-attribute_radarr_radarr_path"
+                    name="{{ library.id }}-attribute_radarr_radarr_path"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_radarr_path', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_radarr_radarr_path_text">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="{{ library.id }}-attribute_radarr_plex_path_text"
+                    style="width: 560px; justify-content: space-between;">
+                    Plex Path
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="Set the path where Plex will find the movies added through Radarr.">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="text" class="form-control" data-path-rule="plex_path"
+                    id="{{ library.id }}-attribute_radarr_plex_path"
+                    name="{{ library.id }}-attribute_radarr_plex_path"
+                    value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_plex_path', '') | default('', true) }}"
+                    aria-describedby="{{ library.id }}-attribute_radarr_plex_path_text">
+            </div>
+
+            {% for field, label, tooltip in [
+                ('monitor', 'Monitor media when added', 'Enables monitoring of newly added media in Radarr.'),
+                ('search', 'Search media when added', 'Automatically searches for media when added.'),
+                ('add_missing', 'Add missing media from collections', 'Adds missing movies from collections to Radarr.'),
+                ('add_existing', 'Add existing media from collections', 'Adds already available movies from collections to Radarr.'),
+                ('upgrade_existing', 'Upgrade existing media from collections to the Quality Profile', 'Attempts to upgrade existing media to match the assigned quality profile.'),
+                ('monitor_existing', 'Set existing media from collections to monitored', 'Changes all existing media from collections to monitored in Radarr.'),
+                ('ignore_cache', "Ignore Kometa's cache when adding media", "Forces Radarr to ignore Kometa's cache when adding media, ensuring the latest data is fetched.")
+            ] %}
+            {% set field_name = library.id ~ '-attribute_radarr_' ~ field %}
+            {% set field_value = data['libraries'].get(field_name, '') %}
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ field_name }}_text"
+                    style="width: 560px; justify-content: space-between;">
+                    {{ label }}
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <select class="form-select" id="{{ field_name }}" name="{{ field_name }}"
+                    aria-describedby="{{ field_name }}_text">
+                    <option value="" {% if field_value == '' %}selected{% endif %}>Inherit</option>
+                    <option value="true" {% if field_value|string|lower == 'true' %}selected{% endif %}>True</option>
+                    <option value="false" {% if field_value|string|lower == 'false' %}selected{% endif %}>False</option>
+                </select>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>

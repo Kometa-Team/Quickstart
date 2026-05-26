@@ -927,6 +927,39 @@ def test_step_post_from_libraries_persists_library_arr_overrides(client, isolate
     assert stored["libraries"]["mov-library_movies-attribute_radarr_add_existing"] is False
 
 
+def test_step_post_from_libraries_accepts_literal_none_arr_url_override(client, isolated_config_dir, monkeypatch, qs_module):
+    config_name = "pytest_step_save_library_arr_none_url"
+
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (True, None, {}, "test: true\n", []))
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+
+    resp = client.post(
+        "/step/900-kometa",
+        data={
+            "configSelector": config_name,
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_radarr_url": "None",
+        },
+        headers={"Referer": "http://localhost/step/025-libraries"},
+    )
+
+    assert resp.status_code == 200
+    assert b"Invalid values:" not in resp.data
+
+
 def test_step_post_from_libraries_rejects_invalid_metadata_files(client, isolated_config_dir, monkeypatch, qs_module):
     from modules import database
 

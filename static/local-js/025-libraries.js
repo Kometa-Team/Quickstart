@@ -2225,6 +2225,68 @@ document.addEventListener('DOMContentLoaded', function () {
       statusEl.classList.add(kind === 'success' ? 'alert-success' : kind === 'error' ? 'alert-danger' : 'alert-info')
     }
 
+    function getLibraryServiceValidationFields (card, serviceName) {
+      if (!card || !serviceName) return {}
+      return {
+        validatedInput: card.querySelector(`[data-library-service-validated="${serviceName}"]`),
+        validatedAtInput: card.querySelector(`[data-library-service-validated-at="${serviceName}"]`),
+        button: card.querySelector(`[data-validate-library-service="${serviceName}"]`)
+      }
+    }
+
+    function isLibraryServiceValidated (card, serviceName) {
+      const { validatedInput } = getLibraryServiceValidationFields(card, serviceName)
+      return String(validatedInput?.value || '').trim().toLowerCase() === 'true'
+    }
+
+    function updateLibraryServiceValidateButton (card, serviceName, state = null) {
+      const { button } = getLibraryServiceValidationFields(card, serviceName)
+      if (!button) return
+      const effectiveState = String(state || button.dataset.validationState || '').trim() || (isLibraryServiceValidated(card, serviceName) ? 'success' : 'idle')
+      button.dataset.validationState = effectiveState
+      button.classList.remove('btn-success', 'btn-secondary')
+
+      if (effectiveState === 'loading') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = `Validating ${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} Overrides...`
+        return
+      }
+
+      if (effectiveState === 'success') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validated'
+        return
+      }
+
+      button.disabled = false
+      button.classList.add('btn-success')
+      button.textContent = `Validate ${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} Overrides`
+    }
+
+    function setLibraryServiceValidatedState (card, serviceName, isValidated) {
+      const { validatedInput, validatedAtInput, button } = getLibraryServiceValidationFields(card, serviceName)
+      if (validatedInput) validatedInput.value = isValidated ? 'true' : 'false'
+      if (validatedAtInput) validatedAtInput.value = isValidated ? new Date().toISOString() : ''
+      if (button) {
+        button.dataset.validationState = isValidated ? 'success' : 'idle'
+      }
+      updateLibraryServiceValidateButton(card, serviceName, isValidated ? 'success' : 'idle')
+    }
+
+    function resetLibraryServiceValidatedState (card, serviceName, opts = {}) {
+      const clearStatus = opts.clearStatus !== false
+      setLibraryServiceValidatedState(card, serviceName, false)
+      if (clearStatus) {
+        setLibraryServiceStatus(card, serviceName, '', '')
+      }
+    }
+
+    function libraryServiceOverrideFieldSelector (serviceName) {
+      return `[name*="-attribute_${serviceName}_"]`
+    }
+
     function populateOverrideDatalist (card, listId, items, valueField) {
       const list = card ? card.querySelector(`#${listId}`) : null
       if (!list) return
@@ -2246,7 +2308,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!button || !serviceName || !libraryId || !card) return
 
       const payload = buildPayloadFromCard(card)
-      button.disabled = true
+      updateLibraryServiceValidateButton(card, serviceName, 'loading')
       setLibraryServiceStatus(card, serviceName, 'info', `Validating ${serviceName} overrides...`)
 
       fetch(`/validate_library_service_overrides/${encodeURIComponent(libraryId)}`, {
@@ -2273,21 +2335,36 @@ document.addEventListener('DOMContentLoaded', function () {
             populateOverrideDatalist(card, `${libraryId}-sonarr-language-profiles`, data.language_profiles, 'name')
           }
           setAdvancedVisibility(card, true)
+          setLibraryServiceValidatedState(card, serviceName, true)
           setLibraryServiceStatus(card, serviceName, 'success', `${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} overrides validated.`)
         })
         .catch((error) => {
           setAdvancedVisibility(card, true)
+          resetLibraryServiceValidatedState(card, serviceName, { clearStatus: false })
           setLibraryServiceStatus(card, serviceName, 'error', error.message || 'Validation failed.')
         })
         .finally(() => {
-          button.disabled = false
+          if (!isLibraryServiceValidated(card, serviceName)) {
+            updateLibraryServiceValidateButton(card, serviceName, 'idle')
+          }
         })
     }
 
     function wireLibraryServiceValidationButtons (card) {
       if (!card || card.dataset.libraryServiceValidationBound === 'true') return
       card.querySelectorAll('[data-validate-library-service]').forEach(button => {
+        const serviceName = button.dataset.validateLibraryService
+        updateLibraryServiceValidateButton(card, serviceName)
         button.addEventListener('click', () => validateLibraryServiceOverrides(button))
+      })
+      card.querySelectorAll(`${libraryServiceOverrideFieldSelector('radarr')}, ${libraryServiceOverrideFieldSelector('sonarr')}`).forEach(field => {
+        const fieldName = String(field.name || '')
+        const serviceName = fieldName.includes('-attribute_sonarr_') ? 'sonarr' : fieldName.includes('-attribute_radarr_') ? 'radarr' : ''
+        if (!serviceName || field.dataset.libraryServiceWatcherBound === 'true') return
+        const onChange = () => resetLibraryServiceValidatedState(card, serviceName)
+        field.addEventListener('input', onChange)
+        field.addEventListener('change', onChange)
+        field.dataset.libraryServiceWatcherBound = 'true'
       })
       card.dataset.libraryServiceValidationBound = 'true'
     }
