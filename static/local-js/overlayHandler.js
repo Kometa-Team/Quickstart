@@ -4742,7 +4742,7 @@ const OverlayHandler = {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function bootstrapOverlayHandler () {
   const imdbDropdowns = document.querySelectorAll('.placeholder-imdb-dropdown')
 
   imdbDropdowns.forEach(dropdown => {
@@ -4780,7 +4780,13 @@ document.addEventListener('DOMContentLoaded', function () {
   OverlayHandler.initializeOverlayBoards()
   OverlayHandler.initializeOverlayPositioners()
   OverlayHandler.initializeJumpButtons()
-})
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapOverlayHandler)
+} else {
+  bootstrapOverlayHandler()
+}
 
 // eslint-disable-next-line no-unused-vars
 function setupParentChildToggleSync () {
