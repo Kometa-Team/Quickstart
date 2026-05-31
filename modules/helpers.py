@@ -2604,6 +2604,15 @@ def normalize_config_name_for_storage(config_name: str | None) -> str:
     return name or "default"
 
 
+MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
+
+
+def get_managed_library_artifact_paths(config_name: str | None) -> list[Path]:
+    normalized = normalize_config_name_for_storage(config_name)
+    config_dir = Path(CONFIG_DIR)
+    return [config_dir / folder / normalized for folder in MANAGED_LIBRARY_FILE_DIRS]
+
+
 def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | None = None) -> dict:
     normalized = normalize_config_name_for_storage(config_name)
     config_dir = Path(CONFIG_DIR)
@@ -2615,6 +2624,7 @@ def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | N
         config_dir / f"{normalized}_config.yml",
         archive_root / normalized,
     ]
+    targets.extend(get_managed_library_artifact_paths(normalized))
 
     if kometa_root:
         targets.append(Path(kometa_root) / "config" / f"{normalized}_config.yml")
@@ -2707,8 +2717,8 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
             bundles[normalized] = bundle
         return bundle
 
-    for path in config_dir.glob("*_config.yml"):
-        if not path.is_file():
+    for path in config_dir.iterdir():
+        if not path.is_file() or not path.name.lower().endswith("_config.yml"):
             continue
         match = current_pattern.match(path.name)
         if not match:
@@ -2716,6 +2726,16 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
         bundle = ensure_bundle(match.group("name"))
         bundle["has_current_file"] = True
         bundle["paths"].append(str(path))
+
+    for folder_name in MANAGED_LIBRARY_FILE_DIRS:
+        managed_root = config_dir / folder_name
+        if not managed_root.exists() or not managed_root.is_dir():
+            continue
+        for path in managed_root.iterdir():
+            if not path.is_dir():
+                continue
+            bundle = ensure_bundle(path.name)
+            bundle["paths"].append(str(path))
 
     if archive_root.exists():
         for path in archive_root.iterdir():
@@ -2729,8 +2749,8 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
     if kometa_root:
         kometa_config_dir = Path(kometa_root) / "config"
         if kometa_config_dir.exists():
-            for path in kometa_config_dir.glob("*_config.yml"):
-                if not path.is_file():
+            for path in kometa_config_dir.iterdir():
+                if not path.is_file() or not path.name.lower().endswith("_config.yml"):
                     continue
                 match = current_pattern.match(path.name)
                 if not match:
@@ -2738,6 +2758,40 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
                 bundle = ensure_bundle(match.group("name"))
                 bundle["has_kometa_copy"] = True
                 bundle["paths"].append(str(path))
+
+    kometa_config_dir = Path(kometa_root) / "config" if kometa_root else None
+    for bundle in bundles.values():
+        name = bundle.get("name")
+        if not name:
+            continue
+        current_file = config_dir / f"{name}_config.yml"
+        if current_file.exists() and current_file.is_file():
+            bundle["has_current_file"] = True
+            path_text = str(current_file)
+            if path_text not in bundle["paths"]:
+                bundle["paths"].append(path_text)
+
+        archive_dir = archive_root / name
+        if archive_dir.exists() and archive_dir.is_dir():
+            bundle["has_archive_dir"] = True
+            bundle["archive_count"] = sum(1 for child in archive_dir.glob("*.yml") if child.is_file())
+            path_text = str(archive_dir)
+            if path_text not in bundle["paths"]:
+                bundle["paths"].append(path_text)
+
+        if kometa_config_dir is not None:
+            kometa_file = kometa_config_dir / f"{name}_config.yml"
+            if kometa_file.exists() and kometa_file.is_file():
+                bundle["has_kometa_copy"] = True
+                path_text = str(kometa_file)
+                if path_text not in bundle["paths"]:
+                    bundle["paths"].append(path_text)
+
+        for managed_path in get_managed_library_artifact_paths(name):
+            if managed_path.exists() and managed_path.is_dir():
+                path_text = str(managed_path)
+                if path_text not in bundle["paths"]:
+                    bundle["paths"].append(path_text)
 
     orphans = [bundle for name, bundle in sorted(bundles.items()) if name not in active_names]
     return {"orphans": orphans, "errors": [], "active_names": sorted(active_names)}

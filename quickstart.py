@@ -693,6 +693,378 @@ def _parse_overlay_file_entries(value):
     return entries
 
 
+LIBRARY_FILE_KINDS = ("metadata_files", "collection_files", "overlay_files")
+LOCAL_LIBRARY_FILE_TYPES = {"file", "folder"}
+LIBRARY_FILE_VALIDATORS = {
+    "metadata_files": (
+        "metadata_file_type",
+        "metadata_file_location",
+        validations.validate_metadata_file_payload,
+    ),
+    "collection_files": (
+        "collection_file_type",
+        "collection_file_location",
+        validations.validate_collection_file_payload,
+    ),
+    "overlay_files": (
+        "overlay_file_type",
+        "overlay_file_location",
+        validations.validate_overlay_file_payload,
+    ),
+}
+LIBRARY_FILE_PARSE_FUNCTIONS = {
+    "metadata_files": _parse_metadata_file_entries,
+    "collection_files": _parse_collection_file_entries,
+    "overlay_files": _parse_overlay_file_entries,
+}
+
+
+def _safe_external_artifact_slug(value, fallback="artifact"):
+    safe = secure_filename(str(value or "").strip())
+    return safe or fallback
+
+
+def _managed_library_file_root(kind):
+    return (Path(helpers.CONFIG_DIR) / kind).resolve()
+
+
+def _yaml_path_suffix(path_value):
+    return str(path_value or "").strip().lower().endswith((".yml", ".yaml"))
+
+
+def _dump_yaml_text(data):
+    buffer = io.StringIO()
+    YAML().dump(data, buffer)
+    return buffer.getvalue()
+
+
+def _resolve_local_library_source(location):
+    raw = str(location or "").strip()
+    if not raw:
+        return None
+    expanded = Path(os.path.expandvars(os.path.expanduser(raw)))
+    if expanded.is_absolute():
+        try:
+            return expanded.resolve()
+        except OSError:
+            return expanded
+    normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
+    if normalized_parts and normalized_parts[0] in LIBRARY_FILE_KINDS:
+        try:
+            return (Path(helpers.CONFIG_DIR) / expanded).resolve()
+        except OSError:
+            return Path(helpers.CONFIG_DIR) / expanded
+    try:
+        return (Path.cwd() / expanded).resolve()
+    except OSError:
+        return Path.cwd() / expanded
+
+
+def _managed_bundle_location_for_path(path):
+    config_root = Path(helpers.CONFIG_DIR).resolve()
+    try:
+        relative = Path(path).resolve().relative_to(config_root)
+    except Exception:
+        return None
+    relative_parts = list(relative.parts)
+    if not relative_parts or relative_parts[0] not in LIBRARY_FILE_KINDS:
+        return None
+    return Path(*relative_parts).as_posix()
+
+
+def _validate_library_file_entry(kind, entry):
+    validator_info = LIBRARY_FILE_VALIDATORS.get(kind)
+    if not validator_info:
+        return False, f"Unsupported library file kind: {kind}", {}
+    type_key, location_key, validator = validator_info
+    payload = {
+        type_key: str((entry or {}).get("type") or "").strip().lower(),
+        location_key: str((entry or {}).get("location") or "").strip(),
+    }
+    return validations._normalize_metadata_validation_result(validator(payload))
+
+
+def _remove_managed_path(path, root):
+    resolved_root = Path(root).resolve()
+    resolved_path = Path(path).resolve()
+    try:
+        resolved_path.relative_to(resolved_root)
+    except Exception as exc:
+        raise RuntimeError(f"Refusing to remove unmanaged path: {resolved_path}") from exc
+    if resolved_path.is_dir():
+        shutil.rmtree(resolved_path, ignore_errors=False)
+    elif resolved_path.exists():
+        resolved_path.unlink()
+
+
+def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_name, library_scope):
+    source_path = _resolve_local_library_source(location)
+    if source_path is None:
+        raise RuntimeError("Path is required.")
+
+    managed_location = _managed_bundle_location_for_path(source_path)
+    if managed_location:
+        return managed_location
+
+    managed_root = _managed_library_file_root(kind)
+    config_slug = helpers.normalize_config_name_for_storage(config_name)
+    library_slug = _safe_external_artifact_slug(library_scope, "library")
+    source_token = str(source_path).replace("\\", "/").lower()
+    digest = hashlib.sha1(source_token.encode("utf-8", errors="ignore")).hexdigest()[:10]
+    target_dir = managed_root / config_slug / library_slug
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    if entry_type == "file":
+        stem = _safe_external_artifact_slug(source_path.stem, "file")
+        suffix = source_path.suffix or ".yml"
+        target_path = (target_dir / f"{stem}_{digest}{suffix}").resolve()
+        if source_path != target_path:
+            shutil.copy2(source_path, target_path)
+    else:
+        folder_name = _safe_external_artifact_slug(source_path.name, "folder")
+        target_path = (target_dir / f"{folder_name}_{digest}").resolve()
+        if source_path != target_path:
+            if target_path.exists():
+                _remove_managed_path(target_path, managed_root)
+            shutil.copytree(source_path, target_path)
+
+    try:
+        relative = target_path.relative_to(Path(helpers.CONFIG_DIR).resolve())
+    except Exception as exc:
+        raise RuntimeError(f"Managed artifact path escaped config directory: {target_path}") from exc
+    return Path(*relative.parts).as_posix()
+
+
+def _normalize_library_external_entry(kind, entry, config_name, library_scope, validate_local=True):
+    parsed_entry = dict(entry) if isinstance(entry, dict) else {}
+    entry_type = str(parsed_entry.get("type") or "").strip().lower()
+    location = str(parsed_entry.get("location") or "").strip()
+    if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
+        return parsed_entry, False, None
+    if entry_type not in LOCAL_LIBRARY_FILE_TYPES or not config_name or not library_scope:
+        return {"type": entry_type, "location": location}, False, None
+
+    if validate_local:
+        valid, message, _details = _validate_library_file_entry(kind, {"type": entry_type, "location": location})
+        if not valid:
+            return None, False, message
+
+    try:
+        normalized_location = _copy_library_artifact_to_managed_store(kind, entry_type, location, config_name, library_scope)
+    except Exception as exc:
+        return None, False, f"Unable to organize {kind}: {exc}"
+
+    changed = normalized_location != location
+    return {"type": entry_type, "location": normalized_location}, changed, None
+
+
+def _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True):
+    if not isinstance(libraries_data, dict):
+        return {}, [], False
+
+    normalized = dict(libraries_data)
+    errors = []
+    changed = False
+    for kind in LIBRARY_FILE_KINDS:
+        parser = LIBRARY_FILE_PARSE_FUNCTIONS[kind]
+        suffix = f"-{kind}"
+        for key, raw_value in list(normalized.items()):
+            if not isinstance(key, str) or not key.endswith(suffix):
+                continue
+            library_scope = key[: -len(suffix)]
+            entries = parser(raw_value)
+            if entries is None:
+                errors.append(f"{library_scope}: {kind} must be a valid list.")
+                continue
+            new_entries = []
+            for idx, entry in enumerate(entries, start=1):
+                normalized_entry, entry_changed, entry_error = _normalize_library_external_entry(
+                    kind,
+                    entry,
+                    config_name,
+                    library_scope,
+                    validate_local=validate_local,
+                )
+                if entry_error:
+                    errors.append(f"{library_scope} {kind}[{idx}]: {entry_error}")
+                    continue
+                if normalized_entry:
+                    new_entries.append(normalized_entry)
+                changed = changed or bool(entry_changed)
+            normalized[key] = json.dumps(new_entries, ensure_ascii=True)
+    return normalized, errors, changed
+
+
+def _normalize_imported_libraries_payload(payload_section, config_name):
+    if not isinstance(payload_section, dict):
+        return payload_section, []
+    libraries_data = payload_section.get("libraries") if isinstance(payload_section.get("libraries"), dict) else payload_section
+    if not isinstance(libraries_data, dict):
+        return payload_section, []
+    normalized, errors, _changed = _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True)
+    if errors:
+        return None, errors
+    updated = dict(payload_section)
+    if "libraries" in updated and isinstance(updated.get("libraries"), dict):
+        updated["libraries"] = normalized
+    else:
+        updated = normalized
+    return updated, []
+
+
+def _rewrite_bundle_library_paths(config_data, bundle_root):
+    if not isinstance(config_data, dict):
+        return config_data
+    libraries = config_data.get("libraries")
+    if not isinstance(libraries, dict):
+        return config_data
+    root = Path(bundle_root).resolve()
+    for lib_cfg in libraries.values():
+        if not isinstance(lib_cfg, dict):
+            continue
+        for kind in LIBRARY_FILE_KINDS:
+            entries = lib_cfg.get(kind)
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+                    location = entry.get(entry_type)
+                    if not location:
+                        continue
+                    raw_location = str(location).strip()
+                    candidate = root / Path(raw_location)
+                    if not candidate.exists():
+                        continue
+                    entry[entry_type] = str(candidate.resolve())
+                    break
+    return config_data
+
+
+def _normalize_generated_config_library_files(config_data, config_name):
+    if not isinstance(config_data, dict):
+        return config_data, False, []
+    libraries = config_data.get("libraries")
+    if not isinstance(libraries, dict):
+        return config_data, False, []
+
+    changed = False
+    errors = []
+    for library_name, lib_cfg in libraries.items():
+        if not isinstance(lib_cfg, dict):
+            continue
+        for kind in LIBRARY_FILE_KINDS:
+            entries = lib_cfg.get(kind)
+            if not isinstance(entries, list):
+                continue
+            new_entries = []
+            for idx, entry in enumerate(entries, start=1):
+                if not isinstance(entry, dict):
+                    new_entries.append(entry)
+                    continue
+                handled = False
+                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+                    location = entry.get(entry_type)
+                    if not location:
+                        continue
+                    normalized_entry, entry_changed, entry_error = _normalize_library_external_entry(
+                        kind,
+                        {"type": entry_type, "location": location},
+                        config_name,
+                        library_name,
+                        validate_local=True,
+                    )
+                    if entry_error:
+                        errors.append(f"{library_name} {kind}[{idx}]: {entry_error}")
+                        new_entries.append(entry)
+                    else:
+                        new_entries.append({entry_type: normalized_entry["location"]})
+                        changed = changed or bool(entry_changed)
+                    handled = True
+                    break
+                if not handled:
+                    new_entries.append(entry)
+            lib_cfg[kind] = new_entries
+    return config_data, changed, errors
+
+
+def _iter_bundle_artifacts(config_data):
+    seen = set()
+    if not isinstance(config_data, dict):
+        return []
+    libraries = config_data.get("libraries")
+    if not isinstance(libraries, dict):
+        return []
+    artifacts = []
+    config_root = Path(helpers.CONFIG_DIR).resolve()
+    for lib_cfg in libraries.values():
+        if not isinstance(lib_cfg, dict):
+            continue
+        for kind in LIBRARY_FILE_KINDS:
+            entries = lib_cfg.get(kind)
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+                    location = entry.get(entry_type)
+                    if not location:
+                        continue
+                    raw_location = str(location).strip()
+                    if not raw_location:
+                        continue
+                    source_path = Path(raw_location)
+                    if not source_path.is_absolute():
+                        source_path = (config_root / Path(raw_location)).resolve()
+                    else:
+                        source_path = source_path.resolve()
+                    if not source_path.exists():
+                        continue
+                    archive_path = _managed_bundle_location_for_path(source_path)
+                    if not archive_path:
+                        archive_path = Path(raw_location).as_posix()
+                    dedupe_key = (str(source_path), archive_path)
+                    if dedupe_key in seen:
+                        break
+                    seen.add(dedupe_key)
+                    artifacts.append(
+                        {
+                            "source": source_path,
+                            "archive": archive_path,
+                            "type": entry_type,
+                        }
+                    )
+                    break
+    return artifacts
+
+
+def _bundle_write_path(zf, archive_name, source_path, redacted=False):
+    source_path = Path(source_path)
+    archive_name = Path(archive_name).as_posix()
+    if redacted and source_path.is_file() and _yaml_path_suffix(source_path.name):
+        text = source_path.read_text(encoding="utf-8", errors="replace")
+        zf.writestr(archive_name, helpers.redact_sensitive_data(text))
+        return
+    zf.write(source_path, archive_name)
+
+
+def _bundle_write_artifact(zf, artifact, redacted=False):
+    source_path = Path((artifact or {}).get("source", ""))
+    archive_path = Path(str((artifact or {}).get("archive", "")).replace("\\", "/"))
+    if not source_path.exists() or not str(archive_path):
+        return
+    if source_path.is_dir():
+        for child in sorted(source_path.rglob("*"), key=lambda item: item.as_posix().lower()):
+            if not child.is_file():
+                continue
+            relative_child = child.relative_to(source_path)
+            _bundle_write_path(zf, (archive_path / relative_child).as_posix(), child, redacted=redacted)
+        return
+    _bundle_write_path(zf, archive_path.as_posix(), source_path, redacted=redacted)
+
+
 def _is_blank_override_value(value):
     if value is None:
         return True
@@ -933,6 +1305,57 @@ def _validate_library_overlay_files(libraries_data, selected_library_ids):
                 errors.append(f"{lib_id} overlay_files[{idx}]: {message}")
 
     return errors
+
+
+def _validate_and_organize_library_file_request(kind, data, type_key, location_key):
+    validator_info = LIBRARY_FILE_VALIDATORS.get(kind)
+    if not validator_info:
+        return jsonify({"valid": False, "error": f"Unsupported library file kind: {kind}"}), 400
+
+    _payload_type_key, _payload_location_key, validator = validator_info
+    valid, message, details = validations._normalize_metadata_validation_result(validator(data))
+    if not valid:
+        payload = {"valid": False, "error": message}
+        if details.get("message") or isinstance(details.get("files"), list):
+            payload["error_details"] = {
+                "text": details.get("message") or message,
+                "files": details.get("files") if isinstance(details.get("files"), list) else [],
+            }
+        if isinstance(details.get("files"), list):
+            payload["files"] = details["files"]
+        return jsonify(payload), 400
+
+    payload = {"valid": True}
+    if details.get("message"):
+        payload["message"] = details["message"]
+    if "validated_files" in details:
+        payload["validated_files"] = details["validated_files"]
+    if isinstance(details.get("files"), list):
+        payload["files"] = details["files"]
+
+    config_name = _resolve_request_config_name(data if isinstance(data, dict) else {})
+    library_scope = str((data or {}).get("library_id") or (data or {}).get("library_scope") or "").strip()
+    entry_type = str((data or {}).get(type_key) or "").strip().lower()
+    entry_location = str((data or {}).get(location_key) or "").strip()
+    if entry_type in LOCAL_LIBRARY_FILE_TYPES and entry_location and config_name and library_scope:
+        normalized_entry, changed, normalize_error = _normalize_library_external_entry(
+            kind,
+            {"type": entry_type, "location": entry_location},
+            config_name,
+            library_scope,
+            validate_local=False,
+        )
+        if normalize_error:
+            return jsonify({"valid": False, "error": normalize_error}), 400
+        payload["normalized_location"] = normalized_entry["location"]
+        payload["organized"] = bool(changed)
+        if changed:
+            payload["message"] = (
+                payload.get("message")
+                or f"Source validated and organized into Quickstart {kind}."
+            )
+
+    return jsonify(payload)
 
 
 def _selected_library_ids_from_libraries_data(libraries_data):
@@ -3228,6 +3651,8 @@ def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) ->
     archive_root = config_dir / "archives"
     old_archive = archive_root / old_norm
     new_archive = archive_root / new_norm
+    old_managed_dirs = helpers.get_managed_library_artifact_paths(old_norm)
+    new_managed_dirs = helpers.get_managed_library_artifact_paths(new_norm)
     if old_archive.exists():
         if new_archive.exists():
             result["errors"].append("Target archive directory already exists.")
@@ -3238,6 +3663,11 @@ def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) ->
             if target_name in existing_names and target_name != path.name:
                 result["errors"].append(f"Archive file already exists: {target_name}")
                 return result
+
+    for old_managed, new_managed in zip(old_managed_dirs, new_managed_dirs):
+        if old_managed.exists() and new_managed.exists():
+            result["errors"].append(f"Target managed library directory already exists: {new_managed}")
+            return result
 
     if dry_run:
         result["success"] = True
@@ -3253,6 +3683,12 @@ def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) ->
             kometa_file.rename(new_kometa_file)
             completed.append((kometa_file, new_kometa_file))
             result["renamed"].append(str(new_kometa_file))
+        for old_managed, new_managed in zip(old_managed_dirs, new_managed_dirs):
+            if old_managed.exists():
+                new_managed.parent.mkdir(parents=True, exist_ok=True)
+                old_managed.rename(new_managed)
+                completed.append((old_managed, new_managed))
+                result["renamed"].append(str(new_managed))
 
         if old_archive.exists():
             old_archive.rename(new_archive)
@@ -5096,7 +5532,16 @@ def import_config_preview():
     if file_name.endswith(".zip"):
         try:
             with zipfile.ZipFile(BytesIO(raw_text)) as archive:
-                config_files = [n for n in archive.namelist() if n.lower().endswith((".yml", ".yaml"))]
+                bundled_library_files = [
+                    n
+                    for n in archive.namelist()
+                    if str(n).replace("\\", "/").lstrip("/").startswith(("metadata_files/", "collection_files/", "overlay_files/"))
+                ]
+                config_files = [
+                    n
+                    for n in archive.namelist()
+                    if n.lower().endswith((".yml", ".yaml")) and n not in bundled_library_files
+                ]
                 if not config_files:
                     return jsonify(success=False, message="No YAML config found in zip file."), 400
                 if len(config_files) > 1:
@@ -5109,29 +5554,47 @@ def import_config_preview():
                     return jsonify(success=False, message="Unable to read config from zip."), 400
 
                 font_files = [n for n in archive.namelist() if n.lower().endswith((".ttf", ".otf"))]
-                if font_files:
+                if font_files or bundled_library_files:
                     cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
                     cache_dir.mkdir(parents=True, exist_ok=True)
-                    extracted_dir = cache_dir / f"fonts_{secrets.token_urlsafe(8)}"
+                    extracted_dir = cache_dir / f"bundle_{secrets.token_urlsafe(8)}"
                     extracted_dir.mkdir(parents=True, exist_ok=True)
-                    seen_names = set()
-                    for font_name in font_files:
-                        base_name = os.path.basename(font_name)
-                        if not base_name:
+                    if font_files:
+                        fonts_dir = extracted_dir / "fonts"
+                        fonts_dir.mkdir(parents=True, exist_ok=True)
+                        seen_names = set()
+                        for font_name in font_files:
+                            base_name = os.path.basename(font_name)
+                            if not base_name:
+                                continue
+                            safe_name = base_name
+                            counter = 1
+                            while safe_name in seen_names:
+                                stem, ext = os.path.splitext(base_name)
+                                safe_name = f"{stem}_{counter}{ext}"
+                                counter += 1
+                            seen_names.add(safe_name)
+                            try:
+                                with archive.open(font_name) as source:
+                                    target = fonts_dir / safe_name
+                                    with open(target, "wb") as dest:
+                                        dest.write(source.read())
+                                    extracted_fonts.append(safe_name)
+                            except Exception:
+                                continue
+                    for member_name in bundled_library_files:
+                        normalized_member = str(member_name).replace("\\", "/").lstrip("/")
+                        if not normalized_member or normalized_member.endswith("/"):
                             continue
-                        safe_name = base_name
-                        counter = 1
-                        while safe_name in seen_names:
-                            stem, ext = os.path.splitext(base_name)
-                            safe_name = f"{stem}_{counter}{ext}"
-                            counter += 1
-                        seen_names.add(safe_name)
+                        target = (extracted_dir / Path(normalized_member)).resolve()
                         try:
-                            with archive.open(font_name) as source:
-                                target = extracted_dir / safe_name
-                                with open(target, "wb") as dest:
-                                    dest.write(source.read())
-                                extracted_fonts.append(safe_name)
+                            target.relative_to(extracted_dir.resolve())
+                        except Exception:
+                            continue
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        try:
+                            with archive.open(member_name) as source, open(target, "wb") as dest:
+                                dest.write(source.read())
                         except Exception:
                             continue
         except Exception:
@@ -5150,6 +5613,8 @@ def import_config_preview():
             except OSError:
                 pass
         return jsonify(success=False, message="Unable to parse config file."), 400
+    if extracted_dir:
+        parsed = _rewrite_bundle_library_paths(parsed, extracted_dir)
 
     def parse_list(value):
         if isinstance(value, str):
@@ -5499,7 +5964,7 @@ def import_config_preview():
             os.remove(previous_path)
         except OSError:
             pass
-    previous_dir = session.get("import_preview_fonts_dir")
+    previous_dir = session.get("import_preview_bundle_dir")
     if previous_dir:
         try:
             shutil.rmtree(previous_dir)
@@ -5517,7 +5982,8 @@ def import_config_preview():
                 "config_data": parsed,
                 "config_text": config_text,
                 "payload": payload,
-                "fonts_dir": str(extracted_dir) if extracted_dir else None,
+                "bundle_dir": str(extracted_dir) if extracted_dir else None,
+                "fonts_dir": str((extracted_dir / "fonts").resolve()) if extracted_dir and extracted_fonts else None,
                 "fonts": extracted_fonts,
                 "report_lines": report_lines,
                 "report_summary": report.summary(),
@@ -5537,7 +6003,7 @@ def import_config_preview():
     session["import_preview_token"] = token
     session["import_preview_path"] = str(cache_path)
     session["import_preview_name"] = config_name
-    session["import_preview_fonts_dir"] = str(extracted_dir) if extracted_dir else ""
+    session["import_preview_bundle_dir"] = str(extracted_dir) if extracted_dir else ""
 
     lines = list(report_lines)
     max_lines = 500
@@ -5925,6 +6391,7 @@ def import_config_confirm():
     config_name = cached.get("config_name")
     payload = cached.get("payload") or {}
     config_data = cached.get("config_data") or {}
+    bundle_dir = cached.get("bundle_dir")
     fonts_dir = cached.get("fonts_dir")
     fonts = cached.get("fonts") or []
     cached_merge_mode = helpers.booler(cached.get("merge_mode"))
@@ -6167,6 +6634,12 @@ def import_config_confirm():
     if not payload:
         return jsonify(success=False, message="No importable sections found."), 400
 
+    if "libraries" in payload:
+        normalized_libraries_section, normalize_errors = _normalize_imported_libraries_payload(payload.get("libraries"), config_name)
+        if normalize_errors:
+            return jsonify(success=False, message="Imported library files could not be organized.", errors=normalize_errors), 400
+        payload["libraries"] = normalized_libraries_section
+
     imported_sections = []
     if merge_mode:
         base_sections = database.retrieve_config_sections(base_config)
@@ -6221,16 +6694,16 @@ def import_config_confirm():
         os.remove(cache_path)
     except OSError:
         pass
-    if fonts_dir:
+    if bundle_dir:
         try:
-            shutil.rmtree(fonts_dir)
+            shutil.rmtree(bundle_dir)
         except OSError:
             pass
 
     session.pop("import_preview_token", None)
     session.pop("import_preview_path", None)
     session.pop("import_preview_name", None)
-    session.pop("import_preview_fonts_dir", None)
+    session.pop("import_preview_bundle_dir", None)
     session.pop("import_preview_plex_url", None)
     session.pop("import_preview_plex_token", None)
     session.pop("import_preview_tmdb_apikey", None)
@@ -6288,6 +6761,7 @@ def step(name):
         url_errors = url_validation.validate_payload(request.form)
         validation_errors = path_errors + url_errors
         save_source, save_source_name = persistence.extract_names(request.referrer or name)
+        normalized_library_payload = None
         if save_source_name == "libraries":
             clean_payload = persistence.clean_form_data(request.form)
             incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
@@ -6299,6 +6773,14 @@ def step(name):
                 override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
                 if not override_result.get("valid") and not override_result.get("skipped"):
                     validation_errors += list(override_result.get("errors") or [])
+            if not validation_errors:
+                normalized_library_payload, normalization_errors, _ = _normalize_library_file_entries_payload(
+                    incoming_libraries,
+                    session.get("config_name") or request.form.get("config_name") or request.form.get("configSelector"),
+                    validate_local=False,
+                )
+                if normalization_errors:
+                    validation_errors += normalization_errors
         if validation_errors:
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
@@ -6324,6 +6806,10 @@ def step(name):
                         reason="config_changed",
                         details="Configuration changed. Validate ImageMaid again.",
                     )
+            elif save_source_name == "libraries" and normalized_library_payload is not None:
+                libraries_form = request.form.to_dict(flat=True)
+                libraries_form.update(normalized_library_payload)
+                persistence.save_settings("025-libraries", libraries_form)
             else:
                 persistence.save_settings(request.referrer, request.form)
             header_style = request.form.get("header_style", "single line")
@@ -6818,6 +7304,12 @@ def step(name):
 
         if final_gate.get("can_build_config"):
             validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(header_style, config_name=config_name)
+            if isinstance(config_data, dict):
+                config_data, _normalized_changed, normalization_errors = _normalize_generated_config_library_files(config_data, config_name)
+                if normalization_errors:
+                    validation_errors = list(validation_errors or []) + normalization_errors
+                    validated = False
+                yaml_content = _dump_yaml_text(config_data)
             validation_summary = build_validation_summary(validation_errors)
             used_fonts = helpers.collect_font_references(config_data)
             saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
@@ -7161,6 +7653,7 @@ def autosave_library(library_id):
     """Merge-save a single library when switching cards without requiring full navigation submit."""
     try:
         incoming = request.get_json(silent=True) or request.form
+        config_name = _resolve_request_config_name(incoming if isinstance(incoming, dict) else {})
         errors = path_validation.validate_payload(incoming)
         if errors:
             return jsonify({"success": False, "error": "Invalid path values.", "errors": errors}), 400
@@ -7176,8 +7669,18 @@ def autosave_library(library_id):
             return jsonify({"success": False, "error": "Invalid metadata files.", "errors": metadata_errors}), 400
         if overlay_errors:
             return jsonify({"success": False, "error": "Invalid overlay files.", "errors": overlay_errors}), 400
-        persistence.save_settings("025-libraries", incoming)
-        return jsonify({"success": True})
+        normalized_libraries, normalization_errors, changed = _normalize_library_file_entries_payload(
+            incoming_libraries,
+            config_name,
+            validate_local=False,
+        )
+        if normalization_errors:
+            return jsonify({"success": False, "error": "Unable to organize library files.", "errors": normalization_errors}), 400
+        save_payload = dict(incoming) if isinstance(incoming, dict) else {}
+        save_payload.update(normalized_libraries)
+        save_payload["config_name"] = config_name
+        persistence.save_settings("025-libraries", save_payload)
+        return jsonify({"success": True, "normalized": bool(changed), "libraries": normalized_libraries})
     except Exception as e:
         helpers.ts_log(f"Autosave failed for library {library_id}: {e}", level="ERROR")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -7375,6 +7878,23 @@ def copy_library_settings():
             try:
                 clean_payload = persistence.clean_form_data(MultiDict(source_payload))
                 incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+                normalized_incoming, normalization_errors, _ = _normalize_library_file_entries_payload(
+                    incoming_dict,
+                    session.get("config_name") or source_payload.get("config_name"),
+                    validate_local=False,
+                )
+                if normalization_errors:
+                    return (
+                        jsonify(
+                            {
+                                "success": False,
+                                "error": "Unable to organize library files in source payload.",
+                                "errors": normalization_errors,
+                            }
+                        ),
+                        400,
+                    )
+                incoming_dict = normalized_incoming
 
                 merged = libraries_data.copy()
 
@@ -7563,32 +8083,47 @@ def _get_custom_font_files() -> list[Path]:
     return sorted(fonts, key=lambda p: p.name.lower())
 
 
+def _bundle_artifacts_from_yaml(yaml_text):
+    parsed = importer.load_yaml_config(yaml_text)
+    return _iter_bundle_artifacts(parsed)
+
+
 def _build_config_bundle(
     config_text: str,
     config_filename: str,
     font_files: list[Path],
+    artifact_files: list[dict] | None = None,
     config_name: str | None = None,
     redacted: bool = False,
 ) -> BytesIO | None:
-    if not config_text or not font_files:
+    artifact_files = artifact_files or []
+    if not config_text or (not font_files and not artifact_files):
         return None
     name = _normalize_config_name(config_name)
     font_names = [font.name for font in font_files]
+    has_artifacts = bool(artifact_files)
     readme_lines = [
         "Quickstart config bundle",
         f"Config name: {name}",
         "",
         "This bundle includes:",
         f"- {config_filename}",
-        "- fonts/ (custom fonts uploaded in Quickstart)",
     ]
     if font_names:
+        readme_lines.append("- fonts/ (custom fonts uploaded in Quickstart)")
         readme_lines.append(f"- Fonts included: {', '.join(font_names)}")
+    if has_artifacts:
+        readme_lines.append("- metadata_files/ collection_files/ overlay_files/ (managed library files)")
     readme_lines += [
         "",
         "Install steps:",
         "1) Copy the config file into your Kometa config folder (config/).",
-        "2) Copy the font files from fonts/ into your Kometa config/fonts/ folder.",
+    ]
+    if font_names:
+        readme_lines.append("2) Copy the font files from fonts/ into your Kometa config/fonts/ folder.")
+    if has_artifacts:
+        readme_lines.append("3) Copy metadata_files/, collection_files/, and overlay_files/ into your Kometa config/ folder.")
+    readme_lines += [
         "",
         "Note: The Quickstart Run Now button syncs fonts automatically.",
         "This bundle is for manual installs.",
@@ -7605,6 +8140,8 @@ def _build_config_bundle(
         zf.writestr(config_filename, config_text)
         for font_path in font_files:
             zf.write(font_path, f"fonts/{font_path.name}")
+        for artifact in artifact_files:
+            _bundle_write_artifact(zf, artifact, redacted=redacted)
         zf.writestr("README.txt", "\n".join(readme_lines))
     bundle.seek(0)
     return bundle
@@ -7615,9 +8152,16 @@ def download():
     yaml_content = session.get("yaml_content", "")
     if yaml_content:
         custom_fonts = _get_custom_font_files()
+        artifact_files = _bundle_artifacts_from_yaml(yaml_content)
         config_name = session.get("config_name")
-        if custom_fonts:
-            bundle = _build_config_bundle(yaml_content, "config.yml", custom_fonts, config_name=config_name)
+        if custom_fonts or artifact_files:
+            bundle = _build_config_bundle(
+                yaml_content,
+                "config.yml",
+                custom_fonts,
+                artifact_files=artifact_files,
+                config_name=config_name,
+            )
             if bundle:
                 bundle_name = f"{_safe_bundle_name(config_name)}_config_bundle.zip"
                 return send_file(
@@ -7645,12 +8189,14 @@ def download_redacted():
 
         # Serve the redacted YAML as a file download
         custom_fonts = _get_custom_font_files()
+        artifact_files = _bundle_artifacts_from_yaml(yaml_content)
         config_name = session.get("config_name")
-        if custom_fonts:
+        if custom_fonts or artifact_files:
             bundle = _build_config_bundle(
                 redacted_content,
                 "config_redacted.yml",
                 custom_fonts,
+                artifact_files=artifact_files,
                 config_name=config_name,
                 redacted=True,
             )
@@ -16572,19 +17118,34 @@ def purge_test_libraries():
 @app.route("/validate_metadata_file", methods=["POST"])
 def validate_metadata_file():
     data = request.get_json(silent=True) or {}
-    return validations.validate_metadata_file_server(data)
+    return _validate_and_organize_library_file_request(
+        "metadata_files",
+        data,
+        "metadata_file_type",
+        "metadata_file_location",
+    )
 
 
 @app.route("/validate_collection_file", methods=["POST"])
 def validate_collection_file():
     data = request.get_json(silent=True) or {}
-    return validations.validate_collection_file_server(data)
+    return _validate_and_organize_library_file_request(
+        "collection_files",
+        data,
+        "collection_file_type",
+        "collection_file_location",
+    )
 
 
 @app.route("/validate_overlay_file", methods=["POST"])
 def validate_overlay_file():
     data = request.get_json(silent=True) or {}
-    return validations.validate_overlay_file_server(data)
+    return _validate_and_organize_library_file_request(
+        "overlay_files",
+        data,
+        "overlay_file_type",
+        "overlay_file_location",
+    )
 
 
 @app.route("/restart", methods=["POST"])

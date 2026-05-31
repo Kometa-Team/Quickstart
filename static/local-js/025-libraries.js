@@ -167,6 +167,23 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function getActiveConfigName () {
+      const selected = String(document.querySelector('[name="configSelector"]')?.value || '').trim()
+      if (selected && selected !== 'add_config') return selected
+      return String(document.querySelector('[name="newConfigName"]')?.value || '').trim()
+    }
+
+    function applyNormalizedLibraryFileLocation (row, selector, payload, editor, syncFn) {
+      const normalizedLocation = String(payload?.normalized_location || '').trim()
+      if (!row || !normalizedLocation) return
+      const input = row.querySelector(selector)
+      if (!input) return
+      input.value = normalizedLocation
+      if (typeof syncFn === 'function') {
+        syncFn(editor, false)
+      }
+    }
+
     function buildMetadataFileRow (entry = {}) {
       const wrapper = document.createElement('div')
       wrapper.className = 'card bg-body-tertiary border-secondary'
@@ -865,6 +882,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (applyMetadataFileDependencyState(row)) return
         const type = row.querySelector('[data-metadata-file-type]')?.value || ''
         const location = row.querySelector('[data-metadata-file-location]')?.value || ''
+        const libraryId = String(editor.dataset.libraryId || '').trim()
         syncMetadataFilesEditor(editor, false)
         setMetadataFileStatus(row, '', 'Validating...')
         setMetadataFileButtonState(row, 'loading')
@@ -875,7 +893,9 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               metadata_file_type: type,
-              metadata_file_location: location
+              metadata_file_location: location,
+              library_id: libraryId,
+              config_name: getActiveConfigName()
             })
           })
           const payload = await response.json().catch(() => ({}))
@@ -885,6 +905,7 @@ document.addEventListener('DOMContentLoaded', function () {
               files: Array.isArray(payload.files) ? payload.files : []
             })
           } else {
+            applyNormalizedLibraryFileLocation(row, '[data-metadata-file-location]', payload, editor, syncMetadataFilesEditor)
             setMetadataFileStatus(row, 'success', {
               text: payload.message || 'Metadata source looks valid.',
               files: Array.isArray(payload.files) ? payload.files : []
@@ -957,6 +978,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (applyCollectionFileDependencyState(row)) return
         const type = row.querySelector('[data-collection-file-type]')?.value || ''
         const location = row.querySelector('[data-collection-file-location]')?.value || ''
+        const libraryId = String(editor.dataset.libraryId || '').trim()
         syncCollectionFilesEditor(editor, false)
         setCollectionFileStatus(row, '', 'Validating...')
         setCollectionFileButtonState(row, 'loading')
@@ -967,7 +989,9 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               collection_file_type: type,
-              collection_file_location: location
+              collection_file_location: location,
+              library_id: libraryId,
+              config_name: getActiveConfigName()
             })
           })
           const payload = await response.json().catch(() => ({}))
@@ -977,6 +1001,7 @@ document.addEventListener('DOMContentLoaded', function () {
               files: Array.isArray(payload.files) ? payload.files : []
             })
           } else {
+            applyNormalizedLibraryFileLocation(row, '[data-collection-file-location]', payload, editor, syncCollectionFilesEditor)
             setCollectionFileStatus(row, 'success', {
               text: payload.message || 'Collection source looks valid.',
               files: Array.isArray(payload.files) ? payload.files : []
@@ -1380,6 +1405,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (applyOverlayFileDependencyState(row)) return
         const type = row.querySelector('[data-overlay-file-type]')?.value || ''
         const location = row.querySelector('[data-overlay-file-location]')?.value || ''
+        const libraryId = String(editor.dataset.libraryId || '').trim()
         syncOverlayFilesEditor(editor, false)
         setOverlayFileStatus(row, '', 'Validating...')
         setOverlayFileButtonState(row, 'loading')
@@ -1390,7 +1416,9 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               overlay_file_type: type,
-              overlay_file_location: location
+              overlay_file_location: location,
+              library_id: libraryId,
+              config_name: getActiveConfigName()
             })
           })
           const payload = await response.json().catch(() => ({}))
@@ -1400,6 +1428,7 @@ document.addEventListener('DOMContentLoaded', function () {
               files: Array.isArray(payload.files) ? payload.files : []
             })
           } else {
+            applyNormalizedLibraryFileLocation(row, '[data-overlay-file-location]', payload, editor, syncOverlayFilesEditor)
             setOverlayFileStatus(row, 'success', {
               text: payload.message || 'Overlay source looks valid.',
               files: Array.isArray(payload.files) ? payload.files : []
