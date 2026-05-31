@@ -1052,6 +1052,37 @@ def _parse_collection_file_block_entries(raw_value):
     return normalized
 
 
+def _parse_overlay_file_block_entries(raw_value):
+    if isinstance(raw_value, list):
+        entries = raw_value
+    elif isinstance(raw_value, str):
+        text = raw_value.strip()
+        if not text:
+            return []
+        try:
+            entries = json.loads(text)
+        except Exception:
+            return []
+    else:
+        return []
+
+    if not isinstance(entries, list):
+        return []
+
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        entry_type = str(entry.get("type") or "").strip().lower()
+        location = str(entry.get("location") or "").strip()
+        if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
+            continue
+        normalized.append({entry_type: location})
+
+    normalized.sort(key=lambda item: (next(iter(item.keys())), next(iter(item.values())).casefold()))
+    return normalized
+
+
 def build_libraries_section(
     movie_libraries,
     show_libraries,
@@ -1372,10 +1403,10 @@ def build_libraries_section(
             helpers.ts_log(f"collections keys for {collection_key}: {list(collections.get(collection_key, {}).keys())}", level="DEBUG")
             helpers.ts_log(f"templates keys for {collection_key}: {list(templates.get(collection_key, {}).keys())}", level="DEBUG")
 
-        if collection_key and collection_key in collections:
+        if collection_key:
             collection_files = []
 
-            for key, selected in collections[collection_key].items():
+            for key, selected in collections.get(collection_key, {}).items():
                 if "template_collection_" in key:
                     if app.config["QS_DEBUG"]:
                         helpers.ts_log(f"Skipping invalid collection key (template child): {key}", level="DEBUG")
@@ -1945,6 +1976,12 @@ def build_libraries_section(
 
                         overlay_entries.sort(key=overlay_sort_key)
 
+                overlay_library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
+                raw_overlay_file_entries = _parse_overlay_file_block_entries(overlays.get(overlay_key, {}).get(f"{overlay_library_prefix}-overlay_files"))
+                if raw_overlay_file_entries:
+                    overlay_entries.extend(raw_overlay_file_entries)
+
+                if overlay_entries:
                     entry["overlay_files"] = overlay_entries
 
         metadata_group = (
@@ -2534,10 +2571,16 @@ def build_config(header_style="standard", config_name=None):
         show_collections = group_by_library("collection_", show_library_names)
         movie_collection_files = group_by_library("collection_files", movie_library_names)
         show_collection_files = group_by_library("collection_files", show_library_names)
+        movie_overlay_file_blocks = group_by_library("overlay_files", movie_library_names)
+        show_overlay_file_blocks = group_by_library("overlay_files", show_library_names)
         # movie_overlays = group_by_library("overlay_", movie_library_names)
         # show_overlays = group_by_library("overlay_", show_library_names)
         movie_overlays = group_by_library("overlay_", movie_library_names, normalize_overlays=True)
         show_overlays = group_by_library("overlay_", show_library_names, normalize_overlays=True)
+        for lib_name, payload in movie_overlay_file_blocks.items():
+            movie_overlays.setdefault(lib_name, {}).update(payload)
+        for lib_name, payload in show_overlay_file_blocks.items():
+            show_overlays.setdefault(lib_name, {}).update(payload)
         movie_attributes = group_by_library("attribute_", movie_library_names)
         show_attributes = group_by_library("attribute_", show_library_names)
         movie_metadata_files = group_by_library("metadata_files", movie_library_names)
@@ -2555,6 +2598,8 @@ def build_config(header_style="standard", config_name=None):
             helpers.ts_log(f"Extracted Show Collections: {show_collections}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Collection Files: {movie_collection_files}", level="DEBUG")
             helpers.ts_log(f"Extracted Show Collection Files: {show_collection_files}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Overlay File Blocks: {movie_overlay_file_blocks}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Overlay File Blocks: {show_overlay_file_blocks}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Overlays: {movie_overlays}", level="DEBUG")
             helpers.ts_log(f"Extracted Show Overlays: {show_overlays}", level="DEBUG")
             helpers.ts_log(f"Extracted Movie Attributes: {movie_attributes}", level="DEBUG")

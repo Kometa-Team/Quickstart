@@ -171,6 +171,19 @@ def test_validate_collection_file_accepts_existing_local_file(client, tmp_path):
     assert payload["valid"] is True
 
 
+def test_validate_overlay_file_accepts_existing_local_file(client, tmp_path):
+    overlay_file = tmp_path / "overlays.yml"
+    overlay_file.write_text("overlays:\n  test:\n    template:\n      - name: ribbon\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_overlay_file",
+        json={"overlay_file_type": "file", "overlay_file_location": str(overlay_file)},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+
+
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):
     collection_file = tmp_path / "collections.yml"
     collection_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")
@@ -198,6 +211,21 @@ def test_validate_collection_file_rejects_empty_top_level_collections(client, tm
     payload = resp.get_json()
     assert payload["valid"] is False
     assert "Top-level `collections:` in `collections.yml` must be a non-empty mapping." == payload["error"]
+
+
+def test_validate_overlay_file_rejects_missing_top_level_overlays(client, tmp_path):
+    overlay_file = tmp_path / "overlays.yml"
+    overlay_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_overlay_file",
+        json={"overlay_file_type": "file", "overlay_file_location": str(overlay_file)},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "Top-level `overlays:` was not found" in payload["error"]
+    assert "`overlays.yml`" in payload["error"]
 
 
 def test_validate_metadata_file_rejects_missing_top_level_metadata(client, tmp_path):
@@ -505,6 +533,27 @@ def test_autosave_library_rejects_invalid_collection_files(client, monkeypatch, 
     assert "Invalid collection files" in payload["error"]
 
 
+def test_autosave_library_rejects_invalid_overlay_files(client, monkeypatch, qs_module):
+    class _Resp:
+        status_code = 404
+        reason = "Not Found"
+        text = ""
+
+    monkeypatch.setattr(qs_module.validations.requests, "get", lambda *_args, **_kwargs: _Resp())
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-overlay_files": '[{"type":"url","location":"https://example.com/missing.yml"}]',
+        },
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "Invalid overlay files" in payload["error"]
+
+
 def test_output_metadata_file_entries_are_sorted():
     import json
 
@@ -543,6 +592,38 @@ def test_output_collection_file_entries_are_sorted():
     from modules import output
 
     parsed = output._parse_collection_file_block_entries(
+        json.dumps(
+            [
+                {"type": "url", "location": "https://example.com/zeta.yml"},
+                {"type": "repo", "location": "custom/movies.yml"},
+                {"type": "file", "location": "config/beta.yml"},
+                {"type": "folder", "location": "config/zeta"},
+                {"type": "git", "location": "community/alpha.yml"},
+                {"type": "file", "location": "config/alpha.yml"},
+                {"type": "folder", "location": "config/alpha"},
+                {"type": "url", "location": "https://example.com/alpha.yml"},
+            ]
+        )
+    )
+
+    assert parsed == [
+        {"file": "config/alpha.yml"},
+        {"file": "config/beta.yml"},
+        {"folder": "config/alpha"},
+        {"folder": "config/zeta"},
+        {"git": "community/alpha.yml"},
+        {"repo": "custom/movies.yml"},
+        {"url": "https://example.com/alpha.yml"},
+        {"url": "https://example.com/zeta.yml"},
+    ]
+
+
+def test_output_overlay_file_entries_are_sorted():
+    import json
+
+    from modules import output
+
+    parsed = output._parse_overlay_file_block_entries(
         json.dumps(
             [
                 {"type": "url", "location": "https://example.com/zeta.yml"},
@@ -614,6 +695,53 @@ def test_build_libraries_section_emits_metadata_files(app):
             {"url": "https://example.com/movies_refresh.yml"},
         ]
     assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "metadata_files"]
+
+
+def test_build_libraries_section_emits_raw_overlay_files(app):
+    import json
+
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-overlay_files": json.dumps(
+                        [
+                            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+                            {"type": "repo", "location": "custom/movies_overlay.yml"},
+                            {"type": "file", "location": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\overlays.yml"},
+                            {"type": "folder", "location": "config\\overlays\\movies"},
+                            {"type": "git", "location": "bullmoose20/overlays.yml"},
+                        ]
+                    )
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+        assert libraries_section["libraries"]["Movies"]["overlay_files"] == [
+            {"file": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\overlays.yml"},
+            {"folder": "config\\overlays\\movies"},
+            {"git": "bullmoose20/overlays.yml"},
+            {"repo": "custom/movies_overlay.yml"},
+            {"url": "https://example.com/movies_refresh.yml"},
+        ]
+    assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "overlay_files"]
 
 
 def test_build_libraries_section_emits_collection_files(app):

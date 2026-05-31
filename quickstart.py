@@ -173,6 +173,7 @@ VALIDATION_REASON_LABELS = {
     "missing_placeholder_imdb": "Missing placeholder IMDb ID",
     "invalid_metadata_files": "Invalid metadata files",
     "invalid_collection_files": "Invalid collection files",
+    "invalid_overlay_files": "Invalid overlay files",
     "invalid_fields": "Invalid fields",
     "no_webhooks": "No webhooks configured",
     "disabled": "Disabled",
@@ -401,6 +402,7 @@ QS_ERROR_REASONS = {
     "invalid_paths",
     "invalid_arr_overrides",
     "invalid_collection_files",
+    "invalid_overlay_files",
     "invalid_fields",
     "invalid_metadata_files",
     "missing_library_defaults",
@@ -662,6 +664,35 @@ def _parse_collection_file_entries(value):
     return entries
 
 
+def _parse_overlay_file_entries(value):
+    if isinstance(value, list):
+        raw_entries = value
+    elif isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        try:
+            raw_entries = json.loads(text)
+        except (TypeError, ValueError):
+            return None
+    else:
+        return []
+
+    if not isinstance(raw_entries, list):
+        return None
+
+    entries = []
+    for entry in raw_entries:
+        if not isinstance(entry, dict):
+            continue
+        entry_type = str(entry.get("type") or "").strip().lower()
+        location = str(entry.get("location") or "").strip()
+        if not entry_type and not location:
+            continue
+        entries.append({"type": entry_type, "location": location})
+    return entries
+
+
 def _is_blank_override_value(value):
     if value is None:
         return True
@@ -870,6 +901,36 @@ def _validate_library_collection_files(libraries_data, selected_library_ids):
             )
             if not valid:
                 errors.append(f"{lib_id} collection_files[{idx}]: {message}")
+
+    return errors
+
+
+def _validate_library_overlay_files(libraries_data, selected_library_ids):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    errors = []
+    for lib_id in selected_library_ids or []:
+        raw_value = libraries_data.get(f"{lib_id}-overlay_files")
+        if raw_value in [None, "", "[]"]:
+            continue
+
+        entries = _parse_overlay_file_entries(raw_value)
+        if entries is None:
+            errors.append(f"{lib_id}: overlay_files must be a valid list.")
+            continue
+
+        for idx, entry in enumerate(entries, start=1):
+            valid, message, _details = validations._normalize_metadata_validation_result(
+                validations.validate_overlay_file_payload(
+                    {
+                        "overlay_file_type": entry.get("type"),
+                        "overlay_file_location": entry.get("location"),
+                    }
+                )
+            )
+            if not valid:
+                errors.append(f"{lib_id} overlay_files[{idx}]: {message}")
 
     return errors
 
@@ -6233,6 +6294,7 @@ def step(name):
             selected_library_ids = _selected_library_ids_from_libraries_data(incoming_libraries)
             validation_errors += _validate_library_collection_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_metadata_files(incoming_libraries, selected_library_ids)
+            validation_errors += _validate_library_overlay_files(incoming_libraries, selected_library_ids)
             for lib_id in selected_library_ids:
                 override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
                 if not override_result.get("valid") and not override_result.get("skipped"):
@@ -7107,10 +7169,13 @@ def autosave_library(library_id):
         selected_library_ids = _selected_library_ids_from_libraries_data(incoming_libraries)
         collection_errors = _validate_library_collection_files(incoming_libraries, selected_library_ids)
         metadata_errors = _validate_library_metadata_files(incoming_libraries, selected_library_ids)
+        overlay_errors = _validate_library_overlay_files(incoming_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
         if metadata_errors:
             return jsonify({"success": False, "error": "Invalid metadata files.", "errors": metadata_errors}), 400
+        if overlay_errors:
+            return jsonify({"success": False, "error": "Invalid overlay files.", "errors": overlay_errors}), 400
         persistence.save_settings("025-libraries", incoming)
         return jsonify({"success": True})
     except Exception as e:
@@ -7355,6 +7420,7 @@ def copy_library_settings():
         source_errors = path_validation.validate_payload(source_items)
         source_collection_errors = _validate_library_collection_files(libraries_data, [source_prefix])
         source_metadata_errors = _validate_library_metadata_files(libraries_data, [source_prefix])
+        source_overlay_errors = _validate_library_overlay_files(libraries_data, [source_prefix])
         if source_errors:
             return (
                 jsonify(
@@ -7384,6 +7450,17 @@ def copy_library_settings():
                         "success": False,
                         "error": "Invalid metadata files found in source library: " + " ".join(source_metadata_errors),
                         "errors": source_metadata_errors,
+                    }
+                ),
+                400,
+            )
+        if source_overlay_errors:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Invalid overlay files found in source library: " + " ".join(source_overlay_errors),
+                        "errors": source_overlay_errors,
                     }
                 ),
                 400,
@@ -8356,17 +8433,20 @@ def validate_all_services():
             path_errors = path_validation.validate_payload(libraries_data)
             collection_file_errors = _validate_library_collection_files(libraries_data, selected_library_ids)
             metadata_file_errors = _validate_library_metadata_files(libraries_data, selected_library_ids)
+            overlay_file_errors = _validate_library_overlay_files(libraries_data, selected_library_ids)
             arr_override_errors = []
             if path_errors:
                 libraries_reason = "invalid_paths"
             elif collection_file_errors:
                 libraries_reason = "invalid_collection_files"
+            elif overlay_file_errors:
+                libraries_reason = "invalid_overlay_files"
             elif metadata_file_errors:
                 libraries_reason = "invalid_metadata_files"
             else:
 
                 def has_minimal_library_yaml_selection(lib_id):
-                    allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_", "-metadata_files", "-collection_files")
+                    allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_", "-metadata_files", "-collection_files", "-overlay_files")
                     for key, value in libraries_data.items():
                         if not isinstance(key, str) or not key.startswith(f"{lib_id}-"):
                             continue
@@ -16499,6 +16579,12 @@ def validate_metadata_file():
 def validate_collection_file():
     data = request.get_json(silent=True) or {}
     return validations.validate_collection_file_server(data)
+
+
+@app.route("/validate_overlay_file", methods=["POST"])
+def validate_overlay_file():
+    data = request.get_json(silent=True) or {}
+    return validations.validate_overlay_file_server(data)
 
 
 @app.route("/restart", methods=["POST"])

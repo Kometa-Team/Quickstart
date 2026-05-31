@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const metadataCustomRepoBase = String(window.QS_SETTINGS_CUSTOM_REPO_BASE || '').trim()
     const metadataRepoDependencyMessage = 'Metadata file repo entries require Custom Repo to be configured and saved first within the Settings page.'
     const collectionRepoDependencyMessage = 'Collection file repo entries require Custom Repo to be configured and saved first within the Settings page.'
+    const overlayRepoDependencyMessage = 'Overlay file repo entries require Custom Repo to be configured and saved first within the Settings page.'
 
     function appendMetadataSettingsLink (target, className = 'link-light fw-semibold text-decoration-underline') {
       const link = document.createElement('a')
@@ -1017,6 +1018,429 @@ document.addEventListener('DOMContentLoaded', function () {
     if (libraryContainer && typeof MutationObserver !== 'undefined') {
       const collectionObserver = new MutationObserver(() => initCollectionFilesEditors(libraryContainer))
       collectionObserver.observe(libraryContainer, { childList: true, subtree: true })
+    }
+
+    function buildOverlayFileRow (entry = {}) {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'card bg-body-tertiary border-secondary'
+      wrapper.setAttribute('data-overlay-file-row', 'true')
+      wrapper.innerHTML = `
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label small text-muted">Type</label>
+              <select class="form-select form-select-sm" data-overlay-file-type>
+                <option value="file">file</option>
+                <option value="folder">folder</option>
+                <option value="git">git</option>
+                <option value="repo">repo</option>
+                <option value="url">url</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label small text-muted">Location</label>
+              <input type="text" class="form-control form-control-sm" data-overlay-file-location placeholder="config/overlays.yml, config/overlays/, user/file.yml, or https://example.com/overlays.yml">
+            </div>
+            <div class="col-md-3 d-flex gap-2 justify-content-md-end">
+              <button type="button" class="btn btn-success btn-sm" data-validate-overlay-file>Validate</button>
+              <button type="button" class="btn btn-danger btn-sm" data-remove-overlay-file>Remove</button>
+            </div>
+          </div>
+          <div class="mt-2 small d-none" data-overlay-file-status></div>
+        </div>
+      `
+      const typeSelect = wrapper.querySelector('[data-overlay-file-type]')
+      const locationInput = wrapper.querySelector('[data-overlay-file-location]')
+      if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
+        typeSelect.value = entry.type
+      }
+      if (locationInput && entry.location) {
+        locationInput.value = entry.location
+      }
+      updateOverlayFileValidateButton(wrapper, false)
+      return wrapper
+    }
+
+    function updateOverlayFileValidateButton (row, isValidated) {
+      if (!row) return
+      const button = row.querySelector('[data-validate-overlay-file]')
+      if (!button) return
+      const state = String(row.dataset.overlayFileButtonState || '').trim() || (isValidated ? 'success' : 'idle')
+      button.classList.remove('btn-success', 'btn-secondary')
+      if (state === 'success') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validated'
+        return
+      }
+      if (state === 'blocked') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Needs Repo'
+        return
+      }
+      if (state === 'loading') {
+        button.disabled = true
+        button.classList.add('btn-secondary')
+        button.textContent = 'Validating...'
+        return
+      }
+      button.disabled = false
+      button.classList.add('btn-success')
+      button.textContent = 'Validate'
+    }
+
+    function setOverlayFileButtonState (row, state) {
+      if (!row) return
+      row.dataset.overlayFileButtonState = state || 'idle'
+      updateOverlayFileValidateButton(row, state === 'success')
+    }
+
+    function updateOverlayCustomRepoStatus (editor) {
+      if (!editor) return
+      const target = editor.querySelector('[data-overlay-custom-repo-status]')
+      if (!target) return
+
+      target.replaceChildren()
+      target.className = 'alert small mb-3'
+      if (!metadataCustomRepoBase) {
+        target.classList.add('alert-warning')
+        target.append('Custom Repo is not configured. ')
+        target.append('Use ')
+        appendMetadataSettingsLink(target, 'alert-link fw-semibold')
+        target.append(' to configure and save it before using ')
+        const code = document.createElement('code')
+        code.textContent = 'repo'
+        target.appendChild(code)
+        target.append(' overlay files.')
+        return
+      }
+
+      target.classList.add('alert-secondary')
+      const label = document.createElement('div')
+      label.className = 'fw-semibold mb-1'
+      label.textContent = 'Custom Repo base used for repo entries'
+      target.appendChild(label)
+
+      const baseValue = document.createElement('code')
+      baseValue.textContent = metadataCustomRepoBase
+      target.appendChild(baseValue)
+
+      if (metadataCustomRepoRaw && metadataCustomRepoRaw !== metadataCustomRepoBase) {
+        const savedValue = document.createElement('div')
+        savedValue.className = 'mt-2'
+        savedValue.append('Saved Custom Repo value: ')
+        const savedCode = document.createElement('code')
+        savedCode.textContent = metadataCustomRepoRaw
+        savedValue.appendChild(savedCode)
+        target.appendChild(savedValue)
+      }
+
+      const hint = document.createElement('div')
+      hint.className = 'mt-2'
+      hint.append('Change it in ')
+      appendMetadataSettingsLink(hint, 'alert-link fw-semibold')
+      hint.append('.')
+      target.appendChild(hint)
+    }
+
+    function applyOverlayFileDependencyState (row, opts = {}) {
+      if (!row) return false
+      const skipStatus = Boolean(opts.skipStatus)
+      const type = row.querySelector('[data-overlay-file-type]')?.value || ''
+      if (type !== 'repo') {
+        if (row.dataset.overlayFileDependency === 'repo-missing') {
+          row.dataset.overlayFileDependency = ''
+        }
+        return false
+      }
+
+      if (metadataCustomRepoBase) {
+        if (row.dataset.overlayFileDependency === 'repo-missing') {
+          row.dataset.overlayFileDependency = ''
+        }
+        return false
+      }
+
+      row.dataset.overlayFileDependency = 'repo-missing'
+      setOverlayFileButtonState(row, 'blocked')
+      if (!skipStatus) {
+        setOverlayFileStatus(row, 'error', overlayRepoDependencyMessage)
+      }
+      return true
+    }
+
+    function renderOverlayFileStatusMessage (target, message) {
+      target.replaceChildren()
+      if (!message) return
+
+      if (typeof message === 'object' && message !== null) {
+        const text = String(message.text || message.message || '').trim()
+        const files = Array.isArray(message.files) ? message.files.filter(Boolean) : []
+        if (text) {
+          const summary = document.createElement('div')
+          appendInlineCodeText(summary, text)
+          target.appendChild(summary)
+        }
+        if (files.length) {
+          if (files.length <= 5) {
+            const list = document.createElement('ul')
+            list.className = 'mb-0 mt-1 ps-3'
+            files.forEach(file => {
+              const item = document.createElement('li')
+              appendInlineCodeText(item, file, { wrapPlainInCode: true })
+              list.appendChild(item)
+            })
+            target.appendChild(list)
+          } else {
+            const details = document.createElement('details')
+            details.className = 'mt-1'
+            const summary = document.createElement('summary')
+            summary.className = 'cursor-pointer'
+            summary.textContent = 'Show files'
+            details.appendChild(summary)
+            const list = document.createElement('ul')
+            list.className = 'mb-0 mt-1 ps-3'
+            files.forEach(file => {
+              const item = document.createElement('li')
+              appendInlineCodeText(item, file, { wrapPlainInCode: true })
+              list.appendChild(item)
+            })
+            details.appendChild(list)
+            target.appendChild(details)
+          }
+        }
+        return
+      }
+
+      const text = String(message || '').trim()
+      if (!text) return
+
+      if (text === overlayRepoDependencyMessage) {
+        target.append('Overlay file repo entries require Custom Repo to be configured and saved first within the ')
+        appendMetadataSettingsLink(target)
+        target.append(' page.')
+        return
+      }
+
+      appendInlineCodeText(target, text)
+    }
+
+    function setOverlayFileStatus (row, kind, message) {
+      if (!row) return
+      const target = row.querySelector('[data-overlay-file-status]')
+      if (!target) return
+      row.dataset.overlayFileState = kind || ''
+      target.className = 'mt-2 small'
+      if (!message) {
+        target.classList.add('d-none')
+        target.textContent = ''
+        if (applyOverlayFileDependencyState(row, { skipStatus: true })) {
+          setOverlayFileButtonState(row, 'blocked')
+        } else {
+          setOverlayFileButtonState(row, 'idle')
+        }
+        const editor = row.closest('[data-overlay-files-editor]')
+        if (editor) updateOverlayFilesAccordionState(editor)
+        return
+      }
+      target.classList.remove('d-none')
+      if (kind === 'success') {
+        target.classList.add('text-success')
+      } else if (kind === 'error') {
+        target.classList.add('text-danger')
+      } else {
+        target.classList.add('text-warning')
+      }
+      renderOverlayFileStatusMessage(target, message)
+      if (kind === 'success') {
+        setOverlayFileButtonState(row, 'success')
+      } else if (row.dataset.overlayFileDependency === 'repo-missing') {
+        setOverlayFileButtonState(row, 'blocked')
+      } else {
+        setOverlayFileButtonState(row, 'idle')
+      }
+      const editor = row.closest('[data-overlay-files-editor]')
+      if (editor) updateOverlayFilesAccordionState(editor)
+    }
+
+    function updateOverlayFilesAccordionState (editor) {
+      if (!editor) return
+      const accordionItem = editor.closest('.accordion-item')
+      const accordionHeader = accordionItem?.querySelector(':scope > .accordion-header')
+      if (!accordionHeader) return
+
+      const rows = Array.from(editor.querySelectorAll('[data-overlay-file-row]'))
+      const hasEntries = rows.some(row => normalizeMetadataFileEntry({
+        type: row.querySelector('[data-overlay-file-type]')?.value || '',
+        location: row.querySelector('[data-overlay-file-location]')?.value || ''
+      }))
+      const hasInvalid = rows.some(row => {
+        const state = String(row.dataset.overlayFileState || '').trim().toLowerCase()
+        return state === 'error' || state === 'warning'
+      })
+
+      accordionHeader.classList.toggle('invalid', hasInvalid)
+      if (!hasInvalid && hasEntries) {
+        accordionHeader.classList.add('selected')
+      } else if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
+        EventHandler.updateAccordionHighlights()
+      }
+    }
+
+    function applyOverlayFileServerErrors (editor, errors) {
+      if (!editor || !Array.isArray(errors) || !errors.length) return false
+      const rows = Array.from(editor.querySelectorAll('[data-overlay-file-row]'))
+      rows.forEach(row => setOverlayFileStatus(row, '', ''))
+      let applied = false
+      errors.forEach(error => {
+        const text = String(error || '').trim()
+        const match = text.match(/overlay_files\[(\d+)\]:\s*(.+)$/i)
+        if (!match) return
+        const index = Number(match[1]) - 1
+        const message = match[2] || 'Validation failed.'
+        if (!Number.isInteger(index) || index < 0 || index >= rows.length) return
+        setOverlayFileStatus(rows[index], 'error', message)
+        applied = true
+      })
+      return applied
+    }
+
+    function syncOverlayFilesEditor (editor, emitEvents = true) {
+      if (!editor) return []
+      const hidden = editor.querySelector('input[type="hidden"][name$="-overlay_files"]')
+      if (!hidden) return []
+      const rows = Array.from(editor.querySelectorAll('[data-overlay-file-row]'))
+      const entries = rows.map(row => {
+        const type = row.querySelector('[data-overlay-file-type]')?.value
+        const location = row.querySelector('[data-overlay-file-location]')?.value
+        return normalizeMetadataFileEntry({ type, location })
+      }).filter(Boolean)
+      hidden.value = JSON.stringify(entries)
+      if (emitEvents) {
+        hidden.dispatchEvent(new Event('input', { bubbles: true }))
+        hidden.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      updateOverlayFilesAccordionState(editor)
+      return entries
+    }
+
+    function renderOverlayFilesEditor (editor) {
+      if (!editor) return
+      const hidden = editor.querySelector('input[type="hidden"][name$="-overlay_files"]')
+      const list = editor.querySelector('[data-overlay-files-list]')
+      if (!hidden || !list) return
+      updateOverlayCustomRepoStatus(editor)
+      const entries = parseMetadataFilesValue(hidden.value)
+      list.replaceChildren()
+      entries.forEach(entry => list.appendChild(buildOverlayFileRow(entry)))
+      list.querySelectorAll('[data-overlay-file-row]').forEach(row => {
+        if (applyOverlayFileDependencyState(row)) return
+        setOverlayFileButtonState(row, 'idle')
+      })
+      syncOverlayFilesEditor(editor, false)
+      updateOverlayFilesAccordionState(editor)
+    }
+
+    function initOverlayFilesEditors (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-overlay-files-editor]').forEach(editor => {
+        if (editor.dataset.overlayFilesReady === 'true') return
+        renderOverlayFilesEditor(editor)
+        editor.dataset.overlayFilesReady = 'true'
+      })
+    }
+
+    document.addEventListener('click', async function (event) {
+      const addButton = event.target.closest('[data-add-overlay-file]')
+      if (addButton) {
+        const editor = addButton.closest('[data-overlay-files-editor]')
+        const list = editor?.querySelector('[data-overlay-files-list]')
+        if (!editor || !list) return
+        list.appendChild(buildOverlayFileRow({ type: 'file', location: '' }))
+        syncOverlayFilesEditor(editor)
+        return
+      }
+
+      const removeButton = event.target.closest('[data-remove-overlay-file]')
+      if (removeButton) {
+        const row = removeButton.closest('[data-overlay-file-row]')
+        const editor = removeButton.closest('[data-overlay-files-editor]')
+        if (!row || !editor) return
+        row.remove()
+        syncOverlayFilesEditor(editor)
+        return
+      }
+
+      const validateButton = event.target.closest('[data-validate-overlay-file]')
+      if (validateButton) {
+        const row = validateButton.closest('[data-overlay-file-row]')
+        const editor = validateButton.closest('[data-overlay-files-editor]')
+        if (!row || !editor) return
+        if (applyOverlayFileDependencyState(row)) return
+        const type = row.querySelector('[data-overlay-file-type]')?.value || ''
+        const location = row.querySelector('[data-overlay-file-location]')?.value || ''
+        syncOverlayFilesEditor(editor, false)
+        setOverlayFileStatus(row, '', 'Validating...')
+        setOverlayFileButtonState(row, 'loading')
+        try {
+          const response = await fetch('/validate_overlay_file', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              overlay_file_type: type,
+              overlay_file_location: location
+            })
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok || !payload.valid) {
+            setOverlayFileStatus(row, 'error', payload.error_details || {
+              text: payload.error || 'Validation failed.',
+              files: Array.isArray(payload.files) ? payload.files : []
+            })
+          } else {
+            setOverlayFileStatus(row, 'success', {
+              text: payload.message || 'Overlay source looks valid.',
+              files: Array.isArray(payload.files) ? payload.files : []
+            })
+          }
+        } catch (_error) {
+          setOverlayFileStatus(row, 'error', 'Validation request failed.')
+        } finally {
+          if (row.dataset.overlayFileState !== 'success' && row.dataset.overlayFileDependency !== 'repo-missing') {
+            setOverlayFileButtonState(row, 'idle')
+          }
+        }
+      }
+    })
+
+    document.addEventListener('input', function (event) {
+      const target = event.target
+      if (!target || !target.closest('[data-overlay-files-editor]')) return
+      if (!target.matches('[data-overlay-file-type], [data-overlay-file-location]')) return
+      const row = target.closest('[data-overlay-file-row]')
+      const editor = target.closest('[data-overlay-files-editor]')
+      setOverlayFileStatus(row, '', '')
+      applyOverlayFileDependencyState(row)
+      syncOverlayFilesEditor(editor)
+    })
+
+    document.addEventListener('change', function (event) {
+      const target = event.target
+      if (!target || !target.closest('[data-overlay-files-editor]')) return
+      if (!target.matches('[data-overlay-file-type], [data-overlay-file-location]')) return
+      const row = target.closest('[data-overlay-file-row]')
+      const editor = target.closest('[data-overlay-files-editor]')
+      setOverlayFileStatus(row, '', '')
+      applyOverlayFileDependencyState(row)
+      syncOverlayFilesEditor(editor)
+    })
+
+    initOverlayFilesEditors(document)
+    if (libraryContainer && typeof MutationObserver !== 'undefined') {
+      const overlayObserver = new MutationObserver(() => initOverlayFilesEditors(libraryContainer))
+      overlayObserver.observe(libraryContainer, { childList: true, subtree: true })
     }
 
     // Ensure hidden "false" inputs don't submit alongside checked checkboxes with the same name
@@ -2167,7 +2591,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (field.type === 'checkbox' || field.type === 'radio') return field.checked
         const value = String(field.value ?? '').trim()
         if (!value) return false
-        if (field.name.endsWith('-metadata_files') || field.name.endsWith('-collection_files')) {
+        if (field.name.endsWith('-metadata_files') || field.name.endsWith('-collection_files') || field.name.endsWith('-overlay_files')) {
           return value !== '[]'
         }
         return true
@@ -2608,6 +3032,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const payload = buildPayloadFromCard(card)
       const collectionEditor = card.querySelector('[data-collection-files-editor]')
       const metadataEditor = card.querySelector('[data-metadata-files-editor]')
+      const overlayEditor = card.querySelector('[data-overlay-files-editor]')
       const option = libraryPicker?.querySelector(`option[value="${activeLibraryId}"]`)
       const friendlyName = option?.dataset.label || option?.textContent?.trim() || activeLibraryId
 
@@ -2625,6 +3050,9 @@ document.addEventListener('DOMContentLoaded', function () {
               }
               if (metadataEditor) {
                 applyMetadataFileServerErrors(metadataEditor, body && body.errors)
+              }
+              if (overlayEditor) {
+                applyOverlayFileServerErrors(overlayEditor, body && body.errors)
               }
               const message = body && body.error ? body.error : `Autosave failed: ${res.status}`
               throw new Error(message)

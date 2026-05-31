@@ -1251,19 +1251,33 @@ def prepare_import_payload(
             # Overlays
             overlay_files = lib_cfg.get("overlay_files")
             if isinstance(overlay_files, list):
+                imported_overlay_files = []
                 for idx, entry in enumerate(overlay_files):
                     default_value = None
                     template_values = None
                     builder_level = builder_default
+                    raw_entry_type = None
+                    raw_entry_location = None
                     if isinstance(entry, dict):
                         default_value = entry.get("default")
                         template_values = entry.get("template_variables")
+                        for candidate in ("file", "folder", "url", "git", "repo"):
+                            location = entry.get(candidate)
+                            if location:
+                                raw_entry_type = candidate
+                                raw_entry_location = str(location)
+                                break
                         if isinstance(template_values, dict) and "builder_level" in template_values:
                             level = template_values.get("builder_level")
                             if level in {"show", "season", "episode"}:
                                 builder_level = level
                     elif isinstance(entry, str):
                         default_value = entry
+
+                    if raw_entry_type and raw_entry_location:
+                        imported_overlay_files.append({"type": raw_entry_type, "location": raw_entry_location})
+                        report.add("imported", f"libraries.{lib_name}.overlay_files[{idx}].{raw_entry_type}")
+                        continue
 
                     if not default_value:
                         report.add("unmapped", f"libraries.{lib_name}.overlay_files[{idx}]", "Missing default.")
@@ -1331,6 +1345,10 @@ def prepare_import_payload(
                                 "imported",
                                 f"libraries.{lib_name}.overlay_files[{idx}].template_variables.{key}",
                             )
+
+                if imported_overlay_files:
+                    libraries_data[f"{lib_id}-overlay_files"] = json.dumps(imported_overlay_files, ensure_ascii=True)
+                    report.add("imported", f"libraries.{lib_name}.overlay_files")
 
             elif overlay_files is not None:
                 report.add("unmapped", f"libraries.{lib_name}.overlay_files", "Unsupported overlay_files format.")
