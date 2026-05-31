@@ -1,35 +1,23 @@
-<div class="accordion-item mt-3">
-    <h2 class="accordion-header">
-        <button class="accordion-button" type="button" data-bs-toggle="collapse"
-            data-bs-target="#{{ library.id }}-collection-files">
-            Collection Files
-        </button>
-    </h2>
-    <div id="{{ library.id }}-collection-files" class="accordion-collapse collapse">
-        <div class="accordion-body">
-            <div class="d-flex flex-column gap-3">
-                <div class="alert alert-warning small mb-0" role="alert">
-                    <div class="fw-semibold mb-1">Validation is limited.</div>
-                    <div>Quickstart can verify that each entry points to a non-empty <code>.yml</code> or <code>.yaml</code> file and that the YAML parses successfully.</div>
-                    <div>Quickstart also verifies that each collection file contains a non-empty top-level <code>collections:</code> mapping.</div>
-                    <div>Quickstart does not fully validate Kometa collection file schema yet, so a file that passes here may still fail later and cause Kometa to abort during a run.</div>
-                </div>
-                <div class="alert alert-info small mb-0" role="alert">
-                    <div>Use one or more <code>file</code>, <code>folder</code>, <code>url</code>, <code>git</code>, or <code>repo</code> entries. These are appended into library-level <code>collection_files</code>.</div>
-                </div>
-                <div class="collection-files-editor" data-collection-files-editor data-library-id="{{ library.id }}">
-                    <div class="alert small mb-4" role="alert" data-collection-custom-repo-status></div>
-                    <input type="hidden" name="{{ library.id }}-collection_files" id="{{ library.id }}-collection_files"
-                        value="{{ data['libraries'].get(library.id ~ '-collection_files', '[]') }}">
-                    <div class="collection-files-list d-flex flex-column gap-3 mt-1" data-collection-files-list></div>
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-add-collection-file>
-                            <i class="bi bi-plus-circle me-1"></i>Add Collection File
-                        </button>
-                        <span class="text-muted small">Supports mixed local files and folders, raw URLs, Community-Configs git paths, and custom_repo-backed repo paths.</span>
-                    </div>
-                </div>
-            </div>
+<div class="d-flex flex-column gap-3">
+    <div class="alert alert-warning small mb-0" role="alert">
+        <div class="fw-semibold mb-1">Validation is limited.</div>
+        <div>Quickstart can verify that each entry points to a non-empty <code>.yml</code> or <code>.yaml</code> file and that the YAML parses successfully.</div>
+        <div>Quickstart also verifies that each collection file contains a non-empty top-level <code>collections:</code> mapping.</div>
+        <div>Quickstart does not fully validate Kometa collection file schema yet, so a file that passes here may still fail later and cause Kometa to abort during a run.</div>
+    </div>
+    <div class="alert alert-info small mb-0" role="alert">
+        <div>Use one or more <code>file</code>, <code>folder</code>, <code>url</code>, <code>git</code>, or <code>repo</code> entries. These are appended into library-level <code>collection_files</code>.</div>
+    </div>
+    <div class="collection-files-editor" data-collection-files-editor data-library-id="{{ library.id }}">
+        <div class="alert small mb-4" role="alert" data-collection-custom-repo-status></div>
+        <input type="hidden" name="{{ library.id }}-collection_files" id="{{ library.id }}-collection_files"
+            value="{{ data['libraries'].get(library.id ~ '-collection_files', '[]') }}">
+        <div class="collection-files-list d-flex flex-column gap-3 mt-1" data-collection-files-list></div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-add-collection-file>
+                <i class="bi bi-plus-circle me-1"></i>Add Collection File
+            </button>
+            <span class="text-muted small">Supports mixed local files and folders, raw URLs, Community-Configs git paths, and custom_repo-backed repo paths.</span>
         </div>
     </div>
 </div>
