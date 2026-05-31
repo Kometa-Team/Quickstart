@@ -57,13 +57,7 @@ def test_prepare_import_payload_maps_library_sonarr_overrides():
 
 def test_prepare_import_payload_maps_library_schedule_overlays():
     payload, report = importer.prepare_import_payload(
-        {
-            "libraries": {
-                "Movies": {
-                    "schedule_overlays": "weekly(saturday)"
-                }
-            }
-        },
+        {"libraries": {"Movies": {"schedule_overlays": "weekly(saturday)"}}},
         {"Movies"},
         set(),
     )
@@ -75,13 +69,7 @@ def test_prepare_import_payload_maps_library_schedule_overlays():
 
 def test_prepare_import_payload_maps_library_schedule():
     payload, report = importer.prepare_import_payload(
-        {
-            "libraries": {
-                "Movies": {
-                    "schedule": "weekly(saturday)"
-                }
-            }
-        },
+        {"libraries": {"Movies": {"schedule": "weekly(saturday)"}}},
         {"Movies"},
         set(),
         set(),

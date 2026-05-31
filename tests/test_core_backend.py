@@ -1997,11 +1997,7 @@ def test_build_libraries_section_emits_schedule_overlays(app):
             {},
             {},
             {},
-            {
-                "movies": {
-                    "mov-library_movies-top_level_schedule_overlays": "weekly(saturday)"
-                }
-            },
+            {"movies": {"mov-library_movies-top_level_schedule_overlays": "weekly(saturday)"}},
             {},
         )
 
@@ -2029,11 +2025,7 @@ def test_build_libraries_section_emits_schedule(app):
             {},
             {},
             {},
-            {
-                "movies": {
-                    "mov-library_movies-top_level_schedule": "weekly(saturday)"
-                }
-            },
+            {"movies": {"mov-library_movies-top_level_schedule": "weekly(saturday)"}},
             {},
         )
 
