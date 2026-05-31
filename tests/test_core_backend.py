@@ -1976,3 +1976,35 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     libraries = stored["libraries"]
     assert libraries["mov-library_movies-metadata_files"] == source_metadata_files
     assert libraries["mov-library_target-metadata_files"] == source_metadata_files
+
+
+def test_build_libraries_section_emits_schedule_overlays(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-top_level_schedule_overlays": "weekly(saturday)"
+                }
+            },
+            {},
+        )
+
+    movies = libraries_section["libraries"]["Movies"]
+    assert movies["schedule_overlays"] == "weekly(saturday)"
+    assert list(movies.keys())[:2] == ["schedule_overlays", "template_variables"]

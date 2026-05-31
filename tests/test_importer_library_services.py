@@ -53,3 +53,21 @@ def test_prepare_import_payload_maps_library_sonarr_overrides():
     assert libraries["sho-library_shows-attribute_sonarr_monitor"] == "future"
     assert libraries["sho-library_shows-attribute_sonarr_season_folder"] == "true"
     assert any("libraries.Shows.sonarr.language_profile" in line for line in report.lines)
+
+
+def test_prepare_import_payload_maps_library_schedule_overlays():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "schedule_overlays": "weekly(saturday)"
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-top_level_schedule_overlays"] == "weekly(saturday)"
+    assert any("libraries.Movies.schedule_overlays" in line for line in report.lines)

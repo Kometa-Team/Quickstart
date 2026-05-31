@@ -76,6 +76,22 @@
         container_class=section.container_class,
         yml_location=section.yml_location
         ) }}
+        {% elif section.type == 'text_input' %}
+        {{ macros.text_input_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class,
+        yml_location=section.yml_location,
+        placeholder=section.placeholder,
+        multiline=section.multiline | default(false),
+        rows=section.rows | default(3),
+        input_mode=section.input_mode | default('')
+        ) }}
         {% endif %}
         {% endfor %}
         <p class="text-white mt-3">
@@ -222,7 +238,8 @@
         yml_location=section.yml_location,
         placeholder=section.placeholder,
         multiline=section.multiline | default(false),
-        rows=section.rows | default(3)
+        rows=section.rows | default(3),
+        input_mode=section.input_mode | default('')
         ) }}
 
         {% elif section.type == "mapping_list" %}
@@ -286,7 +303,8 @@
               yml_location=section.yml_location,
               placeholder=section.placeholder,
               multiline=section.multiline | default(false),
-              rows=section.rows | default(3)
+              rows=section.rows | default(3),
+              input_mode=section.input_mode | default('')
             ) }}
           {% endif %}
         {% endfor %}

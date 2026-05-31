@@ -219,6 +219,23 @@
       "yml_location": "top_level"
     },
     {
+      "prefix": "top_level_schedule_overlays",
+      "type": "text_input",
+      "input_mode": "schedule",
+      "accordion": "overlays",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Overlay Schedule",
+      "wiki": "https://kometa.wiki/en/nightly/config/schedule/#scheduling-overlays",
+      "description": "Define when overlays run for this library using Kometa schedule syntax such as <code>weekly(saturday)</code>.<br><br><b>Warning:</b> Overlay files cannot be scheduled individually. Use <code>schedule_overlays</code> at the library level to control all overlay files for this library.",
+      "tooltip_variant": "info",
+      "container_class": "",
+      "placeholder": "e.g. weekly(saturday)",
+      "yml_location": "top_level"
+    },
+    {
       "prefix": "top_level_reset_overlays",
       "type": "select",
       "accordion": "overlays",

@@ -826,7 +826,7 @@ select_input.key if yml_location == "top_level" else
 {% endmacro %}
 
 {% macro text_input_section(library, data, prefix, title, description, wiki, placeholder="", tooltip_variant="info",
-container_class="border rounded p-3 mb-2", yml_location="attribute", multiline=false, rows=3) %}
+container_class="border rounded p-3 mb-2", yml_location="attribute", multiline=false, rows=3, input_mode="") %}
 {% set field_prefix = "template_variables" if yml_location == "template_variables" else "" if yml_location ==
 "top_level" else "attribute" %}
 {% set full_id = library.id ~ "-" ~ (field_prefix ~ "_" if field_prefix) ~ prefix %}
@@ -834,6 +834,102 @@ container_class="border rounded p-3 mb-2", yml_location="attribute", multiline=f
 field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
 {% set legacy_name = library.id ~ "-" ~ prefix %}
 {% set field_value = data.libraries.get(full_name, data.libraries.get(legacy_name, '')) %}
+{% if input_mode == "schedule" %}
+<div class="{{ container_class }}">
+    <div class="schedule-builder mb-2" data-schedule-builder data-hidden-input="{{ full_name }}"
+        data-default-value="{{ field_value | default('', true) }}">
+        <div class="input-group mb-2 schedule-builder-header">
+            <span class="input-group-text" id="{{ full_id }}_text">
+                <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+                <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="{{ description }}">
+                    <i
+                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                </span>
+            </span>
+            <select class="form-select" id="{{ full_id }}_schedule_mode" data-schedule-mode-select>
+                <option value="range">Range</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+                <option value="date">Date</option>
+                <option value="hourly">Hourly</option>
+                <option value="daily">Daily</option>
+                <option value="never">Never</option>
+                <option value="non_existing">Only If Missing</option>
+                <option value="custom">Custom (Advanced)</option>
+            </select>
+        </div>
+        <div class="schedule-builder-body">
+            <div class="schedule-mode" data-schedule-mode="range">
+                <div class="schedule-grid">
+                    <input type="date" class="form-control" id="{{ full_id }}_schedule_range_start"
+                        data-schedule-range-start aria-label="Range start">
+                    <span class="schedule-range-sep">to</span>
+                    <input type="date" class="form-control" id="{{ full_id }}_schedule_range_end"
+                        data-schedule-range-end aria-label="Range end">
+                </div>
+                <div class="form-text">Month/day are used; year is ignored.</div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="weekly">
+                <div class="schedule-weekly">
+                    {% for day in ['sun','mon','tue','wed','thu','fri','sat'] %}
+                    <label class="schedule-day">
+                        <input type="checkbox" id="{{ full_id }}_schedule_week_{{ day }}" value="{{ day }}"
+                            data-schedule-week-day>
+                        <span>{{ day|capitalize }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="monthly">
+                <input type="number" class="form-control" id="{{ full_id }}_schedule_month_day" min="1" max="31"
+                    step="1" data-schedule-month-day placeholder="Day of month">
+            </div>
+            <div class="schedule-mode" data-schedule-mode="yearly">
+                <input type="date" class="form-control" id="{{ full_id }}_schedule_yearly" data-schedule-yearly
+                    aria-label="Yearly date">
+                <div class="form-text">Month/day are used; year is ignored.</div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="date">
+                <input type="date" class="form-control" id="{{ full_id }}_schedule_date" data-schedule-date
+                    aria-label="Exact date">
+            </div>
+            <div class="schedule-mode" data-schedule-mode="hourly">
+                <div class="schedule-grid">
+                    <input type="number" class="form-control" id="{{ full_id }}_schedule_hour_start" min="0" max="23"
+                        step="1" data-schedule-hour-start placeholder="Start hour">
+                    <span class="schedule-range-sep">to</span>
+                    <input type="number" class="form-control" id="{{ full_id }}_schedule_hour_end" min="0" max="23"
+                        step="1" data-schedule-hour-end placeholder="End hour (optional)">
+                </div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="daily">
+                <div class="form-text">Runs once per day.</div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="never">
+                <div class="form-text">Skips overlay processing for this library.</div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="non_existing">
+                <div class="form-text">Runs only when the target does not already exist.</div>
+            </div>
+            <div class="schedule-mode" data-schedule-mode="custom">
+                <div class="form-text">Use Advanced to enter a raw schedule string.</div>
+            </div>
+        </div>
+        <div class="schedule-preview small text-muted mt-2">
+            Preview: <code data-schedule-preview></code>
+        </div>
+        <details class="schedule-advanced mt-2">
+            <summary>Advanced (use with caution)</summary>
+            <div class="form-text mb-2">Only use this if you know Kometa schedule syntax.</div>
+            <input type="text" class="form-control" id="{{ full_id }}_schedule_raw" data-schedule-raw
+                placeholder="{{ placeholder }}" value="{{ field_value }}">
+        </details>
+        <input type="hidden" id="{{ full_id }}" name="{{ full_name }}" value="{{ field_value }}">
+    </div>
+</div>
+{% else %}
 <div class="{{ container_class }}">
     <div class="input-group mb-2">
         <span class="input-group-text" id="{{ full_id }}_text">
@@ -853,6 +949,7 @@ field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
         {% endif %}
     </div>
 </div>
+{% endif %}
 {% endmacro %}
 
 {% macro asset_directory_list_section(library, data, prefix, title, description, wiki, placeholder="Add Asset Directory",
