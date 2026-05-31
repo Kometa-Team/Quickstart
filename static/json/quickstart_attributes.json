@@ -204,6 +204,23 @@
       "yml_location": "top_level"
     },
     {
+      "prefix": "top_level_schedule",
+      "type": "text_input",
+      "input_mode": "schedule",
+      "accordion": "miscellaneous",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Library Schedule",
+      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#attributes",
+      "description": "Define when this library runs using Kometa schedule syntax such as <code>weekly(saturday)</code>.",
+      "tooltip_variant": "info",
+      "container_class": "",
+      "placeholder": "e.g. weekly(saturday)",
+      "yml_location": "top_level"
+    },
+    {
       "prefix": "top_level_remove_overlays",
       "type": "boolean_toggle",
       "accordion": "overlays",

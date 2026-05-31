@@ -2008,3 +2008,35 @@ def test_build_libraries_section_emits_schedule_overlays(app):
     movies = libraries_section["libraries"]["Movies"]
     assert movies["schedule_overlays"] == "weekly(saturday)"
     assert list(movies.keys())[:2] == ["schedule_overlays", "template_variables"]
+
+
+def test_build_libraries_section_emits_schedule(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-top_level_schedule": "weekly(saturday)"
+                }
+            },
+            {},
+        )
+
+    movies = libraries_section["libraries"]["Movies"]
+    assert movies["schedule"] == "weekly(saturday)"
+    assert list(movies.keys())[:2] == ["schedule", "template_variables"]

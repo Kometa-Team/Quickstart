@@ -2157,16 +2157,20 @@ def build_libraries_section(
 
         remove_key = f"{library_type}-library_{lib_id}-top_level_remove_overlays"
         reset_key = f"{library_type}-library_{lib_id}-top_level_reset_overlays"
+        schedule_key = f"{library_type}-library_{lib_id}-top_level_schedule"
         schedule_overlays_key = f"{library_type}-library_{lib_id}-top_level_schedule_overlays"
         report_path_key = f"{library_type}-library_{lib_id}-top_level_report_path"
 
         remove_overlays = top_group.get(remove_key)
         reset_overlays = top_group.get(reset_key)
+        schedule = top_group.get(schedule_key)
         schedule_overlays = top_group.get(schedule_overlays_key)
         report_path = top_group.get(report_path_key)
 
         if report_path not in [None, ""]:
             entry["report_path"] = report_path
+        if schedule not in [None, ""]:
+            entry["schedule"] = schedule
         if remove_overlays:
             entry["remove_overlays"] = True
         if reset_overlays not in [None, "None", ""]:
@@ -2177,6 +2181,7 @@ def build_libraries_section(
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Top Level for {lib_id}: {top_group}", level="DEBUG")
             helpers.ts_log(f"{report_path_key} = {report_path}", level="DEBUG")
+            helpers.ts_log(f"{schedule_key} = {schedule}", level="DEBUG")
             helpers.ts_log(f"{remove_key} = {remove_overlays}", level="DEBUG")
             helpers.ts_log(f"{reset_key} = {reset_overlays}", level="DEBUG")
             helpers.ts_log(f"{schedule_overlays_key} = {schedule_overlays}", level="DEBUG")
@@ -2230,7 +2235,8 @@ def reorder_library_section(library_data):
     """
     Reorders library data so that:
     - `report_path` appears first.
-    - `remove_overlays`, `reset_overlays`, and `schedule_overlays` come next.
+    - `schedule` comes next.
+    - `remove_overlays`, `reset_overlays`, and `schedule_overlays` come after that.
     - `template_variables` next.
     - `metadata_files` appears before `collection_files`.
     - `collection_files` appears before `overlay_files`.
@@ -2244,7 +2250,11 @@ def reorder_library_section(library_data):
     if "report_path" in library_data:
         reordered_data["report_path"] = library_data["report_path"]
 
-    # 2. Then remove/reset overlays
+    # 2. Then library schedule
+    if "schedule" in library_data:
+        reordered_data["schedule"] = library_data["schedule"]
+
+    # 3. Then remove/reset overlays
     if "remove_overlays" in library_data:
         reordered_data["remove_overlays"] = library_data["remove_overlays"]
     if "reset_overlays" in library_data:
@@ -2252,11 +2262,11 @@ def reorder_library_section(library_data):
     if "schedule_overlays" in library_data:
         reordered_data["schedule_overlays"] = library_data["schedule_overlays"]
 
-    # 3. Then template_variables
+    # 4. Then template_variables
     if "template_variables" in library_data:
         reordered_data["template_variables"] = library_data["template_variables"]
 
-    # 4. Then library-level metadata/collections/overlays in explicit YAML order
+    # 5. Then library-level metadata/collections/overlays in explicit YAML order
     if "metadata_files" in library_data:
         reordered_data["metadata_files"] = library_data["metadata_files"]
     if "collection_files" in library_data:

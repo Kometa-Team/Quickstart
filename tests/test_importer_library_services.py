@@ -71,3 +71,22 @@ def test_prepare_import_payload_maps_library_schedule_overlays():
     libraries = payload["libraries"]["libraries"]
     assert libraries["mov-library_movies-top_level_schedule_overlays"] == "weekly(saturday)"
     assert any("libraries.Movies.schedule_overlays" in line for line in report.lines)
+
+
+def test_prepare_import_payload_maps_library_schedule():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "schedule": "weekly(saturday)"
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-top_level_schedule"] == "weekly(saturday)"
+    assert any("libraries.Movies.schedule" in line for line in report.lines)
