@@ -1680,12 +1680,7 @@ def test_download_redacted_bundles_managed_overlay_folder(client, isolated_confi
 
     with client.session_transaction() as sess:
         sess["config_name"] = config_name
-        sess["yaml_content"] = (
-            "libraries:\n"
-            "  Movies:\n"
-            "    overlay_files:\n"
-            f"      - folder: overlay_files/{config_name}/mov-library_movies/seasonal\n"
-        )
+        sess["yaml_content"] = "libraries:\n" "  Movies:\n" "    overlay_files:\n" f"      - folder: overlay_files/{config_name}/mov-library_movies/seasonal\n"
 
     resp = client.get("/download_redacted")
     assert resp.status_code == 200
