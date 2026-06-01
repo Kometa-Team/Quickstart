@@ -15047,11 +15047,11 @@ def validate_kometa_root():
         yaml_parser = YAML(typ="safe")
         with src_yaml.open("r", encoding="utf-8") as f:
             parsed_config = yaml_parser.load(f) or {}
+        active_config_name = session.get("config_name") if has_request_context() else None
+        config_scope = active_config_name or _config_name_from_yaml_filename(config_name)
         font_refs = helpers.collect_font_references(parsed_config)
         if font_refs:
-            active_config_name = session.get("config_name") if has_request_context() else None
-            config_font_scope = active_config_name or _config_name_from_yaml_filename(config_name)
-            font_result = helpers.copy_fonts_to_kometa(font_refs, kometa_root=p, config_name=config_font_scope)
+            font_result = helpers.copy_fonts_to_kometa(font_refs, kometa_root=p, config_name=config_scope)
             copied = font_result.get("copied", [])
             missing = font_result.get("missing", [])
             errors = font_result.get("errors", [])
@@ -15061,8 +15061,19 @@ def validate_kometa_root():
                 log(f"⚠️ Fonts referenced in the config not found: {', '.join(missing)}")
             for err in errors:
                 log(f"⚠️ {err}")
+        if config_scope:
+            artifact_result = helpers.sync_managed_library_artifacts_to_kometa(config_scope, kometa_root=p)
+            synced = artifact_result.get("synced", [])
+            removed = artifact_result.get("removed", [])
+            errors = artifact_result.get("errors", [])
+            if synced:
+                log(f"✅ Synced {len(synced)} managed library artifact tree(s) to Kometa config/{config_scope}.")
+            if removed:
+                log(f"ℹ️ Removed {len(removed)} stale managed library artifact tree(s) from Kometa config/{config_scope}.")
+            for err in errors:
+                log(f"⚠️ {err}")
     except Exception as e:
-        log(f"⚠️ Failed to sync fonts referenced in the config: {e}")
+        log(f"⚠️ Failed to sync config-owned assets referenced in the config: {e}")
 
     log("✅ Kometa root is valid and ready.")
 

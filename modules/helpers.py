@@ -1344,6 +1344,21 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
         except Exception as exc:
             ts_log(f"Failed to sync fonts to Kometa: {exc}", level="WARNING")
 
+    if kometa_write_ok:
+        try:
+            artifact_result = sync_managed_library_artifacts_to_kometa(name, kometa_root=kometa_root)
+            synced = artifact_result.get("synced", [])
+            removed = artifact_result.get("removed", [])
+            errors = artifact_result.get("errors", [])
+            if synced:
+                ts_log(f"Synced {len(synced)} managed library artifact tree(s) to Kometa config/{name}.")
+            if removed:
+                ts_log(f"Removed {len(removed)} stale managed library artifact tree(s) from Kometa config/{name}.")
+            for err in errors:
+                ts_log(err, level="WARNING")
+        except Exception as exc:
+            ts_log(f"Failed to sync managed library artifacts to Kometa: {exc}", level="WARNING")
+
     ts_log(f"Saved new config to: {latest_path}")
     if kometa_write_ok:
         ts_log(f"Also copied config to: {kometa_path}")
@@ -2634,6 +2649,59 @@ def get_legacy_managed_library_artifact_paths(config_name: str | None) -> list[P
     normalized = normalize_config_name_for_storage(config_name)
     config_dir = Path(CONFIG_DIR)
     return [config_dir / folder / normalized for folder in MANAGED_LIBRARY_FILE_DIRS]
+
+
+def sync_managed_library_artifacts_to_kometa(config_name: str | None, kometa_root: str | Path | None = None) -> dict:
+    normalized = normalize_config_name_for_storage(config_name)
+    source_root = get_managed_config_artifact_root(normalized)
+    destination_root = (Path(kometa_root) if kometa_root is not None else Path(app.config.get("KOMETA_ROOT", "."))) / "config" / normalized
+
+    synced: list[str] = []
+    removed: list[str] = []
+    missing: list[str] = []
+    errors: list[str] = []
+
+    for folder in MANAGED_LIBRARY_FILE_DIRS:
+        source_dir = source_root / folder
+        destination_dir = destination_root / folder
+
+        if source_dir.exists():
+            try:
+                source_resolved = source_dir.resolve()
+                destination_resolved = destination_dir.resolve()
+                if source_resolved == destination_resolved:
+                    synced.append(str(destination_dir))
+                    continue
+            except Exception:
+                pass
+
+            try:
+                destination_dir.parent.mkdir(parents=True, exist_ok=True)
+                if destination_dir.exists():
+                    shutil.rmtree(destination_dir, onerror=handle_remove_readonly)
+                shutil.copytree(source_dir, destination_dir)
+                synced.append(str(destination_dir))
+            except Exception as exc:
+                errors.append(f"Failed to sync {source_dir} -> {destination_dir}: {exc}")
+            continue
+
+        missing.append(folder)
+        if not destination_dir.exists():
+            continue
+        try:
+            shutil.rmtree(destination_dir, onerror=handle_remove_readonly)
+            removed.append(str(destination_dir))
+        except Exception as exc:
+            errors.append(f"Failed to remove stale Kometa artifact directory {destination_dir}: {exc}")
+
+    if destination_root.exists():
+        try:
+            if not any(destination_root.iterdir()):
+                destination_root.rmdir()
+        except Exception:
+            pass
+
+    return {"synced": synced, "removed": removed, "missing": missing, "errors": errors}
 
 
 def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | None = None) -> dict:

@@ -2480,6 +2480,35 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     assert target_file.read_text(encoding="utf-8") == managed_file.read_text(encoding="utf-8")
 
 
+def test_sync_managed_library_artifacts_to_kometa_copies_and_prunes(isolated_config_dir, app):
+    from pathlib import Path
+
+    from modules import helpers
+
+    config_name = "pytest_kometa_artifacts"
+    metadata_dir = isolated_config_dir / config_name / "metadata_files" / "mov-library_movies"
+    overlay_dir = isolated_config_dir / config_name / "overlay_files" / "mov-library_movies"
+    metadata_dir.mkdir(parents=True, exist_ok=True)
+    overlay_dir.mkdir(parents=True, exist_ok=True)
+    (metadata_dir / "movies.yml").write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
+    (overlay_dir / "awards.yml").write_text("overlays:\n  test:\n    template:\n      - name: ribbon\n", encoding="utf-8")
+
+    kometa_root = Path(app.config["KOMETA_ROOT"])
+    stale_dir = kometa_root / "config" / config_name / "collection_files" / "mov-library_movies"
+    stale_dir.mkdir(parents=True, exist_ok=True)
+    (stale_dir / "stale.yml").write_text("collections:\n  stale:\n    plex_search:\n      any:\n        title: Stale\n", encoding="utf-8")
+
+    result = helpers.sync_managed_library_artifacts_to_kometa(config_name, kometa_root=kometa_root)
+
+    assert (kometa_root / "config" / config_name / "metadata_files" / "mov-library_movies" / "movies.yml").exists()
+    assert (kometa_root / "config" / config_name / "overlay_files" / "mov-library_movies" / "awards.yml").exists()
+    assert not stale_dir.exists()
+    assert any(path.endswith(f"{config_name}\\metadata_files") or path.endswith(f"{config_name}/metadata_files") for path in result["synced"])
+    assert any(path.endswith(f"{config_name}\\overlay_files") or path.endswith(f"{config_name}/overlay_files") for path in result["synced"])
+    assert any(path.endswith(f"{config_name}\\collection_files") or path.endswith(f"{config_name}/collection_files") for path in result["removed"])
+    assert result["errors"] == []
+
+
 def test_copy_fonts_to_kometa_prefers_config_scoped_fonts(isolated_config_dir, app):
     from pathlib import Path
 
@@ -2499,6 +2528,28 @@ def test_copy_fonts_to_kometa_prefers_config_scoped_fonts(isolated_config_dir, a
     copied_font = Path(app.config["KOMETA_ROOT"]) / "config" / "fonts" / "Poster.ttf"
     assert copied_font.exists()
     assert copied_font.read_bytes() == b"config-font"
+
+
+def test_save_to_named_config_syncs_managed_library_artifacts_to_kometa(isolated_config_dir, app):
+    from pathlib import Path
+
+    from modules import helpers
+
+    config_name = "pytest_save_sync"
+    collection_dir = isolated_config_dir / config_name / "collection_files" / "mov-library_movies"
+    collection_dir.mkdir(parents=True, exist_ok=True)
+    collection_file = collection_dir / "collections.yml"
+    collection_file.write_text("collections:\n  test:\n    plex_search:\n      any:\n        title: Example\n", encoding="utf-8")
+
+    with app.app_context():
+        latest_filename = helpers.save_to_named_config("settings:\n  cache: true\n", config_name)
+
+    kometa_root = Path(app.config["KOMETA_ROOT"])
+    assert latest_filename == f"{config_name}_config.yml"
+    assert (kometa_root / "config" / latest_filename).exists()
+    synced_file = kometa_root / "config" / config_name / "collection_files" / "mov-library_movies" / "collections.yml"
+    assert synced_file.exists()
+    assert synced_file.read_text(encoding="utf-8") == collection_file.read_text(encoding="utf-8")
 
 
 def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_config_dir, monkeypatch, qs_module):
