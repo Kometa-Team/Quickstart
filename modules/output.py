@@ -834,7 +834,12 @@ def optimize_template_variables(config_data, library_types=None):
         entry["template_variables"] = ordered
 
     libraries_section = config_data.get("libraries", {})
-    libraries = libraries_section.get("libraries")
+    if isinstance(libraries_section, dict) and isinstance(libraries_section.get("libraries"), dict):
+        libraries = libraries_section.get("libraries")
+    elif isinstance(libraries_section, dict):
+        libraries = libraries_section
+    else:
+        libraries = None
     if not isinstance(libraries, dict):
         return config_data
 
@@ -2546,8 +2551,28 @@ def build_config(header_style="standard", config_name=None):
             """
             grouped = {}
 
+            def matches_group_prefix(key):
+                if not isinstance(key, str):
+                    return False
+                # Keep library-level *_files blocks isolated from the default
+                # collection/overlay groups so they do not suppress built-in
+                # defaults during YAML emission.
+                if prefix == "collection_":
+                    return "-collection_" in key or "-template_collection_" in key
+                if prefix == "overlay_":
+                    return "-overlay_" in key or "-template_overlay_" in key
+                if prefix == "attribute_":
+                    return "-attribute_" in key
+                if prefix == "template_variables":
+                    return "-template_variables" in key
+                if prefix == "top_level_":
+                    return "-top_level_" in key
+                if prefix in {"collection_files", "overlay_files", "metadata_files"}:
+                    return key.endswith(f"-{prefix}")
+                return prefix in key
+
             for key, value in nested_libraries_data.items():
-                if prefix not in key:
+                if not matches_group_prefix(key):
                     continue
 
                 lib_name_raw = helpers.extract_library_name(key)
@@ -2630,7 +2655,7 @@ def build_config(header_style="standard", config_name=None):
             movie_top_level,
             show_top_level,
         )
-        config_data["libraries"] = libraries_section
+        config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
         ordered_library_names = _library_names_in_output_order(libraries_section)
         has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(
             nested_libraries_data,

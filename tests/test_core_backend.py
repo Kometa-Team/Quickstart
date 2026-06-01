@@ -956,9 +956,78 @@ def test_build_config_includes_saved_library_metadata_files(app, isolated_config
         _validated, _validation_error, _config_data, yaml_content, _validation_errors = output.build_config("single line", config_name=config_name)
 
     assert "metadata_files:" in yaml_content
+    assert "libraries:\n  libraries:" not in yaml_content
     assert "godzilla.yml" in yaml_content
     assert "config\\metadata\\movies" in yaml_content
     assert "movies_refresh.yml" in yaml_content
+
+
+def test_build_config_prunes_default_horizontal_ratings_offsets(app, monkeypatch):
+    from flask import session
+    from modules import output
+
+    ratings_payload = {
+        "validated": True,
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-collection_collectionless": True,
+            "mov-library_movies-movie-overlay_ratings": True,
+            "mov-library_movies-movie-template_overlay_ratings[rating_alignment]": "horizontal",
+            "mov-library_movies-movie-template_overlay_ratings[horizontal_position]": "left",
+            "mov-library_movies-movie-template_overlay_ratings[vertical_position]": "center",
+            "mov-library_movies-movie-template_overlay_ratings[back_height]": 80,
+            "mov-library_movies-movie-template_overlay_ratings[back_width]": 270,
+            "mov-library_movies-movie-template_overlay_ratings[back_padding]": 15,
+            "mov-library_movies-movie-template_overlay_ratings[rating1]": "user",
+            "mov-library_movies-movie-template_overlay_ratings[rating1_image]": "rt_tomato",
+            "mov-library_movies-movie-template_overlay_ratings[rating1_horizontal_offset]": 30,
+            "mov-library_movies-movie-template_overlay_ratings[rating1_vertical_offset]": -125,
+            "mov-library_movies-movie-template_overlay_ratings[rating2]": "critic",
+            "mov-library_movies-movie-template_overlay_ratings[rating2_image]": "imdb",
+            "mov-library_movies-movie-template_overlay_ratings[rating2_horizontal_offset]": 345,
+            "mov-library_movies-movie-template_overlay_ratings[rating2_vertical_offset]": 0,
+            "mov-library_movies-movie-template_overlay_ratings[rating3]": "audience",
+            "mov-library_movies-movie-template_overlay_ratings[rating3_image]": "tmdb",
+            "mov-library_movies-movie-template_overlay_ratings[rating3_horizontal_offset]": 660,
+            "mov-library_movies-movie-template_overlay_ratings[rating3_vertical_offset]": 125,
+        },
+    }
+
+    monkeypatch.setattr(output.persistence, "retrieve_settings", lambda section: ratings_payload if section == "025-libraries" else {"validated": False})
+    monkeypatch.setattr(output.helpers, "ensure_json_schema", lambda: None)
+    monkeypatch.setattr(
+        output.helpers,
+        "check_for_update",
+        lambda: {
+            "kometa_branch": "nightly",
+            "branch": "develop",
+            "local_version": "0.10.3-build2",
+            "running_on": "Local-Windows",
+        },
+    )
+    monkeypatch.setattr(output.helpers, "get_plex_summary", lambda: "Plex summary unavailable")
+    monkeypatch.setattr(output.helpers, "get_quickstart_settings_summary", lambda: [])
+    monkeypatch.setattr(output.helpers, "get_library_summaries", lambda _names: "Library summary unavailable")
+    monkeypatch.setattr(output.jsonschema.Draft7Validator, "iter_errors", lambda self, parsed: [])
+    monkeypatch.setitem(app.config, "QS_OPTIMIZE_DEFAULTS", True)
+
+    with app.test_request_context("/step/900-kometa"):
+        session["config_name"] = "pytest_ratings_optimized"
+        _validated, _validation_error, config_data, yaml_content, _validation_errors = output.build_config(
+            "single line",
+            config_name="pytest_ratings_optimized",
+        )
+
+    overlays = config_data["libraries"]["Movies"]["overlay_files"]
+    ratings_entry = next((entry for entry in overlays if entry.get("default") == "ratings"), None)
+    assert ratings_entry is not None
+    tv = ratings_entry.get("template_variables", {})
+    assert "rating1_horizontal_offset" not in tv
+    assert "rating2_horizontal_offset" not in tv
+    assert "rating3_horizontal_offset" not in tv
+    assert tv.get("rating1_vertical_offset") == -125
+    assert "rating2_vertical_offset" not in tv
+    assert tv.get("rating3_vertical_offset") == 125
 
 
 def test_step_post_from_libraries_persists_metadata_files(client, isolated_config_dir, monkeypatch, qs_module):
@@ -2387,6 +2456,42 @@ def test_build_libraries_section_emits_schedule_overlays(app):
     movies = libraries_section["libraries"]["Movies"]
     assert movies["schedule_overlays"] == "weekly(saturday)"
     assert list(movies.keys())[:2] == ["schedule_overlays", "template_variables"]
+
+
+def test_build_libraries_section_keeps_default_ratings_overlay_when_overlay_files_exist(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_ratings": True,
+                    "mov-library_movies-movie-template_overlay_ratings[rating1]": "critic",
+                    "mov-library_movies-movie-template_overlay_ratings[rating1_image]": "imdb",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    ratings_entry = next((entry for entry in overlay_entries if entry.get("default") == "ratings"), None)
+    assert ratings_entry is not None
+    assert ratings_entry["template_variables"]["rating1"] == "critic"
+    assert ratings_entry["template_variables"]["rating1_image"] == "imdb"
 
 
 def test_build_libraries_section_emits_schedule(app):
