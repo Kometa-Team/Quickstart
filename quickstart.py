@@ -5704,9 +5704,7 @@ def import_config_preview():
     if file_name.endswith(".zip"):
         try:
             with zipfile.ZipFile(BytesIO(raw_text)) as archive:
-                bundled_library_files = [
-                    n for n in archive.namelist() if _is_bundled_library_archive_member(n)
-                ]
+                bundled_library_files = [n for n in archive.namelist() if _is_bundled_library_archive_member(n)]
                 config_files = [n for n in archive.namelist() if n.lower().endswith((".yml", ".yaml")) and n not in bundled_library_files]
                 if not config_files:
                     return jsonify(success=False, message="No YAML config found in zip file."), 400

@@ -295,7 +295,9 @@ def _validate_yaml_folder(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    yaml_files = [
+        os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))
+    ]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
@@ -335,7 +337,9 @@ def _validate_collection_yaml_folder(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    yaml_files = [
+        os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))
+    ]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
@@ -375,7 +379,9 @@ def _validate_overlay_yaml_folder(location, label):
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    yaml_files = [
+        os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))
+    ]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
