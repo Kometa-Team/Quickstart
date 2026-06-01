@@ -2872,6 +2872,8 @@ def build_config(header_style="standard", config_name=None):
 
         # Clean the data
         cleaned_data = clean_data(data)
+        if dump_name == "libraries" and isinstance(cleaned_data, dict) and "libraries" not in cleaned_data:
+            cleaned_data = {"libraries": cleaned_data}
         if dump_name == "anidb":
             section = cleaned_data.get("anidb")
             if isinstance(section, dict):
