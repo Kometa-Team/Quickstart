@@ -1334,7 +1334,7 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
 
     if font_refs and kometa_write_ok:
         try:
-            font_result = copy_fonts_to_kometa(font_refs, kometa_root=kometa_root)
+            font_result = copy_fonts_to_kometa(font_refs, kometa_root=kometa_root, config_name=name)
             missing = font_result.get("missing", [])
             errors = font_result.get("errors", [])
             if missing:
@@ -2391,8 +2391,14 @@ def is_imagemaid_running():
         return False
 
 
-def get_custom_fonts_dir() -> Path:
+def get_legacy_custom_fonts_dir() -> Path:
     return Path(CONFIG_DIR) / "fonts"
+
+
+def get_custom_fonts_dir(config_name: str | None = None) -> Path:
+    if config_name:
+        return get_managed_config_artifact_root(config_name) / "fonts"
+    return get_legacy_custom_fonts_dir()
 
 
 def get_kometa_fonts_dir(kometa_root: Path | None = None) -> Path:
@@ -2400,12 +2406,16 @@ def get_kometa_fonts_dir(kometa_root: Path | None = None) -> Path:
     return root / "config" / "fonts"
 
 
-def get_font_dirs(include_static: bool = True, include_custom: bool = True) -> list[Path]:
+def get_font_dirs(include_static: bool = True, include_custom: bool = True, config_name: str | None = None) -> list[Path]:
     dirs: list[Path] = []
     seen: set[str] = set()
 
     if include_custom:
-        for path in (get_custom_fonts_dir(), get_kometa_fonts_dir()):
+        custom_paths = []
+        if config_name:
+            custom_paths.append(get_custom_fonts_dir(config_name))
+        custom_paths.extend((get_legacy_custom_fonts_dir(), get_kometa_fonts_dir()))
+        for path in custom_paths:
             key = str(path)
             if key not in seen:
                 dirs.append(path)
@@ -2422,9 +2432,12 @@ def get_font_dirs(include_static: bool = True, include_custom: bool = True) -> l
     return dirs
 
 
-def list_custom_fonts() -> list[str]:
+def list_custom_fonts(config_name: str | None = None) -> list[str]:
     fonts: set[str] = set()
-    for folder in (get_custom_fonts_dir(), get_kometa_fonts_dir()):
+    folders = [get_kometa_fonts_dir(), get_legacy_custom_fonts_dir()]
+    if config_name:
+        folders.insert(0, get_custom_fonts_dir(config_name))
+    for folder in folders:
         if not folder.is_dir():
             continue
         for entry in folder.iterdir():
@@ -2433,9 +2446,9 @@ def list_custom_fonts() -> list[str]:
     return sorted(fonts)
 
 
-def list_available_fonts(include_static: bool = True, include_custom: bool = True) -> list[str]:
+def list_available_fonts(include_static: bool = True, include_custom: bool = True, config_name: str | None = None) -> list[str]:
     fonts: set[str] = set()
-    for folder in get_font_dirs(include_static=include_static, include_custom=include_custom):
+    for folder in get_font_dirs(include_static=include_static, include_custom=include_custom, config_name=config_name):
         if not folder.is_dir():
             continue
         for entry in folder.iterdir():
@@ -2444,8 +2457,8 @@ def list_available_fonts(include_static: bool = True, include_custom: bool = Tru
     return sorted(fonts)
 
 
-def sync_custom_fonts(kometa_root: Path | None = None) -> list[str]:
-    source_dir = get_custom_fonts_dir()
+def sync_custom_fonts(kometa_root: Path | None = None, config_name: str | None = None) -> list[str]:
+    source_dir = get_custom_fonts_dir(config_name)
     if not source_dir.is_dir():
         return []
     dest_dir = get_kometa_fonts_dir(kometa_root)
@@ -2487,10 +2500,10 @@ def collect_font_references(config_data) -> list[str]:
     return sorted(fonts)
 
 
-def copy_fonts_to_kometa(font_refs, kometa_root: Path | None = None) -> dict:
+def copy_fonts_to_kometa(font_refs, kometa_root: Path | None = None, config_name: str | None = None) -> dict:
     dest_dir = get_kometa_fonts_dir(kometa_root)
     dest_dir.mkdir(parents=True, exist_ok=True)
-    sources = get_font_dirs(include_static=True, include_custom=True)
+    sources = get_font_dirs(include_static=True, include_custom=True, config_name=config_name)
     copied: list[str] = []
     missing: list[str] = []
     errors: list[str] = []
@@ -2607,7 +2620,17 @@ def normalize_config_name_for_storage(config_name: str | None) -> str:
 MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
 
 
+def get_managed_config_artifact_root(config_name: str | None) -> Path:
+    normalized = normalize_config_name_for_storage(config_name)
+    return Path(CONFIG_DIR) / normalized
+
+
 def get_managed_library_artifact_paths(config_name: str | None) -> list[Path]:
+    config_root = get_managed_config_artifact_root(config_name)
+    return [config_root / folder for folder in MANAGED_LIBRARY_FILE_DIRS]
+
+
+def get_legacy_managed_library_artifact_paths(config_name: str | None) -> list[Path]:
     normalized = normalize_config_name_for_storage(config_name)
     config_dir = Path(CONFIG_DIR)
     return [config_dir / folder / normalized for folder in MANAGED_LIBRARY_FILE_DIRS]
@@ -2623,8 +2646,10 @@ def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | N
     targets = [
         config_dir / f"{normalized}_config.yml",
         archive_root / normalized,
+        get_managed_config_artifact_root(normalized),
     ]
     targets.extend(get_managed_library_artifact_paths(normalized))
+    targets.extend(get_legacy_managed_library_artifact_paths(normalized))
 
     if kometa_root:
         targets.append(Path(kometa_root) / "config" / f"{normalized}_config.yml")
@@ -2727,6 +2752,15 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
         bundle["has_current_file"] = True
         bundle["paths"].append(str(path))
 
+    for path in config_dir.iterdir():
+        if not path.is_dir():
+            continue
+        if any((path / folder_name).exists() and (path / folder_name).is_dir() for folder_name in MANAGED_LIBRARY_FILE_DIRS):
+            bundle = ensure_bundle(path.name)
+            path_text = str(path)
+            if path_text not in bundle["paths"]:
+                bundle["paths"].append(path_text)
+
     for folder_name in MANAGED_LIBRARY_FILE_DIRS:
         managed_root = config_dir / folder_name
         if not managed_root.exists() or not managed_root.is_dir():
@@ -2735,7 +2769,9 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
             if not path.is_dir():
                 continue
             bundle = ensure_bundle(path.name)
-            bundle["paths"].append(str(path))
+            path_text = str(path)
+            if path_text not in bundle["paths"]:
+                bundle["paths"].append(path_text)
 
     if archive_root.exists():
         for path in archive_root.iterdir():
@@ -2790,6 +2826,16 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
         for managed_path in get_managed_library_artifact_paths(name):
             if managed_path.exists() and managed_path.is_dir():
                 path_text = str(managed_path)
+                if path_text not in bundle["paths"]:
+                    bundle["paths"].append(path_text)
+        managed_root = get_managed_config_artifact_root(name)
+        if managed_root.exists() and managed_root.is_dir():
+            path_text = str(managed_root)
+            if path_text not in bundle["paths"]:
+                bundle["paths"].append(path_text)
+        for legacy_path in get_legacy_managed_library_artifact_paths(name):
+            if legacy_path.exists() and legacy_path.is_dir():
+                path_text = str(legacy_path)
                 if path_text not in bundle["paths"]:
                     bundle["paths"].append(path_text)
 

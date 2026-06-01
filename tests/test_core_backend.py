@@ -205,8 +205,8 @@ def test_validate_metadata_file_organizes_local_file_into_managed_store(client, 
     assert payload["valid"] is True
     assert payload["organized"] is True
     normalized_location = payload["normalized_location"]
-    assert normalized_location.startswith(f"metadata_files/{config_name}/mov-library_movies/")
-    managed_file = isolated_config_dir / Path(normalized_location)
+    assert normalized_location.startswith(f"config/{config_name}/metadata_files/mov-library_movies/")
+    managed_file = isolated_config_dir.parent / Path(normalized_location)
     assert managed_file.exists()
     assert managed_file.read_text(encoding="utf-8") == metadata_file.read_text(encoding="utf-8")
 
@@ -333,7 +333,7 @@ def test_validate_metadata_folder_organizes_generic_folder_name_into_descriptive
     payload = resp.get_json()
     assert payload["valid"] is True
     normalized_location = str(payload["normalized_location"]).replace("\\", "/")
-    assert normalized_location.startswith(f"config/metadata_files/{config_name}/mov-library_movies/")
+    assert normalized_location.startswith(f"config/{config_name}/metadata_files/mov-library_movies/")
     assert "/movies_metadata_files_" in normalized_location
     assert (isolated_config_dir.parent / normalized_location).exists()
 
@@ -374,7 +374,7 @@ def test_validate_collection_folder_accepts_managed_relative_folder_path(client,
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["valid"] is True
-    assert payload["normalized_location"] == "config/collection_files"
+    assert payload["normalized_location"].startswith("config/pytest_managed_collection_folder/collection_files/mov-library_movies/")
     assert payload["organized"] is True
 
 
@@ -628,7 +628,10 @@ def test_autosave_library_accepts_managed_relative_collection_folder_path(client
     payload = resp.get_json()
     assert payload["success"] is True
     saved_entries = json.loads(payload["libraries"]["mov-library_movies-collection_files"])
-    assert saved_entries == [{"type": "folder", "location": "config/collection_files", "validated": True}]
+    assert len(saved_entries) == 1
+    assert saved_entries[0]["type"] == "folder"
+    assert saved_entries[0]["validated"] is True
+    assert saved_entries[0]["location"].startswith("config/pytest_autosave_managed_collection_folder/collection_files/mov-library_movies/")
 
 
 def test_autosave_library_rejects_invalid_overlay_files(client, monkeypatch, qs_module):
@@ -682,7 +685,7 @@ def test_autosave_library_organizes_overlay_folder(client, isolated_config_dir, 
     assert len(overlay_entries) == 1
     assert overlay_entries[0]["type"] == "folder"
     managed_location = overlay_entries[0]["location"]
-    assert managed_location.startswith(f"config/overlay_files/{config_name}/mov-library_movies/")
+    assert managed_location.startswith(f"config/{config_name}/overlay_files/mov-library_movies/")
     managed_dir = isolated_config_dir.parent / managed_location
     assert managed_dir.is_dir()
     assert (managed_dir / "movies.yml").exists()
@@ -1152,7 +1155,7 @@ def test_step_post_from_libraries_persists_metadata_files(client, isolated_confi
     assert stored["libraries"]["mov-library_movies-library"] == "Movies"
     saved_entries = json.loads(stored["libraries"]["mov-library_movies-metadata_files"])
     assert saved_entries[0]["type"] == "file"
-    assert saved_entries[0]["location"].startswith(f"config/metadata_files/{config_name}/mov-library_movies/")
+    assert saved_entries[0]["location"].startswith(f"config/{config_name}/metadata_files/mov-library_movies/")
     assert saved_entries[0]["validated"] is True
     assert saved_entries[1] == {"type": "url", "location": "https://example.com/movies_refresh.yml", "validated": True}
     managed_file = isolated_config_dir.parent / Path(saved_entries[0]["location"])
@@ -1211,7 +1214,7 @@ def test_step_post_from_libraries_persists_collection_files(client, isolated_con
     assert stored["libraries"]["mov-library_movies-library"] == "Movies"
     saved_entries = json.loads(stored["libraries"]["mov-library_movies-collection_files"])
     assert saved_entries[0]["type"] == "file"
-    assert saved_entries[0]["location"].startswith(f"config/collection_files/{config_name}/mov-library_movies/")
+    assert saved_entries[0]["location"].startswith(f"config/{config_name}/collection_files/mov-library_movies/")
     assert saved_entries[0]["validated"] is True
     assert saved_entries[1] == {"type": "url", "location": "https://example.com/movies_refresh.yml", "validated": True}
     managed_file = isolated_config_dir.parent / Path(saved_entries[0]["location"])
@@ -1812,7 +1815,7 @@ def test_download_redacted_bundles_managed_overlay_folder(client, isolated_confi
     import zipfile
 
     config_name = "pytest_redacted_bundle"
-    managed_dir = isolated_config_dir / "overlay_files" / config_name / "mov-library_movies" / "seasonal"
+    managed_dir = isolated_config_dir / config_name / "overlay_files" / "mov-library_movies" / "seasonal"
     managed_dir.mkdir(parents=True, exist_ok=True)
     managed_file = managed_dir / "awards.yml"
     managed_file.write_text(
@@ -1822,7 +1825,7 @@ def test_download_redacted_bundles_managed_overlay_folder(client, isolated_confi
 
     with client.session_transaction() as sess:
         sess["config_name"] = config_name
-        sess["yaml_content"] = "libraries:\n" "  Movies:\n" "    overlay_files:\n" f"      - folder: overlay_files/{config_name}/mov-library_movies/seasonal\n"
+        sess["yaml_content"] = "libraries:\n" "  Movies:\n" "    overlay_files:\n" f"      - folder: {config_name}/overlay_files/mov-library_movies/seasonal\n"
 
     resp = client.get("/download_redacted")
     assert resp.status_code == 200
@@ -1831,7 +1834,7 @@ def test_download_redacted_bundles_managed_overlay_folder(client, isolated_confi
     with zipfile.ZipFile(io.BytesIO(resp.data)) as archive:
         names = set(archive.namelist())
         assert "config_redacted.yml" in names
-        bundled_name = f"overlay_files/{config_name}/mov-library_movies/seasonal/awards.yml"
+        bundled_name = f"{config_name}/overlay_files/mov-library_movies/seasonal/awards.yml"
         assert bundled_name in names
         bundled_text = archive.read(bundled_name).decode("utf-8")
         assert "(redacted)" in bundled_text
@@ -2006,8 +2009,8 @@ def test_bulk_delete_configs_removes_config_artifacts(client, isolated_config_di
         archive_dir = isolated_config_dir / "archives" / name
         archive_dir.mkdir(parents=True, exist_ok=True)
         (archive_dir / f"{name}_config_1.yml").write_text("archived: true\n", encoding="utf-8")
-        (isolated_config_dir / "metadata_files" / name / "mov-library_movies").mkdir(parents=True, exist_ok=True)
-        (isolated_config_dir / "overlay_files" / name / "mov-library_movies").mkdir(parents=True, exist_ok=True)
+        (isolated_config_dir / name / "metadata_files" / "mov-library_movies").mkdir(parents=True, exist_ok=True)
+        (isolated_config_dir / name / "overlay_files" / "mov-library_movies").mkdir(parents=True, exist_ok=True)
         (kometa_path / f"{name}_config.yml").write_text("test: true\n", encoding="utf-8")
         database.save_section_data(
             name=name,
@@ -2030,8 +2033,8 @@ def test_bulk_delete_configs_removes_config_artifacts(client, isolated_config_di
     for name in (first, second):
         assert not (isolated_config_dir / f"{name}_config.yml").exists()
         assert not (isolated_config_dir / "archives" / name).exists()
-        assert not (isolated_config_dir / "metadata_files" / name).exists()
-        assert not (isolated_config_dir / "overlay_files" / name).exists()
+        assert not (isolated_config_dir / name / "metadata_files").exists()
+        assert not (isolated_config_dir / name / "overlay_files").exists()
         assert not (kometa_path / f"{name}_config.yml").exists()
 
 
@@ -2045,7 +2048,7 @@ def test_orphaned_config_artifacts_route_lists_disk_only_bundles(client, isolate
     archive_dir.mkdir(parents=True, exist_ok=True)
     (archive_dir / f"{orphan_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
     (isolated_config_dir / f"{orphan_name}_config.yml").write_text("current: true\n", encoding="utf-8")
-    managed_dir = isolated_config_dir / "metadata_files" / orphan_name / "mov-library_movies"
+    managed_dir = isolated_config_dir / orphan_name / "metadata_files" / "mov-library_movies"
     managed_dir.mkdir(parents=True, exist_ok=True)
     (managed_dir / "movies.yml").write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
 
@@ -2083,7 +2086,7 @@ def test_delete_orphaned_config_artifacts_route_removes_selected_bundle(client, 
     archive_dir.mkdir(parents=True, exist_ok=True)
     (archive_dir / f"{orphan_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
     (isolated_config_dir / f"{orphan_name}_config.yml").write_text("current: true\n", encoding="utf-8")
-    managed_dir = isolated_config_dir / "collection_files" / orphan_name / "mov-library_movies"
+    managed_dir = isolated_config_dir / orphan_name / "collection_files" / "mov-library_movies"
     managed_dir.mkdir(parents=True, exist_ok=True)
     (managed_dir / "collections.yml").write_text("collections:\n  test:\n    plex_search:\n      any:\n        title: Example\n", encoding="utf-8")
 
@@ -2098,7 +2101,7 @@ def test_delete_orphaned_config_artifacts_route_removes_selected_bundle(client, 
     assert payload["deleted"] == [orphan_name]
     assert not (isolated_config_dir / f"{orphan_name}_config.yml").exists(), payload
     assert not archive_dir.exists()
-    assert not (isolated_config_dir / "collection_files" / orphan_name).exists()
+    assert not (isolated_config_dir / orphan_name / "collection_files").exists()
     assert not (kometa_path / f"{orphan_name}_config.yml").exists()
 
 
@@ -2184,8 +2187,8 @@ def test_rename_config_moves_managed_library_file_directories(client, isolated_c
 
     (isolated_config_dir / f"{old_name}_config.yml").write_text("test: true\n", encoding="utf-8")
     (kometa_path / f"{old_name}_config.yml").write_text("test: true\n", encoding="utf-8")
-    metadata_dir = isolated_config_dir / "metadata_files" / old_name / "mov-library_movies"
-    overlay_dir = isolated_config_dir / "overlay_files" / old_name / "mov-library_movies"
+    metadata_dir = isolated_config_dir / old_name / "metadata_files" / "mov-library_movies"
+    overlay_dir = isolated_config_dir / old_name / "overlay_files" / "mov-library_movies"
     metadata_dir.mkdir(parents=True, exist_ok=True)
     overlay_dir.mkdir(parents=True, exist_ok=True)
     (metadata_dir / "movies.yml").write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
@@ -2206,10 +2209,10 @@ def test_rename_config_moves_managed_library_file_directories(client, isolated_c
     payload = resp.get_json()
     assert payload["success"] is True
 
-    assert not (isolated_config_dir / "metadata_files" / old_name).exists()
-    assert not (isolated_config_dir / "overlay_files" / old_name).exists()
-    assert (isolated_config_dir / "metadata_files" / new_name / "mov-library_movies" / "movies.yml").exists()
-    assert (isolated_config_dir / "overlay_files" / new_name / "mov-library_movies" / "awards.yml").exists()
+    assert not (isolated_config_dir / old_name / "metadata_files").exists()
+    assert not (isolated_config_dir / old_name / "overlay_files").exists()
+    assert (isolated_config_dir / new_name / "metadata_files" / "mov-library_movies" / "movies.yml").exists()
+    assert (isolated_config_dir / new_name / "overlay_files" / "mov-library_movies" / "awards.yml").exists()
     assert f"{new_name}_config.yml" in "".join(payload["files"]["renamed"])
 
     with client.session_transaction() as sess:
@@ -2353,7 +2356,7 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     from flask import session
 
     config_name = "pytest_copy_metadata_files"
-    managed_dir = isolated_config_dir / "metadata_files" / config_name / "mov-library_movies"
+    managed_dir = isolated_config_dir / config_name / "metadata_files" / "mov-library_movies"
     managed_dir.mkdir(parents=True, exist_ok=True)
     managed_file = managed_dir / "movies.yml"
     managed_file.write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
@@ -2420,8 +2423,12 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     assert validated is False
     assert user_entered is True
     libraries = stored["libraries"]
-    assert libraries["mov-library_movies-metadata_files"] == source_metadata_files
-    assert libraries["mov-library_target-metadata_files"] == source_metadata_files
+    source_entries = json.loads(libraries["mov-library_movies-metadata_files"])
+    target_entries = json.loads(libraries["mov-library_target-metadata_files"])
+    assert source_entries[0]["location"] == f"config/{managed_location}"
+    assert target_entries[0]["location"] == f"config/{managed_location}"
+    assert source_entries[1] == {"type": "url", "location": "https://example.com/movie-metadata.yml"}
+    assert target_entries[1] == {"type": "url", "location": "https://example.com/movie-metadata.yml"}
 
 
 def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_config_dir, monkeypatch, qs_module):
@@ -2469,10 +2476,10 @@ def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_co
     with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(
             "config.yml",
-            "plex:\n  url: http://plex.local\n  token: test-token\ntmdb:\n  apikey: test-key\nlibraries:\n  Movies:\n    metadata_files:\n      - file: metadata_files/original/movies/source.yml\n",
+            "plex:\n  url: http://plex.local\n  token: test-token\ntmdb:\n  apikey: test-key\nlibraries:\n  Movies:\n    metadata_files:\n      - file: original/metadata_files/movies/source.yml\n",
         )
         archive.writestr(
-            "metadata_files/original/movies/source.yml",
+            "original/metadata_files/movies/source.yml",
             "metadata:\n  imported:\n    title: Imported Example\n",
         )
     bundle.seek(0)
@@ -2497,8 +2504,8 @@ def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_co
     metadata_entries = json.loads(stored["libraries"]["mov-library_movies-metadata_files"])
     assert len(metadata_entries) == 1
     normalized_location = metadata_entries[0]["location"]
-    assert normalized_location.startswith(f"metadata_files/{config_name}/mov-library_movies/")
-    managed_file = isolated_config_dir / normalized_location
+    assert normalized_location.startswith(f"config/{config_name}/metadata_files/mov-library_movies/")
+    managed_file = isolated_config_dir.parent / normalized_location
     assert managed_file.exists()
     assert "Imported Example" in managed_file.read_text(encoding="utf-8")
 
