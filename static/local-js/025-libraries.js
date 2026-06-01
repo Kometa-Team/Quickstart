@@ -110,8 +110,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!entry || typeof entry !== 'object') return null
       const type = String(entry.type || '').trim().toLowerCase()
       const location = String(entry.location || '').trim()
+      const validated = entry.validated === true || String(entry.validated || '').trim().toLowerCase() === 'true'
       if (!type && !location) return null
-      return { type, location }
+      const normalized = { type, location }
+      if (validated) normalized.validated = true
+      return normalized
     }
 
     function parseMetadataFilesValue (rawValue) {
@@ -221,7 +224,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (locationInput && entry.location) {
         locationInput.value = entry.location
       }
-      updateMetadataFileValidateButton(wrapper, false)
+      if (entry.validated) {
+        wrapper.dataset.metadataFileState = 'success'
+        wrapper.dataset.metadataFileButtonState = 'success'
+      }
+      updateMetadataFileValidateButton(wrapper, Boolean(entry.validated))
       return wrapper
     }
 
@@ -485,7 +492,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const entries = rows.map(row => {
         const type = row.querySelector('[data-metadata-file-type]')?.value
         const location = row.querySelector('[data-metadata-file-location]')?.value
-        return normalizeMetadataFileEntry({ type, location })
+        const validated = String(row.dataset.metadataFileState || '').trim().toLowerCase() === 'success'
+        return normalizeMetadataFileEntry({ type, location, validated })
       }).filter(Boolean)
       hidden.value = JSON.stringify(entries)
       if (emitEvents) {
@@ -507,7 +515,11 @@ document.addEventListener('DOMContentLoaded', function () {
       entries.forEach(entry => list.appendChild(buildMetadataFileRow(entry)))
       list.querySelectorAll('[data-metadata-file-row]').forEach(row => {
         if (applyMetadataFileDependencyState(row)) return
-        setMetadataFileButtonState(row, 'idle')
+        if (String(row.dataset.metadataFileState || '').trim().toLowerCase() === 'success') {
+          setMetadataFileButtonState(row, 'success')
+        } else {
+          setMetadataFileButtonState(row, 'idle')
+        }
       })
       syncMetadataFilesEditor(editor, false)
       updateMetadataFilesAccordionState(editor)
@@ -559,7 +571,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (locationInput && entry.location) {
         locationInput.value = entry.location
       }
-      updateCollectionFileValidateButton(wrapper, false)
+      if (entry.validated) {
+        wrapper.dataset.collectionFileState = 'success'
+        wrapper.dataset.collectionFileButtonState = 'success'
+      }
+      updateCollectionFileValidateButton(wrapper, Boolean(entry.validated))
       return wrapper
     }
 
@@ -782,11 +798,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return state === 'error' || state === 'warning'
       })
 
+      accordionHeader.classList.remove('warning')
       accordionHeader.classList.toggle('invalid', hasInvalid)
       if (!hasInvalid && hasEntries) {
         accordionHeader.classList.add('selected')
-      } else if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
-        EventHandler.updateAccordionHighlights()
+      } else {
+        accordionHeader.classList.remove('selected')
+        if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
+          EventHandler.updateAccordionHighlights()
+        }
       }
     }
 
@@ -816,7 +836,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const entries = rows.map(row => {
         const type = row.querySelector('[data-collection-file-type]')?.value
         const location = row.querySelector('[data-collection-file-location]')?.value
-        return normalizeMetadataFileEntry({ type, location })
+        const validated = String(row.dataset.collectionFileState || '').trim().toLowerCase() === 'success'
+        return normalizeMetadataFileEntry({ type, location, validated })
       }).filter(Boolean)
       hidden.value = JSON.stringify(entries)
       if (emitEvents) {
@@ -838,7 +859,11 @@ document.addEventListener('DOMContentLoaded', function () {
       entries.forEach(entry => list.appendChild(buildCollectionFileRow(entry)))
       list.querySelectorAll('[data-collection-file-row]').forEach(row => {
         if (applyCollectionFileDependencyState(row)) return
-        setCollectionFileButtonState(row, 'idle')
+        if (String(row.dataset.collectionFileState || '').trim().toLowerCase() === 'success') {
+          setCollectionFileButtonState(row, 'success')
+        } else {
+          setCollectionFileButtonState(row, 'idle')
+        }
       })
       syncCollectionFilesEditor(editor, false)
       updateCollectionFilesAccordionState(editor)
@@ -910,6 +935,7 @@ document.addEventListener('DOMContentLoaded', function () {
               text: payload.message || 'Metadata source looks valid.',
               files: Array.isArray(payload.files) ? payload.files : []
             })
+            syncMetadataFilesEditor(editor, false)
           }
         } catch (_error) {
           setMetadataFileStatus(row, 'error', 'Validation request failed.')
@@ -1006,6 +1032,7 @@ document.addEventListener('DOMContentLoaded', function () {
               text: payload.message || 'Collection source looks valid.',
               files: Array.isArray(payload.files) ? payload.files : []
             })
+            syncCollectionFilesEditor(editor, false)
           }
         } catch (_error) {
           setCollectionFileStatus(row, 'error', 'Validation request failed.')
@@ -1082,7 +1109,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (locationInput && entry.location) {
         locationInput.value = entry.location
       }
-      updateOverlayFileValidateButton(wrapper, false)
+      if (entry.validated) {
+        wrapper.dataset.overlayFileState = 'success'
+        wrapper.dataset.overlayFileButtonState = 'success'
+      }
+      updateOverlayFileValidateButton(wrapper, Boolean(entry.validated))
       return wrapper
     }
 
@@ -1305,11 +1336,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return state === 'error' || state === 'warning'
       })
 
+      accordionHeader.classList.remove('warning')
       accordionHeader.classList.toggle('invalid', hasInvalid)
       if (!hasInvalid && hasEntries) {
         accordionHeader.classList.add('selected')
-      } else if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
-        EventHandler.updateAccordionHighlights()
+      } else {
+        accordionHeader.classList.remove('selected')
+        if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
+          EventHandler.updateAccordionHighlights()
+        }
       }
     }
 
@@ -1339,7 +1374,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const entries = rows.map(row => {
         const type = row.querySelector('[data-overlay-file-type]')?.value
         const location = row.querySelector('[data-overlay-file-location]')?.value
-        return normalizeMetadataFileEntry({ type, location })
+        const validated = String(row.dataset.overlayFileState || '').trim().toLowerCase() === 'success'
+        return normalizeMetadataFileEntry({ type, location, validated })
       }).filter(Boolean)
       hidden.value = JSON.stringify(entries)
       if (emitEvents) {
@@ -1361,7 +1397,11 @@ document.addEventListener('DOMContentLoaded', function () {
       entries.forEach(entry => list.appendChild(buildOverlayFileRow(entry)))
       list.querySelectorAll('[data-overlay-file-row]').forEach(row => {
         if (applyOverlayFileDependencyState(row)) return
-        setOverlayFileButtonState(row, 'idle')
+        if (String(row.dataset.overlayFileState || '').trim().toLowerCase() === 'success') {
+          setOverlayFileButtonState(row, 'success')
+        } else {
+          setOverlayFileButtonState(row, 'idle')
+        }
       })
       syncOverlayFilesEditor(editor, false)
       updateOverlayFilesAccordionState(editor)
@@ -1433,6 +1473,7 @@ document.addEventListener('DOMContentLoaded', function () {
               text: payload.message || 'Overlay source looks valid.',
               files: Array.isArray(payload.files) ? payload.files : []
             })
+            syncOverlayFilesEditor(editor, false)
           }
         } catch (_error) {
           setOverlayFileStatus(row, 'error', 'Validation request failed.')

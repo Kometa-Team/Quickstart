@@ -333,9 +333,9 @@ def test_validate_metadata_folder_organizes_generic_folder_name_into_descriptive
     payload = resp.get_json()
     assert payload["valid"] is True
     normalized_location = str(payload["normalized_location"]).replace("\\", "/")
-    assert normalized_location.startswith(f"metadata_files/{config_name}/mov-library_movies/")
+    assert normalized_location.startswith(f"config/metadata_files/{config_name}/mov-library_movies/")
     assert "/movies_metadata_files_" in normalized_location
-    assert (isolated_config_dir / normalized_location).exists()
+    assert (isolated_config_dir.parent / normalized_location).exists()
 
 
 def test_validate_collection_folder_accepts_top_level_yaml_files(client, tmp_path):
@@ -354,6 +354,28 @@ def test_validate_collection_folder_accepts_top_level_yaml_files(client, tmp_pat
     assert payload["validated_files"] == 2
     assert payload["files"] == ["godzilla.yml", "refresh.yaml"]
     assert payload["message"] == "Validated 2 YAML files in folder."
+
+
+def test_validate_collection_folder_accepts_managed_relative_folder_path(client, isolated_config_dir):
+    managed_dir = isolated_config_dir / "collection_files"
+    managed_dir.mkdir(parents=True, exist_ok=True)
+    (managed_dir / "godzilla.yml").write_text("collections:\n  test:\n    title: Godzilla\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_collection_file",
+        json={
+            "config_name": "pytest_managed_collection_folder",
+            "library_id": "mov-library_movies",
+            "collection_file_type": "folder",
+            "collection_file_location": "collection_files",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["normalized_location"] == "config/collection_files"
+    assert payload["organized"] is True
 
 
 def test_validate_metadata_folder_rejects_empty_folder(client, tmp_path):
@@ -585,6 +607,30 @@ def test_autosave_library_rejects_invalid_collection_files(client, monkeypatch, 
     assert "Invalid collection files" in payload["error"]
 
 
+def test_autosave_library_accepts_managed_relative_collection_folder_path(client, isolated_config_dir, monkeypatch, qs_module):
+    import json
+
+    managed_dir = isolated_config_dir / "collection_files"
+    managed_dir.mkdir(parents=True, exist_ok=True)
+    (managed_dir / "godzilla.yml").write_text("collections:\n  test:\n    title: Godzilla\n", encoding="utf-8")
+
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (True, None, {}, "test: true\n", []))
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": "pytest_autosave_managed_collection_folder",
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-collection_files": '[{"type":"folder","location":"collection_files","validated":true}]',
+        },
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    saved_entries = json.loads(payload["libraries"]["mov-library_movies-collection_files"])
+    assert saved_entries == [{"type": "folder", "location": "config/collection_files", "validated": True}]
+
+
 def test_autosave_library_rejects_invalid_overlay_files(client, monkeypatch, qs_module):
     class _Resp:
         status_code = 404
@@ -636,8 +682,8 @@ def test_autosave_library_organizes_overlay_folder(client, isolated_config_dir, 
     assert len(overlay_entries) == 1
     assert overlay_entries[0]["type"] == "folder"
     managed_location = overlay_entries[0]["location"]
-    assert managed_location.startswith(f"overlay_files/{config_name}/mov-library_movies/")
-    managed_dir = isolated_config_dir / managed_location
+    assert managed_location.startswith(f"config/overlay_files/{config_name}/mov-library_movies/")
+    managed_dir = isolated_config_dir.parent / managed_location
     assert managed_dir.is_dir()
     assert (managed_dir / "movies.yml").exists()
 
@@ -1066,8 +1112,8 @@ def test_step_post_from_libraries_persists_metadata_files(client, isolated_confi
     metadata_file.write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
     metadata_value = json.dumps(
         [
-            {"type": "file", "location": str(metadata_file)},
-            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+            {"type": "file", "location": str(metadata_file), "validated": True},
+            {"type": "url", "location": "https://example.com/movies_refresh.yml", "validated": True},
         ]
     )
 
@@ -1106,9 +1152,10 @@ def test_step_post_from_libraries_persists_metadata_files(client, isolated_confi
     assert stored["libraries"]["mov-library_movies-library"] == "Movies"
     saved_entries = json.loads(stored["libraries"]["mov-library_movies-metadata_files"])
     assert saved_entries[0]["type"] == "file"
-    assert saved_entries[0]["location"].startswith(f"metadata_files/{config_name}/mov-library_movies/")
-    assert saved_entries[1] == {"type": "url", "location": "https://example.com/movies_refresh.yml"}
-    managed_file = isolated_config_dir / Path(saved_entries[0]["location"])
+    assert saved_entries[0]["location"].startswith(f"config/metadata_files/{config_name}/mov-library_movies/")
+    assert saved_entries[0]["validated"] is True
+    assert saved_entries[1] == {"type": "url", "location": "https://example.com/movies_refresh.yml", "validated": True}
+    managed_file = isolated_config_dir.parent / Path(saved_entries[0]["location"])
     assert managed_file.exists()
     assert managed_file.read_text(encoding="utf-8") == metadata_file.read_text(encoding="utf-8")
 
@@ -1124,8 +1171,8 @@ def test_step_post_from_libraries_persists_collection_files(client, isolated_con
     collection_file.write_text("collections:\n  test:\n    plex_search:\n      any:\n        title: Example\n", encoding="utf-8")
     collection_value = json.dumps(
         [
-            {"type": "file", "location": str(collection_file)},
-            {"type": "url", "location": "https://example.com/movies_refresh.yml"},
+            {"type": "file", "location": str(collection_file), "validated": True},
+            {"type": "url", "location": "https://example.com/movies_refresh.yml", "validated": True},
         ]
     )
 
@@ -1164,9 +1211,10 @@ def test_step_post_from_libraries_persists_collection_files(client, isolated_con
     assert stored["libraries"]["mov-library_movies-library"] == "Movies"
     saved_entries = json.loads(stored["libraries"]["mov-library_movies-collection_files"])
     assert saved_entries[0]["type"] == "file"
-    assert saved_entries[0]["location"].startswith(f"collection_files/{config_name}/mov-library_movies/")
-    assert saved_entries[1] == {"type": "url", "location": "https://example.com/movies_refresh.yml"}
-    managed_file = isolated_config_dir / Path(saved_entries[0]["location"])
+    assert saved_entries[0]["location"].startswith(f"config/collection_files/{config_name}/mov-library_movies/")
+    assert saved_entries[0]["validated"] is True
+    assert saved_entries[1] == {"type": "url", "location": "https://example.com/movies_refresh.yml", "validated": True}
+    managed_file = isolated_config_dir.parent / Path(saved_entries[0]["location"])
     assert managed_file.exists()
     assert managed_file.read_text(encoding="utf-8") == collection_file.read_text(encoding="utf-8")
 

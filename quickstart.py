@@ -629,9 +629,13 @@ def _parse_metadata_file_entries(value):
             continue
         entry_type = str(entry.get("type") or "").strip().lower()
         location = str(entry.get("location") or "").strip()
+        validated = helpers.booler(entry.get("validated"))
         if not entry_type and not location:
             continue
-        entries.append({"type": entry_type, "location": location})
+        parsed_entry = {"type": entry_type, "location": location}
+        if validated:
+            parsed_entry["validated"] = True
+        entries.append(parsed_entry)
     return entries
 
 
@@ -658,9 +662,13 @@ def _parse_collection_file_entries(value):
             continue
         entry_type = str(entry.get("type") or "").strip().lower()
         location = str(entry.get("location") or "").strip()
+        validated = helpers.booler(entry.get("validated"))
         if not entry_type and not location:
             continue
-        entries.append({"type": entry_type, "location": location})
+        parsed_entry = {"type": entry_type, "location": location}
+        if validated:
+            parsed_entry["validated"] = True
+        entries.append(parsed_entry)
     return entries
 
 
@@ -687,9 +695,13 @@ def _parse_overlay_file_entries(value):
             continue
         entry_type = str(entry.get("type") or "").strip().lower()
         location = str(entry.get("location") or "").strip()
+        validated = helpers.booler(entry.get("validated"))
         if not entry_type and not location:
             continue
-        entries.append({"type": entry_type, "location": location})
+        parsed_entry = {"type": entry_type, "location": location}
+        if validated:
+            parsed_entry["validated"] = True
+        entries.append(parsed_entry)
     return entries
 
 
@@ -782,6 +794,16 @@ def _managed_bundle_location_for_path(path):
     return Path(*relative_parts).as_posix()
 
 
+def _display_library_managed_location(location):
+    raw = str(location or "").strip().replace("\\", "/")
+    if not raw:
+        return raw
+    normalized_parts = [part for part in raw.split("/") if part]
+    if normalized_parts and normalized_parts[0] in LIBRARY_FILE_KINDS:
+        return Path("config", *normalized_parts).as_posix()
+    return raw
+
+
 def _validate_library_file_entry(kind, entry):
     validator_info = LIBRARY_FILE_VALIDATORS.get(kind)
     if not validator_info:
@@ -849,10 +871,14 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
     parsed_entry = dict(entry) if isinstance(entry, dict) else {}
     entry_type = str(parsed_entry.get("type") or "").strip().lower()
     location = str(parsed_entry.get("location") or "").strip()
+    is_validated = helpers.booler(parsed_entry.get("validated"))
     if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
         return parsed_entry, False, None
     if entry_type not in LOCAL_LIBRARY_FILE_TYPES or not config_name or not library_scope:
-        return {"type": entry_type, "location": location}, False, None
+        normalized_entry = {"type": entry_type, "location": location}
+        if is_validated:
+            normalized_entry["validated"] = True
+        return normalized_entry, False, None
 
     if validate_local:
         valid, message, _details = _validate_library_file_entry(kind, {"type": entry_type, "location": location})
@@ -864,8 +890,12 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
     except Exception as exc:
         return None, False, f"Unable to organize {kind}: {exc}"
 
-    changed = normalized_location != location
-    return {"type": entry_type, "location": normalized_location}, changed, None
+    display_location = _display_library_managed_location(normalized_location)
+    changed = display_location != location
+    normalized_entry = {"type": entry_type, "location": display_location}
+    if is_validated:
+        normalized_entry["validated"] = True
+    return normalized_entry, changed, None
 
 
 def _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True):

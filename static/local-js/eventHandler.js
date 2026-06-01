@@ -397,6 +397,16 @@ const EventHandler = {
     return toggles.some(toggle => toggle.checked)
   },
 
+  hasLibraryFileEntries: function (accordionBody) {
+    if (!accordionBody) return false
+    const hidden = accordionBody.querySelector(
+      'input[type="hidden"][name$="-metadata_files"], input[type="hidden"][name$="-collection_files"], input[type="hidden"][name$="-overlay_files"]'
+    )
+    if (!hidden) return false
+    const raw = String(hidden.value || '').trim()
+    return Boolean(raw && raw !== '[]')
+  },
+
   /**
    * Update accordion highlights when selections change
    */
@@ -432,10 +442,16 @@ const EventHandler = {
         // Suppress value-based highlighting for true Collection/Overlay sections,
         // but allow it for "Delete Collections" (so its numeric field bubbles up).
         const headerLower = headerText.toLowerCase()
+        const isLibraryFileSection = EventHandler.hasLibraryFileEntries(accordionBody)
         const suppressValueCheck =
-          headerLower.includes('overlay') ||
-          (headerLower.includes('collection') && !headerLower.includes('delete collections'))
-        if (!suppressValueCheck) {
+          !isLibraryFileSection &&
+          (
+            headerLower.includes('overlay') ||
+            (headerLower.includes('collection') && !headerLower.includes('delete collections'))
+          )
+        if (isLibraryFileSection) {
+          hasValue = true
+        } else if (!suppressValueCheck) {
           const textInputs = Array.from(
             accordionBody.querySelectorAll("input[type='text'], input[type='number'], input[type='date']")
           )
@@ -587,10 +603,11 @@ const EventHandler = {
       "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
       '.list-group li'
     ) !== null
+    const hasLibraryFileEntries = EventHandler.hasLibraryFileEntries(accordionBody)
 
     // If this accordion has collection toggles and none are enabled, force no highlight.
     const anyTemplateGroupChecked = EventHandler.hasCheckedTemplateGroupToggle(accordionBody)
-    const effectiveSelections = (anyTemplateGroupChecked === false) ? false : hasSelections
+    const effectiveSelections = (anyTemplateGroupChecked === false) ? false : (hasSelections || hasLibraryFileEntries)
 
     if (!effectiveSelections) {
       element.classList.remove('selected')

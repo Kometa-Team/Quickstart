@@ -2,6 +2,7 @@ import os
 import re
 import urllib.parse
 from json import JSONDecodeError
+from pathlib import Path
 
 import requests
 from ruamel.yaml import YAML
@@ -96,7 +97,21 @@ def _validate_yaml_location_suffix(location, label):
     return True, None
 
 
+def _resolve_managed_library_path(location):
+    raw = str(location or "").strip()
+    if not raw:
+        return raw
+    expanded = Path(os.path.expandvars(os.path.expanduser(raw)))
+    if expanded.is_absolute():
+        return str(expanded)
+    normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
+    if normalized_parts and normalized_parts[0] in helpers.MANAGED_LIBRARY_FILE_DIRS:
+        return str(Path(helpers.CONFIG_DIR) / expanded)
+    return raw
+
+
 def _validate_yaml_location(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = _validate_yaml_location_suffix(location, label)
     if not valid:
         return False, message
@@ -121,14 +136,14 @@ def _validate_yaml_location(location, label):
         return valid, message
 
     valid, message = path_validation.validate_path(
-        location,
+        resolved_location,
         {"allow_relative": True, "must_exist": True, "mode": "input_file"},
     )
     if not valid:
         return False, f"{label}: {message}"
 
     try:
-        with open(location, "r", encoding="utf-8") as handle:
+        with open(resolved_location, "r", encoding="utf-8") as handle:
             yaml_text = handle.read()
     except OSError as exc:
         return False, f"{label}: Unable to read file. {exc}"
@@ -141,6 +156,7 @@ def _validate_yaml_location(location, label):
 
 
 def _validate_metadata_yaml_location(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = _validate_yaml_location_suffix(location, label)
     if not valid:
         return False, message
@@ -163,14 +179,14 @@ def _validate_metadata_yaml_location(location, label):
         return _validate_metadata_yaml_text(response.text, label, source_name)
 
     valid, message = path_validation.validate_path(
-        location,
+        resolved_location,
         {"allow_relative": True, "must_exist": True, "mode": "input_file"},
     )
     if not valid:
         return False, f"{label}: {message}"
 
     try:
-        with open(location, "r", encoding="utf-8") as handle:
+        with open(resolved_location, "r", encoding="utf-8") as handle:
             yaml_text = handle.read()
     except OSError as exc:
         return False, f"{label}: Unable to read file. {exc}"
@@ -179,6 +195,7 @@ def _validate_metadata_yaml_location(location, label):
 
 
 def _validate_collection_yaml_location(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = _validate_yaml_location_suffix(location, label)
     if not valid:
         return False, message
@@ -201,14 +218,14 @@ def _validate_collection_yaml_location(location, label):
         return _validate_collection_yaml_text(response.text, label, source_name)
 
     valid, message = path_validation.validate_path(
-        location,
+        resolved_location,
         {"allow_relative": True, "must_exist": True, "mode": "input_file"},
     )
     if not valid:
         return False, f"{label}: {message}"
 
     try:
-        with open(location, "r", encoding="utf-8") as handle:
+        with open(resolved_location, "r", encoding="utf-8") as handle:
             yaml_text = handle.read()
     except OSError as exc:
         return False, f"{label}: Unable to read file. {exc}"
@@ -217,6 +234,7 @@ def _validate_collection_yaml_location(location, label):
 
 
 def _validate_overlay_yaml_location(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = _validate_yaml_location_suffix(location, label)
     if not valid:
         return False, message
@@ -237,14 +255,14 @@ def _validate_overlay_yaml_location(location, label):
         yaml_text = response.text
     else:
         valid, message = path_validation.validate_path(
-            location,
+            resolved_location,
             {"allow_relative": True, "must_exist": True, "mode": "input_file"},
         )
         if not valid:
             return False, f"{label}: {message}"
 
         try:
-            with open(location, "r", encoding="utf-8") as handle:
+            with open(resolved_location, "r", encoding="utf-8") as handle:
                 yaml_text = handle.read()
         except OSError as exc:
             return False, f"{label}: Unable to read file. {exc}"
@@ -262,19 +280,20 @@ def _summarize_folder_validation_failures(label, yaml_files, failures):
 
 
 def _validate_yaml_folder(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = path_validation.validate_path(
-        location,
+        resolved_location,
         {"allow_relative": True, "must_exist": True, "mode": "input_dir"},
     )
     if not valid:
         return False, f"{label}: {message}"
 
     try:
-        entries = sorted(os.listdir(location), key=str.casefold)
+        entries = sorted(os.listdir(resolved_location), key=str.casefold)
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [os.path.join(location, entry) for entry in entries if os.path.isfile(os.path.join(location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    yaml_files = [os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
@@ -301,19 +320,20 @@ def _validate_yaml_folder(location, label):
 
 
 def _validate_collection_yaml_folder(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = path_validation.validate_path(
-        location,
+        resolved_location,
         {"allow_relative": True, "must_exist": True, "mode": "input_dir"},
     )
     if not valid:
         return False, f"{label}: {message}"
 
     try:
-        entries = sorted(os.listdir(location), key=str.casefold)
+        entries = sorted(os.listdir(resolved_location), key=str.casefold)
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [os.path.join(location, entry) for entry in entries if os.path.isfile(os.path.join(location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    yaml_files = [os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
@@ -340,19 +360,20 @@ def _validate_collection_yaml_folder(location, label):
 
 
 def _validate_overlay_yaml_folder(location, label):
+    resolved_location = _resolve_managed_library_path(location)
     valid, message = path_validation.validate_path(
-        location,
+        resolved_location,
         {"allow_relative": True, "must_exist": True, "mode": "input_dir"},
     )
     if not valid:
         return False, f"{label}: {message}"
 
     try:
-        entries = sorted(os.listdir(location), key=str.casefold)
+        entries = sorted(os.listdir(resolved_location), key=str.casefold)
     except OSError as exc:
         return False, f"{label}: Unable to read folder. {exc}"
 
-    yaml_files = [os.path.join(location, entry) for entry in entries if os.path.isfile(os.path.join(location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
+    yaml_files = [os.path.join(resolved_location, entry) for entry in entries if os.path.isfile(os.path.join(resolved_location, entry)) and entry.lower().endswith((".yml", ".yaml"))]
     if not yaml_files:
         return False, f"{label}: Folder must contain at least one top-level .yml or .yaml file."
 
