@@ -889,13 +889,13 @@ def _remove_managed_path(path, root):
         resolved_path.unlink()
 
 
-def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_name, library_scope):
+def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_name, library_scope, force_clone_managed=False):
     source_path = _resolve_local_library_source(location)
     if source_path is None:
         raise RuntimeError("Path is required.")
 
     managed_location = _managed_bundle_location_for_path(source_path)
-    if managed_location:
+    if managed_location and not force_clone_managed:
         return managed_location
 
     managed_root = _managed_library_file_root(kind, config_name)
@@ -926,7 +926,7 @@ def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_n
     return Path(*relative.parts).as_posix()
 
 
-def _normalize_library_external_entry(kind, entry, config_name, library_scope, validate_local=True):
+def _normalize_library_external_entry(kind, entry, config_name, library_scope, validate_local=True, force_clone_managed=False):
     parsed_entry = dict(entry) if isinstance(entry, dict) else {}
     entry_type = str(parsed_entry.get("type") or "").strip().lower()
     location = str(parsed_entry.get("location") or "").strip()
@@ -945,7 +945,14 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
             return None, False, message
 
     try:
-        normalized_location = _copy_library_artifact_to_managed_store(kind, entry_type, location, config_name, library_scope)
+        normalized_location = _copy_library_artifact_to_managed_store(
+            kind,
+            entry_type,
+            location,
+            config_name,
+            library_scope,
+            force_clone_managed=force_clone_managed,
+        )
     except Exception as exc:
         return None, False, f"Unable to organize {kind}: {exc}"
 
@@ -955,6 +962,29 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
     if is_validated:
         normalized_entry["validated"] = True
     return normalized_entry, changed, None
+
+
+def _clone_library_file_entries_for_target(kind, raw_value, config_name, target_library_id):
+    parser = LIBRARY_FILE_PARSE_FUNCTIONS.get(kind)
+    if not parser:
+        return raw_value
+    entries = parser(raw_value)
+    if entries is None:
+        return raw_value
+    cloned_entries = []
+    for idx, entry in enumerate(entries, start=1):
+        normalized_entry, _changed, entry_error = _normalize_library_external_entry(
+            kind,
+            entry,
+            config_name,
+            target_library_id,
+            validate_local=False,
+            force_clone_managed=True,
+        )
+        if entry_error:
+            raise RuntimeError(f"{target_library_id} {kind}[{idx}]: {entry_error}")
+        cloned_entries.append(normalized_entry if normalized_entry is not None else entry)
+    return json.dumps(cloned_entries, ensure_ascii=True)
 
 
 def _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True):
@@ -3920,7 +3950,7 @@ def _resolve_preview_base_image_path(img_type: str, selected_image: str) -> str:
 
 # Font discovery (TTF/OTF) across common static dirs
 def list_overlay_fonts() -> list[str]:
-    config_name = session.get("config_name") if session else None
+    config_name = session.get("config_name") if has_request_context() else None
     cache_key = helpers.normalize_config_name_for_storage(config_name) if config_name else "__default__"
     cached = _FONT_CACHE.get(cache_key)
     if cached:
@@ -3937,6 +3967,19 @@ def list_overlay_fonts() -> list[str]:
             continue
     _FONT_CACHE[cache_key] = fonts
     return fonts
+
+
+def _config_name_from_yaml_filename(filename: str | None) -> str | None:
+    text = str(filename or "").strip()
+    if not text:
+        return None
+    base = Path(text).name
+    lowered = base.lower()
+    if lowered.endswith("_config.yml"):
+        return base[:-11]
+    if lowered.endswith("_config.yaml"):
+        return base[:-12]
+    return None
 
 
 # Initialize logging
@@ -4338,7 +4381,7 @@ def custom_fonts(filename):
     if not safe_name.lower().endswith((".ttf", ".otf")):
         abort(404)
 
-    current_config = session.get("config_name") if session else None
+    current_config = session.get("config_name") if has_request_context() else None
     for fdir in helpers.get_font_dirs(include_static=True, include_custom=True, config_name=current_config):
         candidate = os.path.join(str(fdir), safe_name)
         if os.path.exists(candidate):
@@ -8141,6 +8184,7 @@ def copy_library_settings():
 
         merged = libraries_data.copy()
         targets_to_process = [source_prefix] + [tid for tid in filtered_targets if tid != source_prefix]
+        config_name = session.get("config_name") or source_payload.get("config_name") or namesgenerator.get_random_name()
 
         for target_id in targets_to_process:
             target_name = name_map.get(target_id, "")
@@ -8158,6 +8202,13 @@ def copy_library_settings():
                 new_value = value
                 if key.endswith("-library"):
                     new_value = target_name or value
+                elif target_id != source_prefix:
+                    if key.endswith("-metadata_files"):
+                        new_value = _clone_library_file_entries_for_target("metadata_files", value, config_name, target_id)
+                    elif key.endswith("-collection_files"):
+                        new_value = _clone_library_file_entries_for_target("collection_files", value, config_name, target_id)
+                    elif key.endswith("-overlay_files"):
+                        new_value = _clone_library_file_entries_for_target("overlay_files", value, config_name, target_id)
                 merged[new_key] = new_value
 
         # Update the aggregated libraries list to include all configured library names
@@ -8168,7 +8219,6 @@ def copy_library_settings():
         merged["libraries"] = ",".join(sorted(set(configured_names)))
 
         # Persist directly to the DB to avoid any loss of data during merge
-        config_name = session.get("config_name") or namesgenerator.get_random_name()
         database.save_section_data(
             name=config_name,
             section="libraries",
@@ -8200,11 +8250,23 @@ def _safe_bundle_name(raw_name: str | None) -> str:
 
 
 def _get_custom_font_files(config_name: str | None = None) -> list[Path]:
-    custom_dir = helpers.get_custom_fonts_dir(config_name)
-    if not custom_dir.is_dir():
-        return []
-    fonts = [entry for entry in custom_dir.iterdir() if entry.is_file() and entry.suffix.lower() in helpers.FONT_EXTENSIONS]
-    return sorted(fonts, key=lambda p: p.name.lower())
+    font_files: list[Path] = []
+    seen: set[str] = set()
+    candidate_dirs: list[Path] = []
+    if config_name:
+        candidate_dirs.append(helpers.get_custom_fonts_dir(config_name))
+    candidate_dirs.append(helpers.get_legacy_custom_fonts_dir())
+    for custom_dir in candidate_dirs:
+        if not custom_dir.is_dir():
+            continue
+        for entry in sorted(custom_dir.iterdir(), key=lambda p: p.name.lower()):
+            if not entry.is_file() or entry.suffix.lower() not in helpers.FONT_EXTENSIONS:
+                continue
+            if entry.name in seen:
+                continue
+            font_files.append(entry)
+            seen.add(entry.name)
+    return font_files
 
 
 def _bundle_artifacts_from_yaml(yaml_text):
@@ -8234,7 +8296,7 @@ def _build_config_bundle(
         f"- {config_filename}",
     ]
     if font_names:
-        readme_lines.append("- fonts/ (custom fonts uploaded in Quickstart)")
+        readme_lines.append(f"- {name}/fonts/ (custom fonts uploaded in Quickstart)")
         readme_lines.append(f"- Fonts included: {', '.join(font_names)}")
     if has_artifacts:
         readme_lines.append(f"- {name}/metadata_files/, {name}/collection_files/, {name}/overlay_files/ (managed library files)")
@@ -8244,7 +8306,7 @@ def _build_config_bundle(
         "1) Copy the config file into your Kometa config folder (config/).",
     ]
     if font_names:
-        readme_lines.append("2) Copy the font files from fonts/ into your Kometa config/fonts/ folder.")
+        readme_lines.append(f"2) Copy the font files from {name}/fonts/ into your Kometa config/fonts/ folder.")
     if has_artifacts:
         readme_lines.append(f"3) Copy {name}/ into your Kometa config/ folder.")
     readme_lines += [
@@ -8263,7 +8325,7 @@ def _build_config_bundle(
     with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(config_filename, config_text)
         for font_path in font_files:
-            zf.write(font_path, f"fonts/{font_path.name}")
+            zf.write(font_path, f"{name}/fonts/{font_path.name}")
         for artifact in artifact_files:
             _bundle_write_artifact(zf, artifact, redacted=redacted)
         zf.writestr("README.txt", "\n".join(readme_lines))
@@ -14989,7 +15051,9 @@ def validate_kometa_root():
             parsed_config = yaml_parser.load(f) or {}
         font_refs = helpers.collect_font_references(parsed_config)
         if font_refs:
-            font_result = helpers.copy_fonts_to_kometa(font_refs, kometa_root=p)
+            active_config_name = session.get("config_name") if has_request_context() else None
+            config_font_scope = active_config_name or _config_name_from_yaml_filename(config_name)
+            font_result = helpers.copy_fonts_to_kometa(font_refs, kometa_root=p, config_name=config_font_scope)
             copied = font_result.get("copied", [])
             missing = font_result.get("missing", [])
             errors = font_result.get("errors", [])

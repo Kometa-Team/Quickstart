@@ -1842,6 +1842,50 @@ def test_download_redacted_bundles_managed_overlay_folder(client, isolated_confi
         assert "internal.example" not in bundled_text
 
 
+def test_upload_fonts_store_in_active_config_directory(client, isolated_config_dir):
+    import io
+
+    config_name = "pytest_font_upload"
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/upload-fonts",
+        data={"fonts": (io.BytesIO(b"font-bytes"), "Poster.ttf")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["status"] == "success"
+    assert "Poster.ttf" in payload["fonts"]
+    assert (isolated_config_dir / config_name / "fonts" / "Poster.ttf").exists()
+    assert not (isolated_config_dir / "fonts" / "Poster.ttf").exists()
+
+
+def test_download_bundle_places_fonts_under_config_name(client, isolated_config_dir):
+    import io
+    import zipfile
+
+    config_name = "pytest_font_bundle"
+    font_dir = isolated_config_dir / config_name / "fonts"
+    font_dir.mkdir(parents=True, exist_ok=True)
+    (font_dir / "Poster.ttf").write_bytes(b"font-bytes")
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+        sess["yaml_content"] = "settings:\n  cache: true\n"
+
+    resp = client.get("/download")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/zip"
+
+    with zipfile.ZipFile(io.BytesIO(resp.data)) as archive:
+        names = set(archive.namelist())
+        assert "config.yml" in names
+        assert f"{config_name}/fonts/Poster.ttf" in names
+
+
 def test_yaml_generation_missing_sections_shows_error(client, isolated_config_dir, monkeypatch, qs_module):
     monkeypatch.setattr(
         qs_module,
@@ -2351,6 +2395,7 @@ def test_retrieve_settings_sanitizes_already_persisted_transient_fields(client, 
 
 def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_dir, monkeypatch, app, qs_module):
     import json
+    from pathlib import Path
 
     from modules import database
     from flask import session
@@ -2426,9 +2471,34 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     source_entries = json.loads(libraries["mov-library_movies-metadata_files"])
     target_entries = json.loads(libraries["mov-library_target-metadata_files"])
     assert source_entries[0]["location"] == f"config/{managed_location}"
-    assert target_entries[0]["location"] == f"config/{managed_location}"
+    assert target_entries[0]["location"].startswith(f"config/{config_name}/metadata_files/mov-library_target/")
+    assert target_entries[0]["location"] != source_entries[0]["location"]
     assert source_entries[1] == {"type": "url", "location": "https://example.com/movie-metadata.yml"}
     assert target_entries[1] == {"type": "url", "location": "https://example.com/movie-metadata.yml"}
+    target_file = isolated_config_dir.parent / Path(target_entries[0]["location"])
+    assert target_file.exists()
+    assert target_file.read_text(encoding="utf-8") == managed_file.read_text(encoding="utf-8")
+
+
+def test_copy_fonts_to_kometa_prefers_config_scoped_fonts(isolated_config_dir, app):
+    from pathlib import Path
+
+    from modules import helpers
+
+    config_name = "pytest_font_sync"
+    config_font_dir = isolated_config_dir / config_name / "fonts"
+    legacy_font_dir = isolated_config_dir / "fonts"
+    config_font_dir.mkdir(parents=True, exist_ok=True)
+    legacy_font_dir.mkdir(parents=True, exist_ok=True)
+    (config_font_dir / "Poster.ttf").write_bytes(b"config-font")
+    (legacy_font_dir / "Poster.ttf").write_bytes(b"legacy-font")
+
+    result = helpers.copy_fonts_to_kometa(["Poster.ttf"], kometa_root=app.config["KOMETA_ROOT"], config_name=config_name)
+
+    assert result["copied"] == ["Poster.ttf"]
+    copied_font = Path(app.config["KOMETA_ROOT"]) / "config" / "fonts" / "Poster.ttf"
+    assert copied_font.exists()
+    assert copied_font.read_bytes() == b"config-font"
 
 
 def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_config_dir, monkeypatch, qs_module):
@@ -2482,6 +2552,10 @@ def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_co
             "original/metadata_files/movies/source.yml",
             "metadata:\n  imported:\n    title: Imported Example\n",
         )
+        archive.writestr(
+            f"{config_name}/fonts/Poster.ttf",
+            b"font-bytes",
+        )
     bundle.seek(0)
 
     preview = client.post(
@@ -2508,6 +2582,9 @@ def test_import_config_confirm_rehomes_bundled_library_files(client, isolated_co
     managed_file = isolated_config_dir.parent / normalized_location
     assert managed_file.exists()
     assert "Imported Example" in managed_file.read_text(encoding="utf-8")
+    bundled_font = isolated_config_dir / config_name / "fonts" / "Poster.ttf"
+    assert bundled_font.exists()
+    assert bundled_font.read_bytes() == b"font-bytes"
 
 
 def test_build_libraries_section_emits_schedule_overlays(app):
