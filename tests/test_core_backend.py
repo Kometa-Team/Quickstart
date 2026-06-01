@@ -313,6 +313,31 @@ def test_validate_metadata_folder_accepts_top_level_yaml_files(client, tmp_path)
     assert payload["message"] == "Validated 2 YAML files in folder."
 
 
+def test_validate_metadata_folder_organizes_generic_folder_name_into_descriptive_managed_store(client, isolated_config_dir, tmp_path):
+    source_dir = tmp_path / "movies" / "metadata_files"
+    source_dir.mkdir(parents=True)
+    (source_dir / "godzilla.yml").write_text("metadata:\n  test:\n    title: Godzilla\n", encoding="utf-8")
+
+    config_name = "pytest_metadata_folder_name"
+    resp = client.post(
+        "/validate_metadata_file",
+        json={
+            "metadata_file_type": "folder",
+            "metadata_file_location": str(source_dir),
+            "library_id": "mov-library_movies",
+            "config_name": config_name,
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    normalized_location = str(payload["normalized_location"]).replace("\\", "/")
+    assert normalized_location.startswith(f"metadata_files/{config_name}/mov-library_movies/")
+    assert "/movies_metadata_files_" in normalized_location
+    assert (isolated_config_dir / normalized_location).exists()
+
+
 def test_validate_collection_folder_accepts_top_level_yaml_files(client, tmp_path):
     collection_dir = tmp_path / "collections"
     collection_dir.mkdir()

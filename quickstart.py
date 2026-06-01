@@ -724,6 +724,16 @@ def _safe_external_artifact_slug(value, fallback="artifact"):
     return safe or fallback
 
 
+def _managed_library_folder_slug(source_path, kind):
+    raw_name = str(getattr(source_path, "name", "") or "").strip().lower()
+    folder_name = _safe_external_artifact_slug(getattr(source_path, "name", ""), "folder")
+    if raw_name in set(LIBRARY_FILE_KINDS):
+        parent_name = _safe_external_artifact_slug(getattr(source_path.parent, "name", ""), "")
+        if parent_name:
+            return f"{parent_name}_{folder_name}"
+    return folder_name
+
+
 def _managed_library_file_root(kind):
     return (Path(helpers.CONFIG_DIR) / kind).resolve()
 
@@ -821,7 +831,7 @@ def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_n
         if source_path != target_path:
             shutil.copy2(source_path, target_path)
     else:
-        folder_name = _safe_external_artifact_slug(source_path.name, "folder")
+        folder_name = _managed_library_folder_slug(source_path, kind)
         target_path = (target_dir / f"{folder_name}_{digest}").resolve()
         if source_path != target_path:
             if target_path.exists():
