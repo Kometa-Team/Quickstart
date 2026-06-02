@@ -1183,7 +1183,10 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% else %}
                         {% set list_json = '[]' %}
                         {% endif %}
-                        <div class="mb-2" data-template-string-list data-hidden-input="{{ input_name }}">
+                        <div class="mb-2" data-template-string-list data-hidden-input="{{ input_name }}"
+                            {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
+                            {% if item.validation_mode %}data-validation-mode="{{ item.validation_mode }}"{% endif %}
+                            {% if item.validation_normalize %}data-validation-normalize="{{ item.validation_normalize }}"{% endif %}>
                             <div class="input-group">
                                 <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
                                     {{ item.label }}
@@ -1198,10 +1201,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 <input type="text" class="form-control" id="{{ input_name }}_input"
                                     aria-describedby="{{ input_name }}_text"
                                     placeholder="{{ item.placeholder | default('Add value') }}"
+                                    {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
                                     {% if disable_toggle %}disabled{% endif %}>
                                 <button class="btn nav-button" type="button" data-template-string-add
                                     {% if disable_toggle %}disabled{% endif %}>Add</button>
                             </div>
+                            <div class="invalid-feedback d-none" data-template-string-feedback></div>
                             <ul class="list-group mt-2" data-template-string-items></ul>
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}">
                         </div>

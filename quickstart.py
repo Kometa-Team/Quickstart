@@ -8921,6 +8921,63 @@ def validate_tmdb():
         return jsonify(result.get_json()), 400
 
 
+def _get_active_tmdb_api_key():
+    config_name = session.get("config_name")
+    if not config_name:
+        return ""
+    try:
+        _validated, _user_entered, stored = database.retrieve_section_data(config_name, "tmdb")
+    except Exception:
+        return ""
+    if not isinstance(stored, dict):
+        return ""
+    tmdb_block = stored.get("tmdb", stored)
+    if not isinstance(tmdb_block, dict):
+        return ""
+    api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
+    return str(api_key).strip()
+
+
+@app.route("/lookup_template_string_value", methods=["POST"])
+def lookup_template_string_value():
+    data = request.get_json(silent=True) or {}
+    preset = str(data.get("preset") or "").strip()
+    value = str(data.get("value") or "").strip()
+
+    if not preset or not value:
+        return jsonify({"error": "Lookup preset and value are required."}), 400
+
+    if preset == "tmdb_collection_id":
+        api_key = _get_active_tmdb_api_key()
+        if not api_key:
+            return jsonify({"valid": False, "verified": False, "message": "TMDb is not configured for the active config."})
+        try:
+            response = requests.get(
+                f"https://api.themoviedb.org/3/collection/{value}",
+                params={"api_key": api_key},
+                timeout=10,
+            )
+        except requests.RequestException as exc:
+            return jsonify({"valid": False, "verified": False, "message": f"TMDb lookup failed: {exc}."})
+
+        if response.status_code == 200:
+            payload = response.json() if response.content else {}
+            label = str(payload.get("name") or "").strip()
+            if label:
+                return jsonify({"valid": True, "verified": True, "label": label, "message": f"TMDb: {label}"})
+            return jsonify({"valid": False, "verified": True, "message": "TMDb collection found, but no collection name was returned."})
+
+        if response.status_code == 404:
+            return jsonify({"valid": False, "verified": True, "message": "TMDb collection ID not found."})
+
+        if response.status_code in {401, 403}:
+            return jsonify({"valid": False, "verified": False, "message": "TMDb lookup could not be verified with the configured API key."})
+
+        return jsonify({"valid": False, "verified": False, "message": f"TMDb lookup failed with status {response.status_code}."})
+
+    return jsonify({"error": f"Unsupported lookup preset: {preset}"}), 400
+
+
 @app.route("/validate_mdblist", methods=["POST"])
 def validate_mdblist():
     data = request.json

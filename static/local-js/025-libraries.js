@@ -2228,7 +2228,226 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    const templateStringListPresetConfigs = {
+      generic_text: {
+        duplicateInsensitive: false,
+        normalize: value => value,
+        validate: value => {
+          if (!value) return { valid: false, message: 'Enter a value before adding it.' }
+          return { valid: true }
+        }
+      },
+      name_like: {
+        duplicateInsensitive: true,
+        normalize: value => value.replace(/\s+/g, ' '),
+        validate: value => {
+          const normalized = String(value || '').trim()
+          if (!normalized) return { valid: false, message: 'Enter a text value before adding it.' }
+          try {
+            if (!/[\p{L}\p{N}]/u.test(normalized)) {
+              return { valid: false, message: 'Enter a text value with letters or numbers.' }
+            }
+            if (!/^[\p{L}\p{N} .,&'’:+\-/()!]+$/u.test(normalized)) {
+              return { valid: false, message: 'Use letters, numbers, spaces, or common punctuation only.' }
+            }
+          } catch (_error) {
+            if (!/[A-Za-z0-9]/.test(normalized)) {
+              return { valid: false, message: 'Enter a text value with letters or numbers.' }
+            }
+            if (!/^[A-Za-z0-9 .,&':+\-/()!]+$/.test(normalized)) {
+              return { valid: false, message: 'Use letters, numbers, spaces, or common punctuation only.' }
+            }
+          }
+          return { valid: true }
+        }
+      },
+      tmdb_collection_id: {
+        duplicateInsensitive: true,
+        normalize: value => value,
+        lookupService: 'tmdb',
+        validate: value => /^\d+$/.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a numeric TMDb collection ID like 131292.' }
+      },
+      year: {
+        duplicateInsensitive: true,
+        normalize: value => value,
+        validate: value => /^\d{4}$/.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a 4-digit year like 2022.' }
+      },
+      decade: {
+        duplicateInsensitive: true,
+        normalize: value => value,
+        validate: value => /^\d{3,4}0$/.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a decade key ending in 0 like 2020.' }
+      },
+      language_code: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        suggestions: [
+          'en', 'fr', 'es', 'de', 'it', 'pt', 'ja', 'ko', 'zh', 'ru', 'ar', 'hi',
+          'fil', 'myn', 'rom', 'tai'
+        ],
+        validate: value => /^[a-z]{2,3}$/.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a 2 or 3 letter language code like fr or fil.' }
+      },
+      aspect_key: {
+        duplicateInsensitive: true,
+        normalize: value => value,
+        suggestions: ['1.33', '1.65', '1.66', '1.78', '1.85', '2.2', '2.35', '2.77'],
+        allowedValues: new Set(['1.33', '1.65', '1.66', '1.78', '1.85', '2.2', '2.35', '2.77']),
+        validate: value => templateStringListPresetConfigs.aspect_key.allowedValues.has(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a supported aspect ratio key like 1.78 or 2.35.' }
+      },
+      resolution_key: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        suggestions: ['4k', '1080', '720', '480', '8k', '2k', '576', 'sd'],
+        allowedValues: new Set(['4k', '1080', '720', '480', '8k', '2k', '144', '240', '360', '576', 'sd']),
+        validate: value => templateStringListPresetConfigs.resolution_key.allowedValues.has(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a supported resolution key like 4k, 1080, 720, 480, or sd.' }
+      },
+      streaming_key: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        suggestions: ['netflix', 'disney', 'amazon', 'hulu', 'hbomax', 'paramount', 'peacock'],
+        allowedValues: new Set(['channel4', 'appletv', 'bet', 'crave', 'crunchyroll', 'discovery', 'disney', 'itvx', 'hbomax', 'hayu', 'hulu', 'movistar', 'atresplayer', 'netflix', 'now', 'paramount', 'peacock', 'amazon', 'amc', 'filmin', 'youtube', 'tubi']),
+        validate: value => templateStringListPresetConfigs.streaming_key.allowedValues.has(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a supported streaming service key like netflix, disney, or amazon.' }
+      },
+      universe_key: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        suggestions: ['mcu', 'star', 'trek', 'wizard', 'fast'],
+        allowedValues: new Set(['avp', 'arrow', 'askew', 'conjuring', 'dca', 'dcu', 'fast', 'marvel', 'mcu', 'middle', 'rocky', 'trek', 'star', 'mummy', 'wizard', 'xmen']),
+        validate: value => templateStringListPresetConfigs.universe_key.allowedValues.has(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a supported universe key like mcu, star, trek, or wizard.' }
+      },
+      based_key: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        suggestions: ['books', 'comics', 'true_story', 'video_games'],
+        allowedValues: new Set(['books', 'comics', 'true_story', 'video_games']),
+        validate: value => templateStringListPresetConfigs.based_key.allowedValues.has(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a supported media outlet key like books or video_games.' }
+      },
+      seasonal_key: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        suggestions: ['christmas', 'halloween', 'valentine', 'years', 'women'],
+        allowedValues: new Set(['years', 'valentine', 'patrick', 'easter', 'mother', 'memorial', 'father', 'independence', 'labor', 'halloween', 'veteran', 'thanksgiving', 'christmas', 'aapi', 'disabilities', 'black_history', 'lgbtq', 'latinx', 'women']),
+        validate: value => templateStringListPresetConfigs.seasonal_key.allowedValues.has(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a supported seasonal key like halloween, christmas, or women.' }
+      },
+      content_rating: {
+        duplicateInsensitive: true,
+        normalize: value => value.replace(/\s+/g, ' '),
+        validate: value => /^[A-Za-z0-9][A-Za-z0-9 +\-./()]*$/.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a content rating like PG-13, TV-14, 15, or M.' }
+      }
+    }
+
+    function inferTemplateStringListPreset (wrapper, input) {
+      const explicitPreset = String(wrapper.dataset.validationPreset || input.dataset.validationPreset || '').trim()
+      if (explicitPreset && templateStringListPresetConfigs[explicitPreset]) return explicitPreset
+
+      const placeholder = String(input.getAttribute('placeholder') || '').trim().toLowerCase()
+      if (placeholder.includes('tmdb collection id')) return 'tmdb_collection_id'
+      if (placeholder.includes('year (e.g. 2022)')) return 'year'
+      if (placeholder.includes('decade key')) return 'decade'
+      if (placeholder.includes('language code')) return 'language_code'
+      if (placeholder.includes('aspect ratio key')) return 'aspect_key'
+      if (placeholder.includes('resolution key')) return 'resolution_key'
+      if (placeholder.includes('service key')) return 'streaming_key'
+      if (placeholder.includes('universe key')) return 'universe_key'
+      if (placeholder.includes('media outlet key')) return 'based_key'
+      if (placeholder.includes('seasonal key')) return 'seasonal_key'
+      if (placeholder.includes('content rating')) return 'content_rating'
+      if (
+        placeholder.includes('genre name') ||
+        placeholder.includes('person name') ||
+        placeholder.includes('studio name') ||
+        placeholder.includes('network name') ||
+        placeholder.includes('country name') ||
+        placeholder.includes('region name') ||
+        placeholder.includes('continent name')
+      ) {
+        return 'name_like'
+      }
+      return 'generic_text'
+    }
+
+    function ensureTemplateStringListDatalist (wrapper, input, presetConfig, presetName) {
+      if (!wrapper || !input || !presetConfig || !Array.isArray(presetConfig.suggestions) || !presetConfig.suggestions.length) return
+      if (presetConfig.suggestions.length > 50) return
+      const existingListId = input.getAttribute('list')
+      if (existingListId && document.getElementById(existingListId)) return
+      const hiddenId = String(wrapper.dataset.hiddenInput || input.id || 'template-string-list').replace(/[^A-Za-z0-9_-]+/g, '_')
+      const datalistId = `${hiddenId}_${presetName}_options`
+      let datalist = document.getElementById(datalistId)
+      if (!datalist) {
+        datalist = document.createElement('datalist')
+        datalist.id = datalistId
+        presetConfig.suggestions.forEach(value => {
+          const option = document.createElement('option')
+          option.value = value
+          datalist.appendChild(option)
+        })
+        wrapper.appendChild(datalist)
+      }
+      input.setAttribute('list', datalistId)
+    }
+
     function setupTemplateStringListHandlers (scope) {
+      const templateStringLookupCache = window.__qsTemplateStringLookupCache || new Map()
+      window.__qsTemplateStringLookupCache = templateStringLookupCache
+
+      function getServiceValidationState (serviceName) {
+        const el = document.getElementById(`qs-validate-${serviceName}`)
+        return String(el?.value || '').trim().toLowerCase() === 'true'
+      }
+
+      async function lookupTemplateStringValue (presetName, value) {
+        const cacheKey = `${presetName}:${value}`
+        if (templateStringLookupCache.has(cacheKey)) {
+          return templateStringLookupCache.get(cacheKey)
+        }
+        const request = fetch('/lookup_template_string_value', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preset: presetName, value })
+        })
+          .then(async (response) => {
+            const data = await response.json().catch(() => ({}))
+            if (!response.ok) {
+              return {
+                valid: false,
+                verified: false,
+                message: data.error || data.message || `Lookup failed (${response.status})`
+              }
+            }
+            return data
+          })
+          .catch(() => ({
+            valid: false,
+            verified: false,
+            message: 'Lookup unavailable right now.'
+          }))
+        templateStringLookupCache.set(cacheKey, request)
+        return request
+      }
+
       const root = scope || document
       root.querySelectorAll('[data-template-string-list]').forEach(wrapper => {
         if (wrapper.dataset.listenerAdded) return
@@ -2237,8 +2456,46 @@ document.addEventListener('DOMContentLoaded', function () {
         const input = wrapper.querySelector('input[type="text"]')
         const addBtn = wrapper.querySelector('[data-template-string-add]')
         const list = wrapper.querySelector('[data-template-string-items]')
+        const feedback = wrapper.querySelector('[data-template-string-feedback]')
 
         if (!hidden || !input || !addBtn || !list) return
+
+        const presetName = inferTemplateStringListPreset(wrapper, input)
+        const presetConfig = templateStringListPresetConfigs[presetName] || templateStringListPresetConfigs.generic_text
+        ensureTemplateStringListDatalist(wrapper, input, presetConfig, presetName)
+
+        function setLookupState (target, state) {
+          if (!target) return
+          target.textContent = state?.message || ''
+          target.className = 'small mt-1'
+          if (!state?.message) {
+            target.classList.add('d-none')
+            return
+          }
+          target.classList.remove('d-none')
+          if (state.valid && state.verified) {
+            target.classList.add('text-success')
+          } else if (state.verified) {
+            target.classList.add('text-danger')
+          } else {
+            target.classList.add('text-warning')
+          }
+        }
+
+        function setFeedback (message, persistent = false) {
+          if (feedback) {
+            feedback.textContent = message || ''
+            feedback.classList.toggle('d-none', !message)
+            feedback.classList.toggle('d-block', Boolean(message))
+          }
+          input.classList.toggle('is-invalid', Boolean(message))
+          input.setCustomValidity(persistent && message ? message : '')
+        }
+
+        function clearTransientFeedback () {
+          if (input.validationMessage) return
+          setFeedback('')
+        }
 
         function parseValues () {
           const raw = String(hidden.value || '').trim()
@@ -2254,13 +2511,66 @@ document.addEventListener('DOMContentLoaded', function () {
           return [raw]
         }
 
-        function renderList (values) {
+        function validateValue (rawValue) {
+          const normalizedRaw = String(rawValue || '').trim()
+          const normalized = presetConfig.normalize ? presetConfig.normalize(normalizedRaw) : normalizedRaw
+          const result = presetConfig.validate ? presetConfig.validate(normalized) : { valid: Boolean(normalized) }
+          return {
+            value: normalized,
+            valid: Boolean(result.valid),
+            message: result.message || 'Enter a valid value.'
+          }
+        }
+
+        function duplicateKeyForValue (value) {
+          return presetConfig.duplicateInsensitive ? String(value || '').toLowerCase() : String(value || '')
+        }
+
+        function analyzeValues (values) {
+          const seen = new Set()
+          const analyzed = []
+          values.forEach(rawValue => {
+            const checked = validateValue(rawValue)
+            if (!checked.value) return
+            const duplicateKey = duplicateKeyForValue(checked.value)
+            if (seen.has(duplicateKey)) return
+            seen.add(duplicateKey)
+            analyzed.push(checked)
+          })
+          return analyzed
+        }
+
+        function renderList (items) {
           list.replaceChildren()
-          values.forEach(value => {
+          items.forEach((item, index) => {
             const li = document.createElement('li')
             li.className = 'list-group-item d-flex justify-content-between align-items-center'
+            if (!item.valid) li.classList.add('list-group-item-danger')
+
+            const textWrap = document.createElement('div')
+            textWrap.className = 'd-flex flex-column'
+
+            const titleRow = document.createElement('div')
+            titleRow.className = 'd-flex align-items-center gap-2'
+
             const textSpan = document.createElement('span')
-            textSpan.textContent = value
+            textSpan.textContent = item.value
+            titleRow.appendChild(textSpan)
+
+            if (!item.valid) {
+              const badge = document.createElement('span')
+              badge.className = 'badge text-bg-danger'
+              badge.textContent = 'Invalid'
+              badge.title = item.message
+              titleRow.appendChild(badge)
+            }
+
+            textWrap.appendChild(titleRow)
+
+            const lookupMeta = document.createElement('div')
+            lookupMeta.className = 'small mt-1 d-none'
+            textWrap.appendChild(lookupMeta)
+
             const button = document.createElement('button')
             button.type = 'button'
             button.className = 'btn btn-sm btn-danger'
@@ -2268,33 +2578,93 @@ document.addEventListener('DOMContentLoaded', function () {
             const icon = document.createElement('i')
             icon.className = 'bi bi-x-lg'
             button.appendChild(icon)
-            li.append(textSpan, button)
+            li.append(textWrap, button)
             list.appendChild(li)
 
             button.addEventListener('click', () => {
-              const updated = values.filter(item => item !== value)
-              hidden.value = JSON.stringify(updated)
-              renderList(updated)
+              const updated = items
+                .filter((_, itemIndex) => itemIndex !== index)
+                .map(entry => entry.value)
+              syncState(updated)
             })
+
+            if (item.valid && presetConfig.lookupService === 'tmdb') {
+              if (!getServiceValidationState('tmdb')) {
+                setLookupState(lookupMeta, {
+                  valid: false,
+                  verified: false,
+                  message: 'TMDb not validated, so the collection title could not be checked.'
+                })
+              } else {
+                setLookupState(lookupMeta, {
+                  valid: false,
+                  verified: false,
+                  message: 'Checking TMDb collection title...'
+                })
+                lookupTemplateStringValue(presetName, item.value).then(result => {
+                  if (!lookupMeta.isConnected) return
+                  if (result.valid && result.verified && result.label) {
+                    setLookupState(lookupMeta, {
+                      valid: true,
+                      verified: true,
+                      message: `TMDb: ${result.label}`
+                    })
+                    return
+                  }
+                  setLookupState(lookupMeta, {
+                    valid: Boolean(result.valid),
+                    verified: Boolean(result.verified),
+                    message: result.message || 'TMDb lookup failed.'
+                  })
+                })
+              }
+            }
           })
         }
 
-        function addValue () {
-          const value = input.value.trim()
-          if (!value) return
-          const current = parseValues()
-          if (current.includes(value)) return
-          current.push(value)
-          hidden.value = JSON.stringify(current)
-          renderList(current)
-          input.value = ''
+        function syncState (values, transientMessage = '') {
+          const analyzed = analyzeValues(values)
+          hidden.value = JSON.stringify(analyzed.map(item => item.value))
+          renderList(analyzed)
+
+          const invalidItems = analyzed.filter(item => !item.valid)
+          if (invalidItems.length) {
+            const message = invalidItems.length === 1
+              ? `${invalidItems[0].message} Remove or fix the invalid entry.`
+              : `${invalidItems[0].message} Remove or fix the invalid entries.`
+            setFeedback(message, true)
+            return analyzed
+          }
+
+          setFeedback(transientMessage || '', false)
+          return analyzed
         }
 
-        const initial = parseValues()
-        hidden.value = JSON.stringify(initial)
-        renderList(initial)
+        function addValue () {
+          const checked = validateValue(input.value)
+          if (!checked.value) {
+            setFeedback('Enter a value before adding it.', false)
+            return
+          }
+          if (!checked.valid) {
+            setFeedback(checked.message, false)
+            return
+          }
+          const current = analyzeValues(parseValues())
+          if (current.some(item => duplicateKeyForValue(item.value) === duplicateKeyForValue(checked.value))) {
+            setFeedback('That value is already in the list.', false)
+            return
+          }
+          current.push(checked)
+          syncState(current.map(item => item.value))
+          input.value = ''
+          clearTransientFeedback()
+        }
+
+        syncState(parseValues())
 
         addBtn.addEventListener('click', addValue)
+        input.addEventListener('input', clearTransientFeedback)
         input.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
             event.preventDefault()

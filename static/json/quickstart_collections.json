@@ -14406,6 +14406,7 @@
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
+            "validation_preset": "tmdb_collection_id",
             "tooltip": "Exclude specific TMDb collections from these collections.",
             "placeholder": "Add TMDb collection ID (e.g. 131292)"
           },
