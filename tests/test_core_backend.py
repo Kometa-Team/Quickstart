@@ -3002,6 +3002,86 @@ def test_build_libraries_section_keeps_default_ratings_overlay_when_overlay_file
     assert ratings_entry["template_variables"]["rating1_image"] == "imdb"
 
 
+def test_build_libraries_section_emits_languages_overlay_language_list(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_languages": True,
+                    "mov-library_movies-movie-template_overlay_languages[languages]": ["en", "ja"],
+                    "mov-library_movies-movie-template_overlay_languages[style]": "square",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    languages_entry = next((entry for entry in overlay_entries if entry.get("default") == "languages"), None)
+    assert languages_entry is not None
+    assert languages_entry["template_variables"]["languages"] == ["en", "ja"]
+    assert languages_entry["template_variables"]["style"] == "square"
+    assert "use_subtitles" not in languages_entry["template_variables"]
+
+
+def test_build_libraries_section_emits_subtitle_languages_overlay_language_list(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_languages_subtitles": True,
+                    "mov-library_movies-movie-template_overlay_languages_subtitles[languages]": ["en", "ja"],
+                    "mov-library_movies-movie-template_overlay_languages_subtitles[style]": "square",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    subtitle_entry = next(
+        (
+            entry for entry in overlay_entries
+            if entry.get("default") == "languages"
+            and entry.get("template_variables", {}).get("use_subtitles") is True
+        ),
+        None,
+    )
+    assert subtitle_entry is not None
+    assert subtitle_entry["template_variables"]["languages"] == ["en", "ja"]
+    assert subtitle_entry["template_variables"]["style"] == "square"
+
+
 def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
     from modules import output
 

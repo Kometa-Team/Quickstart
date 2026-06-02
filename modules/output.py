@@ -1759,6 +1759,8 @@ def build_libraries_section(
                         ordered[key] = tv[key]
                 overlay_entry["template_variables"] = ordered
 
+            default_language_flag_codes = ["en", "de", "fr", "es", "pt", "ja"]
+
             if overlay_key and overlay_key in overlays:
                 raw_overlay_entries = overlays[overlay_key]
 
@@ -1805,7 +1807,9 @@ def build_libraries_section(
                             if not raw_key.startswith(full_key_prefix + "["):
                                 continue
                             var_name = raw_key[len(full_key_prefix) + 1 : -1]
-                            if isinstance(raw_value, str):
+                            if var_name == "languages":
+                                raw_value = _parse_string_list(raw_value)
+                            elif isinstance(raw_value, str):
                                 raw_value = True if raw_value.lower() == "true" else False if raw_value.lower() == "false" else raw_value
                             overlay_entry.setdefault("template_variables", {})[var_name] = raw_value
 
@@ -1875,7 +1879,9 @@ def build_libraries_section(
                             if not raw_key.startswith(full_key_prefix + "["):
                                 continue
                             var_name = raw_key[len(full_key_prefix) + 1 : -1]
-                            if isinstance(raw_value, str):
+                            if var_name == "languages":
+                                raw_value = _parse_string_list(raw_value)
+                            elif isinstance(raw_value, str):
                                 raw_value = True if raw_value.lower() == "true" else False if raw_value.lower() == "false" else raw_value
                             overlay_entry.setdefault("template_variables", {})[var_name] = raw_value
 
@@ -1929,6 +1935,17 @@ def build_libraries_section(
                         if not tv:
                             ov.pop("template_variables", None)
                         continue
+                    if isinstance(default_name, str) and default_name in {"languages", "overlay_languages"}:
+                        languages_value = tv.get("languages")
+                        if languages_value is not None:
+                            normalized_languages = _parse_string_list(languages_value)
+                            if normalized_languages == default_language_flag_codes or not normalized_languages:
+                                tv.pop("languages", None)
+                            else:
+                                tv["languages"] = normalized_languages
+                        if not tv:
+                            ov.pop("template_variables", None)
+                            continue
                     if isinstance(default_name, str) and default_name in {"aspect", "video_format", "overlay_aspect", "overlay_video_format"}:
                         tv.pop("text", None)
                         if not tv:

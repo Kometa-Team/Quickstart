@@ -1864,6 +1864,54 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             {% if var_name == 'text' and overlay.id in ['overlay_aspect', 'overlay_video_format'] %}data-skip-yaml="true"{% endif %}>
                                                     </div>
                                                         {% endif %}
+                                                    {% elif var_details.input_type == "multiselect" %}
+                                                    {% set display_label = var_details.label or var_name.replace('_', ' ') %}
+                                                    {% set input_id = template_name ~ '-' ~ var_name %}
+                                                    {% if selected_value is sequence and selected_value is not string %}
+                                                        {% set selected_values = selected_value %}
+                                                    {% elif var_details.default is sequence and var_details.default is not string %}
+                                                        {% set selected_values = var_details.default %}
+                                                    {% else %}
+                                                        {% set selected_values = [] %}
+                                                    {% endif %}
+                                                    <div class="mb-2">
+                                                        <label class="form-label fw-semibold mb-1"
+                                                            for="{{ input_id }}">
+                                                            {{ display_label }}
+                                                            {% if var_details.tooltip %}
+                                                            <span
+                                                                class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
+                                                                data-bs-toggle="tooltip" data-bs-html="true"
+                                                                title="{{ var_details.tooltip }}">
+                                                                <i
+                                                                    class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                                            </span>
+                                                            {% endif %}
+                                                        </label>
+                                                        <select class="form-select template-variable-multiselect"
+                                                            id="{{ input_id }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            multiple
+                                                            size="{{ var_details.size or 12 }}"
+                                                            data-default='{{ var_details.default | tojson }}'>
+                                                            {% for option in var_details.options %}
+                                                            {% if option is string %}
+                                                            {% set opt_value = option %}
+                                                            {% set opt_label = option %}
+                                                            {% else %}
+                                                            {% set opt_value = option.value %}
+                                                            {% set opt_label = option.label %}
+                                                            {% endif %}
+                                                            <option value="{{ opt_value }}"
+                                                                {% if opt_value in selected_values %}selected{% endif %}>
+                                                                {{ opt_label }}
+                                                            </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <div class="form-text">
+                                                            {{ var_details.help_text or 'Select one or more supported values. Ctrl/Cmd+click toggles individual selections.' }}
+                                                        </div>
+                                                    </div>
                                                     {% elif var_details.type == "toggle" or var_details.input_type == "toggle" %}
                                                     {% set toggle_id = template_name ~ '-' ~ var_name ~ '-' ~ (var_details.value or 'true') %}
                                                     {% set display_label = var_details.label or var_name.replace('_', ' ') %}
