@@ -7522,7 +7522,8 @@ def step(name):
                 if normalization_errors:
                     validation_errors = list(validation_errors or []) + normalization_errors
                     validated = False
-                yaml_content = _dump_yaml_text(config_data)
+                if not isinstance(yaml_content, str) or not yaml_content.strip():
+                    yaml_content = _dump_yaml_text(config_data)
             validation_summary = build_validation_summary(validation_errors)
             used_fonts = helpers.collect_font_references(config_data)
             saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)

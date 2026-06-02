@@ -3351,6 +3351,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function buildPayloadFromCard (card) {
       const payload = {}
+      const libraryId = activeLibraryId || String(card?.querySelector('[name]')?.name || '').split('-')[0]
       const checkboxNames = new Set(
         Array.from(card.querySelectorAll('input[type="checkbox"][name]'))
           .map(el => String(el.name || '').trim())
@@ -3390,6 +3391,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         payload[el.name] = el.value ?? ''
       })
+      if (libraryId) {
+        document.querySelectorAll(`input[type="hidden"][name^="${libraryId}-"]`).forEach(el => {
+          if (!el.name || el.disabled) return
+          if (card.contains(el)) return
+          if (checkboxNames.has(String(el.name || '').trim())) return
+          payload[el.name] = el.value ?? ''
+        })
+      }
       card.querySelectorAll('input.playlist-library-toggle[type="checkbox"][name]:disabled').forEach(el => {
         payload[el.name] = 'false'
       })

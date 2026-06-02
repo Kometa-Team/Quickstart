@@ -2018,6 +2018,62 @@ def test_final_page_stale_bulk_gate_skips_config_generation(client, isolated_con
     assert b'data-auto-validate="true"' in resp.data
 
 
+def test_final_page_preserves_annotated_yaml_content(client, isolated_config_dir, monkeypatch, qs_module):
+    annotated_yaml = (
+        "# yaml-language-server: $schema=https://example.invalid/config-schema.json\n\n"
+        "#==================== KOMETA ====================#\n\n"
+        "plex:\n"
+        "  token: secret\n"
+    )
+    captured = {}
+
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": False,
+        },
+    )
+    monkeypatch.setattr(
+        qs_module.output,
+        "build_config",
+        lambda *_args, **_kwargs: (True, "", {"plex": {"token": "secret"}}, annotated_yaml, []),
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_normalize_generated_config_library_files",
+        lambda config_data, _config_name: (config_data, False, []),
+    )
+
+    def fake_save_to_named_config(yaml_text, config_name, used_fonts):
+        captured["yaml_text"] = yaml_text
+        captured["config_name"] = config_name
+        captured["used_fonts"] = used_fonts
+        return f"{config_name}.yml"
+
+    monkeypatch.setattr(qs_module.helpers, "save_to_named_config", fake_save_to_named_config)
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "pytest_final_annotated_yaml"
+
+    resp = client.get("/step/900-kometa")
+    assert resp.status_code == 200
+    assert b"yaml-language-server" in resp.data
+
+    with client.session_transaction() as sess:
+        assert sess.get("yaml_content") == annotated_yaml
+
+    assert captured["yaml_text"] == annotated_yaml
+    assert captured["config_name"] == "pytest_final_annotated_yaml"
+
+
 def test_switch_config_returns_new_workspace_status(client, isolated_config_dir, app, qs_module):
     from modules import database
 
