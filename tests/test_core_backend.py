@@ -1155,7 +1155,10 @@ def test_collapse_collection_data_template_vars_removes_flat_data_keys_from_all_
 
     for entry in entries:
         template_variables = entry.get("template_variables", {})
-        flat_data_keys = [key for key in template_variables.keys() if isinstance(key, str) and key.startswith("data_")]
+        flat_data_keys = [
+            key for key in template_variables.keys()
+            if isinstance(key, str) and key.startswith("data_")
+        ]
         assert flat_data_keys == []
         if "data" in template_variables:
             assert isinstance(template_variables["data"], dict)
@@ -2145,7 +2148,10 @@ def test_final_page_stale_bulk_gate_skips_config_generation(client, isolated_con
 
 def test_final_page_preserves_annotated_yaml_content(client, isolated_config_dir, monkeypatch, qs_module):
     annotated_yaml = (
-        "# yaml-language-server: $schema=https://example.invalid/config-schema.json\n\n" "#==================== KOMETA ====================#\n\n" "plex:\n" "  token: secret\n"
+        "# yaml-language-server: $schema=https://example.invalid/config-schema.json\n\n"
+        "#==================== KOMETA ====================#\n\n"
+        "plex:\n"
+        "  token: secret\n"
     )
     captured = {}
 
@@ -2999,31 +3005,32 @@ def test_build_libraries_section_keeps_default_ratings_overlay_when_overlay_file
 def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
     from modules import output
 
-    libraries_section = output.build_libraries_section(
-        {"mov-library_movies-library": "Movies"},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {
-            "movies": {
-                "mov-library_movies-template_variables[use_separator]": "gray",
-                "mov-library_movies-attribute_template_variables[placeholder_imdb_id]": "tt0108052",
-                "mov-library_movies-template_variables[language]": "en",
-                "mov-library_movies-template_variables[collection_mode]": "hide",
-            }
-        },
-        {},
-        {},
-        {},
-    )
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-template_variables[use_separator]": "gray",
+                    "mov-library_movies-attribute_template_variables[placeholder_imdb_id]": "tt0108052",
+                    "mov-library_movies-template_variables[language]": "en",
+                    "mov-library_movies-template_variables[collection_mode]": "hide",
+                }
+            },
+            {},
+            {},
+            {},
+        )
 
     template_variables = libraries_section["libraries"]["Movies"]["template_variables"]
     assert template_variables["sep_style"] == "gray"
@@ -3067,29 +3074,30 @@ def test_reorder_library_section_keeps_settings_and_operations_before_library_fi
 def test_build_libraries_section_omits_empty_collectionless_exclude_prefix(app):
     from modules import output
 
-    libraries_section = output.build_libraries_section(
-        {"mov-library_movies-library": "Movies"},
-        {},
-        {
-            "movies": {
-                "mov-library_movies-collection_collectionless": True,
-                "mov-library_movies-template_collection_collectionless_exclude_prefix": "[]",
-            }
-        },
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-    )
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-collection_collectionless": True,
+                    "mov-library_movies-template_collection_collectionless_exclude_prefix": "[]",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
 
     collection_entries = libraries_section["libraries"]["Movies"]["collection_files"]
     collectionless_entry = next((entry for entry in collection_entries if entry.get("default") == "collectionless"), None)
