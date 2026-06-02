@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 import pytest
 from playwright.sync_api import expect
@@ -307,3 +308,74 @@ def test_queued_run_auto_start_toast(page, live_server, monkeypatch, qs_module):
 
     toast = page.locator(".toast .toast-body").filter(has_text="Kometa started from queued request")
     expect(toast).to_be_visible()
+
+
+@pytest.mark.e2e
+def test_validate_kometa_root_syncs_managed_assets_to_kometa(page, live_server, monkeypatch, qs_module):
+    config_name = "pytest_e2e_kometa_copy"
+    config_dir = Path(qs_module.helpers.CONFIG_DIR)
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    source_yaml = Path("config") / f"{config_name}_config.yml"
+
+    managed_dir = config_dir / config_name / "collection_files" / "mov-library_movies"
+    managed_dir.mkdir(parents=True, exist_ok=True)
+    (managed_dir / "collections.yml").write_text(
+        "collections:\n  test:\n    plex_search:\n      any:\n        title: Example\n",
+        encoding="utf-8",
+    )
+    source_yaml.write_text(
+        f"libraries:\n  Movies:\n    collection_files:\n      - file: config/{config_name}/collection_files/mov-library_movies/collections.yml\n",
+        encoding="utf-8",
+    )
+
+    (kometa_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
+    (kometa_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
+    (kometa_root / "VERSION").write_text("0.0.0\n", encoding="utf-8")
+    venv_scripts = kometa_root / "kometa-venv" / "Scripts"
+    venv_scripts.mkdir(parents=True, exist_ok=True)
+    (venv_scripts / "python.exe").write_text("", encoding="utf-8")
+    (venv_scripts / "pip.exe").write_text("", encoding="utf-8")
+
+    stale_dir = kometa_root / "config" / config_name / "overlay_files" / "mov-library_movies"
+    stale_dir.mkdir(parents=True, exist_ok=True)
+    (stale_dir / "stale.yml").write_text("overlays:\n  stale:\n    template:\n      - name: ribbon\n", encoding="utf-8")
+
+    monkeypatch.setattr(qs_module.shutil, "which", lambda _cmd: "C:/Python/python.exe")
+    monkeypatch.setattr(
+        qs_module.subprocess,
+        "check_output",
+        lambda cmd, **_kwargs: "Python 3.12.0" if "--version" in cmd else "git version 2.45.0",
+    )
+
+    class _RunResult:
+        def __init__(self, stdout):
+            self.stdout = stdout
+
+    monkeypatch.setattr(qs_module.subprocess, "run", lambda *args, **kwargs: _RunResult("Requirement already satisfied"))
+
+    page.goto(f"{live_server}/static/favicon.png", wait_until="load")
+
+    payload = page.evaluate(
+        """async ({ path, configName }) => {
+          const res = await fetch('/validate-kometa-root', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path, config_name: configName })
+          })
+          return { status: res.status, body: await res.json() }
+        }""",
+        {"path": str(kometa_root), "configName": source_yaml.name},
+    )
+
+    assert payload["status"] == 200, payload
+    assert payload["body"]["success"] is True
+    assert any("YAML copied to Kometa config folder" in line for line in payload["body"]["log"])
+    assert any("managed library artifact tree" in line for line in payload["body"]["log"])
+
+    copied_yaml = kometa_root / "config" / source_yaml.name
+    copied_collection = kometa_root / "config" / config_name / "collection_files" / "mov-library_movies" / "collections.yml"
+    assert copied_yaml.exists()
+    assert copied_collection.exists()
+    assert copied_collection.read_text(encoding="utf-8") == (managed_dir / "collections.yml").read_text(encoding="utf-8")
+    assert not stale_dir.exists()
+    source_yaml.unlink(missing_ok=True)

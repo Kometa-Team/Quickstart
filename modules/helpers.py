@@ -2472,6 +2472,46 @@ def list_available_fonts(include_static: bool = True, include_custom: bool = Tru
     return sorted(fonts)
 
 
+def migrate_legacy_custom_fonts_to_config(config_name: str | None, font_names: list[str] | tuple[str, ...] | set[str] | None = None) -> dict:
+    normalized = normalize_config_name_for_storage(config_name)
+    if not normalized:
+        return {"copied": [], "skipped": [], "errors": []}
+
+    source_dir = get_legacy_custom_fonts_dir()
+    destination_dir = get_custom_fonts_dir(normalized)
+    copied: list[str] = []
+    skipped: list[str] = []
+    errors: list[str] = []
+
+    if not source_dir.is_dir():
+        return {"copied": copied, "skipped": skipped, "errors": errors}
+
+    requested: set[str] | None = None
+    if font_names is not None:
+        requested = {str(name or "").strip() for name in font_names if str(name or "").strip()}
+        if not requested:
+            return {"copied": copied, "skipped": skipped, "errors": errors}
+
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    for entry in sorted(source_dir.iterdir(), key=lambda p: p.name.lower()):
+        if not entry.is_file() or entry.suffix.lower() not in FONT_EXTENSIONS:
+            continue
+        if requested is not None and entry.name not in requested:
+            continue
+        target = destination_dir / entry.name
+        if target.exists():
+            skipped.append(entry.name)
+            continue
+        try:
+            shutil.copy2(entry, target)
+            copied.append(entry.name)
+        except Exception as exc:
+            errors.append(f"Failed to migrate legacy font {entry} -> {target}: {exc}")
+
+    return {"copied": copied, "skipped": skipped, "errors": errors}
+
+
 def sync_custom_fonts(kometa_root: Path | None = None, config_name: str | None = None) -> list[str]:
     source_dir = get_custom_fonts_dir(config_name)
     if not source_dir.is_dir():
@@ -2518,10 +2558,11 @@ def collect_font_references(config_data) -> list[str]:
 def copy_fonts_to_kometa(font_refs, kometa_root: Path | None = None, config_name: str | None = None) -> dict:
     dest_dir = get_kometa_fonts_dir(kometa_root)
     dest_dir.mkdir(parents=True, exist_ok=True)
+    migration = migrate_legacy_custom_fonts_to_config(config_name, font_refs) if config_name else {"copied": [], "skipped": [], "errors": []}
     sources = get_font_dirs(include_static=True, include_custom=True, config_name=config_name)
     copied: list[str] = []
     missing: list[str] = []
-    errors: list[str] = []
+    errors: list[str] = list(migration.get("errors", []))
 
     for ref in font_refs or []:
         ref_str = str(ref or "").strip()

@@ -1863,6 +1863,32 @@ def test_upload_fonts_store_in_active_config_directory(client, isolated_config_d
     assert not (isolated_config_dir / "fonts" / "Poster.ttf").exists()
 
 
+def test_download_bundle_adopts_legacy_fonts_into_active_config(client, isolated_config_dir):
+    import io
+    import zipfile
+
+    config_name = "pytest_font_migration"
+    legacy_font_dir = isolated_config_dir / "fonts"
+    legacy_font_dir.mkdir(parents=True, exist_ok=True)
+    (legacy_font_dir / "Poster.ttf").write_bytes(b"legacy-font")
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+        sess["yaml_content"] = "settings:\n  cache: true\n"
+
+    resp = client.get("/download")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/zip"
+
+    with zipfile.ZipFile(io.BytesIO(resp.data)) as archive:
+        names = set(archive.namelist())
+        assert f"{config_name}/fonts/Poster.ttf" in names
+
+    migrated_font = isolated_config_dir / config_name / "fonts" / "Poster.ttf"
+    assert migrated_font.exists()
+    assert migrated_font.read_bytes() == b"legacy-font"
+
+
 def test_download_bundle_places_fonts_under_config_name(client, isolated_config_dir):
     import io
     import zipfile
@@ -1884,6 +1910,29 @@ def test_download_bundle_places_fonts_under_config_name(client, isolated_config_
         names = set(archive.namelist())
         assert "config.yml" in names
         assert f"{config_name}/fonts/Poster.ttf" in names
+
+
+def test_import_config_preview_rejects_zip_with_unsupported_entries(client):
+    import io
+    import zipfile
+
+    bundle = io.BytesIO()
+    with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("config.yml", "settings:\n  cache: true\n")
+        archive.writestr("unexpected.exe", b"nope")
+    bundle.seek(0)
+
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_bad_bundle", "file": (bundle, "bundle.zip")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "unsupported entries" in payload["message"].lower()
+    assert "unexpected.exe" in payload["message"]
 
 
 def test_yaml_generation_missing_sections_shows_error(client, isolated_config_dir, monkeypatch, qs_module):
@@ -2528,6 +2577,27 @@ def test_copy_fonts_to_kometa_prefers_config_scoped_fonts(isolated_config_dir, a
     copied_font = Path(app.config["KOMETA_ROOT"]) / "config" / "fonts" / "Poster.ttf"
     assert copied_font.exists()
     assert copied_font.read_bytes() == b"config-font"
+
+
+def test_copy_fonts_to_kometa_adopts_legacy_font_into_config_scope(isolated_config_dir, app):
+    from pathlib import Path
+
+    from modules import helpers
+
+    config_name = "pytest_font_adopt"
+    legacy_font_dir = isolated_config_dir / "fonts"
+    legacy_font_dir.mkdir(parents=True, exist_ok=True)
+    (legacy_font_dir / "Poster.ttf").write_bytes(b"legacy-font")
+
+    result = helpers.copy_fonts_to_kometa(["Poster.ttf"], kometa_root=app.config["KOMETA_ROOT"], config_name=config_name)
+
+    assert result["copied"] == ["Poster.ttf"]
+    adopted_font = isolated_config_dir / config_name / "fonts" / "Poster.ttf"
+    assert adopted_font.exists()
+    assert adopted_font.read_bytes() == b"legacy-font"
+    copied_font = Path(app.config["KOMETA_ROOT"]) / "config" / "fonts" / "Poster.ttf"
+    assert copied_font.exists()
+    assert copied_font.read_bytes() == b"legacy-font"
 
 
 def test_save_to_named_config_syncs_managed_library_artifacts_to_kometa(isolated_config_dir, app):

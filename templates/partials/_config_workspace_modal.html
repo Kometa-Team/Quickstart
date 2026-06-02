@@ -246,7 +246,7 @@
         <div class="mb-3">
           <label class="form-label" for="importConfigFile">Config File (.yml, .yaml, or .zip)</label>
           <input class="form-control" type="file" id="importConfigFile" accept=".yml,.yaml,.zip">
-          <div class="form-text">Zip files must contain exactly one YAML config; .ttf/.otf fonts will be imported.</div>
+          <div class="form-text">Zip files must contain exactly one YAML config. Optional extras are limited to <code>.ttf</code>/<code>.otf</code> fonts, <code>README.txt</code>, and managed <code>metadata_files</code>, <code>collection_files</code>, or <code>overlay_files</code> YAML content.</div>
         </div>
         <div class="form-floating mb-2">
           <input type="text" class="form-control" id="importConfigName" placeholder="Config name">
