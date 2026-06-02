@@ -123,6 +123,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_best_picture",
             "label": "Oscars Best Picture Winners",
             "tooltip": "Collection of Oscars Best Picture Award Winners.",
@@ -676,6 +683,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_golden",
             "label": "Berlinale Golden Bears",
             "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners.",
@@ -1210,6 +1224,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_best",
@@ -1748,6 +1769,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_palm",
             "label": "Cannes Golden Palm Winners",
             "tooltip": "Collection of Cannes Golden Palm Award Winners.",
@@ -2282,6 +2310,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_best",
@@ -2819,6 +2854,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_best",
@@ -3359,6 +3401,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_best",
             "label": "Emmys Best in Category Winners",
             "tooltip": "Collection of Emmys Best in Category Award Winners.",
@@ -3895,6 +3944,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_best_picture",
@@ -4461,6 +4517,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_best",
             "label": "Independent Spirit Best Feature Winners",
             "tooltip": "Collection of Independent Spirit Best Feature Award Winners.",
@@ -4995,6 +5058,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_all_time",
@@ -5534,6 +5604,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_pca",
             "label": "People's Choice Award Winners",
             "tooltip": "Collection of People's Choice Award Winners.",
@@ -6069,6 +6146,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_golden",
@@ -6607,6 +6691,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_golden",
             "label": "Screen Actors Guild Award Winners",
             "tooltip": "Collection of Screen Actors Guild Award Winners.",
@@ -7141,6 +7232,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_grand",
@@ -7679,6 +7777,13 @@
             "step": 1
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "use_best",
             "label": "Toronto People's Choice Award Winners",
             "tooltip": "Collection of Toronto International Film Festival People's Choice Award Winners.",
@@ -8213,6 +8318,13 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
           },
           {
             "key": "use_golden",
@@ -13888,6 +14000,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific Genres from these collections.",
+            "placeholder": "Add genre name (e.g. Politics)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -14283,6 +14402,13 @@
         "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file. Click the name of this file to go to the wiki page to learn more.",
         "tooltip_variant": "danger",
         "template_variables": [
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific TMDb collections from these collections.",
+            "placeholder": "Add TMDb collection ID (e.g. 131292)"
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -15119,6 +15245,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific Universes from these collections.",
+            "placeholder": "Add universe key (e.g. mcu)"
+          },
+          {
             "key": "use_avp",
             "label": "Alien / Predator",
             "tooltip": "Collection of Movies in the Alien / Predator Universe",
@@ -15943,6 +16076,13 @@
             "type": "text_input",
             "default": "085",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific media outlets from these collections.",
+            "placeholder": "Add media outlet key (e.g. books)"
           },
           {
             "key": "use_books",
@@ -16803,6 +16943,20 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific collections from being considered for collectionless.",
+            "placeholder": "Add collection name (e.g. Marvel Cinematic Universe)"
+          },
+          {
+            "key": "exclude_prefix",
+            "label": "Exclude Prefix",
+            "type": "string_list",
+            "tooltip": "Exclude collections with these prefixes from being considered for collectionless.",
+            "placeholder": "Add prefix (e.g. ~)"
           }
         ]
       }
@@ -16835,6 +16989,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. PG-13)"
           },
           {
             "key": "collection_mode",
@@ -17244,6 +17405,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. TV-14)"
           },
           {
             "key": "collection_mode",
@@ -17656,6 +17824,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. 15)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -18064,6 +18239,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. 12)"
           },
           {
             "key": "collection_mode",
@@ -18476,6 +18658,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. M)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -18884,6 +19073,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. PG)"
           },
           {
             "key": "collection_mode",
@@ -19296,6 +19492,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. PG-13)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -19704,6 +19907,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific content ratings from these collections.",
+            "placeholder": "Add content rating (e.g. 13)"
           },
           {
             "key": "collection_mode",
@@ -20121,6 +20331,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific countries from these collections.",
+            "placeholder": "Add country name (e.g. France)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -20528,6 +20745,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific countries from these collections.",
+            "placeholder": "Add country name (e.g. France)"
           },
           {
             "key": "collection_mode",
@@ -21101,6 +21325,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific regions from these collections.",
+            "placeholder": "Add region name (e.g. Melanesia)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -21551,6 +21782,13 @@
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific continents from these collections.",
+            "placeholder": "Add continent name (e.g. Europe)"
           },
           {
             "key": "collection_mode",
@@ -22018,6 +22256,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific aspect ratios from these collections.",
+            "placeholder": "Add aspect ratio key (e.g. 1.65)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22439,6 +22684,13 @@
             ]
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific resolutions from these collections.",
+            "placeholder": "Add resolution key (e.g. 4k)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22849,6 +23101,13 @@
             "default": true
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific audio languages from these collections.",
+            "placeholder": "Add language code (e.g. fr)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -23257,6 +23516,13 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific subtitle languages from these collections.",
+            "placeholder": "Add language code (e.g. fr)"
           },
           {
             "key": "collection_mode",
@@ -26081,6 +26347,13 @@
             ]
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific streaming services from these collections.",
+            "placeholder": "Add service key (e.g. netflix)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -26482,6 +26755,13 @@
             "type": "text_input",
             "default": "070",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific studios from these collections.",
+            "placeholder": "Add studio name (e.g. Marvel Studios)"
           },
           {
             "key": "collection_mode",
@@ -26897,6 +27177,13 @@
               "color",
               "white"
             ]
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific networks from these collections.",
+            "placeholder": "Add network name (e.g. HBO)"
           },
           {
             "key": "collection_mode",
@@ -27782,6 +28069,13 @@
             "label_width": 240
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific seasonal collections from these collections.",
+            "placeholder": "Add seasonal key (e.g. halloween)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -28260,6 +28554,13 @@
             "tooltip": "Controls the increment (i.e. every 5th year). Allowed values: number greater than 0."
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific years from these collections.",
+            "placeholder": "Add year (e.g. 2022)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -28662,6 +28963,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific decades from these collections.",
+            "placeholder": "Add decade key (e.g. 2020)"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -29062,6 +29370,13 @@
             "type": "text_input",
             "default": "100",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific decades from these collections.",
+            "placeholder": "Add decade key (e.g. 2020)"
           },
           {
             "key": "collection_mode",
