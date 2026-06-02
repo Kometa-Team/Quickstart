@@ -1155,10 +1155,7 @@ def test_collapse_collection_data_template_vars_removes_flat_data_keys_from_all_
 
     for entry in entries:
         template_variables = entry.get("template_variables", {})
-        flat_data_keys = [
-            key for key in template_variables.keys()
-            if isinstance(key, str) and key.startswith("data_")
-        ]
+        flat_data_keys = [key for key in template_variables.keys() if isinstance(key, str) and key.startswith("data_")]
         assert flat_data_keys == []
         if "data" in template_variables:
             assert isinstance(template_variables["data"], dict)
@@ -2148,10 +2145,7 @@ def test_final_page_stale_bulk_gate_skips_config_generation(client, isolated_con
 
 def test_final_page_preserves_annotated_yaml_content(client, isolated_config_dir, monkeypatch, qs_module):
     annotated_yaml = (
-        "# yaml-language-server: $schema=https://example.invalid/config-schema.json\n\n"
-        "#==================== KOMETA ====================#\n\n"
-        "plex:\n"
-        "  token: secret\n"
+        "# yaml-language-server: $schema=https://example.invalid/config-schema.json\n\n" "#==================== KOMETA ====================#\n\n" "plex:\n" "  token: secret\n"
     )
     captured = {}
 
