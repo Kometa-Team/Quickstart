@@ -2570,7 +2570,7 @@ def build_config(header_style="standard", config_name=None):
                 if prefix == "attribute_":
                     return "-attribute_" in key
                 if prefix == "template_variables":
-                    return "-template_variables" in key
+                    return "-template_variables" in key or "-attribute_template_variables" in key
                 if prefix == "top_level_":
                     return "-top_level_" in key
                 if prefix in {"collection_files", "overlay_files", "metadata_files"}:

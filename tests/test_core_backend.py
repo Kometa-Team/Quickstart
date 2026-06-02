@@ -3002,6 +3002,42 @@ def test_build_libraries_section_keeps_default_ratings_overlay_when_overlay_file
     assert ratings_entry["template_variables"]["rating1_image"] == "imdb"
 
 
+def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
+    from modules import output
+
+    libraries_section = output.build_libraries_section(
+        {"mov-library_movies-library": "Movies"},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {
+            "movies": {
+                "mov-library_movies-template_variables[use_separator]": "gray",
+                "mov-library_movies-attribute_template_variables[placeholder_imdb_id]": "tt0108052",
+                "mov-library_movies-template_variables[language]": "en",
+                "mov-library_movies-template_variables[collection_mode]": "hide",
+            }
+        },
+        {},
+        {},
+        {},
+    )
+
+    template_variables = libraries_section["libraries"]["Movies"]["template_variables"]
+    assert template_variables["sep_style"] == "gray"
+    assert template_variables["placeholder_imdb_id"] == "tt0108052"
+    assert template_variables["language"] == "en"
+    assert template_variables["collection_mode"] == "hide"
+
+
 def test_build_libraries_section_emits_schedule(app):
     from modules import output
 
