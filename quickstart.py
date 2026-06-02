@@ -747,7 +747,7 @@ def _managed_library_folder_slug(source_path, kind):
 
 
 def _managed_library_config_root(config_name):
-    config_slug = helpers.normalize_config_name_for_storage(config_name)
+    config_slug = helpers.require_config_name_for_storage(config_name, context="Managed library artifact paths")
     return (Path(helpers.CONFIG_DIR) / config_slug).resolve()
 
 
@@ -947,13 +947,18 @@ def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_n
     return Path(*relative.parts).as_posix()
 
 
-def _normalize_library_external_entry(kind, entry, config_name, library_scope, validate_local=True, force_clone_managed=False):
+def _normalize_library_external_entry(kind, entry, config_name, library_scope, validate_local=True, force_clone_managed=False, require_managed_context=False):
     parsed_entry = dict(entry) if isinstance(entry, dict) else {}
     entry_type = str(parsed_entry.get("type") or "").strip().lower()
     location = str(parsed_entry.get("location") or "").strip()
     is_validated = helpers.booler(parsed_entry.get("validated"))
     if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
         return parsed_entry, False, None
+    if entry_type in LOCAL_LIBRARY_FILE_TYPES and require_managed_context:
+        if not str(config_name or "").strip():
+            return None, False, "Managed library files require an explicit config name."
+        if not str(library_scope or "").strip():
+            return None, False, "Managed library files require a library scope."
     if entry_type not in LOCAL_LIBRARY_FILE_TYPES or not config_name or not library_scope:
         normalized_entry = {"type": entry_type, "location": location}
         if is_validated:
@@ -1001,6 +1006,7 @@ def _clone_library_file_entries_for_target(kind, raw_value, config_name, target_
             target_library_id,
             validate_local=False,
             force_clone_managed=True,
+            require_managed_context=True,
         )
         if entry_error:
             raise RuntimeError(f"{target_library_id} {kind}[{idx}]: {entry_error}")
@@ -1034,6 +1040,7 @@ def _normalize_library_file_entries_payload(libraries_data, config_name, validat
                     config_name,
                     library_scope,
                     validate_local=validate_local,
+                    require_managed_context=True,
                 )
                 if entry_error:
                     errors.append(f"{library_scope} {kind}[{idx}]: {entry_error}")
@@ -1128,6 +1135,7 @@ def _normalize_generated_config_library_files(config_data, config_name):
                         config_name,
                         library_name,
                         validate_local=True,
+                        require_managed_context=True,
                     )
                     if entry_error:
                         errors.append(f"{library_name} {kind}[{idx}]: {entry_error}")
@@ -15628,7 +15636,8 @@ def _imagemaid_settings_to_form_payload(payload):
         "overlays_only",
     ]
     form_payload = {}
-    config_name = helpers.normalize_config_name_for_storage(payload.get("config_name"))
+    raw_config_name = str(payload.get("config_name") or "").strip()
+    config_name = helpers.normalize_config_name_for_storage(raw_config_name) if raw_config_name else ""
     if config_name:
         form_payload["config_name"] = config_name
     for key in keys:
@@ -15638,7 +15647,8 @@ def _imagemaid_settings_to_form_payload(payload):
 
 
 def _resolve_request_config_name(payload=None):
-    normalized = helpers.normalize_config_name_for_storage((payload or {}).get("config_name")) if isinstance(payload, dict) else ""
+    raw_config_name = str((payload or {}).get("config_name") or "").strip() if isinstance(payload, dict) else ""
+    normalized = helpers.normalize_config_name_for_storage(raw_config_name) if raw_config_name else ""
     if normalized:
         if has_request_context():
             session["config_name"] = normalized

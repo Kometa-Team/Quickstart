@@ -952,7 +952,13 @@ def _collapse_collection_data_template_vars(config_data):
     if not isinstance(config_data, dict):
         return config_data
     libraries_section = config_data.get("libraries", {})
-    libraries = libraries_section.get("libraries")
+    libraries = None
+    if isinstance(libraries_section, dict):
+        nested = libraries_section.get("libraries")
+        if isinstance(nested, dict):
+            libraries = nested
+        else:
+            libraries = libraries_section
     if not isinstance(libraries, dict):
         return config_data
     for library_data in libraries.values():

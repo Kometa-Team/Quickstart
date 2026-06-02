@@ -1279,8 +1279,7 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
     config_dir = Path(CONFIG_DIR)
     kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
     kometa_config_dir = kometa_root / "config"
-    # Normalize config name
-    name = config_name.strip().lower().replace(" ", "_") or "default"
+    name = require_config_name_for_storage(config_name, context="Saving a named config")
     latest_filename = f"{name}_config.yml"
     latest_path = config_dir / latest_filename
     kometa_path = kometa_config_dir / latest_filename
@@ -2473,9 +2472,10 @@ def list_available_fonts(include_static: bool = True, include_custom: bool = Tru
 
 
 def migrate_legacy_custom_fonts_to_config(config_name: str | None, font_names: list[str] | tuple[str, ...] | set[str] | None = None) -> dict:
-    normalized = normalize_config_name_for_storage(config_name)
-    if not normalized:
-        return {"copied": [], "skipped": [], "errors": []}
+    try:
+        normalized = require_config_name_for_storage(config_name, context="Config-scoped font migration")
+    except ValueError as exc:
+        return {"copied": [], "skipped": [], "errors": [str(exc)]}
 
     source_dir = get_legacy_custom_fonts_dir()
     destination_dir = get_custom_fonts_dir(normalized)
@@ -2673,11 +2673,22 @@ def normalize_config_name_for_storage(config_name: str | None) -> str:
     return name or "default"
 
 
+def require_config_name_for_storage(config_name: str | None, context: str = "Artifact operation") -> str:
+    raw = str(config_name or "").strip()
+    if not raw:
+        raise ValueError(f"{context} requires an explicit config name.")
+    normalized = normalize_config_name_for_storage(raw)
+    if not normalized:
+        raise ValueError(f"{context} requires an explicit config name.")
+    return normalized
+
+
 MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
+MANAGED_CONFIG_ARTIFACT_DIRS = ("fonts",) + MANAGED_LIBRARY_FILE_DIRS
 
 
 def get_managed_config_artifact_root(config_name: str | None) -> Path:
-    normalized = normalize_config_name_for_storage(config_name)
+    normalized = require_config_name_for_storage(config_name, context="Managed config artifact paths")
     return Path(CONFIG_DIR) / normalized
 
 
@@ -2687,13 +2698,13 @@ def get_managed_library_artifact_paths(config_name: str | None) -> list[Path]:
 
 
 def get_legacy_managed_library_artifact_paths(config_name: str | None) -> list[Path]:
-    normalized = normalize_config_name_for_storage(config_name)
+    normalized = require_config_name_for_storage(config_name, context="Legacy managed library artifact paths")
     config_dir = Path(CONFIG_DIR)
     return [config_dir / folder / normalized for folder in MANAGED_LIBRARY_FILE_DIRS]
 
 
 def sync_managed_library_artifacts_to_kometa(config_name: str | None, kometa_root: str | Path | None = None) -> dict:
-    normalized = normalize_config_name_for_storage(config_name)
+    normalized = require_config_name_for_storage(config_name, context="Managed library artifact sync")
     source_root = get_managed_config_artifact_root(normalized)
     destination_root = (Path(kometa_root) if kometa_root is not None else Path(app.config.get("KOMETA_ROOT", "."))) / "config" / normalized
 
@@ -2746,7 +2757,7 @@ def sync_managed_library_artifacts_to_kometa(config_name: str | None, kometa_roo
 
 
 def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | None = None) -> dict:
-    normalized = normalize_config_name_for_storage(config_name)
+    normalized = require_config_name_for_storage(config_name, context="Config artifact cleanup")
     config_dir = Path(CONFIG_DIR)
     archive_root = config_dir / "archives"
     removed: list[str] = []
@@ -2864,7 +2875,7 @@ def list_orphaned_config_artifacts(active_config_names: list[str] | None = None,
     for path in config_dir.iterdir():
         if not path.is_dir():
             continue
-        if any((path / folder_name).exists() and (path / folder_name).is_dir() for folder_name in MANAGED_LIBRARY_FILE_DIRS):
+        if any((path / folder_name).exists() and (path / folder_name).is_dir() for folder_name in MANAGED_CONFIG_ARTIFACT_DIRS):
             bundle = ensure_bundle(path.name)
             path_text = str(path)
             if path_text not in bundle["paths"]:
