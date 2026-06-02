@@ -3038,6 +3038,72 @@ def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
     assert template_variables["collection_mode"] == "hide"
 
 
+def test_reorder_library_section_keeps_settings_and_operations_before_library_files():
+    from modules import output
+
+    reordered = output.reorder_library_section(
+        {
+            "report_path": "config/Movies_Report.yml",
+            "schedule": "weekly(mon)",
+            "schedule_overlays": "weekly(wed)",
+            "template_variables": {"sep_style": "gray"},
+            "metadata_files": [{"folder": "config/example/metadata"}],
+            "collection_files": [{"folder": "config/example/collections"}],
+            "overlay_files": [{"folder": "config/example/overlays"}],
+            "settings": {"asset_directory": ["C:\\Assets\\Movies"]},
+            "radarr": {"url": "http://radarr.local"},
+            "operations": {"assets_for_all": True},
+        }
+    )
+
+    assert list(reordered.keys()) == [
+        "report_path",
+        "schedule",
+        "schedule_overlays",
+        "template_variables",
+        "settings",
+        "radarr",
+        "operations",
+        "metadata_files",
+        "collection_files",
+        "overlay_files",
+    ]
+
+
+def test_build_libraries_section_omits_empty_collectionless_exclude_prefix(app):
+    from modules import output
+
+    libraries_section = output.build_libraries_section(
+        {"mov-library_movies-library": "Movies"},
+        {},
+        {
+            "movies": {
+                "mov-library_movies-collection_collectionless": True,
+                "mov-library_movies-template_collection_collectionless_exclude_prefix": "[]",
+            }
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+    )
+
+    collection_entries = libraries_section["libraries"]["Movies"]["collection_files"]
+    collectionless_entry = next((entry for entry in collection_entries if entry.get("default") == "collectionless"), None)
+
+    assert collectionless_entry is not None
+    assert "template_variables" not in collectionless_entry
+
+
 def test_build_libraries_section_emits_schedule(app):
     from modules import output
 
