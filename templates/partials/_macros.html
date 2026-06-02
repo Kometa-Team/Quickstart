@@ -1869,6 +1869,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                     {% set input_id = template_name ~ '-' ~ var_name %}
                                                     {% if selected_value is sequence and selected_value is not string %}
                                                         {% set selected_values = selected_value %}
+                                                    {% elif selected_value is string and selected_value not in ['', 'None', 'none'] %}
+                                                        {% set selected_values = [selected_value] %}
                                                     {% elif var_details.default is sequence and var_details.default is not string %}
                                                         {% set selected_values = var_details.default %}
                                                     {% else %}

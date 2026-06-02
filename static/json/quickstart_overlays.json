@@ -2430,17 +2430,10 @@
           "languages": {
             "label": "Languages",
             "input_type": "multiselect",
-            "default": [
-              "en",
-              "de",
-              "fr",
-              "es",
-              "pt",
-              "ja"
-            ],
+            "default": [],
             "size": 12,
-            "help_text": "Choose which supported language flags can appear for this overlay.",
-            "tooltip": "Quickstart limits this list to the language flags documented by Kometa for the languages overlay.",
+            "help_text": "Leave blank to use Kometa defaults, or choose specific supported language flags.",
+            "tooltip": "Quickstart limits this list to the language flags documented by Kometa for the languages overlay. Leaving it blank uses Kometa defaults.",
             "options": [
               { "value": "en", "label": "English (en)" },
               { "value": "de", "label": "German (de)" },
@@ -2693,17 +2686,10 @@
           "languages": {
             "label": "Languages",
             "input_type": "multiselect",
-            "default": [
-              "en",
-              "de",
-              "fr",
-              "es",
-              "pt",
-              "ja"
-            ],
+            "default": [],
             "size": 12,
-            "help_text": "Choose which supported subtitle language flags can appear for this overlay.",
-            "tooltip": "Quickstart limits this list to the language flags documented by Kometa for the languages overlay.",
+            "help_text": "Leave blank to use Kometa defaults, or choose specific supported subtitle language flags.",
+            "tooltip": "Quickstart limits this list to the language flags documented by Kometa for the languages overlay. Leaving it blank uses Kometa defaults.",
             "options": [
               { "value": "en", "label": "English (en)" },
               { "value": "de", "label": "German (de)" },

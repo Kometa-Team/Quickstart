@@ -7028,7 +7028,10 @@ def step(name):
                         details="Configuration changed. Validate ImageMaid again.",
                     )
             elif save_source_name == "libraries" and normalized_library_payload is not None:
-                libraries_form = request.form.to_dict(flat=True)
+                libraries_form = {
+                    key: (request.form.getlist(key) if len(request.form.getlist(key)) > 1 else request.form.get(key))
+                    for key in request.form
+                }
                 libraries_form.update(normalized_library_payload)
                 persistence.save_settings("025-libraries", libraries_form)
             else:

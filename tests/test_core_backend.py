@@ -790,6 +790,23 @@ def test_output_overlay_file_entries_are_sorted():
     ]
 
 
+def test_clean_form_data_preserves_overlay_language_multiselect_values():
+    from werkzeug.datastructures import MultiDict
+
+    from modules import persistence
+
+    payload = MultiDict([
+        ("mov-library_movies-movie-template_overlay_languages[languages]", "en"),
+        ("mov-library_movies-movie-template_overlay_languages[languages]", "ja"),
+        ("mov-library_movies-movie-template_overlay_languages[style]", "square"),
+    ])
+
+    cleaned = persistence.clean_form_data(payload)
+
+    assert cleaned["mov-library_movies-movie-template_overlay_languages[languages]"] == ["en", "ja"]
+    assert cleaned["mov-library_movies-movie-template_overlay_languages[style]"] == "square"
+
+
 def test_build_libraries_section_emits_metadata_files(app):
     import json
 

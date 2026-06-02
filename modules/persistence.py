@@ -92,6 +92,13 @@ def clean_form_data(form_data):
                 value_list = form_data.getlist(key)
             clean_data[key] = [v.strip() for v in value_list if v.strip()]
 
+        elif key.endswith("template_overlay_languages[languages]") or key.endswith("template_overlay_languages_subtitles[languages]"):
+            if isinstance(value, list):
+                value_list = value
+            else:
+                value_list = form_data.getlist(key)
+            clean_data[key] = [v.strip() for v in value_list if isinstance(v, str) and v.strip()]
+
         elif key.endswith("use_separator"):
             prefix = "mov" if key.startswith("mov") else "sho"
             clean_data.setdefault(f"{prefix}-template_variables", {})["use_separator"] = value if value != "none" else None
