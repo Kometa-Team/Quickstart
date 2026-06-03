@@ -1914,6 +1914,36 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             {{ var_details.help_text or 'Select one or more supported values. Ctrl/Cmd+click toggles individual selections.' }}
                                                         </div>
                                                     </div>
+                                                    {% if overlay.id in ['overlay_languages', 'overlay_languages_subtitles'] and var_name == 'languages' %}
+                                                    {% set weight_ns = namespace(values={}) %}
+                                                    {% for raw_key, raw_val in data.libraries.items() %}
+                                                        {% if raw_key.startswith(template_name ~ '[weight_') and raw_key.endswith(']') %}
+                                                            {% set weight_key = raw_key | replace(template_name ~ '[weight_', '') | replace(']', '') %}
+                                                            {% if raw_val not in [none, '', 'None', 'none'] %}
+                                                                {% set _ = weight_ns.values.update({weight_key: raw_val}) %}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <div class="overlay-language-weight-builder mb-3"
+                                                        data-overlay-language-weight-builder
+                                                        data-template-name="{{ template_name }}"
+                                                        data-language-input-id="{{ input_id }}"
+                                                        data-options='{{ var_details.options | tojson }}'
+                                                        data-existing='{{ weight_ns.values | tojson }}'>
+                                                        <label class="form-label fw-semibold mb-1">Weight Overrides</label>
+                                                        <div class="form-text mb-2">
+                                                            Override priority for specific language flags. Default weights are omitted from YAML.
+                                                        </div>
+                                                        <div class="d-flex flex-column gap-2" data-overlay-language-weight-rows></div>
+                                                        <div class="mt-2">
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                                data-overlay-language-weight-add>
+                                                                Add Weight Override
+                                                            </button>
+                                                        </div>
+                                                        <div data-overlay-language-weight-hidden></div>
+                                                    </div>
+                                                    {% endif %}
                                                     {% elif var_details.type == "toggle" or var_details.input_type == "toggle" %}
                                                     {% set toggle_id = template_name ~ '-' ~ var_name ~ '-' ~ (var_details.value or 'true') %}
                                                     {% set display_label = var_details.label or var_name.replace('_', ' ') %}

@@ -728,6 +728,16 @@ def prepare_import_payload(
 
     collection_by_id, collection_by_alias = _build_collection_index(collection_config)
     overlay_by_id, overlay_by_alias, overlay_radio = _build_overlay_index(overlay_config)
+    language_weight_template_keys = {
+        f"weight_{key}"
+        for key in {
+            "en", "de", "fr", "es", "pt", "ja", "ko", "zh", "da", "ru", "it", "hi", "te", "fa", "th", "nl",
+            "no", "is", "sv", "tr", "pl", "cs", "uk", "hu", "ar", "bg", "bn", "bs", "ca", "cy", "el", "et",
+            "eu", "fi", "tl", "fil", "gl", "he", "hr", "id", "ka", "kk", "kn", "la", "lt", "lv", "mk", "ml",
+            "mr", "ms", "nb", "nn", "pa", "ro", "sk", "sl", "sq", "sr", "so", "sw", "ta", "ur", "ay", "ga",
+            "li", "kh", "vi", "mn", "af", "bm", "ln", "wo", "lo", "myn", "iu", "rom", "am", "su", "zu", "lb", "mos",
+        }
+    }
     (
         template_vars,
         simple_attrs,
@@ -1329,6 +1339,9 @@ def prepare_import_payload(
 
                     if isinstance(template_values, dict):
                         allowed = _collect_template_keys(overlay_meta.get("template_variables"))
+                        if overlay_id in {"overlay_languages", "overlay_languages_subtitles"}:
+                            allowed = set(allowed)
+                            allowed.update(language_weight_template_keys)
                         for key, value in template_values.items():
                             if key not in allowed:
                                 if key == "builder_level":

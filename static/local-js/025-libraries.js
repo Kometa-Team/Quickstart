@@ -1608,6 +1608,332 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    const overlayLanguageWeightDefaults = {
+      en: 610,
+      de: 600,
+      fr: 590,
+      es: 580,
+      pt: 570,
+      ja: 560,
+      ko: 550,
+      zh: 540,
+      da: 530,
+      ru: 520,
+      it: 510,
+      hi: 500,
+      te: 490,
+      fa: 480,
+      th: 470,
+      nl: 460,
+      no: 450,
+      is: 440,
+      sv: 430,
+      tr: 420,
+      pl: 410,
+      cs: 400,
+      uk: 390,
+      hu: 380,
+      ar: 370,
+      bg: 360,
+      bn: 350,
+      bs: 340,
+      ca: 330,
+      cy: 320,
+      el: 310,
+      et: 300,
+      eu: 290,
+      fi: 280,
+      tl: 270,
+      fil: 265,
+      gl: 260,
+      he: 250,
+      hr: 240,
+      id: 230,
+      ka: 220,
+      kk: 210,
+      kn: 200,
+      la: 190,
+      lt: 180,
+      lv: 170,
+      mk: 160,
+      ml: 150,
+      mr: 140,
+      ms: 130,
+      nb: 120,
+      nn: 110,
+      pa: 100,
+      ro: 90,
+      sk: 80,
+      sl: 70,
+      sq: 60,
+      sr: 50,
+      so: 45,
+      sw: 40,
+      ta: 30,
+      ur: 20,
+      ay: 19,
+      ga: 18,
+      li: 17,
+      kh: 16,
+      vi: 15,
+      mn: 14,
+      af: 13,
+      bm: 12,
+      ln: 11,
+      wo: 10,
+      lo: 9,
+      myn: 8,
+      iu: 7,
+      rom: 6,
+      am: 5,
+      su: 4,
+      zu: 3,
+      lb: 2,
+      mos: 1
+    }
+
+    function setupOverlayLanguageWeightBuilders (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-overlay-language-weight-builder]').forEach(wrapper => {
+        if (wrapper.dataset.listenerAdded === 'true') return
+
+        const templateName = String(wrapper.dataset.templateName || '').trim()
+        const languageInputId = String(wrapper.dataset.languageInputId || '').trim()
+        const rowsContainer = wrapper.querySelector('[data-overlay-language-weight-rows]')
+        const addButton = wrapper.querySelector('[data-overlay-language-weight-add]')
+        const hiddenContainer = wrapper.querySelector('[data-overlay-language-weight-hidden]')
+        if (!templateName || !rowsContainer || !addButton || !hiddenContainer) return
+
+        let options = []
+        try {
+          const parsed = JSON.parse(wrapper.dataset.options || '[]')
+          if (Array.isArray(parsed)) {
+            const seen = new Set()
+            options = parsed
+              .map(option => {
+                if (typeof option === 'string') {
+                  return { value: option, label: option }
+                }
+                if (option && typeof option === 'object' && option.value) {
+                  return { value: String(option.value), label: String(option.label || option.value) }
+                }
+                return null
+              })
+              .filter(Boolean)
+              .filter(option => {
+                if (seen.has(option.value)) return false
+                seen.add(option.value)
+                return true
+              })
+          }
+        } catch (_error) {
+          options = []
+        }
+
+        let state = []
+        try {
+          const parsed = JSON.parse(wrapper.dataset.existing || '{}')
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            state = Object.entries(parsed).map(([key, weight], index) => ({
+              id: `weight-${index + 1}`,
+              key: String(key || '').trim(),
+              weight: String(weight ?? '').trim()
+            })).filter(row => row.key)
+          }
+        } catch (_error) {
+          state = []
+        }
+
+        let rowCounter = state.length
+
+        function getLanguageSelect () {
+          return languageInputId ? document.getElementById(languageInputId) : null
+        }
+
+        function getSelectedLanguages () {
+          const select = getLanguageSelect()
+          if (!select || !select.multiple) return []
+          return Array.from(select.selectedOptions)
+            .map(option => String(option.value || '').trim())
+            .filter(Boolean)
+        }
+
+        function getDefaultWeight (key) {
+          return Object.prototype.hasOwnProperty.call(overlayLanguageWeightDefaults, key)
+            ? overlayLanguageWeightDefaults[key]
+            : null
+        }
+
+        function rowStatusText (row) {
+          const defaultWeight = getDefaultWeight(row.key)
+          const weightText = String(row.weight || '').trim()
+          if (!weightText) return 'Using Kometa default weight'
+          if (!/^-?\d+$/.test(weightText)) return 'Enter a whole number'
+          if (defaultWeight !== null && Number(weightText) === defaultWeight) return 'Matches default weight, so it will not be emitted'
+          return 'Custom override will be emitted'
+        }
+
+        function currentOptionsForRow (row) {
+          const selectedLanguages = new Set(getSelectedLanguages())
+          const selectedKeys = new Set(state.map(entry => entry.key).filter(Boolean))
+          const weightedOptions = options.map(option => {
+            const defaultWeight = getDefaultWeight(option.value)
+            return {
+              value: option.value,
+              label: option.label,
+              defaultWeight,
+              preferred: selectedLanguages.has(option.value) || option.value === row.key,
+              usedElsewhere: selectedKeys.has(option.value) && option.value !== row.key
+            }
+          })
+          weightedOptions.sort((left, right) => {
+            if (left.preferred !== right.preferred) return left.preferred ? -1 : 1
+            return left.label.localeCompare(right.label)
+          })
+          return weightedOptions
+        }
+
+        function nextRowId () {
+          rowCounter += 1
+          return `weight-${rowCounter}`
+        }
+
+        function nextAvailableKey () {
+          const usedKeys = new Set(state.map(row => row.key).filter(Boolean))
+          const selectedLanguages = getSelectedLanguages()
+          for (const key of selectedLanguages) {
+            if (!usedKeys.has(key)) return key
+          }
+          for (const option of options) {
+            if (!usedKeys.has(option.value)) return option.value
+          }
+          return options[0]?.value || ''
+        }
+
+        function syncHiddenInputs () {
+          hiddenContainer.replaceChildren()
+          state.forEach(row => {
+            const key = String(row.key || '').trim()
+            const weightText = String(row.weight || '').trim()
+            if (!key || !weightText || !/^-?\d+$/.test(weightText)) return
+            const numericWeight = Number.parseInt(weightText, 10)
+            const defaultWeight = getDefaultWeight(key)
+            if (defaultWeight !== null && numericWeight === defaultWeight) return
+            const hidden = document.createElement('input')
+            hidden.type = 'hidden'
+            hidden.name = `${templateName}[weight_${key}]`
+            hidden.value = String(numericWeight)
+            hiddenContainer.appendChild(hidden)
+          })
+        }
+
+        function renderRows () {
+          rowsContainer.replaceChildren()
+
+          state.forEach(row => {
+            const rowWrap = document.createElement('div')
+            rowWrap.className = 'border rounded p-2'
+
+            const controls = document.createElement('div')
+            controls.className = 'row g-2 align-items-end'
+
+            const keyCol = document.createElement('div')
+            keyCol.className = 'col-md-5'
+            const keyLabel = document.createElement('label')
+            keyLabel.className = 'form-label mb-1'
+            keyLabel.textContent = 'Language'
+            const keySelect = document.createElement('select')
+            keySelect.className = 'form-select form-select-sm'
+            currentOptionsForRow(row).forEach(option => {
+              const el = document.createElement('option')
+              el.value = option.value
+              const suffix = option.defaultWeight !== null ? ` (${option.value}, default ${option.defaultWeight})` : ` (${option.value})`
+              el.textContent = `${option.label}${suffix}`
+              if (option.value === row.key) el.selected = true
+              if (option.usedElsewhere) el.disabled = true
+              keySelect.appendChild(el)
+            })
+            keyCol.append(keyLabel, keySelect)
+
+            const defaultCol = document.createElement('div')
+            defaultCol.className = 'col-md-3'
+            const defaultLabel = document.createElement('label')
+            defaultLabel.className = 'form-label mb-1'
+            defaultLabel.textContent = 'Default Weight'
+            const defaultBadge = document.createElement('div')
+            defaultBadge.className = 'form-control form-control-sm bg-body-tertiary'
+            const defaultWeight = getDefaultWeight(row.key)
+            defaultBadge.textContent = defaultWeight !== null ? String(defaultWeight) : 'Unknown'
+            defaultCol.append(defaultLabel, defaultBadge)
+
+            const customCol = document.createElement('div')
+            customCol.className = 'col-md-3'
+            const customLabel = document.createElement('label')
+            customLabel.className = 'form-label mb-1'
+            customLabel.textContent = 'Custom Weight'
+            const customInput = document.createElement('input')
+            customInput.type = 'number'
+            customInput.className = 'form-control form-control-sm'
+            customInput.step = '1'
+            customInput.value = row.weight
+            customInput.placeholder = defaultWeight !== null ? String(defaultWeight) : 'Weight'
+            customCol.append(customLabel, customInput)
+
+            const removeCol = document.createElement('div')
+            removeCol.className = 'col-md-1 d-grid'
+            const removeButton = document.createElement('button')
+            removeButton.type = 'button'
+            removeButton.className = 'btn btn-outline-danger btn-sm'
+            removeButton.textContent = 'Remove'
+            removeCol.appendChild(removeButton)
+
+            const status = document.createElement('div')
+            status.className = 'form-text mt-2'
+            status.textContent = rowStatusText(row)
+
+            controls.append(keyCol, defaultCol, customCol, removeCol)
+            rowWrap.append(controls, status)
+            rowsContainer.appendChild(rowWrap)
+
+            keySelect.addEventListener('change', () => {
+              row.key = String(keySelect.value || '').trim()
+              renderRows()
+            })
+            customInput.addEventListener('input', () => {
+              row.weight = String(customInput.value || '').trim()
+              syncHiddenInputs()
+              status.textContent = rowStatusText(row)
+            })
+            removeButton.addEventListener('click', () => {
+              state = state.filter(entry => entry.id !== row.id)
+              renderRows()
+            })
+          })
+
+          syncHiddenInputs()
+          const disableAdd = options.length === 0 || state.length >= options.length
+          addButton.disabled = disableAdd
+        }
+
+        addButton.addEventListener('click', () => {
+          const key = nextAvailableKey()
+          if (!key) return
+          state.push({ id: nextRowId(), key, weight: '' })
+          renderRows()
+        })
+
+        const languageSelect = getLanguageSelect()
+        if (languageSelect) {
+          languageSelect.addEventListener('change', () => {
+            renderRows()
+          })
+        }
+
+        renderRows()
+        wrapper.dataset.listenerAdded = 'true'
+      })
+    }
+
     function initNumericOnlyInputs (scope) {
       const root = scope || document
       root.querySelectorAll('input[data-numeric-only="true"]').forEach(input => {
@@ -3298,6 +3624,7 @@ document.addEventListener('DOMContentLoaded', function () {
       refreshPickerLabels()
       initTooltips(card)
       sortLanguageSelects(card)
+      setupOverlayLanguageWeightBuilders(card)
       initNumericOnlyInputs(card)
       initStylePreviewGrids(card)
       initRelativeYearInputs(card)

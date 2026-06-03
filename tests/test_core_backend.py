@@ -3091,6 +3091,76 @@ def test_build_libraries_section_emits_subtitle_languages_overlay_language_list(
     assert subtitle_entry["template_variables"]["style"] == "square"
 
 
+def test_build_libraries_section_emits_only_non_default_language_weight_overrides(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_languages": True,
+                    "mov-library_movies-movie-template_overlay_languages[weight_en]": "610",
+                    "mov-library_movies-movie-template_overlay_languages[weight_ja]": "700",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    languages_entry = next((entry for entry in overlay_entries if entry.get("default") == "languages"), None)
+    assert languages_entry is not None
+    template_variables = languages_entry.get("template_variables", {})
+    assert "weight_en" not in template_variables
+    assert template_variables["weight_ja"] == 700
+
+
+def test_prepare_import_payload_accepts_language_weight_override():
+    from modules import importer
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "overlay_files": [
+                    {
+                        "default": "languages",
+                        "template_variables": {
+                            "languages": ["en", "ja"],
+                            "weight_ja": 700,
+                            "use_subtitles": True,
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    payload, report = importer.prepare_import_payload(
+        config_data,
+        plex_movie_names={"Movies"},
+        plex_show_names=set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_languages_subtitles"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[languages]"] == ["en", "ja"]
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[weight_ja]"] == 700
+    assert report.summary()["imported"] > 0
+
+
 def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
     from modules import output
 
