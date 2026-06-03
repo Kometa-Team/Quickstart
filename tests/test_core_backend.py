@@ -2136,15 +2136,7 @@ def test_import_config_preview_handles_tuple_validation_response(client, monkeyp
 
     monkeypatch.setattr(qs_module.validations, "validate_plex_server", lambda _payload: tuple_response)
 
-    yaml_text = (
-        "plex:\n"
-        "  url: http://plex.local\n"
-        "  token: imported-token\n"
-        "libraries:\n"
-        "  Movies:\n"
-        "    metadata_files:\n"
-        "      - default: basic\n"
-    )
+    yaml_text = "plex:\n" "  url: http://plex.local\n" "  token: imported-token\n" "libraries:\n" "  Movies:\n" "    metadata_files:\n" "      - default: basic\n"
 
     resp = client.post(
         "/import-config/preview",
