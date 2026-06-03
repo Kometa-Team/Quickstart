@@ -3370,6 +3370,9 @@ def test_save_kometa_install_mode_persists_existing_root(client, tmp_path):
     config_name = "pytest_kometa_existing_mode"
     existing_root = tmp_path / "kometa-existing"
     existing_root.mkdir(parents=True, exist_ok=True)
+    (existing_root / "config").mkdir(parents=True, exist_ok=True)
+    (existing_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
+    (existing_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
 
     resp = client.post(
         "/save-kometa-install-mode",
@@ -3433,6 +3436,9 @@ def test_save_kometa_install_mode_rejects_non_kometa_folder(client, tmp_path):
 def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, monkeypatch, qs_module):
     existing_root = tmp_path / "kometa-existing-update"
     existing_root.mkdir(parents=True, exist_ok=True)
+    (existing_root / "config").mkdir(parents=True, exist_ok=True)
+    (existing_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
+    (existing_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
     captured = {}
 
     def _fake_update(target_root, branch="nightly", force=False, logs=None):
