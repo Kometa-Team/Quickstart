@@ -1037,6 +1037,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  async function parseImportJsonResponse (response, fallbackMessage) {
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase()
+    if (contentType.includes('application/json')) {
+      return await response.json()
+    }
+    const text = await response.text()
+    const trimmed = String(text || '').trim()
+    if (!trimmed) {
+      throw new Error(fallbackMessage || 'Request failed.')
+    }
+    throw new Error(trimmed.slice(0, 300))
+  }
+
   if (saveConfigButton) {
     saveConfigButton.addEventListener('click', async () => {
       if (!newConfigInput) return
@@ -1273,7 +1286,7 @@ document.addEventListener('DOMContentLoaded', function () {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: importToken, library_mapping: collectLibraryMapping() })
       })
-      const data = await res.json()
+      const data = await parseImportJsonResponse(res, 'Preview refresh failed.')
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Preview refresh failed.')
       }
@@ -1692,7 +1705,7 @@ document.addEventListener('DOMContentLoaded', function () {
           method: 'POST',
           body: formData
         })
-        const data = await res.json()
+        const data = await parseImportJsonResponse(res, 'Preview failed.')
         if (!res.ok || !data.success) {
           setImportCredentialFlags({
             needsPlex: Boolean(data && data.needs_plex_credentials),
@@ -1943,7 +1956,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ...mergePayload
           })
         })
-        const data = await res.json()
+        const data = await parseImportJsonResponse(res, 'Import failed.')
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Import failed.')
         }

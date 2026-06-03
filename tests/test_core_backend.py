@@ -2079,6 +2079,85 @@ def test_import_config_preview_rejects_zip_with_unsupported_entries(client):
     assert "unexpected.exe" in payload["message"]
 
 
+def test_import_config_preview_handles_yaml_date_scalars_in_cache(client):
+    import io
+    import json
+    from pathlib import Path
+
+    yaml_text = "settings:\n  cache: true\n  release_date: 2026-06-03\n"
+
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_import_dates", "file": (io.BytesIO(yaml_text.encode("utf-8")), "config.yml")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 200, resp.get_data(as_text=True)
+    payload = resp.get_json()
+    assert payload["success"] is True
+
+    with client.session_transaction() as sess:
+        cache_path = sess["import_preview_path"]
+
+    cached = json.loads(Path(cache_path).read_text(encoding="utf-8"))
+    assert cached["config_data"]["settings"]["release_date"] == "2026-06-03"
+
+
+def test_import_config_preview_returns_json_on_unexpected_error(client, monkeypatch, qs_module):
+    import io
+
+    def _boom(*_args, **_kwargs):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(qs_module.importer, "prepare_import_payload", _boom)
+
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_import_boom", "file": (io.BytesIO(b"settings:\n  cache: true\n"), "config.yml")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 500
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "Import preview failed" in payload["message"]
+    assert "kaboom" in payload["message"]
+
+
+def test_import_config_preview_handles_tuple_validation_response(client, monkeypatch, qs_module):
+    import io
+    from flask import jsonify
+
+    with qs_module.app.app_context():
+        tuple_response = (
+            jsonify({"valid": False, "validated": False, "error": "Bad Plex credentials from tuple response."}),
+            400,
+        )
+
+    monkeypatch.setattr(qs_module.validations, "validate_plex_server", lambda _payload: tuple_response)
+
+    yaml_text = (
+        "plex:\n"
+        "  url: http://plex.local\n"
+        "  token: imported-token\n"
+        "libraries:\n"
+        "  Movies:\n"
+        "    metadata_files:\n"
+        "      - default: basic\n"
+    )
+
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_import_tuple", "file": (io.BytesIO(yaml_text.encode("utf-8")), "config.yml")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "Bad Plex credentials from tuple response." in payload["message"]
+
+
 def test_yaml_generation_missing_sections_shows_error(client, isolated_config_dir, monkeypatch, qs_module):
     monkeypatch.setattr(
         qs_module,

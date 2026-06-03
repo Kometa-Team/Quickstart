@@ -5681,6 +5681,28 @@ def count_annotated_lines(text: str) -> dict:
     return {"imported": imported, "not_imported": not_imported}
 
 
+def _import_preview_json_default(value):
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, set):
+        return sorted(str(item) for item in value)
+    isoformat = getattr(value, "isoformat", None)
+    if callable(isoformat):
+        try:
+            return isoformat()
+        except Exception:
+            pass
+    return str(value)
+
+
+def _coerce_validation_response_payload(response):
+    if isinstance(response, tuple) and response:
+        response = response[0]
+    if hasattr(response, "get_json"):
+        response = response.get_json()
+    return response if isinstance(response, dict) else {}
+
+
 @app.route("/import-config/preview", methods=["POST"])
 def import_config_preview():
     def count_comment_lines(text: str) -> int:
@@ -5975,7 +5997,7 @@ def import_config_preview():
                 used_plex_url = form_plex_url
                 used_plex_token = form_plex_token
                 plex_response = validations.validate_plex_server({"plex_url": form_plex_url, "plex_token": form_plex_token})
-                plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+                plex_result = _coerce_validation_response_payload(plex_response)
                 if not plex_result or not plex_result.get("validated"):
                     if isinstance(plex_result, dict):
                         last_error = plex_result.get("error")
@@ -6006,7 +6028,7 @@ def import_config_preview():
                     used_plex_url = candidate_url
                     used_plex_token = candidate_token
                     plex_response = validations.validate_plex_server({"plex_url": used_plex_url, "plex_token": used_plex_token})
-                    plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+                    plex_result = _coerce_validation_response_payload(plex_response)
                     if plex_result and plex_result.get("validated"):
                         last_error = None
                         break
@@ -6022,7 +6044,7 @@ def import_config_preview():
                         jsonify(
                             success=False,
                             needs_plex_credentials=True,
-                            message=("Plex credentials from the import/base config could not be validated. " "Please enter a valid Plex URL and token."),
+                            message=last_error or ("Plex credentials from the import/base config could not be validated. " "Please enter a valid Plex URL and token."),
                             plex_url=imported_plex_url or base_plex_url or "",
                             plex_token=imported_plex_token or base_plex_token or "",
                         ),
@@ -6086,7 +6108,7 @@ def import_config_preview():
         if has_form:
             used_tmdb_key = form_tmdb_key
             tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": form_tmdb_key})
-            tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
+            tmdb_result = _coerce_validation_response_payload(tmdb_response)
             if not tmdb_result or not tmdb_result.get("valid"):
                 if isinstance(tmdb_result, dict):
                     last_error = tmdb_result.get("message")
@@ -6115,7 +6137,7 @@ def import_config_preview():
             for candidate_key in candidates:
                 used_tmdb_key = candidate_key
                 tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": used_tmdb_key})
-                tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
+                tmdb_result = _coerce_validation_response_payload(tmdb_response)
                 if tmdb_result and tmdb_result.get("valid"):
                     last_error = None
                     break
@@ -6131,7 +6153,7 @@ def import_config_preview():
                     jsonify(
                         success=False,
                         needs_tmdb_credentials=True,
-                        message="TMDb API key from the import/base config could not be validated. Please enter a valid key.",
+                        message=last_error or "TMDb API key from the import/base config could not be validated. Please enter a valid key.",
                         tmdb_apikey=imported_tmdb_key or base_tmdb_key or "",
                     ),
                     400,
@@ -6144,81 +6166,91 @@ def import_config_preview():
                 parsed["tmdb"] = tmdb_block
             tmdb_block["apikey"] = used_tmdb_key
 
-    _library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
-    payload, report = importer.prepare_import_payload(
-        parsed,
-        movie_names,
-        show_names,
-    )
-    if not payload:
+    try:
+        _library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
+        payload, report = importer.prepare_import_payload(
+            parsed,
+            movie_names,
+            show_names,
+        )
+        if not payload:
+            if extracted_dir:
+                try:
+                    shutil.rmtree(extracted_dir)
+                except OSError:
+                    pass
+            return jsonify(success=False, message="No importable sections found."), 400
+        importable_sections = sorted(payload.keys())
+
+        report_lines = list(report.lines)
+        if extracted_fonts:
+            for font in extracted_fonts:
+                report_lines.append(f"imported: bundle.fonts.{font}")
+        annotated_report = importer.annotate_yaml_with_report(config_text, report_lines, binary=True)
+        comments_count = count_comment_lines(config_text)
+        blank_count = count_blank_lines(config_text)
+        total_lines = len(config_text.splitlines()) if isinstance(config_text, str) else 0
+        annotated_counts = count_annotated_lines(annotated_report)
+        diff_count = total_lines - (annotated_counts.get("imported", 0) + annotated_counts.get("not_imported", 0) + blank_count + comments_count)
+        line_counts = {
+            "imported_lines": annotated_counts.get("imported", 0),
+            "not_imported_lines": annotated_counts.get("not_imported", 0),
+            "comments": comments_count,
+            "blank": blank_count,
+            "total": total_lines,
+            "diff": diff_count,
+        }
+
+        previous_path = session.get("import_preview_path")
+        if previous_path:
+            try:
+                os.remove(previous_path)
+            except OSError:
+                pass
+        previous_dir = session.get("import_preview_bundle_dir")
+        if previous_dir:
+            try:
+                shutil.rmtree(previous_dir)
+            except OSError:
+                pass
+
+        cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        token = secrets.token_urlsafe(12)
+        cache_path = cache_dir / f"import_{token}.json"
+        with cache_path.open("w", encoding="utf-8") as handle:
+            json.dump(
+                {
+                    "config_name": config_name,
+                    "config_data": parsed,
+                    "config_text": config_text,
+                    "payload": payload,
+                    "bundle_dir": str(extracted_dir) if extracted_dir else None,
+                    "fonts_dir": str((extracted_dir / "fonts").resolve()) if extracted_dir and extracted_fonts else None,
+                    "fonts": extracted_fonts,
+                    "report_lines": report_lines,
+                    "report_summary": report.summary(),
+                    "annotated_report": annotated_report,
+                    "comments_count": comments_count,
+                    "line_counts": line_counts,
+                    "plex_movie_names": sorted(movie_names) if isinstance(movie_names, (set, list)) else [],
+                    "plex_show_names": sorted(show_names) if isinstance(show_names, (set, list)) else [],
+                    "merge_mode": merge_mode,
+                    "base_config": base_config,
+                    "importable_sections": importable_sections,
+                },
+                handle,
+                ensure_ascii=True,
+                default=_import_preview_json_default,
+            )
+    except Exception as exc:
         if extracted_dir:
             try:
                 shutil.rmtree(extracted_dir)
             except OSError:
                 pass
-        return jsonify(success=False, message="No importable sections found."), 400
-    importable_sections = sorted(payload.keys())
-
-    report_lines = list(report.lines)
-    if extracted_fonts:
-        for font in extracted_fonts:
-            report_lines.append(f"imported: bundle.fonts.{font}")
-    annotated_report = importer.annotate_yaml_with_report(config_text, report_lines, binary=True)
-    comments_count = count_comment_lines(config_text)
-    blank_count = count_blank_lines(config_text)
-    total_lines = len(config_text.splitlines()) if isinstance(config_text, str) else 0
-    annotated_counts = count_annotated_lines(annotated_report)
-    diff_count = total_lines - (annotated_counts.get("imported", 0) + annotated_counts.get("not_imported", 0) + blank_count + comments_count)
-    line_counts = {
-        "imported_lines": annotated_counts.get("imported", 0),
-        "not_imported_lines": annotated_counts.get("not_imported", 0),
-        "comments": comments_count,
-        "blank": blank_count,
-        "total": total_lines,
-        "diff": diff_count,
-    }
-
-    previous_path = session.get("import_preview_path")
-    if previous_path:
-        try:
-            os.remove(previous_path)
-        except OSError:
-            pass
-    previous_dir = session.get("import_preview_bundle_dir")
-    if previous_dir:
-        try:
-            shutil.rmtree(previous_dir)
-        except OSError:
-            pass
-
-    cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    token = secrets.token_urlsafe(12)
-    cache_path = cache_dir / f"import_{token}.json"
-    with cache_path.open("w", encoding="utf-8") as handle:
-        json.dump(
-            {
-                "config_name": config_name,
-                "config_data": parsed,
-                "config_text": config_text,
-                "payload": payload,
-                "bundle_dir": str(extracted_dir) if extracted_dir else None,
-                "fonts_dir": str((extracted_dir / "fonts").resolve()) if extracted_dir and extracted_fonts else None,
-                "fonts": extracted_fonts,
-                "report_lines": report_lines,
-                "report_summary": report.summary(),
-                "annotated_report": annotated_report,
-                "comments_count": comments_count,
-                "line_counts": line_counts,
-                "plex_movie_names": sorted(movie_names) if isinstance(movie_names, (set, list)) else [],
-                "plex_show_names": sorted(show_names) if isinstance(show_names, (set, list)) else [],
-                "merge_mode": merge_mode,
-                "base_config": base_config,
-                "importable_sections": importable_sections,
-            },
-            handle,
-            ensure_ascii=True,
-        )
+        helpers.ts_log(f"Import preview failed: {exc}", level="ERROR")
+        return jsonify(success=False, message=f"Import preview failed: {exc}"), 500
 
     session["import_preview_token"] = token
     session["import_preview_path"] = str(cache_path)
@@ -6415,7 +6447,7 @@ def import_config_preview_mapped():
         plex_token = session.get("import_preview_plex_token") or ""
         if plex_url and plex_token:
             plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
-            plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+            plex_result = _coerce_validation_response_payload(plex_response)
             if plex_result and plex_result.get("validated"):
                 movie_names = parse_list(plex_result.get("movie_libraries", []))
                 show_names = parse_list(plex_result.get("show_libraries", []))
@@ -6551,7 +6583,7 @@ def import_config_preview_mapped():
     cached["importable_sections"] = importable_sections
 
     with open(cache_path, "w", encoding="utf-8") as handle:
-        json.dump(cached, handle, ensure_ascii=True)
+        json.dump(cached, handle, ensure_ascii=True, default=_import_preview_json_default)
 
     lines = list(report_lines)
     max_lines = 500
