@@ -3362,3 +3362,107 @@ def test_build_libraries_section_emits_schedule(app):
     movies = libraries_section["libraries"]["Movies"]
     assert movies["schedule"] == "weekly(saturday)"
     assert list(movies.keys())[:2] == ["schedule", "template_variables"]
+
+
+def test_save_kometa_install_mode_persists_existing_root(client, tmp_path):
+    from modules import database
+
+    config_name = "pytest_kometa_existing_mode"
+    existing_root = tmp_path / "kometa-existing"
+    existing_root.mkdir(parents=True, exist_ok=True)
+
+    resp = client.post(
+        "/save-kometa-install-mode",
+        json={
+            "config_name": config_name,
+            "install_mode": "existing",
+            "existing_root": str(existing_root),
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["install_mode"] == "existing"
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "kometa")
+    assert validated is False
+    assert user_entered is True
+    assert stored["kometa"]["install_mode"] == "existing"
+    assert stored["kometa"]["existing_root"] == str(existing_root)
+
+
+def test_validate_kometa_root_existing_mode_does_not_create_missing_root(client, tmp_path):
+    missing_root = tmp_path / "missing-existing-kometa"
+
+    resp = client.post(
+        "/validate-kometa-root",
+        json={
+            "config_name": "pytest_missing_existing_root",
+            "install_mode": "existing",
+            "path": str(missing_root),
+        },
+    )
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "does not exist" in payload["error"]
+    assert not missing_root.exists()
+
+
+def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, monkeypatch, qs_module):
+    existing_root = tmp_path / "kometa-existing-update"
+    existing_root.mkdir(parents=True, exist_ok=True)
+    captured = {}
+
+    def _fake_update(target_root, branch="nightly", force=False, logs=None):
+        captured["target_root"] = str(target_root)
+        captured["branch"] = branch
+        captured["force"] = force
+        return {"success": True, "log": list(logs or []), "up_to_date": False, "skipped": False}
+
+    monkeypatch.setattr(qs_module.helpers, "perform_kometa_update_zip_only_at_root", _fake_update)
+    monkeypatch.setattr(qs_module.helpers, "invalidate_cached_kometa_update", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module.helpers, "detect_git_branch", lambda *_args, **_kwargs: "develop")
+
+    resp = client.post(
+        "/update-kometa",
+        json={
+            "config_name": "pytest_update_existing_root",
+            "install_mode": "existing",
+            "path": str(existing_root),
+            "background": False,
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert captured["target_root"] == str(existing_root.resolve())
+
+
+def test_get_kometa_root_path_prefers_persisted_existing_selection(app, tmp_path):
+    from flask import session
+    from modules import database, helpers
+
+    config_name = "pytest_persisted_existing_root"
+    existing_root = tmp_path / "persisted-kometa"
+    existing_root.mkdir(parents=True, exist_ok=True)
+
+    database.save_section_data(
+        name=config_name,
+        section="kometa",
+        validated=False,
+        user_entered=True,
+        data={"kometa": {"install_mode": "existing", "existing_root": str(existing_root)}},
+    )
+
+    from pathlib import Path
+
+    managed_default = str((Path(helpers.CONFIG_DIR) / "kometa").resolve())
+    with app.test_request_context("/step/900-kometa"):
+        app.config["KOMETA_ROOT"] = managed_default
+        session["config_name"] = config_name
+        session["kometa_root"] = managed_default
+        assert helpers.get_kometa_root_path() == existing_root.resolve()

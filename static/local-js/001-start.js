@@ -198,6 +198,90 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   }
 
+  const kometaInstallSettings = document.getElementById('start-kometa-install-settings')
+  const kometaInstallSaveButton = document.getElementById('start-kometa-install-save')
+  const kometaInstallStatus = document.getElementById('start-kometa-install-status')
+  const kometaInstallMessage = document.getElementById('start-kometa-install-message')
+  const kometaExistingRootWrap = document.getElementById('start-kometa-existing-root-wrap')
+  const kometaExistingRootInput = document.getElementById('start-kometa-existing-root')
+  const kometaActiveRoot = document.getElementById('start-kometa-active-root')
+
+  function getStartKometaInstallMode () {
+    const selected = document.querySelector('input[name="start-kometa-install-mode"]:checked')
+    return selected ? String(selected.value || '').trim().toLowerCase() : 'managed'
+  }
+
+  function syncStartKometaInstallUi () {
+    if (!kometaInstallSettings) return
+    const mode = getStartKometaInstallMode()
+    const isExisting = mode === 'existing'
+    if (kometaExistingRootWrap) {
+      kometaExistingRootWrap.classList.toggle('d-none', !isExisting)
+    }
+    if (kometaInstallMessage) {
+      if (isExisting) {
+        kometaInstallMessage.textContent = 'Quickstart will only use the existing Kometa install if that path is visible from this environment.'
+      } else {
+        kometaInstallMessage.textContent = 'Quickstart will create and manage its own Kometa install inside this workspace.'
+      }
+    }
+  }
+
+  async function saveStartKometaInstallChoice () {
+    if (!kometaInstallSettings || !kometaInstallSaveButton) return
+    const mode = getStartKometaInstallMode()
+    const existingRoot = kometaExistingRootInput ? kometaExistingRootInput.value.trim() : ''
+    const configName = window.pageInfo && window.pageInfo.config_name ? window.pageInfo.config_name : ''
+
+    kometaInstallSaveButton.disabled = true
+    if (kometaInstallStatus) kometaInstallStatus.textContent = 'Saving...'
+
+    try {
+      const res = await fetch('/save-kometa-install-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config_name: configName,
+          install_mode: mode,
+          existing_root: existingRoot
+        })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || data.message || 'Unable to save the Kometa choice.')
+      }
+      kometaInstallSettings.dataset.installMode = data.install_mode || mode
+      kometaInstallSettings.dataset.selectedRoot = data.kometa_root_display || data.kometa_root || ''
+      if (kometaActiveRoot) {
+        kometaActiveRoot.textContent = data.kometa_root_display || data.kometa_root || ''
+      }
+      if (kometaInstallMessage) {
+        kometaInstallMessage.textContent = data.message || 'Kometa choice saved.'
+      }
+      if (kometaInstallStatus) kometaInstallStatus.textContent = 'Saved.'
+      if (typeof showToast === 'function') {
+        showToast('success', data.message || 'Kometa choice saved.')
+      }
+    } catch (err) {
+      if (kometaInstallStatus) kometaInstallStatus.textContent = 'Save failed.'
+      if (typeof showToast === 'function') {
+        showToast('error', err.message || 'Unable to save the Kometa choice.')
+      }
+    } finally {
+      kometaInstallSaveButton.disabled = false
+    }
+  }
+
+  if (kometaInstallSettings) {
+    document.querySelectorAll('input[name="start-kometa-install-mode"]').forEach((radio) => {
+      radio.addEventListener('change', syncStartKometaInstallUi)
+    })
+    if (kometaInstallSaveButton) {
+      kometaInstallSaveButton.addEventListener('click', saveStartKometaInstallChoice)
+    }
+    syncStartKometaInstallUi()
+  }
+
   function updateButtonState () {
     if (!configSelector) return
     const isAddConfig = configSelector.value === 'add_config'

@@ -55,6 +55,45 @@
                 {% else %}
                 <p class="small text-muted mb-3">Plex, TMDb, libraries, or final validation still need attention before this config is fully ready for Kometa.</p>
                 {% endif %}
+                <div class="border rounded p-3 mb-3" id="start-kometa-install-settings"
+                  data-install-mode="{{ page_info.kometa_install_mode }}"
+                  data-selected-root="{{ page_info.kometa_selected_root_display }}"
+                  data-managed-root="{{ page_info.kometa_managed_root_display }}">
+                  <div class="fw-semibold mb-2">Kometa install ownership</div>
+                  <div class="small text-muted mb-2">Choose whether this config uses a Quickstart-managed Kometa or an existing install visible from this environment.</div>
+                  <div class="small text-muted mb-2">Quickstart-managed gives the clearest support model and full Quickstart-run guardrails. Existing install avoids duplicate installs, but the strongest Quickstart analytics and run protections still depend on launching from Quickstart.</div>
+                  <div class="form-check mb-1">
+                    <input class="form-check-input" type="radio" name="start-kometa-install-mode" id="start-kometa-mode-managed"
+                      value="managed" {{ 'checked' if page_info.kometa_install_mode != 'existing' else '' }}>
+                    <label class="form-check-label" for="start-kometa-mode-managed">
+                      Use Quickstart-managed Kometa
+                      <div class="small text-muted"><code>{{ page_info.kometa_managed_root_display }}</code></div>
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="start-kometa-install-mode" id="start-kometa-mode-existing"
+                      value="existing" {{ 'checked' if page_info.kometa_install_mode == 'existing' else '' }}>
+                    <label class="form-check-label" for="start-kometa-mode-existing">
+                      Use an existing Kometa install
+                    </label>
+                  </div>
+                  <div id="start-kometa-existing-root-wrap" class="mb-2 {{ '' if page_info.kometa_install_mode == 'existing' else 'd-none' }}">
+                    <label class="form-label form-label-sm mb-1" for="start-kometa-existing-root">Existing Kometa path</label>
+                    <input type="text" class="form-control form-control-sm" id="start-kometa-existing-root"
+                      value="{{ page_info.kometa_existing_root | default('', true) | escape }}"
+                      placeholder="Path visible from this Quickstart environment">
+                    <div class="form-text">Quickstart can only use installs it can see from this environment.</div>
+                  </div>
+                  <div class="small mb-2">
+                    Active root:
+                    <code id="start-kometa-active-root">{{ page_info.kometa_selected_root_display if page_info.kometa_selected_root_display else page_info.kometa_managed_root_display }}</code>
+                  </div>
+                  <div class="small text-muted mb-2" id="start-kometa-install-message">{{ page_info.kometa_install_status_message }}</div>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-info" id="start-kometa-install-save">Save Kometa Choice</button>
+                    <span class="small text-muted" id="start-kometa-install-status"></span>
+                  </div>
+                </div>
                   <div class="start-link-row start-link-row-buttons">
                    <a class="btn btn-sm nav-button qs-start-step-link" href="/step/900-kometa" data-qs-target-label="Kometa">Open Run Page</a>
                    <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">More Info...</a>

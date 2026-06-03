@@ -2300,6 +2300,65 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
         return {"success": False, "log": logs}
 
 
+def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str = "nightly", force: bool = False, logs=None):
+    """
+    Update Kometa by downloading/extracting the branch ZIP into an explicit Kometa root.
+    """
+    logs = logs if logs is not None else []
+    try:
+        kometa_dir = Path(kometa_root).resolve()
+        sha_file = kometa_dir / ".kometa_sha"
+        branch_file = kometa_dir / ".kometa_branch"
+
+        logs.append(f"⚙️ ZIP updater → branch '{branch}'")
+        _ensure_dir(kometa_dir)
+
+        upstream_sha = _get_upstream_sha(branch, logs)
+        if not upstream_sha:
+            return {"success": False, "log": logs}
+
+        local_sha = _read_text(sha_file)
+        if local_sha == upstream_sha and not force:
+            logs.append("✅ Up to date (SHA matches). Skipping download.")
+            return {"success": True, "log": logs, "up_to_date": True, "skipped": True}
+        if force:
+            logs.append("Force update requested; proceeding without SHA match check.")
+
+        zip_bytes = _download_zip(branch, logs)
+        if not zip_bytes:
+            return {"success": False, "log": logs}
+
+        backup_dir = _backup_kometa_runtime_assets(kometa_dir, logs)
+
+        if not _extract_zip_bytes(zip_bytes, kometa_dir, logs):
+            if backup_dir:
+                restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
+                if restored:
+                    _cleanup_kometa_backup(backup_dir, logs)
+            return {"success": False, "log": logs}
+
+        if backup_dir:
+            restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
+            if restored:
+                _cleanup_kometa_backup(backup_dir, logs)
+
+        res = _ensure_venv(kometa_dir, logs, venv_name="kometa-venv")
+        if not res:
+            return {"success": False, "log": logs}
+        python_bin, _pip_bin_unused = res
+        if not _pip_install(python_bin, kometa_dir, logs):
+            return {"success": False, "log": logs}
+
+        _write_text(sha_file, upstream_sha)
+        _write_text(branch_file, branch)
+        logs.append("✅ Kometa updated via ZIP.")
+        return {"success": True, "log": logs}
+
+    except Exception as e:
+        logs.append(f"❌ Exception: {e}")
+        return {"success": False, "log": logs}
+
+
 def perform_imagemaid_update_zip_only(config_root: str | Path, branch: str = "develop", force: bool = False, logs=None):
     """
     Update ImageMaid by downloading/extracting the branch ZIP into:
@@ -2355,17 +2414,39 @@ def get_kometa_root_path() -> Path:
     """
     Resolve the Kometa root folder consistently.
     Priority:
-        1) app.config["KOMETA_ROOT"] (set during validation)
-        2) session["kometa_root"] (legacy)
-        3) <CONFIG_DIR>/kometa  (works with ZIP-only updater)
+        1) app.config["KOMETA_ROOT"] if it differs from the managed default
+        2) session["kometa_root"] if it differs from the managed default
+        3) persisted existing-install override for the active config
+        4) managed default under <CONFIG_DIR>/kometa
     """
+    managed_default = os.path.normpath(os.path.join(CONFIG_DIR, "kometa"))
     base = None
     if has_app_context():
-        base = app.config.get("KOMETA_ROOT")
+        configured = app.config.get("KOMETA_ROOT")
+        if configured and os.path.normpath(str(configured)) != managed_default:
+            base = configured
     if not base and has_request_context():
-        base = session.get("kometa_root")
+        session_root = session.get("kometa_root")
+        if session_root and os.path.normpath(str(session_root)) != managed_default:
+            base = session_root
+    if not base and has_request_context():
+        try:
+            settings = persistence.retrieve_settings("900-kometa") or {}
+            section = settings.get("kometa", {}) if isinstance(settings, dict) else {}
+            if isinstance(section, dict):
+                mode = str(section.get("install_mode") or "").strip().lower()
+                existing_root = str(section.get("existing_root") or "").strip()
+                if mode == "existing" and existing_root:
+                    base = existing_root
+        except Exception:
+            base = None
     if not base:
-        base = os.path.join(CONFIG_DIR, "kometa")
+        if has_app_context():
+            base = app.config.get("KOMETA_ROOT")
+        if not base and has_request_context():
+            base = session.get("kometa_root")
+    if not base:
+        base = managed_default
     return Path(os.path.normpath(base)).resolve()
 
 

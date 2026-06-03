@@ -4035,6 +4035,9 @@ kometa_path = os.path.abspath(os.path.join(helpers.CONFIG_DIR, "kometa"))
 
 app.config["KOMETA_ROOT"] = os.environ.get("QS_KOMETA_PATH", kometa_path)
 
+KOMETA_INSTALL_MODE_MANAGED = "managed"
+KOMETA_INSTALL_MODE_EXISTING = "existing"
+
 
 def start_update_thread():
     """Ensure update_checker_loop runs inside the Flask app context."""
@@ -4059,6 +4062,152 @@ def inject_version_info():
 
 def inject_kometa_root():
     return {"kometa_root": app.config["KOMETA_ROOT"]}
+
+
+def _default_managed_kometa_root() -> Path:
+    return Path(helpers.CONFIG_DIR).resolve() / "kometa"
+
+
+def _normalize_kometa_install_mode(value) -> str:
+    raw = str(value or "").strip().lower()
+    if raw == KOMETA_INSTALL_MODE_EXISTING:
+        return KOMETA_INSTALL_MODE_EXISTING
+    return KOMETA_INSTALL_MODE_MANAGED
+
+
+def _canonicalize_kometa_section(section_data):
+    section = dict(section_data) if isinstance(section_data, dict) else {}
+    canonical = {
+        "install_mode": KOMETA_INSTALL_MODE_MANAGED,
+        "existing_root": "",
+    }
+    canonical.update(section)
+    canonical["install_mode"] = _normalize_kometa_install_mode(canonical.get("install_mode"))
+    canonical["existing_root"] = str(canonical.get("existing_root") or "").strip()
+    if canonical["install_mode"] != KOMETA_INSTALL_MODE_EXISTING:
+        canonical["existing_root"] = ""
+    return canonical
+
+
+def _resolve_kometa_selection(section_data=None):
+    section = _canonicalize_kometa_section(section_data)
+    managed_root = _default_managed_kometa_root().resolve()
+    mode = section["install_mode"]
+    existing_root_raw = section.get("existing_root", "")
+    selected_root = managed_root
+    selection_valid = True
+    status_message = "Quickstart will create and manage its own Kometa install under this workspace."
+
+    if mode == KOMETA_INSTALL_MODE_EXISTING:
+        selection_valid = False
+        status_message = "Quickstart will use an existing Kometa install visible from this environment."
+        if existing_root_raw:
+            resolved_existing = _resolve_user_dir(existing_root_raw)
+            if resolved_existing:
+                selected_root = resolved_existing
+                selection_valid = True
+                if not resolved_existing.exists():
+                    status_message = "The selected existing Kometa path is saved, but it is not currently visible from this Quickstart environment."
+                else:
+                    status_message = "Quickstart will use the selected existing Kometa install."
+            else:
+                selected_root = None
+                status_message = "The saved existing Kometa path is invalid."
+        else:
+            selected_root = None
+            status_message = "Choose an existing Kometa path for this config before using the Kometa run page."
+
+    return {
+        "install_mode": mode,
+        "existing_root": existing_root_raw,
+        "managed_root": managed_root,
+        "selected_root": selected_root,
+        "selection_valid": selection_valid,
+        "status_message": status_message,
+        "is_managed": mode == KOMETA_INSTALL_MODE_MANAGED,
+    }
+
+
+def _get_kometa_settings_section(config_name=None):
+    resolved_config = config_name or persistence.ensure_session_config_name()
+    settings = _retrieve_settings_for_config(resolved_config, "900-kometa") or {}
+    section = settings.get("kometa", {}) if isinstance(settings, dict) else {}
+    return settings, _canonicalize_kometa_section(section)
+
+
+def _apply_kometa_root_selection(path_obj):
+    if not path_obj:
+        return
+    resolved = Path(path_obj).resolve()
+    if has_request_context():
+        session["kometa_root"] = resolved.as_posix()
+    app.config["KOMETA_ROOT"] = str(resolved)
+
+
+def _build_kometa_install_context(config_name=None):
+    _settings, section = _get_kometa_settings_section(config_name)
+    selection = _resolve_kometa_selection(section)
+    selected_root = selection.get("selected_root")
+    if selected_root:
+        _apply_kometa_root_selection(selected_root)
+    return {
+        "kometa_install_mode": selection["install_mode"],
+        "kometa_existing_root": selection["existing_root"],
+        "kometa_managed_root": selection["managed_root"].as_posix(),
+        "kometa_managed_root_display": str(selection["managed_root"]),
+        "kometa_selected_root": selected_root.as_posix() if selected_root else "",
+        "kometa_selected_root_display": str(selected_root) if selected_root else "",
+        "kometa_selection_valid": bool(selection["selection_valid"]),
+        "kometa_install_status_message": selection["status_message"],
+        "kometa_is_managed_install": bool(selection["is_managed"]),
+    }
+
+
+def _resolve_kometa_request_target(payload, logs=None, require_existing_root=False):
+    request_payload = payload if isinstance(payload, dict) else {}
+    config_name = _resolve_request_config_name(request_payload)
+    _settings, stored_section = _get_kometa_settings_section(config_name)
+    requested_mode = request_payload.get("install_mode")
+    install_mode = _normalize_kometa_install_mode(requested_mode if requested_mode not in [None, ""] else stored_section.get("install_mode"))
+    raw_path = str(request_payload.get("path") or "").strip()
+    existing_root = str(request_payload.get("existing_root") or stored_section.get("existing_root") or "").strip()
+
+    if install_mode == KOMETA_INSTALL_MODE_MANAGED:
+        resolved = _default_managed_kometa_root().resolve()
+        _apply_kometa_root_selection(resolved)
+        return {
+            "config_name": config_name,
+            "install_mode": install_mode,
+            "path_obj": resolved,
+            "existing_root": "",
+            "selection_valid": True,
+        }
+
+    candidate = raw_path or existing_root
+    if not candidate:
+        if logs is not None:
+            logs.append("❌ Existing Kometa mode requires a path.")
+        return {"error": "Existing Kometa mode requires a path."}
+
+    resolved_existing = _resolve_user_dir(candidate)
+    if not resolved_existing:
+        if logs is not None:
+            logs.append("❌ Invalid path provided.")
+        return {"error": "Invalid path provided."}
+
+    if require_existing_root and not resolved_existing.exists():
+        if logs is not None:
+            logs.append("❌ The selected existing Kometa path does not exist in this Quickstart environment.")
+        return {"error": "The selected existing Kometa path does not exist in this Quickstart environment."}
+
+    _apply_kometa_root_selection(resolved_existing)
+    return {
+        "config_name": config_name,
+        "install_mode": install_mode,
+        "path_obj": resolved_existing,
+        "existing_root": candidate,
+        "selection_valid": resolved_existing.exists(),
+    }
 
 
 # Use booler() for FLASK_DEBUG conversion
@@ -7137,6 +7286,7 @@ def step(name):
     page_info["header_style"] = header_style
     page_info["save_error"] = save_error
     page_info["template_name"] = name
+    page_info.update(_build_kometa_install_context(selected_config))
     settings_payload = persistence.retrieve_settings("150-settings") or {}
     settings_section = settings_payload.get("settings", {}) if isinstance(settings_payload, dict) else {}
     custom_repo_setting = str(settings_section.get("custom_repo") or "").strip()
@@ -15031,39 +15181,95 @@ def header_style_previews():
     return jsonify(success=True, previews=previews)
 
 
+@app.route("/save-kometa-install-mode", methods=["POST"])
+def save_kometa_install_mode():
+    payload = request.get_json(silent=True) or {}
+    config_name = _resolve_request_config_name(payload)
+    install_mode = _normalize_kometa_install_mode(payload.get("install_mode"))
+    existing_root = str(payload.get("existing_root") or "").strip()
+    managed_root = _default_managed_kometa_root().resolve()
+
+    if install_mode == KOMETA_INSTALL_MODE_EXISTING:
+        if not existing_root:
+            return jsonify(success=False, error="Choose the existing Kometa path Quickstart should use for this config."), 400
+        resolved_existing = _resolve_user_dir(existing_root)
+        if not resolved_existing:
+            return jsonify(success=False, error="The existing Kometa path is invalid."), 400
+        if not resolved_existing.exists():
+            return jsonify(success=False, error="The selected existing Kometa path does not exist in this Quickstart environment."), 400
+        target_root = resolved_existing.resolve()
+    else:
+        existing_root = ""
+        target_root = managed_root
+
+    stored_validated, stored_user_entered, stored_payload = database.retrieve_section_data(config_name, "kometa")
+    section_payload = stored_payload if isinstance(stored_payload, dict) else {}
+    section_payload["kometa"] = _canonicalize_kometa_section(
+        {
+            **(section_payload.get("kometa") if isinstance(section_payload.get("kometa"), dict) else {}),
+            "install_mode": install_mode,
+            "existing_root": existing_root,
+        }
+    )
+    database.save_section_data(
+        name=config_name,
+        section="kometa",
+        validated=helpers.booler(stored_validated),
+        user_entered=True,
+        data=section_payload,
+    )
+    _apply_kometa_root_selection(target_root)
+
+    message = (
+        "Quickstart will now use the selected existing Kometa install for this config."
+        if install_mode == KOMETA_INSTALL_MODE_EXISTING
+        else "Quickstart will now use its managed Kometa install for this config."
+    )
+    return jsonify(
+        success=True,
+        message=message,
+        install_mode=install_mode,
+        kometa_root=target_root.as_posix(),
+        kometa_root_display=str(target_root),
+        managed_root=managed_root.as_posix(),
+        managed_root_display=str(managed_root),
+        existing_root=existing_root,
+    )
+
+
 @app.route("/validate-kometa-root", methods=["POST"])
 def validate_kometa_root():
     payload = request.get_json(silent=True) or {}
-    root_path = str(payload.get("path", "")).strip()
     logs = []
 
     def log(msg):
         print(msg, file=sys.stderr)
         logs.append(msg)
 
-    if not root_path:
-        log("❌ No path provided.")
-        return jsonify(success=False, error="No path provided.", log=logs), 400
-
-    p = _resolve_user_dir(root_path)
-    if not p:
-        log("❌ Invalid path provided.")
-        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
-
-    session["kometa_root"] = p.as_posix()
-    app.config["KOMETA_ROOT"] = str(p)
+    target = _resolve_kometa_request_target(payload, logs=logs, require_existing_root=True)
+    if target.get("error"):
+        return jsonify(success=False, error=target["error"], log=logs), 400
+    install_mode = target["install_mode"]
+    p = target["path_obj"]
 
     # Auto-create the Kometa root and config/ if missing
-    if not p.exists():
+    if install_mode == KOMETA_INSTALL_MODE_MANAGED and not p.exists():
         try:
             p.mkdir(parents=True, exist_ok=True)
             log(f"📁 Created Kometa root: {p}")
         except Exception as e:
             log(f"❌ Failed to create Kometa root: {e}")
             return jsonify(success=False, error="Failed to create Kometa root.", log=logs), 500
+    elif install_mode == KOMETA_INSTALL_MODE_EXISTING and not p.exists():
+        log("❌ The selected existing Kometa path does not exist in this Quickstart environment.")
+        return jsonify(success=False, error="The selected existing Kometa path does not exist in this Quickstart environment.", log=logs), 400
 
     try:
-        (p / "config").mkdir(parents=True, exist_ok=True)
+        if install_mode == KOMETA_INSTALL_MODE_MANAGED:
+            (p / "config").mkdir(parents=True, exist_ok=True)
+        elif not (p / "config").exists():
+            log("❌ The selected existing Kometa path is missing its config folder.")
+            return jsonify(success=False, error="The selected existing Kometa path is missing its config folder.", log=logs), 400
     except Exception as e:
         log(f"❌ Failed to create config folder: {e}")
         return jsonify(success=False, error="Failed to create config folder.", log=logs), 500
@@ -15278,24 +15484,16 @@ def _probe_kometa_root_state(path_obj):
 @app.route("/probe-kometa-root", methods=["POST"])
 def probe_kometa_root():
     payload = request.get_json(silent=True) or {}
-    root_path = str(payload.get("path", "")).strip()
     logs = []
 
     def log(msg):
         print(msg, file=sys.stderr)
         logs.append(msg)
 
-    if not root_path:
-        log("❌ No path provided.")
-        return jsonify(success=False, error="No path provided.", log=logs), 400
-
-    p = _resolve_user_dir(root_path)
-    if not p:
-        log("❌ Invalid path provided.")
-        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
-
-    session["kometa_root"] = p.as_posix()
-    app.config["KOMETA_ROOT"] = str(p)
+    target = _resolve_kometa_request_target(payload, logs=logs, require_existing_root=False)
+    if target.get("error"):
+        return jsonify(success=False, error=target["error"], log=logs), 400
+    p = target["path_obj"]
 
     state = _probe_kometa_root_state(p)
     log(f"🔍 Probing Kometa path: {state['kometa_root_display']}")
@@ -15320,7 +15518,6 @@ def probe_kometa_root():
 @app.route("/check-kometa-update", methods=["POST"])
 def check_kometa_update():
     payload = request.get_json(silent=True) or {}
-    root_path = str(payload.get("path", "")).strip()
     branch_override_raw = payload.get("branch_override")
     branch_override = helpers.normalize_kometa_branch_override(branch_override_raw)
     logs = []
@@ -15329,21 +15526,14 @@ def check_kometa_update():
         print(msg, file=sys.stderr)
         logs.append(msg)
 
-    if not root_path:
-        log("❌ No path provided.")
-        return jsonify(success=False, error="No path provided.", log=logs), 400
-
     if branch_override_raw and not branch_override:
         log(f"❌ Invalid Kometa branch override: {branch_override_raw}")
         return jsonify(success=False, error="Invalid Kometa branch override.", log=logs), 400
 
-    p = _resolve_user_dir(root_path)
-    if not p:
-        log("❌ Invalid path provided.")
-        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
-
-    session["kometa_root"] = p.as_posix()
-    app.config["KOMETA_ROOT"] = str(p)
+    target = _resolve_kometa_request_target(payload, logs=logs, require_existing_root=False)
+    if target.get("error"):
+        return jsonify(success=False, error=target["error"], log=logs), 400
+    p = target["path_obj"]
 
     state = _probe_kometa_root_state(p)
     if not state["kometa_installed"]:
@@ -15449,10 +15639,12 @@ def update_kometa():
             409,
         )
     try:
-        cfg_dir = helpers.CONFIG_DIR
-
-        # (optional) allow the caller to pass qs branch; otherwise detect from repo
         data = request.get_json(silent=True) or {}
+        target = _resolve_kometa_request_target(data, require_existing_root=True)
+        if target.get("error"):
+            return jsonify({"success": False, "error": target["error"], "log": [f"❌ {target['error']}"]}), 400
+        kometa_root = target["path_obj"]
+        install_mode = target["install_mode"]
         branch_override_raw = data.get("branch_override")
         branch_override = helpers.normalize_kometa_branch_override(branch_override_raw)
         if branch_override_raw and not branch_override:
@@ -15503,6 +15695,8 @@ def update_kometa():
                 logs = _ProgressLog()
                 _update_background_job(job_id, phase="running", status="running")
                 logs.append(f"🔎 Quickstart branch: {qs_branch}")
+                logs.append(f"📍 Kometa install mode: {install_mode}")
+                logs.append(f"📁 Target Kometa root: {kometa_root}")
                 if branch_override:
                     logs.append(f"⚠️ Kometa branch override selected: {branch_override}")
                 else:
@@ -15512,9 +15706,12 @@ def update_kometa():
                     logs.append("Force update enabled.")
 
                 try:
-                    result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update, logs=logs)
+                    if install_mode == KOMETA_INSTALL_MODE_EXISTING:
+                        result = helpers.perform_kometa_update_zip_only_at_root(kometa_root, branch=kometa_branch, force=force_update, logs=logs)
+                    else:
+                        result = helpers.perform_kometa_update_zip_only(helpers.CONFIG_DIR, branch=kometa_branch, force=force_update, logs=logs)
                     try:
-                        helpers.invalidate_cached_kometa_update(cfg_dir)
+                        helpers.invalidate_cached_kometa_update(kometa_root)
                     except Exception:
                         pass
                     if result.get("success", False):
@@ -15547,6 +15744,8 @@ def update_kometa():
 
         logs = []
         logs.append(f"🔎 Quickstart branch: {qs_branch}")
+        logs.append(f"📍 Kometa install mode: {install_mode}")
+        logs.append(f"📁 Target Kometa root: {kometa_root}")
         if branch_override:
             logs.append(f"⚠️ Kometa branch override selected: {branch_override}")
         else:
@@ -15555,9 +15754,12 @@ def update_kometa():
         if force_update:
             logs.append("Force update enabled.")
 
-        result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update, logs=logs)
+        if install_mode == KOMETA_INSTALL_MODE_EXISTING:
+            result = helpers.perform_kometa_update_zip_only_at_root(kometa_root, branch=kometa_branch, force=force_update, logs=logs)
+        else:
+            result = helpers.perform_kometa_update_zip_only(helpers.CONFIG_DIR, branch=kometa_branch, force=force_update, logs=logs)
         try:
-            helpers.invalidate_cached_kometa_update(cfg_dir)
+            helpers.invalidate_cached_kometa_update(kometa_root)
         except Exception:
             pass
         status = 200 if result.get("success") else 500

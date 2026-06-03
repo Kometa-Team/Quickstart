@@ -387,8 +387,17 @@
                   Install, validate, or update the local Kometa setup before starting a run.
               </div>
               <div class="mb-2">
-                Kometa will be installed/updated in:
-                <code id="kometa-install-path">{{ kometa_default_display }}</code>
+                <div><strong>Install ownership:</strong> {{ 'Quickstart-managed install' if page_info.kometa_is_managed_install else 'Existing install' }}</div>
+                <div><strong>Active root:</strong> <code id="kometa-install-path">{{ page_info.kometa_selected_root_display if page_info.kometa_selected_root_display else page_info.kometa_managed_root_display }}</code></div>
+                {% if not page_info.kometa_is_managed_install %}
+                <div class="small text-muted mt-1">Change this on the <a href="/step/001-start">Start page</a> if Quickstart should switch to a different Kometa install.</div>
+                {% endif %}
+              </div>
+              <div class="alert {{ 'alert-secondary' if page_info.kometa_selection_valid else 'alert-warning' }} small py-2 px-3 mb-2" role="status">
+                {{ page_info.kometa_install_status_message }}
+                {% if not page_info.kometa_is_managed_install %}
+                <div class="mt-1">Quickstart-specific guardrails and analytics are strongest when this install is launched from Quickstart rather than externally.</div>
+                {% endif %}
               </div>
               <div class="row g-2 align-items-end mb-2">
                 <div class="col-sm-6 col-lg-4">
@@ -705,13 +714,18 @@
               <pre class="mb-0 text-wrap" style="white-space: pre-wrap; word-break: break-word;">
 {% set running_on = version_info.running_on | default('') %}
 {% set is_win = 'Windows' in running_on %}
-{% set kometa_default_path = (config_dir ~ '/kometa') %}
-{% set kometa_default_display = kometa_default_path if not is_win else kometa_default_path.replace('/', '\\') %}
+{% set kometa_default_path = page_info.kometa_managed_root %}
+{% set kometa_default_display = page_info.kometa_managed_root_display %}
+{% set kometa_selected_path = page_info.kometa_selected_root %}
+{% set kometa_selected_display = page_info.kometa_selected_root_display %}
 
 <code id="run-command-output"
       data-config-filename="{{ page_info.saved_filename }}"
       data-kometa-root-default="{{ kometa_default_path | replace('\\','/') }}"
-      data-kometa-root-default-display="{{ kometa_default_display }}">
+      data-kometa-root-default-display="{{ kometa_default_display }}"
+      data-kometa-root-selected="{{ kometa_selected_path | replace('\\','/') }}"
+      data-kometa-root-selected-display="{{ kometa_selected_display }}"
+      data-kometa-install-mode="{{ page_info.kometa_install_mode }}">
 </code>
 </pre>
                 <button type="button" id="copy-command"

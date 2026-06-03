@@ -1003,6 +1003,26 @@ $(document).ready(function () {
     if (checkbox.length) checkbox.on('change', buildCommand)
   })
 
+  function getConfiguredKometaInstallMode () {
+    const $out = $('#run-command-output')
+    const raw = ($out.data('kometa-install-mode') || 'managed').toString().trim().toLowerCase()
+    return raw === 'existing' ? 'existing' : 'managed'
+  }
+
+  function getConfiguredKometaRootPosix () {
+    const $out = $('#run-command-output')
+    const selected = ($out.data('kometa-root-selected') || '').toString().trim()
+    const fallback = ($out.data('kometa-root-default') || '').toString().trim()
+    return selected || fallback
+  }
+
+  function getConfiguredKometaRootDisplay () {
+    const $out = $('#run-command-output')
+    const selected = ($out.data('kometa-root-selected-display') || '').toString().trim()
+    const fallback = ($out.data('kometa-root-default-display') || getConfiguredKometaRootPosix())
+    return selected || fallback
+  }
+
   function validateKometaRoot (options = {}) {
     if (KOMETA_VALIDATION_IN_PROGRESS) return
     KOMETA_VALIDATION_IN_PROGRESS = true
@@ -1017,9 +1037,20 @@ $(document).ready(function () {
     const $out = $('#run-command-output')
 
     const configName = $out.data('config-filename')
-    const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
-    const defaultRootDisplay = ($out.data('kometa-root-default-display') || defaultRootPosix)
+    const configuredRootPosix = getConfiguredKometaRootPosix()
+    const configuredRootDisplay = getConfiguredKometaRootDisplay()
+    const configuredInstallMode = getConfiguredKometaInstallMode()
     const appendStatus = Boolean(options.appendStatus)
+
+    if (!configuredRootPosix) {
+      $logBox.text('❌ Quickstart does not have a Kometa install path selected for this config yet.\nOpen the Start page and choose whether this config uses a Quickstart-managed install or an existing install.\n')
+      if ($spinner.length) $spinner.hide()
+      $runNow.prop('disabled', true)
+      KOMETA_VALIDATION_IN_PROGRESS = false
+      KOMETA_VALIDATED = false
+      syncKometaRollupBadge()
+      return
+    }
 
     if (appendStatus) {
       $logBox.append(
@@ -1039,8 +1070,7 @@ $(document).ready(function () {
       type: 'POST',
       url: '/validate-kometa-root',
       contentType: 'application/json',
-      // ✅ send the *normalized* path to the backend
-      data: JSON.stringify({ path: defaultRootPosix, config_name: configName }),
+      data: JSON.stringify({ path: configuredRootPosix, config_name: configName, install_mode: configuredInstallMode }),
       success: (res) => {
         KOMETA_LOCAL_CHECK_COMPLETED = true
         if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
@@ -1051,9 +1081,9 @@ $(document).ready(function () {
           if (res.kometa_version) $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
 
           // ✅ Prefer display paths for UI; keep posix for internal if needed
-          const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || defaultRootDisplay)
+          const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || configuredRootDisplay)
           const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
-          const kometaRootPosix = (res.kometa_root || defaultRootPosix)
+          const kometaRootPosix = (res.kometa_root || configuredRootPosix)
           const venvPythonPosix = (res.venv_python || venvPythonDisplay)
 
           // For command builder (UI shows native separators)
@@ -1130,23 +1160,27 @@ $(document).ready(function () {
 
   function probeKometaRoot () {
     const $out = $('#run-command-output')
-    const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
-    const defaultRootDisplay = ($out.data('kometa-root-default-display') || defaultRootPosix)
-    if (!defaultRootPosix) return Promise.resolve(null)
+    const configuredRootPosix = getConfiguredKometaRootPosix()
+    const configuredRootDisplay = getConfiguredKometaRootDisplay()
+    const configuredInstallMode = getConfiguredKometaInstallMode()
+    if (!configuredRootPosix) {
+      appendKometaStatusLine('❌ No Kometa install path is selected for this config yet.')
+      return Promise.resolve(null)
+    }
 
     return $.ajax({
       type: 'POST',
       url: '/probe-kometa-root',
       contentType: 'application/json',
-      data: JSON.stringify({ path: defaultRootPosix }),
+      data: JSON.stringify({ path: configuredRootPosix, install_mode: configuredInstallMode }),
       success: (res) => {
         KOMETA_LOCAL_CHECK_COMPLETED = true
         KOMETA_INSTALLED = !!res.kometa_installed
         if (Array.isArray(res.log)) res.log.forEach(line => appendKometaStatusLine(line))
 
-        const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || defaultRootDisplay)
+        const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || configuredRootDisplay)
         const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
-        const kometaRootPosix = (res.kometa_root || defaultRootPosix)
+        const kometaRootPosix = (res.kometa_root || configuredRootPosix)
         const venvPythonPosix = (res.venv_python || venvPythonDisplay)
 
         $out.data('kometa-root', kometaRootDisplay)
@@ -1179,15 +1213,15 @@ $(document).ready(function () {
   }
 
   function checkKometaUpdate (forceRefresh = false) {
-    const $out = $('#run-command-output')
-    const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
+    const configuredRootPosix = getConfiguredKometaRootPosix()
+    const configuredInstallMode = getConfiguredKometaInstallMode()
     const branchOverride = getKometaBranchOverride()
-    if (!defaultRootPosix) return Promise.resolve(null)
+    if (!configuredRootPosix) return Promise.resolve(null)
 
     return fetch('/check-kometa-update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: defaultRootPosix, force: forceRefresh, branch_override: branchOverride })
+      body: JSON.stringify({ path: configuredRootPosix, install_mode: configuredInstallMode, force: forceRefresh, branch_override: branchOverride })
     })
       .then(async res => {
         const data = await res.json()
@@ -2213,6 +2247,8 @@ $(document).ready(function () {
     const $runBox = $('#run-command-box')
     const qsBranch = $btn.data('qs-branch') || 'master'
     const branchOverride = getKometaBranchOverride()
+    const configuredRootPosix = getConfiguredKometaRootPosix()
+    const configuredInstallMode = getConfiguredKometaInstallMode()
     const forceUpdate = $forceUpdateToggle.is(':checked')
 
     if (KOMETA_INSTALLED && !forceUpdate && !KOMETA_UPDATE_AVAILABLE) {
@@ -2297,7 +2333,7 @@ $(document).ready(function () {
     fetch('/update-kometa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ branch: qsBranch, branch_override: branchOverride, force: forceUpdate, background: true })
+      body: JSON.stringify({ branch: qsBranch, branch_override: branchOverride, path: configuredRootPosix, install_mode: configuredInstallMode, force: forceUpdate, background: true })
     })
       .then(async res => {
         const data = await res.json()
