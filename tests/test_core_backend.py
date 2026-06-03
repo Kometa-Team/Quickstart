@@ -3411,6 +3411,25 @@ def test_validate_kometa_root_existing_mode_does_not_create_missing_root(client,
     assert not missing_root.exists()
 
 
+def test_save_kometa_install_mode_rejects_non_kometa_folder(client, tmp_path):
+    unrelated_root = tmp_path / "not-kometa"
+    unrelated_root.mkdir(parents=True, exist_ok=True)
+
+    resp = client.post(
+        "/save-kometa-install-mode",
+        json={
+            "config_name": "pytest_non_kometa_existing_root",
+            "install_mode": "existing",
+            "existing_root": str(unrelated_root),
+        },
+    )
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "kometa.py" in payload["error"]
+
+
 def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, monkeypatch, qs_module):
     existing_root = tmp_path / "kometa-existing-update"
     existing_root.mkdir(parents=True, exist_ok=True)
