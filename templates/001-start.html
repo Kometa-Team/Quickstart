@@ -57,36 +57,68 @@
                 {% endif %}
                 <div class="border rounded p-3 mb-3" id="start-kometa-install-settings"
                   data-install-mode="{{ page_info.kometa_install_mode }}"
-                  data-selected-root="{{ page_info.kometa_selected_root_display }}"
+                  data-selected-root="{{ page_info.kometa_primary_path_display }}"
                   data-managed-root="{{ page_info.kometa_managed_root_display }}">
                   <div class="fw-semibold mb-2">Kometa install ownership</div>
-                  <div class="small text-muted mb-2">Choose whether this config uses a Quickstart-managed Kometa or an existing install visible from this environment.</div>
-                  <div class="small text-muted mb-2">Quickstart-managed gives the clearest support model and full Quickstart-run guardrails. Existing install avoids duplicate installs, but the strongest Quickstart analytics and run protections still depend on launching from Quickstart.</div>
+                  <div class="small text-muted mb-2">Choose whether this config uses a Quickstart-managed Kometa, an existing direct install visible from this environment, or an external/containerized Kometa where Quickstart can only reach config and optional logs.</div>
+                  <div class="small text-muted mb-2">Quickstart-managed gives the clearest support model and full Quickstart-run guardrails. Existing direct install avoids duplicate installs, but the strongest Quickstart analytics and run protections still depend on launching from Quickstart. External mode is best for containers/NAS/remote setups, but Quickstart cannot directly launch, update, or fully orchestrate that runtime.</div>
                   <div class="form-check mb-1">
                     <input class="form-check-input" type="radio" name="start-kometa-install-mode" id="start-kometa-mode-managed"
-                      value="managed" {{ 'checked' if page_info.kometa_install_mode != 'existing' else '' }}>
+                      value="managed" {{ 'checked' if page_info.kometa_install_mode == 'managed' else '' }}>
                     <label class="form-check-label" for="start-kometa-mode-managed">
                       Use Quickstart-managed Kometa
                       <div class="small text-muted"><code>{{ page_info.kometa_managed_root_display }}</code></div>
                     </label>
                   </div>
-                  <div class="form-check mb-2">
+                  <div class="form-check mb-1">
                     <input class="form-check-input" type="radio" name="start-kometa-install-mode" id="start-kometa-mode-existing"
                       value="existing" {{ 'checked' if page_info.kometa_install_mode == 'existing' else '' }}>
                     <label class="form-check-label" for="start-kometa-mode-existing">
-                      Use an existing Kometa install
+                      Use an existing direct Kometa install
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="start-kometa-install-mode" id="start-kometa-mode-external"
+                      value="external" {{ 'checked' if page_info.kometa_install_mode == 'external' else '' }}>
+                    <label class="form-check-label" for="start-kometa-mode-external">
+                      Use an external/containerized Kometa config path
                     </label>
                   </div>
                   <div id="start-kometa-existing-root-wrap" class="mb-2 {{ '' if page_info.kometa_install_mode == 'existing' else 'd-none' }}">
-                    <label class="form-label form-label-sm mb-1" for="start-kometa-existing-root">Existing Kometa path</label>
+                    <label class="form-label form-label-sm mb-1" for="start-kometa-existing-root">Existing direct Kometa root</label>
                     <input type="text" class="form-control form-control-sm" id="start-kometa-existing-root"
                       value="{{ page_info.kometa_existing_root | default('', true) | escape }}"
-                      placeholder="Path visible from this Quickstart environment">
-                    <div class="form-text">Quickstart can only use installs it can see from this environment.</div>
+                      placeholder="Folder containing kometa.py, requirements.txt, and config/">
+                    <div class="form-text">Choose the Kometa root folder. Quickstart can only use installs it can see from this environment.</div>
+                  </div>
+                  <div id="start-kometa-external-config-wrap" class="mb-2 {{ '' if page_info.kometa_install_mode == 'external' else 'd-none' }}">
+                    <label class="form-label form-label-sm mb-1" for="start-kometa-external-config-root">External Kometa config path</label>
+                    <input type="text" class="form-control form-control-sm" id="start-kometa-external-config-root"
+                      value="{{ page_info.kometa_external_config_root | default('', true) | escape }}"
+                      placeholder="Typically the mounted config directory, e.g. .../kometa/config">
+                    <div class="form-text">Use this for Docker/NAS/remote setups where Quickstart can reach the config directory but not the Kometa runtime itself.</div>
+                  </div>
+                  <div id="start-kometa-external-log-wrap" class="mb-2 {{ '' if page_info.kometa_install_mode == 'external' else 'd-none' }}">
+                    <label class="form-label form-label-sm mb-1" for="start-kometa-external-log-root">External Kometa log path (optional)</label>
+                    <input type="text" class="form-control form-control-sm" id="start-kometa-external-log-root"
+                      value="{{ page_info.kometa_external_log_root | default('', true) | escape }}"
+                      placeholder="Leave blank to use <config>/logs">
+                    <div class="form-text">If accessible, Quickstart can still use built-in log views and logscan against this path.</div>
+                  </div>
+                  <div id="start-kometa-external-drawbacks" class="small text-warning mb-2 {{ '' if page_info.kometa_install_mode == 'external' else 'd-none' }}">
+                    External mode tradeoffs: Quickstart cannot directly launch or update Kometa, analytics attribution is limited, maintenance-window guardrails and resume markers only apply when runs are launched from Quickstart, and log tools only work if the log path is accessible.
                   </div>
                   <div class="small mb-2">
-                    Active root:
-                    <code id="start-kometa-active-root">{{ page_info.kometa_selected_root_display if page_info.kometa_selected_root_display else page_info.kometa_managed_root_display }}</code>
+                    Active path:
+                    <code id="start-kometa-active-root">{{ page_info.kometa_primary_path_display if page_info.kometa_primary_path_display else page_info.kometa_managed_root_display }}</code>
+                  </div>
+                  <div class="small mb-2">
+                    Active config path:
+                    <code id="start-kometa-active-config">{{ page_info.kometa_active_config_dir_display }}</code>
+                  </div>
+                  <div class="small mb-2">
+                    Active log path:
+                    <code id="start-kometa-active-log">{{ page_info.kometa_active_log_dir_display }}</code>
                   </div>
                   <div class="small text-muted mb-2" id="start-kometa-install-message">{{ page_info.kometa_install_status_message }}</div>
                   <div class="d-flex align-items-center gap-2">

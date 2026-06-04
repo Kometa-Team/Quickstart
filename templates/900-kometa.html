@@ -384,18 +384,26 @@
           <div id="kometa-actions">
             <div class="alert alert-secondary mb-0">
               <div class="small text-muted mb-2">
+                  {% if page_info.kometa_can_probe_runtime %}
                   Install, validate, or update the local Kometa setup before starting a run.
+                  {% else %}
+                  Quickstart is connected to an external Kometa config/log path. It can sync generated config and optionally read logs, but it cannot launch or update that runtime directly.
+                  {% endif %}
               </div>
               <div class="mb-2">
-                <div><strong>Install ownership:</strong> {{ 'Quickstart-managed install' if page_info.kometa_is_managed_install else 'Existing install' }}</div>
-                <div><strong>Active root:</strong> <code id="kometa-install-path">{{ page_info.kometa_selected_root_display if page_info.kometa_selected_root_display else page_info.kometa_managed_root_display }}</code></div>
+                <div><strong>Install ownership:</strong> {{ page_info.kometa_mode_label }}</div>
+                <div><strong>Active path:</strong> <code id="kometa-install-path">{{ page_info.kometa_primary_path_display if page_info.kometa_primary_path_display else page_info.kometa_managed_root_display }}</code></div>
+                <div><strong>Config path:</strong> <code id="kometa-config-path">{{ page_info.kometa_active_config_dir_display }}</code></div>
+                <div><strong>Log path:</strong> <code id="kometa-log-path">{{ page_info.kometa_active_log_dir_display }}</code></div>
                 {% if not page_info.kometa_is_managed_install %}
                 <div class="small text-muted mt-1">Change this on the <a href="/step/001-start">Start page</a> if Quickstart should switch to a different Kometa install.</div>
                 {% endif %}
               </div>
               <div class="alert {{ 'alert-secondary' if page_info.kometa_selection_valid else 'alert-warning' }} small py-2 px-3 mb-2" role="status">
                 {{ page_info.kometa_install_status_message }}
-                {% if not page_info.kometa_is_managed_install %}
+                {% if page_info.kometa_is_external_install %}
+                <div class="mt-1">External mode tradeoffs: Quickstart cannot launch or update Kometa directly, analytics attribution is limited, maintenance-window guardrails and resume markers only apply when Kometa is launched from Quickstart, and log tools only work when the log path is accessible.</div>
+                {% elif not page_info.kometa_is_managed_install %}
                 <div class="mt-1">Quickstart-specific guardrails and analytics are strongest when this install is launched from Quickstart rather than externally.</div>
                 {% endif %}
               </div>
@@ -424,7 +432,7 @@
               </div>
               <div class="d-flex flex-wrap align-items-center gap-3">
                 <button id="update-kometa-btn" type="button" class="btn btn-primary btn-sm"
-                  data-qs-branch="{{ version_info.branch }}">
+                  data-qs-branch="{{ version_info.branch }}" {{ 'disabled' if not page_info.kometa_can_update else '' }}>
                   <i class="bi bi-arrow-clockwise me-1"></i> Check for Kometa Updates
                 </button>
                 <div class="form-check form-switch small">
@@ -725,7 +733,15 @@
       data-kometa-root-default-display="{{ kometa_default_display }}"
       data-kometa-root-selected="{{ kometa_selected_path | replace('\\','/') }}"
       data-kometa-root-selected-display="{{ kometa_selected_display }}"
-      data-kometa-install-mode="{{ page_info.kometa_install_mode }}">
+      data-kometa-install-mode="{{ page_info.kometa_install_mode }}"
+      data-kometa-config-dir="{{ page_info.kometa_active_config_dir | replace('\\','/') }}"
+      data-kometa-config-dir-display="{{ page_info.kometa_active_config_dir_display }}"
+      data-kometa-log-dir="{{ page_info.kometa_active_log_dir | replace('\\','/') }}"
+      data-kometa-log-dir-display="{{ page_info.kometa_active_log_dir_display }}"
+      data-kometa-can-launch="{{ 'true' if page_info.kometa_can_launch else 'false' }}"
+      data-kometa-can-update="{{ 'true' if page_info.kometa_can_update else 'false' }}"
+      data-kometa-can-probe-runtime="{{ 'true' if page_info.kometa_can_probe_runtime else 'false' }}"
+      data-kometa-can-read-logs="{{ 'true' if page_info.kometa_can_read_logs else 'false' }}">
 </code>
 </pre>
                 <button type="button" id="copy-command"

@@ -2918,6 +2918,31 @@ def test_save_to_named_config_syncs_managed_library_artifacts_to_kometa(isolated
     assert synced_file.read_text(encoding="utf-8") == collection_file.read_text(encoding="utf-8")
 
 
+def test_save_to_named_config_writes_to_external_kometa_config_dir(isolated_config_dir, app, tmp_path):
+    from modules import helpers
+
+    config_name = "pytest_external_save_sync"
+    external_config = tmp_path / "external-kometa-config"
+    external_logs = external_config / "logs"
+    external_logs.mkdir(parents=True, exist_ok=True)
+    collection_dir = isolated_config_dir / config_name / "collection_files" / "mov-library_movies"
+    collection_dir.mkdir(parents=True, exist_ok=True)
+    collection_file = collection_dir / "collections.yml"
+    collection_file.write_text("collections:\n  test:\n    plex_search:\n      any:\n        title: Example\n", encoding="utf-8")
+
+    with app.app_context():
+        app.config["KOMETA_INSTALL_MODE"] = "external"
+        app.config["KOMETA_CONFIG_DIR"] = str(external_config)
+        app.config["KOMETA_LOG_DIR"] = str(external_logs)
+        latest_filename = helpers.save_to_named_config("settings:\n  cache: true\n", config_name)
+
+    assert latest_filename == f"{config_name}_config.yml"
+    assert (external_config / latest_filename).exists()
+    synced_file = external_config / config_name / "collection_files" / "mov-library_movies" / "collections.yml"
+    assert synced_file.exists()
+    assert synced_file.read_text(encoding="utf-8") == collection_file.read_text(encoding="utf-8")
+
+
 def test_save_to_named_config_rejects_blank_config_name(isolated_config_dir, app):
     from modules import helpers
 
@@ -3433,6 +3458,41 @@ def test_save_kometa_install_mode_rejects_non_kometa_folder(client, tmp_path):
     assert "kometa.py" in payload["error"]
 
 
+def test_save_kometa_install_mode_persists_external_paths(client, tmp_path):
+    from modules import database
+
+    config_name = "pytest_kometa_external_mode"
+    external_config = tmp_path / "kometa-config"
+    external_logs = external_config / "logs"
+    external_logs.mkdir(parents=True, exist_ok=True)
+
+    resp = client.post(
+        "/save-kometa-install-mode",
+        json={
+            "config_name": config_name,
+            "install_mode": "external",
+            "external_config_root": str(external_config),
+            "external_log_root": str(external_logs),
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["install_mode"] == "external"
+    assert payload["can_launch"] is False
+    assert payload["can_update"] is False
+    assert payload["kometa_config_dir_display"] == str(external_config.resolve())
+    assert payload["kometa_log_dir_display"] == str(external_logs.resolve())
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "kometa")
+    assert validated is False
+    assert user_entered is True
+    assert stored["kometa"]["install_mode"] == "external"
+    assert stored["kometa"]["external_config_root"] == str(external_config)
+    assert stored["kometa"]["external_log_root"] == str(external_logs)
+
+
 def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, monkeypatch, qs_module):
     existing_root = tmp_path / "kometa-existing-update"
     existing_root.mkdir(parents=True, exist_ok=True)
@@ -3465,6 +3525,41 @@ def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, mon
     payload = resp.get_json()
     assert payload["success"] is True
     assert captured["target_root"] == str(existing_root.resolve())
+
+
+def test_get_kometa_config_dir_prefers_persisted_external_selection(app, tmp_path):
+    from flask import session
+    from modules import database, helpers
+
+    config_name = "pytest_persisted_external_config"
+    external_config = tmp_path / "persisted-external-config"
+    external_logs = external_config / "logs"
+    external_logs.mkdir(parents=True, exist_ok=True)
+
+    database.save_section_data(
+        name=config_name,
+        section="kometa",
+        validated=False,
+        user_entered=True,
+        data={
+            "kometa": {
+                "install_mode": "external",
+                "external_config_root": str(external_config),
+                "external_log_root": str(external_logs),
+            }
+        },
+    )
+
+    with app.test_request_context("/step/900-kometa"):
+        app.config["KOMETA_INSTALL_MODE"] = "managed"
+        app.config["KOMETA_CONFIG_DIR"] = ""
+        app.config["KOMETA_LOG_DIR"] = ""
+        session["config_name"] = config_name
+        session["kometa_install_mode"] = "managed"
+        session["kometa_config_dir"] = ""
+        session["kometa_log_dir"] = ""
+        assert helpers.get_kometa_config_dir() == external_config.resolve()
+        assert helpers.get_kometa_log_dir() == external_logs.resolve()
 
 
 def test_get_kometa_root_path_prefers_persisted_existing_selection(app, tmp_path):

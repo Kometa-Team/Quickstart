@@ -1006,13 +1006,16 @@ $(document).ready(function () {
   function getConfiguredKometaInstallMode () {
     const $out = $('#run-command-output')
     const raw = ($out.data('kometa-install-mode') || 'managed').toString().trim().toLowerCase()
-    return raw === 'existing' ? 'existing' : 'managed'
+    if (raw === 'existing' || raw === 'external') return raw
+    return 'managed'
   }
 
   function getConfiguredKometaRootPosix () {
     const $out = $('#run-command-output')
     const selected = ($out.data('kometa-root-selected') || '').toString().trim()
     const fallback = ($out.data('kometa-root-default') || '').toString().trim()
+    const configDir = ($out.data('kometa-config-dir') || '').toString().trim()
+    if (getConfiguredKometaInstallMode() === 'external') return configDir
     return selected || fallback
   }
 
@@ -1020,10 +1023,35 @@ $(document).ready(function () {
     const $out = $('#run-command-output')
     const selected = ($out.data('kometa-root-selected-display') || '').toString().trim()
     const fallback = ($out.data('kometa-root-default-display') || getConfiguredKometaRootPosix())
+    const configDir = ($out.data('kometa-config-dir-display') || '').toString().trim()
+    if (getConfiguredKometaInstallMode() === 'external') return configDir || getConfiguredKometaRootPosix()
     return selected || fallback
   }
 
+  function kometaCanLaunch () {
+    return ($('#run-command-output').data('kometa-can-launch') || '').toString().toLowerCase() === 'true'
+  }
+
+  function kometaCanUpdate () {
+    return ($('#run-command-output').data('kometa-can-update') || '').toString().toLowerCase() === 'true'
+  }
+
+  function kometaCanProbeRuntime () {
+    return ($('#run-command-output').data('kometa-can-probe-runtime') || '').toString().toLowerCase() === 'true'
+  }
+
+  function kometaCanReadLogs () {
+    return ($('#run-command-output').data('kometa-can-read-logs') || '').toString().toLowerCase() === 'true'
+  }
+
   function validateKometaRoot (options = {}) {
+    if (!kometaCanProbeRuntime()) {
+      appendKometaStatusLine('ℹ️ Runtime validation is not available in external Kometa mode. Quickstart can sync config and optional logs, but it cannot validate or launch the runtime directly.')
+      KOMETA_VALIDATION_IN_PROGRESS = false
+      KOMETA_VALIDATED = false
+      syncKometaRollupBadge()
+      return
+    }
     if (KOMETA_VALIDATION_IN_PROGRESS) return
     KOMETA_VALIDATION_IN_PROGRESS = true
     setKometaUpdatePhaseBadge('validating')
@@ -1213,6 +1241,15 @@ $(document).ready(function () {
   }
 
   function checkKometaUpdate (forceRefresh = false) {
+    if (!kometaCanUpdate()) {
+      appendKometaStatusLine('ℹ️ Update checks are not available in external Kometa mode.')
+      return Promise.resolve({
+        success: true,
+        update_check_completed: false,
+        kometa_update_check_skipped: true,
+        kometa_update_available: false
+      })
+    }
     const configuredRootPosix = getConfiguredKometaRootPosix()
     const configuredInstallMode = getConfiguredKometaInstallMode()
     const branchOverride = getKometaBranchOverride()
@@ -1551,6 +1588,12 @@ $(document).ready(function () {
     invalidateKometaUpdateStatus()
     return probeKometaRoot()
       .then((res) => {
+        if (getConfiguredKometaInstallMode() === 'external') {
+          appendKometaStatusLine('')
+          appendKometaStatusLine('ℹ️ External Kometa mode detected. Quickstart will not perform runtime update checks in this mode.')
+          if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('idle')
+          return res
+        }
         if (!res || !res.kometa_installed) {
           appendKometaStatusLine('')
           appendKometaStatusLine('ℹ️ Remote update check skipped because Kometa is not installed.')
@@ -2235,6 +2278,10 @@ $(document).ready(function () {
   }
 
   function callUpdateKometa () {
+    if (!kometaCanUpdate()) {
+      showToast('info', 'External Kometa mode cannot update the runtime. Quickstart can only sync config and optional logs in this mode.')
+      return
+    }
     if (KOMETA_STATUS === 'running') {
       showToast('info', 'Kometa is currently running; update skipped.')
       return
@@ -3058,6 +3105,9 @@ $(document).ready(function () {
       })
       .catch(() => showToast('error', 'Failed to download log.'))
   })
+  if (!kometaCanReadLogs()) {
+    $downloadLogBtn.prop('disabled', true)
+  }
   updateClearFilterButton()
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {
@@ -3075,6 +3125,10 @@ $(document).ready(function () {
     .finally(() => {
       if (!document.getElementById('kometa-validation-log')) return
       if (KOMETA_STATUS === 'running') return
+      if (!kometaCanProbeRuntime()) {
+        appendKometaStatusLine('ℹ️ External Kometa mode active. Runtime validation, launch, and update controls are disabled; generated config still syncs to the configured Kometa path.')
+        return
+      }
       Promise.resolve(runKometaStatusPass(false))
         .finally(() => {
           const stage = getFinalGateState().stage
@@ -3088,6 +3142,7 @@ $(document).ready(function () {
     kometaActionsCollapse.addEventListener('show.bs.collapse', () => {
       const stage = getFinalGateState().stage
       if (stage === 'todo' || stage === 'freshness') return
+      if (!kometaCanProbeRuntime()) return
       if (KOMETA_STATUS === 'running') {
         if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
           bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).hide()
@@ -3101,6 +3156,10 @@ $(document).ready(function () {
 
   if (runCommandCollapse) {
     runCommandCollapse.addEventListener('show.bs.collapse', () => {
+      if (!kometaCanLaunch()) {
+        setRunCommandPlaceholderState()
+        return
+      }
       if (KOMETA_STATUS === 'running') {
         clearRunCommandPlaceholderState()
         return
@@ -3415,6 +3474,10 @@ $(document).ready(function () {
   }
 
   $('#run-now').on('click', function () {
+    if (!kometaCanLaunch()) {
+      showToast('info', 'External Kometa mode cannot launch Kometa from Quickstart. Quickstart can only sync config and optional logs in this mode.')
+      return
+    }
     startKometaCommand(getCurrentRunCommand(), {
       startMode: 'current',
       requireValidated: true,
