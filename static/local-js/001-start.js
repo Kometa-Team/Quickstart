@@ -443,6 +443,8 @@ document.addEventListener('DOMContentLoaded', function () {
     refreshWorkspaceStatusNow()
   }
 
+  window.qsApplyActiveConfigUi = applyActiveConfigUi
+
   async function activateConfig (name) {
     const normalized = sanitizeConfigName(name)
     if (!normalized) {

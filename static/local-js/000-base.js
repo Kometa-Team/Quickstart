@@ -2748,25 +2748,29 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(data.message || 'Failed to switch configs.')
         }
         const nextName = data.name || target
-        configTriggers.forEach((trigger) => {
-          if (trigger && trigger.dataset) {
-            trigger.dataset.current = nextName
-          }
-        })
-        document.querySelectorAll('.qs-main-page-meta-value').forEach((node) => {
-          node.textContent = nextName
-        })
-        const activeConfigInput = document.getElementById('qs-active-config-input')
-        if (activeConfigInput) {
-          activeConfigInput.value = nextName
-        }
-        if (window.pageInfo) {
-          window.pageInfo.config_name = nextName
-        }
-        if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
-          qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: nextName }, data.workspace_status))
+        if (typeof window.qsApplyActiveConfigUi === 'function') {
+          window.qsApplyActiveConfigUi(nextName)
         } else {
-          qsRefreshWorkspaceStatus({ immediate: true, configName: nextName })
+          configTriggers.forEach((trigger) => {
+            if (trigger && trigger.dataset) {
+              trigger.dataset.current = nextName
+            }
+          })
+          document.querySelectorAll('.qs-main-page-meta-value').forEach((node) => {
+            node.textContent = nextName
+          })
+          const activeConfigInput = document.getElementById('qs-active-config-input')
+          if (activeConfigInput) {
+            activeConfigInput.value = nextName
+          }
+          if (window.pageInfo) {
+            window.pageInfo.config_name = nextName
+          }
+          if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
+            qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: nextName }, data.workspace_status))
+          } else {
+            qsRefreshWorkspaceStatus({ immediate: true, configName: nextName })
+          }
         }
         showToast('success', `Switched to config "${nextName}".`)
         const nextConfig = encodeURIComponent(nextName)

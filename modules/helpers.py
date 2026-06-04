@@ -2864,7 +2864,21 @@ def migrate_config_archives(history_limit: int | None = None) -> dict:
 
 
 def normalize_config_name_for_storage(config_name: str | None) -> str:
-    name = str(config_name or "").strip().lower().replace(" ", "_")
+    raw = str(config_name or "").strip()
+    if not raw:
+        return "default"
+
+    name = Path(raw).name.strip().lower()
+    if name.endswith("_config.yml"):
+        name = name[:-11]
+    elif name.endswith("_config.yaml"):
+        name = name[:-12]
+    elif name.endswith(".yml"):
+        name = name[:-4]
+    elif name.endswith(".yaml"):
+        name = name[:-5]
+
+    name = name.replace(" ", "_")
     return name or "default"
 
 

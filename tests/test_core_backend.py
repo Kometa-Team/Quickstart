@@ -3586,3 +3586,10 @@ def test_get_kometa_root_path_prefers_persisted_existing_selection(app, tmp_path
         session["config_name"] = config_name
         session["kometa_root"] = managed_default
         assert helpers.get_kometa_root_path() == existing_root.resolve()
+
+
+def test_normalize_config_name_for_storage_strips_yaml_filename_suffix():
+    from modules import helpers
+
+    assert helpers.normalize_config_name_for_storage("bullmoose20_prod9_config.yml") == "bullmoose20_prod9"
+    assert helpers.normalize_config_name_for_storage(r"C:\tmp\bullmoose20_prod9_config.yml") == "bullmoose20_prod9"
