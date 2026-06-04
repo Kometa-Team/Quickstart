@@ -396,6 +396,7 @@ QS_WARN_REASONS = {
 }
 QS_ERROR_REASONS = {
     "missing_plex_validation",
+    "missing_location",
     "token_invalid",
     "account_locked",
     "validation_error",
@@ -510,20 +511,76 @@ def utc_now_iso():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
+    if not isinstance(stored_data, dict):
+        stored_data = {}
+    stored_data["validation_status"] = status
+    if reason is not None:
+        stored_data["validation_reason"] = reason
+    if details is not None:
+        stored_data["validation_details"] = details
+    stored_data["validation_updated_at"] = updated_at or utc_now_iso()
+    return stored_data
+
+
 def build_validation_summary(errors):
+    def infer_section_from_text(text):
+        lowered = str(text or "").strip().lower()
+        if any(token in lowered for token in ("metadata_files[", "collection_files[", "overlay_files[")):
+            return "libraries"
+        if "playlist_files[" in lowered:
+            return "playlist_files"
+        if lowered.startswith("plex"):
+            return "plex"
+        if lowered.startswith("tmdb"):
+            return "tmdb"
+        if lowered.startswith("settings"):
+            return "settings"
+        return "config"
+
     summary = []
     if not errors:
         return summary
     for err in errors[:20]:
-        path_parts = [str(p) for p in err.path]
+        if isinstance(err, str):
+            section = infer_section_from_text(err)
+            summary.append(
+                {
+                    "title": err,
+                    "details": "",
+                    "doc_url": VALIDATION_DOCS.get(section, VALIDATION_DOC_FALLBACK),
+                    "section": section,
+                    "suggestions": [],
+                }
+            )
+            continue
+
+        if isinstance(err, dict):
+            section = str(err.get("section") or infer_section_from_text(err.get("title") or err.get("message") or "") or "config")
+            summary.append(
+                {
+                    "title": str(err.get("title") or err.get("message") or "Validation error"),
+                    "details": str(err.get("details") or ""),
+                    "doc_url": err.get("doc_url") or VALIDATION_DOCS.get(section, VALIDATION_DOC_FALLBACK),
+                    "section": section,
+                    "suggestions": list(err.get("suggestions") or []),
+                }
+            )
+            continue
+
+        path_parts = [str(p) for p in getattr(err, "path", [])]
         section = path_parts[0] if path_parts else ""
         path_display = ".".join(path_parts) if path_parts else (section or "config")
         doc_url = VALIDATION_DOCS.get(section, VALIDATION_DOC_FALLBACK)
-        title = f"{path_display}: {err.message}"
+        message = str(getattr(err, "message", err) or "Validation error")
+        title = f"{path_display}: {message}"
         details = ""
         suggestions = []
 
-        if err.validator == "additionalProperties":
+        validator = getattr(err, "validator", "")
+        validator_value = getattr(err, "validator_value", None)
+
+        if validator == "additionalProperties":
             extras = []
             try:
                 extras = list(err.params.get("additionalProperties") or [])
@@ -536,17 +593,17 @@ def build_validation_summary(errors):
                     suggestion = VALIDATION_KEY_SUGGESTIONS.get(section, {}).get(key)
                     if suggestion:
                         suggestions.append(f"{key} → {suggestion}")
-        elif err.validator == "type":
-            expected = err.validator_value
+        elif validator == "type":
+            expected = validator_value
             details = f"Expected type: {expected}."
-        elif err.validator == "enum":
-            values = err.validator_value or []
+        elif validator == "enum":
+            values = validator_value or []
             details = f"Expected one of: {', '.join(map(str, values))}."
-        elif err.validator == "minimum":
-            details = f"Minimum allowed: {err.validator_value}."
-        elif err.validator == "maximum":
-            details = f"Maximum allowed: {err.validator_value}."
-        elif err.validator == "pattern":
+        elif validator == "minimum":
+            details = f"Minimum allowed: {validator_value}."
+        elif validator == "maximum":
+            details = f"Maximum allowed: {validator_value}."
+        elif validator == "pattern":
             details = "Value does not match the expected format."
 
         summary.append(
@@ -729,6 +786,21 @@ LIBRARY_FILE_PARSE_FUNCTIONS = {
     "collection_files": _parse_collection_file_entries,
     "overlay_files": _parse_overlay_file_entries,
 }
+
+
+def _format_library_file_validation_error(lib_id, kind, idx, message, entry, details=None):
+    location = str((entry or {}).get("location") or "").strip()
+    detail_text = ""
+    if isinstance(details, dict):
+        detail_text = str(details.get("message") or "").strip()
+    if location:
+        path_label = "Path"
+        if detail_text and detail_text not in message:
+            return f"{lib_id} {kind}[{idx}]: {message} {detail_text} {path_label}: {location}"
+        return f"{lib_id} {kind}[{idx}]: {message} {path_label}: {location}"
+    if detail_text and detail_text not in message:
+        return f"{lib_id} {kind}[{idx}]: {message} {detail_text}"
+    return f"{lib_id} {kind}[{idx}]: {message}"
 
 
 def _safe_external_artifact_slug(value, fallback="artifact"):
@@ -1009,7 +1081,7 @@ def _clone_library_file_entries_for_target(kind, raw_value, config_name, target_
             require_managed_context=True,
         )
         if entry_error:
-            raise RuntimeError(f"{target_library_id} {kind}[{idx}]: {entry_error}")
+            raise RuntimeError(_format_library_file_validation_error(target_library_id, kind, idx, entry_error, entry))
         cloned_entries.append(normalized_entry if normalized_entry is not None else entry)
     return json.dumps(cloned_entries, ensure_ascii=True)
 
@@ -1043,7 +1115,7 @@ def _normalize_library_file_entries_payload(libraries_data, config_name, validat
                     require_managed_context=True,
                 )
                 if entry_error:
-                    errors.append(f"{library_scope} {kind}[{idx}]: {entry_error}")
+                    errors.append(_format_library_file_validation_error(library_scope, kind, idx, entry_error, entry))
                     continue
                 if normalized_entry:
                     new_entries.append(normalized_entry)
@@ -1138,7 +1210,15 @@ def _normalize_generated_config_library_files(config_data, config_name):
                         require_managed_context=True,
                     )
                     if entry_error:
-                        errors.append(f"{library_name} {kind}[{idx}]: {entry_error}")
+                        errors.append(
+                            _format_library_file_validation_error(
+                                library_name,
+                                kind,
+                                idx,
+                                entry_error,
+                                {"type": entry_type, "location": location},
+                            )
+                        )
                         new_entries.append(entry)
                     else:
                         new_entries.append({entry_type: normalized_entry["location"]})
@@ -1392,7 +1472,7 @@ def _validate_library_metadata_files(libraries_data, selected_library_ids):
             continue
 
         for idx, entry in enumerate(entries, start=1):
-            valid, message, _details = validations._normalize_metadata_validation_result(
+            valid, message, details = validations._normalize_metadata_validation_result(
                 validations.validate_metadata_file_payload(
                     {
                         "metadata_file_type": entry.get("type"),
@@ -1401,7 +1481,7 @@ def _validate_library_metadata_files(libraries_data, selected_library_ids):
                 )
             )
             if not valid:
-                errors.append(f"{lib_id} metadata_files[{idx}]: {message}")
+                errors.append(_format_library_file_validation_error(lib_id, "metadata_files", idx, message, entry, details))
 
     return errors
 
@@ -1422,7 +1502,7 @@ def _validate_library_collection_files(libraries_data, selected_library_ids):
             continue
 
         for idx, entry in enumerate(entries, start=1):
-            valid, message, _details = validations._normalize_metadata_validation_result(
+            valid, message, details = validations._normalize_metadata_validation_result(
                 validations.validate_collection_file_payload(
                     {
                         "collection_file_type": entry.get("type"),
@@ -1431,7 +1511,7 @@ def _validate_library_collection_files(libraries_data, selected_library_ids):
                 )
             )
             if not valid:
-                errors.append(f"{lib_id} collection_files[{idx}]: {message}")
+                errors.append(_format_library_file_validation_error(lib_id, "collection_files", idx, message, entry, details))
 
     return errors
 
@@ -1452,7 +1532,7 @@ def _validate_library_overlay_files(libraries_data, selected_library_ids):
             continue
 
         for idx, entry in enumerate(entries, start=1):
-            valid, message, _details = validations._normalize_metadata_validation_result(
+            valid, message, details = validations._normalize_metadata_validation_result(
                 validations.validate_overlay_file_payload(
                     {
                         "overlay_file_type": entry.get("type"),
@@ -1461,7 +1541,7 @@ def _validate_library_overlay_files(libraries_data, selected_library_ids):
                 )
             )
             if not valid:
-                errors.append(f"{lib_id} overlay_files[{idx}]: {message}")
+                errors.append(_format_library_file_validation_error(lib_id, "overlay_files", idx, message, entry, details))
 
     return errors
 
@@ -2283,7 +2363,18 @@ def _has_meaningful_optional_input(template_key, payload):
 
 def _derive_step_status(template_key, group, section_rows, config_exists):
     if template_key == "001-start":
-        return "ok" if config_exists else "error"
+        if not config_exists:
+            return "error"
+        kometa_entry = section_rows.get("kometa") if isinstance(section_rows, dict) else None
+        kometa_entry = kometa_entry if isinstance(kometa_entry, dict) else {}
+        kometa_payload = kometa_entry.get("data")
+        kometa_payload = kometa_payload if isinstance(kometa_payload, dict) else {}
+        kometa_section = kometa_payload.get("kometa") if isinstance(kometa_payload.get("kometa"), dict) else {}
+        kometa_selection = _canonicalize_kometa_section(kometa_section)
+        if kometa_selection.get("install_mode") == KOMETA_INSTALL_MODE_MANAGED:
+            return "ok"
+        is_valid, _reason, _details = _validate_saved_kometa_selection(kometa_selection)
+        return "ok" if is_valid else "error"
 
     if template_key == "900-kometa":
         return "warn"
@@ -4427,6 +4518,55 @@ def _validate_existing_kometa_root(path_obj):
     if not (p / "requirements.txt").exists():
         missing.append("requirements.txt")
     return missing
+
+
+def _validate_saved_kometa_selection(section_data):
+    section = _canonicalize_kometa_section(section_data)
+    install_mode = section.get("install_mode")
+
+    if install_mode == KOMETA_INSTALL_MODE_MANAGED:
+        return True, None, None
+
+    if install_mode == KOMETA_INSTALL_MODE_EXISTING:
+        existing_root = str(section.get("existing_root") or "").strip()
+        if not existing_root:
+            return False, "missing_location", "Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/."
+        resolved_existing = _resolve_user_dir(existing_root)
+        if not resolved_existing:
+            return False, "invalid_paths", [f"Saved existing Kometa root is invalid. Path: {existing_root}"]
+        if not resolved_existing.exists():
+            return False, "invalid_paths", [f"Existing Kometa root does not exist. Path: {resolved_existing}"]
+        missing = _validate_existing_kometa_root(resolved_existing)
+        if missing:
+            if "path" in missing:
+                return False, "invalid_paths", [f"Existing Kometa root does not exist. Path: {resolved_existing}"]
+            missing_labels = []
+            if "kometa.py" in missing:
+                missing_labels.append("kometa.py")
+            if "requirements.txt" in missing:
+                missing_labels.append("requirements.txt")
+            if "config" in missing:
+                missing_labels.append("config/")
+            label_text = ", ".join(missing_labels) if missing_labels else ", ".join(missing)
+            return False, "invalid_paths", [f"Existing Kometa root is missing required items: {label_text}. Path: {resolved_existing}"]
+        return True, None, None
+
+    external_config_root = str(section.get("external_config_root") or "").strip()
+    external_log_root = str(section.get("external_log_root") or "").strip()
+    if not external_config_root:
+        return False, "missing_location", "Choose the external Kometa config path Quickstart should use for this config."
+    resolved_external_config = _resolve_user_dir(external_config_root)
+    if not resolved_external_config:
+        return False, "invalid_paths", [f"Saved external Kometa config path is invalid. Path: {external_config_root}"]
+    if not resolved_external_config.exists() or not resolved_external_config.is_dir():
+        return False, "invalid_paths", [f"External Kometa config path does not exist. Path: {resolved_external_config}"]
+    if external_log_root:
+        resolved_external_log = _resolve_user_dir(external_log_root)
+        if not resolved_external_log:
+            return False, "invalid_paths", [f"Saved external Kometa log path is invalid. Path: {external_log_root}"]
+        if not resolved_external_log.exists() or not resolved_external_log.is_dir():
+            return False, "invalid_paths", [f"External Kometa log path does not exist. Path: {resolved_external_log}"]
+    return True, None, None
 
 
 def _sync_generated_yaml_and_assets_to_kometa_config(config_dir, config_filename, logs=None):
@@ -9718,6 +9858,17 @@ def validate_all_services():
         results[template_key] = result
         summary["skipped"] += 1
 
+    kometa_settings, kometa_section = _get_kometa_settings_section(config_name)
+    del kometa_settings
+    kometa_valid, kometa_reason, kometa_details = _validate_saved_kometa_selection(kometa_section)
+    update_section_validation(
+        "001-start",
+        "kometa",
+        kometa_valid,
+        reason=kometa_reason,
+        details=kometa_details,
+    )
+
     # Bulk validation for libraries
     plex_settings = persistence.retrieve_settings("010-plex") or {}
     plex_is_valid = helpers.booler(plex_settings.get("validated", False)) if isinstance(plex_settings, dict) else False
@@ -9951,6 +10102,7 @@ def validate_all_services():
         "missing_credentials": "Missing credentials",
         "missing_plex_validation": "Plex not validated",
         "no_libraries": "No libraries selected",
+        "missing_location": "Missing location",
         "invalid_paths": "Invalid paths",
         "invalid_arr_overrides": "Invalid Arr overrides",
         "missing_library_defaults": "Missing library defaults",
@@ -15531,10 +15683,11 @@ def save_kometa_install_mode():
             **section_payload_update,
         }
     )
+    section_payload = apply_validation_metadata(section_payload, "validated")
     database.save_section_data(
         name=config_name,
         section="kometa",
-        validated=helpers.booler(stored_validated),
+        validated=True,
         user_entered=True,
         data=section_payload,
     )

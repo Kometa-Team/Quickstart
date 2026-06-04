@@ -58,6 +58,9 @@
                 <div class="border rounded p-3 mb-3" id="start-kometa-install-settings"
                   data-install-mode="{{ page_info.kometa_install_mode }}"
                   data-selected-root="{{ page_info.kometa_primary_path_display }}"
+                  data-existing-root="{{ page_info.kometa_existing_root | default('', true) | escape }}"
+                  data-external-config-root="{{ page_info.kometa_external_config_root | default('', true) | escape }}"
+                  data-external-log-root="{{ page_info.kometa_external_log_root | default('', true) | escape }}"
                   data-managed-root="{{ page_info.kometa_managed_root_display }}">
                   <div class="fw-semibold mb-2">Kometa install ownership</div>
                   <div class="small text-muted mb-2">Choose whether this config uses a Quickstart-managed Kometa, an existing direct install visible from this environment, or an external/containerized Kometa where Quickstart can only reach config and optional logs.</div>
@@ -122,7 +125,7 @@
                   </div>
                   <div class="small text-muted mb-2" id="start-kometa-install-message">{{ page_info.kometa_install_status_message }}</div>
                   <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-info" id="start-kometa-install-save">Save Kometa Choice</button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="start-kometa-install-save" disabled>Save Kometa Choice</button>
                     <span class="small text-muted" id="start-kometa-install-status"></span>
                   </div>
                 </div>

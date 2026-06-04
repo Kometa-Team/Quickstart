@@ -274,6 +274,62 @@ document.addEventListener('DOMContentLoaded', function () {
     syncStartKometaModePill()
   }
 
+  function normalizeKometaPathInput (value) {
+    return String(value || '').trim()
+  }
+
+  function getPersistedStartKometaInstallChoice () {
+    if (!kometaInstallSettings) {
+      return {
+        mode: 'managed',
+        existingRoot: '',
+        externalConfigRoot: '',
+        externalLogRoot: ''
+      }
+    }
+    return {
+      mode: String(kometaInstallSettings.dataset.installMode || 'managed').trim().toLowerCase() || 'managed',
+      existingRoot: normalizeKometaPathInput(kometaInstallSettings.dataset.existingRoot),
+      externalConfigRoot: normalizeKometaPathInput(kometaInstallSettings.dataset.externalConfigRoot),
+      externalLogRoot: normalizeKometaPathInput(kometaInstallSettings.dataset.externalLogRoot)
+    }
+  }
+
+  function getCurrentStartKometaInstallChoice () {
+    return {
+      mode: getStartKometaInstallMode(),
+      existingRoot: normalizeKometaPathInput(kometaExistingRootInput ? kometaExistingRootInput.value : ''),
+      externalConfigRoot: normalizeKometaPathInput(kometaExternalConfigInput ? kometaExternalConfigInput.value : ''),
+      externalLogRoot: normalizeKometaPathInput(kometaExternalLogInput ? kometaExternalLogInput.value : '')
+    }
+  }
+
+  function isStartKometaInstallChoiceDirty () {
+    const persisted = getPersistedStartKometaInstallChoice()
+    const current = getCurrentStartKometaInstallChoice()
+    if (current.mode !== persisted.mode) return true
+    if (current.mode === 'existing') return current.existingRoot !== persisted.existingRoot
+    if (current.mode === 'external') {
+      return current.externalConfigRoot !== persisted.externalConfigRoot || current.externalLogRoot !== persisted.externalLogRoot
+    }
+    return false
+  }
+
+  function syncStartKometaInstallSaveState (options = {}) {
+    if (!kometaInstallSaveButton) return
+    const forceDisabled = options.forceDisabled === true
+    const hasUnsavedChanges = isStartKometaInstallChoiceDirty()
+    const disabled = forceDisabled || !hasUnsavedChanges
+    kometaInstallSaveButton.disabled = disabled
+    kometaInstallSaveButton.classList.remove('btn-success', 'btn-secondary')
+    kometaInstallSaveButton.classList.add(disabled ? 'btn-secondary' : 'btn-success')
+    if (kometaInstallStatus && !options.preserveStatusText) {
+      kometaInstallStatus.textContent = options.statusText !== undefined
+        ? options.statusText
+        : (hasUnsavedChanges ? 'Unsaved changes.' : 'Saved.')
+    }
+  }
+
   async function saveStartKometaInstallChoice () {
     if (!kometaInstallSettings || !kometaInstallSaveButton) return
     const mode = getStartKometaInstallMode()
@@ -283,6 +339,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const configName = window.pageInfo && window.pageInfo.config_name ? window.pageInfo.config_name : ''
 
     kometaInstallSaveButton.disabled = true
+    kometaInstallSaveButton.classList.remove('btn-success')
+    kometaInstallSaveButton.classList.add('btn-secondary')
     if (kometaInstallStatus) kometaInstallStatus.textContent = 'Saving...'
 
     try {
@@ -302,7 +360,16 @@ document.addEventListener('DOMContentLoaded', function () {
         throw new Error(data.error || data.message || 'Unable to save the Kometa choice.')
       }
       kometaInstallSettings.dataset.installMode = data.install_mode || mode
+      kometaInstallSettings.dataset.existingRoot = normalizeKometaPathInput(data.existing_root)
+      kometaInstallSettings.dataset.externalConfigRoot = normalizeKometaPathInput(data.external_config_root)
+      kometaInstallSettings.dataset.externalLogRoot = normalizeKometaPathInput(data.external_log_root)
       kometaInstallSettings.dataset.selectedRoot = data.kometa_primary_path_display || data.kometa_config_dir_display || data.kometa_root_display || data.kometa_root || ''
+      if (window.pageInfo) {
+        window.pageInfo.kometa_install_mode = data.install_mode || mode
+        window.pageInfo.kometa_existing_root = normalizeKometaPathInput(data.existing_root)
+        window.pageInfo.kometa_external_config_root = normalizeKometaPathInput(data.external_config_root)
+        window.pageInfo.kometa_external_log_root = normalizeKometaPathInput(data.external_log_root)
+      }
       if (kometaActiveRoot) {
         kometaActiveRoot.textContent = data.kometa_primary_path_display || data.kometa_config_dir_display || data.kometa_root_display || data.kometa_root || ''
       }
@@ -316,28 +383,39 @@ document.addEventListener('DOMContentLoaded', function () {
         kometaInstallMessage.textContent = data.message || 'Kometa choice saved.'
       }
       syncStartKometaModePill()
-      if (kometaInstallStatus) kometaInstallStatus.textContent = 'Saved.'
+      syncStartKometaInstallSaveState({ statusText: 'Saved.' })
       if (typeof showToast === 'function') {
         showToast('success', data.message || 'Kometa choice saved.')
       }
     } catch (err) {
-      if (kometaInstallStatus) kometaInstallStatus.textContent = 'Save failed.'
+      syncStartKometaInstallSaveState({ statusText: 'Save failed.' })
       if (typeof showToast === 'function') {
         showToast('error', err.message || 'Unable to save the Kometa choice.')
       }
-    } finally {
-      kometaInstallSaveButton.disabled = false
     }
   }
 
   if (kometaInstallSettings) {
     document.querySelectorAll('input[name="start-kometa-install-mode"]').forEach((radio) => {
-      radio.addEventListener('change', syncStartKometaInstallUi)
+      radio.addEventListener('change', () => {
+        syncStartKometaInstallUi()
+        syncStartKometaInstallSaveState()
+      })
+    })
+    ;[kometaExistingRootInput, kometaExternalConfigInput, kometaExternalLogInput].forEach((input) => {
+      if (!input) return
+      input.addEventListener('input', () => {
+        syncStartKometaInstallSaveState()
+      })
+      input.addEventListener('change', () => {
+        syncStartKometaInstallSaveState()
+      })
     })
     if (kometaInstallSaveButton) {
       kometaInstallSaveButton.addEventListener('click', saveStartKometaInstallChoice)
     }
     syncStartKometaInstallUi()
+    syncStartKometaInstallSaveState({ statusText: 'Saved.' })
   }
 
   function updateButtonState () {
