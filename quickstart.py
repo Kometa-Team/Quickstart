@@ -14967,6 +14967,7 @@ def logscan_trends_page():
         progress_index = max(total_steps - 1, 0)
     page_info["progress"] = round(((progress_index + 1) / total_steps) * 100) if total_steps else 0
     available_configs = database.get_unique_config_names() or []
+    page_info.update(_build_kometa_install_context(page_info.get("config_name")))
     workspace_status = _build_workspace_status_context(page_info.get("config_name"), template_list, available_configs=available_configs)
     return render_template(
         "905-analytics.html",

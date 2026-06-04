@@ -22,7 +22,11 @@
     <div class="logscan-control-shell">
       <div class="logscan-control-copy">
         <p class="text-muted small mb-0">
+          {% if page_info.kometa_is_external_install %}
+          Recent Kometa and ImageMaid runs parsed from accessible logs. Tokens and secrets are excluded.
+          {% else %}
           Recent Kometa and ImageMaid runs parsed from their Quickstart-managed logs. Tokens and secrets are excluded.
+          {% endif %}
         </p>
       </div>
       <div class="logscan-control-grid">
