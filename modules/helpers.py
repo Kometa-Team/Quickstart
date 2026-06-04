@@ -3139,14 +3139,14 @@ def list_orphaned_config_artifacts(
 
     if active_kometa_config_dir and active_kometa_config_dir.exists():
         for path in active_kometa_config_dir.iterdir():
-                if not path.is_file() or not path.name.lower().endswith("_config.yml"):
-                    continue
-                match = current_pattern.match(path.name)
-                if not match:
-                    continue
-                bundle = ensure_bundle(match.group("name"))
-                bundle["has_kometa_copy"] = True
-                bundle["paths"].append(str(path))
+            if not path.is_file() or not path.name.lower().endswith("_config.yml"):
+                continue
+            match = current_pattern.match(path.name)
+            if not match:
+                continue
+            bundle = ensure_bundle(match.group("name"))
+            bundle["has_kometa_copy"] = True
+            bundle["paths"].append(str(path))
 
     for bundle in bundles.values():
         name = bundle.get("name")

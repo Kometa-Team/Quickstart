@@ -3366,12 +3366,9 @@ def test_prepare_import_payload_accepts_collection_include_and_exclude_with_warn
 
     libraries_payload = payload["libraries"]["libraries"]
     assert libraries_payload["mov-library_movies-collection_actor"] is True
-    assert libraries_payload["mov-library_movies-template_collection_actor_include"] == "[\"Tom Hanks\"]"
-    assert libraries_payload["mov-library_movies-template_collection_actor_exclude"] == "[\"Morgan Freeman\"]"
-    assert any(
-        "template_variables.include_exclude_warning" in line and "include and exclude were both imported" in line
-        for line in report.lines
-    )
+    assert libraries_payload["mov-library_movies-template_collection_actor_include"] == '["Tom Hanks"]'
+    assert libraries_payload["mov-library_movies-template_collection_actor_exclude"] == '["Morgan Freeman"]'
+    assert any("template_variables.include_exclude_warning" in line and "include and exclude were both imported" in line for line in report.lines)
 
 
 def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
@@ -3906,17 +3903,7 @@ def test_validate_library_metadata_files_includes_failing_path(qs_module):
 
 
 def test_normalize_generated_config_library_files_includes_failing_path(qs_module):
-    config_data = {
-        "libraries": {
-            "Movies": {
-                "metadata_files": [
-                    {
-                        "folder": r"C:\does-not-exist\metadata"
-                    }
-                ]
-            }
-        }
-    }
+    config_data = {"libraries": {"Movies": {"metadata_files": [{"folder": r"C:\does-not-exist\metadata"}]}}}
 
     _config_data, _changed, errors = qs_module._normalize_generated_config_library_files(config_data, "pytest_config")
 

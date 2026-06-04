@@ -4215,7 +4215,9 @@ def _resolve_kometa_selection(section_data=None):
 
     if mode == KOMETA_INSTALL_MODE_EXISTING:
         selection_valid = False
-        status_message = "Quickstart will use an existing Kometa install visible from this environment. Quickstart will not update that install; update it manually outside Quickstart."
+        status_message = (
+            "Quickstart will use an existing Kometa install visible from this environment. Quickstart will not update that install; update it manually outside Quickstart."
+        )
         mode_label = "Existing direct install"
         can_update = False
         if existing_root_raw:
@@ -4229,7 +4231,9 @@ def _resolve_kometa_selection(section_data=None):
                 if not resolved_existing.exists():
                     status_message = "The selected existing Kometa path is saved, but it is not currently visible from this Quickstart environment."
                 else:
-                    status_message = "Quickstart will use the selected existing Kometa install. Quickstart can validate and launch it, but updates must be done manually outside Quickstart."
+                    status_message = (
+                        "Quickstart will use the selected existing Kometa install. Quickstart can validate and launch it, but updates must be done manually outside Quickstart."
+                    )
             else:
                 selected_root = None
                 primary_path = None
@@ -15637,10 +15641,13 @@ def save_kometa_install_mode():
         missing = _validate_existing_kometa_root(resolved_existing)
         if missing:
             if "kometa.py" in missing or "requirements.txt" in missing or "config" in missing:
-                return jsonify(
-                    success=False,
-                    error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
+                    ),
+                    400,
+                )
         section_payload_update = {
             "install_mode": install_mode,
             "existing_root": existing_root,
@@ -15798,11 +15805,14 @@ def validate_kometa_root():
         if missing:
             log("❌ The selected existing Kometa path does not look like a Kometa root.")
             log("ℹ️ Choose the folder that contains kometa.py, requirements.txt, and config/.")
-            return jsonify(
-                success=False,
-                error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
-                log=logs,
-            ), 400
+            return (
+                jsonify(
+                    success=False,
+                    error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
+                    log=logs,
+                ),
+                400,
+            )
 
     try:
         if install_mode == KOMETA_INSTALL_MODE_MANAGED:
@@ -16029,11 +16039,14 @@ def probe_kometa_root():
         if missing:
             log("❌ The selected existing Kometa path does not look like a Kometa root.")
             log("ℹ️ Choose the folder that contains kometa.py, requirements.txt, and config/.")
-            return jsonify(
-                success=False,
-                error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
-                log=logs,
-            ), 400
+            return (
+                jsonify(
+                    success=False,
+                    error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
+                    log=logs,
+                ),
+                400,
+            )
     p = target["path_obj"]
 
     state = _probe_kometa_root_state(p)
@@ -16105,11 +16118,14 @@ def check_kometa_update():
         if missing:
             log("❌ The selected existing Kometa path does not look like a Kometa root.")
             log("ℹ️ Choose the folder that contains kometa.py, requirements.txt, and config/.")
-            return jsonify(
-                success=False,
-                error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
-                log=logs,
-            ), 400
+            return (
+                jsonify(
+                    success=False,
+                    error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
+                    log=logs,
+                ),
+                400,
+            )
     p = target["path_obj"]
 
     state = _probe_kometa_root_state(p)

@@ -1328,10 +1328,7 @@ def prepare_import_payload(
                                     "imported",
                                     f"libraries.{lib_name}.collection_files[{idx}].template_variables.data",
                                 )
-                        if (
-                            _has_template_string_list_values(expanded_template_values.get("include"))
-                            and _has_template_string_list_values(expanded_template_values.get("exclude"))
-                        ):
+                        if _has_template_string_list_values(expanded_template_values.get("include")) and _has_template_string_list_values(expanded_template_values.get("exclude")):
                             report.add(
                                 "skipped",
                                 f"libraries.{lib_name}.collection_files[{idx}].template_variables.include_exclude_warning",
