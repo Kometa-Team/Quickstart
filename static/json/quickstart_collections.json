@@ -22685,11 +22685,20 @@
             ]
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these resolutions. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add resolution key (e.g. 4k)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific resolutions from these collections.",
-            "placeholder": "Add resolution key (e.g. 4k)"
+            "tooltip": "Exclude specific resolutions from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add resolution key (e.g. 4k)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -23102,11 +23111,20 @@
             "default": true
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these audio languages. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add language code (e.g. fr)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific audio languages from these collections.",
-            "placeholder": "Add language code (e.g. fr)"
+            "tooltip": "Exclude specific audio languages from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add language code (e.g. fr)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -23519,11 +23537,20 @@
             "default": true
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these subtitle languages. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add language code (e.g. fr)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific subtitle languages from these collections.",
-            "placeholder": "Add language code (e.g. fr)"
+            "tooltip": "Exclude specific subtitle languages from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add language code (e.g. fr)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -23996,11 +24023,20 @@
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these people. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific people from these collections.",
-            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
+            "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -24466,11 +24502,20 @@
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these people. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific people from these collections.",
-            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
+            "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -24945,11 +24990,20 @@
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these people. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific people from these collections.",
-            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
+            "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -25424,11 +25478,20 @@
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these people. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific people from these collections.",
-            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
+            "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -26758,11 +26821,20 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these studios. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add studio name (e.g. Marvel Studios)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific studios from these collections.",
-            "placeholder": "Add studio name (e.g. Marvel Studios)"
+            "tooltip": "Exclude specific studios from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add studio name (e.g. Marvel Studios)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",
@@ -27180,11 +27252,20 @@
             ]
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these networks. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add network name (e.g. HBO)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
-            "tooltip": "Exclude specific networks from these collections.",
-            "placeholder": "Add network name (e.g. HBO)"
+            "tooltip": "Exclude specific networks from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
+            "placeholder": "Add network name (e.g. HBO)",
+            "mutually_exclusive_with": "include"
           },
           {
             "key": "collection_mode",

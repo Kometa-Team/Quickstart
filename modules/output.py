@@ -1469,7 +1469,7 @@ def build_libraries_section(
                         if new_key not in template_vars:
                             template_vars[new_key] = template_vars[old_key]
                         template_vars.pop(old_key, None)
-                    for list_key in ("exclude", "exclude_prefix"):
+                    for list_key in ("include", "exclude", "exclude_prefix"):
                         if list_key not in template_vars:
                             continue
                         list_values = _parse_string_list(template_vars.get(list_key))

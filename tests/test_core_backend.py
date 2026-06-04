@@ -950,6 +950,44 @@ def test_build_libraries_section_emits_collection_files(app):
         ]
 
 
+def test_build_libraries_section_preserves_collection_include_and_exclude(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-collection_actor": True,
+                    "mov-library_movies-template_collection_actor_include": ["Tom Hanks"],
+                    "mov-library_movies-template_collection_actor_exclude": ["Morgan Freeman"],
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    actor_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "actor"),
+        None,
+    )
+    assert actor_entry is not None
+    assert actor_entry["template_variables"]["include"] == ["Tom Hanks"]
+    assert actor_entry["template_variables"]["exclude"] == ["Morgan Freeman"]
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 
@@ -3299,6 +3337,41 @@ def test_prepare_import_payload_accepts_language_weight_override():
     assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[languages]"] == ["en", "ja"]
     assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[weight_ja]"] == 700
     assert report.summary()["imported"] > 0
+
+
+def test_prepare_import_payload_accepts_collection_include_and_exclude_with_warning():
+    from modules import importer
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "default": "actor",
+                        "template_variables": {
+                            "include": ["Tom Hanks"],
+                            "exclude": ["Morgan Freeman"],
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    payload, report = importer.prepare_import_payload(
+        config_data,
+        plex_movie_names={"Movies"},
+        plex_show_names=set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_actor"] is True
+    assert libraries_payload["mov-library_movies-template_collection_actor_include"] == "[\"Tom Hanks\"]"
+    assert libraries_payload["mov-library_movies-template_collection_actor_exclude"] == "[\"Morgan Freeman\"]"
+    assert any(
+        "template_variables.include_exclude_warning" in line and "include and exclude were both imported" in line
+        for line in report.lines
+    )
 
 
 def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):

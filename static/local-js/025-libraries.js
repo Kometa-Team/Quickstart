@@ -2783,12 +2783,51 @@ document.addEventListener('DOMContentLoaded', function () {
         const addBtn = wrapper.querySelector('[data-template-string-add]')
         const list = wrapper.querySelector('[data-template-string-items]')
         const feedback = wrapper.querySelector('[data-template-string-feedback]')
+        const templateVariableKey = String(wrapper.dataset.templateVariableKey || '').trim()
+        const mutuallyExclusiveWith = String(wrapper.dataset.mutuallyExclusiveWith || '').trim()
 
         if (!hidden || !input || !addBtn || !list) return
 
         const presetName = inferTemplateStringListPreset(wrapper, input)
         const presetConfig = templateStringListPresetConfigs[presetName] || templateStringListPresetConfigs.generic_text
         ensureTemplateStringListDatalist(wrapper, input, presetConfig, presetName)
+
+        function parseStoredStringList (rawValue) {
+          const raw = String(rawValue || '').trim()
+          if (!raw) return []
+          try {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) {
+              return parsed.map(item => String(item).trim()).filter(Boolean)
+            }
+          } catch (e) {
+            // fall through to treat as single value
+          }
+          return [raw]
+        }
+
+        function getCounterpartHiddenId () {
+          if (!hiddenId || !templateVariableKey || !mutuallyExclusiveWith) return ''
+          const suffix = `_${templateVariableKey}`
+          if (!hiddenId.endsWith(suffix)) return ''
+          return `${hiddenId.slice(0, -suffix.length)}_${mutuallyExclusiveWith}`
+        }
+
+        function getCounterpartWrapper () {
+          const counterpartHiddenId = getCounterpartHiddenId()
+          if (!counterpartHiddenId) return null
+          return document.querySelector(`[data-template-string-list][data-hidden-input="${counterpartHiddenId}"]`)
+        }
+
+        function getCounterpartValues () {
+          const counterpartWrapper = getCounterpartWrapper()
+          if (counterpartWrapper && typeof counterpartWrapper.__qsTemplateStringListGetValues === 'function') {
+            return counterpartWrapper.__qsTemplateStringListGetValues()
+          }
+          const counterpartHiddenId = getCounterpartHiddenId()
+          const counterpartHidden = counterpartHiddenId ? document.getElementById(counterpartHiddenId) : null
+          return parseStoredStringList(counterpartHidden?.value)
+        }
 
         function setLookupState (target, state) {
           if (!target) return
@@ -2808,14 +2847,18 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
-        function setFeedback (message, persistent = false) {
+        function setFeedback (message, persistent = false, level = 'error') {
+          const isError = Boolean(message) && level === 'error'
           if (feedback) {
             feedback.textContent = message || ''
             feedback.classList.toggle('d-none', !message)
             feedback.classList.toggle('d-block', Boolean(message))
+            feedback.classList.toggle('invalid-feedback', isError)
+            feedback.classList.toggle('text-warning', Boolean(message) && level === 'warning')
+            feedback.classList.toggle('small', Boolean(message) && level === 'warning')
           }
-          input.classList.toggle('is-invalid', Boolean(message))
-          input.setCustomValidity(persistent && message ? message : '')
+          input.classList.toggle('is-invalid', isError)
+          input.setCustomValidity(persistent && isError && message ? message : '')
         }
 
         function clearTransientFeedback () {
@@ -2824,17 +2867,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function parseValues () {
-          const raw = String(hidden.value || '').trim()
-          if (!raw) return []
-          try {
-            const parsed = JSON.parse(raw)
-            if (Array.isArray(parsed)) {
-              return parsed.map(item => String(item).trim()).filter(Boolean)
-            }
-          } catch (e) {
-            // fall through to treat as single value
-          }
-          return [raw]
+          return parseStoredStringList(hidden.value)
         }
 
         function validateValue (rawValue) {
@@ -2948,9 +2981,23 @@ document.addEventListener('DOMContentLoaded', function () {
           })
         }
 
-        function syncState (values, transientMessage = '') {
+        function syncState (values, transientMessage = '', options = {}) {
           const analyzed = analyzeValues(values)
-          hidden.value = JSON.stringify(analyzed.map(item => item.value))
+          const normalizedValues = analyzed.map(item => item.value)
+          let feedbackMessage = transientMessage || ''
+          let feedbackLevel = 'error'
+
+          if (!options.skipMutualExclusion && mutuallyExclusiveWith && normalizedValues.length) {
+            const counterpartValues = getCounterpartValues()
+            if (counterpartValues.length) {
+              if (!feedbackMessage) {
+                feedbackMessage = 'Include and Exclude are both set. Kometa code allows this, but the wiki says not to combine them.'
+                feedbackLevel = 'warning'
+              }
+            }
+          }
+
+          hidden.value = JSON.stringify(normalizedValues)
           renderList(analyzed)
 
           const invalidItems = analyzed.filter(item => !item.valid)
@@ -2962,7 +3009,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return analyzed
           }
 
-          setFeedback(transientMessage || '', false)
+          setFeedback(feedbackMessage || '', false, feedbackLevel)
           return analyzed
         }
 
@@ -2987,6 +3034,8 @@ document.addEventListener('DOMContentLoaded', function () {
           clearTransientFeedback()
         }
 
+        wrapper.__qsTemplateStringListGetValues = () => parseValues()
+        wrapper.__qsTemplateStringListSync = syncState
         syncState(parseValues())
 
         addBtn.addEventListener('click', addValue)

@@ -363,6 +363,25 @@ def _collect_template_keys(template_vars: Any) -> set[str]:
     return keys
 
 
+def _has_template_string_list_values(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, list):
+        return any(str(item).strip() for item in value if item is not None)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return False
+        try:
+            parsed = json.loads(stripped)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, list):
+            return any(str(item).strip() for item in parsed if item is not None)
+        return True
+    return bool(value)
+
+
 def _build_collection_index(collection_config: list[dict]) -> tuple[dict[str, dict], dict[str, str]]:
     by_id: dict[str, dict] = {}
     by_alias: dict[str, str] = {}
@@ -1309,6 +1328,15 @@ def prepare_import_payload(
                                     "imported",
                                     f"libraries.{lib_name}.collection_files[{idx}].template_variables.data",
                                 )
+                        if (
+                            _has_template_string_list_values(expanded_template_values.get("include"))
+                            and _has_template_string_list_values(expanded_template_values.get("exclude"))
+                        ):
+                            report.add(
+                                "skipped",
+                                f"libraries.{lib_name}.collection_files[{idx}].template_variables.include_exclude_warning",
+                                "Warning - include and exclude were both imported. Kometa code allows this, but the wiki says not to combine them.",
+                            )
                         for key, value in expanded_template_values.items():
                             if key in allowed:
                                 child_name = f"{lib_id}-template_collection_{clean_id}_{key}"
