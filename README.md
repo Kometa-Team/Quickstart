@@ -78,11 +78,12 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 ### Built-in App Runners
 
 #### Kometa
-- **One-Click Execution:** The Kometa page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
+- **One-Click Execution:** In `managed` mode, the Kometa page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
 - **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
-- **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
+- **Process Management:** In `managed` and `existing direct` modes, start, stop, and monitor Kometa runs directly from the web interface
 - **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
 - **Incomplete Run Recovery:** If a Kometa run stops early, Quickstart preserves the run context and surfaces resume or recovery guidance when it can determine the affected scope
+- **Mode-aware final page:** In `managed` and `existing direct` modes, the final Kometa page includes runtime validation, update checks, and run controls. In `external` mode, the same page becomes a sync/status view that shows the external config target, log availability, and mode limitations instead of runtime controls.
 
 This reduces the chance of Plex background maintenance colliding with long Kometa runs, keeps Plex more responsive during the window, and avoids wasting time starting a run that would immediately pause.
 
@@ -103,7 +104,7 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 
 ### Automatic Updates
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
-- **Kometa Sync:** Option to pull and update Kometa itself (nightly/master) before running
+- **Kometa Sync:** In `managed` and `existing direct` modes, Quickstart can pull and update Kometa itself (nightly/master) before running
 - **ImageMaid Sync:** Option to pull and update ImageMaid itself (develop/master) before running
 
 ### Themes & Personalization
@@ -232,7 +233,13 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
 
 ## Prerequisites
 
-We recommend completing the Kometa installation walkthrough before running Quickstart. This prepares Kometa to accept the configuration file Quickstart generates. Running Quickstart first may lead to mismatches with the walkthrough and issues that the walkthrough does not address.
+Whether you should complete the Kometa installation walkthrough before running Quickstart depends on the Kometa runtime mode you plan to use:
+
+- **Managed:** Optional. Quickstart can create and manage its own Kometa runtime inside the workspace.
+- **Existing direct install:** Recommended. This prepares the Kometa install Quickstart will validate, update, and launch directly.
+- **External / containerized config path:** Optional for Quickstart itself. Use this mode when Quickstart only needs to write config and optionally read logs from an external Kometa setup.
+
+Running Quickstart first is now a valid path if you plan to use `managed` mode. The walkthrough remains useful when you intend to point Quickstart at an already-installed Kometa runtime.
 
 Completing the walkthrough will also familiarize you with creating a Python virtual environment, which is recommended when running this as a Python script.
 

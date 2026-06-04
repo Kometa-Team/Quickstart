@@ -4305,6 +4305,17 @@ def _resolve_kometa_request_target(payload, logs=None, require_existing_root=Fal
 
     if install_mode == KOMETA_INSTALL_MODE_MANAGED:
         selection = _resolve_kometa_selection({"install_mode": KOMETA_INSTALL_MODE_MANAGED})
+        if raw_path:
+            resolved_managed = _resolve_user_dir(raw_path)
+            if not resolved_managed:
+                if logs is not None:
+                    logs.append("❌ Invalid path provided.")
+                return {"error": "Invalid path provided."}
+            selection["selected_root"] = resolved_managed
+            selection["primary_path"] = resolved_managed
+            selection["config_dir"] = resolved_managed / "config"
+            selection["log_dir"] = selection["config_dir"] / "logs"
+            selection["selection_valid"] = True
         _apply_kometa_selection(selection)
         return {
             "config_name": config_name,
@@ -4445,7 +4456,7 @@ def _sync_generated_yaml_and_assets_to_kometa_config(config_dir, config_filename
     with src_yaml.open("r", encoding="utf-8") as f:
         parsed_config = yaml_parser.load(f) or {}
     active_config_name = session.get("config_name") if has_request_context() else None
-    config_scope = active_config_name or _config_name_from_yaml_filename(config_name)
+    config_scope = _config_name_from_yaml_filename(config_name) or active_config_name
     font_refs = helpers.collect_font_references(parsed_config)
     if font_refs:
         font_result = helpers.copy_fonts_to_kometa(font_refs, kometa_config_dir=target_config_dir, config_name=config_scope)
@@ -16150,7 +16161,8 @@ def update_kometa():
                     else:
                         result = helpers.perform_kometa_update_zip_only(helpers.CONFIG_DIR, branch=kometa_branch, force=force_update, logs=logs)
                     try:
-                        helpers.invalidate_cached_kometa_update(kometa_root)
+                        invalidate_target = kometa_root if install_mode == KOMETA_INSTALL_MODE_EXISTING else helpers.CONFIG_DIR
+                        helpers.invalidate_cached_kometa_update(invalidate_target)
                     except Exception:
                         pass
                     if result.get("success", False):
@@ -16198,7 +16210,8 @@ def update_kometa():
         else:
             result = helpers.perform_kometa_update_zip_only(helpers.CONFIG_DIR, branch=kometa_branch, force=force_update, logs=logs)
         try:
-            helpers.invalidate_cached_kometa_update(kometa_root)
+            invalidate_target = kometa_root if install_mode == KOMETA_INSTALL_MODE_EXISTING else helpers.CONFIG_DIR
+            helpers.invalidate_cached_kometa_update(invalidate_target)
         except Exception:
             pass
         status = 200 if result.get("success") else 500

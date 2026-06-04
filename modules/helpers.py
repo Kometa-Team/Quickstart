@@ -241,6 +241,15 @@ def get_kometa_install_mode() -> str:
     return "managed"
 
 
+def get_kometa_install_mode_label(mode=None) -> str:
+    normalized = str(mode or get_kometa_install_mode()).strip().lower()
+    if normalized == "existing":
+        return "Existing direct install"
+    if normalized == "external":
+        return "External/containerized config+logs"
+    return "Quickstart-managed install"
+
+
 def invalidate_cached_kometa_update(kometa_root=None):
     if kometa_root is None:
         _KOMETA_UPDATE_CACHE.clear()
@@ -796,6 +805,9 @@ def get_quickstart_settings_summary():
     for key, label, formatter in summary:
         value = get_value(key, "")
         lines.append(f"# {label}: {formatter(value)}")
+
+    kometa_mode = get_kometa_install_mode()
+    lines.append(f"# Kometa Runtime Mode: {get_kometa_install_mode_label(kometa_mode)}")
 
     extra_keys = sorted(key for key in app.config.keys() if key.startswith("QS_") and key not in handled and key not in skip)
     for key in extra_keys:
@@ -2488,6 +2500,18 @@ def get_kometa_root_path() -> Path:
 
 
 def get_kometa_config_dir() -> Path:
+    install_mode = get_kometa_install_mode()
+    if install_mode != "external":
+        if has_request_context():
+            section = _get_persisted_kometa_runtime_section()
+            mode = str(section.get("install_mode") or "").strip().lower()
+            external_config_root = str(section.get("external_config_root") or "").strip()
+            session_config_dir = str(session.get("kometa_config_dir") or "").strip()
+            app_config_dir = str(app.config.get("KOMETA_CONFIG_DIR") or "") if has_app_context() else ""
+            if mode == "external" and external_config_root and not session_config_dir and not app_config_dir:
+                return Path(os.path.normpath(external_config_root)).resolve()
+        return get_kometa_root_path() / "config"
+
     configured = None
     if has_app_context():
         configured = app.config.get("KOMETA_CONFIG_DIR")
@@ -2504,6 +2528,22 @@ def get_kometa_config_dir() -> Path:
 
 
 def get_kometa_log_dir() -> Path:
+    install_mode = get_kometa_install_mode()
+    if install_mode != "external":
+        if has_request_context():
+            section = _get_persisted_kometa_runtime_section()
+            mode = str(section.get("install_mode") or "").strip().lower()
+            external_log_root = str(section.get("external_log_root") or "").strip()
+            external_config_root = str(section.get("external_config_root") or "").strip()
+            session_log_dir = str(session.get("kometa_log_dir") or "").strip()
+            app_log_dir = str(app.config.get("KOMETA_LOG_DIR") or "") if has_app_context() else ""
+            if mode == "external" and not session_log_dir and not app_log_dir:
+                if external_log_root:
+                    return Path(os.path.normpath(external_log_root)).resolve()
+                if external_config_root:
+                    return Path(os.path.normpath(external_config_root)).resolve() / "logs"
+        return get_kometa_config_dir() / "logs"
+
     configured = None
     if has_app_context():
         configured = app.config.get("KOMETA_LOG_DIR")
