@@ -26,6 +26,7 @@ MacOS
 MDBList
 meisnate
 MyAnimeList
+NAS
 OMDb
 Personalization
 Plex
