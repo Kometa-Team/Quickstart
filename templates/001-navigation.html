@@ -278,6 +278,14 @@
                     <i class="bi bi-images me-1"></i> ImageMaid running
                   </span>
                 </a>
+                {% if page_info.kometa_mode_label %}
+                <a class="qs-header-status-pill" href="{{ url_for('step', name='001-start') }}"
+                  title="Kometa mode: {{ page_info.kometa_mode_label }}{% if page_info.kometa_primary_path_display %} | Active path: {{ page_info.kometa_primary_path_display }}{% endif %}{% if page_info.kometa_active_config_dir_display %} | Config path: {{ page_info.kometa_active_config_dir_display }}{% endif %}">
+                  <span class="badge rounded-pill {{ 'text-bg-warning text-dark' if page_info.kometa_is_external_install else ('text-bg-info text-dark' if not page_info.kometa_is_managed_install else 'text-bg-secondary') }} px-3 py-2">
+                    <i class="bi bi-diagram-3 me-1"></i> Kometa: {{ 'External' if page_info.kometa_is_external_install else ('Existing' if not page_info.kometa_is_managed_install else 'Managed') }}
+                  </span>
+                </a>
+                {% endif %}
                 <div class="qs-background-job-pill-list" data-qs-background-job-pills></div>
               </div>
             </div>

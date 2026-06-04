@@ -7989,6 +7989,10 @@ def step(name):
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         page_info["quickstart_root"] = helpers.get_app_root()
+        page_info["kometa_sync_target_display"] = str((helpers.get_kometa_config_dir() / saved_filename).resolve()) if saved_filename else ""
+        kometa_log_dir = helpers.get_kometa_log_dir()
+        page_info["kometa_log_dir_exists"] = bool(kometa_log_dir.exists())
+        page_info["kometa_log_dir_resolved_display"] = str(kometa_log_dir.resolve()) if kometa_log_dir else ""
         kometa_is_running = helpers.is_kometa_running()
         incomplete_resume_hint = None if kometa_is_running else _build_latest_incomplete_resume_hint()
         session["yaml_content"] = yaml_content

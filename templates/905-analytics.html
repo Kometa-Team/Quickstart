@@ -2,6 +2,21 @@
 {% block content %}
 {% include "001-navigation.html" %}
 
+{% if page_info.kometa_is_external_install %}
+<div class="alert {{ 'alert-warning' if page_info.kometa_can_read_logs else 'alert-secondary' }} mb-3" role="alert">
+  <div class="fw-semibold mb-1">Kometa analytics are running in external mode.</div>
+  {% if page_info.kometa_can_read_logs %}
+  <div class="small mb-0">
+    Quickstart can read the configured external Kometa logs at <code>{{ page_info.kometa_active_log_dir_display }}</code>, so logscan and analytics can ingest those logs. Runs launched outside Quickstart will still be missing Quickstart-specific markers, resume metadata, and maintenance orchestration details.
+  </div>
+  {% else %}
+  <div class="small mb-0">
+    Quickstart cannot currently read the configured external Kometa log path at <code>{{ page_info.kometa_active_log_dir_display if page_info.kometa_active_log_dir_display else 'Not configured' }}</code>. Analytics and logscan will stay limited until that path becomes accessible from this Quickstart environment.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="card border-secondary mb-3 logscan-control-card">
   <div class="card-body">
     <div class="logscan-control-shell">

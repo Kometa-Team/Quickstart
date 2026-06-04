@@ -351,6 +351,75 @@
 <!-- Run Command Builder -->
 <div id="run-controls-container" class="d-none">
   <hr>
+  {% if page_info.kometa_is_external_install %}
+  <h5 class="mt-3">
+    External Kometa Target
+    <span class="badge text-bg-warning text-dark ms-2">External Mode</span>
+  </h5>
+  <div class="card border-secondary mt-3">
+    <div class="card-body">
+      <div class="alert alert-secondary mb-3" role="status">
+        <div class="fw-semibold mb-1">Quickstart is not managing the Kometa runtime for this config.</div>
+        <div class="small mb-0">
+          This page does not run Kometa install checks in external mode. It builds the final YAML, saves it locally, and syncs the generated config plus managed assets to the configured external Kometa path.
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="border rounded p-3 h-100">
+            <div class="text-uppercase small text-muted mb-2">Sync Status</div>
+            <div class="mb-2"><strong>Mode:</strong> {{ page_info.kometa_mode_label }}</div>
+            <div class="mb-2"><strong>Config path:</strong> <code>{{ page_info.kometa_active_config_dir_display }}</code></div>
+            <div class="mb-2"><strong>Latest synced file:</strong> <code>{{ page_info.kometa_sync_target_display if page_info.kometa_sync_target_display else 'Not saved yet' }}</code></div>
+            <div class="small text-muted">
+              Managed library files and config-owned fonts are synced alongside the generated YAML when available.
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="border rounded p-3 h-100">
+            <div class="text-uppercase small text-muted mb-2">Logs And Analytics</div>
+            <div class="mb-2"><strong>Log path:</strong> <code>{{ page_info.kometa_active_log_dir_display if page_info.kometa_active_log_dir_display else 'Not configured' }}</code></div>
+            <div class="mb-2">
+              <strong>Log access:</strong>
+              <span class="badge {{ 'text-bg-success' if page_info.kometa_log_dir_exists else 'text-bg-secondary' }}">
+                {{ 'Available' if page_info.kometa_log_dir_exists else 'Unavailable' }}
+              </span>
+            </div>
+            <div class="small text-muted mb-2">
+              Built-in log tools and analytics only work when Quickstart can read the external log path.
+            </div>
+            <div class="small text-muted">
+              External runs will not include Quickstart run markers, resume markers, or maintenance-window orchestration metadata because Quickstart did not launch them.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warning mt-3 mb-0" role="alert">
+        External mode tradeoffs: Quickstart cannot launch or update Kometa directly, maintenance guardrails do not apply automatically, and analytics attribution is limited to what can be inferred from readable logs.
+      </div>
+      {% set kometa_default_path = page_info.kometa_managed_root %}
+      {% set kometa_default_display = page_info.kometa_managed_root_display %}
+      {% set kometa_selected_path = page_info.kometa_selected_root %}
+      {% set kometa_selected_display = page_info.kometa_selected_root_display %}
+      <code id="run-command-output" class="d-none"
+            data-config-filename="{{ page_info.saved_filename }}"
+            data-kometa-root-default="{{ kometa_default_path | replace('\\','/') }}"
+            data-kometa-root-default-display="{{ kometa_default_display }}"
+            data-kometa-root-selected="{{ kometa_selected_path | replace('\\','/') }}"
+            data-kometa-root-selected-display="{{ kometa_selected_display }}"
+            data-kometa-install-mode="{{ page_info.kometa_install_mode }}"
+            data-kometa-config-dir="{{ page_info.kometa_active_config_dir | replace('\\','/') }}"
+            data-kometa-config-dir-display="{{ page_info.kometa_active_config_dir_display }}"
+            data-kometa-log-dir="{{ page_info.kometa_active_log_dir | replace('\\','/') }}"
+            data-kometa-log-dir-display="{{ page_info.kometa_active_log_dir_display }}"
+            data-kometa-can-launch="{{ 'true' if page_info.kometa_can_launch else 'false' }}"
+            data-kometa-can-update="{{ 'true' if page_info.kometa_can_update else 'false' }}"
+            data-kometa-can-probe-runtime="{{ 'true' if page_info.kometa_can_probe_runtime else 'false' }}"
+            data-kometa-can-read-logs="{{ 'true' if page_info.kometa_can_read_logs else 'false' }}"></code>
+    </div>
+  </div>
+  {% else %}
   <h5 class="mt-3">
     Prepare and Run Kometa
     <a href="https://kometa.wiki/en/nightly/kometa/environmental/" target="_blank" class="text-decoration-none ms-2">
@@ -1148,6 +1217,7 @@
     </div>
 
   </div>
+  {% endif %}
 </div>
 {% endif %}
 </div>
