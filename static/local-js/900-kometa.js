@@ -731,8 +731,11 @@ $(document).ready(function () {
 
     if (!$panel.length) return
 
+    const installMode = getConfiguredKometaInstallMode()
     let title = 'Run command is not ready yet'
-    let message = 'Open Prepare Kometa to install, validate, or update the local Kometa setup before running.'
+    let message = installMode === 'existing'
+      ? 'Open Prepare Kometa to validate the existing Kometa setup and check whether it needs a manual update before running.'
+      : 'Open Prepare Kometa to install, validate, or update the local Kometa setup before running.'
     let showButton = true
 
     if (!showYAML) {
@@ -1032,8 +1035,8 @@ $(document).ready(function () {
     return ($('#run-command-output').data('kometa-can-launch') || '').toString().toLowerCase() === 'true'
   }
 
-  function kometaCanUpdate () {
-    return ($('#run-command-output').data('kometa-can-update') || '').toString().toLowerCase() === 'true'
+  function kometaCanCheckUpdateStatus () {
+    return getConfiguredKometaInstallMode() !== 'external' && kometaCanProbeRuntime()
   }
 
   function kometaCanProbeRuntime () {
@@ -1241,7 +1244,7 @@ $(document).ready(function () {
   }
 
   function checkKometaUpdate (forceRefresh = false) {
-    if (!kometaCanUpdate()) {
+    if (!kometaCanCheckUpdateStatus()) {
       appendKometaStatusLine('ℹ️ Update checks are not available in external Kometa mode.')
       return Promise.resolve({
         success: true,
@@ -2261,6 +2264,10 @@ $(document).ready(function () {
   }
 
   function getUpdateButtonLabel () {
+    const installMode = getConfiguredKometaInstallMode()
+    if (installMode === 'existing') {
+      return `<i class="bi bi-arrow-clockwise me-1"></i> ${KOMETA_UPDATE_CHECK_COMPLETED ? 'Recheck Existing Status' : 'Check Existing Status'}`
+    }
     const force = $forceUpdateToggle.is(':checked')
     const label = force
       ? (KOMETA_INSTALLED ? 'Force Update Kometa' : 'Force Install Kometa')
@@ -2278,8 +2285,33 @@ $(document).ready(function () {
   }
 
   function callUpdateKometa () {
-    if (!kometaCanUpdate()) {
+    const installMode = getConfiguredKometaInstallMode()
+    if (installMode === 'external') {
       showToast('info', 'External Kometa mode cannot update the runtime. Quickstart can only sync config and optional logs in this mode.')
+      return
+    }
+    if (installMode === 'existing') {
+      $updateKometaBtn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Checking...')
+      runKometaStatusPass(true)
+        .then((data) => {
+          if (!data) return
+          if (data.kometa_update_available) {
+            showToast('warning', `Kometa update available: ${data.local_version} → ${data.remote_version}. Update this existing install manually outside Quickstart.`)
+            const noteEl = document.getElementById('kometa-update-box-note')
+            if (noteEl) {
+              noteEl.textContent = 'Update this existing Kometa install manually outside Quickstart before running.'
+            }
+          } else if (!data.kometa_update_check_skipped) {
+            showToast('success', 'Existing Kometa install checked. No newer version was detected.')
+          }
+        })
+        .catch(() => {
+          showToast('error', 'Failed to check existing Kometa status.')
+        })
+        .finally(() => {
+          $updateKometaBtn.prop('disabled', false)
+          syncUpdateButtonLabel()
+        })
       return
     }
     if (KOMETA_STATUS === 'running') {

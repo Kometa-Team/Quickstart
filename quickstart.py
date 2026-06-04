@@ -4215,8 +4215,9 @@ def _resolve_kometa_selection(section_data=None):
 
     if mode == KOMETA_INSTALL_MODE_EXISTING:
         selection_valid = False
-        status_message = "Quickstart will use an existing Kometa install visible from this environment."
+        status_message = "Quickstart will use an existing Kometa install visible from this environment. Quickstart will not update that install; update it manually outside Quickstart."
         mode_label = "Existing direct install"
+        can_update = False
         if existing_root_raw:
             resolved_existing = _resolve_user_dir(existing_root_raw)
             if resolved_existing:
@@ -4228,7 +4229,7 @@ def _resolve_kometa_selection(section_data=None):
                 if not resolved_existing.exists():
                     status_message = "The selected existing Kometa path is saved, but it is not currently visible from this Quickstart environment."
                 else:
-                    status_message = "Quickstart will use the selected existing Kometa install."
+                    status_message = "Quickstart will use the selected existing Kometa install. Quickstart can validate and launch it, but updates must be done manually outside Quickstart."
             else:
                 selected_root = None
                 primary_path = None
@@ -16233,21 +16234,22 @@ def update_kometa():
                 ),
                 400,
             )
-        kometa_root = target["path_obj"]
-        install_mode = target["install_mode"]
-        if install_mode == KOMETA_INSTALL_MODE_EXISTING:
-            missing = _validate_existing_kometa_root(kometa_root)
-            if missing:
-                return jsonify(
+        if target.get("install_mode") == KOMETA_INSTALL_MODE_EXISTING:
+            return (
+                jsonify(
                     {
                         "success": False,
-                        "error": "Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
+                        "error": "Existing direct Kometa installs must be updated manually outside Quickstart. Quickstart can validate and check version status, but it will not modify that install.",
                         "log": [
-                            "❌ The selected existing Kometa path does not look like a Kometa root.",
-                            "ℹ️ Choose the folder that contains kometa.py, requirements.txt, and config/.",
+                            "❌ Existing direct Kometa installs are manual-update only in Quickstart.",
+                            "ℹ️ Quickstart can validate and check version status for this install, but update it manually outside Quickstart to reduce the risk of runtime failures.",
                         ],
                     }
-                ), 400
+                ),
+                400,
+            )
+        kometa_root = target["path_obj"]
+        install_mode = target["install_mode"]
         branch_override_raw = data.get("branch_override")
         branch_override = helpers.normalize_kometa_branch_override(branch_override_raw)
         if branch_override_raw and not branch_override:

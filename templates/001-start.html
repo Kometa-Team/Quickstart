@@ -64,7 +64,7 @@
                   data-managed-root="{{ page_info.kometa_managed_root_display }}">
                   <div class="fw-semibold mb-2">Kometa install ownership</div>
                   <div class="small text-muted mb-2">Choose whether this config uses a Quickstart-managed Kometa, an existing direct install visible from this environment, or an external/containerized Kometa where Quickstart can only reach config and optional logs.</div>
-                  <div class="small text-muted mb-2">Quickstart-managed gives the clearest support model and full Quickstart-run guardrails. Existing direct install avoids duplicate installs, but the strongest Quickstart analytics and run protections still depend on launching from Quickstart. External mode is best for containers/NAS/remote setups, but Quickstart cannot directly launch, update, or fully orchestrate that runtime.</div>
+                  <div class="small text-muted mb-2">Quickstart-managed gives the clearest support model and full Quickstart-run guardrails. Existing direct install avoids duplicate installs, lets Quickstart validate and launch that install, but Quickstart will not update it for you. External mode is best for containers/NAS/remote setups, but Quickstart cannot directly launch, update, or fully orchestrate that runtime.</div>
                   <div class="form-check mb-1">
                     <input class="form-check-input" type="radio" name="start-kometa-install-mode" id="start-kometa-mode-managed"
                       value="managed" {{ 'checked' if page_info.kometa_install_mode == 'managed' else '' }}>

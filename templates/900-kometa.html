@@ -453,8 +453,10 @@
           <div id="kometa-actions">
             <div class="alert alert-secondary mb-0">
               <div class="small text-muted mb-2">
-                  {% if page_info.kometa_can_probe_runtime %}
+                  {% if page_info.kometa_install_mode == 'managed' %}
                   Install, validate, or update the local Kometa setup before starting a run.
+                  {% elif page_info.kometa_install_mode == 'existing' %}
+                  Validate the existing Kometa setup and check whether an update is available. Update that install manually outside Quickstart before running if needed.
                   {% else %}
                   Quickstart is connected to an external Kometa config/log path. It can sync generated config and optionally read logs, but it cannot launch or update that runtime directly.
                   {% endif %}
@@ -472,6 +474,8 @@
                 {{ page_info.kometa_install_status_message }}
                 {% if page_info.kometa_is_external_install %}
                 <div class="mt-1">External mode tradeoffs: Quickstart cannot launch or update Kometa directly, analytics attribution is limited, maintenance-window guardrails and resume markers only apply when Kometa is launched from Quickstart, and log tools only work when the log path is accessible.</div>
+                {% elif page_info.kometa_install_mode == 'existing' %}
+                <div class="mt-1">Existing direct install tradeoffs: Quickstart can validate and launch this install, but it will not update it in place. If an update is available, update this Kometa install manually outside Quickstart before running.</div>
                 {% elif not page_info.kometa_is_managed_install %}
                 <div class="mt-1">Quickstart-specific guardrails and analytics are strongest when this install is launched from Quickstart rather than externally.</div>
                 {% endif %}
@@ -501,20 +505,26 @@
               </div>
               <div class="d-flex flex-wrap align-items-center gap-3">
                 <button id="update-kometa-btn" type="button" class="btn btn-primary btn-sm"
-                  data-qs-branch="{{ version_info.branch }}" {{ 'disabled' if not page_info.kometa_can_update else '' }}>
-                  <i class="bi bi-arrow-clockwise me-1"></i> Check for Kometa Updates
+                  data-qs-branch="{{ version_info.branch }}">
+                  <i class="bi bi-arrow-clockwise me-1"></i> {{ 'Check Existing Kometa Status' if page_info.kometa_install_mode == 'existing' else 'Check for Kometa Updates' }}
                 </button>
+                {% if page_info.kometa_is_managed_install %}
                 <div class="form-check form-switch small">
                   <input class="form-check-input" type="checkbox" id="force-kometa-update">
                   <label class="form-check-label" for="force-kometa-update">Force update</label>
                 </div>
+                {% endif %}
               </div>
               <div class="form-text text-muted mt-1">
+                {% if page_info.kometa_install_mode == 'existing' %}
+                Quickstart will only check status and version information here. If an update is available, update this Kometa install manually outside Quickstart.
+                {% else %}
                 Force update re-downloads Kometa even if it is already up to date.
+                {% endif %}
               </div>
               <div id="kometa-update-box" class="alert alert-warning mt-2 mb-0 d-none" role="alert">
                 Update available: <span id="kometa-local-version"></span> -> <span id="kometa-remote-version"></span>.
-                Click "Update Available" to apply it.
+                <span id="kometa-update-box-note">{{ 'Update this existing Kometa install manually outside Quickstart before running.' if page_info.kometa_install_mode == 'existing' else 'Click "Update Available" to apply it.' }}</span>
               </div>
 
               <pre id="kometa-validation-log" class="form-control bg-dark text-light mt-3"

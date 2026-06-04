@@ -3456,6 +3456,7 @@ def test_save_kometa_install_mode_persists_existing_root(client, tmp_path):
     payload = resp.get_json()
     assert payload["success"] is True
     assert payload["install_mode"] == "existing"
+    assert payload["can_update"] is False
 
     validated, user_entered, stored = database.retrieve_section_data(config_name, "kometa")
     assert validated is True
@@ -3636,23 +3637,12 @@ def test_build_kometa_install_context_restores_external_mode_after_restart(app, 
         assert page_info["kometa_active_log_dir_display"] == str(external_logs.resolve())
 
 
-def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, monkeypatch, qs_module):
+def test_update_kometa_existing_mode_requires_manual_update(client, tmp_path, monkeypatch, qs_module):
     existing_root = tmp_path / "kometa-existing-update"
     existing_root.mkdir(parents=True, exist_ok=True)
     (existing_root / "config").mkdir(parents=True, exist_ok=True)
     (existing_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
     (existing_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
-    captured = {}
-
-    def _fake_update(target_root, branch="nightly", force=False, logs=None):
-        captured["target_root"] = str(target_root)
-        captured["branch"] = branch
-        captured["force"] = force
-        return {"success": True, "log": list(logs or []), "up_to_date": False, "skipped": False}
-
-    monkeypatch.setattr(qs_module.helpers, "perform_kometa_update_zip_only_at_root", _fake_update)
-    monkeypatch.setattr(qs_module.helpers, "invalidate_cached_kometa_update", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(qs_module.helpers, "detect_git_branch", lambda *_args, **_kwargs: "develop")
 
     resp = client.post(
         "/update-kometa",
@@ -3664,10 +3654,69 @@ def test_update_kometa_existing_mode_targets_explicit_root(client, tmp_path, mon
         },
     )
 
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "manually outside Quickstart" in payload["error"]
+
+
+def test_check_kometa_update_existing_mode_allows_status_check(client, tmp_path, monkeypatch, qs_module):
+    existing_root = tmp_path / "kometa-existing-check"
+    existing_root.mkdir(parents=True, exist_ok=True)
+    (existing_root / "config").mkdir(parents=True, exist_ok=True)
+    (existing_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
+    (existing_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        qs_module,
+        "_probe_kometa_root_state",
+        lambda _path: {
+            "kometa_installed": True,
+            "kometa_version": "1.0.0",
+            "kometa_running": False,
+            "kometa_root": str(existing_root.resolve()),
+            "kometa_root_display": str(existing_root.resolve()),
+            "venv_python_exists": True,
+            "venv_python": "",
+            "venv_python_display": "",
+            "kometa_config_dir": str((existing_root / "config").resolve()),
+            "kometa_config_dir_display": str((existing_root / "config").resolve()),
+            "kometa_log_dir": str((existing_root / "config" / "logs").resolve()),
+            "kometa_log_dir_display": str((existing_root / "config" / "logs").resolve()),
+        },
+    )
+    monkeypatch.setattr(
+        qs_module.helpers,
+        "get_cached_kometa_update",
+        lambda *_args, **_kwargs: {
+            "local_version": "1.0.0",
+            "remote_version": "1.1.0",
+            "branch": "nightly",
+            "cached": False,
+            "update_available": True,
+            "local_branch": "nightly",
+            "local_sha": "abc123",
+            "remote_sha": "def456",
+            "comparison_basis": "version",
+            "branch_mismatch": False,
+        },
+    )
+
+    resp = client.post(
+        "/check-kometa-update",
+        json={
+            "config_name": "pytest_check_existing_root",
+            "install_mode": "existing",
+            "path": str(existing_root),
+        },
+    )
+
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["success"] is True
-    assert captured["target_root"] == str(existing_root.resolve())
+    assert payload["kometa_update_available"] is True
+    assert payload["local_version"] == "1.0.0"
+    assert payload["remote_version"] == "1.1.0"
 
 
 def test_get_kometa_config_dir_prefers_persisted_external_selection(app, tmp_path):
