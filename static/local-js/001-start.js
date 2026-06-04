@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const mode = getStartKometaInstallMode()
     let label = 'Managed'
     let title = 'Kometa mode: Quickstart-managed install'
-    kometaModePillBadge.classList.remove('text-bg-secondary', 'text-bg-info', 'text-bg-warning', 'text-dark')
+    kometaModePillBadge.classList.remove('text-bg-success', 'text-bg-info', 'text-bg-warning', 'text-dark')
 
     if (mode === 'existing') {
       label = 'Existing'
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
       title = 'Kometa mode: External/containerized config+logs'
       kometaModePillBadge.classList.add('text-bg-warning', 'text-dark')
     } else {
-      kometaModePillBadge.classList.add('text-bg-secondary')
+      kometaModePillBadge.classList.add('text-bg-success')
     }
 
     kometaModePillBadge.innerHTML = `<i class="bi bi-diagram-3 me-1"></i> Kometa: ${label}`
