@@ -212,10 +212,37 @@ document.addEventListener('DOMContentLoaded', function () {
   const kometaActiveRoot = document.getElementById('start-kometa-active-root')
   const kometaActiveConfig = document.getElementById('start-kometa-active-config')
   const kometaActiveLog = document.getElementById('start-kometa-active-log')
+  const kometaModePill = document.getElementById('qs-kometa-mode-pill')
+  const kometaModePillBadge = document.getElementById('qs-kometa-mode-pill-badge')
 
   function getStartKometaInstallMode () {
     const selected = document.querySelector('input[name="start-kometa-install-mode"]:checked')
     return selected ? String(selected.value || '').trim().toLowerCase() : 'managed'
+  }
+
+  function syncStartKometaModePill () {
+    if (!kometaModePillBadge) return
+    const mode = getStartKometaInstallMode()
+    let label = 'Managed'
+    let title = 'Kometa mode: Quickstart-managed install'
+    kometaModePillBadge.classList.remove('text-bg-secondary', 'text-bg-info', 'text-bg-warning', 'text-dark')
+
+    if (mode === 'existing') {
+      label = 'Existing'
+      title = 'Kometa mode: Existing direct install'
+      kometaModePillBadge.classList.add('text-bg-info', 'text-dark')
+    } else if (mode === 'external') {
+      label = 'External'
+      title = 'Kometa mode: External/containerized config+logs'
+      kometaModePillBadge.classList.add('text-bg-warning', 'text-dark')
+    } else {
+      kometaModePillBadge.classList.add('text-bg-secondary')
+    }
+
+    kometaModePillBadge.innerHTML = `<i class="bi bi-diagram-3 me-1"></i> Kometa: ${label}`
+    if (kometaModePill) {
+      kometaModePill.setAttribute('title', title)
+    }
   }
 
   function syncStartKometaInstallUi () {
@@ -244,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
         kometaInstallMessage.textContent = 'Quickstart will create and manage its own Kometa install inside this workspace.'
       }
     }
+    syncStartKometaModePill()
   }
 
   async function saveStartKometaInstallChoice () {
@@ -287,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (kometaInstallMessage) {
         kometaInstallMessage.textContent = data.message || 'Kometa choice saved.'
       }
+      syncStartKometaModePill()
       if (kometaInstallStatus) kometaInstallStatus.textContent = 'Saved.'
       if (typeof showToast === 'function') {
         showToast('success', data.message || 'Kometa choice saved.')
