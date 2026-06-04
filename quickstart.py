@@ -4232,15 +4232,20 @@ def _apply_kometa_selection(selection):
     resolved_root = Path(selected_root).resolve() if selected_root else None
     resolved_config_dir = Path(config_dir).resolve() if config_dir else None
     resolved_log_dir = Path(log_dir).resolve() if log_dir else None
+    fallback_root = None
+    if resolved_root is None and resolved_config_dir is not None:
+        fallback_root = resolved_config_dir.parent if resolved_config_dir.name.lower() == "config" else resolved_config_dir
 
     if has_request_context():
         session["kometa_install_mode"] = mode
-        session["kometa_root"] = resolved_root.as_posix() if resolved_root else ""
+        session["kometa_root"] = resolved_root.as_posix() if resolved_root else (fallback_root.as_posix() if fallback_root else "")
         session["kometa_config_dir"] = resolved_config_dir.as_posix() if resolved_config_dir else ""
         session["kometa_log_dir"] = resolved_log_dir.as_posix() if resolved_log_dir else ""
 
     if resolved_root:
         app.config["KOMETA_ROOT"] = str(resolved_root)
+    elif fallback_root:
+        app.config["KOMETA_ROOT"] = str(fallback_root)
     app.config["KOMETA_INSTALL_MODE"] = mode
     app.config["KOMETA_CONFIG_DIR"] = str(resolved_config_dir) if resolved_config_dir else ""
     app.config["KOMETA_LOG_DIR"] = str(resolved_log_dir) if resolved_log_dir else ""
