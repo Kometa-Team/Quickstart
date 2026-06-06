@@ -93,6 +93,16 @@ def normalized_parts(path: Path) -> list[str]:
     return parts
 
 
+def is_virtualenv_dir_name(name: str) -> bool:
+    lowered = name.lower()
+    return (
+        lowered == "venv"
+        or lowered.endswith("-venv")
+        or lowered.endswith("_venv")
+        or lowered.startswith("py_env-python")
+    )
+
+
 def has_part_sequence(parts: list[str], sequence: tuple[str, ...]) -> bool:
     if len(parts) < len(sequence):
         return False
@@ -115,6 +125,10 @@ def should_exclude_directory(path: Path, root: Path, enabled: bool = True) -> bo
     if parts[0] in DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES:
         return True
     if any(part.startswith(".") for part in parts):
+        return True
+    if "appdata" in parts:
+        return True
+    if any(is_virtualenv_dir_name(part) for part in parts):
         return True
     if any(part in DEFAULT_EXCLUDED_DIR_NAMES for part in parts):
         return True
@@ -661,7 +675,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-default-excludes",
         action="store_true",
-        help="Disable built-in excludes such as Windows, Program Files, ProgramData, $Recycle.Bin, dot-prefixed folders, .git, node_modules, venv, AppData\\Local, and VS Code history folders.",
+        help="Disable built-in excludes such as Windows, Program Files, ProgramData, $Recycle.Bin, dot-prefixed folders, .git, node_modules, common virtualenv folders, all AppData trees, and VS Code history folders.",
     )
     return parser.parse_args()
 
