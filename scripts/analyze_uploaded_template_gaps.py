@@ -18,6 +18,21 @@ from ruamel.yaml import YAML
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_VERSION = 2
 
+DEFAULT_EXCLUDED_DIR_NAMES = {
+    ".git",
+    "node_modules",
+    "venv",
+}
+DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES = {
+    "$recycle.bin",
+    "program files",
+    "program files (x86)",
+    "windows",
+}
+DEFAULT_EXCLUDED_PATH_SEQUENCES = {
+    ("appdata", "local", "temp"),
+}
+
 yaml = YAML(typ="safe", pure=True)
 
 
@@ -64,6 +79,41 @@ def get_cache_path(root: Path, requested_path: str | None) -> Path:
 def file_signature(path: Path) -> dict[str, int]:
     stat = path.stat()
     return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+
+
+def normalized_parts(path: Path) -> list[str]:
+    parts: list[str] = []
+    for part in path.parts:
+        cleaned = part.rstrip("\\/").lower()
+        if cleaned:
+            parts.append(cleaned)
+    return parts
+
+
+def has_part_sequence(parts: list[str], sequence: tuple[str, ...]) -> bool:
+    if len(parts) < len(sequence):
+        return False
+    for idx in range(len(parts) - len(sequence) + 1):
+        if tuple(parts[idx : idx + len(sequence)]) == sequence:
+            return True
+    return False
+
+
+def should_exclude_directory(path: Path, root: Path, enabled: bool = True) -> bool:
+    if not enabled:
+        return False
+    try:
+        relative = path.relative_to(root)
+        parts = normalized_parts(relative)
+    except ValueError:
+        parts = normalized_parts(path)
+    if not parts:
+        return False
+    if parts[0] in DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES:
+        return True
+    if any(part in DEFAULT_EXCLUDED_DIR_NAMES for part in parts):
+        return True
+    return any(has_part_sequence(parts, sequence) for sequence in DEFAULT_EXCLUDED_PATH_SEQUENCES)
 
 
 def relative_label(path: Path, base: Path) -> str:
@@ -406,15 +456,27 @@ def extract_findings_from_data(data: dict[str, Any], path: Path) -> list[dict[st
     return findings
 
 
-def collect_yaml_files(inputs: list[Path], discovery_callback=None) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
+def collect_yaml_files(
+    inputs: list[Path],
+    discovery_callback=None,
+    exclude_defaults: bool = True,
+) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
     yaml_files: list[Path] = []
     temp_dirs: list[tempfile.TemporaryDirectory] = []
     for input_path in inputs:
         if input_path.is_dir():
             if discovery_callback:
                 discovery_callback("root", input_path, len(yaml_files))
-            for current_root, _, filenames in os.walk(input_path):
+            for current_root, dirnames, filenames in os.walk(input_path, topdown=True):
                 current_path = Path(current_root)
+                if should_exclude_directory(current_path, input_path, enabled=exclude_defaults):
+                    dirnames[:] = []
+                    continue
+                dirnames[:] = [
+                    dirname
+                    for dirname in dirnames
+                    if not should_exclude_directory(current_path / dirname, input_path, enabled=exclude_defaults)
+                ]
                 if discovery_callback:
                     discovery_callback("dir", current_path, len(yaml_files))
                 for filename in filenames:
@@ -433,8 +495,16 @@ def collect_yaml_files(inputs: list[Path], discovery_callback=None) -> tuple[lis
                 zf.extractall(extract_root)
             if discovery_callback:
                 discovery_callback("zip", input_path, len(yaml_files))
-            for current_root, _, filenames in os.walk(extract_root):
+            for current_root, dirnames, filenames in os.walk(extract_root, topdown=True):
                 current_path = Path(current_root)
+                if should_exclude_directory(current_path, extract_root, enabled=exclude_defaults):
+                    dirnames[:] = []
+                    continue
+                dirnames[:] = [
+                    dirname
+                    for dirname in dirnames
+                    if not should_exclude_directory(current_path / dirname, extract_root, enabled=exclude_defaults)
+                ]
                 if discovery_callback:
                     discovery_callback("dir", current_path, len(yaml_files))
                 for filename in filenames:
@@ -583,16 +653,22 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable periodic progress output during long scans.",
     )
+    parser.add_argument(
+        "--no-default-excludes",
+        action="store_true",
+        help="Disable built-in excludes such as Windows, Program Files, $Recycle.Bin, .git, node_modules, venv, and AppData\\Local\\Temp.",
+    )
     return parser.parse_args()
 
 
 def build_progress_callbacks(enabled: bool):
     if not enabled:
-        return None, None
+        return None, None, None
 
     start_time = time.monotonic()
     discovery_state = {"last_time": 0.0, "last_dirs": 0}
     scan_state = {"last_time": 0.0, "last_index": 0}
+    verify_state = {"last_time": 0.0, "last_index": 0, "last_stage": ""}
 
     def elapsed_label() -> str:
         elapsed = int(time.monotonic() - start_time)
@@ -653,7 +729,29 @@ def build_progress_callbacks(enabled: bool):
         scan_state["last_time"] = now
         scan_state["last_index"] = index
 
-    return emit_discovery, emit
+    def emit_verify(stage: str, index: int | None = None, total: int | None = None) -> None:
+        now = time.monotonic()
+        if index is None or total is None:
+            print(f"[progress][{elapsed_label()}] {stage}", file=sys.stderr, flush=True)
+            verify_state["last_time"] = now
+            verify_state["last_stage"] = stage
+            verify_state["last_index"] = 0
+            return
+        should_emit = (
+            index == 1
+            or index == total
+            or stage != verify_state["last_stage"]
+            or index - verify_state["last_index"] >= 500
+            or now - verify_state["last_time"] >= 5.0
+        )
+        if not should_emit:
+            return
+        print(f"[progress][{elapsed_label()}] {stage} {index}/{total}", file=sys.stderr, flush=True)
+        verify_state["last_time"] = now
+        verify_state["last_index"] = index
+        verify_state["last_stage"] = stage
+
+    return emit_discovery, emit, emit_verify
 
 
 def ensure_json_output_path(root: Path, requested_output: str | None) -> Path:
@@ -720,6 +818,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         f"  files skipped: {report.get('skipped_file_count', 0)}",
         f"  files with template variables: {report.get('files_with_template_variables_count', 0)}",
         f"  cache enabled: {report.get('cache_enabled', False)}",
+        f"  default excludes: {report.get('default_excludes_enabled', True)}",
         f"  cache hits: {report.get('cache_hit_count', 0)}",
         f"  cache misses: {report.get('cache_miss_count', 0)}",
         "  cache invalidates on: analyzer, Quickstart support JSON, Kometa defaults, or source file changes",
@@ -770,10 +869,15 @@ def main() -> None:
     cache_path = get_cache_path(root, args.cache_path)
     cache_enabled = not args.no_cache
     cache_data = load_cache(cache_path, expected_context=cache_context) if cache_enabled else empty_cache(cache_context)
+    default_excludes_enabled = not args.no_default_excludes
 
     inputs = [Path(p).resolve() for p in args.input] if args.input else [root / "artifacts" / "config_zip_scan"]
-    discovery_callback, progress_callback = build_progress_callbacks(not args.no_progress)
-    input_files, temp_dirs = collect_yaml_files(inputs, discovery_callback=discovery_callback)
+    discovery_callback, progress_callback, verify_callback = build_progress_callbacks(not args.no_progress)
+    input_files, temp_dirs = collect_yaml_files(
+        inputs,
+        discovery_callback=discovery_callback,
+        exclude_defaults=default_excludes_enabled,
+    )
     candidate_files, prefilter_skipped_files, prefilter_cache_stats = prefilter_yaml_files(
         input_files,
         cache_data=cache_data if cache_enabled else None,
@@ -805,7 +909,11 @@ def main() -> None:
         all_rows: list[dict[str, Any]] = []
         grouped_examples: dict[tuple[str, str | None, str], list[str]] = defaultdict(list)
 
-        for row in uploaded:
+        if verify_callback:
+            verify_callback(f"verifying {len(uploaded)} findings against Quickstart and Kometa defaults")
+        for idx, row in enumerate(uploaded, start=1):
+            if verify_callback:
+                verify_callback("verifying findings", idx, len(uploaded))
             key = row["key"]
             kind = row["kind"]
             alias = row["default"]
@@ -841,6 +949,8 @@ def main() -> None:
                 gap_rows.append(out)
                 grouped_examples[(kind, alias, key)].append(row["file"])
 
+        if verify_callback:
+            verify_callback("aggregating ranked gaps")
         summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
         for row in gap_rows:
             bucket = summary.setdefault(
@@ -906,6 +1016,7 @@ def main() -> None:
             "cache_enabled": cache_enabled,
             "cache_path": str(cache_path),
             "cache_context": cache_context,
+            "default_excludes_enabled": default_excludes_enabled,
             "cache_hit_count": prefilter_cache_stats["cache_hits"] + parse_cache_stats["cache_hits"],
             "cache_miss_count": prefilter_cache_stats["cache_misses"] + parse_cache_stats["cache_misses"],
             "cache_stats": {
@@ -938,6 +1049,8 @@ def main() -> None:
 
     json_output_path = ensure_json_output_path(root, args.output)
     json_output_path.parent.mkdir(parents=True, exist_ok=True)
+    if verify_callback:
+        verify_callback(f"writing JSON report to {json_output_path}")
     rendered = json.dumps(report, indent=2)
     json_output_path.write_text(rendered, encoding="utf-8")
     if cache_enabled:
