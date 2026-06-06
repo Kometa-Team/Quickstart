@@ -1,7 +1,10 @@
 import argparse
 import json
+import os
 import re
+import sys
 import tempfile
+import time
 import zipfile
 from collections import defaultdict
 from datetime import datetime
@@ -257,13 +260,23 @@ def normalize_nested_template_key(key: str, value: Any) -> list[tuple[str, Any]]
     return [(key, value)]
 
 
-def collect_yaml_files(inputs: list[Path]) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
+def collect_yaml_files(inputs: list[Path], discovery_callback=None) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
     yaml_files: list[Path] = []
     temp_dirs: list[tempfile.TemporaryDirectory] = []
     for input_path in inputs:
         if input_path.is_dir():
-            yaml_files.extend(sorted(input_path.rglob("*.yml")))
-            yaml_files.extend(sorted(input_path.rglob("*.yaml")))
+            if discovery_callback:
+                discovery_callback("root", input_path, len(yaml_files))
+            for current_root, _, filenames in os.walk(input_path):
+                current_path = Path(current_root)
+                if discovery_callback:
+                    discovery_callback("dir", current_path, len(yaml_files))
+                for filename in filenames:
+                    lower = filename.lower()
+                    if lower.endswith(".yml") or lower.endswith(".yaml"):
+                        yaml_files.append(current_path / filename)
+            if discovery_callback:
+                discovery_callback("root_done", input_path, len(yaml_files))
         elif input_path.is_file() and input_path.suffix.lower() in {".yml", ".yaml"}:
             yaml_files.append(input_path)
         elif input_path.is_file() and input_path.suffix.lower() == ".zip":
@@ -272,18 +285,50 @@ def collect_yaml_files(inputs: list[Path]) -> tuple[list[Path], list[tempfile.Te
             extract_root = Path(temp_dir.name)
             with zipfile.ZipFile(input_path) as zf:
                 zf.extractall(extract_root)
-            yaml_files.extend(sorted(extract_root.rglob("*.yml")))
-            yaml_files.extend(sorted(extract_root.rglob("*.yaml")))
+            if discovery_callback:
+                discovery_callback("zip", input_path, len(yaml_files))
+            for current_root, _, filenames in os.walk(extract_root):
+                current_path = Path(current_root)
+                if discovery_callback:
+                    discovery_callback("dir", current_path, len(yaml_files))
+                for filename in filenames:
+                    lower = filename.lower()
+                    if lower.endswith(".yml") or lower.endswith(".yaml"):
+                        yaml_files.append(current_path / filename)
         else:
             raise FileNotFoundError(f"Unsupported input path: {input_path}")
-    return yaml_files, temp_dirs
+    return sorted(yaml_files), temp_dirs
 
 
-def scan_uploaded_configs(input_files: list[Path]) -> list[dict[str, Any]]:
+def scan_uploaded_configs(
+    input_files: list[Path],
+    progress_callback=None,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[str]]:
     findings: list[dict[str, Any]] = []
-    for path in input_files:
-        data = load_yaml(path)
+    skipped_files: list[dict[str, str]] = []
+    parsed_file_paths: list[str] = []
+    parsed_count = 0
+    total_files = len(input_files)
+    for idx, path in enumerate(input_files, start=1):
+        try:
+            data = load_yaml(path)
+        except Exception as exc:
+            skipped_files.append(
+                {
+                    "file": str(path),
+                    "error_type": type(exc).__name__,
+                    "reason": str(exc),
+                    "detail": f"{type(exc).__name__}: {exc}",
+                }
+            )
+            if progress_callback:
+                progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            continue
+        parsed_file_paths.append(str(path))
         if not isinstance(data, dict):
+            parsed_count += 1
+            if progress_callback:
+                progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             continue
         libraries = data.get("libraries")
         if isinstance(libraries, dict):
@@ -351,7 +396,10 @@ def scan_uploaded_configs(input_files: list[Path]) -> list[dict[str, Any]]:
                                 "value": raw_value,
                             }
                         )
-    return findings
+        parsed_count += 1
+        if progress_callback:
+            progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+    return findings, skipped_files, parsed_file_paths
 
 
 def parse_args() -> argparse.Namespace:
@@ -372,7 +420,69 @@ def parse_args() -> argparse.Namespace:
         default=str(ROOT),
         help="Path to the Quickstart repo root. Defaults to the repo containing this script.",
     )
+    parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="Disable periodic progress output during long scans.",
+    )
     return parser.parse_args()
+
+
+def build_progress_callbacks(enabled: bool):
+    if not enabled:
+        return None, None
+
+    discovery_state = {"last_time": 0.0, "last_dirs": 0}
+    scan_state = {"last_time": 0.0, "last_index": 0}
+
+    def emit_discovery(event: str, current_path: Path, yaml_found: int) -> None:
+        now = time.monotonic()
+        if event == "root":
+            print(f"[progress] scanning root {current_path}", file=sys.stderr, flush=True)
+            discovery_state["last_time"] = now
+            return
+        if event == "zip":
+            print(f"[progress] extracting and scanning zip {current_path}", file=sys.stderr, flush=True)
+            discovery_state["last_time"] = now
+            return
+        if event == "root_done":
+            print(f"[progress] finished root {current_path} | discovered {yaml_found} YAML files so far", file=sys.stderr, flush=True)
+            discovery_state["last_time"] = now
+            return
+        discovery_state["last_dirs"] += 1
+        should_emit = (
+            discovery_state["last_dirs"] == 1
+            or discovery_state["last_dirs"] % 100 == 0
+            or now - discovery_state["last_time"] >= 5.0
+        )
+        if not should_emit:
+            return
+        print(
+            f"[progress] scanning directory {current_path} | discovered {yaml_found} YAML files",
+            file=sys.stderr,
+            flush=True,
+        )
+        discovery_state["last_time"] = now
+
+    def emit(index: int, total: int, parsed: int, skipped: int, current_path: Path) -> None:
+        now = time.monotonic()
+        should_emit = (
+            index == 1
+            or index == total
+            or index - scan_state["last_index"] >= 100
+            or now - scan_state["last_time"] >= 5.0
+        )
+        if not should_emit:
+            return
+        print(
+            f"[progress] {index}/{total} files | parsed {parsed} | skipped {skipped} | {current_path}",
+            file=sys.stderr,
+            flush=True,
+        )
+        scan_state["last_time"] = now
+        scan_state["last_index"] = index
+
+    return emit_discovery, emit
 
 
 def ensure_json_output_path(root: Path, requested_output: str | None) -> Path:
@@ -433,7 +543,9 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
 
     lines = [
         "Template Variable Gap Summary",
-        f"  files scanned: {len(report.get('uploaded_files_scanned', []))}",
+        f"  files parsed: {report.get('parsed_file_count', 0)}",
+        f"  files skipped: {report.get('skipped_file_count', 0)}",
+        f"  files with template variables: {report.get('files_with_template_variables_count', 0)}",
         f"  template variable occurrences scanned: {report.get('template_variable_occurrences_scanned', 0)}",
         f"  verified gaps: {report.get('verified_gap_count', 0)}",
         f"  value-shape verified gaps: {report.get('value_shape_verified_gap_count', 0)}",
@@ -450,6 +562,14 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         lines.append(render_table("Playlist Gaps", playlists))
     if libraries:
         lines.append(render_table("Library Gaps", libraries))
+    skipped_files = report.get("skipped_files", [])
+    if skipped_files:
+        lines.append("Skipped Files")
+        for item in skipped_files[:10]:
+            lines.append(f"  {item.get('file')}: {item.get('error_type')}")
+        remaining = len(skipped_files) - min(len(skipped_files), 10)
+        if remaining > 0:
+            lines.append(f"  ... plus {remaining} more skipped files")
     lines.append(f"Full JSON report: {json_output_path}")
     return "\n".join(lines)
 
@@ -463,13 +583,20 @@ def main() -> None:
     qs_attributes_path = root / "static" / "json" / "quickstart_attributes.json"
 
     inputs = [Path(p).resolve() for p in args.input] if args.input else [root / "artifacts" / "config_zip_scan"]
-    input_files, temp_dirs = collect_yaml_files(inputs)
+    discovery_callback, progress_callback = build_progress_callbacks(not args.no_progress)
+    input_files, temp_dirs = collect_yaml_files(inputs, discovery_callback=discovery_callback)
 
     try:
         qs_collections = build_qs_collection_map(qs_collections_path)
         qs_overlays = build_qs_overlay_map(qs_overlays_path)
         qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
-        uploaded = scan_uploaded_configs(input_files)
+        if progress_callback:
+            print(
+                f"[progress] discovered {len(input_files)} YAML files across {len(inputs)} input root(s)",
+                file=sys.stderr,
+                flush=True,
+            )
+        uploaded, skipped_files, parsed_file_paths = scan_uploaded_configs(input_files, progress_callback=progress_callback)
 
         gap_rows: list[dict[str, Any]] = []
         all_rows: list[dict[str, Any]] = []
@@ -573,7 +700,12 @@ def main() -> None:
         report = {
             "quickstart_root": str(root),
             "inputs": [str(p) for p in inputs],
+            "parsed_files": sorted(parsed_file_paths),
             "uploaded_files_scanned": sorted({row["file"] for row in uploaded}),
+            "skipped_files": skipped_files,
+            "skipped_file_count": len(skipped_files),
+            "parsed_file_count": len(parsed_file_paths),
+            "files_with_template_variables_count": len(sorted({row["file"] for row in uploaded})),
             "template_variable_occurrences_scanned": len(uploaded),
             "verified_gap_count": len(serializable_ranked),
             "value_shape_verified_gap_count": sum(1 for item in serializable_ranked if item["value_shape_verified_occurrences"] > 0),
