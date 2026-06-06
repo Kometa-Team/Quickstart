@@ -27,10 +27,13 @@ DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES = {
     "$recycle.bin",
     "program files",
     "program files (x86)",
+    "programdata",
     "windows",
 }
 DEFAULT_EXCLUDED_PATH_SEQUENCES = {
+    ("appdata", "local"),
     ("appdata", "local", "temp"),
+    ("appdata", "roaming", "code", "user", "history"),
 }
 
 yaml = YAML(typ="safe", pure=True)
@@ -110,6 +113,8 @@ def should_exclude_directory(path: Path, root: Path, enabled: bool = True) -> bo
     if not parts:
         return False
     if parts[0] in DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES:
+        return True
+    if any(part.startswith(".") for part in parts):
         return True
     if any(part in DEFAULT_EXCLUDED_DIR_NAMES for part in parts):
         return True
@@ -656,7 +661,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-default-excludes",
         action="store_true",
-        help="Disable built-in excludes such as Windows, Program Files, $Recycle.Bin, .git, node_modules, venv, and AppData\\Local\\Temp.",
+        help="Disable built-in excludes such as Windows, Program Files, ProgramData, $Recycle.Bin, dot-prefixed folders, .git, node_modules, venv, AppData\\Local, and VS Code history folders.",
     )
     return parser.parse_args()
 
