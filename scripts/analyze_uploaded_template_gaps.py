@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -15,6 +16,7 @@ from ruamel.yaml import YAML
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CACHE_VERSION = 2
 
 yaml = YAML(typ="safe", pure=True)
 
@@ -25,6 +27,79 @@ def load_yaml(path: Path) -> Any:
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def empty_cache(context: dict[str, Any] | None = None) -> dict[str, Any]:
+    cache: dict[str, Any] = {"version": CACHE_VERSION, "files": {}}
+    if context is not None:
+        cache["context"] = context
+    return cache
+
+
+def load_cache(path: Path, expected_context: dict[str, Any] | None = None) -> dict[str, Any]:
+    if not path.exists():
+        return empty_cache(expected_context)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return empty_cache(expected_context)
+    if not isinstance(data, dict) or data.get("version") != CACHE_VERSION or not isinstance(data.get("files"), dict):
+        return empty_cache(expected_context)
+    if expected_context is not None and data.get("context") != expected_context:
+        return empty_cache(expected_context)
+    return data
+
+
+def save_cache(path: Path, cache_data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cache_data, indent=2), encoding="utf-8")
+
+
+def get_cache_path(root: Path, requested_path: str | None) -> Path:
+    if requested_path:
+        return Path(requested_path).resolve()
+    return root / "artifacts" / "template_gap_cache.json"
+
+
+def file_signature(path: Path) -> dict[str, int]:
+    stat = path.stat()
+    return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+
+
+def relative_label(path: Path, base: Path) -> str:
+    try:
+        return str(path.relative_to(base))
+    except ValueError:
+        return str(path.resolve())
+
+
+def fingerprint_paths(paths: list[Path], base: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(paths, key=lambda p: relative_label(p, base)):
+        signature = file_signature(path)
+        digest.update(relative_label(path, base).encode("utf-8"))
+        digest.update(str(signature["size"]).encode("utf-8"))
+        digest.update(str(signature["mtime_ns"]).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def build_cache_context(
+    root: Path,
+    qs_collections_path: Path,
+    qs_overlays_path: Path,
+    qs_attributes_path: Path,
+    kometa_defaults: Path,
+) -> dict[str, Any]:
+    quickstart_support_files = [qs_collections_path, qs_overlays_path, qs_attributes_path]
+    kometa_default_files = [path for path in kometa_defaults.rglob("*.yml") if path.is_file()]
+    analyzer_file = Path(__file__).resolve()
+    return {
+        "quickstart_root": str(root),
+        "analyzer_signature": file_signature(analyzer_file),
+        "quickstart_support_fingerprint": fingerprint_paths(quickstart_support_files, root),
+        "kometa_defaults_fingerprint": fingerprint_paths(kometa_default_files, root),
+        "kometa_default_file_count": len(kometa_default_files),
+    }
 
 
 def collect_qs_keys(raw: Any) -> set[str]:
@@ -260,6 +335,77 @@ def normalize_nested_template_key(key: str, value: Any) -> list[tuple[str, Any]]
     return [(key, value)]
 
 
+def extract_findings_from_data(data: dict[str, Any], path: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    libraries = data.get("libraries")
+    if isinstance(libraries, dict):
+        for library_name, lib_cfg in libraries.items():
+            if not isinstance(lib_cfg, dict):
+                continue
+            tv = lib_cfg.get("template_variables")
+            if isinstance(tv, dict):
+                for raw_key, raw_value in tv.items():
+                    for key, value in normalize_nested_template_key(str(raw_key), raw_value):
+                        findings.append(
+                            {
+                                "file": str(path),
+                                "library": str(library_name),
+                                "section": "library_template_variables",
+                                "default": None,
+                                "kind": "library",
+                                "key": key,
+                                "value": value,
+                            }
+                        )
+            for section_name, kind in (("collection_files", "collection"), ("overlay_files", "overlay")):
+                entries = lib_cfg.get(section_name)
+                if not isinstance(entries, list):
+                    continue
+                for entry in entries:
+                    if not isinstance(entry, dict):
+                        continue
+                    alias = entry.get("default")
+                    tv = entry.get("template_variables")
+                    if not alias or not isinstance(tv, dict):
+                        continue
+                    for raw_key, raw_value in tv.items():
+                        for key, value in normalize_nested_template_key(str(raw_key), raw_value):
+                            findings.append(
+                                {
+                                    "file": str(path),
+                                    "library": str(library_name),
+                                    "section": section_name,
+                                    "default": str(alias),
+                                    "kind": kind,
+                                    "key": key,
+                                    "value": value,
+                                }
+                            )
+    playlist_files = data.get("playlist_files")
+    if isinstance(playlist_files, list):
+        for entry in playlist_files:
+            if not isinstance(entry, dict):
+                continue
+            alias = entry.get("default")
+            tv = entry.get("template_variables")
+            if not alias or not isinstance(tv, dict):
+                continue
+            for raw_key, raw_value in tv.items():
+                for key, value in normalize_nested_template_key(str(raw_key), raw_value):
+                    findings.append(
+                        {
+                            "file": str(path),
+                            "library": None,
+                            "section": "playlist_files",
+                            "default": str(alias),
+                            "kind": "playlist",
+                            "key": key,
+                            "value": raw_value,
+                        }
+                    )
+    return findings
+
+
 def collect_yaml_files(inputs: list[Path], discovery_callback=None) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
     yaml_files: list[Path] = []
     temp_dirs: list[tempfile.TemporaryDirectory] = []
@@ -300,106 +446,109 @@ def collect_yaml_files(inputs: list[Path], discovery_callback=None) -> tuple[lis
     return sorted(yaml_files), temp_dirs
 
 
+def prefilter_yaml_files(input_files: list[Path], cache_data: dict[str, Any] | None = None) -> tuple[list[Path], list[dict[str, str]], dict[str, int]]:
+    candidate_files: list[Path] = []
+    skipped_files: list[dict[str, str]] = []
+    stats = {"cache_hits": 0, "cache_misses": 0}
+    files_cache = cache_data.get("files", {}) if isinstance(cache_data, dict) else {}
+    for path in input_files:
+        cache_key = str(path)
+        signature = file_signature(path)
+        cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
+        if isinstance(cached, dict) and cached.get("signature") == signature and "contains_template_variables" in cached:
+            stats["cache_hits"] += 1
+            if cached.get("prefilter_skip"):
+                skipped_files.append(dict(cached["prefilter_skip"]))
+                continue
+            if cached.get("contains_template_variables"):
+                candidate_files.append(path)
+            continue
+        stats["cache_misses"] += 1
+        try:
+            raw_text = path.read_text(encoding="utf-8")
+        except Exception as exc:
+            skip_record = {
+                "file": str(path),
+                "error_type": type(exc).__name__,
+                "reason": str(exc),
+                "detail": f"{type(exc).__name__}: {exc}",
+                "stage": "prefilter",
+            }
+            skipped_files.append(skip_record)
+            if isinstance(files_cache, dict):
+                files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_template_variables": False}
+            continue
+        contains_template_variables = "template_variables" in raw_text
+        if isinstance(files_cache, dict):
+            files_cache[cache_key] = {"signature": signature, "contains_template_variables": contains_template_variables}
+        if contains_template_variables:
+            candidate_files.append(path)
+    return candidate_files, skipped_files, stats
+
+
 def scan_uploaded_configs(
     input_files: list[Path],
     progress_callback=None,
-) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[str]]:
+    cache_data: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[str], dict[str, int]]:
     findings: list[dict[str, Any]] = []
     skipped_files: list[dict[str, str]] = []
     parsed_file_paths: list[str] = []
     parsed_count = 0
     total_files = len(input_files)
+    stats = {"cache_hits": 0, "cache_misses": 0}
+    files_cache = cache_data.get("files", {}) if isinstance(cache_data, dict) else {}
     for idx, path in enumerate(input_files, start=1):
+        cache_key = str(path)
+        signature = file_signature(path)
+        cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
+        if isinstance(cached, dict) and cached.get("signature") == signature and "scan_result" in cached:
+            stats["cache_hits"] += 1
+            scan_result = cached["scan_result"]
+            if scan_result.get("status") == "skip":
+                skipped_files.append(dict(scan_result["skip_record"]))
+                if progress_callback:
+                    progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+                continue
+            parsed_file_paths.append(str(path))
+            parsed_count += 1
+            findings.extend(scan_result.get("findings", []))
+            if progress_callback:
+                progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            continue
+        stats["cache_misses"] += 1
         try:
             data = load_yaml(path)
         except Exception as exc:
-            skipped_files.append(
-                {
-                    "file": str(path),
-                    "error_type": type(exc).__name__,
-                    "reason": str(exc),
-                    "detail": f"{type(exc).__name__}: {exc}",
-                }
-            )
+            skip_record = {
+                "file": str(path),
+                "error_type": type(exc).__name__,
+                "reason": str(exc),
+                "detail": f"{type(exc).__name__}: {exc}",
+                "stage": "parse",
+            }
+            skipped_files.append(skip_record)
+            if isinstance(files_cache, dict):
+                files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "skip", "skip_record": skip_record}}
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             continue
         parsed_file_paths.append(str(path))
         if not isinstance(data, dict):
             parsed_count += 1
+            if isinstance(files_cache, dict):
+                files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "ok", "findings": []}}
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             continue
-        libraries = data.get("libraries")
-        if isinstance(libraries, dict):
-            for library_name, lib_cfg in libraries.items():
-                if not isinstance(lib_cfg, dict):
-                    continue
-                tv = lib_cfg.get("template_variables")
-                if isinstance(tv, dict):
-                    for raw_key, raw_value in tv.items():
-                        for key, value in normalize_nested_template_key(str(raw_key), raw_value):
-                            findings.append(
-                                {
-                                    "file": str(path),
-                                    "library": str(library_name),
-                                    "section": "library_template_variables",
-                                    "default": None,
-                                    "kind": "library",
-                                    "key": key,
-                                    "value": value,
-                                }
-                            )
-                for section_name, kind in (("collection_files", "collection"), ("overlay_files", "overlay")):
-                    entries = lib_cfg.get(section_name)
-                    if not isinstance(entries, list):
-                        continue
-                    for entry in entries:
-                        if not isinstance(entry, dict):
-                            continue
-                        alias = entry.get("default")
-                        tv = entry.get("template_variables")
-                        if not alias or not isinstance(tv, dict):
-                            continue
-                        for raw_key, raw_value in tv.items():
-                            for key, value in normalize_nested_template_key(str(raw_key), raw_value):
-                                findings.append(
-                                    {
-                                    "file": str(path),
-                                    "library": str(library_name),
-                                    "section": section_name,
-                                        "default": str(alias),
-                                        "kind": kind,
-                                        "key": key,
-                                        "value": value,
-                                    }
-                                )
-        playlist_files = data.get("playlist_files")
-        if isinstance(playlist_files, list):
-            for entry in playlist_files:
-                if not isinstance(entry, dict):
-                    continue
-                alias = entry.get("default")
-                tv = entry.get("template_variables")
-                if not alias or not isinstance(tv, dict):
-                    continue
-                for raw_key, raw_value in tv.items():
-                    for key, value in normalize_nested_template_key(str(raw_key), raw_value):
-                        findings.append(
-                            {
-                                "file": str(path),
-                                "library": None,
-                                "section": "playlist_files",
-                                "default": str(alias),
-                                "kind": "playlist",
-                                "key": key,
-                                "value": raw_value,
-                            }
-                        )
+        file_findings = extract_findings_from_data(data, path)
+        findings.extend(file_findings)
         parsed_count += 1
+        if isinstance(files_cache, dict):
+            files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "ok", "findings": file_findings}}
         if progress_callback:
             progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
-    return findings, skipped_files, parsed_file_paths
+    return findings, skipped_files, parsed_file_paths, stats
 
 
 def parse_args() -> argparse.Namespace:
@@ -421,6 +570,15 @@ def parse_args() -> argparse.Namespace:
         help="Path to the Quickstart repo root. Defaults to the repo containing this script.",
     )
     parser.add_argument(
+        "--cache-path",
+        help="Optional cache JSON path. Defaults to artifacts/template_gap_cache.json.",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable incremental file-result caching for this run.",
+    )
+    parser.add_argument(
         "--no-progress",
         action="store_true",
         help="Disable periodic progress output during long scans.",
@@ -432,21 +590,34 @@ def build_progress_callbacks(enabled: bool):
     if not enabled:
         return None, None
 
+    start_time = time.monotonic()
     discovery_state = {"last_time": 0.0, "last_dirs": 0}
     scan_state = {"last_time": 0.0, "last_index": 0}
+
+    def elapsed_label() -> str:
+        elapsed = int(time.monotonic() - start_time)
+        minutes, seconds = divmod(elapsed, 60)
+        hours, minutes = divmod(minutes, 60)
+        if hours:
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        return f"{minutes:02d}:{seconds:02d}"
 
     def emit_discovery(event: str, current_path: Path, yaml_found: int) -> None:
         now = time.monotonic()
         if event == "root":
-            print(f"[progress] scanning root {current_path}", file=sys.stderr, flush=True)
+            print(f"[progress][{elapsed_label()}] scanning root {current_path}", file=sys.stderr, flush=True)
             discovery_state["last_time"] = now
             return
         if event == "zip":
-            print(f"[progress] extracting and scanning zip {current_path}", file=sys.stderr, flush=True)
+            print(f"[progress][{elapsed_label()}] extracting and scanning zip {current_path}", file=sys.stderr, flush=True)
             discovery_state["last_time"] = now
             return
         if event == "root_done":
-            print(f"[progress] finished root {current_path} | discovered {yaml_found} YAML files so far", file=sys.stderr, flush=True)
+            print(
+                f"[progress][{elapsed_label()}] finished root {current_path} | discovered {yaml_found} YAML files so far",
+                file=sys.stderr,
+                flush=True,
+            )
             discovery_state["last_time"] = now
             return
         discovery_state["last_dirs"] += 1
@@ -458,7 +629,7 @@ def build_progress_callbacks(enabled: bool):
         if not should_emit:
             return
         print(
-            f"[progress] scanning directory {current_path} | discovered {yaml_found} YAML files",
+            f"[progress][{elapsed_label()}] scanning directory {current_path} | discovered {yaml_found} YAML files",
             file=sys.stderr,
             flush=True,
         )
@@ -475,7 +646,7 @@ def build_progress_callbacks(enabled: bool):
         if not should_emit:
             return
         print(
-            f"[progress] {index}/{total} files | parsed {parsed} | skipped {skipped} | {current_path}",
+            f"[progress][{elapsed_label()}] {index}/{total} files | parsed {parsed} | skipped {skipped} | {current_path}",
             file=sys.stderr,
             flush=True,
         )
@@ -543,9 +714,15 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
 
     lines = [
         "Template Variable Gap Summary",
+        f"  files discovered: {report.get('discovered_file_count', 0)}",
+        f"  files prefiltered: {report.get('prefiltered_file_count', 0)}",
         f"  files parsed: {report.get('parsed_file_count', 0)}",
         f"  files skipped: {report.get('skipped_file_count', 0)}",
         f"  files with template variables: {report.get('files_with_template_variables_count', 0)}",
+        f"  cache enabled: {report.get('cache_enabled', False)}",
+        f"  cache hits: {report.get('cache_hit_count', 0)}",
+        f"  cache misses: {report.get('cache_miss_count', 0)}",
+        "  cache invalidates on: analyzer, Quickstart support JSON, Kometa defaults, or source file changes",
         f"  template variable occurrences scanned: {report.get('template_variable_occurrences_scanned', 0)}",
         f"  verified gaps: {report.get('verified_gap_count', 0)}",
         f"  value-shape verified gaps: {report.get('value_shape_verified_gap_count', 0)}",
@@ -570,6 +747,8 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         remaining = len(skipped_files) - min(len(skipped_files), 10)
         if remaining > 0:
             lines.append(f"  ... plus {remaining} more skipped files")
+    if report.get("cache_enabled", False):
+        lines.append(f"Cache file: {report.get('cache_path')}")
     lines.append(f"Full JSON report: {json_output_path}")
     return "\n".join(lines)
 
@@ -581,10 +760,24 @@ def main() -> None:
     qs_collections_path = root / "static" / "json" / "quickstart_collections.json"
     qs_overlays_path = root / "static" / "json" / "quickstart_overlays.json"
     qs_attributes_path = root / "static" / "json" / "quickstart_attributes.json"
+    cache_context = build_cache_context(
+        root,
+        qs_collections_path,
+        qs_overlays_path,
+        qs_attributes_path,
+        kometa_defaults,
+    )
+    cache_path = get_cache_path(root, args.cache_path)
+    cache_enabled = not args.no_cache
+    cache_data = load_cache(cache_path, expected_context=cache_context) if cache_enabled else empty_cache(cache_context)
 
     inputs = [Path(p).resolve() for p in args.input] if args.input else [root / "artifacts" / "config_zip_scan"]
     discovery_callback, progress_callback = build_progress_callbacks(not args.no_progress)
     input_files, temp_dirs = collect_yaml_files(inputs, discovery_callback=discovery_callback)
+    candidate_files, prefilter_skipped_files, prefilter_cache_stats = prefilter_yaml_files(
+        input_files,
+        cache_data=cache_data if cache_enabled else None,
+    )
 
     try:
         qs_collections = build_qs_collection_map(qs_collections_path)
@@ -592,11 +785,21 @@ def main() -> None:
         qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
         if progress_callback:
             print(
-                f"[progress] discovered {len(input_files)} YAML files across {len(inputs)} input root(s)",
+                f"[progress][discovery] discovered {len(input_files)} YAML files across {len(inputs)} input root(s)",
                 file=sys.stderr,
                 flush=True,
             )
-        uploaded, skipped_files, parsed_file_paths = scan_uploaded_configs(input_files, progress_callback=progress_callback)
+            print(
+                f"[progress][prefilter] selected {len(candidate_files)} YAML files containing template_variables",
+                file=sys.stderr,
+                flush=True,
+            )
+        uploaded, parse_skipped_files, parsed_file_paths, parse_cache_stats = scan_uploaded_configs(
+            candidate_files,
+            progress_callback=progress_callback,
+            cache_data=cache_data if cache_enabled else None,
+        )
+        skipped_files = prefilter_skipped_files + parse_skipped_files
 
         gap_rows: list[dict[str, Any]] = []
         all_rows: list[dict[str, Any]] = []
@@ -700,6 +903,17 @@ def main() -> None:
         report = {
             "quickstart_root": str(root),
             "inputs": [str(p) for p in inputs],
+            "cache_enabled": cache_enabled,
+            "cache_path": str(cache_path),
+            "cache_context": cache_context,
+            "cache_hit_count": prefilter_cache_stats["cache_hits"] + parse_cache_stats["cache_hits"],
+            "cache_miss_count": prefilter_cache_stats["cache_misses"] + parse_cache_stats["cache_misses"],
+            "cache_stats": {
+                "prefilter": prefilter_cache_stats,
+                "parse": parse_cache_stats,
+            },
+            "discovered_file_count": len(input_files),
+            "prefiltered_file_count": len(candidate_files),
             "parsed_files": sorted(parsed_file_paths),
             "uploaded_files_scanned": sorted({row["file"] for row in uploaded}),
             "skipped_files": skipped_files,
@@ -726,6 +940,8 @@ def main() -> None:
     json_output_path.parent.mkdir(parents=True, exist_ok=True)
     rendered = json.dumps(report, indent=2)
     json_output_path.write_text(rendered, encoding="utf-8")
+    if cache_enabled:
+        save_cache(cache_path, cache_data)
     print(render_summary(report, json_output_path))
 
 
