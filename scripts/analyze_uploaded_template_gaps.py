@@ -1,0 +1,601 @@
+import argparse
+import json
+import re
+import tempfile
+import zipfile
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from ruamel.yaml import YAML
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+yaml = YAML(typ="safe", pure=True)
+
+
+def load_yaml(path: Path) -> Any:
+    return yaml.load(path.read_text(encoding="utf-8"))
+
+
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def collect_qs_keys(raw: Any) -> set[str]:
+    keys: set[str] = set()
+    if isinstance(raw, dict):
+        keys.update(str(k) for k in raw.keys())
+    elif isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict) and item.get("key"):
+                keys.add(str(item["key"]))
+    return keys
+
+
+def build_qs_collection_map(qs_collections_path: Path) -> dict[str, set[str]]:
+    data = load_json(qs_collections_path)
+    mapping: dict[str, set[str]] = {}
+    for group in data:
+        if not isinstance(group, dict):
+            continue
+        for collection in group.get("collections", []):
+            if not isinstance(collection, dict):
+                continue
+            cid = collection.get("id")
+            if not cid:
+                continue
+            alias = str(cid).replace("collection_", "", 1)
+            mapping[alias] = collect_qs_keys(collection.get("template_variables"))
+    return mapping
+
+
+def build_qs_overlay_map(qs_overlays_path: Path) -> dict[str, set[str]]:
+    data = load_json(qs_overlays_path)
+    mapping: dict[str, set[str]] = {}
+    for group in data:
+        if not isinstance(group, dict):
+            continue
+        for overlay in group.get("overlays", []):
+            if not isinstance(overlay, dict):
+                continue
+            oid = overlay.get("id")
+            if not oid:
+                continue
+            alias = str(oid).replace("overlay_", "", 1)
+            mapping[alias] = collect_qs_keys(overlay.get("template_variables"))
+    return mapping
+
+
+def build_qs_library_template_keys(qs_attributes_path: Path) -> set[str]:
+    data = load_json(qs_attributes_path)
+    keys: set[str] = set()
+    for section in data.get("sections", []):
+        if isinstance(section, dict) and section.get("yml_location") == "template_variables" and section.get("prefix"):
+            keys.add(str(section["prefix"]))
+    return keys
+
+
+def resolve_default_paths(alias: str, kind: str, kometa_defaults: Path) -> list[Path]:
+    if kind == "overlay":
+        path = kometa_defaults / "overlays" / f"{alias}.yml"
+        return [path] if path.exists() else []
+    if kind == "playlist":
+        path = kometa_defaults / "playlist.yml"
+        return [path] if path.exists() else []
+    matches = sorted(kometa_defaults.rglob(f"{alias}.yml"))
+    return [p for p in matches if p.is_file()]
+
+
+KEY_RE = re.compile(r"^\s*([A-Za-z0-9_<>-]+(?:\.[A-Za-z0-9_<>-]+)?)\s*:\s*(?:.*)?$")
+LIST_RE = re.compile(r"^\s*-\s+([A-Za-z0-9_<>-]+(?:\.[A-Za-z0-9_<>-]+)?)\s*$")
+PLACEHOLDER_RE = re.compile(r"<<[^>]+>>")
+
+RESERVED = {
+    "external_templates",
+    "templates",
+    "collections",
+    "overlays",
+    "playlists",
+    "default",
+    "optional",
+    "conditionals",
+    "conditions",
+    "variables",
+    "template",
+    "value",
+    "key",
+    "type",
+    "group",
+    "run_definition",
+    "allowed_libraries",
+    "mapping_name",
+    "mapping_name_encoded",
+    "search",
+    "filters",
+    "plex_search",
+    "plex_all",
+    "ignore_blank_results",
+    "validate",
+    "all",
+    "any",
+    "name",
+    "summary",
+}
+
+
+def patterns_from_default_file(path: Path) -> set[str]:
+    patterns: set[str] = set()
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.rstrip()
+        km = KEY_RE.match(line)
+        lm = LIST_RE.match(line)
+        token = None
+        if km:
+            token = km.group(1)
+        elif lm:
+            token = lm.group(1)
+        if not token:
+            continue
+        if token in RESERVED:
+            continue
+        patterns.add(token)
+        if token.endswith(".exists"):
+            patterns.add(token[: -len(".exists")])
+    return patterns
+
+
+def key_matches_pattern(key: str, pattern: str) -> bool:
+    if key == pattern:
+        return True
+    regex = "^" + PLACEHOLDER_RE.sub(lambda _: r"[^:\s]+", re.escape(pattern)) + "$"
+    return re.match(regex, key) is not None
+
+
+def key_is_valid_for_default(key: str, default_files: list[Path]) -> tuple[bool, list[Path]]:
+    matched: list[Path] = []
+    for path in default_files:
+        for pattern in patterns_from_default_file(path):
+            if key_matches_pattern(key, pattern):
+                matched.append(path)
+                break
+    return bool(matched), matched
+
+
+BOOL_PREFIXES = (
+    "use_",
+    "build_",
+    "remove_",
+    "delete_",
+    "create_",
+    "save_",
+    "show_",
+)
+BOOL_EXACT = {
+    "custom_keys",
+    "sync",
+    "test",
+}
+NUMERIC_HINTS = {
+    "horizontal_offset",
+    "vertical_offset",
+    "back_width",
+    "back_height",
+    "back_padding",
+    "back_radius",
+    "back_line_width",
+    "font_size",
+    "stroke_width",
+    "weight",
+    "overlay_limit",
+    "minimum_items",
+    "data_increment",
+}
+LIST_HINTS = {
+    "libraries",
+    "languages",
+    "exclude",
+    "include",
+    "append_exclude",
+    "append_include",
+    "remove_exclude",
+    "remove_include",
+}
+STRING_HINTS = {
+    "file",
+    "text",
+    "final_name",
+    "horizontal_align",
+    "vertical_align",
+    "horizontal_position",
+    "vertical_position",
+    "style",
+    "collection_mode",
+    "sync_mode",
+    "back_align",
+    "back_color",
+    "back_line_color",
+    "font",
+    "font_color",
+    "stroke_color",
+    "language",
+}
+URLISH_PREFIXES = (
+    "trakt_list_",
+    "imdb_list_",
+    "mdblist_list_",
+    "url_",
+    "git_",
+    "repo_",
+    "file_",
+)
+
+
+def infer_value_shape(value: Any, key: str) -> tuple[bool | None, str]:
+    if key in BOOL_EXACT or key.startswith(BOOL_PREFIXES):
+        return isinstance(value, bool), "bool"
+    if key in NUMERIC_HINTS:
+        return isinstance(value, (int, float)) and not isinstance(value, bool), "number"
+    if key in LIST_HINTS:
+        if isinstance(value, list):
+            return True, "list"
+        if isinstance(value, str):
+            return True, "string_or_list"
+        return False, "string_or_list"
+    if key in STRING_HINTS or key.startswith(URLISH_PREFIXES):
+        return isinstance(value, str), "string"
+    if key.startswith(("data_", "summary_", "name_")):
+        return isinstance(value, (str, int, float, bool, list, dict)), "dynamic"
+    return None, "unknown"
+
+
+def normalize_nested_template_key(key: str, value: Any) -> list[tuple[str, Any]]:
+    if key == "data" and isinstance(value, dict):
+        return [(f"data_{subkey}", subvalue) for subkey, subvalue in value.items()]
+    return [(key, value)]
+
+
+def collect_yaml_files(inputs: list[Path]) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
+    yaml_files: list[Path] = []
+    temp_dirs: list[tempfile.TemporaryDirectory] = []
+    for input_path in inputs:
+        if input_path.is_dir():
+            yaml_files.extend(sorted(input_path.rglob("*.yml")))
+            yaml_files.extend(sorted(input_path.rglob("*.yaml")))
+        elif input_path.is_file() and input_path.suffix.lower() in {".yml", ".yaml"}:
+            yaml_files.append(input_path)
+        elif input_path.is_file() and input_path.suffix.lower() == ".zip":
+            temp_dir = tempfile.TemporaryDirectory(prefix="qs_template_gap_")
+            temp_dirs.append(temp_dir)
+            extract_root = Path(temp_dir.name)
+            with zipfile.ZipFile(input_path) as zf:
+                zf.extractall(extract_root)
+            yaml_files.extend(sorted(extract_root.rglob("*.yml")))
+            yaml_files.extend(sorted(extract_root.rglob("*.yaml")))
+        else:
+            raise FileNotFoundError(f"Unsupported input path: {input_path}")
+    return yaml_files, temp_dirs
+
+
+def scan_uploaded_configs(input_files: list[Path]) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    for path in input_files:
+        data = load_yaml(path)
+        if not isinstance(data, dict):
+            continue
+        libraries = data.get("libraries")
+        if isinstance(libraries, dict):
+            for library_name, lib_cfg in libraries.items():
+                if not isinstance(lib_cfg, dict):
+                    continue
+                tv = lib_cfg.get("template_variables")
+                if isinstance(tv, dict):
+                    for raw_key, raw_value in tv.items():
+                        for key, value in normalize_nested_template_key(str(raw_key), raw_value):
+                            findings.append(
+                                {
+                                    "file": str(path),
+                                    "library": str(library_name),
+                                    "section": "library_template_variables",
+                                    "default": None,
+                                    "kind": "library",
+                                    "key": key,
+                                    "value": value,
+                                }
+                            )
+                for section_name, kind in (("collection_files", "collection"), ("overlay_files", "overlay")):
+                    entries = lib_cfg.get(section_name)
+                    if not isinstance(entries, list):
+                        continue
+                    for entry in entries:
+                        if not isinstance(entry, dict):
+                            continue
+                        alias = entry.get("default")
+                        tv = entry.get("template_variables")
+                        if not alias or not isinstance(tv, dict):
+                            continue
+                        for raw_key, raw_value in tv.items():
+                            for key, value in normalize_nested_template_key(str(raw_key), raw_value):
+                                findings.append(
+                                    {
+                                    "file": str(path),
+                                    "library": str(library_name),
+                                    "section": section_name,
+                                        "default": str(alias),
+                                        "kind": kind,
+                                        "key": key,
+                                        "value": value,
+                                    }
+                                )
+        playlist_files = data.get("playlist_files")
+        if isinstance(playlist_files, list):
+            for entry in playlist_files:
+                if not isinstance(entry, dict):
+                    continue
+                alias = entry.get("default")
+                tv = entry.get("template_variables")
+                if not alias or not isinstance(tv, dict):
+                    continue
+                for raw_key, raw_value in tv.items():
+                    for key, value in normalize_nested_template_key(str(raw_key), raw_value):
+                        findings.append(
+                            {
+                                "file": str(path),
+                                "library": None,
+                                "section": "playlist_files",
+                                "default": str(alias),
+                                "kind": "playlist",
+                                "key": key,
+                                "value": raw_value,
+                            }
+                        )
+    return findings
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Find template variables used in uploaded configs that are valid in Kometa but not exposed in Quickstart."
+    )
+    parser.add_argument(
+        "--input",
+        nargs="+",
+        help="YAML file, folder, or ZIP to scan. Can be passed multiple times or with multiple values.",
+    )
+    parser.add_argument(
+        "--output",
+        help="Optional JSON output file path. If omitted, writes to artifacts/template_gap_reports/<timestamp>.json.",
+    )
+    parser.add_argument(
+        "--quickstart-root",
+        default=str(ROOT),
+        help="Path to the Quickstart repo root. Defaults to the repo containing this script.",
+    )
+    return parser.parse_args()
+
+
+def ensure_json_output_path(root: Path, requested_output: str | None) -> Path:
+    if requested_output:
+        return Path(requested_output).resolve()
+    report_dir = root / "artifacts" / "template_gap_reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return report_dir / f"template_gap_report_{timestamp}.json"
+
+
+def compact_path_list(paths: list[str], limit: int = 3) -> str:
+    if not paths:
+        return "-"
+    shown = paths[:limit]
+    text = ", ".join(shown)
+    remaining = len(paths) - len(shown)
+    if remaining > 0:
+        text += f" +{remaining}"
+    return text
+
+
+def render_table(title: str, rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return f"{title}\n  none\n"
+    headers = ["default", "key", "occ", "shape ok", "shape ?", "files", "libraries", "kometa file"]
+    table_rows = []
+    for row in rows:
+        table_rows.append(
+            [
+                str(row.get("default") or "-"),
+                str(row.get("key") or "-"),
+                str(row.get("occurrences", 0)),
+                str(row.get("value_shape_verified_occurrences", 0)),
+                str(row.get("value_shape_unknown_occurrences", 0)),
+                str(row.get("file_count", 0)),
+                compact_path_list(row.get("libraries", []), limit=2),
+                compact_path_list(row.get("matched_default_files", []), limit=2),
+            ]
+        )
+    widths = []
+    for col_idx, header in enumerate(headers):
+        widths.append(max(len(header), *(len(r[col_idx]) for r in table_rows)))
+
+    def fmt(row: list[str]) -> str:
+        return "  " + " | ".join(cell.ljust(widths[idx]) for idx, cell in enumerate(row))
+
+    lines = [title, fmt(headers), "  " + "-+-".join("-" * width for width in widths)]
+    lines.extend(fmt(row) for row in table_rows)
+    return "\n".join(lines) + "\n"
+
+
+def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
+    overlays = report.get("verified_gaps_by_kind", {}).get("overlay", [])
+    collections = report.get("verified_gaps_by_kind", {}).get("collection", [])
+    playlists = report.get("verified_gaps_by_kind", {}).get("playlist", [])
+    libraries = report.get("verified_gaps_by_kind", {}).get("library", [])
+
+    lines = [
+        "Template Variable Gap Summary",
+        f"  files scanned: {len(report.get('uploaded_files_scanned', []))}",
+        f"  template variable occurrences scanned: {report.get('template_variable_occurrences_scanned', 0)}",
+        f"  verified gaps: {report.get('verified_gap_count', 0)}",
+        f"  value-shape verified gaps: {report.get('value_shape_verified_gap_count', 0)}",
+        f"  overlay gaps: {len(overlays)}",
+        f"  collection gaps: {len(collections)}",
+        f"  playlist gaps: {len(playlists)}",
+        f"  library gaps: {len(libraries)}",
+        "  runtime guaranteed: false",
+        "",
+        render_table("Overlay Gaps", overlays),
+        render_table("Collection Gaps", collections),
+    ]
+    if playlists:
+        lines.append(render_table("Playlist Gaps", playlists))
+    if libraries:
+        lines.append(render_table("Library Gaps", libraries))
+    lines.append(f"Full JSON report: {json_output_path}")
+    return "\n".join(lines)
+
+
+def main() -> None:
+    args = parse_args()
+    root = Path(args.quickstart_root).resolve()
+    kometa_defaults = root / "config" / "kometa" / "defaults"
+    qs_collections_path = root / "static" / "json" / "quickstart_collections.json"
+    qs_overlays_path = root / "static" / "json" / "quickstart_overlays.json"
+    qs_attributes_path = root / "static" / "json" / "quickstart_attributes.json"
+
+    inputs = [Path(p).resolve() for p in args.input] if args.input else [root / "artifacts" / "config_zip_scan"]
+    input_files, temp_dirs = collect_yaml_files(inputs)
+
+    try:
+        qs_collections = build_qs_collection_map(qs_collections_path)
+        qs_overlays = build_qs_overlay_map(qs_overlays_path)
+        qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
+        uploaded = scan_uploaded_configs(input_files)
+
+        gap_rows: list[dict[str, Any]] = []
+        all_rows: list[dict[str, Any]] = []
+        grouped_examples: dict[tuple[str, str | None, str], list[str]] = defaultdict(list)
+
+        for row in uploaded:
+            key = row["key"]
+            kind = row["kind"]
+            alias = row["default"]
+            if kind == "collection":
+                supported = key in qs_collections.get(alias or "", set())
+                default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
+                name_verified, matched_files = key_is_valid_for_default(key, default_files)
+            elif kind == "overlay":
+                supported = key in qs_overlays.get(alias or "", set())
+                default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
+                name_verified, matched_files = key_is_valid_for_default(key, default_files)
+            elif kind == "playlist":
+                supported = False
+                default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
+                name_verified, matched_files = key_is_valid_for_default(key, default_files)
+            else:
+                supported = key in qs_library_keys
+                name_verified = True
+                matched_files = []
+
+            value_shape_verified, value_shape_rule = infer_value_shape(row["value"], key)
+            out = dict(row)
+            out["supported_in_quickstart"] = supported
+            out["name_verified"] = name_verified
+            out["value_shape_verified"] = value_shape_verified
+            out["value_shape_rule"] = value_shape_rule
+            out["runtime_guaranteed"] = False
+            out["valid_for_kometa"] = name_verified
+            out["matched_default_files"] = [str(p.relative_to(kometa_defaults)) for p in matched_files]
+            all_rows.append(out)
+
+            if name_verified and not supported:
+                gap_rows.append(out)
+                grouped_examples[(kind, alias, key)].append(row["file"])
+
+        summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
+        for row in gap_rows:
+            bucket = summary.setdefault(
+                (row["kind"], row["default"], row["key"]),
+                {
+                    "kind": row["kind"],
+                    "default": row["default"],
+                    "key": row["key"],
+                    "occurrences": 0,
+                    "files": set(),
+                    "libraries": set(),
+                    "matched_default_files": set(),
+                    "value_shape_verified_occurrences": 0,
+                    "value_shape_unknown_occurrences": 0,
+                    "value_shape_rules": set(),
+                },
+            )
+            bucket["occurrences"] += 1
+            bucket["files"].add(row["file"])
+            if row["library"]:
+                bucket["libraries"].add(row["library"])
+            for item in row["matched_default_files"]:
+                bucket["matched_default_files"].add(item)
+            if row["value_shape_verified"] is True:
+                bucket["value_shape_verified_occurrences"] += 1
+            elif row["value_shape_verified"] is None:
+                bucket["value_shape_unknown_occurrences"] += 1
+            bucket["value_shape_rules"].add(row["value_shape_rule"])
+
+        ranked = sorted(
+            summary.values(),
+            key=lambda item: (-item["occurrences"], -len(item["files"]), str(item["default"]), str(item["key"])),
+        )
+
+        serializable_ranked = []
+        for item in ranked:
+            serializable_ranked.append(
+                {
+                    "kind": item["kind"],
+                    "default": item["default"],
+                    "key": item["key"],
+                    "occurrences": item["occurrences"],
+                    "file_count": len(item["files"]),
+                    "files": sorted(item["files"]),
+                    "libraries": sorted(item["libraries"]),
+                    "matched_default_files": sorted(item["matched_default_files"]),
+                    "name_verified": True,
+                    "value_shape_verified_occurrences": item["value_shape_verified_occurrences"],
+                    "value_shape_unknown_occurrences": item["value_shape_unknown_occurrences"],
+                    "value_shape_rules": sorted(item["value_shape_rules"]),
+                    "runtime_guaranteed": False,
+                }
+            )
+
+        by_kind: dict[str, list[dict[str, Any]]] = {"overlay": [], "collection": [], "playlist": [], "library": []}
+        for item in serializable_ranked:
+            kind_key = item["kind"] if item["kind"] in by_kind else "library"
+            by_kind[kind_key].append(item)
+
+        report = {
+            "quickstart_root": str(root),
+            "inputs": [str(p) for p in inputs],
+            "uploaded_files_scanned": sorted({row["file"] for row in uploaded}),
+            "template_variable_occurrences_scanned": len(uploaded),
+            "verified_gap_count": len(serializable_ranked),
+            "value_shape_verified_gap_count": sum(1 for item in serializable_ranked if item["value_shape_verified_occurrences"] > 0),
+            "verification_notes": {
+                "name_verified": "Key name matched a variable declared or referenced in the corresponding built-in Kometa default.",
+                "value_shape_verified": "Best-effort local heuristic that the supplied value looks like the expected basic type. Null means no reliable local rule was inferred.",
+                "runtime_guaranteed": False,
+            },
+            "verified_gaps_ranked": serializable_ranked,
+            "verified_gaps_by_kind": by_kind,
+            "all_rows": all_rows,
+        }
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+    json_output_path = ensure_json_output_path(root, args.output)
+    json_output_path.parent.mkdir(parents=True, exist_ok=True)
+    rendered = json.dumps(report, indent=2)
+    json_output_path.write_text(rendered, encoding="utf-8")
+    print(render_summary(report, json_output_path))
+
+
+if __name__ == "__main__":
+    main()
