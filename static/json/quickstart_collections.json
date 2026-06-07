@@ -12115,6 +12115,17 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
+          },
+          {
             "key": "use_favorited",
             "label": "MyAnimeList Favorited",
             "tooltip": "Collection of most Favorited Anime on MyAnimeList.",
@@ -20325,6 +20336,17 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
+          },
+          {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
@@ -20739,6 +20761,17 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
           },
           {
             "key": "use_other",
@@ -21156,6 +21189,17 @@
             "type": "text_input",
             "default": "081",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
           },
           {
             "key": "use_Northern Africa",
@@ -21734,6 +21778,17 @@
             "type": "text_input",
             "default": "082",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
           },
           {
             "key": "use_Africa",
