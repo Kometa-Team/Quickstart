@@ -14,6 +14,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
+
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_VERSION = 3
 
@@ -27,7 +28,6 @@ DEFAULT_EXCLUDED_DIR_NAMES = {
     "cache",
     "cache_data",
     "dist",
-    "downloads",
     "images",
     "img",
     "log",
@@ -39,8 +39,6 @@ DEFAULT_EXCLUDED_DIR_NAMES = {
     "photos",
     "pictures",
     "site-packages",
-    "temp",
-    "tmp",
     "vendor",
     "videos",
     "venv",
@@ -53,9 +51,6 @@ DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES = {
     "windows",
 }
 DEFAULT_EXCLUDED_PATH_SEQUENCES = {
-    ("appdata", "local"),
-    ("appdata", "local", "temp"),
-    ("appdata", "roaming", "code", "user", "history"),
     ("defaults-image-creation", "create_people_posters", "config", "chrome-profile"),
     ("onedrive",),
     ("users", "default"),
@@ -121,7 +116,12 @@ def normalized_parts(path: Path) -> list[str]:
 
 def is_virtualenv_dir_name(name: str) -> bool:
     lowered = name.lower()
-    return lowered == "venv" or lowered.endswith("-venv") or lowered.endswith("_venv") or lowered.startswith("py_env-python")
+    return (
+        lowered == "venv"
+        or lowered.endswith("-venv")
+        or lowered.endswith("_venv")
+        or lowered.startswith("py_env-python")
+    )
 
 
 def has_part_sequence(parts: list[str], sequence: tuple[str, ...]) -> bool:
@@ -154,6 +154,28 @@ def should_exclude_directory(path: Path, root: Path, enabled: bool = True) -> bo
     if any(part in DEFAULT_EXCLUDED_DIR_NAMES for part in parts):
         return True
     return any(has_part_sequence(parts, sequence) for sequence in DEFAULT_EXCLUDED_PATH_SEQUENCES)
+
+
+def describe_default_excludes(enabled: bool) -> dict[str, Any]:
+    if not enabled:
+        return {
+            "enabled": False,
+            "top_level_dir_names": [],
+            "dir_names_anywhere": [],
+            "path_sequences": [],
+            "logic_rules": [],
+        }
+    return {
+        "enabled": True,
+        "top_level_dir_names": sorted(DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES),
+        "dir_names_anywhere": sorted(DEFAULT_EXCLUDED_DIR_NAMES),
+        "path_sequences": ["\\".join(sequence) for sequence in sorted(DEFAULT_EXCLUDED_PATH_SEQUENCES)],
+        "logic_rules": [
+            "dot-prefixed folders",
+            "any path containing AppData",
+            "virtualenv-style folders: venv, *-venv, *_venv, py_env-python*",
+        ],
+    }
 
 
 def relative_label(path: Path, base: Path) -> str:
@@ -512,7 +534,11 @@ def collect_yaml_files(
                 if should_exclude_directory(current_path, input_path, enabled=exclude_defaults):
                     dirnames[:] = []
                     continue
-                dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, input_path, enabled=exclude_defaults)]
+                dirnames[:] = [
+                    dirname
+                    for dirname in dirnames
+                    if not should_exclude_directory(current_path / dirname, input_path, enabled=exclude_defaults)
+                ]
                 if discovery_callback:
                     discovery_callback("dir", current_path, len(yaml_files))
                 for filename in filenames:
@@ -536,7 +562,11 @@ def collect_yaml_files(
                 if should_exclude_directory(current_path, extract_root, enabled=exclude_defaults):
                     dirnames[:] = []
                     continue
-                dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, extract_root, enabled=exclude_defaults)]
+                dirnames[:] = [
+                    dirname
+                    for dirname in dirnames
+                    if not should_exclude_directory(current_path / dirname, extract_root, enabled=exclude_defaults)
+                ]
                 if discovery_callback:
                     discovery_callback("dir", current_path, len(yaml_files))
                 for filename in filenames:
@@ -654,7 +684,9 @@ def scan_uploaded_configs(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Find template variables used in uploaded configs that are valid in Kometa but not exposed in Quickstart.")
+    parser = argparse.ArgumentParser(
+        description="Find template variables used in uploaded configs that are valid in Kometa but not exposed in Quickstart."
+    )
     parser.add_argument(
         "--input",
         nargs="+",
@@ -727,7 +759,11 @@ def build_progress_callbacks(enabled: bool):
             discovery_state["last_time"] = now
             return
         discovery_state["last_dirs"] += 1
-        should_emit = discovery_state["last_dirs"] == 1 or discovery_state["last_dirs"] % 100 == 0 or now - discovery_state["last_time"] >= 5.0
+        should_emit = (
+            discovery_state["last_dirs"] == 1
+            or discovery_state["last_dirs"] % 100 == 0
+            or now - discovery_state["last_time"] >= 5.0
+        )
         if not should_emit:
             return
         print(
@@ -739,7 +775,12 @@ def build_progress_callbacks(enabled: bool):
 
     def emit(index: int, total: int, parsed: int, skipped: int, current_path: Path) -> None:
         now = time.monotonic()
-        should_emit = index == 1 or index == total or index - scan_state["last_index"] >= 100 or now - scan_state["last_time"] >= 5.0
+        should_emit = (
+            index == 1
+            or index == total
+            or index - scan_state["last_index"] >= 100
+            or now - scan_state["last_time"] >= 5.0
+        )
         if not should_emit:
             return
         print(
@@ -758,7 +799,13 @@ def build_progress_callbacks(enabled: bool):
             verify_state["last_stage"] = stage
             verify_state["last_index"] = 0
             return
-        should_emit = index == 1 or index == total or stage != verify_state["last_stage"] or index - verify_state["last_index"] >= 500 or now - verify_state["last_time"] >= 5.0
+        should_emit = (
+            index == 1
+            or index == total
+            or stage != verify_state["last_stage"]
+            or index - verify_state["last_index"] >= 500
+            or now - verify_state["last_time"] >= 5.0
+        )
         if not should_emit:
             return
         print(f"[progress][{elapsed_label()}] {stage} {index}/{total}", file=sys.stderr, flush=True)
@@ -846,9 +893,24 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         f"  library gaps: {len(libraries)}",
         "  runtime guaranteed: false",
         "",
-        render_table("Overlay Gaps", overlays),
-        render_table("Collection Gaps", collections),
     ]
+    exclude_details = report.get("default_excludes")
+    if isinstance(exclude_details, dict):
+        lines.append("Default Excludes Active")
+        if exclude_details.get("enabled"):
+            lines.append(f"  top-level dir names: {', '.join(exclude_details.get('top_level_dir_names', [])) or 'none'}")
+            lines.append(f"  dir names anywhere: {', '.join(exclude_details.get('dir_names_anywhere', [])) or 'none'}")
+            lines.append(f"  path sequences: {', '.join(exclude_details.get('path_sequences', [])) or 'none'}")
+            lines.append(f"  logic rules: {', '.join(exclude_details.get('logic_rules', [])) or 'none'}")
+        else:
+            lines.append("  none")
+        lines.append("")
+    lines.extend(
+        [
+            render_table("Overlay Gaps", overlays),
+            render_table("Collection Gaps", collections),
+        ]
+    )
     if playlists:
         lines.append(render_table("Playlist Gaps", playlists))
     if libraries:
@@ -885,6 +947,7 @@ def main() -> None:
     cache_enabled = not args.no_cache
     cache_data = load_cache(cache_path, expected_context=cache_context) if cache_enabled else empty_cache(cache_context)
     default_excludes_enabled = not args.no_default_excludes
+    default_excludes = describe_default_excludes(default_excludes_enabled)
 
     inputs = [Path(p).resolve() for p in args.input] if args.input else [root / "artifacts" / "config_zip_scan"]
     discovery_callback, progress_callback, verify_callback = build_progress_callbacks(not args.no_progress)
@@ -1032,6 +1095,7 @@ def main() -> None:
             "cache_path": str(cache_path),
             "cache_context": cache_context,
             "default_excludes_enabled": default_excludes_enabled,
+            "default_excludes": default_excludes,
             "cache_hit_count": prefilter_cache_stats["cache_hits"] + parse_cache_stats["cache_hits"],
             "cache_miss_count": prefilter_cache_stats["cache_misses"] + parse_cache_stats["cache_misses"],
             "cache_stats": {
