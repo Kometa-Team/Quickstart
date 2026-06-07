@@ -1,7 +1,15 @@
 <p>Select which Collection Files you would like to run against your libraries. You can hover over the magnifying
   glass to see some of the collections that the file will create, or click on the name of the file to be taken
   to it's wiki page.</p>
-  {% import 'partials/_macros.html' as macros %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <button type="button" class="btn btn-outline-secondary btn-sm"
+    data-collection-section-modal-trigger data-library-id="{{ library.id }}">
+    <i class="bi bi-arrows-move me-1"></i>Reorder Collection Sections
+  </button>
+  <span class="small text-muted">Drag enabled collection defaults into the order you want. Quickstart will rewrite their <code>collection_section</code> values.</span>
+</div>
+{% include "partials/_collection_section_modal.html" %}
+{% import 'partials/_macros.html' as macros %}
 
 {% for group in collection_config %}
 {{ macros.collection_group_section(library, data, version_info, group, telemetry) }}

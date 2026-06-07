@@ -1,0 +1,29 @@
+<div class="modal fade" id="{{ library.id }}-collection-section-modal" tabindex="-1"
+  aria-labelledby="{{ library.id }}-collection-section-modal-label" aria-hidden="true"
+  data-collection-section-modal data-library-id="{{ library.id }}">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ library.id }}-collection-section-modal-label">Reorder Collection Sections</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info small mb-3" role="alert">
+          Drag the enabled collection defaults into the order you want. Saving assigns section values in <code>010</code> steps from top to bottom.
+        </div>
+        <div class="small text-muted mb-2" data-collection-section-modal-status>
+          Only enabled collections with a <code>collection_section</code> field appear here.
+        </div>
+        <ul class="list-group collection-section-sortable" data-collection-section-sortable></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-collection-section-reset>
+          Reset List
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" data-collection-section-save>
+          Save Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

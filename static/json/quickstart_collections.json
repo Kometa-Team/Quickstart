@@ -14414,6 +14414,14 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
+            "placeholder": "Leave blank or enter a value like 040"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
@@ -14835,6 +14843,14 @@
         "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file",
         "tooltip_variant": "danger",
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
+            "placeholder": "Leave blank or enter a value like 040"
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",

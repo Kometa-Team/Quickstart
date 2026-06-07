@@ -1022,7 +1022,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                 {% set disable_toggle = needs_tv_metadata and not valid_tv_metadata %}
 
                 <!-- Rendering Collection: {{ collection.id }} -->
-                <div class="template-toggle-group ms-3 mb-2">
+                <div class="template-toggle-group ms-3 mb-2"
+                    data-collection-config="true"
+                    data-library-id="{{ library.id }}"
+                    data-collection-id="{{ collection.id }}"
+                    data-collection-label="{{ collection.label }}">
 
                     {% if needs_tv_metadata %}
                     {% if disable_toggle %}

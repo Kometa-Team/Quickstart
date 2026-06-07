@@ -4197,6 +4197,157 @@ document.addEventListener('DOMContentLoaded', function () {
       openCopyModal(sourceId, sourceName, sourceType)
     })
 
+    function compareCollectionSectionValues (a, b) {
+      const aTrimmed = String(a || '').trim()
+      const bTrimmed = String(b || '').trim()
+      const aNumeric = /^\d+$/.test(aTrimmed)
+      const bNumeric = /^\d+$/.test(bTrimmed)
+      if (aNumeric && bNumeric) return Number(aTrimmed) - Number(bTrimmed)
+      if (aNumeric) return -1
+      if (bNumeric) return 1
+      if (aTrimmed && bTrimmed) return aTrimmed.localeCompare(bTrimmed)
+      if (aTrimmed) return -1
+      if (bTrimmed) return 1
+      return 0
+    }
+
+    function getCollectionSectionEntries (libraryId) {
+      const container = document.getElementById(`${libraryId}-container`)
+      if (!container) return []
+      const groups = Array.from(container.querySelectorAll('[data-collection-config="true"]'))
+      const entries = []
+      groups.forEach((group, index) => {
+        const collectionId = group.dataset.collectionId || ''
+        const label = group.dataset.collectionLabel || collectionId
+        const toggle = collectionId ? group.querySelector(`input[type="checkbox"]#${libraryId}-${collectionId}`) : null
+        if (!toggle || !toggle.checked) return
+        const input = group.querySelector('input[name$="_collection_section"]')
+        if (!input) return
+        entries.push({
+          collectionId,
+          label,
+          inputId: input.id,
+          currentValue: String(input.value || '').trim(),
+          domIndex: index
+        })
+      })
+      entries.sort((left, right) => {
+        const byValue = compareCollectionSectionValues(left.currentValue, right.currentValue)
+        if (byValue !== 0) return byValue
+        return left.domIndex - right.domIndex
+      })
+      return entries
+    }
+
+    function buildCollectionSectionListItem (entry, position) {
+      const li = document.createElement('li')
+      li.className = 'list-group-item sortable-item d-flex justify-content-between align-items-center gap-3'
+      li.dataset.inputId = entry.inputId
+      li.dataset.collectionId = entry.collectionId
+      li.innerHTML = `
+        <div class="d-flex align-items-center gap-2 flex-grow-1">
+          <i class="bi bi-grip-vertical drag-handle text-muted" role="button" aria-label="Drag to reorder"></i>
+          <div class="d-flex flex-column">
+            <span class="fw-semibold">${entry.label}</span>
+            <span class="small text-muted"><code>${entry.collectionId.replace(/^collection_/, '')}</code></span>
+          </div>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted">Current</div>
+          <span class="badge bg-secondary" data-collection-section-current>${entry.currentValue || 'blank'}</span>
+          <div class="small text-muted mt-1">New: <span data-collection-section-next>${String(position * 10).padStart(3, '0')}</span></div>
+        </div>
+      `
+      return li
+    }
+
+    function refreshCollectionSectionPreviewNumbers (list) {
+      if (!list) return
+      Array.from(list.children).forEach((item, index) => {
+        const next = item.querySelector('[data-collection-section-next]')
+        if (next) next.textContent = String((index + 1) * 10).padStart(3, '0')
+      })
+    }
+
+    function renderCollectionSectionModalList (modalEl) {
+      if (!modalEl) return []
+      const libraryId = modalEl.dataset.libraryId
+      const list = modalEl.querySelector('[data-collection-section-sortable]')
+      const status = modalEl.querySelector('[data-collection-section-modal-status]')
+      const saveButton = modalEl.querySelector('[data-collection-section-save]')
+      const entries = getCollectionSectionEntries(libraryId)
+      list.replaceChildren()
+      if (!entries.length) {
+        if (status) status.textContent = 'No enabled collections with a collection_section field are available to reorder in this library.'
+        if (saveButton) saveButton.disabled = true
+        return entries
+      }
+      entries.forEach((entry, index) => list.appendChild(buildCollectionSectionListItem(entry, index + 1)))
+      if (status) status.textContent = `${entries.length} enabled collection default${entries.length === 1 ? '' : 's'} ready to reorder.`
+      if (saveButton) saveButton.disabled = false
+      refreshCollectionSectionPreviewNumbers(list)
+      if (modalEl._collectionSectionSortable && typeof modalEl._collectionSectionSortable.destroy === 'function') {
+        modalEl._collectionSectionSortable.destroy()
+      }
+      modalEl._collectionSectionSortable = Sortable.create(list, {
+        handle: '.drag-handle',
+        animation: 150,
+        onSort: function () {
+          refreshCollectionSectionPreviewNumbers(list)
+        }
+      })
+      return entries
+    }
+
+    function saveCollectionSectionModalOrder (modalEl) {
+      if (!modalEl) return
+      const list = modalEl.querySelector('[data-collection-section-sortable]')
+      const items = Array.from(list ? list.children : [])
+      if (!items.length) return
+      items.forEach((item, index) => {
+        const inputId = item.dataset.inputId
+        const input = inputId ? document.getElementById(inputId) : null
+        if (!input) return
+        const nextValue = String((index + 1) * 10).padStart(3, '0')
+        input.value = nextValue
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+        const current = item.querySelector('[data-collection-section-current]')
+        if (current) current.textContent = nextValue
+      })
+      if (typeof showToast === 'function') {
+        showToast('success', 'Collection section order updated.')
+      }
+      refreshCollectionSectionPreviewNumbers(list)
+      const modal = bootstrap && bootstrap.Modal ? bootstrap.Modal.getInstance(modalEl) : null
+      if (modal) modal.hide()
+    }
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-collection-section-modal-trigger]')
+      if (trigger) {
+        const libraryId = trigger.dataset.libraryId
+        const modalEl = libraryId ? document.getElementById(`${libraryId}-collection-section-modal`) : null
+        if (!modalEl || !bootstrap || !bootstrap.Modal) return
+        renderCollectionSectionModalList(modalEl)
+        bootstrap.Modal.getOrCreateInstance(modalEl).show()
+        return
+      }
+
+      const resetButton = event.target.closest('[data-collection-section-reset]')
+      if (resetButton) {
+        const modalEl = resetButton.closest('[data-collection-section-modal]')
+        renderCollectionSectionModalList(modalEl)
+        return
+      }
+
+      const saveButton = event.target.closest('[data-collection-section-save]')
+      if (saveButton) {
+        const modalEl = saveButton.closest('[data-collection-section-modal]')
+        saveCollectionSectionModalOrder(modalEl)
+      }
+    })
+
     function initializeSortableList (libraryId, prefix) {
       const list = document.getElementById(`${libraryId}-attribute_${prefix}_sortable`)
       const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
