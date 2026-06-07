@@ -14,7 +14,6 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_VERSION = 3
 
@@ -122,12 +121,7 @@ def normalized_parts(path: Path) -> list[str]:
 
 def is_virtualenv_dir_name(name: str) -> bool:
     lowered = name.lower()
-    return (
-        lowered == "venv"
-        or lowered.endswith("-venv")
-        or lowered.endswith("_venv")
-        or lowered.startswith("py_env-python")
-    )
+    return lowered == "venv" or lowered.endswith("-venv") or lowered.endswith("_venv") or lowered.startswith("py_env-python")
 
 
 def has_part_sequence(parts: list[str], sequence: tuple[str, ...]) -> bool:
@@ -518,11 +512,7 @@ def collect_yaml_files(
                 if should_exclude_directory(current_path, input_path, enabled=exclude_defaults):
                     dirnames[:] = []
                     continue
-                dirnames[:] = [
-                    dirname
-                    for dirname in dirnames
-                    if not should_exclude_directory(current_path / dirname, input_path, enabled=exclude_defaults)
-                ]
+                dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, input_path, enabled=exclude_defaults)]
                 if discovery_callback:
                     discovery_callback("dir", current_path, len(yaml_files))
                 for filename in filenames:
@@ -546,11 +536,7 @@ def collect_yaml_files(
                 if should_exclude_directory(current_path, extract_root, enabled=exclude_defaults):
                     dirnames[:] = []
                     continue
-                dirnames[:] = [
-                    dirname
-                    for dirname in dirnames
-                    if not should_exclude_directory(current_path / dirname, extract_root, enabled=exclude_defaults)
-                ]
+                dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, extract_root, enabled=exclude_defaults)]
                 if discovery_callback:
                     discovery_callback("dir", current_path, len(yaml_files))
                 for filename in filenames:
@@ -668,9 +654,7 @@ def scan_uploaded_configs(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Find template variables used in uploaded configs that are valid in Kometa but not exposed in Quickstart."
-    )
+    parser = argparse.ArgumentParser(description="Find template variables used in uploaded configs that are valid in Kometa but not exposed in Quickstart.")
     parser.add_argument(
         "--input",
         nargs="+",
@@ -743,11 +727,7 @@ def build_progress_callbacks(enabled: bool):
             discovery_state["last_time"] = now
             return
         discovery_state["last_dirs"] += 1
-        should_emit = (
-            discovery_state["last_dirs"] == 1
-            or discovery_state["last_dirs"] % 100 == 0
-            or now - discovery_state["last_time"] >= 5.0
-        )
+        should_emit = discovery_state["last_dirs"] == 1 or discovery_state["last_dirs"] % 100 == 0 or now - discovery_state["last_time"] >= 5.0
         if not should_emit:
             return
         print(
@@ -759,12 +739,7 @@ def build_progress_callbacks(enabled: bool):
 
     def emit(index: int, total: int, parsed: int, skipped: int, current_path: Path) -> None:
         now = time.monotonic()
-        should_emit = (
-            index == 1
-            or index == total
-            or index - scan_state["last_index"] >= 100
-            or now - scan_state["last_time"] >= 5.0
-        )
+        should_emit = index == 1 or index == total or index - scan_state["last_index"] >= 100 or now - scan_state["last_time"] >= 5.0
         if not should_emit:
             return
         print(
@@ -783,13 +758,7 @@ def build_progress_callbacks(enabled: bool):
             verify_state["last_stage"] = stage
             verify_state["last_index"] = 0
             return
-        should_emit = (
-            index == 1
-            or index == total
-            or stage != verify_state["last_stage"]
-            or index - verify_state["last_index"] >= 500
-            or now - verify_state["last_time"] >= 5.0
-        )
+        should_emit = index == 1 or index == total or stage != verify_state["last_stage"] or index - verify_state["last_index"] >= 500 or now - verify_state["last_time"] >= 5.0
         if not should_emit:
             return
         print(f"[progress][{elapsed_label()}] {stage} {index}/{total}", file=sys.stderr, flush=True)
