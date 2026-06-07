@@ -14014,7 +14014,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "exclude",
@@ -15282,7 +15283,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "exclude",
@@ -16121,7 +16123,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "exclude",
@@ -17033,7 +17036,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -17455,7 +17459,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -17878,7 +17883,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -18301,7 +18307,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -18724,7 +18731,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -19147,7 +19155,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -19570,7 +19579,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -19993,7 +20003,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -20421,7 +20432,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -20854,7 +20866,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -21288,7 +21301,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -21883,7 +21897,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -22365,7 +22380,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_1.33",
@@ -22837,7 +22853,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -23280,7 +23297,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -23712,7 +23730,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_other",
@@ -24152,7 +24171,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -24637,7 +24657,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -25131,7 +25152,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -25625,7 +25647,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -26126,7 +26149,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "use_appletv",
@@ -27039,7 +27063,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "include",
@@ -27465,7 +27490,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "style",
@@ -27906,7 +27932,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections. Kometa defaults Seasonal to off unless you enable it.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": false
           },
           {
             "key": "use_aapi",
@@ -28806,7 +28833,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "data_starting",
@@ -29287,7 +29315,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "exclude",
@@ -29702,7 +29731,8 @@
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "exclude",
