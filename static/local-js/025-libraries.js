@@ -4279,6 +4279,23 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function ensureCollectionSectionModalRoot (modalEl) {
+      if (!modalEl || !document.body) return modalEl
+      const modalId = modalEl.id
+      if (modalId) {
+        const bodyModal = Array.from(document.body.querySelectorAll('[data-collection-section-modal]'))
+          .find(el => el.id === modalId && el !== modalEl)
+        if (bodyModal) {
+          if (modalEl.parentElement) modalEl.remove()
+          return bodyModal
+        }
+      }
+      if (modalEl.parentElement !== document.body) {
+        document.body.appendChild(modalEl)
+      }
+      return modalEl
+    }
+
     function renderCollectionSectionModalList (modalEl) {
       if (!modalEl) return []
       const libraryId = modalEl.dataset.libraryId
@@ -4340,8 +4357,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const trigger = event.target.closest('[data-collection-section-modal-trigger]')
       if (trigger) {
         const libraryId = trigger.dataset.libraryId
-        const modalEl = libraryId ? document.getElementById(`${libraryId}-collection-section-modal`) : null
+        let modalEl = libraryId ? document.getElementById(`${libraryId}-collection-section-modal`) : null
         if (!modalEl || !bootstrap || !bootstrap.Modal) return
+        modalEl = ensureCollectionSectionModalRoot(modalEl)
         renderCollectionSectionModalList(modalEl)
         bootstrap.Modal.getOrCreateInstance(modalEl).show()
         return
