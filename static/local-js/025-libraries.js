@@ -4252,6 +4252,16 @@ document.addEventListener('DOMContentLoaded', function () {
             <span class="small text-muted"><code>${entry.collectionId.replace(/^collection_/, '')}</code></span>
           </div>
         </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Move collection section">
+            <button type="button" class="btn btn-outline-secondary" data-collection-section-move="up" aria-label="Move up">
+              <i class="bi bi-chevron-up"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" data-collection-section-move="down" aria-label="Move down">
+              <i class="bi bi-chevron-down"></i>
+            </button>
+          </div>
+        </div>
         <div class="text-end">
           <div class="small text-muted">Current</div>
           <span class="badge bg-secondary" data-collection-section-current>${entry.currentValue || 'blank'}</span>
@@ -4292,6 +4302,9 @@ document.addEventListener('DOMContentLoaded', function () {
       modalEl._collectionSectionSortable = Sortable.create(list, {
         handle: '.drag-handle',
         animation: 150,
+        delayOnTouchOnly: true,
+        delay: 180,
+        touchStartThreshold: 6,
         onSort: function () {
           refreshCollectionSectionPreviewNumbers(list)
         }
@@ -4345,6 +4358,21 @@ document.addEventListener('DOMContentLoaded', function () {
       if (saveButton) {
         const modalEl = saveButton.closest('[data-collection-section-modal]')
         saveCollectionSectionModalOrder(modalEl)
+        return
+      }
+
+      const moveButton = event.target.closest('[data-collection-section-move]')
+      if (moveButton) {
+        const direction = moveButton.dataset.collectionSectionMove
+        const item = moveButton.closest('li')
+        const list = item?.parentElement
+        if (!item || !list) return
+        if (direction === 'up' && item.previousElementSibling) {
+          list.insertBefore(item, item.previousElementSibling)
+        } else if (direction === 'down' && item.nextElementSibling) {
+          list.insertBefore(item.nextElementSibling, item)
+        }
+        refreshCollectionSectionPreviewNumbers(list)
       }
     })
 
