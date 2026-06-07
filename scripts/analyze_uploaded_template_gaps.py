@@ -17,6 +17,10 @@ from ruamel.yaml import YAML
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_VERSION = 3
+QS_SPECIAL_LIBRARY_TEMPLATE_KEYS = {
+    "placeholder_imdb_id",
+    "sep_style",
+}
 
 DEFAULT_EXCLUDED_DIR_NAMES = {
     ".git",
@@ -261,22 +265,64 @@ def build_qs_overlay_map(qs_overlays_path: Path) -> dict[str, set[str]]:
 
 def build_qs_library_template_keys(qs_attributes_path: Path) -> set[str]:
     data = load_json(qs_attributes_path)
-    keys: set[str] = set()
+    keys: set[str] = set(QS_SPECIAL_LIBRARY_TEMPLATE_KEYS)
     for section in data.get("sections", []):
         if isinstance(section, dict) and section.get("yml_location") == "template_variables" and section.get("prefix"):
             keys.add(str(section["prefix"]))
     return keys
 
 
+def build_schema_key_set(schema_path: Path) -> set[str]:
+    data = load_json(schema_path)
+    keys: set[str] = set()
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            properties = node.get("properties")
+            if isinstance(properties, dict):
+                for key, value in properties.items():
+                    keys.add(str(key))
+                    walk(value)
+            pattern_properties = node.get("patternProperties")
+            if isinstance(pattern_properties, dict):
+                for key, value in pattern_properties.items():
+                    keys.add(str(key))
+                    walk(value)
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(data)
+    return keys
+
+
 def resolve_default_paths(alias: str, kind: str, kometa_defaults: Path) -> list[Path]:
+    support_files: list[Path] = []
+    shared_templates = kometa_defaults / "templates.yml"
+    if shared_templates.exists():
+        support_files.append(shared_templates)
     if kind == "overlay":
         path = kometa_defaults / "overlays" / f"{alias}.yml"
-        return [path] if path.exists() else []
+        if path.exists():
+            support_files.append(path)
+        return support_files
     if kind == "playlist":
         path = kometa_defaults / "playlist.yml"
-        return [path] if path.exists() else []
+        if path.exists():
+            support_files.append(path)
+        return support_files
     matches = sorted(kometa_defaults.rglob(f"{alias}.yml"))
-    return [p for p in matches if p.is_file()]
+    support_files.extend([p for p in matches if p.is_file()])
+    deduped: list[Path] = []
+    seen: set[Path] = set()
+    for path in support_files:
+        if path in seen:
+            continue
+        deduped.append(path)
+        seen.add(path)
+    return deduped
 
 
 KEY_RE = re.compile(r"^\s*([A-Za-z0-9_<>-]+(?:\.[A-Za-z0-9_<>-]+)?)\s*:\s*(?:.*)?$")
@@ -352,6 +398,22 @@ def key_is_valid_for_default(key: str, default_files: list[Path]) -> tuple[bool,
                 matched.append(path)
                 break
     return bool(matched), matched
+
+
+def classify_validation_level(
+    quickstart_supported: bool,
+    schema_declared: bool,
+    kometa_declared: bool,
+) -> str:
+    if quickstart_supported:
+        return "supported_in_quickstart"
+    if kometa_declared and schema_declared:
+        return "works_in_kometa_missing_from_quickstart"
+    if kometa_declared and not schema_declared:
+        return "works_in_kometa_missing_from_quickstart_and_schema"
+    if schema_declared and not kometa_declared:
+        return "schema_declared_not_confirmed_in_kometa_defaults"
+    return "unverified"
 
 
 BOOL_PREFIXES = (
@@ -839,7 +901,7 @@ def compact_path_list(paths: list[str], limit: int = 3) -> str:
 def render_table(title: str, rows: list[dict[str, Any]]) -> str:
     if not rows:
         return f"{title}\n  none\n"
-    headers = ["default", "key", "occ", "shape ok", "shape ?", "files", "libraries", "kometa file"]
+    headers = ["default", "key", "occ", "qs", "schema", "kometa", "status", "files", "libraries", "kometa file"]
     table_rows = []
     for row in rows:
         table_rows.append(
@@ -847,11 +909,40 @@ def render_table(title: str, rows: list[dict[str, Any]]) -> str:
                 str(row.get("default") or "-"),
                 str(row.get("key") or "-"),
                 str(row.get("occurrences", 0)),
-                str(row.get("value_shape_verified_occurrences", 0)),
-                str(row.get("value_shape_unknown_occurrences", 0)),
+                "yes" if row.get("supported_in_quickstart") else "no",
+                "yes" if row.get("schema_declared") else "no",
+                "yes" if row.get("kometa_declared") else "no",
+                str(row.get("validation_level") or "-"),
                 str(row.get("file_count", 0)),
                 compact_path_list(row.get("libraries", []), limit=2),
                 compact_path_list(row.get("matched_default_files", []), limit=2),
+            ]
+        )
+    widths = []
+    for col_idx, header in enumerate(headers):
+        widths.append(max(len(header), *(len(r[col_idx]) for r in table_rows)))
+
+    def fmt(row: list[str]) -> str:
+        return "  " + " | ".join(cell.ljust(widths[idx]) for idx, cell in enumerate(row))
+
+    lines = [title, fmt(headers), "  " + "-+-".join("-" * width for width in widths)]
+    lines.extend(fmt(row) for row in table_rows)
+    return "\n".join(lines) + "\n"
+
+
+def render_grouped_default_table(title: str, rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return f"{title}\n  none\n"
+    headers = ["kind", "default", "gaps", "occ", "keys"]
+    table_rows = []
+    for row in rows:
+        table_rows.append(
+            [
+                str(row.get("kind") or "-"),
+                str(row.get("default") or "-"),
+                str(row.get("gap_count", 0)),
+                str(row.get("occurrences", 0)),
+                compact_path_list(row.get("keys", []), limit=4),
             ]
         )
     widths = []
@@ -871,6 +962,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
     collections = report.get("verified_gaps_by_kind", {}).get("collection", [])
     playlists = report.get("verified_gaps_by_kind", {}).get("playlist", [])
     libraries = report.get("verified_gaps_by_kind", {}).get("library", [])
+    schema_backlog = report.get("schema_backlog_by_default", [])
 
     lines = [
         "Template Variable Gap Summary",
@@ -886,6 +978,9 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         "  cache invalidates on: analyzer, Quickstart support JSON, Kometa defaults, or source file changes",
         f"  template variable occurrences scanned: {report.get('template_variable_occurrences_scanned', 0)}",
         f"  verified gaps: {report.get('verified_gap_count', 0)}",
+        f"  schema-declared verified gaps: {report.get('schema_declared_gap_count', 0)}",
+        f"  kometa-declared verified gaps: {report.get('kometa_declared_gap_count', 0)}",
+        f"  verified gaps missing from schema but supported by Kometa: {report.get('kometa_missing_schema_gap_count', 0)}",
         f"  value-shape verified gaps: {report.get('value_shape_verified_gap_count', 0)}",
         f"  overlay gaps: {len(overlays)}",
         f"  collection gaps: {len(collections)}",
@@ -911,6 +1006,8 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
             render_table("Collection Gaps", collections),
         ]
     )
+    if schema_backlog:
+        lines.append(render_grouped_default_table("Schema Backlog By Default", schema_backlog))
     if playlists:
         lines.append(render_table("Playlist Gaps", playlists))
     if libraries:
@@ -933,6 +1030,7 @@ def main() -> None:
     args = parse_args()
     root = Path(args.quickstart_root).resolve()
     kometa_defaults = root / "config" / "kometa" / "defaults"
+    kometa_schema_path = root / "config" / "kometa" / "json-schema" / "config-schema.json"
     qs_collections_path = root / "static" / "json" / "quickstart_collections.json"
     qs_overlays_path = root / "static" / "json" / "quickstart_overlays.json"
     qs_attributes_path = root / "static" / "json" / "quickstart_attributes.json"
@@ -965,6 +1063,7 @@ def main() -> None:
         qs_collections = build_qs_collection_map(qs_collections_path)
         qs_overlays = build_qs_overlay_map(qs_overlays_path)
         qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
+        schema_keys = build_schema_key_set(kometa_schema_path)
         if progress_callback:
             print(
                 f"[progress][discovery] discovered {len(input_files)} YAML files across {len(inputs)} input root(s)",
@@ -1013,8 +1112,13 @@ def main() -> None:
                 matched_files = []
 
             value_shape_verified, value_shape_rule = infer_value_shape(row["value"], key)
+            schema_declared = key in schema_keys
+            validation_level = classify_validation_level(supported, schema_declared, name_verified)
             out = dict(row)
             out["supported_in_quickstart"] = supported
+            out["schema_declared"] = schema_declared
+            out["kometa_declared"] = name_verified
+            out["validation_level"] = validation_level
             out["name_verified"] = name_verified
             out["value_shape_verified"] = value_shape_verified
             out["value_shape_rule"] = value_shape_rule
@@ -1041,6 +1145,10 @@ def main() -> None:
                     "files": set(),
                     "libraries": set(),
                     "matched_default_files": set(),
+                    "supported_in_quickstart": False,
+                    "schema_declared": False,
+                    "kometa_declared": False,
+                    "validation_level": "",
                     "value_shape_verified_occurrences": 0,
                     "value_shape_unknown_occurrences": 0,
                     "value_shape_rules": set(),
@@ -1052,6 +1160,10 @@ def main() -> None:
                 bucket["libraries"].add(row["library"])
             for item in row["matched_default_files"]:
                 bucket["matched_default_files"].add(item)
+            bucket["supported_in_quickstart"] = bucket["supported_in_quickstart"] or bool(row.get("supported_in_quickstart"))
+            bucket["schema_declared"] = bucket["schema_declared"] or bool(row.get("schema_declared"))
+            bucket["kometa_declared"] = bucket["kometa_declared"] or bool(row.get("kometa_declared"))
+            bucket["validation_level"] = str(row.get("validation_level") or bucket["validation_level"])
             if row["value_shape_verified"] is True:
                 bucket["value_shape_verified_occurrences"] += 1
             elif row["value_shape_verified"] is None:
@@ -1075,6 +1187,10 @@ def main() -> None:
                     "files": sorted(item["files"]),
                     "libraries": sorted(item["libraries"]),
                     "matched_default_files": sorted(item["matched_default_files"]),
+                    "supported_in_quickstart": item["supported_in_quickstart"],
+                    "schema_declared": item["schema_declared"],
+                    "kometa_declared": item["kometa_declared"],
+                    "validation_level": item["validation_level"],
                     "name_verified": True,
                     "value_shape_verified_occurrences": item["value_shape_verified_occurrences"],
                     "value_shape_unknown_occurrences": item["value_shape_unknown_occurrences"],
@@ -1087,6 +1203,36 @@ def main() -> None:
         for item in serializable_ranked:
             kind_key = item["kind"] if item["kind"] in by_kind else "library"
             by_kind[kind_key].append(item)
+
+        schema_backlog_summary: dict[tuple[str, str | None], dict[str, Any]] = {}
+        for item in serializable_ranked:
+            if not item["kometa_declared"] or item["schema_declared"]:
+                continue
+            bucket = schema_backlog_summary.setdefault(
+                (item["kind"], item["default"]),
+                {
+                    "kind": item["kind"],
+                    "default": item["default"],
+                    "occurrences": 0,
+                    "keys": set(),
+                },
+            )
+            bucket["occurrences"] += item["occurrences"]
+            bucket["keys"].add(item["key"])
+
+        schema_backlog_by_default = sorted(
+            [
+                {
+                    "kind": item["kind"],
+                    "default": item["default"],
+                    "occurrences": item["occurrences"],
+                    "gap_count": len(item["keys"]),
+                    "keys": sorted(item["keys"]),
+                }
+                for item in schema_backlog_summary.values()
+            ],
+            key=lambda item: (-item["occurrences"], -item["gap_count"], str(item["default"]), str(item["kind"])),
+        )
 
         report = {
             "quickstart_root": str(root),
@@ -1112,14 +1258,21 @@ def main() -> None:
             "files_with_template_variables_count": len(sorted({row["file"] for row in uploaded})),
             "template_variable_occurrences_scanned": len(uploaded),
             "verified_gap_count": len(serializable_ranked),
+            "schema_declared_gap_count": sum(1 for item in serializable_ranked if item["schema_declared"]),
+            "kometa_declared_gap_count": sum(1 for item in serializable_ranked if item["kometa_declared"]),
+            "kometa_missing_schema_gap_count": sum(1 for item in serializable_ranked if item["kometa_declared"] and not item["schema_declared"]),
             "value_shape_verified_gap_count": sum(1 for item in serializable_ranked if item["value_shape_verified_occurrences"] > 0),
             "verification_notes": {
-                "name_verified": "Key name matched a variable declared or referenced in the corresponding built-in Kometa default.",
+                "name_verified": "Key name matched a variable declared or referenced in the corresponding built-in Kometa default or shared built-in templates.yml.",
+                "schema_declared": "Key name was found in Kometa's bundled config-schema.json. This is a secondary signal because the schema is not fully exhaustive.",
+                "kometa_declared": "Key name was found in Kometa's bundled built-in defaults/templates, which is treated as the stronger local source of truth.",
+                "validation_level": "works_in_kometa_missing_from_quickstart_and_schema means the key was not found in Quickstart or schema, but was found in Kometa built-in defaults/templates.",
                 "value_shape_verified": "Best-effort local heuristic that the supplied value looks like the expected basic type. Null means no reliable local rule was inferred.",
                 "runtime_guaranteed": False,
             },
             "verified_gaps_ranked": serializable_ranked,
             "verified_gaps_by_kind": by_kind,
+            "schema_backlog_by_default": schema_backlog_by_default,
             "all_rows": all_rows,
         }
     finally:
