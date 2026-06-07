@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, MutationObserver, jumpTo, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, MutationObserver, jumpTo, showNavigationLoadingOverlay, hideNavigationLoadingOverlay, requestAnimationFrame */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -4296,6 +4296,46 @@ document.addEventListener('DOMContentLoaded', function () {
       return modalEl
     }
 
+    function syncCollectionSectionModalBackdrop (modalEl) {
+      if (!modalEl) return
+      modalEl.style.zIndex = '2000'
+      modalEl.style.pointerEvents = 'auto'
+      modalEl.removeAttribute('inert')
+
+      const dialog = modalEl.querySelector('.modal-dialog')
+      if (dialog) dialog.style.pointerEvents = 'auto'
+
+      const content = modalEl.querySelector('.modal-content')
+      if (content) content.style.pointerEvents = 'auto'
+
+      const backdrops = Array.from(document.querySelectorAll('.modal-backdrop'))
+      const latestBackdrop = backdrops.at(-1)
+      if (latestBackdrop) latestBackdrop.style.zIndex = '1990'
+    }
+
+    function cleanupCollectionSectionModalBackdrops () {
+      if (document.querySelector('.modal.show')) return
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove())
+    }
+
+    function prepareCollectionSectionModal (modalEl) {
+      if (!modalEl) return modalEl
+      modalEl = ensureCollectionSectionModalRoot(modalEl)
+      if (modalEl.dataset.collectionSectionPrepared === 'true') return modalEl
+      modalEl.dataset.collectionSectionPrepared = 'true'
+      modalEl.addEventListener('show.bs.modal', () => {
+        syncCollectionSectionModalBackdrop(modalEl)
+        requestAnimationFrame(() => syncCollectionSectionModalBackdrop(modalEl))
+      })
+      modalEl.addEventListener('shown.bs.modal', () => {
+        syncCollectionSectionModalBackdrop(modalEl)
+      })
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        cleanupCollectionSectionModalBackdrops()
+      })
+      return modalEl
+    }
+
     function renderCollectionSectionModalList (modalEl) {
       if (!modalEl) return []
       const libraryId = modalEl.dataset.libraryId
@@ -4359,7 +4399,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const libraryId = trigger.dataset.libraryId
         let modalEl = libraryId ? document.getElementById(`${libraryId}-collection-section-modal`) : null
         if (!modalEl || !bootstrap || !bootstrap.Modal) return
-        modalEl = ensureCollectionSectionModalRoot(modalEl)
+        modalEl = prepareCollectionSectionModal(modalEl)
         renderCollectionSectionModalList(modalEl)
         bootstrap.Modal.getOrCreateInstance(modalEl).show()
         return

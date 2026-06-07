@@ -16,11 +16,34 @@ from ruamel.yaml import YAML
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CACHE_VERSION = 2
+CACHE_VERSION = 3
 
 DEFAULT_EXCLUDED_DIR_NAMES = {
     ".git",
+    ".venv",
+    "__pycache__",
+    "assets",
+    "bin",
+    "build",
+    "cache",
+    "cache_data",
+    "dist",
+    "downloads",
+    "images",
+    "img",
+    "log",
+    "logs",
     "node_modules",
+    "obj",
+    "output",
+    "packages",
+    "photos",
+    "pictures",
+    "site-packages",
+    "temp",
+    "tmp",
+    "vendor",
+    "videos",
     "venv",
 }
 DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES = {
@@ -34,6 +57,10 @@ DEFAULT_EXCLUDED_PATH_SEQUENCES = {
     ("appdata", "local"),
     ("appdata", "local", "temp"),
     ("appdata", "roaming", "code", "user", "history"),
+    ("defaults-image-creation", "create_people_posters", "config", "chrome-profile"),
+    ("onedrive",),
+    ("users", "default"),
+    ("users", "public"),
 }
 
 yaml = YAML(typ="safe", pure=True)
@@ -675,7 +702,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-default-excludes",
         action="store_true",
-        help="Disable built-in excludes such as Windows, Program Files, ProgramData, $Recycle.Bin, dot-prefixed folders, .git, node_modules, common virtualenv folders, all AppData trees, and VS Code history folders.",
+        help="Disable built-in excludes such as Windows, Program Files, ProgramData, $Recycle.Bin, dot-prefixed folders, .git, node_modules, common virtualenv folders, all AppData trees, OneDrive, common media/output/cache/build directories, and VS Code history folders.",
     )
     return parser.parse_args()
 
