@@ -14011,6 +14011,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
@@ -15273,6 +15279,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
@@ -16104,6 +16116,12 @@
             "type": "text_input",
             "default": "085",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "exclude",
@@ -17012,6 +17030,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
@@ -17426,6 +17450,12 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "use_other",
@@ -17845,6 +17875,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
@@ -18260,6 +18296,12 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "use_other",
@@ -18679,6 +18721,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
@@ -19094,6 +19142,12 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "use_other",
@@ -19513,6 +19567,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
@@ -19928,6 +19988,12 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "use_other",
@@ -20350,6 +20416,12 @@
             "type": "text_input",
             "default": "080",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "style",
@@ -20779,6 +20851,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "style",
             "label": "Style",
             "type": "select",
@@ -21205,6 +21283,12 @@
             "type": "text_input",
             "default": "081",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "style",
@@ -21796,6 +21880,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "style",
             "label": "Style",
             "type": "select",
@@ -22272,6 +22362,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "use_1.33",
             "label": "1.33 - Academy Aperture",
             "tooltip": "Collection of Movies/Shows with a 1.33 aspect ratio.",
@@ -22738,6 +22834,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "style",
             "label": "Style",
             "url": "https://kometa.wiki/en/nightly/defaults/both/resolution/#standards-style",
@@ -23175,6 +23277,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
@@ -23599,6 +23707,12 @@
             "type": "text_input",
             "default": "095",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "use_other",
@@ -24033,6 +24147,12 @@
             "type": "text_input",
             "default": "140",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "style",
@@ -24512,6 +24632,12 @@
             "type": "text_input",
             "default": "150",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "style",
@@ -25002,6 +25128,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "style",
             "label": "Style",
             "type": "select",
@@ -25488,6 +25620,12 @@
             "type": "text_input",
             "default": "170",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "style",
@@ -25983,6 +26121,12 @@
             "type": "text_input",
             "default": "030",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "use_appletv",
@@ -26892,6 +27036,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "include",
             "label": "Include",
             "type": "string_list",
@@ -27310,6 +27460,12 @@
             "type": "text_input",
             "default": "050",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "style",
@@ -27745,6 +27901,12 @@
             "type": "text_input",
             "default": "000",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections. Kometa defaults Seasonal to off unless you enable it.",
+            "type": "toggle"
           },
           {
             "key": "use_aapi",
@@ -28641,6 +28803,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -29116,6 +29284,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
@@ -29523,6 +29697,12 @@
             "type": "text_input",
             "default": "100",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle"
           },
           {
             "key": "exclude",

@@ -5012,10 +5012,14 @@ function setupParentChildToggleVisibility (scope) {
         const id = child.id || ''
         return id.includes('_visible_')
       }
+      const isCollectionBehaviorToggle = (child) => {
+        const id = child.id || ''
+        return id.endsWith('_use_separator') || id.endsWith('_use_other')
+      }
       const isRequiredChild = (child) => {
         const id = child.id || ''
         if (!id.includes('-template_collection_')) return false
-        if (isAddMissingToggle(child) || isVisibleToggle(child)) return false
+        if (isAddMissingToggle(child) || isVisibleToggle(child) || isCollectionBehaviorToggle(child)) return false
         return id.includes('_use_')
       }
       const requiredChildren = Array.from(childrenToggles).filter(isRequiredChild)
