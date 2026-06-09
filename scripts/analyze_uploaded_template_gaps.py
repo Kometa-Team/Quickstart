@@ -20,6 +20,18 @@ QS_SPECIAL_LIBRARY_TEMPLATE_KEYS = {
     "placeholder_imdb_id",
     "sep_style",
 }
+QS_SPECIAL_GLOBAL_SUPPORTED_KEYS = {
+    "minimum_items",
+    "playlist_exclude_users",
+    "playlist_sync_to_users",
+}
+QS_SPECIAL_PLAYLIST_SUPPORTED_KEYS = {
+    "exclude_users",
+    "libraries",
+    "playlist_exclude_users",
+    "playlist_sync_to_users",
+    "sync_to_users",
+}
 
 DEFAULT_EXCLUDED_DIR_NAMES = {
     ".git",
@@ -261,8 +273,34 @@ def build_qs_library_template_keys(qs_attributes_path: Path) -> set[str]:
     data = load_json(qs_attributes_path)
     keys: set[str] = set(QS_SPECIAL_LIBRARY_TEMPLATE_KEYS)
     for section in data.get("sections", []):
-        if isinstance(section, dict) and section.get("yml_location") == "template_variables" and section.get("prefix"):
-            keys.add(str(section["prefix"]))
+        if not isinstance(section, dict):
+            continue
+        prefix = section.get("prefix")
+        key = section.get("key")
+        yml_location = section.get("yml_location")
+        if yml_location == "template_variables":
+            if prefix:
+                keys.add(str(prefix))
+            if key:
+                keys.add(str(key))
+        elif yml_location == "top_level":
+            if prefix:
+                prefix_text = str(prefix)
+                keys.add(prefix_text)
+                if prefix_text.startswith("top_level_"):
+                    keys.add(prefix_text[len("top_level_") :])
+            if key:
+                keys.add(str(key))
+    return keys
+
+
+def build_qs_global_supported_keys(qs_attributes_path: Path) -> set[str]:
+    return build_qs_library_template_keys(qs_attributes_path) | set(QS_SPECIAL_GLOBAL_SUPPORTED_KEYS) | set(QS_SPECIAL_PLAYLIST_SUPPORTED_KEYS)
+
+
+def build_qs_playlist_supported_keys(qs_attributes_path: Path) -> set[str]:
+    keys = set(QS_SPECIAL_PLAYLIST_SUPPORTED_KEYS)
+    keys.update(build_qs_global_supported_keys(qs_attributes_path))
     return keys
 
 
@@ -1032,6 +1070,8 @@ def main() -> None:
         qs_collections = build_qs_collection_map(qs_collections_path)
         qs_overlays = build_qs_overlay_map(qs_overlays_path)
         qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
+        qs_global_keys = build_qs_global_supported_keys(qs_attributes_path)
+        qs_playlist_keys = build_qs_playlist_supported_keys(qs_attributes_path)
         schema_keys = build_schema_key_set(kometa_schema_path)
         if progress_callback:
             print(
@@ -1064,7 +1104,7 @@ def main() -> None:
             kind = row["kind"]
             alias = row["default"]
             if kind == "collection":
-                supported = key in qs_collections.get(alias or "", set())
+                supported = key in qs_collections.get(alias or "", set()) or key in qs_global_keys
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "overlay":
@@ -1072,11 +1112,11 @@ def main() -> None:
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "playlist":
-                supported = False
+                supported = key in qs_playlist_keys
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             else:
-                supported = key in qs_library_keys
+                supported = key in qs_library_keys or key in qs_global_keys
                 name_verified = True
                 matched_files = []
 
