@@ -18,6 +18,12 @@ from ruamel.yaml.composer import ReusedAnchorWarning
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_VERSION = 3
+CACHE_SAVE_EVERY_ITEMS = 1000
+CACHE_SAVE_EVERY_SECS = 60.0
+VERIFY_CHECKPOINT_VERSION = 1
+VERIFY_CHECKPOINT_EVERY_ITEMS = 1000
+VERIFY_CHECKPOINT_EVERY_SECS = 30.0
+VERIFY_CHECKPOINT_DIRNAME = "template_gap_verify_checkpoint"
 QS_SPECIAL_LIBRARY_TEMPLATE_KEYS = {
     "placeholder_imdb_id",
     "sep_style",
@@ -66,6 +72,16 @@ def json_default(value: Any) -> Any:
     if isinstance(value, (date, datetime)):
         return value.isoformat()
     raise TypeError(f"Object of type {value.__class__.__name__} is not JSON serializable")
+
+
+def write_text_atomic(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", delete=False, dir=path.parent, encoding="utf-8") as handle:
+        handle.write(text)
+        temp_name = handle.name
+    Path(temp_name).replace(path)
+
+
 DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES = {
     "$recycle.bin",
     "program files",
@@ -115,14 +131,116 @@ def load_cache(path: Path, expected_context: dict[str, Any] | None = None) -> di
 
 
 def save_cache(path: Path, cache_data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(cache_data, indent=2), encoding="utf-8")
+    write_text_atomic(path, json.dumps(cache_data, indent=2, default=json_default))
 
 
 def get_cache_path(root: Path, requested_path: str | None) -> Path:
     if requested_path:
         return Path(requested_path).resolve()
     return root / "artifacts" / "template_gap_cache.json"
+
+
+def get_verification_checkpoint_dir(root: Path) -> Path:
+    return root / "artifacts" / VERIFY_CHECKPOINT_DIRNAME
+
+
+def remove_tree(path: Path) -> None:
+    if not path.exists():
+        return
+    if path.is_file():
+        path.unlink()
+        return
+    for child in path.iterdir():
+        if child.is_dir():
+            remove_tree(child)
+        else:
+            child.unlink()
+    path.rmdir()
+
+
+def compute_uploaded_signature(rows: list[dict[str, Any]]) -> str:
+    digest = hashlib.sha256()
+    digest.update(str(len(rows)).encode("utf-8"))
+    for row in rows:
+        digest.update(
+            json.dumps(
+                [
+                    row.get("file"),
+                    row.get("kind"),
+                    row.get("default"),
+                    row.get("library"),
+                    row.get("key"),
+                    row.get("value"),
+                ],
+                ensure_ascii=False,
+                separators=(",", ":"),
+                default=json_default,
+            ).encode("utf-8")
+        )
+    return digest.hexdigest()
+
+
+def append_jsonl_rows(path: Path, rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="\n") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False, default=json_default))
+            handle.write("\n")
+
+
+def load_jsonl_rows(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            raw = line.strip()
+            if not raw:
+                continue
+            try:
+                item = json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"invalid JSONL at {path}:{line_number}: {exc}") from exc
+            if not isinstance(item, dict):
+                raise ValueError(f"unexpected non-object JSONL entry at {path}:{line_number}")
+            rows.append(item)
+    return rows
+
+
+def load_matching_report_rows(
+    report_dir: Path,
+    *,
+    quickstart_root: Path,
+    inputs: list[Path],
+    cache_context: dict[str, Any],
+    uploaded_signature: str,
+    uploaded_count: int,
+) -> tuple[list[dict[str, Any]] | None, Path | None]:
+    if not report_dir.exists():
+        return None, None
+    candidates = sorted(report_dir.glob("template_gap_report_*.json"), key=lambda p: p.stat().st_mtime_ns, reverse=True)
+    for candidate in candidates:
+        try:
+            data = load_json(candidate)
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+        if data.get("quickstart_root") != str(quickstart_root):
+            continue
+        if data.get("inputs") != [str(p) for p in inputs]:
+            continue
+        if data.get("cache_context") != cache_context:
+            continue
+        rows = data.get("all_rows")
+        if not isinstance(rows, list) or len(rows) != uploaded_count:
+            continue
+        if not all(isinstance(row, dict) for row in rows):
+            continue
+        if compute_uploaded_signature(rows) != uploaded_signature:
+            continue
+        return rows, candidate
+    return None, None
 
 
 def file_signature(path: Path) -> dict[str, int]:
@@ -678,6 +796,7 @@ def prefilter_yaml_files(
     input_files: list[Path],
     cache_data: dict[str, Any] | None = None,
     progress_callback=None,
+    checkpoint_callback=None,
 ) -> tuple[list[Path], list[dict[str, str]], dict[str, int]]:
     candidate_files: list[Path] = []
     skipped_files: list[dict[str, str]] = []
@@ -694,11 +813,16 @@ def prefilter_yaml_files(
                 skipped_files.append(dict(cached["prefilter_skip"]))
                 if progress_callback:
                     progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+                if checkpoint_callback:
+                    checkpoint_callback(idx, total_files)
                 continue
             if cached.get("contains_template_variables"):
                 candidate_files.append(path)
             if progress_callback:
                 progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
+            continue
             continue
         stats["cache_misses"] += 1
         try:
@@ -716,6 +840,8 @@ def prefilter_yaml_files(
                 files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_template_variables": False}
             if progress_callback:
                 progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
             continue
         contains_template_variables = "template_variables" in raw_text
         if isinstance(files_cache, dict):
@@ -724,6 +850,8 @@ def prefilter_yaml_files(
             candidate_files.append(path)
         if progress_callback:
             progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+        if checkpoint_callback:
+            checkpoint_callback(idx, total_files)
     return candidate_files, skipped_files, stats
 
 
@@ -731,6 +859,7 @@ def scan_uploaded_configs(
     input_files: list[Path],
     progress_callback=None,
     cache_data: dict[str, Any] | None = None,
+    checkpoint_callback=None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[str], dict[str, int]]:
     findings: list[dict[str, Any]] = []
     skipped_files: list[dict[str, str]] = []
@@ -756,6 +885,8 @@ def scan_uploaded_configs(
             findings.extend(scan_result.get("findings", []))
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
             continue
         stats["cache_misses"] += 1
         try:
@@ -775,6 +906,8 @@ def scan_uploaded_configs(
                 files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "skip", "skip_record": skip_record}}
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
             continue
         except Exception as exc:
             skip_record = {
@@ -789,6 +922,8 @@ def scan_uploaded_configs(
                 files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "skip", "skip_record": skip_record}}
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
             continue
         parsed_file_paths.append(str(path))
         if not isinstance(data, dict):
@@ -797,6 +932,8 @@ def scan_uploaded_configs(
                 files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "ok", "findings": []}}
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
             continue
         file_findings = extract_findings_from_data(data, path)
         findings.extend(file_findings)
@@ -805,7 +942,109 @@ def scan_uploaded_configs(
             files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "ok", "findings": file_findings}}
         if progress_callback:
             progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+        if checkpoint_callback:
+            checkpoint_callback(idx, total_files)
     return findings, skipped_files, parsed_file_paths, stats
+
+
+def make_periodic_persistor(callback, every_items: int, every_seconds: float):
+    state = {"last_index": 0, "last_time": time.monotonic()}
+
+    def persist(index: int, total: int | None = None, force: bool = False) -> bool:
+        now = time.monotonic()
+        should_save = force
+        if not should_save and total is not None and index >= total:
+            should_save = True
+        if not should_save and index - state["last_index"] >= every_items:
+            should_save = True
+        if not should_save and now - state["last_time"] >= every_seconds:
+            should_save = True
+        if not should_save:
+            return False
+        callback()
+        state["last_index"] = index
+        state["last_time"] = now
+        return True
+
+    return persist
+
+
+def accumulate_gap_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]], row: dict[str, Any]) -> None:
+    if not row.get("name_verified") or row.get("supported_in_quickstart"):
+        return
+    bucket = summary.setdefault(
+        (str(row.get("kind")), row.get("default"), str(row.get("key"))),
+        {
+            "kind": row.get("kind"),
+            "default": row.get("default"),
+            "key": row.get("key"),
+            "occurrences": 0,
+            "files": set(),
+            "libraries": set(),
+            "matched_default_files": set(),
+            "supported_in_quickstart": False,
+            "schema_declared": False,
+            "kometa_declared": False,
+            "validation_level": "",
+            "value_shape_verified_occurrences": 0,
+            "value_shape_unknown_occurrences": 0,
+            "value_shape_rules": set(),
+        },
+    )
+    bucket["occurrences"] += 1
+    if row.get("file"):
+        bucket["files"].add(row["file"])
+    if row.get("library"):
+        bucket["libraries"].add(row["library"])
+    for item in row.get("matched_default_files", []):
+        bucket["matched_default_files"].add(item)
+    bucket["supported_in_quickstart"] = bucket["supported_in_quickstart"] or bool(row.get("supported_in_quickstart"))
+    bucket["schema_declared"] = bucket["schema_declared"] or bool(row.get("schema_declared"))
+    bucket["kometa_declared"] = bucket["kometa_declared"] or bool(row.get("kometa_declared"))
+    bucket["validation_level"] = str(row.get("validation_level") or bucket["validation_level"])
+    if row.get("value_shape_verified") is True:
+        bucket["value_shape_verified_occurrences"] += 1
+    elif row.get("value_shape_verified") is None:
+        bucket["value_shape_unknown_occurrences"] += 1
+    bucket["value_shape_rules"].add(row.get("value_shape_rule"))
+
+
+def build_gap_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None, str], dict[str, Any]]:
+    summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
+    for row in rows:
+        accumulate_gap_summary(summary, row)
+    return summary
+
+
+def serialize_ranked_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]]) -> list[dict[str, Any]]:
+    ranked = sorted(
+        summary.values(),
+        key=lambda item: (-item["occurrences"], -len(item["files"]), str(item["default"]), str(item["key"])),
+    )
+    serializable_ranked: list[dict[str, Any]] = []
+    for item in ranked:
+        serializable_ranked.append(
+            {
+                "kind": item["kind"],
+                "default": item["default"],
+                "key": item["key"],
+                "occurrences": item["occurrences"],
+                "file_count": len(item["files"]),
+                "files": sorted(item["files"]),
+                "libraries": sorted(item["libraries"]),
+                "matched_default_files": sorted(item["matched_default_files"]),
+                "supported_in_quickstart": item["supported_in_quickstart"],
+                "schema_declared": item["schema_declared"],
+                "kometa_declared": item["kometa_declared"],
+                "validation_level": item["validation_level"],
+                "name_verified": True,
+                "value_shape_verified_occurrences": item["value_shape_verified_occurrences"],
+                "value_shape_unknown_occurrences": item["value_shape_unknown_occurrences"],
+                "value_shape_rules": sorted(item["value_shape_rules"]),
+                "runtime_guaranteed": False,
+            }
+        )
+    return serializable_ranked
 
 
 def parse_args() -> argparse.Namespace:
@@ -1102,8 +1341,16 @@ def main() -> None:
         kometa_defaults,
     )
     cache_path = get_cache_path(root, args.cache_path)
+    verification_checkpoint_dir = get_verification_checkpoint_dir(root)
+    verification_meta_path = verification_checkpoint_dir / "metadata.json"
+    verification_rows_path = verification_checkpoint_dir / "all_rows.ndjson"
     cache_enabled = not args.no_cache
     cache_data = load_cache(cache_path, expected_context=cache_context) if cache_enabled else empty_cache(cache_context)
+    cache_persist = (
+        make_periodic_persistor(lambda: save_cache(cache_path, cache_data), CACHE_SAVE_EVERY_ITEMS, CACHE_SAVE_EVERY_SECS)
+        if cache_enabled
+        else None
+    )
     default_excludes_enabled = not args.no_default_excludes
     default_excludes = describe_default_excludes(default_excludes_enabled)
 
@@ -1118,6 +1365,7 @@ def main() -> None:
         input_files,
         cache_data=cache_data if cache_enabled else None,
         progress_callback=prefilter_progress_callback,
+        checkpoint_callback=cache_persist,
     )
 
     try:
@@ -1142,16 +1390,110 @@ def main() -> None:
             candidate_files,
             progress_callback=progress_callback,
             cache_data=cache_data if cache_enabled else None,
+            checkpoint_callback=cache_persist,
         )
+        if cache_persist:
+            cache_persist(len(candidate_files), len(candidate_files), force=True)
         skipped_files = prefilter_skipped_files + parse_skipped_files
 
-        gap_rows: list[dict[str, Any]] = []
+        uploaded_signature = compute_uploaded_signature(uploaded)
         all_rows: list[dict[str, Any]] = []
-        grouped_examples: dict[tuple[str, str | None, str], list[str]] = defaultdict(list)
+        summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
+        resumed_from_index = 0
+        resume_used = False
+
+        def reset_verification_checkpoint() -> None:
+            remove_tree(verification_checkpoint_dir)
+            verification_checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        def save_verification_metadata(processed_count: int) -> None:
+            metadata = {
+                "version": VERIFY_CHECKPOINT_VERSION,
+                "quickstart_root": str(root),
+                "inputs": [str(p) for p in inputs],
+                "cache_context": cache_context,
+                "uploaded_signature": uploaded_signature,
+                "uploaded_count": len(uploaded),
+                "processed_count": processed_count,
+                "rows_path": str(verification_rows_path),
+            }
+            write_text_atomic(verification_meta_path, json.dumps(metadata, indent=2, default=json_default))
+
+        checkpoint_valid = False
+        if verification_meta_path.exists() and verification_rows_path.exists():
+            try:
+                checkpoint_meta = load_json(verification_meta_path)
+                if (
+                    isinstance(checkpoint_meta, dict)
+                    and checkpoint_meta.get("version") == VERIFY_CHECKPOINT_VERSION
+                    and checkpoint_meta.get("quickstart_root") == str(root)
+                    and checkpoint_meta.get("inputs") == [str(p) for p in inputs]
+                    and checkpoint_meta.get("cache_context") == cache_context
+                    and checkpoint_meta.get("uploaded_signature") == uploaded_signature
+                    and checkpoint_meta.get("uploaded_count") == len(uploaded)
+                ):
+                    all_rows = load_jsonl_rows(verification_rows_path)
+                    if len(all_rows) <= len(uploaded):
+                        summary = build_gap_summary(all_rows)
+                        resumed_from_index = len(all_rows)
+                        resume_used = resumed_from_index > 0
+                        checkpoint_valid = True
+            except Exception as exc:
+                if verify_callback:
+                    verify_callback(f"ignoring invalid verification checkpoint: {exc}")
+        if not checkpoint_valid:
+            seeded_rows, seeded_report_path = load_matching_report_rows(
+                root / "artifacts" / "template_gap_reports",
+                quickstart_root=root,
+                inputs=inputs,
+                cache_context=cache_context,
+                uploaded_signature=uploaded_signature,
+                uploaded_count=len(uploaded),
+            )
+            if seeded_rows is not None:
+                all_rows = seeded_rows
+                summary = build_gap_summary(all_rows)
+                resumed_from_index = len(all_rows)
+                resume_used = resumed_from_index > 0
+                checkpoint_valid = True
+                reset_verification_checkpoint()
+                append_jsonl_rows(verification_rows_path, all_rows)
+                save_verification_metadata(len(all_rows))
+                if verify_callback and seeded_report_path is not None:
+                    verify_callback(f"reusing completed verification from {seeded_report_path}")
+            else:
+                reset_verification_checkpoint()
+                save_verification_metadata(0)
+                all_rows = []
+                summary = {}
+
+        verify_buffer: list[dict[str, Any]] = []
+        verify_save_state = {"last_index": len(all_rows), "last_time": time.monotonic()}
+
+        def flush_verification_checkpoint(processed_count: int, force: bool = False) -> None:
+            now = time.monotonic()
+            should_save = force
+            if not should_save and processed_count >= len(uploaded):
+                should_save = True
+            if not should_save and processed_count - verify_save_state["last_index"] >= VERIFY_CHECKPOINT_EVERY_ITEMS:
+                should_save = True
+            if not should_save and now - verify_save_state["last_time"] >= VERIFY_CHECKPOINT_EVERY_SECS:
+                should_save = True
+            if not should_save:
+                return
+            append_jsonl_rows(verification_rows_path, verify_buffer)
+            verify_buffer.clear()
+            save_verification_metadata(processed_count)
+            verify_save_state["last_index"] = processed_count
+            verify_save_state["last_time"] = now
 
         if verify_callback:
             verify_callback(f"verifying {len(uploaded)} findings against Quickstart and Kometa defaults")
-        for idx, row in enumerate(uploaded, start=1):
+            if resume_used:
+                verify_callback(
+                    f"resuming verification from {resumed_from_index}/{len(uploaded)} using {verification_rows_path}"
+                )
+        for idx, row in enumerate(uploaded[resumed_from_index:], start=resumed_from_index + 1):
             if verify_callback:
                 verify_callback("verifying findings", idx, len(uploaded))
             key = row["key"]
@@ -1189,78 +1531,14 @@ def main() -> None:
             out["valid_for_kometa"] = name_verified
             out["matched_default_files"] = [str(p.relative_to(kometa_defaults)) for p in matched_files]
             all_rows.append(out)
-
-            if name_verified and not supported:
-                gap_rows.append(out)
-                grouped_examples[(kind, alias, key)].append(row["file"])
+            verify_buffer.append(out)
+            accumulate_gap_summary(summary, out)
+            flush_verification_checkpoint(len(all_rows))
 
         if verify_callback:
             verify_callback("aggregating ranked gaps")
-        summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
-        for row in gap_rows:
-            bucket = summary.setdefault(
-                (row["kind"], row["default"], row["key"]),
-                {
-                    "kind": row["kind"],
-                    "default": row["default"],
-                    "key": row["key"],
-                    "occurrences": 0,
-                    "files": set(),
-                    "libraries": set(),
-                    "matched_default_files": set(),
-                    "supported_in_quickstart": False,
-                    "schema_declared": False,
-                    "kometa_declared": False,
-                    "validation_level": "",
-                    "value_shape_verified_occurrences": 0,
-                    "value_shape_unknown_occurrences": 0,
-                    "value_shape_rules": set(),
-                },
-            )
-            bucket["occurrences"] += 1
-            bucket["files"].add(row["file"])
-            if row["library"]:
-                bucket["libraries"].add(row["library"])
-            for item in row["matched_default_files"]:
-                bucket["matched_default_files"].add(item)
-            bucket["supported_in_quickstart"] = bucket["supported_in_quickstart"] or bool(row.get("supported_in_quickstart"))
-            bucket["schema_declared"] = bucket["schema_declared"] or bool(row.get("schema_declared"))
-            bucket["kometa_declared"] = bucket["kometa_declared"] or bool(row.get("kometa_declared"))
-            bucket["validation_level"] = str(row.get("validation_level") or bucket["validation_level"])
-            if row["value_shape_verified"] is True:
-                bucket["value_shape_verified_occurrences"] += 1
-            elif row["value_shape_verified"] is None:
-                bucket["value_shape_unknown_occurrences"] += 1
-            bucket["value_shape_rules"].add(row["value_shape_rule"])
-
-        ranked = sorted(
-            summary.values(),
-            key=lambda item: (-item["occurrences"], -len(item["files"]), str(item["default"]), str(item["key"])),
-        )
-
-        serializable_ranked = []
-        for item in ranked:
-            serializable_ranked.append(
-                {
-                    "kind": item["kind"],
-                    "default": item["default"],
-                    "key": item["key"],
-                    "occurrences": item["occurrences"],
-                    "file_count": len(item["files"]),
-                    "files": sorted(item["files"]),
-                    "libraries": sorted(item["libraries"]),
-                    "matched_default_files": sorted(item["matched_default_files"]),
-                    "supported_in_quickstart": item["supported_in_quickstart"],
-                    "schema_declared": item["schema_declared"],
-                    "kometa_declared": item["kometa_declared"],
-                    "validation_level": item["validation_level"],
-                    "name_verified": True,
-                    "value_shape_verified_occurrences": item["value_shape_verified_occurrences"],
-                    "value_shape_unknown_occurrences": item["value_shape_unknown_occurrences"],
-                    "value_shape_rules": sorted(item["value_shape_rules"]),
-                    "runtime_guaranteed": False,
-                }
-            )
+        flush_verification_checkpoint(len(all_rows), force=True)
+        serializable_ranked = serialize_ranked_summary(summary)
 
         by_kind: dict[str, list[dict[str, Any]]] = {"overlay": [], "collection": [], "playlist": [], "library": []}
         for item in serializable_ranked:
@@ -1305,6 +1583,9 @@ def main() -> None:
             "cache_enabled": cache_enabled,
             "cache_path": str(cache_path),
             "cache_context": cache_context,
+            "verification_checkpoint_path": str(verification_rows_path),
+            "verification_resume_used": resume_used,
+            "verification_resumed_row_count": resumed_from_index,
             "default_excludes_enabled": default_excludes_enabled,
             "default_excludes": default_excludes,
             "cache_hit_count": prefilter_cache_stats["cache_hits"] + parse_cache_stats["cache_hits"],
@@ -1351,9 +1632,10 @@ def main() -> None:
     if verify_callback:
         verify_callback(f"writing JSON report to {json_output_path}")
     rendered = json.dumps(report, indent=2, default=json_default)
-    json_output_path.write_text(rendered, encoding="utf-8")
+    write_text_atomic(json_output_path, rendered)
     if cache_enabled:
         save_cache(cache_path, cache_data)
+    remove_tree(verification_checkpoint_dir)
     print(render_summary(report, json_output_path))
 
 
