@@ -3631,6 +3631,90 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof bootstrap === 'undefined' || !bootstrap.Modal || !document.body) return
+
+  function ensureModalRoot (modalEl) {
+    if (!modalEl) return modalEl
+    const modalId = modalEl.id
+    modalEl.dataset.qsModalRoot = 'true'
+    if (modalId) {
+      const bodyModal = Array.from(document.body.querySelectorAll('[data-qs-modal-root]'))
+        .find(el => el.id === modalId && el !== modalEl)
+      if (bodyModal) {
+        if (modalEl.parentElement) modalEl.remove()
+        return bodyModal
+      }
+    }
+    if (modalEl.parentElement !== document.body) {
+      document.body.appendChild(modalEl)
+    }
+    return modalEl
+  }
+
+  function syncModalBackdrop (modalEl) {
+    if (!modalEl) return
+    modalEl.style.zIndex = '2000'
+    modalEl.style.pointerEvents = 'auto'
+    modalEl.removeAttribute('inert')
+
+    const dialog = modalEl.querySelector('.modal-dialog')
+    if (dialog) dialog.style.pointerEvents = 'auto'
+
+    const content = modalEl.querySelector('.modal-content')
+    if (content) content.style.pointerEvents = 'auto'
+
+    const latestBackdrop = Array.from(document.querySelectorAll('.modal-backdrop')).at(-1)
+    if (latestBackdrop) latestBackdrop.style.zIndex = '1990'
+  }
+
+  function cleanupModalBackdrops () {
+    if (document.querySelector('.modal.show')) return
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove())
+  }
+
+  function prepareModal (modalEl) {
+    if (!modalEl) return modalEl
+    modalEl = ensureModalRoot(modalEl)
+    if (modalEl.dataset.qsModalPrepared === 'true') return modalEl
+    modalEl.dataset.qsModalPrepared = 'true'
+    modalEl.addEventListener('show.bs.modal', () => {
+      syncModalBackdrop(modalEl)
+      requestAnimationFrame(() => syncModalBackdrop(modalEl))
+    })
+    modalEl.addEventListener('shown.bs.modal', () => {
+      syncModalBackdrop(modalEl)
+    })
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      cleanupModalBackdrops()
+    })
+    return modalEl
+  }
+
+  function resolveModalFromTrigger (trigger) {
+    if (!trigger) return null
+    const selector = trigger.getAttribute('data-bs-target') || trigger.getAttribute('href')
+    if (!selector || !selector.startsWith('#')) return null
+    return document.querySelector(selector)
+  }
+
+  document.querySelectorAll('.modal').forEach(prepareModal)
+
+  document.addEventListener('click', event => {
+    const trigger = event.target.closest('[data-bs-toggle="modal"]')
+    if (!trigger) return
+    prepareModal(resolveModalFromTrigger(trigger))
+  })
+
+  document.addEventListener('show.bs.modal', event => {
+    const modalEl = event.target instanceof window.Element && event.target.classList.contains('modal')
+      ? event.target
+      : null
+    if (!modalEl) return
+    prepareModal(modalEl)
+  })
+})
+
+document.addEventListener('DOMContentLoaded', () => {
   const controls = document.getElementById('qs-scroll-controls')
   const topBtn = document.getElementById('qs-scroll-top')
   const bottomBtn = document.getElementById('qs-scroll-bottom')
