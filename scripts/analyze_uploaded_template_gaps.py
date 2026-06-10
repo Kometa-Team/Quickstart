@@ -6,13 +6,15 @@ import re
 import sys
 import tempfile
 import time
+import warnings
 import zipfile
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 from ruamel.yaml import YAML
+from ruamel.yaml.composer import ReusedAnchorWarning
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_VERSION = 3
@@ -58,6 +60,12 @@ DEFAULT_EXCLUDED_DIR_NAMES = {
     "videos",
     "venv",
 }
+
+
+def json_default(value: Any) -> Any:
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    raise TypeError(f"Object of type {value.__class__.__name__} is not JSON serializable")
 DEFAULT_EXCLUDED_TOP_LEVEL_DIR_NAMES = {
     "$recycle.bin",
     "program files",
@@ -76,7 +84,9 @@ yaml = YAML(typ="safe", pure=True)
 
 
 def load_yaml(path: Path) -> Any:
-    return yaml.load(path.read_text(encoding="utf-8"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ReusedAnchorWarning)
+        return yaml.load(path.read_text(encoding="utf-8"))
 
 
 def load_json(path: Path) -> Any:
@@ -737,6 +747,22 @@ def scan_uploaded_configs(
         stats["cache_misses"] += 1
         try:
             data = load_yaml(path)
+        except ReusedAnchorWarning as exc:
+            skip_record = {
+                "file": str(path),
+                "error_type": "DuplicateYamlAnchor",
+                "reason": "duplicate YAML anchor",
+                "detail": str(exc),
+                "stage": "parse",
+                "malformed": True,
+                "malformed_reason": "duplicate_yaml_anchor",
+            }
+            skipped_files.append(skip_record)
+            if isinstance(files_cache, dict):
+                files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "skip", "skip_record": skip_record}}
+            if progress_callback:
+                progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            continue
         except Exception as exc:
             skip_record = {
                 "file": str(path),
@@ -1243,6 +1269,8 @@ def main() -> None:
             key=lambda item: (-item["occurrences"], -item["gap_count"], str(item["default"]), str(item["kind"])),
         )
 
+        malformed_files = [item for item in skipped_files if item.get("malformed") is True]
+
         report = {
             "quickstart_root": str(root),
             "inputs": [str(p) for p in inputs],
@@ -1263,6 +1291,8 @@ def main() -> None:
             "uploaded_files_scanned": sorted({row["file"] for row in uploaded}),
             "skipped_files": skipped_files,
             "skipped_file_count": len(skipped_files),
+            "malformed_files": malformed_files,
+            "malformed_file_count": len(malformed_files),
             "parsed_file_count": len(parsed_file_paths),
             "files_with_template_variables_count": len(sorted({row["file"] for row in uploaded})),
             "template_variable_occurrences_scanned": len(uploaded),
@@ -1292,7 +1322,7 @@ def main() -> None:
     json_output_path.parent.mkdir(parents=True, exist_ok=True)
     if verify_callback:
         verify_callback(f"writing JSON report to {json_output_path}")
-    rendered = json.dumps(report, indent=2)
+    rendered = json.dumps(report, indent=2, default=json_default)
     json_output_path.write_text(rendered, encoding="utf-8")
     if cache_enabled:
         save_cache(cache_path, cache_data)
