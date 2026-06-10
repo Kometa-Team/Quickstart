@@ -1346,11 +1346,7 @@ def main() -> None:
     verification_rows_path = verification_checkpoint_dir / "all_rows.ndjson"
     cache_enabled = not args.no_cache
     cache_data = load_cache(cache_path, expected_context=cache_context) if cache_enabled else empty_cache(cache_context)
-    cache_persist = (
-        make_periodic_persistor(lambda: save_cache(cache_path, cache_data), CACHE_SAVE_EVERY_ITEMS, CACHE_SAVE_EVERY_SECS)
-        if cache_enabled
-        else None
-    )
+    cache_persist = make_periodic_persistor(lambda: save_cache(cache_path, cache_data), CACHE_SAVE_EVERY_ITEMS, CACHE_SAVE_EVERY_SECS) if cache_enabled else None
     default_excludes_enabled = not args.no_default_excludes
     default_excludes = describe_default_excludes(default_excludes_enabled)
 
@@ -1490,9 +1486,7 @@ def main() -> None:
         if verify_callback:
             verify_callback(f"verifying {len(uploaded)} findings against Quickstart and Kometa defaults")
             if resume_used:
-                verify_callback(
-                    f"resuming verification from {resumed_from_index}/{len(uploaded)} using {verification_rows_path}"
-                )
+                verify_callback(f"resuming verification from {resumed_from_index}/{len(uploaded)} using {verification_rows_path}")
         for idx, row in enumerate(uploaded[resumed_from_index:], start=resumed_from_index + 1):
             if verify_callback:
                 verify_callback("verifying findings", idx, len(uploaded))
