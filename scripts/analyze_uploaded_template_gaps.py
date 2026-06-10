@@ -674,12 +674,17 @@ def collect_yaml_files(
     return sorted(yaml_files), temp_dirs
 
 
-def prefilter_yaml_files(input_files: list[Path], cache_data: dict[str, Any] | None = None) -> tuple[list[Path], list[dict[str, str]], dict[str, int]]:
+def prefilter_yaml_files(
+    input_files: list[Path],
+    cache_data: dict[str, Any] | None = None,
+    progress_callback=None,
+) -> tuple[list[Path], list[dict[str, str]], dict[str, int]]:
     candidate_files: list[Path] = []
     skipped_files: list[dict[str, str]] = []
     stats = {"cache_hits": 0, "cache_misses": 0}
     files_cache = cache_data.get("files", {}) if isinstance(cache_data, dict) else {}
-    for path in input_files:
+    total_files = len(input_files)
+    for idx, path in enumerate(input_files, start=1):
         cache_key = str(path)
         signature = file_signature(path)
         cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
@@ -687,9 +692,13 @@ def prefilter_yaml_files(input_files: list[Path], cache_data: dict[str, Any] | N
             stats["cache_hits"] += 1
             if cached.get("prefilter_skip"):
                 skipped_files.append(dict(cached["prefilter_skip"]))
+                if progress_callback:
+                    progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
                 continue
             if cached.get("contains_template_variables"):
                 candidate_files.append(path)
+            if progress_callback:
+                progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
             continue
         stats["cache_misses"] += 1
         try:
@@ -705,12 +714,16 @@ def prefilter_yaml_files(input_files: list[Path], cache_data: dict[str, Any] | N
             skipped_files.append(skip_record)
             if isinstance(files_cache, dict):
                 files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_template_variables": False}
+            if progress_callback:
+                progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
             continue
         contains_template_variables = "template_variables" in raw_text
         if isinstance(files_cache, dict):
             files_cache[cache_key] = {"signature": signature, "contains_template_variables": contains_template_variables}
         if contains_template_variables:
             candidate_files.append(path)
+        if progress_callback:
+            progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
     return candidate_files, skipped_files, stats
 
 
@@ -835,10 +848,11 @@ def parse_args() -> argparse.Namespace:
 
 def build_progress_callbacks(enabled: bool):
     if not enabled:
-        return None, None, None
+        return None, None, None, None
 
     start_time = time.monotonic()
     discovery_state = {"last_time": 0.0, "last_dirs": 0}
+    prefilter_state = {"last_time": 0.0, "last_index": 0}
     scan_state = {"last_time": 0.0, "last_index": 0}
     verify_state = {"last_time": 0.0, "last_index": 0, "last_stage": ""}
 
@@ -892,6 +906,19 @@ def build_progress_callbacks(enabled: bool):
         scan_state["last_time"] = now
         scan_state["last_index"] = index
 
+    def emit_prefilter(index: int, total: int, selected: int, skipped: int, current_path: Path) -> None:
+        now = time.monotonic()
+        should_emit = index == 1 or index == total or index - prefilter_state["last_index"] >= 250 or now - prefilter_state["last_time"] >= 5.0
+        if not should_emit:
+            return
+        print(
+            f"[progress][{elapsed_label()}] prefilter {index}/{total} files | selected {selected} | skipped {skipped} | {current_path}",
+            file=sys.stderr,
+            flush=True,
+        )
+        prefilter_state["last_time"] = now
+        prefilter_state["last_index"] = index
+
     def emit_verify(stage: str, index: int | None = None, total: int | None = None) -> None:
         now = time.monotonic()
         if index is None or total is None:
@@ -908,7 +935,7 @@ def build_progress_callbacks(enabled: bool):
         verify_state["last_index"] = index
         verify_state["last_stage"] = stage
 
-    return emit_discovery, emit, emit_verify
+    return emit_discovery, emit, emit_verify, emit_prefilter
 
 
 def ensure_json_output_path(root: Path, requested_output: str | None) -> Path:
@@ -1081,7 +1108,7 @@ def main() -> None:
     default_excludes = describe_default_excludes(default_excludes_enabled)
 
     inputs = [Path(p).resolve() for p in args.input] if args.input else [root / "artifacts" / "config_zip_scan"]
-    discovery_callback, progress_callback, verify_callback = build_progress_callbacks(not args.no_progress)
+    discovery_callback, progress_callback, verify_callback, prefilter_progress_callback = build_progress_callbacks(not args.no_progress)
     input_files, temp_dirs = collect_yaml_files(
         inputs,
         discovery_callback=discovery_callback,
@@ -1090,6 +1117,7 @@ def main() -> None:
     candidate_files, prefilter_skipped_files, prefilter_cache_stats = prefilter_yaml_files(
         input_files,
         cache_data=cache_data if cache_enabled else None,
+        progress_callback=prefilter_progress_callback,
     )
 
     try:
