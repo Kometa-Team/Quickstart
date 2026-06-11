@@ -376,7 +376,7 @@ def build_qs_collection_map(qs_collections_path: Path) -> dict[str, set[str]]:
             if not cid:
                 continue
             alias = str(cid).replace("collection_", "", 1)
-            mapping[alias] = collect_qs_keys(collection.get("template_variables"))
+            mapping.setdefault(alias, set()).update(collect_qs_keys(collection.get("template_variables")))
     return mapping
 
 
@@ -393,7 +393,10 @@ def build_qs_overlay_map(qs_overlays_path: Path) -> dict[str, set[str]]:
             if not oid:
                 continue
             alias = str(oid).replace("overlay_", "", 1)
-            mapping[alias] = collect_qs_keys(overlay.get("template_variables"))
+            # Some Quickstart defaults intentionally reuse the same alias for
+            # different media types. Merge their declared keys so later entries
+            # do not erase earlier support and create false-positive gaps.
+            mapping.setdefault(alias, set()).update(collect_qs_keys(overlay.get("template_variables")))
     return mapping
 
 

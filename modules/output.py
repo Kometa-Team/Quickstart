@@ -2001,16 +2001,39 @@ def build_libraries_section(
                             continue
                     if isinstance(default_name, str) and default_name in {"resolution", "overlay_resolution"}:
                         use_edition_val = tv.get("use_edition")
+                        use_resolution_val = tv.get("use_resolution")
                         if isinstance(use_edition_val, str):
                             use_edition_val = use_edition_val.lower() == "true"
+                        if isinstance(use_resolution_val, str):
+                            use_resolution_val = use_resolution_val.lower() == "true"
                         if use_edition_val is None:
                             tv["use_edition"] = True
                             use_edition_val = True
                         elif use_edition_val is False:
                             tv["use_edition"] = False
                             use_edition_val = False
+                        if use_resolution_val is None:
+                            tv["use_resolution"] = True
+                            use_resolution_val = True
+                        elif use_resolution_val is False:
+                            tv["use_resolution"] = False
+                            use_resolution_val = False
                         if use_edition_val is True:
-                            keep_keys = {"builder_level", "use_edition", "horizontal_offset", "vertical_offset"}
+                            keep_keys = {
+                                "builder_level",
+                                "use_edition",
+                                "use_resolution",
+                                "use_1080p",
+                                "use_720p",
+                                "use_576p",
+                                "use_480p",
+                                "use_dv",
+                                "use_hlg",
+                                "use_hdr",
+                                "use_dvhdrplus",
+                                "horizontal_offset",
+                                "vertical_offset",
+                            }
                             for key in list(tv.keys()):
                                 if key not in keep_keys:
                                     tv.pop(key, None)

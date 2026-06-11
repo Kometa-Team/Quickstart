@@ -32,3 +32,37 @@ def test_prepare_import_payload_maps_multiple_overlay_files_per_library():
     assert any("libraries.Movies.overlay_files[2].git" in line for line in report.lines)
     assert any("libraries.Movies.overlay_files[3].repo" in line for line in report.lines)
     assert any("libraries.Movies.overlay_files[4].url" in line for line in report.lines)
+
+
+def test_prepare_import_payload_accepts_resolution_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "resolution",
+                            "template_variables": {
+                                "use_resolution": False,
+                                "use_edition": True,
+                                "use_1080p": False,
+                                "use_dv": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_resolution"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_resolution]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_edition]"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_1080p]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_dv]"] is False
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_resolution" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_1080p" in line for line in report.lines)

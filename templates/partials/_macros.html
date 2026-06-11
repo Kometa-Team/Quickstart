@@ -1961,6 +1961,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             value="{{ var_details.value or 'true' }}"
                                                             {% if var_details.default is defined %}data-default="{{ var_details.default }}"{% endif %}
                                                             {% if is_checked %}checked{% endif %}>
+                                                        <input type="hidden" name="{{ template_name }}[{{ var_name }}]" value="false">
                                                         <label class="form-check-label ms-2 mb-0" for="{{ toggle_id }}">{{ display_label }}</label>
                                                         {% if var_details.tooltip %}
                                                         <i class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ var_details.tooltip_variant or 'info' }} ms-2"
