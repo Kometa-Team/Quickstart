@@ -679,6 +679,7 @@ const OverlayHandler = {
     }
 
     const RESOLUTION_CHILD_TOGGLE_KEYS = [
+      'use_4k',
       'use_1080p',
       'use_720p',
       'use_576p',

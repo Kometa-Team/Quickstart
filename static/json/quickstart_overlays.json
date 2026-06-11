@@ -2890,6 +2890,17 @@
           },
           {
             "type": "toggle",
+            "key": "use_4k",
+            "label": "Use 4k",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
             "key": "use_1080p",
             "label": "Use 1080p",
             "value": "true",

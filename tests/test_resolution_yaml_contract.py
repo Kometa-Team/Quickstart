@@ -61,6 +61,7 @@ def test_resolution_yaml_contract_keeps_child_filters_when_edition_enabled(monke
         {
             "use_edition": True,
             "use_resolution": True,
+            "use_4k": False,
             "use_1080p": False,
             "use_dv": False,
             "horizontal_offset": 15,
@@ -70,6 +71,7 @@ def test_resolution_yaml_contract_keeps_child_filters_when_edition_enabled(monke
 
     template_vars = _template_vars_from_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
 
+    assert template_vars["use_4k"] is False
     assert template_vars["use_1080p"] is False
     assert template_vars["use_dv"] is False
 

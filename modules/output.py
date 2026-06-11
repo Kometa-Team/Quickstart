@@ -2023,6 +2023,7 @@ def build_libraries_section(
                                 "builder_level",
                                 "use_edition",
                                 "use_resolution",
+                                "use_4k",
                                 "use_1080p",
                                 "use_720p",
                                 "use_576p",
