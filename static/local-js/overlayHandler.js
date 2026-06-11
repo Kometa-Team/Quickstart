@@ -690,6 +690,51 @@ const OverlayHandler = {
       'use_dvhdrplus'
     ]
 
+    const EDITION_CHILD_TOGGLE_KEYS = [
+      'use_extended',
+      'use_uncut',
+      'use_unrated',
+      'use_special',
+      'use_anniversary',
+      'use_collector',
+      'use_diamond',
+      'use_platinum',
+      'use_directors',
+      'use_final',
+      'use_international',
+      'use_theatrical',
+      'use_ultimate',
+      'use_alternate',
+      'use_coda',
+      'use_enhanced',
+      'use_imax',
+      'use_remastered',
+      'use_criterion',
+      'use_richarddonner',
+      'use_blackchrome',
+      'use_definitive',
+      'use_openmatte',
+      'use_ulysses',
+      'use_producers'
+    ]
+
+    const RESOLUTION_TOGGLE_FAMILIES = [
+      {
+        family: 'resolution',
+        title: 'Resolution Badges',
+        description: 'Enable the family, then choose which resolution and HDR variants can render.',
+        masterKey: 'use_resolution',
+        childKeys: RESOLUTION_CHILD_TOGGLE_KEYS
+      },
+      {
+        family: 'edition',
+        title: 'Edition Badges',
+        description: 'Enable the family, then choose which edition badges can render.',
+        masterKey: 'use_edition',
+        childKeys: EDITION_CHILD_TOGGLE_KEYS
+      }
+    ]
+
     const getResolutionToggleState = (cfg) => {
       if (cfg.id !== 'overlay_resolution') {
         return { useResolution: true, useEdition: true }
@@ -747,20 +792,91 @@ const OverlayHandler = {
       })
     }
 
-    const syncResolutionChildToggleVisibility = (cfg) => {
+    const ensureResolutionToggleFamilyGroups = (cfg) => {
       if (cfg.id !== 'overlay_resolution' || !cfg.container) return
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return
-      const { useResolution } = getResolutionToggleState(cfg)
-      RESOLUTION_CHILD_TOGGLE_KEYS.forEach((key) => {
+
+      RESOLUTION_TOGGLE_FAMILIES.forEach((familyDef) => {
+        const masterInput = cfg.container.querySelector(`[name="${templateName}[${familyDef.masterKey}]"]`)
+        const masterRow = masterInput?.closest('.form-check')
+        if (!masterRow) return
+
+        let group = cfg.container.querySelector(`[data-resolution-family-group="${familyDef.family}"]`)
+        let copy = group?.querySelector(`[data-resolution-family-copy="${familyDef.family}"]`)
+        let childContainer = group?.querySelector(`[data-resolution-family-children="${familyDef.family}"]`)
+
+        if (!group) {
+          group = document.createElement('section')
+          group.className = 'border rounded-3 px-3 pt-3 pb-2 mb-3 bg-body-tertiary'
+          group.dataset.resolutionFamilyGroup = familyDef.family
+
+          const heading = document.createElement('div')
+          heading.className = 'small text-uppercase fw-semibold text-secondary mb-2'
+          heading.dataset.resolutionFamilyHeading = familyDef.family
+          heading.textContent = familyDef.title
+
+          copy = document.createElement('div')
+          copy.className = 'form-text mb-2'
+          copy.dataset.resolutionFamilyCopy = familyDef.family
+          copy.textContent = familyDef.description
+
+          childContainer = document.createElement('div')
+          childContainer.className = 'pt-1'
+          childContainer.dataset.resolutionFamilyChildren = familyDef.family
+
+          const parent = masterRow.parentElement
+          if (!parent) return
+          parent.insertBefore(group, masterRow)
+          group.appendChild(heading)
+          group.appendChild(masterRow)
+          group.appendChild(copy)
+          group.appendChild(childContainer)
+        } else {
+          group.insertBefore(masterRow, copy || childContainer || null)
+        }
+
+        familyDef.childKeys.forEach((key) => {
+          const input = cfg.container.querySelector(`[name="${templateName}[${key}]"]`)
+          const row = input?.closest('.form-check')
+          if (row && childContainer) {
+            childContainer.appendChild(row)
+          }
+        })
+      })
+    }
+
+    const syncResolutionToggleFamilyVisibility = (cfg, family, keys, enabled) => {
+      if (cfg.id !== 'overlay_resolution' || !cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+
+      const familyGroup = cfg.container.querySelector(`[data-resolution-family-group="${family}"]`)
+      if (familyGroup) {
+        familyGroup.classList.toggle('opacity-75', !enabled)
+      }
+
+      const childContainer = cfg.container.querySelector(`[data-resolution-family-children="${family}"]`)
+      if (childContainer) {
+        childContainer.classList.toggle('d-none', !enabled)
+      }
+
+      keys.forEach((key) => {
         const input = cfg.container.querySelector(`[name="${templateName}[${key}]"]`)
         if (!input) return
         const group = input.closest('.form-check') || input.parentElement
-        if (group) {
-          group.classList.toggle('d-none', !useResolution)
+        if (group && !childContainer) {
+          group.classList.toggle('d-none', !enabled)
         }
-        input.disabled = !useResolution
+        input.disabled = !enabled
       })
+    }
+
+    const syncResolutionChildToggleVisibility = (cfg) => {
+      if (cfg.id !== 'overlay_resolution' || !cfg.container) return
+      const { useResolution, useEdition } = getResolutionToggleState(cfg)
+      syncResolutionToggleFamilyVisibility(cfg, 'resolution', RESOLUTION_CHILD_TOGGLE_KEYS, useResolution)
+      syncResolutionToggleFamilyVisibility(cfg, 'edition', EDITION_CHILD_TOGGLE_KEYS, useEdition)
     }
 
     const syncResolutionToggleWarning = (cfg) => {
@@ -4272,6 +4388,7 @@ const OverlayHandler = {
             spacing: 15
           }
         }
+        ensureResolutionToggleFamilyGroups(cfg)
         syncAudioCodecBackdropHeight(cfg, false)
         syncResolutionBackdropHeight(cfg, false)
         syncResolutionEditionVisibility(cfg, false)

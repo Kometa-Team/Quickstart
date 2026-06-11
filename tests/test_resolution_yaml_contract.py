@@ -64,6 +64,8 @@ def test_resolution_yaml_contract_keeps_child_filters_when_edition_enabled(monke
             "use_4k": False,
             "use_1080p": False,
             "use_dv": False,
+            "use_extended": False,
+            "use_openmatte": False,
             "horizontal_offset": 15,
             "vertical_offset": 15,
         }
@@ -74,6 +76,8 @@ def test_resolution_yaml_contract_keeps_child_filters_when_edition_enabled(monke
     assert template_vars["use_4k"] is False
     assert template_vars["use_1080p"] is False
     assert template_vars["use_dv"] is False
+    assert template_vars["use_extended"] is False
+    assert template_vars["use_openmatte"] is False
 
 
 def test_resolution_yaml_contract_keeps_both_master_toggles_false(monkeypatch, qs_module):

@@ -48,6 +48,8 @@ def test_prepare_import_payload_accepts_resolution_template_variables():
                                 "use_4k": False,
                                 "use_1080p": False,
                                 "use_dv": False,
+                                "use_extended": False,
+                                "use_openmatte": False,
                             },
                         }
                     ]
@@ -66,5 +68,8 @@ def test_prepare_import_payload_accepts_resolution_template_variables():
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_4k]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_1080p]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_dv]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_extended]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_openmatte]"] is False
     assert any("libraries.Movies.overlay_files[0].template_variables.use_resolution" in line for line in report.lines)
     assert any("libraries.Movies.overlay_files[0].template_variables.use_1080p" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_extended" in line for line in report.lines)
