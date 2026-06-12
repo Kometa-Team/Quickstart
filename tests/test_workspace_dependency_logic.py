@@ -523,6 +523,141 @@ def test_workspace_status_route_returns_all_dependency_reasons(client, monkeypat
     assert "120-sonarr" in payload["required_keys"]
 
 
+def test_workspace_app_readiness_kometa_points_to_first_blocker(monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "get_menu_list", _template_list)
+    monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
+    monkeypatch.setattr(qs_module, "_build_workspace_status_context", lambda *_args, **_kwargs: {"readiness": {}})
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "todo",
+            "todo_count": 2,
+            "todo_blockers": [{"key": "020-tmdb", "label": "TMDb"}],
+        },
+    )
+    monkeypatch.setattr(qs_module, "_build_kometa_install_context", lambda _name: {})
+    monkeypatch.setattr(qs_module, "_get_imagemaid_settings_section", lambda _name: ({}, {}))
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: "")
+    monkeypatch.setattr(qs_module, "_probe_imagemaid_root_state", lambda _path: {})
+    monkeypatch.setattr(qs_module.database, "retrieve_section_data", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module, "_validate_imagemaid_settings", lambda *_args, **_kwargs: (False, "", ""))
+
+    payload = qs_module._build_workspace_app_readiness("cfg")
+
+    assert payload["kometa"]["state"] == "needs_setup"
+    assert payload["kometa"]["href"] == "/step/020-tmdb"
+    assert payload["kometa"]["action_label"] == "Finish setup"
+    assert payload["kometa"]["target_step"] == "020-tmdb"
+
+
+def test_workspace_app_readiness_imagemaid_missing_plex_points_to_plex(monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "get_menu_list", _template_list)
+    monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
+    monkeypatch.setattr(qs_module, "_build_workspace_status_context", lambda *_args, **_kwargs: {"readiness": {}})
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "config",
+            "todo_count": 0,
+            "todo_blockers": [],
+        },
+    )
+    monkeypatch.setattr(qs_module, "_build_kometa_install_context", lambda _name: {})
+    monkeypatch.setattr(qs_module, "_get_imagemaid_settings_section", lambda _name: ({"validated": False}, {"imagemaid": {}}))
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: "C:\\ImageMaid")
+    monkeypatch.setattr(
+        qs_module,
+        "_probe_imagemaid_root_state",
+        lambda _path: {"imagemaid_installed": True, "venv_python_exists": True},
+    )
+    monkeypatch.setattr(qs_module.database, "retrieve_section_data", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        qs_module,
+        "_validate_imagemaid_settings",
+        lambda *_args, **_kwargs: (False, "missing_plex_validation", "Validate Plex first."),
+    )
+
+    payload = qs_module._build_workspace_app_readiness("cfg")
+
+    assert payload["imagemaid"]["state"] == "needs_setup"
+    assert payload["imagemaid"]["summary"] == "Plex validation required"
+    assert payload["imagemaid"]["href"] == "/step/010-plex"
+    assert payload["imagemaid"]["action_label"] == "Open Plex"
+    assert payload["imagemaid"]["target_step"] == "010-plex"
+
+
+def test_workspace_app_readiness_kometa_freshness_keeps_app_available(monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "get_menu_list", _template_list)
+    monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
+    monkeypatch.setattr(qs_module, "_build_workspace_status_context", lambda *_args, **_kwargs: {"readiness": {}})
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "freshness",
+            "todo_count": 0,
+            "todo_blockers": [],
+        },
+    )
+    monkeypatch.setattr(qs_module, "_build_kometa_install_context", lambda _name: {})
+    monkeypatch.setattr(qs_module, "_get_imagemaid_settings_section", lambda _name: ({}, {}))
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: "")
+    monkeypatch.setattr(qs_module, "_probe_imagemaid_root_state", lambda _path: {})
+    monkeypatch.setattr(qs_module.database, "retrieve_section_data", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module, "_validate_imagemaid_settings", lambda *_args, **_kwargs: (False, "", ""))
+
+    payload = qs_module._build_workspace_app_readiness("cfg")
+
+    assert payload["kometa"]["state"] == "review"
+    assert payload["kometa"]["summary"] == "Validation refresh recommended"
+    assert payload["kometa"]["action_label"] == "Open Kometa"
+
+
+def test_workspace_status_context_aligns_app_steps_with_app_readiness(monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: [])
+    monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
+    template_list = _template_list() + [("915-imagemaid.html", "ImageMaid")]
+
+    def fake_app_readiness(_config_name, workspace_status, template_list=None):
+        return {
+            "kometa": {"state": "needs_setup"},
+            "imagemaid": {"state": "needs_setup"},
+        }
+
+    monkeypatch.setattr(qs_module, "_build_workspace_app_readiness_from_status", fake_app_readiness)
+
+    ctx = qs_module._build_workspace_status_context("cfg", template_list, available_configs=["cfg"])
+
+    assert ctx["step_statuses"]["900-kometa"] == "error"
+    assert ctx["step_statuses"]["915-imagemaid"] == "error"
+
+
+def test_workspace_app_readiness_route_returns_app_payload(client, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_workspace_app_readiness",
+        lambda config_name: {
+            "generated_at": "2026-06-11T00:00:00Z",
+            "kometa": {"name": "Kometa", "summary": f"Config {config_name} ready"},
+            "imagemaid": {"name": "ImageMaid", "summary": "Prepare ImageMaid"},
+        },
+    )
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "cfg"
+
+    resp = client.get("/workspace_app_readiness")
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["config_name"] == "cfg"
+    assert payload["apps"]["kometa"]["summary"] == "Config cfg ready"
+    assert payload["apps"]["imagemaid"]["summary"] == "Prepare ImageMaid"
+
+
 def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
     rows = [
         _section_row(

@@ -4815,6 +4815,26 @@ body {
     font-weight: 500;
 }
 
+.qs-readiness-apps-line {
+    color: var(--theme-text-muted);
+}
+
+.qs-readiness-apps-line.qs-readiness-apps-line--ok {
+    color: #7ee8bf;
+}
+
+.qs-readiness-apps-line.qs-readiness-apps-line--warn {
+    color: #ffd793;
+}
+
+.qs-readiness-apps-line.qs-readiness-apps-line--error {
+    color: #ffb6be;
+}
+
+.qs-readiness-apps-line.qs-readiness-apps-line--unknown {
+    color: #9ee8ff;
+}
+
 .qs-readiness-freshness-fresh {
     color: #7ee8bf;
 }
@@ -5106,6 +5126,47 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.32rem;
+}
+
+.qs-step-group-summary-meta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.35rem;
+    padding: 0.08rem 0.42rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--theme-text);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.qs-step-group-summary-meta--ok {
+    border-color: rgba(22, 163, 101, 0.75);
+    background: rgba(22, 163, 101, 0.16);
+    color: #79f3c8;
+}
+
+.qs-step-group-summary-meta--warn {
+    border-color: rgba(245, 158, 11, 0.72);
+    background: rgba(245, 158, 11, 0.16);
+    color: #ffd793;
+}
+
+.qs-step-group-summary-meta--error {
+    border-color: rgba(220, 53, 69, 0.72);
+    background: rgba(220, 53, 69, 0.16);
+    color: #ffb6be;
+}
+
+.qs-step-group-summary-meta--unknown {
+    border-color: rgba(56, 189, 248, 0.72);
+    background: rgba(56, 189, 248, 0.16);
+    color: #9ee8ff;
 }
 
 .qs-step-group summary::-webkit-details-marker {
@@ -6077,6 +6138,10 @@ body {
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-step-group-summary-right {
         width: 100%;
         justify-content: center;
+    }
+
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-step-group-summary-meta {
+        display: none !important;
     }
 
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group .qs-step-group-summary-right {

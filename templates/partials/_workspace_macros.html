@@ -122,6 +122,9 @@ Sponsor
   <summary class="qs-step-group-summary" title="{{ title }}">
     <span>{{ title }}</span>
     <span class="qs-step-group-summary-right">
+      {% if group_key == 'apps' %}
+      <span class="qs-step-group-summary-meta d-none" data-qs-app-group-summary></span>
+      {% endif %}
       {{ status_icon(group_state, 'qs-step-group-state') }}
       <i class="bi bi-chevron-down" aria-hidden="true"></i>
     </span>

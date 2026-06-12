@@ -555,13 +555,16 @@ const qsCurrentTemplate = String(window.QS_CURRENT_TEMPLATE || document.document
 const qsSkipMaintenancePoll = qsCurrentTemplate === '900-kometa'
 const qsSkipImageMaidPoll = qsCurrentTemplate === '915-imagemaid'
 const qsSkipLogscanReingestPoll = qsCurrentTemplate === '905-analytics'
+const QS_APP_READINESS_POLL_INTERVAL_MS = 12000
 let qsLatestKometaStatus = null
 let qsLatestImageMaidStatus = null
+let qsLatestAppReadiness = null
 let qsActiveBackgroundJobs = []
 let qsMaintenancePollInFlight = false
 let qsLogscanReingestPollInFlight = false
 let qsImageMaidPollInFlight = false
 let qsBackgroundJobsPollInFlight = false
+let qsAppReadinessPollInFlight = false
 
 function qsShouldPollBackgroundState () {
   return !document.hidden
@@ -982,6 +985,7 @@ function qsHandleMaintenanceStatus (data) {
 
   qsLastMaintenancePaused = paused
   qsRenderActiveWorkCard()
+  qsRenderAppReadiness()
   document.dispatchEvent(new CustomEvent('qs:maintenance-status', { detail: data }))
 }
 
@@ -1004,6 +1008,7 @@ function qsHandleImageMaidStatus (data) {
     }
   }
   qsRenderActiveWorkCard()
+  qsRenderAppReadiness()
 }
 
 window.QS_handleImageMaidStatus = qsHandleImageMaidStatus
@@ -1017,6 +1022,202 @@ function qsHandleLogscanReingestStatus (data) {
 }
 
 window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
+
+function qsGetAppReadinessState (entry) {
+  return String((entry && entry.state) || '').trim().toLowerCase()
+}
+
+function qsIsAppReadinessAvailable (entry) {
+  return ['ready', 'review', 'running', 'queued'].includes(qsGetAppReadinessState(entry))
+}
+
+function qsHydrateKometaReadiness (entry) {
+  const hydrated = { ...(entry || {}) }
+  const data = qsLatestKometaStatus
+  if (!data || typeof data !== 'object') return hydrated
+
+  const status = String(data.status || '').trim().toLowerCase()
+  const elapsed = typeof data.elapsed_seconds === 'number' ? qsFormatElapsedLabel(data.elapsed_seconds) : ''
+  const windowLabel = String(data.maintenance_window || '').trim()
+  const windowSuffix = windowLabel ? ` (${windowLabel})` : ''
+  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || status !== 'running')
+
+  if (status === 'running') {
+    hydrated.state = 'running'
+    hydrated.summary = 'Running now'
+    hydrated.detail = `Kometa is currently running${elapsed ? ` (${elapsed})` : ''}.`
+    return hydrated
+  }
+  if (data.pending_start) {
+    hydrated.state = 'queued'
+    hydrated.summary = 'Start queued'
+    hydrated.detail = `Kometa will start when the Plex maintenance window allows it${windowSuffix}.`
+    return hydrated
+  }
+  if (data.maintenance_paused) {
+    hydrated.state = 'blocked'
+    hydrated.summary = 'Paused for maintenance'
+    hydrated.detail = `Kometa is paused for Plex maintenance${windowSuffix}.`
+    return hydrated
+  }
+  if (unavailableBlocksWork) {
+    hydrated.state = 'blocked'
+    hydrated.summary = 'Window data unavailable'
+    hydrated.detail = 'Quickstart cannot confirm the Plex maintenance window right now.'
+  }
+  return hydrated
+}
+
+function qsHydrateImageMaidReadiness (entry) {
+  const hydrated = { ...(entry || {}) }
+  const data = qsLatestImageMaidStatus
+  if (!data || typeof data !== 'object') return hydrated
+
+  if (String(data.status || '').trim().toLowerCase() === 'running') {
+    const elapsed = typeof data.elapsed_seconds === 'number' ? qsFormatElapsedLabel(data.elapsed_seconds) : ''
+    hydrated.state = 'running'
+    hydrated.summary = 'Running now'
+    hydrated.detail = `ImageMaid is currently running${elapsed ? ` (${elapsed})` : ''}.`
+  }
+  return hydrated
+}
+
+function qsFormatAppReadinessSnippet (entry) {
+  const state = qsGetAppReadinessState(entry)
+  const name = String((entry && entry.name) || 'App').trim()
+  switch (state) {
+    case 'ready':
+    case 'review':
+      return `${name} ready`
+    case 'running':
+      return `${name} running`
+    case 'queued':
+      return `${name} queued`
+    case 'needs_validation':
+      return `${name} needs validation`
+    case 'needs_prepare':
+      return `${name} needs preparation`
+    case 'blocked':
+    case 'needs_setup':
+    case 'error':
+      return `${name}: ${String((entry && entry.summary) || 'needs attention').trim()}`
+    default:
+      return `${name}: ${String((entry && entry.summary) || 'checking status').trim()}`
+  }
+}
+
+function qsSetStepGroupIndicatorState (group, state) {
+  if (!group) return
+  const normalized = ['ok', 'warn', 'error', 'unknown'].includes(String(state || '').trim().toLowerCase())
+    ? String(state || '').trim().toLowerCase()
+    : 'unknown'
+  const indicator = group.querySelector('.qs-step-group-state')
+  if (!indicator) return
+  indicator.classList.remove('qs-step-group-state--ok', 'qs-step-group-state--warn', 'qs-step-group-state--error', 'qs-step-group-state--unknown')
+  indicator.classList.add(`qs-step-group-state--${normalized}`)
+}
+
+function qsRenderAppReadiness () {
+  const appsLineEl = document.querySelector('[data-qs-readiness-apps]')
+  const appsGroup = document.querySelector('[data-step-group="apps"]')
+  const appsGroupSummaryEl = appsGroup ? appsGroup.querySelector('[data-qs-app-group-summary]') : null
+  const payload = qsLatestAppReadiness && typeof qsLatestAppReadiness === 'object'
+    ? (qsLatestAppReadiness.apps || qsLatestAppReadiness)
+    : null
+
+  if (!appsLineEl && !appsGroupSummaryEl) return
+
+  if (!payload || typeof payload !== 'object') {
+    if (appsLineEl) {
+      appsLineEl.textContent = 'Apps: checking status...'
+      appsLineEl.classList.remove('qs-readiness-apps-line--ok', 'qs-readiness-apps-line--warn', 'qs-readiness-apps-line--error', 'qs-readiness-apps-line--unknown')
+      appsLineEl.classList.add('qs-readiness-apps-line--unknown')
+    }
+    if (appsGroupSummaryEl) {
+      appsGroupSummaryEl.classList.add('d-none')
+      appsGroupSummaryEl.textContent = ''
+      appsGroupSummaryEl.removeAttribute('title')
+    }
+    qsSetStepGroupIndicatorState(appsGroup, 'unknown')
+    return
+  }
+
+  const entries = []
+  if (payload.kometa) entries.push(qsHydrateKometaReadiness(payload.kometa))
+  if (payload.imagemaid) entries.push(qsHydrateImageMaidReadiness(payload.imagemaid))
+
+  if (!entries.length) {
+    if (appsLineEl) {
+      appsLineEl.textContent = 'Apps: status unavailable.'
+      appsLineEl.classList.remove('qs-readiness-apps-line--ok', 'qs-readiness-apps-line--warn', 'qs-readiness-apps-line--error', 'qs-readiness-apps-line--unknown')
+      appsLineEl.classList.add('qs-readiness-apps-line--unknown')
+    }
+    if (appsGroupSummaryEl) {
+      appsGroupSummaryEl.classList.add('d-none')
+      appsGroupSummaryEl.textContent = ''
+      appsGroupSummaryEl.removeAttribute('title')
+    }
+    qsSetStepGroupIndicatorState(appsGroup, 'unknown')
+    return
+  }
+
+  const availableEntries = entries.filter(entry => qsIsAppReadinessAvailable(entry))
+  const runningEntries = entries.filter(entry => qsGetAppReadinessState(entry) === 'running')
+  const validationEntries = entries.filter(entry => qsGetAppReadinessState(entry) === 'needs_validation')
+  const setupEntries = entries.filter((entry) => ['needs_setup', 'needs_prepare', 'blocked', 'error'].includes(qsGetAppReadinessState(entry)))
+
+  let lineState = 'unknown'
+  let lineText = 'Apps: checking status...'
+  let groupMetaText = ''
+
+  if (availableEntries.length === entries.length) {
+    lineState = 'ok'
+    if (entries.length === 1) {
+      lineText = `Apps: ${entries[0].name} is ready.`
+    } else {
+      lineText = `Apps: ${entries.map(entry => entry.name).join(' and ')} are ready.`
+    }
+    groupMetaText = runningEntries.length > 0 ? `${runningEntries.length} Running` : `${availableEntries.length} Ready`
+  } else if (availableEntries.length > 0) {
+    lineState = 'warn'
+    lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`
+    groupMetaText = `${availableEntries.length} Ready`
+  } else if (validationEntries.length > 0) {
+    lineState = 'warn'
+    lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`
+    groupMetaText = 'Validate'
+  } else if (setupEntries.length > 0) {
+    lineState = 'error'
+    lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`
+    groupMetaText = 'Needs Setup'
+  } else {
+    lineState = 'unknown'
+    lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`
+    groupMetaText = 'Checking'
+  }
+
+  if (appsLineEl) {
+    appsLineEl.textContent = lineText
+    appsLineEl.classList.remove('qs-readiness-apps-line--ok', 'qs-readiness-apps-line--warn', 'qs-readiness-apps-line--error', 'qs-readiness-apps-line--unknown')
+    appsLineEl.classList.add(`qs-readiness-apps-line--${lineState}`)
+    appsLineEl.title = entries.map((entry) => `${entry.name}: ${entry.summary}`).join(' | ')
+  }
+
+  if (appsGroupSummaryEl) {
+    appsGroupSummaryEl.classList.remove('d-none', 'qs-step-group-summary-meta--ok', 'qs-step-group-summary-meta--warn', 'qs-step-group-summary-meta--error', 'qs-step-group-summary-meta--unknown')
+    appsGroupSummaryEl.classList.add(`qs-step-group-summary-meta--${lineState}`)
+    appsGroupSummaryEl.textContent = groupMetaText
+    appsGroupSummaryEl.title = entries.map((entry) => `${entry.name}: ${entry.summary}`).join(' | ')
+  }
+
+  qsSetStepGroupIndicatorState(appsGroup, lineState)
+}
+
+function qsRefreshAppReadiness () {
+  qsRenderAppReadiness()
+}
+
+window.QS_refreshAppReadiness = qsRefreshAppReadiness
 
 ;(function qsMaintenancePoll () {
   if (qsSkipMaintenancePoll) return
@@ -1068,6 +1269,25 @@ window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
   }
   setTimeout(poll, 1600)
   setInterval(poll, QS_MAINTENANCE_TOAST_INTERVAL_MS)
+})()
+
+;(function qsAppReadinessPoll () {
+  const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsAppReadinessPollInFlight) return
+    qsAppReadinessPollInFlight = true
+    fetch('/workspace_app_readiness')
+      .then(res => res.json())
+      .then((data) => {
+        qsLatestAppReadiness = data
+        qsRenderAppReadiness()
+      })
+      .catch(() => {})
+      .finally(() => {
+        qsAppReadinessPollInFlight = false
+      })
+  }
+  setTimeout(poll, 900)
+  setInterval(poll, QS_APP_READINESS_POLL_INTERVAL_MS)
 })()
 
 ;(function qsBackgroundJobsPoll () {

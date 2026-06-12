@@ -2262,6 +2262,180 @@ def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at
     }
 
 
+def _step_href(step_key):
+    target = str(step_key or "").strip()
+    if not target:
+        target = "001-start"
+    if has_request_context():
+        try:
+            return url_for("step", name=target)
+        except Exception:
+            return f"/step/{target}"
+    return f"/step/{target}"
+
+
+def _latest_bulk_validation_timestamp(config_name):
+    if not config_name:
+        return ""
+    try:
+        stored_validation = database.retrieve_section_data(config_name, "validation_summary")
+        stored_payload = stored_validation[2] if stored_validation else None
+        if isinstance(stored_payload, dict):
+            return str(stored_payload.get("updated_at") or "").strip()
+    except Exception:
+        return ""
+    return ""
+
+
+def _workspace_step_status_from_app_readiness(state):
+    normalized = str(state or "").strip().lower()
+    if normalized in {"ready", "review", "running", "queued"}:
+        return "ok"
+    if normalized == "needs_validation":
+        return "warn"
+    if normalized in {"needs_prepare", "needs_setup", "blocked", "error"}:
+        return "error"
+    return "unknown"
+
+
+def _build_workspace_app_readiness_from_status(config_name, workspace_status, template_list=None):
+    template_list = template_list or helpers.get_menu_list()
+    final_gate = _build_final_gate(
+        workspace_status,
+        template_list,
+        _latest_bulk_validation_timestamp(config_name),
+    )
+    install_context = _build_kometa_install_context(config_name)
+
+    first_blocker = {}
+    todo_blockers = final_gate.get("todo_blockers") or []
+    if todo_blockers:
+        first_blocker = todo_blockers[0] if isinstance(todo_blockers[0], dict) else {}
+    blocker_key = first_blocker.get("key") or "001-start"
+    blocker_label = first_blocker.get("label") or "setup"
+    todo_count = int(final_gate.get("todo_count") or 0)
+
+    kometa = {
+        "name": "Kometa",
+        "href": _step_href("900-kometa"),
+        "action_label": "Open Kometa",
+        "state": "review",
+        "summary": "Open Kometa",
+        "detail": "Use the Kometa page to review build status, prepare the runtime, and run this config.",
+        "target_step": "900-kometa",
+        "final_gate_stage": final_gate.get("stage") or "todo",
+        "todo_count": todo_count,
+        "install_mode": install_context.get("kometa_install_mode") or "",
+        "mode_label": install_context.get("kometa_mode_label") or "",
+        "can_launch": bool(install_context.get("kometa_can_launch")),
+        "can_sync_config": bool(install_context.get("kometa_can_sync_config")),
+    }
+
+    if final_gate.get("stage") == "todo":
+        noun = "item" if todo_count == 1 else "items"
+        kometa.update(
+            state="needs_setup",
+            summary=f"{todo_count} setup {noun} left" if todo_count else "Finish setup first",
+            detail=f"Finish {blocker_label} before Kometa is ready to review in Quickstart.",
+            action_label="Finish setup",
+            href=_step_href(blocker_key),
+            target_step=blocker_key,
+        )
+    elif final_gate.get("stage") == "freshness":
+        kometa.update(
+            state="review",
+            summary="Validation refresh recommended",
+            detail=f"Open Kometa to refresh bulk validation before running. Quickstart expects validation within the last {QS_FINAL_VALIDATION_TTL_HOURS} hours, but the app itself is still available.",
+            action_label="Open Kometa",
+            href=_step_href("900-kometa"),
+            target_step="900-kometa",
+        )
+    elif install_context.get("kometa_can_launch"):
+        kometa.update(
+            state="ready",
+            summary="Ready in Quickstart",
+            detail="Open Kometa to prepare the runtime if needed, then review or run this config.",
+        )
+    elif install_context.get("kometa_can_sync_config"):
+        detail = "Open Kometa to review and sync this config."
+        if install_context.get("kometa_is_external_install"):
+            detail = "Open Kometa to review and sync this config for your external Kometa install."
+        kometa.update(
+            state="review",
+            summary="Config ready",
+            detail=detail,
+        )
+
+    imagemaid_settings, imagemaid_section = _get_imagemaid_settings_section(config_name)
+    imagemaid_state = _probe_imagemaid_root_state(helpers.get_imagemaid_root_path())
+    imagemaid_row = database.retrieve_section_data(config_name, "imagemaid") if config_name else None
+    imagemaid_validated = helpers.booler(imagemaid_row[0]) if imagemaid_row else helpers.booler(imagemaid_settings.get("validated", False))
+    imagemaid_is_valid, imagemaid_reason, imagemaid_details = _validate_imagemaid_settings(imagemaid_section, config_name=config_name)
+
+    imagemaid = {
+        "name": "ImageMaid",
+        "href": _step_href("915-imagemaid"),
+        "action_label": "Open ImageMaid",
+        "state": "needs_prepare",
+        "summary": "Prepare ImageMaid",
+        "detail": "Install or prepare ImageMaid before validating and running it in Quickstart.",
+        "target_step": "915-imagemaid",
+        "validated": bool(imagemaid_validated),
+        "settings_valid": bool(imagemaid_is_valid),
+        "installed": bool(imagemaid_state.get("imagemaid_installed")),
+        "venv_ready": bool(imagemaid_state.get("venv_python_exists")),
+    }
+
+    if imagemaid_state.get("imagemaid_installed") and imagemaid_state.get("venv_python_exists"):
+        if imagemaid_is_valid and imagemaid_validated:
+            imagemaid.update(
+                state="ready",
+                summary="Ready to run",
+                detail="Open ImageMaid to review the command preview and run it.",
+            )
+        elif imagemaid_is_valid:
+            imagemaid.update(
+                state="needs_validation",
+                summary="Ready to validate",
+                detail="Open ImageMaid and validate the saved settings to unlock run controls.",
+            )
+        else:
+            summary_map = {
+                "missing_plex_validation": "Plex validation required",
+                "missing_credentials": "Saved Plex credentials required",
+                "invalid_path": "Plex path needs attention",
+            }
+            imagemaid.update(
+                state="needs_setup",
+                summary=summary_map.get(imagemaid_reason, "ImageMaid needs attention"),
+                detail=str(imagemaid_details or "Open ImageMaid to finish setup.").strip(),
+            )
+            if imagemaid_reason == "missing_plex_validation":
+                imagemaid.update(
+                    href=_step_href("010-plex"),
+                    action_label="Open Plex",
+                    target_step="010-plex",
+                )
+
+    return {
+        "generated_at": utc_now_iso(),
+        "kometa": kometa,
+        "imagemaid": imagemaid,
+    }
+
+
+def _build_workspace_app_readiness(config_name, template_list=None, available_configs=None):
+    template_list = template_list or helpers.get_menu_list()
+    available_configs = available_configs or database.get_unique_config_names() or []
+    workspace_status = _build_workspace_status_context(
+        config_name,
+        template_list,
+        available_configs=available_configs,
+        include_app_readiness_overrides=False,
+    )
+    return _build_workspace_app_readiness_from_status(config_name, workspace_status, template_list=template_list)
+
+
 def _is_nonblank_setting(value):
     if value is None:
         return False
@@ -2465,7 +2639,7 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
     return "ok"
 
 
-def _build_workspace_status_context(config_name, template_list, available_configs=None):
+def _build_workspace_status_context(config_name, template_list, available_configs=None, include_app_readiness_overrides=True):
     template_keys = []
     for file_entry, _ in template_list or []:
         template_key = file_entry.rsplit(".", 1)[0]
@@ -2528,6 +2702,29 @@ def _build_workspace_status_context(config_name, template_list, available_config
         step_statuses[template_key] = _derive_step_status(template_key, group, section_rows, config_exists)
     if "900-kometa" in template_keys:
         step_statuses["900-kometa"] = _derive_live_final_validation_status(step_statuses, template_keys)
+
+    if include_app_readiness_overrides and config_name:
+        provisional_status = {
+            "step_statuses": dict(step_statuses),
+            "required_keys": list(required_keys),
+            "optional_keys": list(optional_keys),
+            "review_keys": list(review_keys),
+            "tautulli_requirement_reasons": tautulli_requirement_reasons,
+            "omdb_requirement_reasons": omdb_requirement_reasons,
+            "mdblist_requirement_reasons": mdblist_requirement_reasons,
+            "anidb_requirement_reasons": anidb_requirement_reasons,
+            "radarr_requirement_reasons": radarr_requirement_reasons,
+            "sonarr_requirement_reasons": sonarr_requirement_reasons,
+            "trakt_requirement_reasons": trakt_requirement_reasons,
+            "mal_requirement_reasons": mal_requirement_reasons,
+        }
+        app_readiness = _build_workspace_app_readiness_from_status(config_name, provisional_status, template_list=template_list)
+        kometa_readiness = app_readiness.get("kometa") if isinstance(app_readiness, dict) else None
+        imagemaid_readiness = app_readiness.get("imagemaid") if isinstance(app_readiness, dict) else None
+        if "900-kometa" in step_statuses and isinstance(kometa_readiness, dict):
+            step_statuses["900-kometa"] = _workspace_step_status_from_app_readiness(kometa_readiness.get("state"))
+        if "915-imagemaid" in step_statuses and isinstance(imagemaid_readiness, dict):
+            step_statuses["915-imagemaid"] = _workspace_step_status_from_app_readiness(imagemaid_readiness.get("state"))
 
     required_rollup = _worst_status(step_statuses.get(key, "warn") for key in required_keys) if required_keys else "ok"
     review_rollup = _worst_status(step_statuses.get(key, "ok") for key in review_keys) if review_keys else "ok"
@@ -8298,6 +8495,14 @@ def workspace_status():
         mal_requirement_reasons=status.get("mal_requirement_reasons", []),
         readiness=status.get("readiness", {}),
     )
+
+
+@app.route("/workspace_app_readiness", methods=["GET"])
+def workspace_app_readiness():
+    persistence.ensure_session_config_name()
+    config_name = request.args.get("config_name") or session.get("config_name")
+    payload = _build_workspace_app_readiness(config_name)
+    return jsonify(success=True, config_name=config_name, apps=payload)
 
 
 @app.route("/get_top_imdb_items/<library_name>")

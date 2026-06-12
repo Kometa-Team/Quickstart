@@ -186,6 +186,9 @@
               <div class="small qs-readiness-subline qs-readiness-freshness-{{ readiness.get('validation_freshness', 'never') }}">
                 Last validated: {{ readiness.get('validation_age_label', 'Never') }}
               </div>
+              <div class="small qs-readiness-subline qs-readiness-apps-line" data-qs-readiness-apps>
+                Apps: checking status...
+              </div>
               <div class="qs-readiness-compact" data-qs-readiness-compact>
                 <div class="qs-readiness-compact-row" data-qs-readiness-required-row title="Required progress">
                   <span class="qs-readiness-compact-label">R</span>
