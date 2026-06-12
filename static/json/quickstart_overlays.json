@@ -3125,6 +3125,411 @@
               "half"
             ]
           },
+          "use_en": {
+            "label": "Use EN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_de": {
+            "label": "Use DE",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fr": {
+            "label": "Use FR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_es": {
+            "label": "Use ES",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pt": {
+            "label": "Use PT",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ja": {
+            "label": "Use JA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ko": {
+            "label": "Use KO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_zh": {
+            "label": "Use ZH",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_da": {
+            "label": "Use DA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ru": {
+            "label": "Use RU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_it": {
+            "label": "Use IT",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hi": {
+            "label": "Use HI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_te": {
+            "label": "Use TE",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fa": {
+            "label": "Use FA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_th": {
+            "label": "Use TH",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nl": {
+            "label": "Use NL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_no": {
+            "label": "Use NO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_is": {
+            "label": "Use IS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sv": {
+            "label": "Use SV",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tr": {
+            "label": "Use TR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pl": {
+            "label": "Use PL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_cs": {
+            "label": "Use CS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_uk": {
+            "label": "Use UK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hu": {
+            "label": "Use HU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ar": {
+            "label": "Use AR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bg": {
+            "label": "Use BG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bn": {
+            "label": "Use BN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bs": {
+            "label": "Use BS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ca": {
+            "label": "Use CA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_cy": {
+            "label": "Use CY",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_el": {
+            "label": "Use EL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_et": {
+            "label": "Use ET",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_eu": {
+            "label": "Use EU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fi": {
+            "label": "Use FI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tl": {
+            "label": "Use TL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fil": {
+            "label": "Use FIL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_gl": {
+            "label": "Use GL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_he": {
+            "label": "Use HE",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hr": {
+            "label": "Use HR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_id": {
+            "label": "Use ID",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ka": {
+            "label": "Use KA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_kk": {
+            "label": "Use KK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_kn": {
+            "label": "Use KN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_la": {
+            "label": "Use LA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lt": {
+            "label": "Use LT",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lv": {
+            "label": "Use LV",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mk": {
+            "label": "Use MK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ml": {
+            "label": "Use ML",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mr": {
+            "label": "Use MR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ms": {
+            "label": "Use MS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nb": {
+            "label": "Use NB",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nn": {
+            "label": "Use NN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pa": {
+            "label": "Use PA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ro": {
+            "label": "Use RO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sk": {
+            "label": "Use SK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sl": {
+            "label": "Use SL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sq": {
+            "label": "Use SQ",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sr": {
+            "label": "Use SR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_so": {
+            "label": "Use SO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sw": {
+            "label": "Use SW",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ta": {
+            "label": "Use TA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ur": {
+            "label": "Use UR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_vi": {
+            "label": "Use VI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bm": {
+            "label": "Use BM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ln": {
+            "label": "Use LN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_wo": {
+            "label": "Use WO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_myn": {
+            "label": "Use MYN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_iu": {
+            "label": "Use IU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rom": {
+            "label": "Use ROM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_am": {
+            "label": "Use AM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_su": {
+            "label": "Use SU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_zu": {
+            "label": "Use ZU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lb": {
+            "label": "Use LB",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mos": {
+            "label": "Use MOS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_af": {
+            "label": "Use AF",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mn": {
+            "label": "Use MN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_kh": {
+            "label": "Use KH",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_li": {
+            "label": "Use LI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ga": {
+            "label": "Use GA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ay": {
+            "label": "Use AY",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lo": {
+            "label": "Use LO",
+            "input_type": "toggle",
+            "default": true
+          },
           "font": {
             "label": "Font",
             "input_type": "text",
@@ -3380,6 +3785,411 @@
               "square",
               "half"
             ]
+          },
+          "use_en": {
+            "label": "Use EN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_de": {
+            "label": "Use DE",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fr": {
+            "label": "Use FR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_es": {
+            "label": "Use ES",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pt": {
+            "label": "Use PT",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ja": {
+            "label": "Use JA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ko": {
+            "label": "Use KO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_zh": {
+            "label": "Use ZH",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_da": {
+            "label": "Use DA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ru": {
+            "label": "Use RU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_it": {
+            "label": "Use IT",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hi": {
+            "label": "Use HI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_te": {
+            "label": "Use TE",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fa": {
+            "label": "Use FA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_th": {
+            "label": "Use TH",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nl": {
+            "label": "Use NL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_no": {
+            "label": "Use NO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_is": {
+            "label": "Use IS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sv": {
+            "label": "Use SV",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tr": {
+            "label": "Use TR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pl": {
+            "label": "Use PL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_cs": {
+            "label": "Use CS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_uk": {
+            "label": "Use UK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hu": {
+            "label": "Use HU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ar": {
+            "label": "Use AR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bg": {
+            "label": "Use BG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bn": {
+            "label": "Use BN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bs": {
+            "label": "Use BS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ca": {
+            "label": "Use CA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_cy": {
+            "label": "Use CY",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_el": {
+            "label": "Use EL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_et": {
+            "label": "Use ET",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_eu": {
+            "label": "Use EU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fi": {
+            "label": "Use FI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tl": {
+            "label": "Use TL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_fil": {
+            "label": "Use FIL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_gl": {
+            "label": "Use GL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_he": {
+            "label": "Use HE",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hr": {
+            "label": "Use HR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_id": {
+            "label": "Use ID",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ka": {
+            "label": "Use KA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_kk": {
+            "label": "Use KK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_kn": {
+            "label": "Use KN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_la": {
+            "label": "Use LA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lt": {
+            "label": "Use LT",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lv": {
+            "label": "Use LV",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mk": {
+            "label": "Use MK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ml": {
+            "label": "Use ML",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mr": {
+            "label": "Use MR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ms": {
+            "label": "Use MS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nb": {
+            "label": "Use NB",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nn": {
+            "label": "Use NN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pa": {
+            "label": "Use PA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ro": {
+            "label": "Use RO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sk": {
+            "label": "Use SK",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sl": {
+            "label": "Use SL",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sq": {
+            "label": "Use SQ",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sr": {
+            "label": "Use SR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_so": {
+            "label": "Use SO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sw": {
+            "label": "Use SW",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ta": {
+            "label": "Use TA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ur": {
+            "label": "Use UR",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_vi": {
+            "label": "Use VI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bm": {
+            "label": "Use BM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ln": {
+            "label": "Use LN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_wo": {
+            "label": "Use WO",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_myn": {
+            "label": "Use MYN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_iu": {
+            "label": "Use IU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rom": {
+            "label": "Use ROM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_am": {
+            "label": "Use AM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_su": {
+            "label": "Use SU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_zu": {
+            "label": "Use ZU",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lb": {
+            "label": "Use LB",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mos": {
+            "label": "Use MOS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_af": {
+            "label": "Use AF",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mn": {
+            "label": "Use MN",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_kh": {
+            "label": "Use KH",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_li": {
+            "label": "Use LI",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ga": {
+            "label": "Use GA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ay": {
+            "label": "Use AY",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_lo": {
+            "label": "Use LO",
+            "input_type": "toggle",
+            "default": true
           },
           "font": {
             "label": "Font",

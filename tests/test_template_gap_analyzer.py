@@ -56,4 +56,30 @@ def test_build_qs_overlay_map_includes_rating3_for_repo_quickstart_file():
 
     assert "rating3" in overlay_map["ratings"]
     assert "rating3_image" in overlay_map["ratings"]
+    assert "rating3_font" in overlay_map["ratings"]
+    assert "rating3_font_size" in overlay_map["ratings"]
+    assert "rating3_font_color" in overlay_map["ratings"]
+    assert "rating3_vertical_offset" in overlay_map["ratings"]
     assert "rating_alignment" in overlay_map["ratings"]
+
+
+def test_overlay_key_supported_in_quickstart_accepts_languages_use_subtitles_alias():
+    module = _load_gap_analyzer_module()
+
+    qs_overlays = {
+        "languages": {"style", "languages"},
+        "languages_subtitles": {"style", "languages", "use_subtitles"},
+    }
+
+    assert module.overlay_key_supported_in_quickstart("languages", "use_subtitles", qs_overlays) is True
+
+
+def test_overlay_key_supported_in_quickstart_uses_direct_alias_match_when_available():
+    module = _load_gap_analyzer_module()
+
+    qs_overlays = {
+        "ratings": {"rating1", "rating2", "rating3", "rating3_image"},
+    }
+
+    assert module.overlay_key_supported_in_quickstart("ratings", "rating3", qs_overlays) is True
+    assert module.overlay_key_supported_in_quickstart("ratings", "rating3_image", qs_overlays) is True

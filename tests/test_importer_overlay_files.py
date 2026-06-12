@@ -250,6 +250,77 @@ def test_prepare_import_payload_accepts_language_count_use_key_template_variable
     assert any("libraries.Movies.overlay_files[0].template_variables.use_multi" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_languages_audio_use_key_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "languages",
+                            "template_variables": {
+                                "use_en": False,
+                                "use_ja": False,
+                                "use_fil": False,
+                                "use_myn": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_languages"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages[use_en]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages[use_ja]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages[use_fil]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages[use_myn]"] is False
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_en" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_fil" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_myn" in line for line in report.lines)
+
+
+def test_prepare_import_payload_accepts_languages_subtitles_use_key_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "languages",
+                            "template_variables": {
+                                "use_subtitles": True,
+                                "use_en": False,
+                                "use_ja": False,
+                                "use_fil": False,
+                                "use_myn": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_languages_subtitles"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[use_en]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[use_ja]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[use_fil]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[use_myn]"] is False
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_subtitles" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_en" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_myn" in line for line in report.lines)
+
+
 def test_prepare_import_payload_accepts_status_use_key_template_variables():
     payload, report = importer.prepare_import_payload(
         {

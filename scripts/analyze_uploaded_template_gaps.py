@@ -400,6 +400,20 @@ def build_qs_overlay_map(qs_overlays_path: Path) -> dict[str, set[str]]:
     return mapping
 
 
+def overlay_key_supported_in_quickstart(alias: str | None, key: str, qs_overlays: dict[str, set[str]]) -> bool:
+    alias_text = str(alias or "")
+    if key in qs_overlays.get(alias_text, set()):
+        return True
+
+    # Quickstart models subtitle language flags as a dedicated overlay alias,
+    # while user configs legitimately express that selection as
+    # default: languages + template_variables.use_subtitles: true.
+    if alias_text == "languages" and key == "use_subtitles":
+        return key in qs_overlays.get("languages_subtitles", set())
+
+    return False
+
+
 def build_qs_library_template_keys(qs_attributes_path: Path) -> set[str]:
     data = load_json(qs_attributes_path)
     keys: set[str] = set(QS_SPECIAL_LIBRARY_TEMPLATE_KEYS)
@@ -1501,7 +1515,7 @@ def main() -> None:
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "overlay":
-                supported = key in qs_overlays.get(alias or "", set())
+                supported = overlay_key_supported_in_quickstart(alias, key, qs_overlays)
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "playlist":

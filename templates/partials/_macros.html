@@ -1649,7 +1649,22 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 <div class="overlay-template-section mt-2" id="{{ details_id }}"
                                                     style="display: none;">
                                                 {% set is_mapping = overlay.template_variables is mapping %}
-                                                {% set tv_items = overlay.template_variables.items() if is_mapping else overlay.template_variables %}
+                                                {% set raw_tv_items = overlay.template_variables.items() if is_mapping else overlay.template_variables %}
+                                                {% if is_mapping and overlay.id in ['overlay_languages', 'overlay_languages_subtitles'] %}
+                                                {% set priority_tv_items = [] %}
+                                                {% set remaining_tv_items = [] %}
+                                                {% for tv_item in raw_tv_items %}
+                                                {% set tv_item_name = tv_item[0] %}
+                                                {% if tv_item_name.startswith('use_') and tv_item_name not in ['use_lowercase', 'use_subtitles'] %}
+                                                {% set _ = priority_tv_items.append(tv_item) %}
+                                                {% else %}
+                                                {% set _ = remaining_tv_items.append(tv_item) %}
+                                                {% endif %}
+                                                {% endfor %}
+                                                {% set tv_items = priority_tv_items + remaining_tv_items %}
+                                                {% else %}
+                                                {% set tv_items = raw_tv_items %}
+                                                {% endif %}
                                                 {% set seen_vars = [] %}
                                                 {% for item in tv_items %}
                                                 {% if is_mapping %}
