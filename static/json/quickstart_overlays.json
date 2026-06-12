@@ -407,26 +407,6 @@
             "default": 14,
             "label": "Last (Days)"
           },
-          "text_airing": {
-            "input_type": "text",
-            "label": "Airing Text",
-            "default": "AIRING"
-          },
-          "text_returning": {
-            "input_type": "text",
-            "label": "Returning Text",
-            "default": "RETURNING"
-          },
-          "text_canceled": {
-            "input_type": "text",
-            "label": "Canceled Text",
-            "default": "CANCELED"
-          },
-          "text_ended": {
-            "input_type": "text",
-            "label": "Ended Text",
-            "default": "ENDED"
-          },
           "use_airing": {
             "label": "Use Airing",
             "input_type": "toggle",
@@ -446,6 +426,26 @@
             "label": "Use Ended",
             "input_type": "toggle",
             "default": true
+          },
+          "text_airing": {
+            "input_type": "text",
+            "label": "Airing Text",
+            "default": "AIRING"
+          },
+          "text_returning": {
+            "input_type": "text",
+            "label": "Returning Text",
+            "default": "RETURNING"
+          },
+          "text_canceled": {
+            "input_type": "text",
+            "label": "Canceled Text",
+            "default": "CANCELED"
+          },
+          "text_ended": {
+            "input_type": "text",
+            "label": "Ended Text",
+            "default": "ENDED"
           },
           "font": {
             "input_type": "text",
@@ -2191,90 +2191,6 @@
             "default": 15
           },
           {
-            "input_type": "hidden",
-            "key": "font",
-            "default": "Inter-Medium.ttf"
-          },
-          {
-            "input_type": "hidden",
-            "key": "font_size",
-            "default": 55
-          },
-          {
-            "input_type": "hidden",
-            "key": "font_color",
-            "default": "#FFFFFFFF"
-          },
-          {
-            "input_type": "number",
-            "key": "stroke_width",
-            "label": "Stroke Width",
-            "default": 1,
-            "tooltip": "Font Stroke Width for the Overlay. Use any number greater than 0."
-          },
-          {
-            "input_type": "text",
-            "key": "stroke_color",
-            "label": "Stroke Color",
-            "default": "#00000000",
-            "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
-          },
-          {
-            "input_type": "select",
-            "key": "back_align",
-            "label": "Backdrop Alignment",
-            "default": "center",
-            "options": [
-              "left",
-              "center",
-              "right",
-              "top",
-              "bottom"
-            ]
-          },
-          {
-            "input_type": "text",
-            "key": "back_color",
-            "label": "Backdrop Color",
-            "default": "#00000099"
-          },
-          {
-            "input_type": "number",
-            "key": "back_height",
-            "label": "Backdrop Height",
-            "default": 105
-          },
-          {
-            "input_type": "number",
-            "key": "back_width",
-            "label": "Backdrop Width",
-            "default": 305
-          },
-          {
-            "input_type": "text",
-            "key": "back_line_color",
-            "label": "Backdrop Line Color",
-            "default": "#00000000"
-          },
-          {
-            "input_type": "number",
-            "key": "back_line_width",
-            "label": "Backdrop Line Width",
-            "default": 1
-          },
-          {
-            "input_type": "number",
-            "key": "back_padding",
-            "label": "Backdrop Padding",
-            "default": 1
-          },
-          {
-            "input_type": "number",
-            "key": "back_radius",
-            "label": "Backdrop Radius",
-            "default": 30
-          },
-          {
             "type": "toggle",
             "key": "use_1",
             "label": "Use 1+",
@@ -2484,6 +2400,90 @@
             ]
           },
           {
+            "input_type": "hidden",
+            "key": "font",
+            "default": "Inter-Medium.ttf"
+          },
+          {
+            "input_type": "hidden",
+            "key": "font_size",
+            "default": 55
+          },
+          {
+            "input_type": "hidden",
+            "key": "font_color",
+            "default": "#FFFFFFFF"
+          },
+          {
+            "input_type": "number",
+            "key": "stroke_width",
+            "label": "Stroke Width",
+            "default": 1,
+            "tooltip": "Font Stroke Width for the Overlay. Use any number greater than 0."
+          },
+          {
+            "input_type": "text",
+            "key": "stroke_color",
+            "label": "Stroke Color",
+            "default": "#00000000",
+            "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
+          },
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 1
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 1
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
+          {
             "input_type": "number",
             "key": "horizontal_offset",
             "label": "Horizontal Offset",
@@ -2558,6 +2558,94 @@
             "key": "text",
             "label": "Text",
             "default": "1.78"
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.33",
+            "label": "Use 1.33",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.65",
+            "label": "Use 1.65",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.66",
+            "label": "Use 1.66",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.78",
+            "label": "Use 1.78",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.85",
+            "label": "Use 1.85",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2.2",
+            "label": "Use 2.2",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2.35",
+            "label": "Use 2.35",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2.77",
+            "label": "Use 2.77",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
           },
           {
             "input_type": "text",
@@ -2657,94 +2745,6 @@
             "key": "vertical_offset",
             "label": "Vertical Offset",
             "default": 150
-          },
-          {
-            "type": "toggle",
-            "key": "use_1.33",
-            "label": "Use 1.33",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_1.65",
-            "label": "Use 1.65",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_1.66",
-            "label": "Use 1.66",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_1.78",
-            "label": "Use 1.78",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_1.85",
-            "label": "Use 1.85",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_2.2",
-            "label": "Use 2.2",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_2.35",
-            "label": "Use 2.35",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_2.77",
-            "label": "Use 2.77",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
           },
           {
             "type": "toggle",
@@ -2983,6 +2983,28 @@
         ],
         "template_variables": [
           {
+            "type": "toggle",
+            "key": "use_dual",
+            "label": "Use Dual",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_multi",
+            "label": "Use Multi",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
             "input_type": "select",
             "key": "back_align",
             "label": "Backdrop Alignment",
@@ -3036,28 +3058,6 @@
             "key": "back_radius",
             "label": "Backdrop Radius",
             "default": 30
-          },
-          {
-            "type": "toggle",
-            "key": "use_dual",
-            "label": "Use Dual",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "use_multi",
-            "label": "Use Multi",
-            "value": "true",
-            "default": true,
-            "options": [
-              "true",
-              "false"
-            ]
           },
           {
             "type": "toggle",
@@ -4404,93 +4404,6 @@
             "default": "HDTV"
           },
           {
-            "input_type": "text",
-            "key": "font",
-            "label": "Font",
-            "default": "Inter-Medium.ttf"
-          },
-          {
-            "input_type": "number",
-            "key": "font_size",
-            "label": "Font Size",
-            "default": 55
-          },
-          {
-            "input_type": "text",
-            "key": "font_color",
-            "label": "Font Color",
-            "default": "#FFFFFFFF"
-          },
-          {
-            "input_type": "number",
-            "key": "stroke_width",
-            "label": "Stroke Width",
-            "default": 1,
-            "tooltip": "Font Stroke Width for the Overlay. Use any number greater than 0."
-          },
-          {
-            "input_type": "text",
-            "key": "stroke_color",
-            "label": "Stroke Color",
-            "default": "#00000000",
-            "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
-          },
-          {
-            "input_type": "select",
-            "key": "back_align",
-            "label": "Backdrop Alignment",
-            "default": "center",
-            "options": [
-              "left",
-              "center",
-              "right",
-              "top",
-              "bottom"
-            ]
-          },
-          {
-            "input_type": "text",
-            "key": "back_color",
-            "label": "Backdrop Color",
-            "default": "#00000099"
-          },
-          {
-            "input_type": "number",
-            "key": "back_height",
-            "label": "Backdrop Height",
-            "default": 105
-          },
-          {
-            "input_type": "number",
-            "key": "back_width",
-            "label": "Backdrop Width",
-            "default": 305
-          },
-          {
-            "input_type": "text",
-            "key": "back_line_color",
-            "label": "Backdrop Line Color",
-            "default": "#00000000"
-          },
-          {
-            "input_type": "number",
-            "key": "back_line_width",
-            "label": "Backdrop Line Width",
-            "default": 1
-          },
-          {
-            "input_type": "number",
-            "key": "back_padding",
-            "label": "Backdrop Padding",
-            "default": 1
-          },
-          {
-            "input_type": "number",
-            "key": "back_radius",
-            "label": "Backdrop Radius",
-            "default": 30
-          },
-          {
             "type": "toggle",
             "key": "use_remux",
             "label": "Use REMUX",
@@ -4577,6 +4490,93 @@
               "true",
               "false"
             ]
+          },
+          {
+            "input_type": "text",
+            "key": "font",
+            "label": "Font",
+            "default": "Inter-Medium.ttf"
+          },
+          {
+            "input_type": "number",
+            "key": "font_size",
+            "label": "Font Size",
+            "default": 55
+          },
+          {
+            "input_type": "text",
+            "key": "font_color",
+            "label": "Font Color",
+            "default": "#FFFFFFFF"
+          },
+          {
+            "input_type": "number",
+            "key": "stroke_width",
+            "label": "Stroke Width",
+            "default": 1,
+            "tooltip": "Font Stroke Width for the Overlay. Use any number greater than 0."
+          },
+          {
+            "input_type": "text",
+            "key": "stroke_color",
+            "label": "Stroke Color",
+            "default": "#00000000",
+            "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
+          },
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 1
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 1
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
           },
           {
             "type": "toggle",
