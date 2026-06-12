@@ -2,7 +2,6 @@ from ruamel.yaml import YAML
 
 from modules import importer
 
-
 OVERLAY_CASES = [
     {
         "id": "us_movie",
