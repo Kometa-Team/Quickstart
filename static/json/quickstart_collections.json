@@ -26153,6 +26153,27 @@
             "default": true
           },
           {
+            "key": "originals_only",
+            "label": "Originals Only",
+            "url": "https://kometa.wiki/en/nightly/defaults/both/streaming/#template-variables",
+            "tooltip": "Switches supported services from \"currently streaming on this service\" to that service's original productions. This cannot be combined with Region and only works for select services such as Amazon, Apple TV, Disney, Max, Hulu, Netflix, Paramount, Peacock.",
+            "tooltip_variant": "warning",
+            "type": "toggle",
+            "default": false,
+            "mutually_exclusive_with": "region"
+          },
+          {
+            "key": "region",
+            "label": "Region",
+            "url": "https://kometa.wiki/en/nightly/defaults/both/streaming/#template-variables",
+            "type": "select",
+            "tooltip": "Optional ISO 3166-1 country code used for streaming availability, such as US, CA, GB, or ES. Leave blank to use the default provider region. Do not combine this with Originals Only.",
+            "options_source": "iso_3166_1_regions",
+            "include_blank_option": true,
+            "blank_option_label": "Default Region (Kometa default: US)",
+            "mutually_exclusive_with": "originals_only"
+          },
+          {
             "key": "use_appletv",
             "label": "Apple TV Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Apple TV.",

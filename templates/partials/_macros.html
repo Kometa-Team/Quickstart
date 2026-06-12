@@ -1109,7 +1109,10 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         <div class="form-check form-switch d-flex align-items-center mb-1">
                             <input class="form-check-input template-child-toggle me-2" type="checkbox"
                                 id="{{ input_name }}" name="{{ input_name }}" value="true"
-                                data-parent-toggle="{{ library.id }}-{{ collection.id }}" {% if disable_toggle
+                                data-parent-toggle="{{ library.id }}-{{ collection.id }}"
+                                {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
+                                {% if disable_toggle
                                 %}disabled{% endif %} {% if not disable_toggle and
                                 (stored_true or (not has_stored and default_true)) %}checked{% endif %}>
                             <input type="hidden" name="{{ input_name }}" value="false">
@@ -1120,6 +1123,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             {% endif %}
                         </div>
                         {% elif item.type == 'select' %}
+                        {% set stored_select_val = data['libraries'].get(input_name, item.default) | default('', true) %}
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
                                 {{ item.label }}
@@ -1132,7 +1136,26 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 {% endif %}
                             </span>
                             <select class="form-select" id="{{ input_name }}" name="{{ input_name }}"
-                                aria-describedby="{{ input_name }}_text" {% if disable_toggle %}disabled{% endif %}>
+                                aria-describedby="{{ input_name }}_text"
+                                {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
+                                {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
+                                {% if disable_toggle %}disabled{% endif %}>
+                                {% if item.include_blank_option %}
+                                <option value="" {% if not stored_select_val %}selected{% endif %}>
+                                    {{ item.blank_option_label | default('Default') }}
+                                </option>
+                                {% endif %}
+                                {% if item.options_source == 'iso_3166_1_regions' %}
+                                <option value="US" {% if stored_select_val == 'US' %}selected{% endif %}>United States</option>
+                                {% for code, region in data['iso_3166_1_regions'] | sort(attribute='1') %}
+                                {% if code != "US" %}
+                                <option value="{{ code }}" {% if stored_select_val == code %}selected{% endif %}>
+                                    {{ region }}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                                {% else %}
                                 {% for val in item.options %}
                                 {% if val is string %}
                                 {% set option_value = val %}
@@ -1145,16 +1168,16 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 val.media_types) %}
                                 {% endif %}
                                 {% if show_option %}
-                                <option value="{{ option_value }}" {% if data['libraries'][input_name]==option_value or
-                                    (not data['libraries'][input_name] and item.default==option_value) %} selected {%
-                                    endif %}>
+                                <option value="{{ option_value }}" {% if stored_select_val == option_value %}selected{% endif %}>
                                     {{ option_label }}
                                 </option>
                                 {% endif %}
                                 {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
                         {% set preview_options = [] %}
+                        {% if item.options is defined %}
                         {% for val in item.options %}
                         {% if val is mapping and val.image_url %}
                         {% set show_preview = (val.media_types is not defined) or (library.type in val.media_types) %}
@@ -1163,6 +1186,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% endif %}
                         {% endif %}
                         {% endfor %}
+                        {% endif %}
                         {% if preview_options %}
                         <div class="style-preview-grid mb-2" data-style-preview-grid data-style-select="{{ input_name }}">
                             {% for val in preview_options %}
@@ -1404,13 +1428,20 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             </span>
                             <input type="{{ 'number' if is_number_input else 'text' }}" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
                                 value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
+                                {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
+                                {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
                                 {% if is_number_input %}
                                 min="{{ item.min | default(1) }}" step="{{ item.step | default(1) }}" inputmode="numeric"
                                 data-numeric-only="true"
                                 data-default-value="{{ item.default | default('', true) }}"
                                 {% else %}
-                                minlength="1" pattern="[\x20-\x7E]+"
-                                title="Only ASCII characters allowed (no accents or emojis)"
+                                {% if item.minlength is defined %}minlength="{{ item.minlength }}"{% else %}minlength="1"{% endif %}
+                                pattern="{{ item.text_pattern | default('[\\x20-\\x7E]+') }}"
+                                title="{{ item.text_title | default('Only ASCII characters allowed (no accents or emojis)') }}"
+                                {% if item.maxlength is defined %}maxlength="{{ item.maxlength }}"{% endif %}
+                                {% if item.inputmode is defined %}inputmode="{{ item.inputmode }}"{% endif %}
+                                {% if item.autocapitalize is defined %}autocapitalize="{{ item.autocapitalize }}"{% endif %}
                                 {% endif %}
                                 {% if disable_toggle %}disabled{% endif %}>
                         </div>

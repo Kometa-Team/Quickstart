@@ -1958,6 +1958,123 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function setupCollectionTemplateFieldRules (scope) {
+      const root = scope || document
+
+      function normalizeFieldValue (input) {
+        if (!input) return
+        const preset = String(input.dataset.validationPreset || '').trim()
+        if (preset === 'iso_3166_1_code' && input.type !== 'checkbox') {
+          const raw = String(input.value || '')
+          const cleaned = raw.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase()
+          if (raw !== cleaned) input.value = cleaned
+        }
+      }
+
+      function isActiveField (input) {
+        if (!input) return false
+        if (input.type === 'checkbox') return !!input.checked
+        return String(input.value || '').trim().length > 0
+      }
+
+      function setFieldDisabledState (input, disabled) {
+        if (!input) return
+        input.disabled = !!disabled
+      }
+
+      function syncMutualState (group) {
+        if (!group) return
+        const fields = Array.from(group.querySelectorAll('[data-template-variable-key][data-mutually-exclusive-with]'))
+        if (!fields.length) return
+
+        const fieldByKey = new Map()
+        fields.forEach(field => {
+          const key = String(field.dataset.templateVariableKey || '').trim()
+          if (key && !fieldByKey.has(key)) fieldByKey.set(key, field)
+        })
+
+        let hasConflict = false
+        fields.forEach(field => {
+          const key = String(field.dataset.templateVariableKey || '').trim()
+          const counterpartKey = String(field.dataset.mutuallyExclusiveWith || '').trim()
+          if (!key || !counterpartKey) return
+
+          const counterpart = fieldByKey.get(counterpartKey)
+          if (!counterpart) return
+
+          const fieldActive = isActiveField(field)
+          const counterpartActive = isActiveField(counterpart)
+          if (fieldActive && counterpartActive) hasConflict = true
+
+          if (fieldActive && !counterpartActive) {
+            setFieldDisabledState(counterpart, true)
+          } else if (!counterpartActive) {
+            setFieldDisabledState(counterpart, false)
+          }
+        })
+
+        let warning = group.querySelector('[data-collection-mutual-warning]')
+        if (!warning) {
+          warning = document.createElement('div')
+          warning.className = 'alert alert-warning py-2 px-3 mb-2 small d-none'
+          warning.dataset.collectionMutualWarning = 'true'
+          warning.textContent = 'Originals Only and Region cannot both be set at the same time.'
+          const anchor = group.querySelector('.child-toggle-wrapper')
+          if (anchor) {
+            anchor.insertAdjacentElement('afterbegin', warning)
+          } else {
+            group.appendChild(warning)
+          }
+        }
+        warning.classList.toggle('d-none', !hasConflict)
+      }
+
+      root.querySelectorAll('[data-collection-config="true"]').forEach(group => {
+        if (group.dataset.templateFieldRulesBound === 'true') return
+
+        const fields = Array.from(group.querySelectorAll('[data-template-variable-key]'))
+        fields.forEach(input => {
+          const preset = String(input.dataset.validationPreset || '').trim()
+          if (preset === 'iso_3166_1_code' && input.type !== 'checkbox') {
+            const feedbackId = `${input.id}_feedback`
+            let feedback = document.getElementById(feedbackId)
+            if (!feedback) {
+              feedback = document.createElement('div')
+              feedback.id = feedbackId
+              feedback.className = 'invalid-feedback'
+              feedback.textContent = 'Enter a 2-letter ISO 3166-1 region code.'
+              input.insertAdjacentElement('afterend', feedback)
+            }
+
+            const validateRegion = () => {
+              normalizeFieldValue(input)
+              const value = String(input.value || '').trim()
+              const valid = !value || /^[A-Z]{2}$/.test(value)
+              input.classList.toggle('is-invalid', !valid)
+              input.setCustomValidity(valid ? '' : 'Enter a 2-letter ISO 3166-1 region code.')
+            }
+
+            input.addEventListener('input', validateRegion)
+            input.addEventListener('change', validateRegion)
+            input.addEventListener('blur', validateRegion)
+            validateRegion()
+          }
+
+          input.addEventListener('input', () => {
+            normalizeFieldValue(input)
+            syncMutualState(group)
+          })
+          input.addEventListener('change', () => {
+            normalizeFieldValue(input)
+            syncMutualState(group)
+          })
+        })
+
+        syncMutualState(group)
+        group.dataset.templateFieldRulesBound = 'true'
+      })
+    }
+
     function initStylePreviewGrids (scope) {
       const root = scope || document
       root.querySelectorAll('[data-style-preview-grid]').forEach(grid => {
@@ -3675,6 +3792,7 @@ document.addEventListener('DOMContentLoaded', function () {
       sortLanguageSelects(card)
       setupOverlayLanguageWeightBuilders(card)
       initNumericOnlyInputs(card)
+      setupCollectionTemplateFieldRules(card)
       initStylePreviewGrids(card)
       initRelativeYearInputs(card)
       initScheduleBuilders(card)
@@ -4171,6 +4289,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     setupParentChildToggleVisibility()
+    setupCollectionTemplateFieldRules()
     setupCustomStringListHandlers('mass_genre_update')
     setupCustomStringListHandlers('radarr_remove_by_tag')
     setupCustomStringListHandlers('sonarr_remove_by_tag')
