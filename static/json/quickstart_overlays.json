@@ -33,6 +33,106 @@
               "red"
             ]
           },
+          "use_oscars": {
+            "label": "Use Oscars Best Picture",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_oscars_director": {
+            "label": "Use Oscars Best Director",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_golden": {
+            "label": "Use Golden Globe Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_golden_director": {
+            "label": "Use Golden Globe Director",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bafta": {
+            "label": "Use BAFTA Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_cannes": {
+            "label": "Use Cannes Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_berlinale": {
+            "label": "Use Berlinale Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_venice": {
+            "label": "Use Venice Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_sundance": {
+            "label": "Use Sundance Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_emmys": {
+            "label": "Use Emmys Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_choice": {
+            "label": "Use Critic's Choice Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_spirit": {
+            "label": "Use Independent Spirit Award Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_cesar": {
+            "label": "Use Cesar Winner",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_imdb": {
+            "label": "Use IMDb Top 250",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_letterboxd": {
+            "label": "Use Letterboxd Top 500",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rottenverified": {
+            "label": "Use Rotten Tomatoes Verified Hot",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rotten": {
+            "label": "Use Rotten Tomatoes Certified Fresh",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_metacritic": {
+            "label": "Use Metacritic Must See",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_common": {
+            "label": "Use Common Sense Selection",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_razzie": {
+            "label": "Use Razzies Winner",
+            "input_type": "toggle",
+            "default": true
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 0,
@@ -326,6 +426,26 @@
             "input_type": "text",
             "label": "Ended Text",
             "default": "ENDED"
+          },
+          "use_airing": {
+            "label": "Use Airing",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_returning": {
+            "label": "Use Returning",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_canceled": {
+            "label": "Use Canceled",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ended": {
+            "label": "Use Ended",
+            "input_type": "toggle",
+            "default": true
           },
           "font": {
             "input_type": "text",
@@ -1210,6 +1330,36 @@
               "false"
             ]
           },
+          "use_g": {
+            "label": "Use G",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pg": {
+            "label": "Use PG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pg-13": {
+            "label": "Use PG-13",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r": {
+            "label": "Use R",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nc-17": {
+            "label": "Use NC-17",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nr": {
+            "label": "Use NR",
+            "input_type": "toggle",
+            "default": true
+          },
           "back_align": {
             "default": "center",
             "label": "Backdrop Alignment",
@@ -1295,6 +1445,36 @@
               "true",
               "false"
             ]
+          },
+          "use_tv-g": {
+            "label": "Use TV-G",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tv-y": {
+            "label": "Use TV-Y",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tv-pg": {
+            "label": "Use TV-PG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tv-14": {
+            "label": "Use TV-14",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tv-ma": {
+            "label": "Use TV-MA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nr": {
+            "label": "Use NR",
+            "input_type": "toggle",
+            "default": true
           },
           "builder_level": {
             "input_type": "toggle",
@@ -1403,6 +1583,46 @@
               "false"
             ]
           },
+          "use_u": {
+            "label": "Use U",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pg": {
+            "label": "Use PG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_12": {
+            "label": "Use 12",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_12a": {
+            "label": "Use 12A",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_15": {
+            "label": "Use 15",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_18": {
+            "label": "Use 18",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r18": {
+            "label": "Use R18",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nr": {
+            "label": "Use NR",
+            "input_type": "toggle",
+            "default": true
+          },
           "builder_level": {
             "input_type": "toggle",
             "media_types": [
@@ -1509,6 +1729,41 @@
               "true",
               "false"
             ]
+          },
+          "use_0": {
+            "label": "Use 0",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_6": {
+            "label": "Use 6",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_12": {
+            "label": "Use 12",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_16": {
+            "label": "Use 16",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_18": {
+            "label": "Use 18",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bpjm": {
+            "label": "Use BPjM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nr": {
+            "label": "Use NR",
+            "input_type": "toggle",
+            "default": true
           },
           "builder_level": {
             "input_type": "toggle",
@@ -1617,6 +1872,41 @@
               "false"
             ]
           },
+          "use_g": {
+            "label": "Use G",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pg": {
+            "label": "Use PG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_m": {
+            "label": "Use M",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ma": {
+            "label": "Use MA15+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r": {
+            "label": "Use R18+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_x": {
+            "label": "Use X18+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nr": {
+            "label": "Use NR",
+            "input_type": "toggle",
+            "default": true
+          },
           "builder_level": {
             "input_type": "toggle",
             "media_types": [
@@ -1723,6 +2013,66 @@
               "true",
               "false"
             ]
+          },
+          "use_g": {
+            "label": "Use G",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pg": {
+            "label": "Use PG",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_m": {
+            "label": "Use M",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r13": {
+            "label": "Use R13",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rp13": {
+            "label": "Use RP13",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r15": {
+            "label": "Use R15",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r16": {
+            "label": "Use R16",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rp16": {
+            "label": "Use RP16",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_R18": {
+            "label": "Use R18",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_rp18": {
+            "label": "Use RP18",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_r": {
+            "label": "Use R",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_nr": {
+            "label": "Use NR",
+            "input_type": "toggle",
+            "default": true
           },
           "builder_level": {
             "input_type": "toggle",
@@ -1925,6 +2275,215 @@
             "default": 30
           },
           {
+            "type": "toggle",
+            "key": "use_1",
+            "label": "Use 1+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2",
+            "label": "Use 2+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_3",
+            "label": "Use 3+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_4",
+            "label": "Use 4+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_5",
+            "label": "Use 5+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_6",
+            "label": "Use 6+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_7",
+            "label": "Use 7+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_8",
+            "label": "Use 8+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_9",
+            "label": "Use 9+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_10",
+            "label": "Use 10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_11",
+            "label": "Use 11+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_12",
+            "label": "Use 12+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_13",
+            "label": "Use 13+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_14",
+            "label": "Use 14+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_15",
+            "label": "Use 15+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_16",
+            "label": "Use 16+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_17",
+            "label": "Use 17+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_18",
+            "label": "Use 18+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_nr",
+            "label": "Use NR",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
             "input_type": "number",
             "key": "horizontal_offset",
             "label": "Horizontal Offset",
@@ -2101,6 +2660,94 @@
           },
           {
             "type": "toggle",
+            "key": "use_1.33",
+            "label": "Use 1.33",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.65",
+            "label": "Use 1.65",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.66",
+            "label": "Use 1.66",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.78",
+            "label": "Use 1.78",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1.85",
+            "label": "Use 1.85",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2.2",
+            "label": "Use 2.2",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2.35",
+            "label": "Use 2.35",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_2.77",
+            "label": "Use 2.77",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
@@ -2157,6 +2804,86 @@
               "compact",
               "standard"
             ]
+          },
+          "use_truehd_atmos": {
+            "label": "Use Dolby TrueHD Atmos",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_dtsx": {
+            "label": "Use DTS-X",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_plus_atmos": {
+            "label": "Use Dolby Digital+ / E-AC3",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_dolby_atmos": {
+            "label": "Use Dolby Atmos",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_truehd": {
+            "label": "Use Dolby TrueHD",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_ma": {
+            "label": "Use DTS-HD-MA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_flac": {
+            "label": "Use FLAC",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_pcm": {
+            "label": "Use PCM",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hra": {
+            "label": "Use DTS-HD-HRA",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_plus": {
+            "label": "Use Dolby Digital+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_dtses": {
+            "label": "Use DTS-ES",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_dts": {
+            "label": "Use DTS",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_digital": {
+            "label": "Use Dolby Digital",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_aac": {
+            "label": "Use AAC",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_mp3": {
+            "label": "Use MP3",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_opus": {
+            "label": "Use Opus",
+            "input_type": "toggle",
+            "default": true
           },
           "builder_level": {
             "input_type": "toggle",
@@ -2309,6 +3036,28 @@
             "key": "back_radius",
             "label": "Backdrop Radius",
             "default": 30
+          },
+          {
+            "type": "toggle",
+            "key": "use_dual",
+            "label": "Use Dual",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_multi",
+            "label": "Use Multi",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
           },
           {
             "type": "toggle",
@@ -3743,6 +4492,94 @@
           },
           {
             "type": "toggle",
+            "key": "use_remux",
+            "label": "Use REMUX",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_bluray",
+            "label": "Use BLU-RAY",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_web",
+            "label": "Use WEB",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_hdtv",
+            "label": "Use HDTV",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_dvd",
+            "label": "Use DVD",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_sdtv",
+            "label": "Use SDTV",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_telesync",
+            "label": "Use TELESYNC",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_cam",
+            "label": "Use CAM",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
@@ -3805,6 +4642,116 @@
               "color",
               "white"
             ]
+          },
+          "use_netflix": {
+            "label": "Use Netflix",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_amazon": {
+            "label": "Use Prime Video",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_disney": {
+            "label": "Use Disney+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hbomax": {
+            "label": "Use HBO Max",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_crunchyroll": {
+            "label": "Use Crunchyroll",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_movistar": {
+            "label": "Use Movistar Plus+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_atresplayer": {
+            "label": "Use Atres Player",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_youtube": {
+            "label": "Use YouTube",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hulu": {
+            "label": "Use Hulu",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_paramount": {
+            "label": "Use Paramount+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_amc": {
+            "label": "Use AMC+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_appletv": {
+            "label": "Use AppleTV",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_peacock": {
+            "label": "Use Peacock",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_discovery": {
+            "label": "Use discovery+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_crave": {
+            "label": "Use Crave",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_now": {
+            "label": "Use NOW",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_channel4": {
+            "label": "Use Channel 4",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_itvx": {
+            "label": "Use ITVX",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_bet": {
+            "label": "Use BET+",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_hayu": {
+            "label": "Use hayu",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_tubi": {
+            "label": "Use tubi",
+            "input_type": "toggle",
+            "default": true
+          },
+          "use_filmin": {
+            "label": "Use filmin",
+            "input_type": "toggle",
+            "default": true
           },
           "builder_level": {
             "input_type": "toggle",

@@ -438,10 +438,15 @@ def _build_overlay_index(overlay_config: list[dict]) -> tuple[dict[str, dict], d
             alias = oid.replace("overlay_", "", 1)
             by_alias[alias] = oid
             if input_type == "radio" and radio_group and "value" in overlay:
+                radio_value = overlay.get("value")
                 radio_map[oid] = {
                     "group_name": str(radio_group),
-                    "value": overlay.get("value"),
+                    "value": radio_value,
                 }
+                if isinstance(radio_value, str):
+                    radio_alias = radio_value.strip()
+                    if radio_alias:
+                        by_alias[radio_alias] = oid
     return by_id, by_alias, radio_map
 
 
