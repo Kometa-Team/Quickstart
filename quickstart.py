@@ -7754,6 +7754,7 @@ def step(name):
     page_info = {}
     header_style = "single line"
     save_error = None
+    autosave_only = request.method == "POST" and request.headers.get("X-QS-Autosave-Only") == "1"
     if name == "900-final":
         return redirect(url_for("step", name="900-kometa"), code=302)
     persistence.ensure_session_config_name()
@@ -7831,6 +7832,11 @@ def step(name):
             else:
                 persistence.save_settings(request.referrer, request.form)
             header_style = request.form.get("header_style", "single line")
+
+        if autosave_only:
+            if save_error:
+                return jsonify(success=False, error=save_error), 400
+            return jsonify(success=True, config_name=session.get("config_name"))
 
     # --- Detect config change ---
     selected_config = request.form.get("configSelector") or previous_config

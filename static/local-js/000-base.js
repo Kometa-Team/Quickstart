@@ -2083,10 +2083,6 @@ function qsApplyActiveConfigUi (name, options = {}) {
 
   if (window.pageInfo) window.pageInfo.config_name = nextName
 
-  if (options && options.refreshWorkspace === false) {
-    return
-  }
-
   const workspaceStatus = options && typeof options === 'object' ? options.workspaceStatus : null
   if (workspaceStatus && typeof qsApplyWorkspaceStatus === 'function') {
     qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: nextName }, workspaceStatus))
@@ -2957,10 +2953,13 @@ document.addEventListener('DOMContentLoaded', () => {
       body: formData,
       cache: 'no-store',
       credentials: 'same-origin',
-      headers: { Accept: 'text/html' }
+      headers: {
+        Accept: 'application/json',
+        'X-QS-Autosave-Only': '1'
+      }
     })
-    const text = await response.text()
-    if (!response.ok || text.includes('Invalid values:')) {
+    const payload = await response.json().catch(() => null)
+    if (!response.ok || !payload || payload.success !== true) {
       throw new Error('Current page could not be saved. Fix validation errors before switching configs.')
     }
     return { saved: true, skipped: false }
@@ -3004,7 +3003,6 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmBtn.disabled = true
       confirmBtn.textContent = 'Saving...'
       window.QS_SWITCHING_CONFIG = true
-      qsApplyActiveConfigUi(target, { refreshWorkspace: false })
 
       try {
         if (typeof showNavigationLoadingOverlay === 'function') {
@@ -3043,7 +3041,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
-        qsApplyActiveConfigUi(current, { refreshWorkspace: false })
         confirmBtn.disabled = false
         confirmBtn.textContent = 'Switch'
         if (typeof hideNavigationLoadingOverlay === 'function') {
