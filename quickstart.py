@@ -2454,7 +2454,7 @@ def _is_meaningful_optional_status_input(value):
         return False
     text = str(value).strip().lower()
     # UI template placeholders can be persisted as defaults; they should not
-    # make an optional page look user-configured in the workspace menu.
+    # make an optional page look user-configured in the workspace menu
     return not (text.startswith("enter ") and any(token in text for token in ("token", "api key", "url", "client")))
 
 
