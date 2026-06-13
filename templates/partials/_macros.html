@@ -1084,10 +1084,46 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 
                     {% if collection.template_variables %}
                     {% set is_seasonal = collection.id == 'collection_seasonal' %}
+                    {% set priority_use_key_collection_ids = [
+                        'collection_basic',
+                        'collection_anilist',
+                        'collection_imdb',
+                        'collection_letterboxd',
+                        'collection_myanimelist',
+                        'collection_simkl',
+                        'collection_tautulli',
+                        'collection_tmdb',
+                        'collection_trakt',
+                        'collection_other_chart'
+                    ] %}
+                    {% set ordered_collection_items = collection.template_variables %}
+                    {% if collection.id in priority_use_key_collection_ids %}
+                    {% set prioritized_collection_items = namespace(priority=[], remaining=[], used_keys=[]) %}
+                    {% for raw_item in collection.template_variables %}
+                    {% if raw_item.key is defined and raw_item.key.startswith('use_') %}
+                    {% set _ = prioritized_collection_items.priority.append(raw_item) %}
+                    {% set _ = prioritized_collection_items.used_keys.append(raw_item.key) %}
+                    {% set use_suffix = raw_item.key[4:] %}
+                    {% for sibling_item in collection.template_variables %}
+                    {% if sibling_item.key is defined and sibling_item.key in ['radarr_add_missing_' ~ use_suffix, 'sonarr_add_missing_' ~ use_suffix] %}
+                    {% if sibling_item.key not in prioritized_collection_items.used_keys %}
+                    {% set _ = prioritized_collection_items.priority.append(sibling_item) %}
+                    {% set _ = prioritized_collection_items.used_keys.append(sibling_item.key) %}
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    {% if raw_item.key is not defined or raw_item.key not in prioritized_collection_items.used_keys %}
+                    {% set _ = prioritized_collection_items.remaining.append(raw_item) %}
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    {% set ordered_collection_items = prioritized_collection_items.priority + prioritized_collection_items.remaining %}
+                    {% endif %}
                     {% set season = namespace(open=false) %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
-                        {% for item in collection.template_variables
+                        {% for item in ordered_collection_items
                         if (not item.media_types or library.type in item.media_types)
                         and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
                         {% set clean_id = collection.id.replace('collection_', '') %}
