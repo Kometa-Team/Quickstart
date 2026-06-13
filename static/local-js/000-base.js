@@ -2061,6 +2061,40 @@ function qsRefreshWorkspaceStatus (options = {}) {
   return Promise.resolve(null)
 }
 
+function qsApplyActiveConfigUi (name, options = {}) {
+  const nextName = String(name || '').trim()
+  if (!nextName) return
+
+  document.querySelectorAll('.qs-config-switch-trigger[data-current]').forEach((trigger) => {
+    trigger.dataset.current = nextName
+  })
+  document.querySelectorAll('.qs-main-page-meta-value').forEach((label) => {
+    label.textContent = nextName
+  })
+
+  const activeConfigInput = document.getElementById('qs-active-config-input')
+  if (activeConfigInput) activeConfigInput.value = nextName
+
+  const configSelector = document.getElementById('configSelector')
+  if (configSelector) configSelector.value = nextName
+
+  const configSwitchSelect = document.getElementById('configSwitchSelect')
+  if (configSwitchSelect) configSwitchSelect.value = nextName
+
+  if (window.pageInfo) window.pageInfo.config_name = nextName
+
+  if (options && options.refreshWorkspace === false) {
+    return
+  }
+
+  const workspaceStatus = options && typeof options === 'object' ? options.workspaceStatus : null
+  if (workspaceStatus && typeof qsApplyWorkspaceStatus === 'function') {
+    qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: nextName }, workspaceStatus))
+  } else {
+    qsRefreshWorkspaceStatus({ immediate: true, configName: nextName })
+  }
+}
+
 let qsBulkValidationRequest = null
 
 function qsGetBulkSummaryCounts (summary) {
@@ -2576,6 +2610,7 @@ window.QSWorkspaceStatus = {
   apply: qsApplyWorkspaceStatus,
   recalculateFromSidebar: qsRecalculateReadinessFromSidebar
 }
+window.qsApplyActiveConfigUi = qsApplyActiveConfigUi
 
 document.addEventListener('qs:workspace-data-changed', (event) => {
   const detail = (event && event.detail) || {}
@@ -2932,15 +2967,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (select) {
-    modalEl.addEventListener('show.bs.modal', () => {
+    select.dataset.qsPendingTarget = select.value || ''
+    select.addEventListener('change', () => {
+      select.dataset.qsPendingTarget = select.value || ''
+    })
+    configTriggers.forEach((trigger) => {
+      if (!trigger || trigger.dataset.qsConfigSwitchBound === 'true') return
+      trigger.dataset.qsConfigSwitchBound = 'true'
+      trigger.addEventListener('click', () => {
+        const current = getCurrentConfig()
+        if (current) {
+          select.value = current
+          select.dataset.qsPendingTarget = current
+        }
+      })
+    })
+    modalEl.addEventListener('hidden.bs.modal', () => {
       const current = getCurrentConfig()
-      if (current) select.value = current
+      if (current) {
+        select.value = current
+        select.dataset.qsPendingTarget = current
+      }
     })
   }
 
   if (confirmBtn && select) {
     confirmBtn.addEventListener('click', async () => {
-      const target = select.value
+      const target = String(select.dataset.qsPendingTarget || select.value || '').trim()
       const current = getCurrentConfig()
       if (!target || target === current) {
         const modal = bootstrap.Modal.getInstance(modalEl)
@@ -2951,6 +3004,7 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmBtn.disabled = true
       confirmBtn.textContent = 'Saving...'
       window.QS_SWITCHING_CONFIG = true
+      qsApplyActiveConfigUi(target, { refreshWorkspace: false })
 
       try {
         if (typeof showNavigationLoadingOverlay === 'function') {
@@ -2968,36 +3022,28 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(data.message || 'Failed to switch configs.')
         }
         const nextName = data.name || target
-        if (typeof window.qsApplyActiveConfigUi === 'function') {
-          window.qsApplyActiveConfigUi(nextName)
-        } else {
-          configTriggers.forEach((trigger) => {
-            if (trigger && trigger.dataset) {
-              trigger.dataset.current = nextName
-            }
-          })
-          document.querySelectorAll('.qs-main-page-meta-value').forEach((node) => {
-            node.textContent = nextName
-          })
-          const activeConfigInput = document.getElementById('qs-active-config-input')
-          if (activeConfigInput) {
-            activeConfigInput.value = nextName
-          }
-          if (window.pageInfo) {
-            window.pageInfo.config_name = nextName
-          }
-          if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
-            qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: nextName }, data.workspace_status))
-          } else {
-            qsRefreshWorkspaceStatus({ immediate: true, configName: nextName })
-          }
+        qsApplyActiveConfigUi(nextName, { workspaceStatus: data.workspace_status })
+        const modal = bootstrap.Modal.getInstance(modalEl)
+        if (modal) modal.hide()
+        try {
+          showToast('success', `Switched to config "${nextName}".`)
+        } catch (toastErr) {
+          // Navigation should not depend on toast rendering.
         }
-        showToast('success', `Switched to config "${nextName}".`)
         const nextConfig = encodeURIComponent(nextName)
         const nextUrl = `${window.location.pathname}?config_name=${nextConfig}`
-        setTimeout(() => window.location.assign(nextUrl), 150)
+        if (window.history && typeof window.history.replaceState === 'function') {
+          window.history.replaceState(null, '', nextUrl)
+        }
+        const navigate = () => window.location.replace(nextUrl)
+        if (typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(navigate)
+        } else {
+          navigate()
+        }
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
+        qsApplyActiveConfigUi(current, { refreshWorkspace: false })
         confirmBtn.disabled = false
         confirmBtn.textContent = 'Switch'
         if (typeof hideNavigationLoadingOverlay === 'function') {

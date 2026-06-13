@@ -17,7 +17,7 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
+    crossorigin="anonymous" defer></script>
 
   <!-- Include FontAwesome & Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -27,12 +27,12 @@
 
   <!-- Include jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
-    crossorigin="anonymous"></script>
+    crossorigin="anonymous" defer></script>
 
   <!-- Include SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"
     integrity="sha384-eeLEhtwdMwD3X9y+8P3Cn7Idl/M+w8H4uZqkgD/2eJVkWIN1yKzEj6XegJ9dL3q0"
-    crossorigin="anonymous"></script>
+    crossorigin="anonymous" defer></script>
 
   <script>
     // Initialize Bootstrap tooltips with HTML images allowed (global)
@@ -74,9 +74,9 @@
     window.QS_TRAKT_REQUIREMENT_REASONS = {{ (trakt_requirement_reasons if trakt_requirement_reasons is defined else []) | tojson }};
     window.QS_MAL_REQUIREMENT_REASONS = {{ (mal_requirement_reasons if mal_requirement_reasons is defined else []) | tojson }};
   </script>
-  <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='local-js/pathValidation.js') }}"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='local-js/urlValidation.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}" defer></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='local-js/pathValidation.js') }}" defer></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='local-js/urlValidation.js') }}" defer></script>
   <div class="header-container text-center">
     <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="QUICKSTART" class="header-image" />
   </div>
@@ -141,10 +141,10 @@
   </div>
 
   <script type="text/javascript"
-    src="{{ url_for('static', filename='local-js/001-start.js') }}"></script>
+    src="{{ url_for('static', filename='local-js/001-start.js') }}" defer></script>
   {% if page_info['template_name'] != '001-start' %}
   <script type="text/javascript"
-    src="{{ url_for('static', filename='local-js/' + page_info['template_name'] + '.js') }}"></script>
+    src="{{ url_for('static', filename='local-js/' + page_info['template_name'] + '.js') }}" defer></script>
   {% endif %}
 
   <!-- Footer -->
