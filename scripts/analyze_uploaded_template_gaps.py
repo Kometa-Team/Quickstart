@@ -248,6 +248,13 @@ def file_signature(path: Path) -> dict[str, int]:
     return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
 
 
+def safe_file_signature(path: Path) -> dict[str, int] | None:
+    try:
+        return file_signature(path)
+    except FileNotFoundError:
+        return None
+
+
 def normalized_parts(path: Path) -> list[str]:
     parts: list[str] = []
     for part in path.parts:
@@ -822,7 +829,23 @@ def prefilter_yaml_files(
     total_files = len(input_files)
     for idx, path in enumerate(input_files, start=1):
         cache_key = str(path)
-        signature = file_signature(path)
+        signature = safe_file_signature(path)
+        if signature is None:
+            skip_record = {
+                "file": str(path),
+                "error_type": "FileNotFoundError",
+                "reason": "file disappeared before prefilter could inspect it",
+                "detail": f"FileNotFoundError: {path}",
+                "stage": "prefilter",
+            }
+            skipped_files.append(skip_record)
+            if isinstance(files_cache, dict):
+                files_cache.pop(cache_key, None)
+            if progress_callback:
+                progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
+            continue
         cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
         if isinstance(cached, dict) and cached.get("signature") == signature and "contains_template_variables" in cached:
             stats["cache_hits"] += 1
@@ -887,7 +910,23 @@ def scan_uploaded_configs(
     files_cache = cache_data.get("files", {}) if isinstance(cache_data, dict) else {}
     for idx, path in enumerate(input_files, start=1):
         cache_key = str(path)
-        signature = file_signature(path)
+        signature = safe_file_signature(path)
+        if signature is None:
+            skip_record = {
+                "file": str(path),
+                "error_type": "FileNotFoundError",
+                "reason": "file disappeared before parse could inspect it",
+                "detail": f"FileNotFoundError: {path}",
+                "stage": "parse",
+            }
+            skipped_files.append(skip_record)
+            if isinstance(files_cache, dict):
+                files_cache.pop(cache_key, None)
+            if progress_callback:
+                progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
+            continue
         cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
         if isinstance(cached, dict) and cached.get("signature") == signature and "scan_result" in cached:
             stats["cache_hits"] += 1
