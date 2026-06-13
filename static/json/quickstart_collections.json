@@ -33,6 +33,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -593,6 +601,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -1134,6 +1150,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
@@ -1679,6 +1703,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -2220,6 +2252,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
@@ -2764,6 +2804,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
@@ -3311,6 +3359,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -3854,6 +3910,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
@@ -4427,6 +4491,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -4968,6 +5040,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
@@ -5514,6 +5594,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -6056,6 +6144,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
@@ -6601,6 +6697,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -7144,6 +7248,14 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -7685,6 +7797,14 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
           },
           {
             "key": "data_starting",
