@@ -988,6 +988,133 @@ def test_build_libraries_section_preserves_collection_include_and_exclude(app):
     assert actor_entry["template_variables"]["exclude"] == ["Morgan Freeman"]
 
 
+def test_build_libraries_section_preserves_chart_builder_size_template_variables(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-collection_tautulli": True,
+                    "mov-library_movies-template_collection_tautulli_list_days": "14",
+                    "mov-library_movies-template_collection_tautulli_list_size": "50",
+                    "mov-library_movies-template_collection_tautulli_list_days_popular": "7",
+                    "mov-library_movies-template_collection_tautulli_list_size_watched": "25",
+                    "mov-library_movies-collection_trakt": True,
+                    "mov-library_movies-template_collection_trakt_limit": "75",
+                    "mov-library_movies-template_collection_trakt_limit_popular": "50",
+                    "mov-library_movies-template_collection_trakt_limit_recommended": "30",
+                    "mov-library_movies-collection_tmdb": True,
+                    "mov-library_movies-template_collection_tmdb_limit": "60",
+                    "mov-library_movies-template_collection_tmdb_limit_airing": "20",
+                    "mov-library_movies-template_collection_tmdb_limit_trending": "40",
+                    "mov-library_movies-collection_simkl": True,
+                    "mov-library_movies-template_collection_simkl_limit_trending_today": "15",
+                    "mov-library_movies-template_collection_simkl_limit_dvd": "10",
+                    "mov-library_movies-collection_anilist": True,
+                    "mov-library_movies-template_collection_anilist_limit": "80",
+                    "mov-library_movies-template_collection_anilist_limit_popular": "40",
+                    "mov-library_movies-template_collection_anilist_limit_season": "25",
+                    "mov-library_movies-collection_myanimelist": True,
+                    "mov-library_movies-template_collection_myanimelist_limit": "90",
+                    "mov-library_movies-template_collection_myanimelist_limit_favorited": "45",
+                    "mov-library_movies-template_collection_myanimelist_limit_airing": "12",
+                    "mov-library_movies-collection_basic": True,
+                    "mov-library_movies-template_collection_basic_limit": "20",
+                    "mov-library_movies-template_collection_basic_limit_released": "10",
+                    "mov-library_movies-template_collection_basic_limit_episodes": "5",
+                    "mov-library_movies-collection_letterboxd": True,
+                    "mov-library_movies-template_collection_letterboxd_limit": "120",
+                    "mov-library_movies-template_collection_letterboxd_limit_1001_movies": "80",
+                    "mov-library_movies-template_collection_letterboxd_limit_top_500": "60",
+                    "mov-library_movies-template_collection_letterboxd_limit_women_directors": "40",
+                    "mov-library_movies-collection_imdb": True,
+                    "mov-library_movies-template_collection_imdb_limit": "250",
+                    "mov-library_movies-collection_other_chart": True,
+                    "mov-library_movies-template_collection_other_chart_limit": "125",
+                    "mov-library_movies-collection_streaming": True,
+                    "mov-library_movies-template_collection_streaming_limit": "500",
+                    "mov-library_movies-template_collection_streaming_discover_limit": "150",
+                    "mov-library_movies-collection_seasonal": True,
+                    "mov-library_movies-template_collection_seasonal_limit": "30",
+                    "mov-library_movies-template_collection_seasonal_limit_halloween": "12",
+                    "mov-library_movies-collection_year": True,
+                    "mov-library_movies-template_collection_year_limit": "8",
+                    "mov-library_movies-collection_content_rating_us": True,
+                    "mov-library_movies-template_collection_content_rating_us_limit": "40",
+                    "mov-library_movies-template_collection_content_rating_us_limit_other": "5",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    collection_entries = libraries_section["libraries"]["Movies"]["collection_files"]
+
+    tautulli_entry = next((entry for entry in collection_entries if entry.get("default") == "tautulli"), None)
+    trakt_entry = next((entry for entry in collection_entries if entry.get("default") == "trakt"), None)
+    tmdb_entry = next((entry for entry in collection_entries if entry.get("default") == "tmdb"), None)
+    simkl_entry = next((entry for entry in collection_entries if entry.get("default") == "simkl"), None)
+    anilist_entry = next((entry for entry in collection_entries if entry.get("default") == "anilist"), None)
+    myanimelist_entry = next((entry for entry in collection_entries if entry.get("default") == "myanimelist"), None)
+    basic_entry = next((entry for entry in collection_entries if entry.get("default") == "basic"), None)
+    letterboxd_entry = next((entry for entry in collection_entries if entry.get("default") == "letterboxd"), None)
+    imdb_entry = next((entry for entry in collection_entries if entry.get("default") == "imdb"), None)
+    other_chart_entry = next((entry for entry in collection_entries if entry.get("default") == "other_chart"), None)
+    streaming_entry = next((entry for entry in collection_entries if entry.get("default") == "streaming"), None)
+    seasonal_entry = next((entry for entry in collection_entries if entry.get("default") == "seasonal"), None)
+    year_entry = next((entry for entry in collection_entries if entry.get("default") == "year"), None)
+    content_rating_us_entry = next((entry for entry in collection_entries if entry.get("default") == "content_rating_us"), None)
+
+    assert tautulli_entry["template_variables"]["list_days"] == "14"
+    assert tautulli_entry["template_variables"]["list_size"] == "50"
+    assert tautulli_entry["template_variables"]["list_days_popular"] == "7"
+    assert tautulli_entry["template_variables"]["list_size_watched"] == "25"
+    assert trakt_entry["template_variables"]["limit"] == "75"
+    assert trakt_entry["template_variables"]["limit_popular"] == "50"
+    assert trakt_entry["template_variables"]["limit_recommended"] == "30"
+    assert tmdb_entry["template_variables"]["limit"] == "60"
+    assert tmdb_entry["template_variables"]["limit_airing"] == "20"
+    assert tmdb_entry["template_variables"]["limit_trending"] == "40"
+    assert simkl_entry["template_variables"]["limit_trending_today"] == "15"
+    assert simkl_entry["template_variables"]["limit_dvd"] == "10"
+    assert anilist_entry["template_variables"]["limit"] == "80"
+    assert anilist_entry["template_variables"]["limit_popular"] == "40"
+    assert anilist_entry["template_variables"]["limit_season"] == "25"
+    assert myanimelist_entry["template_variables"]["limit"] == "90"
+    assert myanimelist_entry["template_variables"]["limit_favorited"] == "45"
+    assert myanimelist_entry["template_variables"]["limit_airing"] == "12"
+    assert basic_entry["template_variables"]["limit"] == "20"
+    assert basic_entry["template_variables"]["limit_released"] == "10"
+    assert basic_entry["template_variables"]["limit_episodes"] == "5"
+    assert letterboxd_entry["template_variables"]["limit"] == "120"
+    assert letterboxd_entry["template_variables"]["limit_1001_movies"] == "80"
+    assert letterboxd_entry["template_variables"]["limit_top_500"] == "60"
+    assert letterboxd_entry["template_variables"]["limit_women_directors"] == "40"
+    assert imdb_entry["template_variables"]["limit"] == "250"
+    assert other_chart_entry["template_variables"]["limit"] == "125"
+    assert streaming_entry["template_variables"]["limit"] == "500"
+    assert streaming_entry["template_variables"]["discover_limit"] == "150"
+    assert seasonal_entry["template_variables"]["limit"] == "30"
+    assert seasonal_entry["template_variables"]["limit_halloween"] == "12"
+    assert year_entry["template_variables"]["limit"] == "8"
+    assert content_rating_us_entry["template_variables"]["limit"] == "40"
+    assert content_rating_us_entry["template_variables"]["limit_other"] == "5"
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 

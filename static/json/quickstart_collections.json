@@ -9407,12 +9407,29 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
+            "type": "number",
+            "default": 100
+          },
+          {
             "key": "use_episodes",
             "label": "New Episodes",
             "tooltip": "Collection of Episodes released in the last 7 days.",
             "tooltip_variant": "info",
             "type": "toggle",
             "default": true,
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "limit_episodes",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the New Episodes collection.",
+            "type": "number",
+            "default": "limit",
             "media_types": [
               "show"
             ]
@@ -9434,6 +9451,13 @@
             "tooltip_variant": "info",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_released",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Newly Released collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_released",
@@ -9923,6 +9947,20 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "list_days",
+            "label": "List Days",
+            "type": "text_input",
+            "default": "30",
+            "tooltip": "Changes the list_days attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
+            "key": "list_size",
+            "label": "List Size",
+            "type": "text_input",
+            "default": "20",
+            "tooltip": "Changes the list_size attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_popular",
             "label": "Plex Popular",
             "tooltip": "Enable the most Popular Movies/Shows on Plex",
@@ -9931,12 +9969,36 @@
             "default": true
           },
           {
+            "key": "list_days_popular",
+            "label": "Plex Popular List Days",
+            "type": "text_input",
+            "tooltip": "Changes the list_days attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value."
+          },
+          {
+            "key": "list_size_popular",
+            "label": "Plex Popular List Size",
+            "type": "text_input",
+            "tooltip": "Changes the list_size attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value."
+          },
+          {
             "key": "use_watched",
             "label": "Plex Watched",
             "tooltip": "Enable the most Watched Movies/Shows on Plex",
             "tooltip_variant": "info",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "list_days_watched",
+            "label": "Plex Watched List Days",
+            "type": "text_input",
+            "tooltip": "Changes the list_days attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value."
+          },
+          {
+            "key": "list_size_watched",
+            "label": "Plex Watched List Size",
+            "type": "text_input",
+            "tooltip": "Changes the list_size attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value."
           },
           {
             "key": "style",
@@ -10411,6 +10473,12 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
           },
           {
             "key": "use_top",
@@ -10992,11 +11060,24 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_airing",
             "label": "TMDb Airing Today",
             "tooltip": "Collection of Shows Airing Today on TMDb.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_airing",
+            "label": "TMDb Airing Today Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the TMDb Airing Today collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_airing",
@@ -11026,6 +11107,12 @@
             "default": true
           },
           {
+            "key": "limit_air",
+            "label": "TMDb On The Air Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the TMDb On The Air collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_air",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11051,6 +11138,12 @@
             "tooltip": "Collection of the Most Popular Movies/Shows on TMDb.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_popular",
+            "label": "TMDb Popular Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the TMDb Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_popular",
@@ -11080,6 +11173,12 @@
             "default": true
           },
           {
+            "key": "limit_top",
+            "label": "TMDb Top Rated Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the TMDb Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_top",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11105,6 +11204,12 @@
             "tooltip": "Collection of Trending Movies/Shows on TMDb.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_trending",
+            "label": "TMDb Trending Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the TMDb Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_trending",
@@ -11666,11 +11771,24 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_collected",
             "label": "Trakt Collected",
             "tooltip": "Collection of the Most Collected Movies/Shows on Trakt.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_collected",
+            "label": "Trakt Collected Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Trakt Collected collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_collected",
@@ -11700,6 +11818,12 @@
             "default": true
           },
           {
+            "key": "limit_popular",
+            "label": "Trakt Popular Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Trakt Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_popular",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11725,6 +11849,12 @@
             "tooltip": "Collection of Recommended Movies/Shows on Trakt.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_recommended",
+            "label": "Trakt Recommended Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Trakt Recommended collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_recommended",
@@ -11754,6 +11884,12 @@
             "default": true
           },
           {
+            "key": "limit_trending",
+            "label": "Trakt Trending Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Trakt Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_trending",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11779,6 +11915,12 @@
             "tooltip": "Collection of the Most Watched Movies/Shows on Trakt.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_watched",
+            "label": "Trakt Watched Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Trakt Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_watched",
@@ -12351,6 +12493,12 @@
             "default": true
           },
           {
+            "key": "limit_trending_today",
+            "label": "Simkl Trending Today Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Simkl Trending Today collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_trending_today",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -12376,6 +12524,12 @@
             "tooltip": "Collection of Simkl's Trending This Week list.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_trending_week",
+            "label": "Simkl Trending This Week Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Simkl Trending This Week collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_trending_week",
@@ -12405,6 +12559,12 @@
             "default": true
           },
           {
+            "key": "limit_trending_month",
+            "label": "Simkl Trending This Month Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Simkl Trending This Month collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_trending_month",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -12430,6 +12590,12 @@
             "tooltip": "Collection of Simkl's Recently Released on DVD list.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_dvd",
+            "label": "Simkl DVD Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Simkl DVD collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_dvd",
@@ -12640,11 +12806,24 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_popular",
             "label": "AniList Popular",
             "tooltip": "Collection of the most Popular Anime on AniList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_popular",
+            "label": "AniList Popular Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the AniList Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_popular",
@@ -12674,6 +12853,12 @@
             "default": true
           },
           {
+            "key": "limit_season",
+            "label": "AniList Season Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the AniList Season collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_season",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -12701,6 +12886,12 @@
             "default": true
           },
           {
+            "key": "limit_top",
+            "label": "AniList Top Rated Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the AniList Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_top",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -12726,6 +12917,12 @@
             "tooltip": "Collection of the Trending Anime on AniList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_trending",
+            "label": "AniList Trending Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the AniList Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_trending",
@@ -13264,6 +13461,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "style",
             "label": "Style",
             "type": "select",
@@ -13280,6 +13484,12 @@
             "tooltip": "Collection of most Favorited Anime on MyAnimeList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_favorited",
+            "label": "MyAnimeList Favorited Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Favorited collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_favorited",
@@ -13309,6 +13519,12 @@
             "default": true
           },
           {
+            "key": "limit_popular",
+            "label": "MyAnimeList Popular Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_popular",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -13334,6 +13550,12 @@
             "tooltip": "Collection of the Current Seasons Anime on MyAnimeList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_season",
+            "label": "MyAnimeList Season Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Season collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_season",
@@ -13363,6 +13585,12 @@
             "default": true
           },
           {
+            "key": "limit_airing",
+            "label": "MyAnimeList Top Airing Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Top Airing collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_airing",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -13388,6 +13616,12 @@
             "tooltip": "Collection of the Top Rated Anime on MyAnimeList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_top",
+            "label": "MyAnimeList Top Rated Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_top",
@@ -13935,11 +14169,25 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
+            "type": "number",
+            "default": 100
+          },
+          {
             "key": "use_1001_movies",
             "label": "1,001 To See Before You Die",
             "tooltip": "Collection of 1,001 Movies You Must See Before You Die.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_1001_movies",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the 1,001 To See Before You Die collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_1001_movies",
@@ -13959,6 +14207,13 @@
             "default": true
           },
           {
+            "key": "limit_afi_100",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the AFI 100 Years 100 Movies collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_afi_100",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -13974,6 +14229,13 @@
             "tooltip": "Collection of Box Office Mojo's all-time top 100 films.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_boxofficemojo_100",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Box Office Mojo All Time 100 collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_boxofficemojo_100",
@@ -13993,6 +14255,13 @@
             "default": true
           },
           {
+            "key": "limit_cannes",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Cannes Palme d'Or Winners collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_cannes",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14008,6 +14277,13 @@
             "tooltip": "Collection of Edgar Wright's 1,000 Favorite Movies.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_edgarwright",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Edgar Wright's 1,000 Favorites collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_edgarwright",
@@ -14027,6 +14303,13 @@
             "default": true
           },
           {
+            "key": "limit_imdb_top_250",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the IMDb Top 250 (Letterboxd) collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_imdb_top_250",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14037,14 +14320,21 @@
             ]
           },
           {
-            "key": "use_top_250",
-            "label": "Letterboxd Top 250",
-            "tooltip": "Collection of the Top 250 films on Letterboxd.",
+            "key": "use_top_500",
+            "label": "Letterboxd Top 500",
+            "tooltip": "Collection of the Top 500 films on Letterboxd.",
             "type": "toggle",
             "default": true
           },
           {
-            "key": "radarr_add_missing_top_250",
+            "key": "limit_top_500",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Letterboxd Top 500 collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
+            "key": "radarr_add_missing_top_500",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
             "tooltip_variant": "danger",
@@ -14059,6 +14349,13 @@
             "tooltip": "Collection of the Top 250 international films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_international",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 International collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_international",
@@ -14078,6 +14375,13 @@
             "default": true
           },
           {
+            "key": "limit_science",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 Sci-Fi Films collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_science",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14093,6 +14397,13 @@
             "tooltip": "Collection of the Top 100 western films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_western",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 100 Western Films collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_western",
@@ -14112,6 +14423,13 @@
             "default": true
           },
           {
+            "key": "limit_silent",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 100 Silent Films collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_silent",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14127,6 +14445,13 @@
             "tooltip": "Collection of films in the One Million Watched Club on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_million",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the One Million Watched Club collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_million",
@@ -14146,6 +14471,13 @@
             "default": true
           },
           {
+            "key": "limit_oscars",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Oscar Best Picture Winners collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_oscars",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14161,6 +14493,13 @@
             "tooltip": "Collection of films from Roger Ebert's \"Great Movies\" essays.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_rogerebert",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Roger Ebert's Great Movies collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_rogerebert",
@@ -14180,6 +14519,13 @@
             "default": true
           },
           {
+            "key": "limit_sight_sound",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Sight & Sound Greatest Films collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_sight_sound",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14195,6 +14541,13 @@
             "tooltip": "Collection of the Top 100 animated films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_animation",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 100 Animation collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_animation",
@@ -14214,6 +14567,13 @@
             "default": true
           },
           {
+            "key": "limit_black_directors",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 Black-Directed collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_black_directors",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14229,6 +14589,13 @@
             "tooltip": "Collection of the Top 250 documentary films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_documentaries",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 Documentaries collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_documentaries",
@@ -14248,6 +14615,13 @@
             "default": true
           },
           {
+            "key": "limit_horror",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 Horror collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_horror",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14265,6 +14639,13 @@
             "default": true
           },
           {
+            "key": "limit_most_fans",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 Most Fans collection.",
+            "type": "number",
+            "default": "limit"
+          },
+          {
             "key": "radarr_add_missing_most_fans",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -14280,6 +14661,13 @@
             "tooltip": "Collection of the Top 250 Women-Directed films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_women_directors",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit of the Top 250 Women-Directed collection.",
+            "type": "number",
+            "default": "limit"
           },
           {
             "key": "radarr_add_missing_women_directors",
@@ -14538,30 +14926,30 @@
             ]
           },
           {
-            "key": "visible_home_top_250",
-            "label": "Letterboxd Top 250 Visible Home",
+            "key": "visible_home_top_500",
+            "label": "Letterboxd Top 500 Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the Letterboxd Top 250 collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the Letterboxd Top 500 collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
             ]
           },
           {
-            "key": "visible_library_top_250",
-            "label": "Letterboxd Top 250 Visible Library",
+            "key": "visible_library_top_500",
+            "label": "Letterboxd Top 500 Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the Letterboxd Top 250 collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the Letterboxd Top 500 collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
             ]
           },
           {
-            "key": "visible_shared_top_250",
-            "label": "Letterboxd Top 250 Visible Shared",
+            "key": "visible_shared_top_500",
+            "label": "Letterboxd Top 500 Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the Letterboxd Top 250 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the Letterboxd Top 500 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -15363,6 +15751,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_commonsense",
             "label": "Common Sense Selection",
             "tooltip": "Collection of Common Sense Selection Movies/Shows.",
@@ -15989,6 +16383,12 @@
             "type": "text_input",
             "default": "060",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
           },
           {
             "key": "use_separator",
@@ -17260,6 +17660,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -18415,6 +18821,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "200",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -19412,6 +19825,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -19424,6 +19843,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -19856,6 +20281,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -19868,6 +20299,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -20301,6 +20738,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -20313,6 +20756,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -20746,6 +21195,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -20758,6 +21213,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -21191,6 +21652,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -21203,6 +21670,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -21636,6 +22109,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -21648,6 +22127,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -22081,6 +22566,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -22093,6 +22584,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -22526,6 +23023,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -22538,6 +23041,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -22976,6 +23485,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -22999,6 +23514,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -23431,6 +23952,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -23454,6 +23981,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -23887,6 +24420,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -23912,11 +24451,23 @@
             "default": true
           },
           {
+            "key": "limit_Northern Africa",
+            "label": "Northern Africa Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Northern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Eastern Africa",
             "label": "Eastern Africa",
             "tooltip": "Collection of Movies that have been filmed in Eastern Africa.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Eastern Africa",
+            "label": "Eastern Africa Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Eastern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Central Africa",
@@ -23926,11 +24477,23 @@
             "default": true
           },
           {
+            "key": "limit_Central Africa",
+            "label": "Central Africa Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Central Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Southern Africa",
             "label": "Southern Africa",
             "tooltip": "Collection of Movies that have been filmed in Southern Africa.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Southern Africa",
+            "label": "Southern Africa Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Southern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Western Africa",
@@ -23940,11 +24503,23 @@
             "default": true
           },
           {
+            "key": "limit_Western Africa",
+            "label": "Western Africa Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Western Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Caribbean",
             "label": "Caribbean",
             "tooltip": "Collection of Movies that have been filmed in the Caribbean.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Caribbean",
+            "label": "Caribbean Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Caribbean collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Central America",
@@ -23954,11 +24529,23 @@
             "default": true
           },
           {
+            "key": "limit_Central America",
+            "label": "Central America Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Central America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_South America",
             "label": "South America",
             "tooltip": "Collection of Movies that have been filmed in South America.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_South America",
+            "label": "South America Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the South America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_North America",
@@ -23968,11 +24555,23 @@
             "default": true
           },
           {
+            "key": "limit_North America",
+            "label": "North America Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the North America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Antarctica",
             "label": "Antarctica",
             "tooltip": "Collection of Movies that have been filmed in Antarctica.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Antarctica",
+            "label": "Antarctica Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Central Asia",
@@ -23982,11 +24581,23 @@
             "default": true
           },
           {
+            "key": "limit_Central Asia",
+            "label": "Central Asia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Central Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Eastern Asia",
             "label": "Eastern Asia",
             "tooltip": "Collection of Movies that have been filmed in Eastern Asia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Eastern Asia",
+            "label": "Eastern Asia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Eastern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_South-Eastern Asia",
@@ -23996,11 +24607,23 @@
             "default": true
           },
           {
+            "key": "limit_South-Eastern Asia",
+            "label": "South-Eastern Asia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the South-Eastern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Southern Asia",
             "label": "Southern Asia",
             "tooltip": "Collection of Movies that have been filmed in Southern Asia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Southern Asia",
+            "label": "Southern Asia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Southern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Western Asia",
@@ -24010,11 +24633,23 @@
             "default": true
           },
           {
+            "key": "limit_Western Asia",
+            "label": "Western Asia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Western Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Eastern Europe",
             "label": "Eastern Europe",
             "tooltip": "Collection of Movies that have been filmed in Eastern Europe.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Eastern Europe",
+            "label": "Eastern Europe Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Eastern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Northern Europe",
@@ -24024,11 +24659,23 @@
             "default": true
           },
           {
+            "key": "limit_Northern Europe",
+            "label": "Northern Europe Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Northern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Southern Europe",
             "label": "Southern Europe",
             "tooltip": "Collection of Movies that have been filmed in Southern Europe.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Southern Europe",
+            "label": "Southern Europe Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Southern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Western Europe",
@@ -24038,11 +24685,23 @@
             "default": true
           },
           {
+            "key": "limit_Western Europe",
+            "label": "Western Europe Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Western Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Australia and New Zealand",
             "label": "Australia and New Zealand",
             "tooltip": "Collection of Movies that have been filmed in Australia and New Zealand.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Australia and New Zealand",
+            "label": "Australia and New Zealand Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Australia and New Zealand collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Melanesia",
@@ -24052,11 +24711,23 @@
             "default": true
           },
           {
+            "key": "limit_Melanesia",
+            "label": "Melanesia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Melanesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Micronesia",
             "label": "Micronesia",
             "tooltip": "Collection of Movies that have been filmed in Micronesia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Micronesia",
+            "label": "Micronesia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Micronesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Polynesia",
@@ -24066,11 +24737,23 @@
             "default": true
           },
           {
+            "key": "limit_Polynesia",
+            "label": "Polynesia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Polynesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_other",
             "label": "Other Regions",
             "tooltip": "Collection of Movies that are in other uncommon Regions.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Regions Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other Regions collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -24987,6 +25670,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -25012,11 +25701,23 @@
             "default": true
           },
           {
+            "key": "limit_Africa",
+            "label": "Africa Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Americas",
             "label": "Americas",
             "tooltip": "Collection of Movies filmed in Americas.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Americas",
+            "label": "Americas Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Americas collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Antarctica",
@@ -25026,11 +25727,23 @@
             "default": true
           },
           {
+            "key": "limit_Antarctica",
+            "label": "Antarctica Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Asia",
             "label": "Asia",
             "tooltip": "Collection of Movies filmed in Asia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_Asia",
+            "label": "Asia Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_Europe",
@@ -25040,6 +25753,12 @@
             "default": true
           },
           {
+            "key": "limit_Europe",
+            "label": "Europe Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_Oceania",
             "label": "Oceania",
             "tooltip": "Collection of Movies filmed in Oceania.",
@@ -25047,11 +25766,23 @@
             "default": true
           },
           {
+            "key": "limit_Oceania",
+            "label": "Oceania Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Oceania collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_other",
             "label": "Other Continents",
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Continents Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other Continents collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -25617,6 +26348,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -25631,11 +26368,23 @@
             "default": true
           },
           {
+            "key": "limit_1.33",
+            "label": "1.33 - Academy Aperture Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 1.33 - Academy Aperture collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_1.65",
             "label": "1.65 - Early Widescreen",
             "tooltip": "Collection of Movies/Shows with a 1.65 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_1.65",
+            "label": "1.65 - Early Widescreen Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 1.65 - Early Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_1.66",
@@ -25645,11 +26394,23 @@
             "default": true
           },
           {
+            "key": "limit_1.66",
+            "label": "1.66 - European Widescreen Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 1.66 - European Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_1.78",
             "label": "1.78 - Widescreen TV",
             "tooltip": "Collection of Movies/Shows with a 1.78 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_1.78",
+            "label": "1.78 - Widescreen TV Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 1.78 - Widescreen TV collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_1.85",
@@ -25659,11 +26420,23 @@
             "default": true
           },
           {
+            "key": "limit_1.85",
+            "label": "1.85 - American Widescreen Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 1.85 - American Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_2.2",
             "label": "2.2 - 70mm Frame",
             "tooltip": "Collection of Movies/Shows with a 2.2 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_2.2",
+            "label": "2.2 - 70mm Frame Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 2.2 - 70mm Frame collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "use_2.35",
@@ -25673,11 +26446,23 @@
             "default": true
           },
           {
+            "key": "limit_2.35",
+            "label": "2.35 - Anamorphic Projection Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 2.35 - Anamorphic Projection collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "use_2.77",
             "label": "2.77 - Cinerama",
             "tooltip": "Collection of Movies/Shows with a 2.77 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_2.77",
+            "label": "2.77 - Cinerama Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the 2.77 - Cinerama collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "exclude",
@@ -26258,6 +27043,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -26702,6 +27493,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -26714,6 +27511,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "include",
@@ -27156,6 +27959,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -27168,6 +27977,12 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_other",
+            "label": "Other Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "include",
@@ -29596,6 +30411,20 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "500",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
+            "key": "discover_limit",
+            "label": "Discover Limit",
+            "type": "text_input",
+            "default": "0",
+            "tooltip": "Changes the TMDb Discover limit used for the streaming availability builder. Use 0 to keep the defaults file behavior."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -31778,6 +32607,12 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections. Kometa defaults Seasonal to off unless you enable it.",
@@ -31790,6 +32625,12 @@
             "tooltip": "Movies related to Asian American Pacific Islander Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_aapi",
+            "label": "Asian American Pacific Islander Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Asian American Pacific Islander Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_aapi",
@@ -31817,6 +32658,12 @@
             "default": true
           },
           {
+            "key": "limit_black_history",
+            "label": "Black History Month Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Black History Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_black_history",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -31840,6 +32687,12 @@
             "tooltip": "Movies related to Christmas",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_christmas",
+            "label": "Christmas Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Christmas Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_christmas",
@@ -31867,6 +32720,12 @@
             "default": true
           },
           {
+            "key": "limit_disabilities",
+            "label": "Disability Month Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Disability Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_disabilities",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -31890,6 +32749,12 @@
             "tooltip": "Movies related to Easter",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_easter",
+            "label": "Easter Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Easter Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_easter",
@@ -31917,6 +32782,12 @@
             "default": true
           },
           {
+            "key": "limit_father",
+            "label": "Father's Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Father's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_father",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -31940,6 +32811,12 @@
             "tooltip": "Movies related to Halloween",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_halloween",
+            "label": "Halloween Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Halloween Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_halloween",
@@ -31967,6 +32844,12 @@
             "default": true
           },
           {
+            "key": "limit_independence",
+            "label": "Independence Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Independence Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_independence",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -31990,6 +32873,12 @@
             "tooltip": "Movies related to Labor Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_labor",
+            "label": "Labor Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Labor Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_labor",
@@ -32017,6 +32906,12 @@
             "default": true
           },
           {
+            "key": "limit_lgbtq",
+            "label": "LGBTQ Month Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the LGBTQ Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_lgbtq",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -32040,6 +32935,12 @@
             "tooltip": "Movies related to Memorial Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_memorial",
+            "label": "Memorial Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Memorial Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_memorial",
@@ -32067,6 +32968,12 @@
             "default": true
           },
           {
+            "key": "limit_mother",
+            "label": "Mother's Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Mother's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_mother",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -32090,6 +32997,12 @@
             "tooltip": "Movies related to National Hispanic Heritage Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_latinx",
+            "label": "National Hispanic Heritage Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the National Hispanic Heritage Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_latinx",
@@ -32117,6 +33030,12 @@
             "default": true
           },
           {
+            "key": "limit_years",
+            "label": "New Year's Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the New Year's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_years",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -32140,6 +33059,12 @@
             "tooltip": "Movies related to St. Patrick's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_patrick",
+            "label": "St. Patrick's Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the St. Patrick's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_patrick",
@@ -32167,6 +33092,12 @@
             "default": true
           },
           {
+            "key": "limit_thanksgiving",
+            "label": "Thanksgiving Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Thanksgiving Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_thanksgiving",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -32190,6 +33121,12 @@
             "tooltip": "Movies related to Valentine's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_valentine",
+            "label": "Valentine's Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Valentine's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_valentine",
@@ -32217,6 +33154,12 @@
             "default": true
           },
           {
+            "key": "limit_veteran",
+            "label": "Veteran's Day Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Veteran's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+          },
+          {
             "key": "radarr_add_missing_veteran",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -32240,6 +33183,12 @@
             "tooltip": "Movies related to Women's History Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "limit_women",
+            "label": "Women's History Month Movies Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit of the Women's History Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
           },
           {
             "key": "radarr_add_missing_women",
@@ -33249,6 +34198,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "10",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -33731,6 +34687,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -34145,6 +35108,13 @@
             "type": "text_input",
             "default": "100",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
           },
           {
             "key": "use_separator",
