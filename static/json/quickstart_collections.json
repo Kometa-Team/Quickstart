@@ -23054,6 +23054,27 @@
             "default": false
           },
           {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -23485,6 +23506,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -24084,6 +24126,510 @@
             "default": false
           },
           {
+            "key": "visible_home_Northern Africa",
+            "label": "Northern Africa Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Northern Africa collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Northern Africa",
+            "label": "Northern Africa Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Northern Africa collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Northern Africa",
+            "label": "Northern Africa Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Northern Africa collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Eastern Africa",
+            "label": "Eastern Africa Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Africa collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Eastern Africa",
+            "label": "Eastern Africa Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Africa collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Eastern Africa",
+            "label": "Eastern Africa Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Africa collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Central Africa",
+            "label": "Central Africa Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Central Africa collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Central Africa",
+            "label": "Central Africa Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Central Africa collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Central Africa",
+            "label": "Central Africa Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Central Africa collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Southern Africa",
+            "label": "Southern Africa Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Africa collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Southern Africa",
+            "label": "Southern Africa Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Africa collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Southern Africa",
+            "label": "Southern Africa Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Africa collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Western Africa",
+            "label": "Western Africa Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Western Africa collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Western Africa",
+            "label": "Western Africa Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Western Africa collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Western Africa",
+            "label": "Western Africa Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Western Africa collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Caribbean",
+            "label": "Caribbean Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Caribbean collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Caribbean",
+            "label": "Caribbean Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Caribbean collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Caribbean",
+            "label": "Caribbean Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Caribbean collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Central America",
+            "label": "Central America Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Central America collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Central America",
+            "label": "Central America Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Central America collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Central America",
+            "label": "Central America Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Central America collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_South America",
+            "label": "South America Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the South America collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_South America",
+            "label": "South America Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the South America collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_South America",
+            "label": "South America Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the South America collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_North America",
+            "label": "North America Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the North America collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_North America",
+            "label": "North America Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the North America collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_North America",
+            "label": "North America Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the North America collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Antarctica",
+            "label": "Antarctica Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Antarctica collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Antarctica",
+            "label": "Antarctica Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Antarctica collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Antarctica",
+            "label": "Antarctica Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Antarctica collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Central Asia",
+            "label": "Central Asia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Central Asia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Central Asia",
+            "label": "Central Asia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Central Asia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Central Asia",
+            "label": "Central Asia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Central Asia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Eastern Asia",
+            "label": "Eastern Asia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Asia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Eastern Asia",
+            "label": "Eastern Asia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Asia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Eastern Asia",
+            "label": "Eastern Asia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Asia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_South-Eastern Asia",
+            "label": "South-Eastern Asia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the South-Eastern Asia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_South-Eastern Asia",
+            "label": "South-Eastern Asia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the South-Eastern Asia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_South-Eastern Asia",
+            "label": "South-Eastern Asia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the South-Eastern Asia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Southern Asia",
+            "label": "Southern Asia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Asia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Southern Asia",
+            "label": "Southern Asia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Asia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Southern Asia",
+            "label": "Southern Asia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Asia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Western Asia",
+            "label": "Western Asia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Western Asia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Western Asia",
+            "label": "Western Asia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Western Asia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Western Asia",
+            "label": "Western Asia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Western Asia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Eastern Europe",
+            "label": "Eastern Europe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Europe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Eastern Europe",
+            "label": "Eastern Europe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Europe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Eastern Europe",
+            "label": "Eastern Europe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Eastern Europe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Northern Europe",
+            "label": "Northern Europe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Northern Europe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Northern Europe",
+            "label": "Northern Europe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Northern Europe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Northern Europe",
+            "label": "Northern Europe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Northern Europe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Southern Europe",
+            "label": "Southern Europe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Europe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Southern Europe",
+            "label": "Southern Europe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Europe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Southern Europe",
+            "label": "Southern Europe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Southern Europe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Western Europe",
+            "label": "Western Europe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Western Europe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Western Europe",
+            "label": "Western Europe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Western Europe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Western Europe",
+            "label": "Western Europe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Western Europe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Australia and New Zealand",
+            "label": "Australia and New Zealand Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Australia and New Zealand collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Australia and New Zealand",
+            "label": "Australia and New Zealand Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Australia and New Zealand collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Australia and New Zealand",
+            "label": "Australia and New Zealand Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Australia and New Zealand collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Melanesia",
+            "label": "Melanesia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Melanesia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Melanesia",
+            "label": "Melanesia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Melanesia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Melanesia",
+            "label": "Melanesia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Melanesia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Micronesia",
+            "label": "Micronesia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Micronesia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Micronesia",
+            "label": "Micronesia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Micronesia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Micronesia",
+            "label": "Micronesia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Micronesia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Polynesia",
+            "label": "Polynesia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Polynesia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Polynesia",
+            "label": "Polynesia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Polynesia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Polynesia",
+            "label": "Polynesia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Polynesia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Regions Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other Regions collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Regions Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other Regions collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Regions Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other Regions collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -24558,6 +25104,153 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Africa",
+            "label": "Africa Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Africa collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Africa",
+            "label": "Africa Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Africa collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Africa",
+            "label": "Africa Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Africa collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Americas",
+            "label": "Americas Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Americas collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Americas",
+            "label": "Americas Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Americas collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Americas",
+            "label": "Americas Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Americas collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Antarctica",
+            "label": "Antarctica Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Antarctica collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Antarctica",
+            "label": "Antarctica Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Antarctica collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Antarctica",
+            "label": "Antarctica Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Antarctica collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Asia",
+            "label": "Asia Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Asia collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Asia",
+            "label": "Asia Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Asia collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Asia",
+            "label": "Asia Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Asia collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Europe",
+            "label": "Europe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Europe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Europe",
+            "label": "Europe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Europe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Europe",
+            "label": "Europe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Europe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_Oceania",
+            "label": "Oceania Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Oceania collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_Oceania",
+            "label": "Oceania Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Oceania collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_Oceania",
+            "label": "Oceania Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Oceania collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Continents Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other Continents collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Continents Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other Continents collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Continents Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other Continents collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
