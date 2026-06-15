@@ -17725,6 +17725,321 @@
             "default": false
           },
           {
+            "key": "visible_home_avp",
+            "label": "Alien / Predator Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Alien / Predator collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_avp",
+            "label": "Alien / Predator Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Alien / Predator collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_avp",
+            "label": "Alien / Predator Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Alien / Predator collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_arrow",
+            "label": "Arrowverse Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Arrowverse collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_arrow",
+            "label": "Arrowverse Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Arrowverse collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_arrow",
+            "label": "Arrowverse Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Arrowverse collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_dca",
+            "label": "DC Animated Universe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the DC Animated Universe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_dca",
+            "label": "DC Animated Universe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the DC Animated Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_dca",
+            "label": "DC Animated Universe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the DC Animated Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_dcu",
+            "label": "DC Extended Universe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the DC Extended Universe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_dcu",
+            "label": "DC Extended Universe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the DC Extended Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_dcu",
+            "label": "DC Extended Universe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the DC Extended Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_fast",
+            "label": "Fast & Furious Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Fast & Furious collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_fast",
+            "label": "Fast & Furious Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Fast & Furious collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_fast",
+            "label": "Fast & Furious Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Fast & Furious collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_marvel",
+            "label": "In Association with Marvel Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the In Association with Marvel collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_marvel",
+            "label": "In Association with Marvel Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the In Association with Marvel collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_marvel",
+            "label": "In Association with Marvel Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the In Association with Marvel collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_mcu",
+            "label": "Marvel Cinematic Universe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Marvel Cinematic Universe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_mcu",
+            "label": "Marvel Cinematic Universe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Marvel Cinematic Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_mcu",
+            "label": "Marvel Cinematic Universe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Marvel Cinematic Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_middle",
+            "label": "Middle Earth Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Middle Earth collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_middle",
+            "label": "Middle Earth Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Middle Earth collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_middle",
+            "label": "Middle Earth Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Middle Earth collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_rocky",
+            "label": "Rocky / Creed Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Rocky / Creed collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_rocky",
+            "label": "Rocky / Creed Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Rocky / Creed collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_rocky",
+            "label": "Rocky / Creed Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Rocky / Creed collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_trek",
+            "label": "Star Trek Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Star Trek collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trek",
+            "label": "Star Trek Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Star Trek collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trek",
+            "label": "Star Trek Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Star Trek collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_star",
+            "label": "Star Wars Universe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Star Wars Universe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_star",
+            "label": "Star Wars Universe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Star Wars Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_star",
+            "label": "Star Wars Universe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Star Wars Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_mummy",
+            "label": "The Mummy Universe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the The Mummy Universe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_mummy",
+            "label": "The Mummy Universe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the The Mummy Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_mummy",
+            "label": "The Mummy Universe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the The Mummy Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_askew",
+            "label": "View Askewverse Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the View Askewverse collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_askew",
+            "label": "View Askewverse Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the View Askewverse collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_askew",
+            "label": "View Askewverse Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the View Askewverse collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_wizard",
+            "label": "Wizarding World Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Wizarding World collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_wizard",
+            "label": "Wizarding World Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Wizarding World collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_wizard",
+            "label": "Wizarding World Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Wizarding World collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_xmen",
+            "label": "X-Men Universe Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the X-Men Universe collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_xmen",
+            "label": "X-Men Universe Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the X-Men Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_xmen",
+            "label": "X-Men Universe Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the X-Men Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -18265,6 +18580,90 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_books",
+            "label": "Based on a Book Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Book collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_books",
+            "label": "Based on a Book Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Book collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_books",
+            "label": "Based on a Book Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Book collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_comics",
+            "label": "Based on a Comic Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Comic collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_comics",
+            "label": "Based on a Comic Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Comic collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_comics",
+            "label": "Based on a Comic Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Comic collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_true_story",
+            "label": "Based on a True Story Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a True Story collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_true_story",
+            "label": "Based on a True Story Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a True Story collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_true_story",
+            "label": "Based on a True Story Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a True Story collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_video_games",
+            "label": "Based on a Video Game Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Video Game collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_video_games",
+            "label": "Based on a Video Game Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Video Game collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_video_games",
+            "label": "Based on a Video Game Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Based on a Video Game collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -19080,6 +19479,27 @@
             "default": false
           },
           {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -19500,6 +19920,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -19927,6 +20368,27 @@
             "default": false
           },
           {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -20348,6 +20810,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -20775,6 +21258,27 @@
             "default": false
           },
           {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -21196,6 +21700,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -21623,6 +22148,27 @@
             "default": false
           },
           {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -22044,6 +22590,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
