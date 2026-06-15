@@ -2019,6 +2019,8 @@ def build_libraries_section(
                             tv["use_resolution"] = False
                             use_resolution_val = False
                         if use_edition_val is True:
+                            resolution_levels = ["4k", "1080p", "720p", "576p", "480p"]
+                            resolution_variants = ["dvhdrplus", "dvhdr", "plus", "dv", "hlg", "hdr"]
                             keep_keys = {
                                 "builder_level",
                                 "use_edition",
@@ -2031,6 +2033,8 @@ def build_libraries_section(
                                 "use_dv",
                                 "use_hlg",
                                 "use_hdr",
+                                "use_plus",
+                                "use_dvhdr",
                                 "use_dvhdrplus",
                                 "use_extended",
                                 "use_uncut",
@@ -2060,6 +2064,13 @@ def build_libraries_section(
                                 "horizontal_offset",
                                 "vertical_offset",
                             }
+                            keep_keys.update(
+                                {
+                                    f"use_{resolution_level}_{resolution_variant}"
+                                    for resolution_level in resolution_levels
+                                    for resolution_variant in resolution_variants
+                                }
+                            )
                             for key in list(tv.keys()):
                                 if key not in keep_keys:
                                     tv.pop(key, None)

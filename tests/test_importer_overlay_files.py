@@ -46,8 +46,15 @@ def test_prepare_import_payload_accepts_resolution_template_variables():
                                 "use_resolution": False,
                                 "use_edition": True,
                                 "use_4k": False,
+                                "use_4k_dvhdrplus": False,
                                 "use_1080p": False,
+                                "use_1080p_dv": False,
+                                "use_720p_hdr": False,
+                                "use_576p_dvhdr": False,
+                                "use_480p_plus": False,
                                 "use_dv": False,
+                                "use_plus": False,
+                                "use_dvhdr": False,
                                 "use_extended": False,
                                 "use_openmatte": False,
                             },
@@ -66,12 +73,21 @@ def test_prepare_import_payload_accepts_resolution_template_variables():
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_resolution]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_edition]"] is True
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_4k]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_4k_dvhdrplus]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_1080p]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_1080p_dv]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_720p_hdr]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_576p_dvhdr]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_480p_plus]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_dv]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_plus]"] is False
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_dvhdr]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_extended]"] is False
     assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[use_openmatte]"] is False
     assert any("libraries.Movies.overlay_files[0].template_variables.use_resolution" in line for line in report.lines)
     assert any("libraries.Movies.overlay_files[0].template_variables.use_1080p" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_1080p_dv" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.use_plus" in line for line in report.lines)
     assert any("libraries.Movies.overlay_files[0].template_variables.use_extended" in line for line in report.lines)
 
 

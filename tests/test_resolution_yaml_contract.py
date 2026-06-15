@@ -62,8 +62,15 @@ def test_resolution_yaml_contract_keeps_child_filters_when_edition_enabled(monke
             "use_edition": True,
             "use_resolution": True,
             "use_4k": False,
+            "use_4k_dvhdrplus": False,
             "use_1080p": False,
+            "use_1080p_dv": False,
+            "use_720p_hdr": False,
+            "use_576p_dvhdr": False,
+            "use_480p_plus": False,
             "use_dv": False,
+            "use_plus": False,
+            "use_dvhdr": False,
             "use_extended": False,
             "use_openmatte": False,
             "horizontal_offset": 15,
@@ -74,8 +81,15 @@ def test_resolution_yaml_contract_keeps_child_filters_when_edition_enabled(monke
     template_vars = _template_vars_from_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
 
     assert template_vars["use_4k"] is False
+    assert template_vars["use_4k_dvhdrplus"] is False
     assert template_vars["use_1080p"] is False
+    assert template_vars["use_1080p_dv"] is False
+    assert template_vars["use_720p_hdr"] is False
+    assert template_vars["use_576p_dvhdr"] is False
+    assert template_vars["use_480p_plus"] is False
     assert template_vars["use_dv"] is False
+    assert template_vars["use_plus"] is False
+    assert template_vars["use_dvhdr"] is False
     assert template_vars["use_extended"] is False
     assert template_vars["use_openmatte"] is False
 

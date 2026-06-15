@@ -4460,8 +4460,140 @@
           },
           {
             "type": "toggle",
+            "key": "use_4k_dvhdrplus",
+            "label": "Use 4k DV/HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_4k_dvhdr",
+            "label": "Use 4k DV/HDR10",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_4k_plus",
+            "label": "Use 4k HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_4k_dv",
+            "label": "Use 4k Dolby Vision",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_4k_hlg",
+            "label": "Use 4k HLG",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_4k_hdr",
+            "label": "Use 4k HDR",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
             "key": "use_1080p",
             "label": "Use 1080p",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1080p_dvhdrplus",
+            "label": "Use 1080p DV/HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1080p_dvhdr",
+            "label": "Use 1080p DV/HDR10",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1080p_plus",
+            "label": "Use 1080p HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1080p_dv",
+            "label": "Use 1080p Dolby Vision",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1080p_hlg",
+            "label": "Use 1080p HLG",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_1080p_hdr",
+            "label": "Use 1080p HDR",
             "value": "true",
             "default": true,
             "options": [
@@ -4482,6 +4614,72 @@
           },
           {
             "type": "toggle",
+            "key": "use_720p_dvhdrplus",
+            "label": "Use 720p DV/HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_720p_dvhdr",
+            "label": "Use 720p DV/HDR10",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_720p_plus",
+            "label": "Use 720p HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_720p_dv",
+            "label": "Use 720p Dolby Vision",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_720p_hlg",
+            "label": "Use 720p HLG",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_720p_hdr",
+            "label": "Use 720p HDR",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
             "key": "use_576p",
             "label": "Use 576p",
             "value": "true",
@@ -4493,8 +4691,118 @@
           },
           {
             "type": "toggle",
+            "key": "use_576p_dvhdrplus",
+            "label": "Use 576p DV/HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_576p_dvhdr",
+            "label": "Use 576p DV/HDR10",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_576p_plus",
+            "label": "Use 576p HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_576p_dv",
+            "label": "Use 576p Dolby Vision",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_576p_hdr",
+            "label": "Use 576p HDR",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
             "key": "use_480p",
             "label": "Use 480p",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_480p_dvhdrplus",
+            "label": "Use 480p DV/HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_480p_dvhdr",
+            "label": "Use 480p DV/HDR10",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_480p_plus",
+            "label": "Use 480p HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_480p_dv",
+            "label": "Use 480p Dolby Vision",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_480p_hdr",
+            "label": "Use 480p HDR",
             "value": "true",
             "default": true,
             "options": [
@@ -4528,6 +4836,28 @@
             "type": "toggle",
             "key": "use_hdr",
             "label": "Use HDR",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_plus",
+            "label": "Use HDR10+",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "use_dvhdr",
+            "label": "Use DV/HDR10",
             "value": "true",
             "default": true,
             "options": [
