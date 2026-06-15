@@ -25733,6 +25733,174 @@
             "default": false
           },
           {
+            "key": "visible_home_1.33",
+            "label": "1.33 - Academy Aperture Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 1.33 - Academy Aperture collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_1.33",
+            "label": "1.33 - Academy Aperture Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 1.33 - Academy Aperture collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_1.33",
+            "label": "1.33 - Academy Aperture Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 1.33 - Academy Aperture collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_1.65",
+            "label": "1.65 - Early Widescreen Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 1.65 - Early Widescreen collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_1.65",
+            "label": "1.65 - Early Widescreen Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 1.65 - Early Widescreen collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_1.65",
+            "label": "1.65 - Early Widescreen Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 1.65 - Early Widescreen collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_1.66",
+            "label": "1.66 - European Widescreen Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 1.66 - European Widescreen collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_1.66",
+            "label": "1.66 - European Widescreen Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 1.66 - European Widescreen collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_1.66",
+            "label": "1.66 - European Widescreen Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 1.66 - European Widescreen collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_1.78",
+            "label": "1.78 - Widescreen TV Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 1.78 - Widescreen TV collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_1.78",
+            "label": "1.78 - Widescreen TV Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 1.78 - Widescreen TV collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_1.78",
+            "label": "1.78 - Widescreen TV Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 1.78 - Widescreen TV collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_1.85",
+            "label": "1.85 - American Widescreen Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 1.85 - American Widescreen collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_1.85",
+            "label": "1.85 - American Widescreen Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 1.85 - American Widescreen collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_1.85",
+            "label": "1.85 - American Widescreen Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 1.85 - American Widescreen collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_2.2",
+            "label": "2.2 - 70mm Frame Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 2.2 - 70mm Frame collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_2.2",
+            "label": "2.2 - 70mm Frame Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 2.2 - 70mm Frame collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_2.2",
+            "label": "2.2 - 70mm Frame Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 2.2 - 70mm Frame collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_2.35",
+            "label": "2.35 - Anamorphic Projection Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 2.35 - Anamorphic Projection collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_2.35",
+            "label": "2.35 - Anamorphic Projection Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 2.35 - Anamorphic Projection collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_2.35",
+            "label": "2.35 - Anamorphic Projection Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 2.35 - Anamorphic Projection collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_2.77",
+            "label": "2.77 - Cinerama Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 2.77 - Cinerama collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_2.77",
+            "label": "2.77 - Cinerama Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 2.77 - Cinerama collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_2.77",
+            "label": "2.77 - Cinerama Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 2.77 - Cinerama collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -26610,6 +26778,27 @@
             "default": false
           },
           {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -27040,6 +27229,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_other",
+            "label": "Other Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_other",
+            "label": "Other Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_other",
+            "label": "Other Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
