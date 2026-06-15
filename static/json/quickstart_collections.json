@@ -30174,6 +30174,384 @@
             "default": false
           },
           {
+            "key": "visible_home_appletv",
+            "label": "Apple TV Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Apple TV Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_appletv",
+            "label": "Apple TV Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Apple TV Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_appletv",
+            "label": "Apple TV Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Apple TV Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_bet",
+            "label": "BET+ Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the BET+ Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_bet",
+            "label": "BET+ Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the BET+ Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_bet",
+            "label": "BET+ Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the BET+ Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_channel4",
+            "label": "Channel 4 Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Channel 4 Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_channel4",
+            "label": "Channel 4 Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Channel 4 Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_channel4",
+            "label": "Channel 4 Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Channel 4 Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_crave",
+            "label": "Crave Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Crave Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_crave",
+            "label": "Crave Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Crave Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_crave",
+            "label": "Crave Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Crave Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_crunchyroll",
+            "label": "Crunchyroll Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Crunchyroll Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_crunchyroll",
+            "label": "Crunchyroll Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Crunchyroll Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_crunchyroll",
+            "label": "Crunchyroll Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Crunchyroll Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_discovery",
+            "label": "discovery+ Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the discovery+ Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_discovery",
+            "label": "discovery+ Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the discovery+ Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_discovery",
+            "label": "discovery+ Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the discovery+ Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_disney",
+            "label": "Disney+ Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Disney+ Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_disney",
+            "label": "Disney+ Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Disney+ Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_disney",
+            "label": "Disney+ Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Disney+ Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_hayu",
+            "label": "Hayu Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Hayu Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_hayu",
+            "label": "Hayu Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Hayu Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_hayu",
+            "label": "Hayu Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Hayu Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_hulu",
+            "label": "Hulu Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Hulu Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_hulu",
+            "label": "Hulu Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Hulu Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_hulu",
+            "label": "Hulu Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Hulu Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_itvx",
+            "label": "ITVX Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the ITVX Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_itvx",
+            "label": "ITVX Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the ITVX Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_itvx",
+            "label": "ITVX Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the ITVX Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_hbomax",
+            "label": "HBO Max Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the HBO Max Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_hbomax",
+            "label": "HBO Max Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the HBO Max Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_hbomax",
+            "label": "HBO Max Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the HBO Max Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_netflix",
+            "label": "Netflix Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Netflix Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_netflix",
+            "label": "Netflix Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Netflix Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_netflix",
+            "label": "Netflix Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Netflix Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_now",
+            "label": "NOW Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the NOW Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_now",
+            "label": "NOW Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the NOW Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_now",
+            "label": "NOW Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the NOW Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_paramount",
+            "label": "Paramount+ Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Paramount+ Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_paramount",
+            "label": "Paramount+ Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Paramount+ Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_paramount",
+            "label": "Paramount+ Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Paramount+ Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_peacock",
+            "label": "Peacock Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Peacock Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_peacock",
+            "label": "Peacock Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Peacock Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_peacock",
+            "label": "Peacock Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Peacock Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_amazon",
+            "label": "Prime Video Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Prime Video Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_amazon",
+            "label": "Prime Video Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Prime Video Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_amazon",
+            "label": "Prime Video Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Prime Video Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_youtube",
+            "label": "YouTube Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the YouTube Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_youtube",
+            "label": "YouTube Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the YouTube Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_youtube",
+            "label": "YouTube Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the YouTube Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_tubi",
+            "label": "tubi Movies/Shows Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the tubi Movies/Shows collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_tubi",
+            "label": "tubi Movies/Shows Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the tubi Movies/Shows collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_tubi",
+            "label": "tubi Movies/Shows Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the tubi Movies/Shows collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -31938,6 +32316,576 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_aapi",
+            "label": "Asian American Pacific Islander Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_aapi",
+            "label": "Asian American Pacific Islander Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_aapi",
+            "label": "Asian American Pacific Islander Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_black_history",
+            "label": "Black History Month Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Black History Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_black_history",
+            "label": "Black History Month Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Black History Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_black_history",
+            "label": "Black History Month Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Black History Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_christmas",
+            "label": "Christmas Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Christmas Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_christmas",
+            "label": "Christmas Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Christmas Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_christmas",
+            "label": "Christmas Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Christmas Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_disabilities",
+            "label": "Disability Month Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Disability Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_disabilities",
+            "label": "Disability Month Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Disability Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_disabilities",
+            "label": "Disability Month Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Disability Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_easter",
+            "label": "Easter Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Easter Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_easter",
+            "label": "Easter Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Easter Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_easter",
+            "label": "Easter Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Easter Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_father",
+            "label": "Father's Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Father's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_father",
+            "label": "Father's Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Father's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_father",
+            "label": "Father's Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Father's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_halloween",
+            "label": "Halloween Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Halloween Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_halloween",
+            "label": "Halloween Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Halloween Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_halloween",
+            "label": "Halloween Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Halloween Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_independence",
+            "label": "Independence Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Independence Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_independence",
+            "label": "Independence Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Independence Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_independence",
+            "label": "Independence Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Independence Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_labor",
+            "label": "Labor Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Labor Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_labor",
+            "label": "Labor Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Labor Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_labor",
+            "label": "Labor Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Labor Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_lgbtq",
+            "label": "LGBTQ Month Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the LGBTQ Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_lgbtq",
+            "label": "LGBTQ Month Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the LGBTQ Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_lgbtq",
+            "label": "LGBTQ Month Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the LGBTQ Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_memorial",
+            "label": "Memorial Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Memorial Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_memorial",
+            "label": "Memorial Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Memorial Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_memorial",
+            "label": "Memorial Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Memorial Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_mother",
+            "label": "Mother's Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Mother's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_mother",
+            "label": "Mother's Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Mother's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_mother",
+            "label": "Mother's Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Mother's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_latinx",
+            "label": "National Hispanic Heritage Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_latinx",
+            "label": "National Hispanic Heritage Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_latinx",
+            "label": "National Hispanic Heritage Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_years",
+            "label": "New Year's Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the New Year's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_years",
+            "label": "New Year's Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the New Year's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_years",
+            "label": "New Year's Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the New Year's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_patrick",
+            "label": "St. Patrick's Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_patrick",
+            "label": "St. Patrick's Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_patrick",
+            "label": "St. Patrick's Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_thanksgiving",
+            "label": "Thanksgiving Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Thanksgiving Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_thanksgiving",
+            "label": "Thanksgiving Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Thanksgiving Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_thanksgiving",
+            "label": "Thanksgiving Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Thanksgiving Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_valentine",
+            "label": "Valentine's Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Valentine's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_valentine",
+            "label": "Valentine's Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Valentine's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_valentine",
+            "label": "Valentine's Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Valentine's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_veteran",
+            "label": "Veteran's Day Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Veteran's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_veteran",
+            "label": "Veteran's Day Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Veteran's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_veteran",
+            "label": "Veteran's Day Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Veteran's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_women",
+            "label": "Women's History Month Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Women's History Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_women",
+            "label": "Women's History Month Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Women's History Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_women",
+            "label": "Women's History Month Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Women's History Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
