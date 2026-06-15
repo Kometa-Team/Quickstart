@@ -227,6 +227,66 @@
             ]
           },
           {
+            "key": "visible_home_best_picture",
+            "label": "Oscars Best Picture Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Oscars Best Picture Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_best_picture",
+            "label": "Oscars Best Picture Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Oscars Best Picture Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_best_picture",
+            "label": "Oscars Best Picture Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Oscars Best Picture Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_best_director",
+            "label": "Oscars Best Director Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Oscars Best Director Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_best_director",
+            "label": "Oscars Best Director Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Oscars Best Director Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_best_director",
+            "label": "Oscars Best Director Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Oscars Best Director Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -772,6 +832,36 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_golden",
+            "label": "Berlinale Golden Bears Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Berlinale Golden Bears collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_golden",
+            "label": "Berlinale Golden Bears Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Berlinale Golden Bears collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_golden",
+            "label": "Berlinale Golden Bears Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Berlinale Golden Bears collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -1329,6 +1419,36 @@
             ]
           },
           {
+            "key": "visible_home_best",
+            "label": "BAFTA Best Films Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the BAFTA Best Films collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_best",
+            "label": "BAFTA Best Films Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the BAFTA Best Films collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_best",
+            "label": "BAFTA Best Films Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the BAFTA Best Films collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -1880,6 +2000,36 @@
             ]
           },
           {
+            "key": "visible_home_palm",
+            "label": "Cannes Golden Palm Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Cannes Golden Palm Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_palm",
+            "label": "Cannes Golden Palm Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Cannes Golden Palm Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_palm",
+            "label": "Cannes Golden Palm Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Cannes Golden Palm Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -2425,6 +2575,36 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_best",
+            "label": "César Best Film Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_best",
+            "label": "César Best Film Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_best",
+            "label": "César Best Film Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -2984,6 +3164,27 @@
             "default": false
           },
           {
+            "key": "visible_home_best",
+            "label": "Critics Choice Best Picture Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Critics Choice Best Picture Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_best",
+            "label": "Critics Choice Best Picture Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Critics Choice Best Picture Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_best",
+            "label": "Critics Choice Best Picture Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Critics Choice Best Picture Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -3534,6 +3735,27 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_best",
+            "label": "Emmys Best in Category Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Emmys Best in Category Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_best",
+            "label": "Emmys Best in Category Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Emmys Best in Category Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_best",
+            "label": "Emmys Best in Category Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Emmys Best in Category Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -4117,6 +4339,48 @@
             "default": false
           },
           {
+            "key": "visible_home_best_picture",
+            "label": "Golden Globes Best Picture Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Globes Best Picture Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_best_picture",
+            "label": "Golden Globes Best Picture Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Globes Best Picture Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_best_picture",
+            "label": "Golden Globes Best Picture Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Globes Best Picture Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_best_director",
+            "label": "Golden Globes Best Director Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Globes Best Director Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_best_director",
+            "label": "Golden Globes Best Director Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Globes Best Director Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_best_director",
+            "label": "Golden Globes Best Director Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Globes Best Director Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -4668,6 +4932,36 @@
             ]
           },
           {
+            "key": "visible_home_best",
+            "label": "Independent Spirit Best Feature Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Independent Spirit Best Feature Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_best",
+            "label": "Independent Spirit Best Feature Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Independent Spirit Best Feature Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_best",
+            "label": "Independent Spirit Best Feature Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Independent Spirit Best Feature Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -5213,6 +5507,36 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_all_time",
+            "label": "National Film Registry All Time Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the National Film Registry All Time collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_all_time",
+            "label": "National Film Registry All Time Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the National Film Registry All Time collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_all_time",
+            "label": "National Film Registry All Time Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the National Film Registry All Time collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -5772,6 +6096,27 @@
             "default": false
           },
           {
+            "key": "visible_home_pca",
+            "label": "People's Choice Award Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the People's Choice Award Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_pca",
+            "label": "People's Choice Award Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the People's Choice Award Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_pca",
+            "label": "People's Choice Award Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the People's Choice Award Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -6317,6 +6662,36 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_golden",
+            "label": "Golden Raspberry Award Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Raspberry Award Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_golden",
+            "label": "Golden Raspberry Award Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Raspberry Award Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_golden",
+            "label": "Golden Raspberry Award Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Raspberry Award Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -6874,6 +7249,36 @@
             ]
           },
           {
+            "key": "visible_home_golden",
+            "label": "Screen Actors Guild Award Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Screen Actors Guild Award Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_golden",
+            "label": "Screen Actors Guild Award Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Screen Actors Guild Award Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_golden",
+            "label": "Screen Actors Guild Award Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Screen Actors Guild Award Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -7419,6 +7824,36 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_grand",
+            "label": "Grand Jury Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Grand Jury Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_grand",
+            "label": "Grand Jury Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Grand Jury Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_grand",
+            "label": "Grand Jury Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Grand Jury Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -7976,6 +8411,36 @@
             ]
           },
           {
+            "key": "visible_home_best",
+            "label": "Toronto People's Choice Award Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Toronto People's Choice Award Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_best",
+            "label": "Toronto People's Choice Award Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Toronto People's Choice Award Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_best",
+            "label": "Toronto People's Choice Award Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Toronto People's Choice Award Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -8513,6 +8978,36 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_golden",
+            "label": "Golden Lion Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Lion Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_golden",
+            "label": "Golden Lion Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Lion Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_golden",
+            "label": "Golden Lion Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Golden Lion Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
