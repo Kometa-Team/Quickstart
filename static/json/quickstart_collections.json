@@ -9018,6 +9018,57 @@
             "default": false
           },
           {
+            "key": "visible_home_episodes",
+            "label": "New Episodes Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the New Episodes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "visible_library_episodes",
+            "label": "New Episodes Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the New Episodes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "visible_shared_episodes",
+            "label": "New Episodes Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the New Episodes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "visible_home_released",
+            "label": "Newly Released Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Newly Released collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_released",
+            "label": "Newly Released Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Newly Released collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_released",
+            "label": "Newly Released Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Newly Released collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -9447,6 +9498,48 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "Plex Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "Plex Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "Plex Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_watched",
+            "label": "Plex Watched Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Watched collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_watched",
+            "label": "Plex Watched Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Watched collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_watched",
+            "label": "Plex Watched Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Watched collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -9963,6 +10056,69 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_top",
+            "label": "IMDb Top 250 Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_top",
+            "label": "IMDb Top 250 Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_top",
+            "label": "IMDb Top 250 Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "IMDb Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "IMDb Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "IMDb Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_lowest",
+            "label": "IMDb Lowest Rated Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Lowest Rated collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_lowest",
+            "label": "IMDb Lowest Rated Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Lowest Rated collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_lowest",
+            "label": "IMDb Lowest Rated Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Lowest Rated collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -10530,6 +10686,111 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_airing",
+            "label": "TMDb Airing Today Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Airing Today collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_airing",
+            "label": "TMDb Airing Today Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Airing Today collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_airing",
+            "label": "TMDb Airing Today Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Airing Today collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_air",
+            "label": "TMDb On The Air Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb On The Air collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_air",
+            "label": "TMDb On The Air Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb On The Air collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_air",
+            "label": "TMDb On The Air Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb On The Air collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "TMDb Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "TMDb Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "TMDb Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_top",
+            "label": "TMDb Top Rated Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Top Rated collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_top",
+            "label": "TMDb Top Rated Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Top Rated collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_top",
+            "label": "TMDb Top Rated Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Top Rated collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_trending",
+            "label": "TMDb Trending Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Trending collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trending",
+            "label": "TMDb Trending Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Trending collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trending",
+            "label": "TMDb Trending Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the TMDb Trending collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -11102,6 +11363,111 @@
             "default": false
           },
           {
+            "key": "visible_home_collected",
+            "label": "Trakt Collected Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Collected collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_collected",
+            "label": "Trakt Collected Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Collected collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_collected",
+            "label": "Trakt Collected Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Collected collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "Trakt Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "Trakt Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "Trakt Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_recommended",
+            "label": "Trakt Recommended Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Recommended collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_recommended",
+            "label": "Trakt Recommended Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Recommended collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_recommended",
+            "label": "Trakt Recommended Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Recommended collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_trending",
+            "label": "Trakt Trending Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Trending collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trending",
+            "label": "Trakt Trending Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Trending collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trending",
+            "label": "Trakt Trending Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Trending collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_watched",
+            "label": "Trakt Watched Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Watched collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_watched",
+            "label": "Trakt Watched Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Watched collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_watched",
+            "label": "Trakt Watched Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Trakt Watched collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -11648,6 +12014,90 @@
             "default": false
           },
           {
+            "key": "visible_home_trending_today",
+            "label": "Simkl Trending Today Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending Today collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trending_today",
+            "label": "Simkl Trending Today Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending Today collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trending_today",
+            "label": "Simkl Trending Today Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending Today collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_trending_week",
+            "label": "Simkl Trending This Week Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending This Week collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trending_week",
+            "label": "Simkl Trending This Week Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending This Week collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trending_week",
+            "label": "Simkl Trending This Week Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending This Week collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_trending_month",
+            "label": "Simkl Trending This Month Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending This Month collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trending_month",
+            "label": "Simkl Trending This Month Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending This Month collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trending_month",
+            "label": "Simkl Trending This Month Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl Trending This Month collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_dvd",
+            "label": "Simkl DVD Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl DVD collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_dvd",
+            "label": "Simkl DVD Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl DVD collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_dvd",
+            "label": "Simkl DVD Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Simkl DVD collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -11857,6 +12307,90 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "AniList Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "AniList Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "AniList Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_season",
+            "label": "AniList Season Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Season collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_season",
+            "label": "AniList Season Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Season collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_season",
+            "label": "AniList Season Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Season collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_top",
+            "label": "AniList Top Rated Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Top Rated collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_top",
+            "label": "AniList Top Rated Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Top Rated collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_top",
+            "label": "AniList Top Rated Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Top Rated collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_trending",
+            "label": "AniList Trending Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Trending collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_trending",
+            "label": "AniList Trending Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Trending collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_trending",
+            "label": "AniList Trending Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the AniList Trending collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -12424,6 +12958,111 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_favorited",
+            "label": "MyAnimeList Favorited Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Favorited collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_favorited",
+            "label": "MyAnimeList Favorited Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Favorited collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_favorited",
+            "label": "MyAnimeList Favorited Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Favorited collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "MyAnimeList Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "MyAnimeList Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "MyAnimeList Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_season",
+            "label": "MyAnimeList Season Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Season collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_season",
+            "label": "MyAnimeList Season Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Season collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_season",
+            "label": "MyAnimeList Season Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Season collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_airing",
+            "label": "MyAnimeList Top Airing Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Top Airing collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_airing",
+            "label": "MyAnimeList Top Airing Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Top Airing collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_airing",
+            "label": "MyAnimeList Top Airing Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Top Airing collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_top",
+            "label": "MyAnimeList Top Rated Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Top Rated collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_top",
+            "label": "MyAnimeList Top Rated Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Top Rated collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_top",
+            "label": "MyAnimeList Top Rated Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the MyAnimeList Top Rated collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
           },
           {
@@ -13224,6 +13863,636 @@
             ]
           },
           {
+            "key": "visible_home_1001_movies",
+            "label": "1,001 To See Before You Die Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the 1,001 To See Before You Die collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_1001_movies",
+            "label": "1,001 To See Before You Die Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the 1,001 To See Before You Die collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_1001_movies",
+            "label": "1,001 To See Before You Die Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the 1,001 To See Before You Die collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_afi_100",
+            "label": "AFI 100 Years 100 Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the AFI 100 Years 100 Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_afi_100",
+            "label": "AFI 100 Years 100 Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the AFI 100 Years 100 Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_afi_100",
+            "label": "AFI 100 Years 100 Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the AFI 100 Years 100 Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_boxofficemojo_100",
+            "label": "Box Office Mojo All Time 100 Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Box Office Mojo All Time 100 collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_boxofficemojo_100",
+            "label": "Box Office Mojo All Time 100 Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Box Office Mojo All Time 100 collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_boxofficemojo_100",
+            "label": "Box Office Mojo All Time 100 Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Box Office Mojo All Time 100 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_cannes",
+            "label": "Cannes Palme d'Or Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Cannes Palme d'Or Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_cannes",
+            "label": "Cannes Palme d'Or Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Cannes Palme d'Or Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_cannes",
+            "label": "Cannes Palme d'Or Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Cannes Palme d'Or Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_edgarwright",
+            "label": "Edgar Wright's 1,000 Favorites Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Edgar Wright's 1,000 Favorites collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_edgarwright",
+            "label": "Edgar Wright's 1,000 Favorites Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Edgar Wright's 1,000 Favorites collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_edgarwright",
+            "label": "Edgar Wright's 1,000 Favorites Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Edgar Wright's 1,000 Favorites collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_imdb_top_250",
+            "label": "IMDb Top 250 (Letterboxd) Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 (Letterboxd) collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_imdb_top_250",
+            "label": "IMDb Top 250 (Letterboxd) Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 (Letterboxd) collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_imdb_top_250",
+            "label": "IMDb Top 250 (Letterboxd) Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 (Letterboxd) collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_top_250",
+            "label": "Letterboxd Top 250 Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Letterboxd Top 250 collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_top_250",
+            "label": "Letterboxd Top 250 Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Letterboxd Top 250 collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_top_250",
+            "label": "Letterboxd Top 250 Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Letterboxd Top 250 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_international",
+            "label": "Top 250 International Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 International collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_international",
+            "label": "Top 250 International Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 International collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_international",
+            "label": "Top 250 International Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 International collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_science",
+            "label": "Top 250 Sci-Fi Films Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Sci-Fi Films collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_science",
+            "label": "Top 250 Sci-Fi Films Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Sci-Fi Films collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_science",
+            "label": "Top 250 Sci-Fi Films Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Sci-Fi Films collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_western",
+            "label": "Top 100 Western Films Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Western Films collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_western",
+            "label": "Top 100 Western Films Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Western Films collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_western",
+            "label": "Top 100 Western Films Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Western Films collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_silent",
+            "label": "Top 100 Silent Films Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Silent Films collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_silent",
+            "label": "Top 100 Silent Films Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Silent Films collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_silent",
+            "label": "Top 100 Silent Films Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Silent Films collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_million",
+            "label": "One Million Watched Club Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the One Million Watched Club collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_million",
+            "label": "One Million Watched Club Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the One Million Watched Club collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_million",
+            "label": "One Million Watched Club Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the One Million Watched Club collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_oscars",
+            "label": "Oscar Best Picture Winners Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Oscar Best Picture Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_oscars",
+            "label": "Oscar Best Picture Winners Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Oscar Best Picture Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_oscars",
+            "label": "Oscar Best Picture Winners Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Oscar Best Picture Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_rogerebert",
+            "label": "Roger Ebert's Great Movies Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Roger Ebert's Great Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_rogerebert",
+            "label": "Roger Ebert's Great Movies Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Roger Ebert's Great Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_rogerebert",
+            "label": "Roger Ebert's Great Movies Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Roger Ebert's Great Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_sight_sound",
+            "label": "Sight & Sound Greatest Films Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Sight & Sound Greatest Films collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_sight_sound",
+            "label": "Sight & Sound Greatest Films Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Sight & Sound Greatest Films collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_sight_sound",
+            "label": "Sight & Sound Greatest Films Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Sight & Sound Greatest Films collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_animation",
+            "label": "Top 100 Animation Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Animation collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_animation",
+            "label": "Top 100 Animation Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Animation collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_animation",
+            "label": "Top 100 Animation Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 100 Animation collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_black_directors",
+            "label": "Top 250 Black-Directed Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Black-Directed collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_black_directors",
+            "label": "Top 250 Black-Directed Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Black-Directed collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_black_directors",
+            "label": "Top 250 Black-Directed Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Black-Directed collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_documentaries",
+            "label": "Top 250 Documentaries Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Documentaries collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_documentaries",
+            "label": "Top 250 Documentaries Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Documentaries collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_documentaries",
+            "label": "Top 250 Documentaries Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Documentaries collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_horror",
+            "label": "Top 250 Horror Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Horror collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_horror",
+            "label": "Top 250 Horror Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Horror collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_horror",
+            "label": "Top 250 Horror Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Horror collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_most_fans",
+            "label": "Top 250 Most Fans Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Most Fans collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_most_fans",
+            "label": "Top 250 Most Fans Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Most Fans collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_most_fans",
+            "label": "Top 250 Most Fans Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Most Fans collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_women_directors",
+            "label": "Top 250 Women-Directed Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Women-Directed collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_women_directors",
+            "label": "Top 250 Women-Directed Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Women-Directed collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_women_directors",
+            "label": "Top 250 Women-Directed Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 250 Women-Directed collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -13748,6 +15017,102 @@
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false
+          },
+          {
+            "key": "visible_home_commonsense",
+            "label": "Common Sense Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Common Sense Selection collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_commonsense",
+            "label": "Common Sense Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Common Sense Selection collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_commonsense",
+            "label": "Common Sense Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Common Sense Selection collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_metacritic",
+            "label": "Metacritic Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Metacritic Must See collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_metacritic",
+            "label": "Metacritic Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Metacritic Must See collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_metacritic",
+            "label": "Metacritic Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Metacritic Must See collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_home_stevenlu",
+            "label": "StevenLu Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library_stevenlu",
+            "label": "StevenLu Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared_stevenlu",
+            "label": "StevenLu Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_home_pirated",
+            "label": "Pirated Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_library_pirated",
+            "label": "Pirated Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "visible_shared_pirated",
+            "label": "Pirated Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "collection_order",

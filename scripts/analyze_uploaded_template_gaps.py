@@ -387,7 +387,7 @@ def build_qs_collection_map(qs_collections_path: Path) -> dict[str, set[str]]:
     return mapping
 
 
-def build_qs_overlay_map(qs_overlays_path: Path) -> dict[str, set[str]]:
+def build_qs_overlay_map(qs_overlays_path: Path, *, enrich_runtime_support: bool = True) -> dict[str, set[str]]:
     data = load_json(qs_overlays_path)
     mapping: dict[str, set[str]] = {}
     for group in data:
@@ -400,10 +400,43 @@ def build_qs_overlay_map(qs_overlays_path: Path) -> dict[str, set[str]]:
             if not oid:
                 continue
             alias = str(oid).replace("overlay_", "", 1)
+            keys = collect_qs_keys(overlay.get("template_variables"))
+
+            if enrich_runtime_support:
+                # Quickstart injects horizontal/vertical offset controls at render time
+                # for overlays that declare default offsets or initial offset aliases.
+                default_offsets = overlay.get("default_offsets")
+                default_offsets_by_type = overlay.get("default_offsets_by_type")
+                supports_runtime_offsets = False
+                supports_origin_alignment = False
+
+                if {"horizontal_offset", "vertical_offset", "initial_horizontal_offset", "initial_vertical_offset"} & keys:
+                    supports_runtime_offsets = True
+
+                if isinstance(default_offsets, dict):
+                    if any(axis in default_offsets for axis in ("horizontal", "vertical")):
+                        supports_runtime_offsets = True
+                    if default_offsets.get("origin") is not None:
+                        supports_origin_alignment = True
+
+                if isinstance(default_offsets_by_type, dict):
+                    for values in default_offsets_by_type.values():
+                        if not isinstance(values, dict):
+                            continue
+                        if any(axis in values for axis in ("horizontal", "vertical")):
+                            supports_runtime_offsets = True
+                        if values.get("origin") is not None:
+                            supports_origin_alignment = True
+
+                if supports_runtime_offsets:
+                    keys.update({"horizontal_offset", "vertical_offset"})
+                if supports_origin_alignment:
+                    keys.update({"horizontal_align", "vertical_align"})
+
             # Some Quickstart defaults intentionally reuse the same alias for
             # different media types. Merge their declared keys so later entries
             # do not erase earlier support and create false-positive gaps.
-            mapping.setdefault(alias, set()).update(collect_qs_keys(overlay.get("template_variables")))
+            mapping.setdefault(alias, set()).update(keys)
     return mapping
 
 
@@ -1028,6 +1061,10 @@ def make_periodic_persistor(callback, every_items: int, every_seconds: float):
 def accumulate_gap_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]], row: dict[str, Any]) -> None:
     if not row.get("name_verified") or row.get("supported_in_quickstart"):
         return
+    accumulate_ranked_summary(summary, row)
+
+
+def accumulate_ranked_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]], row: dict[str, Any]) -> None:
     bucket = summary.setdefault(
         (str(row.get("kind")), row.get("default"), str(row.get("key"))),
         {
@@ -1039,6 +1076,7 @@ def accumulate_gap_summary(summary: dict[tuple[str, str | None, str], dict[str, 
             "libraries": set(),
             "matched_default_files": set(),
             "supported_in_quickstart": False,
+            "quickstart_declared": False,
             "schema_declared": False,
             "kometa_declared": False,
             "validation_level": "",
@@ -1055,6 +1093,7 @@ def accumulate_gap_summary(summary: dict[tuple[str, str | None, str], dict[str, 
     for item in row.get("matched_default_files", []):
         bucket["matched_default_files"].add(item)
     bucket["supported_in_quickstart"] = bucket["supported_in_quickstart"] or bool(row.get("supported_in_quickstart"))
+    bucket["quickstart_declared"] = bucket["quickstart_declared"] or bool(row.get("quickstart_declared"))
     bucket["schema_declared"] = bucket["schema_declared"] or bool(row.get("schema_declared"))
     bucket["kometa_declared"] = bucket["kometa_declared"] or bool(row.get("kometa_declared"))
     bucket["validation_level"] = str(row.get("validation_level") or bucket["validation_level"])
@@ -1069,6 +1108,19 @@ def build_gap_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None,
     summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
     for row in rows:
         accumulate_gap_summary(summary, row)
+    return summary
+
+
+def accumulate_quickstart_recommendation_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]], row: dict[str, Any]) -> None:
+    if not row.get("name_verified") or row.get("quickstart_declared"):
+        return
+    accumulate_ranked_summary(summary, row)
+
+
+def build_quickstart_recommendation_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None, str], dict[str, Any]]:
+    summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
+    for row in rows:
+        accumulate_quickstart_recommendation_summary(summary, row)
     return summary
 
 
@@ -1090,6 +1142,7 @@ def serialize_ranked_summary(summary: dict[tuple[str, str | None, str], dict[str
                 "libraries": sorted(item["libraries"]),
                 "matched_default_files": sorted(item["matched_default_files"]),
                 "supported_in_quickstart": item["supported_in_quickstart"],
+                "quickstart_declared": item["quickstart_declared"],
                 "schema_declared": item["schema_declared"],
                 "kometa_declared": item["kometa_declared"],
                 "validation_level": item["validation_level"],
@@ -1318,6 +1371,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
     playlists = report.get("verified_gaps_by_kind", {}).get("playlist", [])
     libraries = report.get("verified_gaps_by_kind", {}).get("library", [])
     schema_backlog = report.get("schema_backlog_by_default", [])
+    quickstart_backlog = report.get("quickstart_backlog_by_default", [])
 
     lines = [
         "Template Variable Gap Summary",
@@ -1337,6 +1391,8 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         f"  kometa-declared verified gaps: {report.get('kometa_declared_gap_count', 0)}",
         f"  verified gaps missing from schema but supported by Kometa: {report.get('kometa_missing_schema_gap_count', 0)}",
         f"  value-shape verified gaps: {report.get('value_shape_verified_gap_count', 0)}",
+        f"  quickstart recommendations: {report.get('quickstart_recommendation_count', 0)}",
+        f"  runtime-supported quickstart recommendations: {report.get('quickstart_runtime_supported_recommendation_count', 0)}",
         f"  overlay gaps: {len(overlays)}",
         f"  collection gaps: {len(collections)}",
         f"  playlist gaps: {len(playlists)}",
@@ -1361,6 +1417,8 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
             render_table("Collection Gaps", collections),
         ]
     )
+    if quickstart_backlog:
+        lines.append(render_grouped_default_table("Quickstart Backlog By Default", quickstart_backlog))
     if schema_backlog:
         lines.append(render_grouped_default_table("Schema Backlog By Default", schema_backlog))
     if playlists:
@@ -1423,6 +1481,7 @@ def main() -> None:
     try:
         qs_collections = build_qs_collection_map(qs_collections_path)
         qs_overlays = build_qs_overlay_map(qs_overlays_path)
+        qs_overlays_declared = build_qs_overlay_map(qs_overlays_path, enrich_runtime_support=False)
         qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
         qs_global_keys = build_qs_global_supported_keys(qs_attributes_path)
         qs_playlist_keys = build_qs_playlist_supported_keys(qs_attributes_path)
@@ -1551,18 +1610,22 @@ def main() -> None:
             alias = row["default"]
             if kind == "collection":
                 supported = key in qs_collections.get(alias or "", set()) or key in qs_global_keys
+                quickstart_declared = supported
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "overlay":
                 supported = overlay_key_supported_in_quickstart(alias, key, qs_overlays)
+                quickstart_declared = overlay_key_supported_in_quickstart(alias, key, qs_overlays_declared)
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "playlist":
                 supported = key in qs_playlist_keys
+                quickstart_declared = supported
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             else:
                 supported = key in qs_library_keys or key in qs_global_keys
+                quickstart_declared = supported
                 name_verified = True
                 matched_files = []
 
@@ -1571,6 +1634,7 @@ def main() -> None:
             validation_level = classify_validation_level(supported, schema_declared, name_verified)
             out = dict(row)
             out["supported_in_quickstart"] = supported
+            out["quickstart_declared"] = quickstart_declared
             out["schema_declared"] = schema_declared
             out["kometa_declared"] = name_verified
             out["validation_level"] = validation_level
@@ -1589,11 +1653,17 @@ def main() -> None:
             verify_callback("aggregating ranked gaps")
         flush_verification_checkpoint(len(all_rows), force=True)
         serializable_ranked = serialize_ranked_summary(summary)
+        quickstart_recommendation_ranked = serialize_ranked_summary(build_quickstart_recommendation_summary(all_rows))
 
         by_kind: dict[str, list[dict[str, Any]]] = {"overlay": [], "collection": [], "playlist": [], "library": []}
         for item in serializable_ranked:
             kind_key = item["kind"] if item["kind"] in by_kind else "library"
             by_kind[kind_key].append(item)
+
+        quickstart_recommendations_by_kind: dict[str, list[dict[str, Any]]] = {"overlay": [], "collection": [], "playlist": [], "library": []}
+        for item in quickstart_recommendation_ranked:
+            kind_key = item["kind"] if item["kind"] in quickstart_recommendations_by_kind else "library"
+            quickstart_recommendations_by_kind[kind_key].append(item)
 
         schema_backlog_summary: dict[tuple[str, str | None], dict[str, Any]] = {}
         for item in serializable_ranked:
@@ -1621,6 +1691,36 @@ def main() -> None:
                     "keys": sorted(item["keys"]),
                 }
                 for item in schema_backlog_summary.values()
+            ],
+            key=lambda item: (-item["occurrences"], -item["gap_count"], str(item["default"]), str(item["kind"])),
+        )
+
+        quickstart_backlog_summary: dict[tuple[str, str | None], dict[str, Any]] = {}
+        for item in quickstart_recommendation_ranked:
+            if not item["kometa_declared"] or item["quickstart_declared"]:
+                continue
+            bucket = quickstart_backlog_summary.setdefault(
+                (item["kind"], item["default"]),
+                {
+                    "kind": item["kind"],
+                    "default": item["default"],
+                    "occurrences": 0,
+                    "keys": set(),
+                },
+            )
+            bucket["occurrences"] += item["occurrences"]
+            bucket["keys"].add(item["key"])
+
+        quickstart_backlog_by_default = sorted(
+            [
+                {
+                    "kind": item["kind"],
+                    "default": item["default"],
+                    "occurrences": item["occurrences"],
+                    "gap_count": len(item["keys"]),
+                    "keys": sorted(item["keys"]),
+                }
+                for item in quickstart_backlog_summary.values()
             ],
             key=lambda item: (-item["occurrences"], -item["gap_count"], str(item["default"]), str(item["kind"])),
         )
@@ -1660,8 +1760,13 @@ def main() -> None:
             "kometa_declared_gap_count": sum(1 for item in serializable_ranked if item["kometa_declared"]),
             "kometa_missing_schema_gap_count": sum(1 for item in serializable_ranked if item["kometa_declared"] and not item["schema_declared"]),
             "value_shape_verified_gap_count": sum(1 for item in serializable_ranked if item["value_shape_verified_occurrences"] > 0),
+            "quickstart_recommendation_count": len(quickstart_recommendation_ranked),
+            "quickstart_runtime_supported_recommendation_count": sum(
+                1 for item in quickstart_recommendation_ranked if item["supported_in_quickstart"] and not item["quickstart_declared"]
+            ),
             "verification_notes": {
                 "name_verified": "Key name matched a variable declared or referenced in the corresponding built-in Kometa default or shared built-in templates.yml.",
+                "quickstart_declared": "Key name was explicitly declared in Quickstart's shipped support metadata or modeled alias mapping, without relying on runtime-injected overlay controls.",
                 "schema_declared": "Key name was found in Kometa's bundled config-schema.json. This is a secondary signal because the schema is not fully exhaustive.",
                 "kometa_declared": "Key name was found in Kometa's bundled built-in defaults/templates, which is treated as the stronger local source of truth.",
                 "validation_level": "works_in_kometa_missing_from_quickstart_and_schema means the key was not found in Quickstart or schema, but was found in Kometa built-in defaults/templates.",
@@ -1670,6 +1775,9 @@ def main() -> None:
             },
             "verified_gaps_ranked": serializable_ranked,
             "verified_gaps_by_kind": by_kind,
+            "quickstart_recommendations_ranked": quickstart_recommendation_ranked,
+            "quickstart_recommendations_by_kind": quickstart_recommendations_by_kind,
+            "quickstart_backlog_by_default": quickstart_backlog_by_default,
             "schema_backlog_by_default": schema_backlog_by_default,
             "all_rows": all_rows,
         }
