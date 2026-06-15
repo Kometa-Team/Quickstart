@@ -10,6 +10,7 @@ import warnings
 import zipfile
 from collections import defaultdict
 from datetime import date, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -370,6 +371,31 @@ def collect_qs_keys(raw: Any) -> set[str]:
     return keys
 
 
+def collect_declared_yaml_patterns(raw: Any, *, parent_key: str | None = None) -> set[str]:
+    patterns: set[str] = set()
+    if isinstance(raw, dict):
+        for raw_key, raw_value in raw.items():
+            key = str(raw_key)
+            if key not in RESERVED:
+                patterns.add(key)
+                if key.endswith(".exists"):
+                    patterns.add(key[: -len(".exists")])
+                if parent_key == "data":
+                    patterns.add(f"data_{key}")
+            patterns.update(collect_declared_yaml_patterns(raw_value, parent_key=key))
+    elif isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, str):
+                token = item.strip()
+                if token and re.fullmatch(r"[A-Za-z0-9_<>-]+(?:\.[A-Za-z0-9_<>-]+)?", token) and token not in RESERVED:
+                    patterns.add(token)
+                    if token.endswith(".exists"):
+                        patterns.add(token[: -len(".exists")])
+            else:
+                patterns.update(collect_declared_yaml_patterns(item, parent_key=parent_key))
+    return patterns
+
+
 def build_qs_collection_map(qs_collections_path: Path) -> dict[str, set[str]]:
     data = load_json(qs_collections_path)
     mapping: dict[str, set[str]] = {}
@@ -579,6 +605,7 @@ RESERVED = {
 }
 
 
+@lru_cache(maxsize=None)
 def patterns_from_default_file(path: Path) -> set[str]:
     patterns: set[str] = set()
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -597,6 +624,12 @@ def patterns_from_default_file(path: Path) -> set[str]:
         patterns.add(token)
         if token.endswith(".exists"):
             patterns.add(token[: -len(".exists")])
+    try:
+        parsed = load_yaml(path)
+    except Exception:
+        parsed = None
+    if parsed is not None:
+        patterns.update(collect_declared_yaml_patterns(parsed))
     return patterns
 
 

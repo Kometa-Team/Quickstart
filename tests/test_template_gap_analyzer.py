@@ -200,3 +200,121 @@ def test_quickstart_recommendation_summary_includes_runtime_supported_overlay_ke
     assert ranked[0]["key"] == "horizontal_align"
     assert ranked[0]["supported_in_quickstart"] is True
     assert ranked[0]["quickstart_declared"] is False
+
+
+def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_file():
+    module = _load_gap_analyzer_module()
+    qs_collections = Path(__file__).resolve().parents[1] / "static" / "json" / "quickstart_collections.json"
+
+    collection_map = module.build_qs_collection_map(qs_collections)
+
+    assert "data_limit" in collection_map["actor"]
+    assert "data_limit" in collection_map["writer"]
+    assert "data_limit" not in collection_map["studio"]
+    assert "data_limit" not in collection_map["network"]
+
+
+def test_key_is_valid_for_default_understands_dynamic_data_limit_from_repo_defaults():
+    module = _load_gap_analyzer_module()
+    root = Path(__file__).resolve().parents[1]
+    actor_default = root / "config" / "kometa" / "defaults" / "both" / "actor.yml"
+    writer_default = root / "config" / "kometa" / "defaults" / "movie" / "writer.yml"
+
+    actor_valid, actor_matches = module.key_is_valid_for_default("data_limit", [actor_default])
+    writer_valid, writer_matches = module.key_is_valid_for_default("data_limit", [writer_default])
+
+    assert actor_valid is True
+    assert actor_matches == [actor_default]
+    assert writer_valid is True
+    assert writer_matches == [writer_default]
+
+
+def test_key_is_valid_for_default_does_not_infer_data_limit_for_studio_or_network_repo_defaults():
+    module = _load_gap_analyzer_module()
+    root = Path(__file__).resolve().parents[1]
+    studio_default = root / "config" / "kometa" / "defaults" / "both" / "studio.yml"
+    network_default = root / "config" / "kometa" / "defaults" / "show" / "network.yml"
+
+    studio_valid, studio_matches = module.key_is_valid_for_default("data_limit", [studio_default])
+    network_valid, network_matches = module.key_is_valid_for_default("data_limit", [network_default])
+
+    assert studio_valid is False
+    assert studio_matches == []
+    assert network_valid is False
+    assert network_matches == []
+
+
+def test_key_is_valid_for_default_uses_repo_yaml_for_streaming_and_letterboxd_cases():
+    module = _load_gap_analyzer_module()
+    root = Path(__file__).resolve().parents[1]
+    kometa_defaults = root / "config" / "kometa" / "defaults"
+    streaming_defaults = module.resolve_default_paths("streaming", "collection", kometa_defaults)
+    letterboxd_defaults = module.resolve_default_paths("letterboxd", "collection", kometa_defaults)
+
+    streaming_valid, _streaming_matches = module.key_is_valid_for_default("discover_limit", streaming_defaults)
+    letterboxd_valid, _letterboxd_matches = module.key_is_valid_for_default("use_top_500", letterboxd_defaults)
+    imdb_top_250_valid, _imdb_top_250_matches = module.key_is_valid_for_default("use_imdb_top_250", letterboxd_defaults)
+
+    assert streaming_valid is True
+    assert letterboxd_valid is True
+    assert imdb_top_250_valid is True
+
+
+def test_quickstart_recommendation_summary_uses_yaml_verified_collection_edges():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "kind": "collection",
+            "default": "actor",
+            "key": "data_limit",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["both/actor.yml"],
+            "supported_in_quickstart": True,
+            "quickstart_declared": True,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "supported_in_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "number",
+        },
+        {
+            "kind": "collection",
+            "default": "studio",
+            "key": "data_limit",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": [],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": False,
+            "validation_level": "unverified",
+            "name_verified": False,
+            "value_shape_verified": True,
+            "value_shape_rule": "number",
+        },
+        {
+            "kind": "collection",
+            "default": "streaming",
+            "key": "discover_limit",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["both/streaming.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "number",
+        },
+    ]
+
+    summary = module.build_quickstart_recommendation_summary(rows)
+    ranked = module.serialize_ranked_summary(summary)
+
+    assert [item["key"] for item in ranked] == ["discover_limit"]
