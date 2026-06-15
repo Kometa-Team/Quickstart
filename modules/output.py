@@ -2065,11 +2065,7 @@ def build_libraries_section(
                                 "vertical_offset",
                             }
                             keep_keys.update(
-                                {
-                                    f"use_{resolution_level}_{resolution_variant}"
-                                    for resolution_level in resolution_levels
-                                    for resolution_variant in resolution_variants
-                                }
+                                {f"use_{resolution_level}_{resolution_variant}" for resolution_level in resolution_levels for resolution_variant in resolution_variants}
                             )
                             for key in list(tv.keys()):
                                 if key not in keep_keys:
