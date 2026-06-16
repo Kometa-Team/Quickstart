@@ -118,6 +118,51 @@ def test_validate_apprise_rejects_empty_local_yaml(client, tmp_path):
     assert "must not be empty" in payload["error"]
 
 
+def test_lookup_template_string_value_imdb_id_plex_returns_plex_title(client, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module.helpers,
+        "find_item_by_imdb_id",
+        lambda library_name, imdb_id, media_type: {"id": imdb_id, "title": "The Matrix"},
+    )
+
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "imdb_id_plex",
+            "value": "tt0133093",
+            "library_name": "Movies",
+            "media_type": "movie",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["verified"] is True
+    assert payload["label"] == "The Matrix"
+    assert payload["message"] == "Plex: The Matrix"
+
+
+def test_lookup_template_string_value_imdb_id_plex_warns_when_missing(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "find_item_by_imdb_id", lambda library_name, imdb_id, media_type: None)
+
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "imdb_id_plex",
+            "value": "tt0133093",
+            "library_name": "Movies",
+            "media_type": "movie",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert payload["verified"] is False
+    assert "no matching item was found" in payload["message"]
+
+
 def test_validate_apprise_rejects_invalid_remote_yaml(client, monkeypatch, qs_module):
     class _Resp:
         status_code = 200

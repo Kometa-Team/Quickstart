@@ -2712,6 +2712,14 @@ document.addEventListener('DOMContentLoaded', function () {
           ? { valid: true }
           : { valid: false, message: 'Enter a numeric TMDb collection ID like 131292.' }
       },
+      imdb_id_plex: {
+        duplicateInsensitive: true,
+        normalize: value => value.toLowerCase(),
+        lookupService: 'plex',
+        validate: value => /^tt\d{7,8}$/i.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter an IMDb ID like tt1234567 or tt12345678.' }
+      },
       year: {
         duplicateInsensitive: true,
         normalize: value => value,
@@ -2860,8 +2868,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return String(el?.value || '').trim().toLowerCase() === 'true'
       }
 
-      async function lookupTemplateStringValue (presetName, value) {
-        const cacheKey = `${presetName}:${value}`
+      async function lookupTemplateStringValue (presetName, value, context = {}) {
+        const libraryName = String(context.libraryName || '').trim()
+        const mediaType = String(context.mediaType || '').trim()
+        const cacheKey = `${presetName}:${libraryName}:${mediaType}:${value}`
         if (templateStringLookupCache.has(cacheKey)) {
           return templateStringLookupCache.get(cacheKey)
         }
@@ -2869,7 +2879,12 @@ document.addEventListener('DOMContentLoaded', function () {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ preset: presetName, value })
+          body: JSON.stringify({
+            preset: presetName,
+            value,
+            library_name: libraryName,
+            media_type: mediaType
+          })
         })
           .then(async (response) => {
             const data = await response.json().catch(() => ({}))
@@ -2907,6 +2922,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const presetName = inferTemplateStringListPreset(wrapper, input)
         const presetConfig = templateStringListPresetConfigs[presetName] || templateStringListPresetConfigs.generic_text
+        const libraryName = String(wrapper.dataset.libraryName || '').trim()
+        const mediaType = String(wrapper.dataset.mediaType || '').trim()
         ensureTemplateStringListDatalist(wrapper, input, presetConfig, presetName)
 
         function parseStoredStringList (rawValue) {
@@ -3091,6 +3108,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     valid: Boolean(result.valid),
                     verified: Boolean(result.verified),
                     message: result.message || 'TMDb lookup failed.'
+                  })
+                })
+              }
+            } else if (item.valid && presetConfig.lookupService === 'plex') {
+              if (!getServiceValidationState('plex')) {
+                setLookupState(lookupMeta, {
+                  valid: false,
+                  verified: false,
+                  message: 'Plex not validated, so the IMDb ID could not be checked against the active library.'
+                })
+              } else if (!libraryName) {
+                setLookupState(lookupMeta, {
+                  valid: false,
+                  verified: false,
+                  message: 'Library context is unavailable for Plex lookup.'
+                })
+              } else {
+                setLookupState(lookupMeta, {
+                  valid: false,
+                  verified: false,
+                  message: 'Checking Plex library for this IMDb ID...'
+                })
+                lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
+                  if (!lookupMeta.isConnected) return
+                  if (result.valid && result.verified && result.label) {
+                    setLookupState(lookupMeta, {
+                      valid: true,
+                      verified: true,
+                      message: `Plex: ${result.label}`
+                    })
+                    return
+                  }
+                  setLookupState(lookupMeta, {
+                    valid: Boolean(result.valid),
+                    verified: Boolean(result.verified),
+                    message: result.message || 'Plex lookup failed.'
                   })
                 })
               }

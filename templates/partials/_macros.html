@@ -1263,6 +1263,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% set list_json = '[]' %}
                         {% endif %}
                         <div class="mb-2" data-template-string-list data-hidden-input="{{ input_name }}"
+                            data-library-name="{{ library.name }}"
+                            data-media-type="{{ library.type }}"
                             {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
                             {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
                             {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}

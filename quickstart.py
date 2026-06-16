@@ -9768,6 +9768,8 @@ def lookup_template_string_value():
     data = request.get_json(silent=True) or {}
     preset = str(data.get("preset") or "").strip()
     value = str(data.get("value") or "").strip()
+    library_name = str(data.get("library_name") or "").strip()
+    media_type = str(data.get("media_type") or "").strip()
 
     if not preset or not value:
         return jsonify({"error": "Lookup preset and value are required."}), 400
@@ -9799,6 +9801,26 @@ def lookup_template_string_value():
             return jsonify({"valid": False, "verified": False, "message": "TMDb lookup could not be verified with the configured API key."})
 
         return jsonify({"valid": False, "verified": False, "message": f"TMDb lookup failed with status {response.status_code}."})
+
+    if preset == "imdb_id_plex":
+        if not library_name:
+            return jsonify({"valid": False, "verified": False, "message": "Active Plex library is required for IMDb lookup."})
+        try:
+            result = helpers.find_item_by_imdb_id(library_name, value, media_type)
+        except Exception as exc:
+            return jsonify({"valid": False, "verified": False, "message": f"Plex lookup failed: {exc}."})
+
+        if result and result.get("title"):
+            title = str(result.get("title")).strip()
+            return jsonify({"valid": True, "verified": True, "label": title, "message": f"Plex: {title}"})
+
+        return jsonify(
+            {
+                "valid": False,
+                "verified": False,
+                "message": "IMDb ID format is valid, but no matching item was found in the active Plex library.",
+            }
+        )
 
     return jsonify({"error": f"Unsupported lookup preset: {preset}"}), 400
 

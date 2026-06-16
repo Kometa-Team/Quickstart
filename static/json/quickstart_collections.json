@@ -172,6 +172,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -810,6 +827,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -1416,6 +1450,23 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -2026,6 +2077,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -2632,6 +2700,23 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -3253,6 +3338,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -3852,6 +3954,23 @@
             "media_types": [
               "show"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -4482,6 +4601,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -5093,6 +5229,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -5699,6 +5852,23 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -6320,6 +6490,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -6908,6 +7095,23 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -7518,6 +7722,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -8124,6 +8345,23 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -8734,6 +8972,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -9334,6 +9589,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -9932,6 +10204,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -10469,6 +10758,23 @@
               "color",
               "white"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -11063,6 +11369,23 @@
               "color",
               "white"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -11775,6 +12098,23 @@
               "color",
               "white"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -12533,6 +12873,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -13250,6 +13607,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -13617,6 +13991,23 @@
               "color",
               "white"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -14350,6 +14741,23 @@
             "media_types": [
               "show"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -15490,6 +15898,23 @@
               "color",
               "white"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -16693,6 +17118,23 @@
             ]
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -17266,6 +17708,23 @@
             "placeholder": "Add genre name (e.g. Politics)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17676,6 +18135,16 @@
             "validation_preset": "tmdb_collection_id",
             "tooltip": "Exclude specific TMDb collections from these collections.",
             "placeholder": "Add TMDb collection ID (e.g. 131292)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br> Default is <b>2</b>. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": 2
           },
           {
             "key": "sync_mode",
@@ -18125,6 +18594,16 @@
             "type": "text_input",
             "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
             "placeholder": "Leave blank or enter a value like 040"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br> Default is <b>2</b>. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": 2
           },
           {
             "key": "sync_mode",
@@ -19001,6 +19480,24 @@
             "media_types": [
               "show"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br> Default is <b>2</b>. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": 2
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -19896,6 +20393,23 @@
             "media_types": [
               "show"
             ]
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -20812,6 +21326,23 @@
             "placeholder": "Add content rating (e.g. PG-13)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -21272,6 +21803,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. TV-14)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -21737,6 +22285,23 @@
             "placeholder": "Add content rating (e.g. 15)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22198,6 +22763,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. 12)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -22663,6 +23245,23 @@
             "placeholder": "Add content rating (e.g. M)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -23124,6 +23723,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. PG)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -23589,6 +24205,23 @@
             "placeholder": "Add content rating (e.g. PG-13)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -24050,6 +24683,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. 13)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -24529,6 +25179,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
             "placeholder": "Add country name (e.g. France)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -25019,6 +25686,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
             "placeholder": "Add country name (e.g. France)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -25878,6 +26562,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific regions from these collections.",
             "placeholder": "Add region name (e.g. Melanesia)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -26950,6 +27651,23 @@
             "placeholder": "Add continent name (e.g. Europe)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -27674,6 +28392,23 @@
             "placeholder": "Add aspect ratio key (e.g. 1.65)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -28312,6 +29047,23 @@
             "mutually_exclusive_with": "include"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -28761,6 +29513,23 @@
             "tooltip": "Exclude specific audio languages from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add language code (e.g. fr)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -29233,6 +30002,23 @@
             "tooltip": "Exclude specific subtitle languages from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add language code (e.g. fr)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -29749,6 +30535,23 @@
             "mutually_exclusive_with": "include"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -30233,6 +31036,23 @@
             "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add person name (e.g. Jeremy Kleiner)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -30730,6 +31550,23 @@
             "mutually_exclusive_with": "include"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -31223,6 +32060,23 @@
             "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add person name (e.g. Jeremy Kleiner)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -32197,6 +33051,23 @@
             "placeholder": "Add service key (e.g. netflix)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -33028,6 +33899,23 @@
             "mutually_exclusive_with": "include"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -33464,6 +34352,23 @@
             "tooltip": "Exclude specific networks from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add network name (e.g. HBO)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
@@ -34541,6 +35446,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific seasonal collections from these collections.",
             "placeholder": "Add seasonal key (e.g. halloween)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "sync_mode",
@@ -35642,6 +36564,23 @@
             "placeholder": "Add year (e.g. 2022)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -36068,6 +37007,23 @@
             "placeholder": "Add decade key (e.g. 2020)"
           },
           {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -36492,6 +37448,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific decades from these collections.",
             "placeholder": "Add decade key (e.g. 2020)"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex"
           },
           {
             "key": "collection_mode",
