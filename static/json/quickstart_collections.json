@@ -9429,7 +9429,7 @@
           },
           {
             "key": "limit_episodes",
-            "label": "Limit",
+            "label": "New Episodes Limit",
             "tooltip": "Changes the Builder Limit of the New Episodes collection.",
             "type": "text_input",
             "default": "limit",
@@ -9460,7 +9460,7 @@
           },
           {
             "key": "limit_released",
-            "label": "Limit",
+            "label": "Newly Released Limit",
             "tooltip": "Changes the Builder Limit of the Newly Released collection.",
             "type": "text_input",
             "default": "limit",
@@ -14301,7 +14301,7 @@
           },
           {
             "key": "limit_1001_movies",
-            "label": "Limit",
+            "label": "1,001 To See Before You Die Limit",
             "tooltip": "Changes the Builder Limit of the 1,001 To See Before You Die collection.",
             "type": "text_input",
             "default": "limit",
@@ -14328,7 +14328,7 @@
           },
           {
             "key": "limit_afi_100",
-            "label": "Limit",
+            "label": "AFI 100 Years 100 Movies Limit",
             "tooltip": "Changes the Builder Limit of the AFI 100 Years 100 Movies collection.",
             "type": "text_input",
             "default": "limit",
@@ -14355,7 +14355,7 @@
           },
           {
             "key": "limit_boxofficemojo_100",
-            "label": "Limit",
+            "label": "Box Office Mojo All Time 100 Limit",
             "tooltip": "Changes the Builder Limit of the Box Office Mojo All Time 100 collection.",
             "type": "text_input",
             "default": "limit",
@@ -14382,7 +14382,7 @@
           },
           {
             "key": "limit_cannes",
-            "label": "Limit",
+            "label": "Cannes Palme d'Or Winners Limit",
             "tooltip": "Changes the Builder Limit of the Cannes Palme d'Or Winners collection.",
             "type": "text_input",
             "default": "limit",
@@ -14409,7 +14409,7 @@
           },
           {
             "key": "limit_edgarwright",
-            "label": "Limit",
+            "label": "Edgar Wright's 1,000 Favorites Limit",
             "tooltip": "Changes the Builder Limit of the Edgar Wright's 1,000 Favorites collection.",
             "type": "text_input",
             "default": "limit",
@@ -14436,7 +14436,7 @@
           },
           {
             "key": "limit_imdb_top_250",
-            "label": "Limit",
+            "label": "IMDb Top 250 (Letterboxd) Limit",
             "tooltip": "Changes the Builder Limit of the IMDb Top 250 (Letterboxd) collection.",
             "type": "text_input",
             "default": "limit",
@@ -14463,7 +14463,7 @@
           },
           {
             "key": "limit_top_500",
-            "label": "Limit",
+            "label": "Letterboxd Top 500 Limit",
             "tooltip": "Changes the Builder Limit of the Letterboxd Top 500 collection.",
             "type": "text_input",
             "default": "limit",
@@ -14490,7 +14490,7 @@
           },
           {
             "key": "limit_international",
-            "label": "Limit",
+            "label": "Top 250 International Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 International collection.",
             "type": "text_input",
             "default": "limit",
@@ -14517,7 +14517,7 @@
           },
           {
             "key": "limit_science",
-            "label": "Limit",
+            "label": "Top 250 Sci-Fi Films Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Sci-Fi Films collection.",
             "type": "text_input",
             "default": "limit",
@@ -14544,7 +14544,7 @@
           },
           {
             "key": "limit_western",
-            "label": "Limit",
+            "label": "Top 100 Western Films Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Western Films collection.",
             "type": "text_input",
             "default": "limit",
@@ -14571,7 +14571,7 @@
           },
           {
             "key": "limit_silent",
-            "label": "Limit",
+            "label": "Top 100 Silent Films Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Silent Films collection.",
             "type": "text_input",
             "default": "limit",
@@ -14598,7 +14598,7 @@
           },
           {
             "key": "limit_million",
-            "label": "Limit",
+            "label": "One Million Watched Club Limit",
             "tooltip": "Changes the Builder Limit of the One Million Watched Club collection.",
             "type": "text_input",
             "default": "limit",
@@ -14625,7 +14625,7 @@
           },
           {
             "key": "limit_oscars",
-            "label": "Limit",
+            "label": "Oscar Best Picture Winners Limit",
             "tooltip": "Changes the Builder Limit of the Oscar Best Picture Winners collection.",
             "type": "text_input",
             "default": "limit",
@@ -14652,7 +14652,7 @@
           },
           {
             "key": "limit_rogerebert",
-            "label": "Limit",
+            "label": "Roger Ebert's Great Movies Limit",
             "tooltip": "Changes the Builder Limit of the Roger Ebert's Great Movies collection.",
             "type": "text_input",
             "default": "limit",
@@ -14679,7 +14679,7 @@
           },
           {
             "key": "limit_sight_sound",
-            "label": "Limit",
+            "label": "Sight & Sound Greatest Films Limit",
             "tooltip": "Changes the Builder Limit of the Sight & Sound Greatest Films collection.",
             "type": "text_input",
             "default": "limit",
@@ -14706,7 +14706,7 @@
           },
           {
             "key": "limit_animation",
-            "label": "Limit",
+            "label": "Top 100 Animation Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Animation collection.",
             "type": "text_input",
             "default": "limit",
@@ -14733,7 +14733,7 @@
           },
           {
             "key": "limit_black_directors",
-            "label": "Limit",
+            "label": "Top 250 Black-Directed Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Black-Directed collection.",
             "type": "text_input",
             "default": "limit",
@@ -14760,7 +14760,7 @@
           },
           {
             "key": "limit_documentaries",
-            "label": "Limit",
+            "label": "Top 250 Documentaries Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Documentaries collection.",
             "type": "text_input",
             "default": "limit",
@@ -14787,7 +14787,7 @@
           },
           {
             "key": "limit_horror",
-            "label": "Limit",
+            "label": "Top 250 Horror Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Horror collection.",
             "type": "text_input",
             "default": "limit",
@@ -14814,7 +14814,7 @@
           },
           {
             "key": "limit_most_fans",
-            "label": "Limit",
+            "label": "Top 250 Most Fans Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Most Fans collection.",
             "type": "text_input",
             "default": "limit",
@@ -14841,7 +14841,7 @@
           },
           {
             "key": "limit_women_directors",
-            "label": "Limit",
+            "label": "Top 250 Women-Directed Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Women-Directed collection.",
             "type": "text_input",
             "default": "limit",
