@@ -3,7 +3,6 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults"
@@ -83,11 +82,7 @@ def test_cache_builders_exists_for_every_cache_capable_collection_family():
         if alias not in expected_defaults:
             continue
         for collection in collections:
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             if "cache_builders" not in keys:
                 missing.append(collection["id"])
 
@@ -100,11 +95,7 @@ def test_cache_builders_defaults_match_repo_defaults():
 
     for alias, expected_default in expected_defaults.items():
         for collection in qs_map[alias]:
-            cache_field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == "cache_builders"
-            )
+            cache_field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "cache_builders")
             assert cache_field["type"] == "text_input"
             assert cache_field["input_type"] == "number"
             assert cache_field["default"] == expected_default
@@ -119,9 +110,5 @@ def test_cache_builders_is_not_inferred_for_basic_genre_or_network():
     for alias in ("basic", "genre", "network"):
         assert alias not in expected_defaults
         for collection in qs_map[alias]:
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             assert "cache_builders" not in keys

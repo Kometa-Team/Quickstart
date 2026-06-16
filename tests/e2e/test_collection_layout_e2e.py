@@ -6,8 +6,7 @@ def test_collection_child_numeric_labels_do_not_clip(page, live_server):
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     page.wait_for_timeout(500)
 
-    clipped = page.evaluate(
-        """async () => {
+    clipped = page.evaluate("""async () => {
           const existing = document.getElementById('qs-collection-label-clip-harness');
           if (existing) existing.remove();
 
@@ -72,7 +71,6 @@ def test_collection_child_numeric_labels_do_not_clip(page, live_server):
           });
 
           return findings;
-        }"""
-    )
+        }""")
 
     assert clipped == []

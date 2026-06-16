@@ -3,7 +3,6 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults"
@@ -90,11 +89,7 @@ def test_collection_order_exists_for_every_supported_collection_family():
         if alias not in expected_defaults:
             continue
         for collection in collections:
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             if "collection_order" not in keys:
                 missing.append(collection["id"])
 
@@ -107,11 +102,7 @@ def test_collection_order_defaults_match_repo_defaults():
 
     for alias, expected_default in expected_defaults.items():
         for collection in qs_map[alias]:
-            field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == "collection_order"
-            )
+            field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "collection_order")
             assert field["type"] == "select"
             assert field["default"] == expected_default
 
@@ -123,9 +114,5 @@ def test_collection_order_is_not_inferred_for_streaming_seasonal_genre_or_networ
     for alias in ("streaming", "seasonal", "genre", "network", "basic"):
         assert alias not in expected_defaults
         for collection in qs_map[alias]:
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             assert "collection_order" not in keys

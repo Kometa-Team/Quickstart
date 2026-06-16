@@ -3,7 +3,6 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults"
@@ -17,11 +16,7 @@ def _build_qs_collection_map():
     for group in data:
         for collection in group.get("collections", []):
             alias = collection["id"].replace("collection_", "", 1)
-            mapping.setdefault(alias, set()).update(
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            )
+            mapping.setdefault(alias, set()).update(item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key"))
     return mapping
 
 

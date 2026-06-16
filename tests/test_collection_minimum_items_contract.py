@@ -3,7 +3,6 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults"
@@ -84,11 +83,7 @@ def test_minimum_items_exists_for_every_supported_non_readonly_collection_family
         for collection in collections:
             if collection.get("readonly"):
                 continue
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             if "minimum_items" not in keys:
                 missing.append(collection["id"])
 
@@ -103,11 +98,7 @@ def test_minimum_items_defaults_and_numeric_contract_match_repo_defaults():
         for collection in qs_map[alias]:
             if collection.get("readonly"):
                 continue
-            field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == "minimum_items"
-            )
+            field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "minimum_items")
             assert field["type"] == "text_input"
             assert field["input_type"] == "number"
             assert field["min"] == 1

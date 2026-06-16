@@ -3,7 +3,6 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults"
@@ -67,11 +66,7 @@ def test_ignore_imdb_ids_exists_for_every_shared_collection_family():
         for collection in qs_map[alias]:
             if collection.get("readonly"):
                 continue
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             if "ignore_imdb_ids" not in keys:
                 missing.append(collection["id"])
 
@@ -86,11 +81,7 @@ def test_ignore_imdb_ids_uses_string_list_with_imdb_preset():
         for collection in qs_map[alias]:
             if collection.get("readonly"):
                 continue
-            field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == "ignore_imdb_ids"
-            )
+            field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "ignore_imdb_ids")
             assert field["type"] == "string_list"
             assert field["validation_preset"] == "imdb_id_plex"
             assert "default" not in field
@@ -101,9 +92,5 @@ def test_ignore_ids_is_not_added_yet():
 
     for collections in qs_map.values():
         for collection in collections:
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             assert "ignore_ids" not in keys
