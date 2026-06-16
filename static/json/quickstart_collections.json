@@ -172,6 +172,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -783,6 +800,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -1361,6 +1395,23 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -1945,6 +1996,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -2388,7 +2456,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "César Awards",
+        "label": "C\u00e9sar Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -2510,8 +2578,8 @@
           },
           {
             "key": "use_best",
-            "label": "César Best Film Winners",
-            "tooltip": "Collection of César Award Winners.",
+            "label": "C\u00e9sar Best Film Winners",
+            "tooltip": "Collection of C\u00e9sar Award Winners.",
             "type": "toggle",
             "default": true
           },
@@ -2523,6 +2591,23 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -2582,9 +2667,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "César Best Film Winners Visible Home",
+            "label": "C\u00e9sar Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -2592,9 +2677,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "César Best Film Winners Visible Library",
+            "label": "C\u00e9sar Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -2602,9 +2687,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "César Best Film Winners Visible Shared",
+            "label": "C\u00e9sar Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3115,6 +3200,23 @@
             "type": "toggle",
             "media_types": [
               "show"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -3689,6 +3791,23 @@
             "type": "toggle",
             "media_types": [
               "show"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -4293,6 +4412,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -4877,6 +5013,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -5455,6 +5608,23 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -6050,6 +6220,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -6610,6 +6797,23 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -7194,6 +7398,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -7772,6 +7993,23 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -8356,6 +8594,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -8926,6 +9181,23 @@
             "type": "toggle",
             "media_types": [
               "movie"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -10039,6 +10311,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -10603,6 +10892,23 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -11288,6 +11594,23 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -12020,6 +12343,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -12710,6 +13050,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -13049,6 +13406,23 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -13755,6 +14129,23 @@
             "type": "toggle",
             "media_types": [
               "show"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -14868,6 +15259,23 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -16045,6 +16453,23 @@
             ]
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17003,6 +17428,23 @@
             "placeholder": "Add TMDb collection ID (e.g. 131292)"
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17423,6 +17865,23 @@
             "type": "text_input",
             "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
             "placeholder": "Leave blank or enter a value like 040"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
           },
           {
             "key": "collection_mode",
@@ -18271,6 +18730,23 @@
             "type": "toggle",
             "media_types": [
               "show"
+            ]
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
           },
           {
@@ -23775,6 +24251,23 @@
             "placeholder": "Add country name (e.g. France)"
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -24246,6 +24739,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
             "placeholder": "Add country name (e.g. France)"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
           },
           {
             "key": "collection_mode",
@@ -25088,6 +25598,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific regions from these collections.",
             "placeholder": "Add region name (e.g. Melanesia)"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
           },
           {
             "key": "collection_mode",
@@ -26143,6 +26670,23 @@
             "placeholder": "Add continent name (e.g. Europe)"
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -26848,6 +27392,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific aspect ratios from these collections.",
             "placeholder": "Add aspect ratio key (e.g. 1.65)"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
           },
           {
             "key": "collection_mode",
@@ -31356,6 +31917,23 @@
             "placeholder": "Add service key (e.g. netflix)"
           },
           {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -33673,6 +34251,23 @@
             "type": "string_list",
             "tooltip": "Exclude specific seasonal collections from these collections.",
             "placeholder": "Add seasonal key (e.g. halloween)"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
           },
           {
             "key": "collection_mode",
