@@ -441,6 +441,9 @@ def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
     # branch = get_kometa_branch()
     branch = "nightly"
+    # Temporary override: use Kometa develop for local schema downloads.
+    # Remove the next 3 lines later to return to the shared branch logic.
+    branch = "develop"
 
     previous_hashes = load_previous_hashes()
     new_hashes = {}

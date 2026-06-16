@@ -2947,9 +2947,13 @@ def build_config(header_style="standard", config_name=None):
     )
     library_names = movie_summary_names + show_summary_names
     library_details = helpers.get_library_summaries(library_names)
+    schema_header = f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json"
+    # Temporary override: force VS Code/YAML LS to Kometa develop.
+    # Remove the next 3 lines later to fall back to the existing kometa_branch-based URL.
+    schema_header = "# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/develop/json-schema/config-schema.json"
 
     yaml_content = (
-        f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json\n\n"
+        f"{schema_header}\n\n"
         f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
         f"#==================== {config_name} ====================#\n"
         f"# {config_name} config created by Quickstart on {timestamp}\n"
