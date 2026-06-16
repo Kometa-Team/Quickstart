@@ -4231,6 +4231,21 @@ div#loading {
     flex: 0 0 170px;
 }
 
+.qs-template-variable-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.2;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.qs-template-variable-label a {
+    white-space: normal;
+}
+
 .font-row .font-input-group {
     flex: 1 1 auto;
     min-width: 0;

@@ -1300,11 +1300,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             {'value': 'relative_latest', 'label': 'Relative Latest (latest-#)', 'kind': 'relative', 'prefix': 'latest-'},
                             {'value': 'year', 'label': 'Specific Year', 'kind': 'year'}
                         ] %}
-                        {% set label_width = item.label_width if item.label_width is defined else (240 if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')) else 170) %}
+                        {% set label_width = item.label_width if item.label_width is defined else ((320 if item.label|length > 24 else 240) if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')) else 170) %}
                         <div class="input-group mb-2" data-relative-year data-hidden-input="{{ input_name }}"
                             data-default-value="{{ item.default | default('', true) }}"
                             data-min-year="{{ item.min | default(1) }}">
-                            <span class="input-group-text" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
+                            <span class="input-group-text qs-template-variable-label" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
                                 {% if item.url %}
                                 <a href="{{ item.url }}" target="_blank">
                                     {{ item.label }}
@@ -1459,9 +1459,9 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
-                        {% set label_width = item.label_width if item.label_width is defined else (240 if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')) else 170) %}
+                        {% set label_width = item.label_width if item.label_width is defined else ((320 if item.label|length > 24 else 240) if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')) else 170) %}
                         <div class="input-group mb-2">
-                            <span class="input-group-text" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
+                            <span class="input-group-text qs-template-variable-label" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
                                 {% if item.url %}
                                 <a href="{{ item.url }}" target="_blank">
                                     {{ item.label }}

@@ -77,4 +77,5 @@ def test_collection_child_numeric_inputs_use_wider_default_label_width_rule():
 
     expected_rule = "item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')"
     assert template.count(expected_rule) >= 2
-    assert "(240 if item.key is defined" in template
+    assert "320 if item.label|length > 24 else 240" in template
+    assert "qs-template-variable-label" in template
