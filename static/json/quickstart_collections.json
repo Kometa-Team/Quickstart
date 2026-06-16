@@ -17755,7 +17755,7 @@
             "label": "Collection Order",
             "type": "select",
             "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
-            "default": "custom",
+            "default": "release",
             "options": [
               {
                 "value": "custom",
@@ -18204,7 +18204,7 @@
             "label": "Collection Order",
             "type": "select",
             "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
-            "default": "custom",
+            "default": "release",
             "options": [
               {
                 "value": "custom",
