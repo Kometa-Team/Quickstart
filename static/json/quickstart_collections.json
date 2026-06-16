@@ -189,6 +189,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -817,6 +827,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -1413,6 +1433,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -2013,6 +2043,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -2609,6 +2649,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -3220,6 +3270,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -3809,6 +3869,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -4429,6 +4499,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -5030,6 +5110,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -5626,6 +5716,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -6237,6 +6337,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -6815,6 +6925,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -7415,6 +7535,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -8011,6 +8141,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -8611,6 +8751,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -9199,6 +9349,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -10328,6 +10488,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 0,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -10910,6 +11080,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -11612,6 +11792,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -12360,6 +12550,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -13067,6 +13267,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -13424,6 +13634,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -14147,6 +14367,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -15277,6 +15507,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -16470,6 +16710,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17445,6 +17695,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17882,6 +18142,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -18748,6 +19018,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
@@ -31934,6 +32214,16 @@
             ]
           },
           {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -34268,6 +34558,16 @@
                 "label": "Sync"
               }
             ]
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "collection_mode",
