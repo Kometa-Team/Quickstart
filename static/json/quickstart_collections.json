@@ -9410,8 +9410,11 @@
             "key": "limit",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
-            "type": "number",
-            "default": 100
+            "type": "text_input",
+            "default": 100,
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_episodes",
@@ -9428,11 +9431,14 @@
             "key": "limit_episodes",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the New Episodes collection.",
-            "type": "number",
+            "type": "text_input",
             "default": "limit",
             "media_types": [
               "show"
-            ]
+            ],
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "sonarr_add_missing_episodes",
@@ -9456,8 +9462,11 @@
             "key": "limit_released",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Newly Released collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_released",
@@ -9951,14 +9960,20 @@
             "label": "List Days",
             "type": "text_input",
             "default": "30",
-            "tooltip": "Changes the list_days attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the list_days attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "list_size",
             "label": "List Size",
             "type": "text_input",
             "default": "20",
-            "tooltip": "Changes the list_size attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the list_size attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_popular",
@@ -9972,13 +9987,19 @@
             "key": "list_days_popular",
             "label": "Plex Popular List Days",
             "type": "text_input",
-            "tooltip": "Changes the list_days attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value."
+            "tooltip": "Changes the list_days attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "list_size_popular",
             "label": "Plex Popular List Size",
             "type": "text_input",
-            "tooltip": "Changes the list_size attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value."
+            "tooltip": "Changes the list_size attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_watched",
@@ -9992,13 +10013,19 @@
             "key": "list_days_watched",
             "label": "Plex Watched List Days",
             "type": "text_input",
-            "tooltip": "Changes the list_days attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value."
+            "tooltip": "Changes the list_days attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "list_size_watched",
             "label": "Plex Watched List Size",
             "type": "text_input",
-            "tooltip": "Changes the list_size attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value."
+            "tooltip": "Changes the list_size attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "style",
@@ -10478,7 +10505,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_top",
@@ -11064,7 +11094,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_airing",
@@ -11077,7 +11110,10 @@
             "key": "limit_airing",
             "label": "TMDb Airing Today Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the TMDb Airing Today collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the TMDb Airing Today collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_airing",
@@ -11110,7 +11146,10 @@
             "key": "limit_air",
             "label": "TMDb On The Air Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the TMDb On The Air collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the TMDb On The Air collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_air",
@@ -11143,7 +11182,10 @@
             "key": "limit_popular",
             "label": "TMDb Popular Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the TMDb Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the TMDb Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_popular",
@@ -11176,7 +11218,10 @@
             "key": "limit_top",
             "label": "TMDb Top Rated Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the TMDb Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the TMDb Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_top",
@@ -11209,7 +11254,10 @@
             "key": "limit_trending",
             "label": "TMDb Trending Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the TMDb Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the TMDb Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trending",
@@ -11775,7 +11823,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_collected",
@@ -11788,7 +11839,10 @@
             "key": "limit_collected",
             "label": "Trakt Collected Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Trakt Collected collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Trakt Collected collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_collected",
@@ -11821,7 +11875,10 @@
             "key": "limit_popular",
             "label": "Trakt Popular Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Trakt Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Trakt Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_popular",
@@ -11854,7 +11911,10 @@
             "key": "limit_recommended",
             "label": "Trakt Recommended Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Trakt Recommended collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Trakt Recommended collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_recommended",
@@ -11887,7 +11947,10 @@
             "key": "limit_trending",
             "label": "Trakt Trending Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Trakt Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Trakt Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trending",
@@ -11920,7 +11983,10 @@
             "key": "limit_watched",
             "label": "Trakt Watched Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Trakt Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Trakt Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_watched",
@@ -12483,7 +12549,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Maximum number of items to return per Simkl list. Valid range is 1 to 500."
+            "tooltip": "Maximum number of items to return per Simkl list. Valid range is 1 to 500.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_trending_today",
@@ -12496,7 +12565,10 @@
             "key": "limit_trending_today",
             "label": "Simkl Trending Today Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Simkl Trending Today collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Simkl Trending Today collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trending_today",
@@ -12529,7 +12601,10 @@
             "key": "limit_trending_week",
             "label": "Simkl Trending This Week Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Simkl Trending This Week collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Simkl Trending This Week collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trending_week",
@@ -12562,7 +12637,10 @@
             "key": "limit_trending_month",
             "label": "Simkl Trending This Month Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Simkl Trending This Month collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Simkl Trending This Month collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trending_month",
@@ -12595,7 +12673,10 @@
             "key": "limit_dvd",
             "label": "Simkl DVD Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Simkl DVD collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Simkl DVD collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_dvd",
@@ -12810,7 +12891,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_popular",
@@ -12823,7 +12907,10 @@
             "key": "limit_popular",
             "label": "AniList Popular Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the AniList Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the AniList Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_popular",
@@ -12856,7 +12943,10 @@
             "key": "limit_season",
             "label": "AniList Season Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the AniList Season collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the AniList Season collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_season",
@@ -12889,7 +12979,10 @@
             "key": "limit_top",
             "label": "AniList Top Rated Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the AniList Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the AniList Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_top",
@@ -12922,7 +13015,10 @@
             "key": "limit_trending",
             "label": "AniList Trending Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the AniList Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the AniList Trending collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trending",
@@ -13465,7 +13561,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "style",
@@ -13489,7 +13588,10 @@
             "key": "limit_favorited",
             "label": "MyAnimeList Favorited Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the MyAnimeList Favorited collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Favorited collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_favorited",
@@ -13522,7 +13624,10 @@
             "key": "limit_popular",
             "label": "MyAnimeList Popular Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the MyAnimeList Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_popular",
@@ -13555,7 +13660,10 @@
             "key": "limit_season",
             "label": "MyAnimeList Season Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the MyAnimeList Season collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Season collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_season",
@@ -13588,7 +13696,10 @@
             "key": "limit_airing",
             "label": "MyAnimeList Top Airing Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the MyAnimeList Top Airing collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Top Airing collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_airing",
@@ -13621,7 +13732,10 @@
             "key": "limit_top",
             "label": "MyAnimeList Top Rated Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the MyAnimeList Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the MyAnimeList Top Rated collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_top",
@@ -14172,8 +14286,11 @@
             "key": "limit",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
-            "type": "number",
-            "default": 100
+            "type": "text_input",
+            "default": 100,
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_1001_movies",
@@ -14186,8 +14303,11 @@
             "key": "limit_1001_movies",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the 1,001 To See Before You Die collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_1001_movies",
@@ -14210,8 +14330,11 @@
             "key": "limit_afi_100",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the AFI 100 Years 100 Movies collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_afi_100",
@@ -14234,8 +14357,11 @@
             "key": "limit_boxofficemojo_100",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Box Office Mojo All Time 100 collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_boxofficemojo_100",
@@ -14258,8 +14384,11 @@
             "key": "limit_cannes",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Cannes Palme d'Or Winners collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_cannes",
@@ -14282,8 +14411,11 @@
             "key": "limit_edgarwright",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Edgar Wright's 1,000 Favorites collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_edgarwright",
@@ -14306,8 +14438,11 @@
             "key": "limit_imdb_top_250",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the IMDb Top 250 (Letterboxd) collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_imdb_top_250",
@@ -14330,8 +14465,11 @@
             "key": "limit_top_500",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Letterboxd Top 500 collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_top_500",
@@ -14354,8 +14492,11 @@
             "key": "limit_international",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 International collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_international",
@@ -14378,8 +14519,11 @@
             "key": "limit_science",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Sci-Fi Films collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_science",
@@ -14402,8 +14546,11 @@
             "key": "limit_western",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Western Films collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_western",
@@ -14426,8 +14573,11 @@
             "key": "limit_silent",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Silent Films collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_silent",
@@ -14450,8 +14600,11 @@
             "key": "limit_million",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the One Million Watched Club collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_million",
@@ -14474,8 +14627,11 @@
             "key": "limit_oscars",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Oscar Best Picture Winners collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_oscars",
@@ -14498,8 +14654,11 @@
             "key": "limit_rogerebert",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Roger Ebert's Great Movies collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_rogerebert",
@@ -14522,8 +14681,11 @@
             "key": "limit_sight_sound",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Sight & Sound Greatest Films collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_sight_sound",
@@ -14546,8 +14708,11 @@
             "key": "limit_animation",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Animation collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_animation",
@@ -14570,8 +14735,11 @@
             "key": "limit_black_directors",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Black-Directed collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_black_directors",
@@ -14594,8 +14762,11 @@
             "key": "limit_documentaries",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Documentaries collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_documentaries",
@@ -14618,8 +14789,11 @@
             "key": "limit_horror",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Horror collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_horror",
@@ -14642,8 +14816,11 @@
             "key": "limit_most_fans",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Most Fans collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_most_fans",
@@ -14666,8 +14843,11 @@
             "key": "limit_women_directors",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Women-Directed collection.",
-            "type": "number",
-            "default": "limit"
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_women_directors",
@@ -15754,7 +15934,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_commonsense",
@@ -16388,7 +16571,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -17663,7 +17849,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -18825,7 +19014,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "200",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -19828,7 +20020,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -19848,7 +20043,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -20284,7 +20482,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -20304,7 +20505,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -20741,7 +20945,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -20761,7 +20968,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -21198,7 +21408,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -21218,7 +21431,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -21655,7 +21871,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -21675,7 +21894,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -22112,7 +22334,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -22132,7 +22357,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -22569,7 +22797,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -22589,7 +22820,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -23026,7 +23260,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -23046,7 +23283,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -23488,7 +23728,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -23519,7 +23762,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -23955,7 +24201,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -23986,7 +24235,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -24423,7 +24675,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -24454,7 +24709,10 @@
             "key": "limit_Northern Africa",
             "label": "Northern Africa Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Northern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Northern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Eastern Africa",
@@ -24467,7 +24725,10 @@
             "key": "limit_Eastern Africa",
             "label": "Eastern Africa Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Eastern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Eastern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Central Africa",
@@ -24480,7 +24741,10 @@
             "key": "limit_Central Africa",
             "label": "Central Africa Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Central Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Central Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Southern Africa",
@@ -24493,7 +24757,10 @@
             "key": "limit_Southern Africa",
             "label": "Southern Africa Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Southern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Southern Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Western Africa",
@@ -24506,7 +24773,10 @@
             "key": "limit_Western Africa",
             "label": "Western Africa Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Western Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Western Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Caribbean",
@@ -24519,7 +24789,10 @@
             "key": "limit_Caribbean",
             "label": "Caribbean Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Caribbean collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Caribbean collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Central America",
@@ -24532,7 +24805,10 @@
             "key": "limit_Central America",
             "label": "Central America Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Central America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Central America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_South America",
@@ -24545,7 +24821,10 @@
             "key": "limit_South America",
             "label": "South America Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the South America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the South America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_North America",
@@ -24558,7 +24837,10 @@
             "key": "limit_North America",
             "label": "North America Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the North America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the North America collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Antarctica",
@@ -24571,7 +24853,10 @@
             "key": "limit_Antarctica",
             "label": "Antarctica Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Central Asia",
@@ -24584,7 +24869,10 @@
             "key": "limit_Central Asia",
             "label": "Central Asia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Central Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Central Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Eastern Asia",
@@ -24597,7 +24885,10 @@
             "key": "limit_Eastern Asia",
             "label": "Eastern Asia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Eastern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Eastern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_South-Eastern Asia",
@@ -24610,7 +24901,10 @@
             "key": "limit_South-Eastern Asia",
             "label": "South-Eastern Asia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the South-Eastern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the South-Eastern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Southern Asia",
@@ -24623,7 +24917,10 @@
             "key": "limit_Southern Asia",
             "label": "Southern Asia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Southern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Southern Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Western Asia",
@@ -24636,7 +24933,10 @@
             "key": "limit_Western Asia",
             "label": "Western Asia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Western Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Western Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Eastern Europe",
@@ -24649,7 +24949,10 @@
             "key": "limit_Eastern Europe",
             "label": "Eastern Europe Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Eastern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Eastern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Northern Europe",
@@ -24662,7 +24965,10 @@
             "key": "limit_Northern Europe",
             "label": "Northern Europe Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Northern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Northern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Southern Europe",
@@ -24675,7 +24981,10 @@
             "key": "limit_Southern Europe",
             "label": "Southern Europe Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Southern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Southern Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Western Europe",
@@ -24688,7 +24997,10 @@
             "key": "limit_Western Europe",
             "label": "Western Europe Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Western Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Western Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Australia and New Zealand",
@@ -24701,7 +25013,10 @@
             "key": "limit_Australia and New Zealand",
             "label": "Australia and New Zealand Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Australia and New Zealand collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Australia and New Zealand collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Melanesia",
@@ -24714,7 +25029,10 @@
             "key": "limit_Melanesia",
             "label": "Melanesia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Melanesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Melanesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Micronesia",
@@ -24727,7 +25045,10 @@
             "key": "limit_Micronesia",
             "label": "Micronesia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Micronesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Micronesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Polynesia",
@@ -24740,7 +25061,10 @@
             "key": "limit_Polynesia",
             "label": "Polynesia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Polynesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Polynesia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_other",
@@ -24753,7 +25077,10 @@
             "key": "limit_other",
             "label": "Other Regions Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other Regions collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other Regions collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -25673,7 +26000,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -25704,7 +26034,10 @@
             "key": "limit_Africa",
             "label": "Africa Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Americas",
@@ -25717,7 +26050,10 @@
             "key": "limit_Americas",
             "label": "Americas Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Americas collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Americas collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Antarctica",
@@ -25730,7 +26066,10 @@
             "key": "limit_Antarctica",
             "label": "Antarctica Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Asia",
@@ -25743,7 +26082,10 @@
             "key": "limit_Asia",
             "label": "Asia Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Europe",
@@ -25756,7 +26098,10 @@
             "key": "limit_Europe",
             "label": "Europe Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_Oceania",
@@ -25769,7 +26114,10 @@
             "key": "limit_Oceania",
             "label": "Oceania Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Oceania collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Oceania collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_other",
@@ -25782,7 +26130,10 @@
             "key": "limit_other",
             "label": "Other Continents Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other Continents collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other Continents collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -26351,7 +26702,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -26371,7 +26725,10 @@
             "key": "limit_1.33",
             "label": "1.33 - Academy Aperture Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 1.33 - Academy Aperture collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 1.33 - Academy Aperture collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_1.65",
@@ -26384,7 +26741,10 @@
             "key": "limit_1.65",
             "label": "1.65 - Early Widescreen Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 1.65 - Early Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 1.65 - Early Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_1.66",
@@ -26397,7 +26757,10 @@
             "key": "limit_1.66",
             "label": "1.66 - European Widescreen Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 1.66 - European Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 1.66 - European Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_1.78",
@@ -26410,7 +26773,10 @@
             "key": "limit_1.78",
             "label": "1.78 - Widescreen TV Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 1.78 - Widescreen TV collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 1.78 - Widescreen TV collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_1.85",
@@ -26423,7 +26789,10 @@
             "key": "limit_1.85",
             "label": "1.85 - American Widescreen Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 1.85 - American Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 1.85 - American Widescreen collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_2.2",
@@ -26436,7 +26805,10 @@
             "key": "limit_2.2",
             "label": "2.2 - 70mm Frame Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 2.2 - 70mm Frame collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 2.2 - 70mm Frame collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_2.35",
@@ -26449,7 +26821,10 @@
             "key": "limit_2.35",
             "label": "2.35 - Anamorphic Projection Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 2.35 - Anamorphic Projection collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 2.35 - Anamorphic Projection collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_2.77",
@@ -26462,7 +26837,10 @@
             "key": "limit_2.77",
             "label": "2.77 - Cinerama Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the 2.77 - Cinerama collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the 2.77 - Cinerama collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "exclude",
@@ -27046,7 +27424,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -27496,7 +27877,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -27516,7 +27900,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "include",
@@ -27962,7 +28349,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -27982,7 +28372,10 @@
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Other collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "include",
@@ -30415,14 +30808,20 @@
             "label": "Limit",
             "type": "text_input",
             "default": "500",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "discover_limit",
             "label": "Discover Limit",
             "type": "text_input",
             "default": "0",
-            "tooltip": "Changes the TMDb Discover limit used for the streaming availability builder. Use 0 to keep the defaults file behavior."
+            "tooltip": "Changes the TMDb Discover limit used for the streaming availability builder. Use 0 to keep the defaults file behavior.",
+            "input_type": "number",
+            "min": 0,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -32610,7 +33009,10 @@
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -32630,7 +33032,10 @@
             "key": "limit_aapi",
             "label": "Asian American Pacific Islander Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Asian American Pacific Islander Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Asian American Pacific Islander Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_aapi",
@@ -32661,7 +33066,10 @@
             "key": "limit_black_history",
             "label": "Black History Month Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Black History Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Black History Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_black_history",
@@ -32692,7 +33100,10 @@
             "key": "limit_christmas",
             "label": "Christmas Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Christmas Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Christmas Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_christmas",
@@ -32723,7 +33134,10 @@
             "key": "limit_disabilities",
             "label": "Disability Month Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Disability Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Disability Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_disabilities",
@@ -32754,7 +33168,10 @@
             "key": "limit_easter",
             "label": "Easter Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Easter Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Easter Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_easter",
@@ -32785,7 +33202,10 @@
             "key": "limit_father",
             "label": "Father's Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Father's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Father's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_father",
@@ -32816,7 +33236,10 @@
             "key": "limit_halloween",
             "label": "Halloween Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Halloween Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Halloween Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_halloween",
@@ -32847,7 +33270,10 @@
             "key": "limit_independence",
             "label": "Independence Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Independence Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Independence Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_independence",
@@ -32878,7 +33304,10 @@
             "key": "limit_labor",
             "label": "Labor Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Labor Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Labor Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_labor",
@@ -32909,7 +33338,10 @@
             "key": "limit_lgbtq",
             "label": "LGBTQ Month Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the LGBTQ Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the LGBTQ Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_lgbtq",
@@ -32940,7 +33372,10 @@
             "key": "limit_memorial",
             "label": "Memorial Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Memorial Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Memorial Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_memorial",
@@ -32971,7 +33406,10 @@
             "key": "limit_mother",
             "label": "Mother's Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Mother's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Mother's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_mother",
@@ -33002,7 +33440,10 @@
             "key": "limit_latinx",
             "label": "National Hispanic Heritage Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the National Hispanic Heritage Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the National Hispanic Heritage Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_latinx",
@@ -33033,7 +33474,10 @@
             "key": "limit_years",
             "label": "New Year's Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the New Year's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the New Year's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_years",
@@ -33064,7 +33508,10 @@
             "key": "limit_patrick",
             "label": "St. Patrick's Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the St. Patrick's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the St. Patrick's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_patrick",
@@ -33095,7 +33542,10 @@
             "key": "limit_thanksgiving",
             "label": "Thanksgiving Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Thanksgiving Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Thanksgiving Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_thanksgiving",
@@ -33126,7 +33576,10 @@
             "key": "limit_valentine",
             "label": "Valentine's Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Valentine's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Valentine's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_valentine",
@@ -33157,7 +33610,10 @@
             "key": "limit_veteran",
             "label": "Veteran's Day Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Veteran's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Veteran's Day Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_veteran",
@@ -33188,7 +33644,10 @@
             "key": "limit_women",
             "label": "Women's History Month Movies Limit",
             "type": "text_input",
-            "tooltip": "Changes the Builder Limit of the Women's History Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value."
+            "tooltip": "Changes the Builder Limit of the Women's History Month Movies collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_women",
@@ -34202,7 +34661,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "10",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -34691,7 +35153,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
@@ -35114,7 +35579,10 @@
             "label": "Limit",
             "type": "text_input",
             "default": "100",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0."
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_separator",
