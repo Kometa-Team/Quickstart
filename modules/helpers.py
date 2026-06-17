@@ -74,6 +74,19 @@ IMAGEMAID_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_IMAGEMAID_UPDATE_CAC
 _IMAGEMAID_UPDATE_CACHE = {}
 IMAGEMAID_BRANCH_OVERRIDES = {"master", "develop"}
 
+JSON_SCHEMA_SYNC_FILES = (
+    ("README.md", "json-schema/README.md"),
+    ("collection-schema.json", "json-schema/collection-schema.json"),
+    ("config-schema.json", "json-schema/config-schema.json"),
+    ("kitchen_sink_config.yml", "json-schema/kitchen_sink_config.yml"),
+    ("metadata-schema.json", "json-schema/metadata-schema.json"),
+    ("overlay-schema.json", "json-schema/overlay-schema.json"),
+    ("playlist-schema.json", "json-schema/playlist-schema.json"),
+    ("prototype_comprehensive.yml", "json-schema/prototype_comprehensive.yml"),
+    ("prototype_config.yml", "json-schema/prototype_config.yml"),
+    ("config.yml.template", "config/config.yml.template"),
+)
+
 
 def detect_git_branch(repo_root=None, default="develop"):
     root = Path(repo_root or get_app_root()).resolve()
@@ -422,7 +435,7 @@ def calculate_hash(content):
 
 
 def _schema_files_present():
-    return all(os.path.exists(os.path.join(JSON_SCHEMA_DIR, filename)) for filename in ("prototype_config.yml", "config-schema.json", "config.yml.template"))
+    return all(os.path.exists(os.path.join(JSON_SCHEMA_DIR, filename)) for filename, _remote_path in JSON_SCHEMA_SYNC_FILES)
 
 
 def load_previous_hashes():
@@ -467,20 +480,8 @@ def ensure_json_schema():
     previous_hashes = load_previous_hashes()
     new_hashes = {}
 
-    for filename, url in [
-        (
-            "prototype_config.yml",
-            f"{GITHUB_BASE_URL}/{branch}/json-schema/prototype_config.yml",
-        ),
-        (
-            "config-schema.json",
-            f"{GITHUB_BASE_URL}/{branch}/json-schema/config-schema.json",
-        ),
-        (
-            "config.yml.template",
-            f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
-        ),
-    ]:
+    for filename, remote_path in JSON_SCHEMA_SYNC_FILES:
+        url = f"{GITHUB_BASE_URL}/{branch}/{remote_path}"
         file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
 
         try:
