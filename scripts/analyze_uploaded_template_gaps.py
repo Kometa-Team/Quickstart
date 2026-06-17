@@ -736,6 +736,9 @@ def patterns_from_default_file(path: Path) -> set[str]:
 def key_matches_pattern(key: str, pattern: str) -> bool:
     if key == pattern:
         return True
+    literal_pattern = PLACEHOLDER_RE.sub("", pattern)
+    if not re.search(r"[A-Za-z0-9_.-]", literal_pattern):
+        return False
     regex = "^" + PLACEHOLDER_RE.sub(lambda _: r"[^:\s]+", re.escape(pattern)) + "$"
     return re.match(regex, key) is not None
 
