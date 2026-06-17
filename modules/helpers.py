@@ -422,10 +422,7 @@ def calculate_hash(content):
 
 
 def _schema_files_present():
-    return all(
-        os.path.exists(os.path.join(JSON_SCHEMA_DIR, filename))
-        for filename in ("prototype_config.yml", "config-schema.json", "config.yml.template")
-    )
+    return all(os.path.exists(os.path.join(JSON_SCHEMA_DIR, filename)) for filename in ("prototype_config.yml", "config-schema.json", "config.yml.template"))
 
 
 def load_previous_hashes():
