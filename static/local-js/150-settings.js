@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', function () {
   let syncUsersModal = document.getElementById('syncUsersModal')
   let excludeUsersModal = document.getElementById('excludeUsersModal')
 
+  if (window.QSTemplateStringLists && typeof window.QSTemplateStringLists.setup === 'function') {
+    window.QSTemplateStringLists.setup(document)
+  }
+
   function ensureSettingsModalRoot (modalEl) {
     if (!modalEl || !document.body) return modalEl
     const modalId = modalEl.id
@@ -257,16 +261,6 @@ document.addEventListener('DOMContentLoaded', function () {
       errorMessage: 'Please enter a valid integer (0 or greater).'
     },
     {
-      id: 'ignore_ids',
-      regex: /^(|None|\d{1,8}(,\d{1,8})*)$/i,
-      errorMessage: 'Please enter a valid CSV list of numeric IDs (1-8 digits), "None", or leave blank.'
-    },
-    {
-      id: 'ignore_imdb_ids',
-      regex: /^(|None|tt\d{7,8}(,tt\d{7,8})*)$/i,
-      errorMessage: 'Please enter a valid CSV list of IMDb IDs (e.g., tt1234567), "None", or leave blank.'
-    },
-    {
       id: 'custom_repo',
       regex: /^(|None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$/i,
       errorMessage: 'Please enter a valid URL, "None", or leave blank.'
@@ -307,6 +301,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    if (window.QSTemplateStringLists && typeof window.QSTemplateStringLists.validateAll === 'function') {
+      const templateListsValid = window.QSTemplateStringLists.validateAll(configForm || document)
+      if (!templateListsValid) {
+        isFormValid = false
+      }
+    }
+
     updateValidationMessages(isFormValid)
     return isFormValid
   }
@@ -327,6 +328,12 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
   })
+
+  if (configForm) {
+    configForm.addEventListener('qs:template-string-list-change', function () {
+      settingsTouched = true
+    })
+  }
 
   const assetDirectoryContainer = document.getElementById('asset_directory_container')
   const addAssetDirectoryButton = document.getElementById('add-asset-directory')

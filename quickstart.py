@@ -8154,9 +8154,29 @@ def step(name):
     attribute_config = {}
     collection_config = []
     overlay_config = []
-    service_validations = {}
+    service_validations = {
+        "plex": False,
+        "tmdb": False,
+        "omdb": False,
+        "mdblist": False,
+        "anidb": False,
+        "trakt": False,
+        "mal": False,
+    }
     overlay_fonts = []
     image_data = {}
+    service_validation_sources = [
+        ("010-plex", "plex"),
+        ("020-tmdb", "tmdb"),
+        ("050-omdb", "omdb"),
+        ("060-mdblist", "mdblist"),
+        ("100-anidb", "anidb"),
+        ("130-trakt", "trakt"),
+        ("140-mal", "mal"),
+    ]
+    for section, key in service_validation_sources:
+        settings = persistence.retrieve_settings(section)
+        service_validations[key] = helpers.booler(settings.get("validated", False))
 
     def add_offset_vars(config):  # noqa: ANN001
         """
@@ -8210,18 +8230,6 @@ def step(name):
         image_data = _build_preview_image_data()
         overlay_fonts = list_overlay_fonts()
 
-        service_validation_sources = [
-            ("010-plex", "plex"),
-            ("020-tmdb", "tmdb"),
-            ("050-omdb", "omdb"),
-            ("060-mdblist", "mdblist"),
-            ("100-anidb", "anidb"),
-            ("130-trakt", "trakt"),
-            ("140-mal", "mal"),
-        ]
-        for section, key in service_validation_sources:
-            settings = persistence.retrieve_settings(section)
-            service_validations[key] = helpers.booler(settings.get("validated", False))
     workspace_status = _build_workspace_status_context(config_name, file_list, available_configs=available_configs)
     jump_to_validations = workspace_status.get("jump_to_validations", {})
     step_statuses = workspace_status.get("step_statuses", {})
@@ -9924,6 +9932,27 @@ def _build_tmdb_library_type_warning(tmdb_message, tmdb_result_type, expected_me
     return f"{tmdb_message}. This {value_label} resolves to a {readable_type}, but the active library is a {library_label}."
 
 
+def _parse_optional_id_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    text = str(value).strip()
+    if not text or text.lower() == "none":
+        return []
+
+    if text.startswith("[") and text.endswith("]"):
+        try:
+            parsed = json.loads(text)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+
+    return [item.strip() for item in text.split(",") if item.strip()]
+
+
 @app.route("/lookup_template_string_value", methods=["POST"])
 def lookup_template_string_value():
     data = request.get_json(silent=True) or {}
@@ -10011,10 +10040,7 @@ def lookup_template_string_value():
 
         return jsonify(tmdb_result)
 
-    if preset == "imdb_id_plex":
-        if not library_name:
-            return jsonify({"valid": False, "verified": False, "message": "Active Plex library is required for IMDb lookup."})
-
+    if preset in {"imdb_id_plex", "imdb_id_tmdb"}:
         tmdb_result = _lookup_tmdb_by_imdb_id(value, media_type=media_type)
         tmdb_label = str(tmdb_result.get("label") or "").strip()
         tmdb_message = str(tmdb_result.get("message") or "").strip()
@@ -10032,6 +10058,12 @@ def lookup_template_string_value():
                     "message": warning_message,
                 }
             )
+
+        if preset == "imdb_id_tmdb":
+            return jsonify(tmdb_result)
+
+        if not library_name:
+            return jsonify({"valid": False, "verified": False, "message": "Active Plex library is required for IMDb lookup."})
 
         try:
             result = helpers.find_item_by_imdb_id(library_name, value, media_type, fallback_title=tmdb_label)
@@ -10477,8 +10509,14 @@ def validate_all_services():
         check_regex("item_refresh_delay", r"^(0|[1-9]\d*)$")
         check_regex("minimum_items", r"^[1-9]\d*$")
         check_regex("run_again_delay", r"^(0|[1-9]\d*)$")
-        check_regex("ignore_ids", r"^(None|\d{1,8}(,\d{1,8})*)$", flags=re.IGNORECASE, allow_blank=True)
-        check_regex("ignore_imdb_ids", r"^(None|tt\d{7,8}(,tt\d{7,8})*)$", flags=re.IGNORECASE, allow_blank=True)
+        ignore_ids_values = _parse_optional_id_list(settings_section.get("ignore_ids"))
+        if any(not re.match(r"^\d{1,8}$", item) for item in ignore_ids_values):
+            invalid_fields.append("ignore_ids")
+
+        ignore_imdb_ids_values = _parse_optional_id_list(settings_section.get("ignore_imdb_ids"))
+        if any(not re.match(r"^tt\d{7,8}$", item, re.IGNORECASE) for item in ignore_imdb_ids_values):
+            invalid_fields.append("ignore_imdb_ids")
+
         check_regex("custom_repo", r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$", flags=re.IGNORECASE, allow_blank=True)
 
         asset_dirs = settings_section.get("asset_directory") if isinstance(settings_section, dict) else None

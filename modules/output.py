@@ -306,6 +306,13 @@ def _normalize_collection_template_var_value(key, value):
     return value
 
 
+def _normalize_settings_section_value(key, value):
+    if key in {"ignore_ids", "ignore_imdb_ids"}:
+        list_values = _parse_string_list(value)
+        return ",".join(list_values) if list_values else None
+    return value
+
+
 def _normalize_asset_directory_entry(value):
     if value is None:
         return None
@@ -3231,14 +3238,23 @@ def build_config(header_style="standard", config_name=None):
                         ordered_section[key] = value
                 cleaned_data["trakt"] = ordered_section
 
-        # Ensure `asset_directory` is serialized as a proper YAML list
-        if dump_name == "settings" and "asset_directory" in cleaned_data.get("settings", {}):
-            if isinstance(cleaned_data["settings"]["asset_directory"], str):
-                # Convert multi-line string into a list
-                cleaned_data["settings"]["asset_directory"] = _normalize_asset_directory_values(cleaned_data["settings"]["asset_directory"])
-            elif isinstance(cleaned_data["settings"]["asset_directory"], list):
-                # Ensure all list items are strings
-                cleaned_data["settings"]["asset_directory"] = _normalize_asset_directory_values(cleaned_data["settings"]["asset_directory"])
+        # Ensure settings multi-value inputs are normalized for YAML output.
+        if dump_name == "settings" and isinstance(cleaned_data.get("settings"), dict):
+            settings_block = cleaned_data["settings"]
+            for setting_key in list(settings_block.keys()):
+                normalized_value = _normalize_settings_section_value(setting_key, settings_block.get(setting_key))
+                if normalized_value is None:
+                    settings_block.pop(setting_key, None)
+                else:
+                    settings_block[setting_key] = normalized_value
+
+            if "asset_directory" in settings_block:
+                if isinstance(settings_block["asset_directory"], str):
+                    # Convert multi-line string into a list
+                    settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
+                elif isinstance(settings_block["asset_directory"], list):
+                    # Ensure all list items are strings
+                    settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
 
         # Dump the cleaned data to YAML
         with io.StringIO() as stream:

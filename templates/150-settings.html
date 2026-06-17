@@ -1,6 +1,7 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+<input type="hidden" id="qs-validate-tmdb" value="{{ 'true' if service_validations.tmdb else 'false' }}">
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
 </div>
 <div class="form-floating mb-2">
@@ -746,37 +747,77 @@
           </div>
 
           <div class="row">
+            {% set stored_ignore_ids = data['settings'].get('ignore_ids') %}
+            {% if stored_ignore_ids is string %}
+              {% set stored_ignore_ids_text = stored_ignore_ids.strip() %}
+              {% if not stored_ignore_ids_text or stored_ignore_ids_text.lower() == 'none' %}
+                {% set ignore_ids_json = '[]' %}
+              {% elif stored_ignore_ids_text.startswith('[') and stored_ignore_ids_text.endswith(']') %}
+                {% set ignore_ids_json = stored_ignore_ids_text %}
+              {% else %}
+                {% set ignore_ids_json = (stored_ignore_ids_text.split(',') | map('trim') | reject('equalto', '') | list | tojson) %}
+              {% endif %}
+            {% elif stored_ignore_ids is sequence and stored_ignore_ids is not string %}
+              {% set ignore_ids_json = stored_ignore_ids | tojson %}
+            {% else %}
+              {% set ignore_ids_json = '[]' %}
+            {% endif %}
             <div class="col-md-6">
-              <div class="input-group mb-2">
-                <span class="input-group-text" id="ignore_ids_text"
-                  style="width: 170px; justify-content: space-between;">
+              <div class="mb-2" data-template-string-list data-hidden-input="ignore_ids"
+                data-validation-preset="numeric_id">
+                <div class="input-group">
+                  <span class="input-group-text" id="ignore_ids_text" style="width: 170px;">
                   Ignore IDs
                   <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                     title="Set a list or comma-separated string of TMDb/TVDb IDs to ignore in all collections.">
                     <i class="bi bi-info-circle-fill"></i>
                   </span>
-                </span>
-
-                <input type="text" class="form-control" id="ignore_ids" name="ignore_ids"
-                  value="{{ data['settings']['ignore_ids'] }}">
+                  </span>
+                  <input type="text" class="form-control" id="ignore_ids_input" aria-describedby="ignore_ids_text"
+                    placeholder="Add numeric ID" data-validation-preset="numeric_id">
+                  <button class="btn nav-button" type="button" data-template-string-add>Add</button>
+                </div>
+                <div class="invalid-feedback d-none" data-template-string-feedback></div>
+                <ul class="list-group mt-2" data-template-string-items></ul>
+                <input type="hidden" id="ignore_ids" name="ignore_ids" value="{{ ignore_ids_json }}">
               </div>
-              <div class="error-message text-danger"></div>
             </div>
 
+            {% set stored_ignore_imdb_ids = data['settings'].get('ignore_imdb_ids') %}
+            {% if stored_ignore_imdb_ids is string %}
+              {% set stored_ignore_imdb_ids_text = stored_ignore_imdb_ids.strip() %}
+              {% if not stored_ignore_imdb_ids_text or stored_ignore_imdb_ids_text.lower() == 'none' %}
+                {% set ignore_imdb_ids_json = '[]' %}
+              {% elif stored_ignore_imdb_ids_text.startswith('[') and stored_ignore_imdb_ids_text.endswith(']') %}
+                {% set ignore_imdb_ids_json = stored_ignore_imdb_ids_text %}
+              {% else %}
+                {% set ignore_imdb_ids_json = (stored_ignore_imdb_ids_text.split(',') | map('trim') | reject('equalto', '') | list | tojson) %}
+              {% endif %}
+            {% elif stored_ignore_imdb_ids is sequence and stored_ignore_imdb_ids is not string %}
+              {% set ignore_imdb_ids_json = stored_ignore_imdb_ids | tojson %}
+            {% else %}
+              {% set ignore_imdb_ids_json = '[]' %}
+            {% endif %}
             <div class="col-md-6">
-              <div class="input-group mb-2">
-                <span class="input-group-text" id="ignore_imdb_ids_text">
+              <div class="mb-2" data-template-string-list data-hidden-input="ignore_imdb_ids"
+                data-validation-preset="imdb_id_tmdb">
+                <div class="input-group">
+                  <span class="input-group-text" id="ignore_imdb_ids_text" style="width: 170px;">
                   Ignore IMDb IDs
                   <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                     title="Set a list or comma-separated string of IMDb IDs to ignore in all collections.">
                     <i class="bi bi-info-circle-fill"></i>
                   </span>
-                </span>
-
-                <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids"
-                  value="{{ data['settings']['ignore_imdb_ids'] }}">
+                  </span>
+                  <input type="text" class="form-control" id="ignore_imdb_ids_input"
+                    aria-describedby="ignore_imdb_ids_text" placeholder="Add IMDb ID"
+                    data-validation-preset="imdb_id_tmdb">
+                  <button class="btn nav-button" type="button" data-template-string-add>Add</button>
+                </div>
+                <div class="invalid-feedback d-none" data-template-string-feedback></div>
+                <ul class="list-group mt-2" data-template-string-items></ul>
+                <input type="hidden" id="ignore_imdb_ids" name="ignore_imdb_ids" value="{{ ignore_imdb_ids_json }}">
               </div>
-              <div class="error-message text-danger"></div>
             </div>
           </div>
 
