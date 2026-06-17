@@ -1,5 +1,6 @@
 import argparse
 import gzip
+import inspect
 import io
 import json
 import os
@@ -10065,8 +10066,17 @@ def lookup_template_string_value():
         if not library_name:
             return jsonify({"valid": False, "verified": False, "message": "Active Plex library is required for IMDb lookup."})
 
+        find_item_by_imdb_id = helpers.find_item_by_imdb_id
         try:
-            result = helpers.find_item_by_imdb_id(library_name, value, media_type, fallback_title=tmdb_label)
+            supports_fallback_title = "fallback_title" in inspect.signature(find_item_by_imdb_id).parameters
+        except (TypeError, ValueError):
+            supports_fallback_title = True
+
+        try:
+            if supports_fallback_title:
+                result = find_item_by_imdb_id(library_name, value, media_type, fallback_title=tmdb_label)
+            else:
+                result = find_item_by_imdb_id(library_name, value, media_type)
         except Exception as exc:
             return jsonify({"valid": False, "verified": False, "message": f"Plex lookup failed: {exc}."})
 

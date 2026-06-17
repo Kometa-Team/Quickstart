@@ -214,10 +214,13 @@ def test_playlist_files_follow_library_output_order(monkeypatch, qs_module):
         "libraries": {
             "sho-library_zshows-library": "Z Shows",
             "sho-library_zshows-playlist": "true",
+            "sho-library_zshows-collection_collectionless": True,
             "mov-library_amovies-library": "A Movies",
             "mov-library_amovies-playlist": "true",
+            "mov-library_amovies-collection_collectionless": True,
             "mov-library_bmovies-library": "B Movies",
             "mov-library_bmovies-playlist": "true",
+            "mov-library_bmovies-collection_collectionless": True,
         },
     }
 

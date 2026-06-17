@@ -87,10 +87,15 @@ def test_ignore_imdb_ids_uses_string_list_with_imdb_preset():
             assert "default" not in field
 
 
-def test_ignore_ids_is_not_added_yet():
+def test_ignore_ids_uses_string_list_with_numeric_preset():
     qs_map = _build_qs_collection_map()
+    expected_aliases = _expected_ignore_imdb_ids_aliases()
 
-    for collections in qs_map.values():
-        for collection in collections:
-            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
-            assert "ignore_ids" not in keys
+    for alias in expected_aliases:
+        for collection in qs_map[alias]:
+            if collection.get("readonly"):
+                continue
+            field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "ignore_ids")
+            assert field["type"] == "string_list"
+            assert field["validation_preset"] == "numeric_id"
+            assert "default" not in field
