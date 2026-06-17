@@ -386,6 +386,8 @@ def collect_declared_yaml_patterns(raw: Any, *, parent_key: str | None = None) -
     elif isinstance(raw, list):
         for item in raw:
             if isinstance(item, str):
+                if parent_key == "template":
+                    continue
                 token = item.strip()
                 if token and re.fullmatch(r"[A-Za-z0-9_<>-]+(?:\.[A-Za-z0-9_<>-]+)?", token) and token not in RESERVED:
                     patterns.add(token)
@@ -543,9 +545,6 @@ def build_schema_key_set(schema_path: Path) -> set[str]:
 
 def resolve_default_paths(alias: str, kind: str, kometa_defaults: Path) -> list[Path]:
     support_files: list[Path] = []
-    shared_templates = kometa_defaults / "templates.yml"
-    if shared_templates.exists():
-        support_files.append(shared_templates)
     if kind == "overlay":
         path = kometa_defaults / "overlays" / f"{alias}.yml"
         if path.exists():
@@ -605,9 +604,118 @@ RESERVED = {
 }
 
 
+def kometa_defaults_root_for(path: Path) -> Path:
+    for candidate in [path.parent, *path.parents]:
+        if candidate.name == "defaults":
+            return candidate
+    return path.parent
+
+
+def extract_template_names(raw: Any) -> set[str]:
+    names: set[str] = set()
+    if isinstance(raw, str):
+        token = raw.strip()
+        if token:
+            names.add(token)
+    elif isinstance(raw, dict):
+        name = raw.get("name")
+        if name:
+            names.add(str(name))
+    elif isinstance(raw, list):
+        for item in raw:
+            names.update(extract_template_names(item))
+    return names
+
+
+@lru_cache(maxsize=None)
+def load_template_sections(path: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    parsed = load_yaml(path) or {}
+    local_templates = parsed.get("templates") if isinstance(parsed, dict) else {}
+    if not isinstance(local_templates, dict):
+        local_templates = {}
+
+    shared_templates: dict[str, dict[str, Any]] = {}
+    if not isinstance(parsed, dict):
+        return parsed, shared_templates
+
+    defaults_root = kometa_defaults_root_for(path)
+    external_templates = parsed.get("external_templates")
+    template_defaults: list[str] = []
+    if isinstance(external_templates, dict):
+        external_default = external_templates.get("default")
+        if isinstance(external_default, str):
+            template_defaults.append(external_default)
+        elif isinstance(external_default, list):
+            template_defaults.extend(str(item) for item in external_default if item)
+
+    for template_default in template_defaults:
+        template_path = defaults_root / f"{template_default}.yml"
+        if not template_path.exists():
+            continue
+        shared_parsed = load_yaml(template_path) or {}
+        shared_section = shared_parsed.get("templates") if isinstance(shared_parsed, dict) else {}
+        if isinstance(shared_section, dict):
+            for template_name, template_cfg in shared_section.items():
+                shared_templates[str(template_name)] = template_cfg
+
+    return parsed, shared_templates
+
+
+def _collect_template_patterns(
+    template_name: str,
+    local_templates: dict[str, Any],
+    shared_templates: dict[str, dict[str, Any]],
+    seen: set[str] | None = None,
+) -> set[str]:
+    if seen is None:
+        seen = set()
+    if template_name in seen:
+        return set()
+    seen.add(template_name)
+
+    template_cfg = local_templates.get(template_name)
+    if template_cfg is None:
+        template_cfg = shared_templates.get(template_name)
+    if not isinstance(template_cfg, dict):
+        return set()
+
+    patterns = collect_declared_yaml_patterns(template_cfg)
+    for nested_template in extract_template_names(template_cfg.get("template")):
+        patterns.update(_collect_template_patterns(nested_template, local_templates, shared_templates, seen))
+    return patterns
+
+
 @lru_cache(maxsize=None)
 def patterns_from_default_file(path: Path) -> set[str]:
-    patterns: set[str] = set()
+    try:
+        parsed, shared_templates = load_template_sections(path)
+    except Exception:
+        parsed = None
+        shared_templates = {}
+    if isinstance(parsed, dict):
+        patterns: set[str] = set()
+        external_templates = parsed.get("external_templates")
+        if isinstance(external_templates, dict):
+            template_variables = external_templates.get("template_variables")
+            patterns.update(collect_declared_yaml_patterns(template_variables))
+
+        local_templates = parsed.get("templates")
+        if not isinstance(local_templates, dict):
+            local_templates = {}
+
+        for section_name in ("collections", "dynamic_collections", "overlays", "playlists"):
+            section = parsed.get(section_name)
+            if not isinstance(section, dict):
+                continue
+            for entry_cfg in section.values():
+                if not isinstance(entry_cfg, dict):
+                    continue
+                patterns.update(collect_declared_yaml_patterns(entry_cfg))
+                for template_name in extract_template_names(entry_cfg.get("template")):
+                    patterns.update(_collect_template_patterns(template_name, local_templates, shared_templates))
+        return patterns
+
+    patterns = set()
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.rstrip()
         km = KEY_RE.match(line)
@@ -617,19 +725,11 @@ def patterns_from_default_file(path: Path) -> set[str]:
             token = km.group(1)
         elif lm:
             token = lm.group(1)
-        if not token:
-            continue
-        if token in RESERVED:
+        if not token or token in RESERVED:
             continue
         patterns.add(token)
         if token.endswith(".exists"):
             patterns.add(token[: -len(".exists")])
-    try:
-        parsed = load_yaml(path)
-    except Exception:
-        parsed = None
-    if parsed is not None:
-        patterns.update(collect_declared_yaml_patterns(parsed))
     return patterns
 
 

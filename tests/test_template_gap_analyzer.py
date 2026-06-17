@@ -260,6 +260,35 @@ def test_key_is_valid_for_default_uses_repo_yaml_for_streaming_and_letterboxd_ca
     assert imdb_top_250_valid is True
 
 
+def test_key_is_valid_for_default_only_uses_referenced_template_chain():
+    module = _load_gap_analyzer_module()
+    root = Path(__file__).resolve().parents[1]
+    kometa_defaults = root / "config" / "kometa" / "defaults"
+
+    based_defaults = module.resolve_default_paths("based", "collection", kometa_defaults)
+    genre_defaults = module.resolve_default_paths("genre", "collection", kometa_defaults)
+    network_defaults = module.resolve_default_paths("network", "collection", kometa_defaults)
+    streaming_defaults = module.resolve_default_paths("streaming", "collection", kometa_defaults)
+    seasonal_defaults = module.resolve_default_paths("seasonal", "collection", kometa_defaults)
+    collectionless_defaults = module.resolve_default_paths("collectionless", "collection", kometa_defaults)
+    movie_franchise_defaults = module.resolve_default_paths("franchise", "collection", kometa_defaults)
+    show_franchise_default = [root / "config" / "kometa" / "defaults" / "show" / "franchise.yml"]
+
+    assert module.key_is_valid_for_default("collection_order", based_defaults)[0] is False
+    assert module.key_is_valid_for_default("collection_order", genre_defaults)[0] is False
+    assert module.key_is_valid_for_default("collection_order", streaming_defaults)[0] is False
+    assert module.key_is_valid_for_default("sync_mode", genre_defaults)[0] is False
+    assert module.key_is_valid_for_default("sync_mode", network_defaults)[0] is False
+
+    assert module.key_is_valid_for_default("sync_mode", streaming_defaults)[0] is True
+    assert module.key_is_valid_for_default("sync_mode", seasonal_defaults)[0] is True
+    assert module.key_is_valid_for_default("collection_order", collectionless_defaults)[0] is True
+    assert module.key_is_valid_for_default("collection_order", movie_franchise_defaults)[0] is True
+    assert module.key_is_valid_for_default("sync_mode", movie_franchise_defaults)[0] is True
+    assert module.key_is_valid_for_default("collection_order", show_franchise_default)[0] is True
+    assert module.key_is_valid_for_default("sync_mode", show_franchise_default)[0] is True
+
+
 def test_quickstart_recommendation_summary_uses_yaml_verified_collection_edges():
     module = _load_gap_analyzer_module()
 
