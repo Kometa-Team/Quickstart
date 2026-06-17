@@ -1138,6 +1138,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                     {% set season = namespace(open=false) %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn">
+                                Reset to Defaults
+                            </button>
+                        </div>
                         {% for item in ordered_collection_items
                         if (not item.media_types or library.type in item.media_types)
                         and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
@@ -1161,6 +1166,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             <input class="form-check-input template-child-toggle me-2" type="checkbox"
                                 id="{{ input_name }}" name="{{ input_name }}" value="true"
                                 data-parent-toggle="{{ library.id }}-{{ collection.id }}"
+                                data-default="{{ item.default | default('false', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
                                 {% if disable_toggle
@@ -1188,6 +1194,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             </span>
                             <select class="form-select" id="{{ input_name }}" name="{{ input_name }}"
                                 aria-describedby="{{ input_name }}_text"
+                                data-default="{{ item.default | default('', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
                                 {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
@@ -1262,6 +1269,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% else %}
                         {% set list_json = '[]' %}
                         {% endif %}
+                        {% if item.default is defined and item.default is sequence and item.default is not string %}
+                        {% set list_default_json = item.default | tojson %}
+                        {% elif item.default is defined and item.default is string and item.default|trim %}
+                        {% set list_default_json = item.default %}
+                        {% else %}
+                        {% set list_default_json = '[]' %}
+                        {% endif %}
                         <div class="mb-2" data-template-string-list data-hidden-input="{{ input_name }}"
                             data-library-name="{{ library.name }}"
                             data-media-type="{{ library.type }}"
@@ -1291,7 +1305,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             </div>
                             <div class="invalid-feedback d-none" data-template-string-feedback></div>
                             <ul class="list-group mt-2" data-template-string-items></ul>
-                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}">
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}"
+                                data-default='{{ list_default_json }}'>
                         </div>
                         {% elif item.type == 'relative_year' %}
                         {% set stored_val = data['libraries'].get(input_name, item.default) | default('', true) %}
@@ -1340,7 +1355,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 data-relative-year-value inputmode="numeric"
                                 min="1" step="1" data-numeric-only="true" placeholder="Year or Offset"
                                 aria-label="Year or offset" {% if disable_toggle %}disabled{% endif %}>
-                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}"
+                                data-default="{{ item.default | default('', true) }}">
                         </div>
                         {% elif item.key is defined and item.key.startswith('schedule_') %}
                         {% set schedule_label = 'Schedule' %}
@@ -1457,7 +1473,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     data-schedule-raw
                                     value="{{ stored_val }}" {% if disable_toggle %}disabled{% endif %}>
                             </details>
-                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}"
+                                data-default="{{ item.default | default('', true) }}">
                         </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
@@ -1481,6 +1498,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             </span>
                             <input type="{{ 'number' if is_number_input else 'text' }}" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
                                 value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
+                                data-default="{{ item.default | default('', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
                                 {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}

@@ -576,6 +576,9 @@
 
       addBtn.addEventListener('click', addValue)
       input.addEventListener('input', clearTransientFeedback)
+      hidden.addEventListener('change', () => {
+        syncState(parseValues(), '', { emitChange: false })
+      })
       input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
           event.preventDefault()
