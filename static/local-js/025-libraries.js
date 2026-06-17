@@ -2972,7 +2972,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return
           }
           target.classList.remove('d-none')
-          if (state.valid && state.verified) {
+          if (state.level === 'warning') {
+            target.classList.add('text-warning')
+          } else if (state.valid && state.verified) {
             target.classList.add('text-success')
           } else if (state.verified) {
             target.classList.add('text-danger')
@@ -3097,10 +3099,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 lookupTemplateStringValue(presetName, item.value).then(result => {
                   if (!lookupMeta.isConnected) return
                   if (result.valid && result.verified && result.label) {
+                    const successMessage = result.message || `TMDb: ${result.label}`
                     setLookupState(lookupMeta, {
                       valid: true,
                       verified: true,
-                      message: `TMDb: ${result.label}`
+                      level: result.level,
+                      message: successMessage
                     })
                     return
                   }
@@ -3133,10 +3137,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
                   if (!lookupMeta.isConnected) return
                   if (result.valid && result.verified && result.label) {
+                    const successMessage = result.message || `Plex: ${result.label}`
                     setLookupState(lookupMeta, {
                       valid: true,
                       verified: true,
-                      message: `Plex: ${result.label}`
+                      level: result.level,
+                      message: successMessage
                     })
                     return
                   }

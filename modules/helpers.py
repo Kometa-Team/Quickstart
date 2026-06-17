@@ -1069,27 +1069,66 @@ def get_plex_key_by_name(full_list, target_name):
     return None  # Or raise an exception if you prefer
 
 
-def find_item_by_imdb_id(library_name, imdb_id, media_type):
-    from modules import plex_connection
+def _extract_imdb_id_from_item(item):
+    for guid in getattr(item, "guids", []) or []:
+        guid_id = str(getattr(guid, "id", "") or "").strip().lower()
+        if guid_id.startswith("imdb://"):
+            return guid_id.replace("imdb://", "", 1)
+    return ""
 
-    if not imdb_id:
+
+def _normalize_lookup_title(value):
+    normalized = re.sub(r"\s+", " ", str(value or "").strip().lower())
+    return normalized
+
+
+def find_item_by_imdb_id(library_name, imdb_id, media_type, fallback_title=None):
+    normalized_imdb_id = str(imdb_id or "").strip().lower()
+    if not normalized_imdb_id:
         return None
 
-    plex = plex_connection.connect_to_plex()
-    if not plex:
+    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    if not plex_url or not plex_token:
         return None
 
-    section = plex.library.section(library_name)
-    if not section:
+    plex = PlexServer(plex_url, plex_token, timeout=8)
+
+    try:
+        section = plex.library.section(library_name)
+    except Exception:
         return None
 
-    # Search by IMDb ID
-    results = section.search(guid=f"imdb://{imdb_id}")
-    if not results:
+    def build_match(item, source):
+        title = str(getattr(item, "title", "") or "").strip()
+        if not title:
+            return None
+        return {"id": normalized_imdb_id, "title": title, "source": source}
+
+    def find_exact_imdb_match(candidates, source):
+        for item in candidates or []:
+            if _extract_imdb_id_from_item(item) == normalized_imdb_id:
+                return build_match(item, source)
         return None
 
-    item = results[0]
-    return {"id": imdb_id, "title": item.title}
+    direct_guid_match = find_exact_imdb_match(
+        section.search(guid=f"imdb://{normalized_imdb_id}"),
+        "plex-guid",
+    )
+    if direct_guid_match:
+        return direct_guid_match
+
+    if fallback_title:
+        title_results = section.search(title=fallback_title, maxresults=20)
+        exact_title_guid_match = find_exact_imdb_match(title_results, "plex-title-guid")
+        if exact_title_guid_match:
+            return exact_title_guid_match
+
+        normalized_fallback_title = _normalize_lookup_title(fallback_title)
+        for item in title_results or []:
+            if _normalize_lookup_title(getattr(item, "title", "")) == normalized_fallback_title:
+                return build_match(item, "plex-title")
+
+    return None
 
 
 def allowed_extensions_string():

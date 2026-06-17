@@ -299,6 +299,13 @@ def _parse_string_list(value):
     return _coerce_string_list([value])
 
 
+def _normalize_collection_template_var_value(key, value):
+    if key in {"ignore_ids", "ignore_imdb_ids"}:
+        list_values = _parse_string_list(value)
+        return ",".join(list_values) if list_values else None
+    return value
+
+
 def _normalize_asset_directory_entry(value):
     if value is None:
         return None
@@ -1521,6 +1528,12 @@ def build_libraries_section(
                             template_vars[list_key] = list_values
                         else:
                             template_vars.pop(list_key, None)
+                    for template_key in list(template_vars.keys()):
+                        normalized_value = _normalize_collection_template_var_value(template_key, template_vars.get(template_key))
+                        if normalized_value is None:
+                            template_vars.pop(template_key, None)
+                        else:
+                            template_vars[template_key] = normalized_value
                     if template_vars:
                         file_entry["template_variables"] = template_vars
 
