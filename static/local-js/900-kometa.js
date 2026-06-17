@@ -441,6 +441,43 @@ $(document).ready(function () {
     updateSectionStyleHeaderBadge(value)
   }
 
+  function initBootstrapTooltips (scope, selector, options) {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return
+    const root = scope || document
+    const query = selector || '[data-bs-toggle="tooltip"]'
+    const nodes = []
+    if (root && typeof root.matches === 'function' && root.matches(query)) nodes.push(root)
+    if (root && typeof root.querySelectorAll === 'function') {
+      root.querySelectorAll(query).forEach(el => nodes.push(el))
+    }
+    const seen = new Set()
+    nodes.forEach(el => {
+      if (!el || seen.has(el)) return
+      seen.add(el)
+      const existing = bootstrap.Tooltip.getInstance(el)
+      if (existing) existing.dispose()
+      bootstrap.Tooltip.getOrCreateInstance(el, Object.assign({ html: true, sanitize: false }, options || {}))
+    })
+  }
+
+  function disposeBootstrapTooltips (scope, selector) {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return
+    const root = scope || document
+    const query = selector || '[data-bs-toggle="tooltip"]'
+    const nodes = []
+    if (root && typeof root.matches === 'function' && root.matches(query)) nodes.push(root)
+    if (root && typeof root.querySelectorAll === 'function') {
+      root.querySelectorAll(query).forEach(el => nodes.push(el))
+    }
+    const seen = new Set()
+    nodes.forEach(el => {
+      if (!el || seen.has(el)) return
+      seen.add(el)
+      const existing = bootstrap.Tooltip.getInstance(el)
+      if (existing) existing.dispose()
+    })
+  }
+
   function setActiveGridCard (fontName) {
     if (!headerGrid) return
     const activeFont = normalizeFontName(fontName)
@@ -707,7 +744,7 @@ $(document).ready(function () {
     updateLabels(logFlags, 'opt-')
     updateLabels(otherFlags, 'opt-')
 
-    $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
+    initBootstrapTooltips(document)
     syncFinalAccordionRollups()
   }
 
@@ -826,6 +863,17 @@ $(document).ready(function () {
       .addClass('d-none')
       .removeClass('text-bg-warning text-bg-secondary text-bg-primary')
       .text('Recovery Active')
+  }
+
+  function resolveFreshnessGateAfterBulkValidation () {
+    const gateEl = document.getElementById('final-gate-state')
+    if (gateEl) {
+      gateEl.dataset.stage = 'config'
+      gateEl.dataset.autoValidate = 'false'
+      gateEl.dataset.bulkFresh = 'true'
+    }
+    const panel = document.getElementById('final-gate-panel')
+    if (panel) panel.classList.add('d-none')
   }
 
   function updateRunNowState () {
@@ -1310,13 +1358,8 @@ $(document).ready(function () {
     buildCommand()
   }
 
-  $('[title]').tooltip({ placement: 'top', trigger: 'hover' })
-
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-    // eslint-disable-next-line no-new
-    new bootstrap.Tooltip(tooltipTriggerEl, { html: true })
-  })
+  initBootstrapTooltips(document, '[title]', { html: false, sanitize: true, placement: 'top', trigger: 'hover' })
+  initBootstrapTooltips(document)
 
   function copyTextToClipboard (text) {
     if (!text) return Promise.reject(new Error('Empty text'))
@@ -3390,6 +3433,7 @@ $(document).ready(function () {
 
     document.addEventListener('qs:bulk-validation-complete', function (event) {
       const data = (event && event.detail) ? event.detail : {}
+      const finalGateState = getFinalGateState()
       const results = data.results || {}
       const gateTargets = {
         '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
@@ -3451,6 +3495,13 @@ $(document).ready(function () {
         if (!Number.isNaN(parsed.getTime())) {
           validateAllStatusBulkTime.textContent = formatLocalTimestamp(parsed)
         }
+      }
+
+      if (finalGateState.stage === 'freshness') {
+        resolveFreshnessGateAfterBulkValidation()
+        showToast('info', 'Validation complete. Refreshing Kometa...')
+        setTimeout(() => window.location.reload(), 300)
+        return
       }
 
       updateValidationGate()
@@ -3659,12 +3710,12 @@ $(document).ready(function () {
           const why = KOMETA_UPDATING ? 'Kometa is updating; wait for it to finish.' : 'Kometa is running; stop it before updating.'
           $updateBtn.prop('disabled', true)
             .attr('title', why)
-            .tooltip({ placement: 'top' })
+          initBootstrapTooltips($updateBtn[0], '[title]', { html: false, sanitize: true, placement: 'top', trigger: 'hover' })
           $forceUpdate.prop('disabled', true)
         } else {
           $updateBtn.prop('disabled', false)
             .removeAttr('title')
-            .tooltip('dispose')
+          disposeBootstrapTooltips($updateBtn[0], '[title]')
           $forceUpdate.prop('disabled', false)
         }
 

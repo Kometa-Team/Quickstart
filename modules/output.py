@@ -2880,8 +2880,8 @@ def build_config(header_style="standard", config_name=None):
     with open(os.path.join(helpers.JSON_SCHEMA_DIR, "config-schema.json"), "r") as file:
         schema = yaml.load(file)
 
-    # Fetch kometa_branch dynamically
-    version_info = helpers.check_for_update()
+    # Reuse the shared update snapshot instead of re-checking on every final-page render.
+    version_info = app.config.get("VERSION_CHECK") or helpers.check_for_update()
     kometa_branch = version_info.get("kometa_branch", "nightly")  # Default to nightly if not found
 
     # Fetch other Quickstart details

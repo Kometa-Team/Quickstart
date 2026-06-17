@@ -63,6 +63,10 @@ MAX_LOG_BACKUPS = 10
 RESTART_NOTICE_FILE = os.path.join(CONFIG_DIR, ".restart_notice.json")
 PLEX_DISCOVERY_CACHE_TTL_SECONDS = int(os.environ.get("QS_PLEX_DISCOVERY_CACHE_TTL_SECONDS", "300"))
 _PLEX_DISCOVERY_CACHE = {}
+JSON_SCHEMA_REFRESH_TTL_SECONDS = int(os.environ.get("QS_JSON_SCHEMA_REFRESH_TTL_SECONDS", "1800"))
+_JSON_SCHEMA_LAST_REFRESH_AT = 0.0
+QS_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_UPDATE_CACHE_TTL_SECONDS", "600"))
+_QS_UPDATE_CACHE = {}
 KOMETA_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_KOMETA_UPDATE_CACHE_TTL_SECONDS", "600"))
 _KOMETA_UPDATE_CACHE = {}
 KOMETA_BRANCH_OVERRIDES = {"master", "develop", "nightly"}
@@ -417,6 +421,13 @@ def calculate_hash(content):
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
+def _schema_files_present():
+    return all(
+        os.path.exists(os.path.join(JSON_SCHEMA_DIR, filename))
+        for filename in ("prototype_config.yml", "config-schema.json", "config.yml.template")
+    )
+
+
 def load_previous_hashes():
     """Load the last known hashes of schema files."""
     if not os.path.exists(HASH_FILE):
@@ -439,11 +450,25 @@ def save_hashes(hashes):
 
 def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
+    global _JSON_SCHEMA_LAST_REFRESH_AT
+
     # branch = get_kometa_branch()
     branch = "nightly"
     # Temporary override: use Kometa develop for local schema downloads.
     # Remove the next 3 lines later to return to the shared branch logic.
     branch = "develop"
+
+    if _schema_files_present() and _JSON_SCHEMA_LAST_REFRESH_AT <= 0:
+        try:
+            reference_path = Path(HASH_FILE if os.path.exists(HASH_FILE) else os.path.join(JSON_SCHEMA_DIR, "config-schema.json"))
+            _JSON_SCHEMA_LAST_REFRESH_AT = time.monotonic() - max(0, time.time() - reference_path.stat().st_mtime)
+        except Exception:
+            _JSON_SCHEMA_LAST_REFRESH_AT = time.monotonic()
+
+    if _schema_files_present():
+        age = time.monotonic() - _JSON_SCHEMA_LAST_REFRESH_AT
+        if _JSON_SCHEMA_LAST_REFRESH_AT > 0 and age <= JSON_SCHEMA_REFRESH_TTL_SECONDS:
+            return
 
     previous_hashes = load_previous_hashes()
     new_hashes = {}
@@ -487,6 +512,8 @@ def ensure_json_schema():
 
     # Save updated hashes
     save_hashes(new_hashes)
+    if _schema_files_present():
+        _JSON_SCHEMA_LAST_REFRESH_AT = time.monotonic()
 
 
 def get_remote_version(branch):
@@ -554,6 +581,13 @@ def check_for_update():
     """Compare the local version with the remote version and determine Kometa branch."""
     branch = get_branch()
     local_version = get_version(branch)
+    cache_key = (branch, local_version)
+    cached = _QS_UPDATE_CACHE.get(cache_key)
+    if cached:
+        age = time.monotonic() - cached.get("created_at", 0)
+        if age <= QS_UPDATE_CACHE_TTL_SECONDS:
+            return copy.deepcopy(cached.get("payload") or {})
+
     remote_version = get_remote_version(branch)
 
     update_available = remote_version and remote_version != local_version
@@ -565,7 +599,7 @@ def check_for_update():
     # Get OS name and correct extension
     os_name, os_ext = get_running_os()
 
-    return {
+    payload = {
         "local_version": local_version,
         "remote_version": remote_version,
         "branch": branch,
@@ -574,6 +608,11 @@ def check_for_update():
         "running_on": os_name,
         "file_ext": os_ext,
     }
+    _QS_UPDATE_CACHE[cache_key] = {
+        "created_at": time.monotonic(),
+        "payload": copy.deepcopy(payload),
+    }
+    return payload
 
 
 def get_running_os():
@@ -1065,51 +1104,32 @@ def allowed_extensions_string():
 
 def get_plex_summary():
     try:
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
-        plex = PlexServer(plex_url, plex_token)
+        metadata = get_plex_metadata()
+        if not isinstance(metadata, dict):
+            return "Plex summary unavailable."
 
-        # Core metadata
-        server_name = plex.friendlyName or "Plex Server"
-        version = plex.version or "Unknown Version"
-        platform = plex.platform or "Unknown OS"
-        platform_version = plex.platformVersion or "Unknown Version"
+        server_name = metadata.get("server_name") or "Plex Server"
+        version = metadata.get("version") or "Unknown Version"
+        platform = metadata.get("platform") or "Unknown OS"
+        platform_version = metadata.get("platformVersion") or "Unknown Version"
+        db_cache_str = metadata.get("db_cache") or "Unknown"
 
-        # Settings
-        settings = plex.settings
-
-        # DB Cache
-        try:
-            db_cache_size = settings.get("DatabaseCacheSize").value
-            db_cache_str = f"{db_cache_size} MB"
-        except NotFound:
-            db_cache_str = "Unknown"
-
-        # Update Channel
-        try:
-            update_channel = settings.get("butlerUpdateChannel").value
-            if update_channel == "16":
-                update_channel_str = "Public update channel."
-            elif update_channel == "8":
-                update_channel_str = "PlexPass update channel."
-            else:
-                update_channel_str = f"Unknown update channel ({update_channel})."
-        except NotFound:
+        update_channel = metadata.get("update_channel")
+        if update_channel == "Public update channel":
+            update_channel_str = "Public update channel."
+        elif update_channel == "PlexPass update channel":
+            update_channel_str = "PlexPass update channel."
+        elif update_channel:
+            update_channel_str = f"{update_channel}."
+        else:
             update_channel_str = "Unknown update channel."
 
-        # Plex Pass Status
-        try:
-            plex_pass = plex.myPlexAccount().subscriptionActive
-        except Exception:
-            plex_pass = "Unknown"
-
+        plex_pass = metadata.get("plex_pass", "Unknown")
         plex_pass_str = f"PlexPass: {plex_pass} on {update_channel_str}"
-
-        # Maintenance Window
-        try:
-            start_hour = int(settings.get("butlerStartHour").value)
-            end_hour = int(settings.get("butlerEndHour").value)
-            maintenance_window = f"Scheduled maintenance running between {start_hour}:00 and {end_hour}:00"
-        except Exception:
+        maintenance_window_value = metadata.get("maintenance_window") or "Unavailable"
+        if maintenance_window_value and maintenance_window_value != "Unavailable":
+            maintenance_window = f"Scheduled maintenance running between {maintenance_window_value}"
+        else:
             maintenance_window = "Scheduled maintenance times could not be found."
 
         # Final summary string
@@ -1317,6 +1337,31 @@ def contains_non_latin(text):
     return bool(re.search(r"[^\x00-\x7F]", text))
 
 
+def _read_text_if_exists(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+
+def _directory_tree_signature(root: Path) -> list[tuple[str, int, int]]:
+    if not root.exists() or not root.is_dir():
+        return []
+
+    entries: list[tuple[str, int, int]] = []
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root).as_posix()
+        if path.is_dir():
+            entries.append((f"{relative}/", 0, 0))
+            continue
+        try:
+            stats = path.stat()
+            entries.append((relative, int(stats.st_size), int(stats.st_mtime_ns)))
+        except Exception:
+            entries.append((relative, -1, -1))
+    return entries
+
+
 def save_to_named_config(yaml_text, config_name, font_refs=None):
     config_dir = Path(CONFIG_DIR)
     kometa_root = get_kometa_root_path()
@@ -1333,8 +1378,25 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
     if history_limit < 0:
         history_limit = 0
 
-    # If latest exists, archive it to _1, _2, etc.
-    if latest_path.exists():
+    existing_local_yaml = _read_text_if_exists(latest_path)
+    local_needs_write = existing_local_yaml != yaml_text
+
+    config_dir.mkdir(parents=True, exist_ok=True)
+    kometa_write_ok = True
+    try:
+        kometa_config_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        kometa_write_ok = False
+        ts_log(f"Failed to create Kometa config directory {kometa_config_dir}: {exc}", level="WARNING")
+
+    if kometa_write_ok:
+        existing_kometa_yaml = _read_text_if_exists(kometa_path)
+        kometa_needs_write = existing_kometa_yaml != yaml_text
+    else:
+        kometa_needs_write = False
+
+    # Only rotate config history when the generated YAML actually changed.
+    if local_needs_write and latest_path.exists():
         archive_dir = config_dir / "archives" / name
         archive_dir.mkdir(parents=True, exist_ok=True)
         counter = 1
@@ -1354,18 +1416,15 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
                     except Exception as exc:
                         ts_log(f"Failed to prune archive {old_path}: {exc}", level="WARNING")
 
-    # Save the new config to both locations
-    config_dir.mkdir(parents=True, exist_ok=True)
-    kometa_write_ok = True
-    try:
-        kometa_config_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        kometa_write_ok = False
-        ts_log(f"Failed to create Kometa config directory {kometa_config_dir}: {exc}", level="WARNING")
+    if local_needs_write:
+        try:
+            with open(latest_path, "w", encoding="utf-8") as f:
+                f.write(yaml_text)
+        except OSError as exc:
+            ts_log(f"Failed to write Quickstart config to {latest_path}: {exc}", level="WARNING")
+            raise
 
-    with open(latest_path, "w", encoding="utf-8") as f:
-        f.write(yaml_text)
-    if kometa_write_ok:
+    if kometa_write_ok and kometa_needs_write:
         try:
             with open(kometa_path, "w", encoding="utf-8") as f:
                 f.write(yaml_text)
@@ -1400,9 +1459,14 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
         except Exception as exc:
             ts_log(f"Failed to sync managed library artifacts to Kometa: {exc}", level="WARNING")
 
-    ts_log(f"Saved new config to: {latest_path}")
-    if kometa_write_ok:
+    if local_needs_write:
+        ts_log(f"Saved new config to: {latest_path}")
+    else:
+        ts_log(f"Config unchanged; reused existing Quickstart config at: {latest_path}")
+    if kometa_write_ok and kometa_needs_write:
         ts_log(f"Also copied config to: {kometa_path}")
+    elif kometa_write_ok:
+        ts_log(f"Kometa config unchanged; reused existing copy at: {kometa_path}")
 
     # Return POSIX-style filename (used for CLI path like --config config/name_config.yml)
     return latest_path.name
@@ -2946,6 +3010,9 @@ def sync_managed_library_artifacts_to_kometa(config_name: str | None, kometa_roo
                 pass
 
             try:
+                if destination_dir.exists() and _directory_tree_signature(source_dir) == _directory_tree_signature(destination_dir):
+                    synced.append(str(destination_dir))
+                    continue
                 destination_dir.parent.mkdir(parents=True, exist_ok=True)
                 if destination_dir.exists():
                     shutil.rmtree(destination_dir, onerror=handle_remove_readonly)
