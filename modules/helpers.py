@@ -451,9 +451,6 @@ def ensure_json_schema():
 
     # branch = get_kometa_branch()
     branch = "nightly"
-    # Temporary override: use Kometa develop for local schema downloads.
-    # Remove the next 3 lines later to return to the shared branch logic.
-    branch = "develop"
 
     if _schema_files_present() and _JSON_SCHEMA_LAST_REFRESH_AT <= 0:
         try:
