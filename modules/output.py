@@ -17,6 +17,8 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
 
+_EMPTY_OUTPUT = object()
+
 from modules import helpers, persistence, database
 
 LIBRARY_RADARR_FIELDS = {
@@ -998,6 +1000,48 @@ def _collapse_collection_data_template_vars(config_data):
                 template_vars["data"] = existing
             else:
                 template_vars["data"] = data_block
+    return config_data
+
+
+def _normalize_legacy_collection_template_vars(config_data):
+    if not isinstance(config_data, dict):
+        return config_data
+    libraries_section = config_data.get("libraries", {})
+    libraries = None
+    if isinstance(libraries_section, dict):
+        nested = libraries_section.get("libraries")
+        if isinstance(nested, dict):
+            libraries = nested
+        else:
+            libraries = libraries_section
+    if not isinstance(libraries, dict):
+        return config_data
+
+    letterboxd_key_map = {
+        "use_top_250": "use_top_500",
+        "radarr_add_missing_top_250": "radarr_add_missing_top_500",
+        "visible_home_top_250": "visible_home_top_500",
+        "visible_library_top_250": "visible_library_top_500",
+        "visible_shared_top_250": "visible_shared_top_500",
+        "limit_top_250": "limit_top_500",
+    }
+
+    for library_data in libraries.values():
+        if not isinstance(library_data, dict):
+            continue
+        collection_files = library_data.get("collection_files")
+        if not isinstance(collection_files, list):
+            continue
+        for entry in collection_files:
+            if not isinstance(entry, dict) or entry.get("default") != "letterboxd":
+                continue
+            template_vars = entry.get("template_variables")
+            if not isinstance(template_vars, dict):
+                continue
+            for old_key, new_key in letterboxd_key_map.items():
+                if old_key not in template_vars or new_key in template_vars:
+                    continue
+                template_vars[new_key] = template_vars.pop(old_key)
     return config_data
 
 
@@ -3033,6 +3077,31 @@ def build_config(header_style="standard", config_name=None):
             lambda self, _: self.represent_scalar("tag:yaml.org,2002:null", ""),
         )
 
+        def _prune_empty_output_values(obj):
+            if isinstance(obj, dict):
+                pruned = {}
+                for key, value in obj.items():
+                    if key == "valid":
+                        continue
+                    cleaned_value = _prune_empty_output_values(value)
+                    if cleaned_value is _EMPTY_OUTPUT:
+                        continue
+                    pruned[key] = cleaned_value
+                return pruned if pruned else _EMPTY_OUTPUT
+            if isinstance(obj, list):
+                cleaned_items = []
+                for value in obj:
+                    cleaned_value = _prune_empty_output_values(value)
+                    if cleaned_value is _EMPTY_OUTPUT:
+                        continue
+                    cleaned_items.append(cleaned_value)
+                return cleaned_items if cleaned_items else _EMPTY_OUTPUT
+            if obj is None:
+                return _EMPTY_OUTPUT
+            if isinstance(obj, str) and obj.strip() == "":
+                return _EMPTY_OUTPUT
+            return obj
+
         def clean_data(obj):
             if isinstance(obj, dict):
                 # Sort specific sections alphabetically
@@ -3056,14 +3125,30 @@ def build_config(header_style="standard", config_name=None):
                     "mal",
                 ]:
                     obj = dict(sorted(obj.items()))  # Alphabetically sort keys in the section
-                return {k: clean_data(v) for k, v in obj.items() if k != "valid"}
+                cleaned_dict = {}
+                for k, v in obj.items():
+                    if k == "valid":
+                        continue
+                    cleaned_value = clean_data(v)
+                    if cleaned_value is _EMPTY_OUTPUT:
+                        continue
+                    cleaned_dict[k] = cleaned_value
+                return cleaned_dict if cleaned_dict else _EMPTY_OUTPUT
             elif isinstance(obj, list):
-                return [clean_data(v) for v in obj]
+                cleaned_list = []
+                for v in obj:
+                    cleaned_value = clean_data(v)
+                    if cleaned_value is _EMPTY_OUTPUT:
+                        continue
+                    cleaned_list.append(cleaned_value)
+                return cleaned_list if cleaned_list else _EMPTY_OUTPUT
             else:
-                return obj
+                return _prune_empty_output_values(obj)
 
         # Clean the data
         cleaned_data = clean_data(data)
+        if cleaned_data is _EMPTY_OUTPUT:
+            cleaned_data = {}
         if dump_name == "libraries" and isinstance(cleaned_data, dict) and "libraries" not in cleaned_data:
             cleaned_data = {"libraries": cleaned_data}
         if dump_name == "anidb":
@@ -3224,6 +3309,7 @@ def build_config(header_style="standard", config_name=None):
         authorization_data = config_data["mal"]["mal"].get("authorization", {})
         authorization_data.pop("code_verifier", None)  # Remove safely
 
+    config_data = _normalize_legacy_collection_template_vars(config_data)
     optimize_defaults = helpers.booler(app.config.get("QS_OPTIMIZE_DEFAULTS", True))
     if optimize_defaults:
         config_data = optimize_template_variables(config_data, library_types)
