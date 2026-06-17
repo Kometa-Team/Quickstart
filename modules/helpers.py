@@ -1082,6 +1082,30 @@ def _normalize_lookup_title(value):
     return normalized
 
 
+def find_item_by_title(library_name, title):
+    normalized_title = _normalize_lookup_title(title)
+    if not normalized_title:
+        return None
+
+    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    if not plex_url or not plex_token:
+        return None
+
+    plex = PlexServer(plex_url, plex_token, timeout=8)
+
+    try:
+        section = plex.library.section(library_name)
+    except Exception:
+        return None
+
+    results = section.search(title=title, maxresults=20)
+    for item in results or []:
+        item_title = str(getattr(item, "title", "") or "").strip()
+        if _normalize_lookup_title(item_title) == normalized_title:
+            return {"title": item_title}
+    return None
+
+
 def find_item_by_imdb_id(library_name, imdb_id, media_type, fallback_title=None):
     normalized_imdb_id = str(imdb_id or "").strip().lower()
     if not normalized_imdb_id:

@@ -2712,6 +2712,14 @@ document.addEventListener('DOMContentLoaded', function () {
           ? { valid: true }
           : { valid: false, message: 'Enter a numeric TMDb collection ID like 131292.' }
       },
+      numeric_id: {
+        duplicateInsensitive: true,
+        normalize: value => value,
+        lookupService: 'tmdb',
+        validate: value => /^\d+$/.test(value)
+          ? { valid: true }
+          : { valid: false, message: 'Enter a numeric ID like 603 or 1399.' }
+      },
       imdb_id_plex: {
         duplicateInsensitive: true,
         normalize: value => value.toLowerCase(),
@@ -3096,7 +3104,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   verified: false,
                   message: 'Checking TMDb collection title...'
                 })
-                lookupTemplateStringValue(presetName, item.value).then(result => {
+                lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
                   if (!lookupMeta.isConnected) return
                   if (result.valid && result.verified && result.label) {
                     const successMessage = result.message || `TMDb: ${result.label}`

@@ -181,6 +181,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -836,6 +844,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -1459,6 +1475,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -2086,6 +2110,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -2709,6 +2741,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -3347,6 +3387,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -3963,6 +4011,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -4610,6 +4666,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -5238,6 +5302,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -5861,6 +5933,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -6499,6 +6579,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -7104,6 +7192,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -7731,6 +7827,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -8354,6 +8458,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -8981,6 +9093,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -9598,6 +9718,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -10213,6 +10341,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -10767,6 +10903,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -11378,6 +11522,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -12107,6 +12259,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -12882,6 +13042,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -13616,6 +13784,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -14000,6 +14176,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -14750,6 +14934,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -15907,6 +16099,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -17127,6 +17327,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -17715,6 +17923,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -19492,6 +19708,14 @@
             "default": 2
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -20402,6 +20626,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -21335,6 +21567,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -21812,6 +22052,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -22294,6 +22542,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -22772,6 +23028,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -23254,6 +23518,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -23732,6 +24004,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -24214,6 +24494,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -24692,6 +24980,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -25188,6 +25484,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -25695,6 +25999,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -26571,6 +26883,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -27660,6 +27980,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -28401,6 +28729,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -29056,6 +29392,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -29522,6 +29866,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -30011,6 +30363,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -30544,6 +30904,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -31045,6 +31413,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -31559,6 +31935,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -32069,6 +32453,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -33060,6 +33452,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -33908,6 +34308,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -34361,6 +34769,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -35455,6 +35871,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
@@ -36573,6 +36997,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -37016,6 +37448,14 @@
             "step": 1
           },
           {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
+          },
+          {
             "key": "ignore_imdb_ids",
             "label": "Ignore IMDb IDs",
             "type": "string_list",
@@ -37457,6 +37897,14 @@
             "input_type": "number",
             "min": 1,
             "step": 1
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id"
           },
           {
             "key": "ignore_imdb_ids",
