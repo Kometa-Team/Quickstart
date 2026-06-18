@@ -1448,6 +1448,65 @@ def test_collapse_collection_data_template_vars_removes_flat_data_keys_from_all_
             assert isinstance(template_variables["data"], dict)
 
 
+def test_normalize_collection_template_var_value_handles_dynamic_family_controls():
+    from modules import output
+
+    assert output._normalize_collection_template_var_value("append_include", '["US", "CA", "US"]') == ["US", "CA"]
+    assert output._normalize_collection_template_var_value("remove_suffix", '["Collection", " Edition ", "Collection"]') == "Collection,Edition"
+    assert output._normalize_collection_template_var_value(
+        "addons",
+        '{"Action": ["Adventure", "Adventure", "Thriller"], "Drama": "Crime, Mystery", "": ["Skip"]}',
+    ) == {
+        "Action": ["Adventure", "Thriller"],
+        "Drama": ["Crime", "Mystery"],
+    }
+    assert output._normalize_collection_template_var_value(
+        "append_addons",
+        '{"Top 250": ["IMDb Top 250"]}',
+    ) == {"Top 250": ["IMDb Top 250"]}
+
+
+def test_dynamic_family_template_var_normalization_matches_collection_export_shapes():
+    from modules import output
+
+    template_vars = {
+        "include": '["US", "CA"]',
+        "append_include": '["MX", "CA"]',
+        "addons": '{"US": ["Canada", "Mexico"], "CA": "United States"}',
+        "append_addons": '{"US": ["Brazil"]}',
+        "remove_suffix": '["Collection"]',
+    }
+
+    for list_key in ("include", "exclude", "exclude_prefix"):
+        if list_key not in template_vars:
+            continue
+        list_values = output._parse_string_list(template_vars.get(list_key))
+        if list_values:
+            template_vars[list_key] = list_values
+        else:
+            template_vars.pop(list_key, None)
+
+    for template_key in list(template_vars.keys()):
+        normalized_value = output._normalize_collection_template_var_value(template_key, template_vars.get(template_key))
+        if normalized_value is None:
+            template_vars.pop(template_key, None)
+        else:
+            template_vars[template_key] = normalized_value
+
+    assert template_vars == {
+        "include": ["US", "CA"],
+        "append_include": ["MX", "CA"],
+        "addons": {
+            "US": ["Canada", "Mexico"],
+            "CA": ["United States"],
+        },
+        "append_addons": {
+            "US": ["Brazil"],
+        },
+        "remove_suffix": "Collection",
+    }
+
+
 def test_build_config_prunes_default_horizontal_ratings_offsets(app, monkeypatch):
     from flask import session
     from modules import output

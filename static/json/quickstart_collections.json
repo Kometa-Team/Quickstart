@@ -13,7 +13,8 @@
         ],
         "readonly": true,
         "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
-        "tooltip_variant": "danger"
+        "tooltip_variant": "danger",
+        "template_variables": []
       },
       {
         "id": "collection_oscars",
@@ -11874,7 +11875,8 @@
         ],
         "readonly": true,
         "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
-        "tooltip_variant": "danger"
+        "tooltip_variant": "danger",
+        "template_variables": []
       },
       {
         "id": "collection_basic",
@@ -20990,6 +20992,22 @@
             "placeholder": "Add genre name (e.g. Politics)"
           },
           {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional genres that should be grouped into that collection.",
+            "key_placeholder": "Base genre (e.g. Drama)",
+            "value_placeholder": "Add comma-separated genres (e.g. Crime, Mystery)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional genres mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base genre (e.g. Drama)",
+            "value_placeholder": "Add comma-separated genres (e.g. Crime, Mystery)"
+          },
+          {
             "key": "minimum_items",
             "label": "Minimum Items",
             "type": "text_input",
@@ -21445,6 +21463,29 @@
             "validation_preset": "tmdb_collection_id",
             "tooltip": "Exclude specific TMDb collections from these collections.",
             "placeholder": "Add TMDb collection ID (e.g. 131292)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional franchises that should be grouped into that collection.",
+            "key_placeholder": "Base franchise (e.g. Star Wars)",
+            "value_placeholder": "Add comma-separated franchises (e.g. The Clone Wars, Rebels)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional franchises mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base franchise (e.g. Star Wars)",
+            "value_placeholder": "Add comma-separated franchises (e.g. The Clone Wars, Rebels)"
+          },
+          {
+            "key": "remove_suffix",
+            "label": "Remove Suffix",
+            "type": "string_list",
+            "tooltip": "Remove these suffixes from the generated collection titles for this Defaults File.",
+            "placeholder": "Add suffix (e.g. Collection)"
           },
           {
             "key": "minimum_items",
@@ -21953,6 +21994,22 @@
             "type": "text_input",
             "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
             "placeholder": "Leave blank or enter a value like 040"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional franchises that should be grouped into that collection.",
+            "key_placeholder": "Base franchise (e.g. Star Wars)",
+            "value_placeholder": "Add comma-separated franchises (e.g. The Clone Wars, Rebels)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional franchises mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base franchise (e.g. Star Wars)",
+            "value_placeholder": "Add comma-separated franchises (e.g. The Clone Wars, Rebels)"
           },
           {
             "key": "minimum_items",
@@ -25149,11 +25206,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these US content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. PG-13)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional US content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. PG-13)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. PG-13)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional US content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. PG-13)",
+            "value_placeholder": "Add comma-separated ratings (e.g. TV-14, TV-PG)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional US content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. PG-13)",
+            "value_placeholder": "Add comma-separated ratings (e.g. TV-14, TV-PG)"
           },
           {
             "key": "minimum_items",
@@ -25646,11 +25734,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these US content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. PG-13)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional US content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. PG-13)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. TV-14)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional US content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. PG-13)",
+            "value_placeholder": "Add comma-separated ratings (e.g. TV-14, TV-PG)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional US content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. PG-13)",
+            "value_placeholder": "Add comma-separated ratings (e.g. TV-14, TV-PG)"
           },
           {
             "key": "minimum_items",
@@ -26144,11 +26263,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these UK content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. 15)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional UK content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. 15)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. 15)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional UK content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. 15)",
+            "value_placeholder": "Add comma-separated ratings (e.g. 12, 18)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional UK content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. 15)",
+            "value_placeholder": "Add comma-separated ratings (e.g. 12, 18)"
           },
           {
             "key": "minimum_items",
@@ -26652,11 +26802,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these DE content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. 16)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional DE content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. 16)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. 12)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional DE content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. 16)",
+            "value_placeholder": "Add comma-separated ratings (e.g. 12, 18)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional DE content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. 16)",
+            "value_placeholder": "Add comma-separated ratings (e.g. 12, 18)"
           },
           {
             "key": "minimum_items",
@@ -27160,11 +27341,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these AU content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. MA15+)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional AU content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. MA15+)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. M)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional AU content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. MA15+)",
+            "value_placeholder": "Add comma-separated ratings (e.g. M, R18+)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional AU content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. MA15+)",
+            "value_placeholder": "Add comma-separated ratings (e.g. M, R18+)"
           },
           {
             "key": "minimum_items",
@@ -27668,11 +27880,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these NZ content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. M)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional NZ content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. M)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. PG)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional NZ content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. M)",
+            "value_placeholder": "Add comma-separated ratings (e.g. PG, R16)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional NZ content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. M)",
+            "value_placeholder": "Add comma-separated ratings (e.g. PG, R16)"
           },
           {
             "key": "minimum_items",
@@ -28176,11 +28419,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these MAL content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. PG-13)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional MAL content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. PG-13)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. PG-13)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional MAL content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. PG-13)",
+            "value_placeholder": "Add comma-separated ratings (e.g. G, R)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional MAL content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. PG-13)",
+            "value_placeholder": "Add comma-separated ratings (e.g. G, R)"
           },
           {
             "key": "minimum_items",
@@ -28684,11 +28958,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these CS content ratings. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add rating (e.g. 15)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional CS content ratings to the default include list for this Defaults File.",
+            "placeholder": "Add rating (e.g. 15)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific content ratings from these collections.",
             "placeholder": "Add content rating (e.g. 13)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional CS content ratings that should be grouped into that collection.",
+            "key_placeholder": "Base rating (e.g. 15)",
+            "value_placeholder": "Add comma-separated ratings (e.g. 12, 18)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional CS content ratings mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base rating (e.g. 15)",
+            "value_placeholder": "Add comma-separated ratings (e.g. 12, 18)"
           },
           {
             "key": "minimum_items",
@@ -29208,11 +29513,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these countries. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add country (e.g. France)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional countries to the default include list for this Defaults File.",
+            "placeholder": "Add country (e.g. France)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
             "placeholder": "Add country name (e.g. France)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional countries that should be grouped into that collection.",
+            "key_placeholder": "Base country (e.g. France)",
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional countries mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base country (e.g. France)",
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
           },
           {
             "key": "minimum_items",
@@ -29733,11 +30069,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these countries. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add country (e.g. France)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional countries to the default include list for this Defaults File.",
+            "placeholder": "Add country (e.g. France)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
             "placeholder": "Add country name (e.g. France)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional countries that should be grouped into that collection.",
+            "key_placeholder": "Base country (e.g. France)",
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional countries mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base country (e.g. France)",
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
           },
           {
             "key": "minimum_items",
@@ -30627,11 +30994,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these regions. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add region (e.g. US)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional regions to the default include list for this Defaults File.",
+            "placeholder": "Add region (e.g. US)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific regions from these collections.",
             "placeholder": "Add region name (e.g. Melanesia)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional regions that should be grouped into that collection.",
+            "key_placeholder": "Base region (e.g. US)",
+            "value_placeholder": "Add comma-separated regions (e.g. CA, MX)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional regions mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base region (e.g. US)",
+            "value_placeholder": "Add comma-separated regions (e.g. CA, MX)"
           },
           {
             "key": "minimum_items",
@@ -31742,11 +32140,42 @@
             "step": 1
           },
           {
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these continents. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add continent (e.g. Europe)",
+            "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional continents to the default include list for this Defaults File.",
+            "placeholder": "Add continent (e.g. Europe)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific continents from these collections.",
             "placeholder": "Add continent name (e.g. Europe)"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional continents that should be grouped into that collection.",
+            "key_placeholder": "Base continent (e.g. Europe)",
+            "value_placeholder": "Add comma-separated continents (e.g. Asia, Africa)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional continents mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base continent (e.g. Europe)",
+            "value_placeholder": "Add comma-separated continents (e.g. Asia, Africa)"
           },
           {
             "key": "minimum_items",
@@ -33193,12 +33622,35 @@
             "mutually_exclusive_with": "exclude"
           },
           {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional resolutions to the default include list for this Defaults File.",
+            "placeholder": "Add resolution key (e.g. 4k)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific resolutions from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add resolution key (e.g. 4k)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional resolutions that should be grouped into that collection.",
+            "key_placeholder": "Base resolution (e.g. 4k)",
+            "value_placeholder": "Add comma-separated resolutions (e.g. 2160p, uhd)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional resolutions mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base resolution (e.g. 4k)",
+            "value_placeholder": "Add comma-separated resolutions (e.g. 2160p, uhd)"
           },
           {
             "key": "minimum_items",
@@ -33687,6 +34139,13 @@
             "tooltip": "Only create collections for these audio languages. Kometa code allows this with Exclude, but the wiki says not to combine them.",
             "placeholder": "Add language code (e.g. fr)",
             "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional audio languages to the default include list for this Defaults File.",
+            "placeholder": "Add language code (e.g. fr)"
           },
           {
             "key": "exclude",
@@ -34204,6 +34663,13 @@
             "tooltip": "Only create collections for these subtitle languages. Kometa code allows this with Exclude, but the wiki says not to combine them.",
             "placeholder": "Add language code (e.g. fr)",
             "mutually_exclusive_with": "exclude"
+          },
+          {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional subtitle languages to the default include list for this Defaults File.",
+            "placeholder": "Add language code (e.g. fr)"
           },
           {
             "key": "exclude",
@@ -38405,12 +38871,35 @@
             "mutually_exclusive_with": "exclude"
           },
           {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional studios to the default include list for this Defaults File.",
+            "placeholder": "Add studio (e.g. A24)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific studios from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add studio name (e.g. Marvel Studios)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional studios that should be grouped into that collection.",
+            "key_placeholder": "Base studio (e.g. A24)",
+            "value_placeholder": "Add comma-separated studios (e.g. Neon, IFC Films)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional studios mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base studio (e.g. A24)",
+            "value_placeholder": "Add comma-separated studios (e.g. Neon, IFC Films)"
           },
           {
             "key": "minimum_items",
@@ -38888,12 +39377,35 @@
             "mutually_exclusive_with": "exclude"
           },
           {
+            "key": "append_include",
+            "label": "Append Include",
+            "type": "string_list",
+            "tooltip": "Append additional networks to the default include list for this Defaults File.",
+            "placeholder": "Add network (e.g. HBO)"
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific networks from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add network name (e.g. HBO)",
             "mutually_exclusive_with": "include"
+          },
+          {
+            "key": "addons",
+            "label": "Addons",
+            "type": "mapping_list",
+            "tooltip": "Map a base value to additional networks that should be grouped into that collection.",
+            "key_placeholder": "Base network (e.g. HBO)",
+            "value_placeholder": "Add comma-separated networks (e.g. Max, HBO Max)"
+          },
+          {
+            "key": "append_addons",
+            "label": "Append Addons",
+            "type": "mapping_list",
+            "tooltip": "Append additional networks mappings to the default addons dictionary for this Defaults File.",
+            "key_placeholder": "Base network (e.g. HBO)",
+            "value_placeholder": "Add comma-separated networks (e.g. Max, HBO Max)"
           },
           {
             "key": "minimum_items",

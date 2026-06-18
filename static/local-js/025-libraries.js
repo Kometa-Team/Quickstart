@@ -3236,11 +3236,165 @@ document.addEventListener('DOMContentLoaded', function () {
         syncState(parseValues())
 
         addBtn.addEventListener('click', addValue)
+        hidden.addEventListener('change', () => {
+          syncState(parseValues())
+        })
         input.addEventListener('input', clearTransientFeedback)
         input.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
             event.preventDefault()
             addValue()
+          }
+        })
+
+        wrapper.dataset.listenerAdded = 'true'
+      })
+    }
+
+    function setupTemplateMappingListHandlers (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-template-mapping-list]').forEach(wrapper => {
+        if (wrapper.dataset.listenerAdded) return
+
+        const hiddenId = wrapper.dataset.hiddenInput
+        const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
+        const keyInput = wrapper.querySelector('[data-template-mapping-key]')
+        const valueInput = wrapper.querySelector('[data-template-mapping-value]')
+        const addBtn = wrapper.querySelector('[data-template-mapping-add]')
+        const list = wrapper.querySelector('[data-template-mapping-items]')
+        const feedback = wrapper.querySelector('[data-template-mapping-feedback]')
+
+        if (!hidden || !keyInput || !valueInput || !addBtn || !list) return
+
+        function parseValuesList (rawValue) {
+          if (Array.isArray(rawValue)) {
+            return rawValue.map(item => String(item).trim()).filter(Boolean)
+          }
+          const text = String(rawValue || '').trim()
+          if (!text) return []
+          return text.split(',').map(item => item.trim()).filter(Boolean)
+        }
+
+        function parseStoredMapping (rawValue) {
+          const raw = String(rawValue || '').trim()
+          if (!raw) return {}
+          try {
+            const parsed = JSON.parse(raw)
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              return parsed
+            }
+          } catch (e) {
+            // fall through to empty mapping
+          }
+          return {}
+        }
+
+        function setFeedback (message = '') {
+          if (!feedback) return
+          feedback.textContent = message
+          feedback.classList.toggle('d-none', !message)
+          feedback.classList.toggle('d-block', Boolean(message))
+        }
+
+        function normalizeMapping (mapping) {
+          const normalized = {}
+          Object.entries(mapping || {}).forEach(([rawKey, rawValues]) => {
+            const key = String(rawKey || '').trim()
+            if (!key) return
+            const values = parseValuesList(rawValues)
+            if (!values.length) return
+            normalized[key] = values
+          })
+          return normalized
+        }
+
+        function renderList (mapping) {
+          list.replaceChildren()
+          Object.entries(mapping).forEach(([key, values]) => {
+            const li = document.createElement('li')
+            li.className = 'list-group-item d-flex justify-content-between align-items-center'
+
+            const textWrap = document.createElement('div')
+            textWrap.className = 'd-flex flex-column'
+
+            const title = document.createElement('span')
+            title.textContent = key
+            textWrap.appendChild(title)
+
+            const details = document.createElement('div')
+            details.className = 'small text-muted'
+            details.textContent = values.join(', ')
+            textWrap.appendChild(details)
+
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'btn btn-sm btn-danger'
+            button.setAttribute('aria-label', 'Remove')
+            const icon = document.createElement('i')
+            icon.className = 'bi bi-x-lg'
+            button.appendChild(icon)
+
+            li.append(textWrap, button)
+            list.appendChild(li)
+
+            button.addEventListener('click', () => {
+              const current = normalizeMapping(parseStoredMapping(hidden.value))
+              delete current[key]
+              hidden.value = JSON.stringify(current)
+              renderList(current)
+              setFeedback('')
+            })
+          })
+        }
+
+        function syncState (mapping, message = '') {
+          const normalized = normalizeMapping(mapping)
+          hidden.value = JSON.stringify(normalized)
+          renderList(normalized)
+          setFeedback(message)
+          return normalized
+        }
+
+        function addEntry () {
+          const key = String(keyInput.value || '').trim()
+          if (!key) {
+            setFeedback('Enter a key before adding it.')
+            return
+          }
+          const values = parseValuesList(valueInput.value)
+          if (!values.length) {
+            setFeedback('Enter at least one value before adding it.')
+            return
+          }
+          const current = normalizeMapping(parseStoredMapping(hidden.value))
+          current[key] = values
+          syncState(current)
+          keyInput.value = ''
+          valueInput.value = ''
+        }
+
+        syncState(parseStoredMapping(hidden.value))
+
+        addBtn.addEventListener('click', addEntry)
+        hidden.addEventListener('change', () => {
+          syncState(parseStoredMapping(hidden.value))
+        })
+        keyInput.addEventListener('input', () => {
+          setFeedback('')
+        })
+        valueInput.addEventListener('input', () => {
+          setFeedback('')
+        })
+        keyInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            addEntry()
+          }
+        })
+        valueInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            addEntry()
           }
         })
 
@@ -3887,6 +4041,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setupCustomStringListHandlers('mass_content_rating_update', card)
       setupCustomStringListHandlers('mass_genre_mapper', card)
       setupTemplateStringListHandlers(card)
+      setupTemplateMappingListHandlers(card)
       setupMappingListHandlers('genre_mapper', card)
       setupMappingListHandlers('content_rating_mapper', card)
       wireOverlayDetailToggles(card)
@@ -4376,6 +4531,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setupCustomStringListHandlers('metadata_backup')
     setupCustomStringListHandlers('mass_content_rating_update')
     setupCustomStringListHandlers('mass_genre_mapper')
+    setupTemplateStringListHandlers()
+    setupTemplateMappingListHandlers()
     setupMappingListHandlers('genre_mapper')
     setupMappingListHandlers('content_rating_mapper')
 

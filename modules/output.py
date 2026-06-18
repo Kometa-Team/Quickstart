@@ -299,9 +299,73 @@ def _parse_string_list(value):
     return _coerce_string_list([value])
 
 
+def _parse_comma_string_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return _coerce_string_list(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return []
+        if stripped.startswith("[") and stripped.endswith("]"):
+            try:
+                parsed = json.loads(stripped)
+            except Exception:
+                parsed = None
+            if isinstance(parsed, list):
+                return _coerce_string_list(parsed)
+            try:
+                parsed = ast.literal_eval(stripped)
+            except Exception:
+                parsed = None
+            if isinstance(parsed, list):
+                return _coerce_string_list(parsed)
+        return _coerce_string_list(part.strip() for part in stripped.split(","))
+    return _coerce_string_list([value])
+
+
+def _parse_string_list_mapping(value):
+    if value is None:
+        return {}
+    parsed = value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return {}
+        try:
+            parsed = json.loads(stripped)
+        except Exception:
+            try:
+                parsed = ast.literal_eval(stripped)
+            except Exception:
+                parsed = None
+    if not isinstance(parsed, dict):
+        return {}
+
+    normalized = {}
+    for raw_key, raw_values in parsed.items():
+        key_text = str(raw_key or "").strip()
+        if not key_text:
+            continue
+        values = _parse_comma_string_list(raw_values)
+        if values:
+            normalized[key_text] = values
+    return normalized
+
+
 def _normalize_collection_template_var_value(key, value):
     if key in {"ignore_ids", "ignore_imdb_ids"}:
         list_values = _parse_string_list(value)
+        return ",".join(list_values) if list_values else None
+    if key in {"append_include"}:
+        list_values = _parse_string_list(value)
+        return list_values if list_values else None
+    if key in {"addons", "append_addons"}:
+        mapping_values = _parse_string_list_mapping(value)
+        return mapping_values if mapping_values else None
+    if key == "remove_suffix":
+        list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
     if key in {"radarr_tag", "sonarr_tag", "item_radarr_tag", "item_sonarr_tag"}:
         list_values = _parse_string_list(value)

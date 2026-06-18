@@ -1303,10 +1303,54 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 <button class="btn nav-button" type="button" data-template-string-add
                                     {% if disable_toggle %}disabled{% endif %}>Add</button>
                             </div>
-                            <div class="invalid-feedback d-none" data-template-string-feedback></div>
-                            <ul class="list-group mt-2" data-template-string-items></ul>
-                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}"
-                                data-default='{{ list_default_json }}'>
+                        <div class="invalid-feedback d-none" data-template-string-feedback></div>
+                        <ul class="list-group mt-2" data-template-string-items></ul>
+                        <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}"
+                            data-default='{{ list_default_json }}'>
+                        </div>
+                        {% elif item.type == 'mapping_list' %}
+                        {% set stored_map = data['libraries'].get(input_name) %}
+                        {% if stored_map is string %}
+                        {% set map_json = stored_map %}
+                        {% elif stored_map is mapping %}
+                        {% set map_json = stored_map | tojson %}
+                        {% else %}
+                        {% set map_json = '{}' %}
+                        {% endif %}
+                        {% if item.default is defined and item.default is mapping %}
+                        {% set map_default_json = item.default | tojson %}
+                        {% elif item.default is defined and item.default is string and item.default|trim %}
+                        {% set map_default_json = item.default %}
+                        {% else %}
+                        {% set map_default_json = '{}' %}
+                        {% endif %}
+                        <div class="mb-2" data-template-mapping-list data-hidden-input="{{ input_name }}">
+                            <div class="input-group">
+                                <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                                    {{ item.label }}
+                                    {% if item.tooltip %}
+                                    <span class="text-{{ item.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                                        data-bs-html="true" title="{{ item.tooltip }}">
+                                        <i
+                                            class="bi {% if item.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                    </span>
+                                    {% endif %}
+                                </span>
+                                <input type="text" class="form-control" data-template-mapping-key
+                                    aria-describedby="{{ input_name }}_text"
+                                    placeholder="{{ item.key_placeholder | default('Add key') }}"
+                                    {% if disable_toggle %}disabled{% endif %}>
+                                <input type="text" class="form-control" data-template-mapping-value
+                                    aria-describedby="{{ input_name }}_text"
+                                    placeholder="{{ item.value_placeholder | default('Add comma-separated values') }}"
+                                    {% if disable_toggle %}disabled{% endif %}>
+                                <button class="btn nav-button" type="button" data-template-mapping-add
+                                    {% if disable_toggle %}disabled{% endif %}>Add</button>
+                            </div>
+                            <div class="invalid-feedback d-none" data-template-mapping-feedback></div>
+                            <ul class="list-group mt-2" data-template-mapping-items></ul>
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ map_json }}"
+                                data-default='{{ map_default_json }}'>
                         </div>
                         {% elif item.type == 'relative_year' %}
                         {% set stored_val = data['libraries'].get(input_name, item.default) | default('', true) %}
