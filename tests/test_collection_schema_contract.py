@@ -4,7 +4,6 @@ from pathlib import Path
 import jsonschema
 from ruamel.yaml import YAML
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "config" / ".schema" / "collection-schema.json"
 DEFAULTS_ROOTS = [
@@ -30,10 +29,7 @@ def test_collection_schema_validates_all_top_level_collection_defaults():
                 key=lambda err: (".".join(str(part) for part in err.absolute_path), err.validator, err.message),
             )
             if errors:
-                formatted = [
-                    f"{'.'.join(str(part) for part in err.absolute_path) or '<root>'}: {err.message}"
-                    for err in errors[:10]
-                ]
+                formatted = [f"{'.'.join(str(part) for part in err.absolute_path) or '<root>'}: {err.message}" for err in errors[:10]]
                 failures.append(f"{path.relative_to(ROOT)}: " + " | ".join(formatted))
 
     assert not failures, "\n".join(failures)
