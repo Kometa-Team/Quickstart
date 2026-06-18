@@ -197,6 +197,63 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -860,6 +917,63 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -1491,6 +1605,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -2126,6 +2297,63 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -2596,7 +2824,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "C\u00e9sar Awards",
+        "label": "César Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -2718,8 +2946,8 @@
           },
           {
             "key": "use_best",
-            "label": "C\u00e9sar Best Film Winners",
-            "tooltip": "Collection of C\u00e9sar Award Winners.",
+            "label": "César Best Film Winners",
+            "tooltip": "Collection of César Award Winners.",
             "type": "toggle",
             "default": true
           },
@@ -2757,6 +2985,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -2842,9 +3127,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "C\u00e9sar Best Film Winners Visible Home",
+            "label": "César Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -2852,9 +3137,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "C\u00e9sar Best Film Winners Visible Library",
+            "label": "César Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -2862,9 +3147,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "C\u00e9sar Best Film Winners Visible Shared",
+            "label": "César Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3401,6 +3686,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -4027,6 +4417,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -4682,6 +5177,111 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -5318,6 +5918,63 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -5949,6 +6606,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -6595,6 +7309,111 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -7208,6 +8027,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -7843,6 +8719,63 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -8474,6 +9407,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -9109,6 +10099,63 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -9732,6 +10779,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -10789,6 +11893,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -10919,6 +12043,26 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -11538,6 +12682,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -12275,6 +13524,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -13058,6 +14412,111 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -13800,6 +15259,111 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -14192,6 +15756,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -14950,6 +16619,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -16115,6 +17889,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -17343,6 +19174,111 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -18322,6 +20258,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -18361,6 +20317,45 @@
             "min": 1,
             "step": 1,
             "default": 2
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -19722,6 +21717,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -21109,6 +23209,111 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -21985,6 +24190,16 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           }
         ]
       },
@@ -22471,6 +24686,16 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]
@@ -22960,6 +25185,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -23447,6 +25692,26 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]
@@ -23936,6 +26201,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -24423,6 +26708,26 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]
@@ -24912,6 +27217,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -25400,6 +27725,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       }
@@ -25500,6 +27845,16 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -26015,6 +28370,16 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -26899,6 +29264,26 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -27996,6 +30381,26 @@
             "validation_preset": "imdb_id_plex"
           },
           {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -28743,6 +31148,26 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -29789,6 +32214,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -30286,6 +32731,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -30782,6 +33247,26 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]
@@ -31300,6 +33785,26 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]
@@ -31821,6 +34326,16 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           }
         ]
       },
@@ -32341,6 +34856,16 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           }
         ]
       },
@@ -32860,6 +35385,16 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
             ]
           }
         ]
@@ -33466,6 +36001,111 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -34705,6 +37345,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -35167,6 +37827,16 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]
@@ -35887,6 +38557,63 @@
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
             "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sync_mode",
@@ -37394,6 +40121,26 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -37845,6 +40592,16 @@
                 ]
               }
             ]
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
           }
         ]
       },
@@ -38295,6 +41052,16 @@
                   "episode"
                 ]
               }
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
             ]
           }
         ]

@@ -303,6 +303,9 @@ def _normalize_collection_template_var_value(key, value):
     if key in {"ignore_ids", "ignore_imdb_ids"}:
         list_values = _parse_string_list(value)
         return ",".join(list_values) if list_values else None
+    if key in {"radarr_tag", "sonarr_tag", "item_radarr_tag", "item_sonarr_tag"}:
+        list_values = _parse_string_list(value)
+        return list_values if list_values else None
     return value
 
 
