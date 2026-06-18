@@ -10,7 +10,6 @@ import psutil
 import re
 import shutil
 import shlex
-import signal
 import socket
 import subprocess
 import sys

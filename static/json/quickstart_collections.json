@@ -34,6 +34,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -790,6 +818,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -1497,6 +1553,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -2208,6 +2292,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -2915,6 +3027,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -3625,6 +3765,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -4439,6 +4607,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -5249,6 +5445,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -6110,6 +6334,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -6817,6 +7069,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -7527,6 +7807,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -8340,6 +8648,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -9047,6 +9383,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_year_collections",
@@ -9758,6 +10122,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -10467,6 +10859,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -11174,6 +11594,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "data_starting",
@@ -11897,6 +12345,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
@@ -12489,6 +12965,34 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "list_days",
@@ -13107,6 +13611,34 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -13933,6 +14465,34 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -14902,6 +15462,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -15866,6 +16454,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -16444,6 +17060,34 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -17352,6 +17996,34 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -18316,6 +18988,34 @@
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -20094,6 +20794,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -20969,6 +21697,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -21455,6 +22211,13 @@
             "type": "text_input",
             "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
             "placeholder": "Leave blank or enter a value like 040"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
           },
           {
             "key": "exclude",
@@ -21994,6 +22757,13 @@
             "type": "text_input",
             "tooltip": "Optional override for where this default group appears in the Plex Collections page. Leave blank to keep the Kometa default order.",
             "placeholder": "Leave blank or enter a value like 040"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
           },
           {
             "key": "addons",
@@ -22551,6 +23321,34 @@
             "type": "text_input",
             "default": "040",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -23956,6 +24754,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -24780,6 +25606,13 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
@@ -25172,6 +26005,34 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -25702,6 +26563,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -26229,6 +27118,34 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -26770,6 +27687,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -27307,6 +28252,34 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -27848,6 +28821,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -28387,6 +29388,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -28924,6 +29953,34 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -29468,6 +30525,34 @@
             "type": "text_input",
             "default": "080",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -30026,6 +31111,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -30581,6 +31694,34 @@
             "type": "text_input",
             "default": "081",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -32001,6 +33142,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -32796,6 +33965,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -33580,6 +34777,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -34099,6 +35324,34 @@
             "type": "text_input",
             "default": "090",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -34623,6 +35876,34 @@
             "type": "text_input",
             "default": "095",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -35157,6 +36438,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -35686,6 +36995,34 @@
             "type": "text_input",
             "default": "150",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_separator",
@@ -36218,6 +37555,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -36746,6 +38111,34 @@
             "type": "text_input",
             "default": "170",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_separator",
@@ -37283,6 +38676,34 @@
             "type": "text_input",
             "default": "030",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -38856,6 +40277,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -39349,6 +40798,34 @@
             "type": "text_input",
             "default": "050",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "use_separator",
@@ -39849,6 +41326,34 @@
             "type": "text_input",
             "default": "000",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
@@ -41630,6 +43135,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -42167,6 +43700,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -42626,6 +44187,34 @@
             "type": "text_input",
             "default": "100",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit",
