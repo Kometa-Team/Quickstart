@@ -254,6 +254,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -974,6 +993,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -1659,6 +1697,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]
@@ -2354,6 +2411,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -2824,7 +2900,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "César Awards",
+        "label": "C\u00e9sar Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -2946,8 +3022,8 @@
           },
           {
             "key": "use_best",
-            "label": "César Best Film Winners",
-            "tooltip": "Collection of César Award Winners.",
+            "label": "C\u00e9sar Best Film Winners",
+            "tooltip": "Collection of C\u00e9sar Award Winners.",
             "type": "toggle",
             "default": true
           },
@@ -3044,6 +3120,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -3127,9 +3222,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "César Best Film Winners Visible Home",
+            "label": "C\u00e9sar Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3137,9 +3232,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "César Best Film Winners Visible Library",
+            "label": "C\u00e9sar Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3147,9 +3242,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "César Best Film Winners Visible Shared",
+            "label": "C\u00e9sar Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3788,6 +3883,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -4519,6 +4695,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -5282,6 +5539,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -5975,6 +6313,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -6660,6 +7017,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]
@@ -7414,6 +7790,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -8081,6 +8538,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]
@@ -8776,6 +9252,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -9461,6 +9956,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]
@@ -10156,6 +10670,25 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -10833,6 +11366,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]
@@ -12789,6 +13341,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -13626,6 +14259,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -14517,6 +15231,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -15364,6 +16159,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -15858,6 +16734,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -16721,6 +17678,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -17943,6 +18981,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]
@@ -19279,6 +20336,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -20358,6 +21496,16 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -20815,6 +21963,89 @@
             "min": 1,
             "step": 1,
             "default": 2
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sync_mode",
@@ -21819,6 +23050,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -23311,6 +24623,87 @@
             "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "show"
             ]
@@ -36108,6 +37501,87 @@
             ]
           },
           {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
             "key": "sync_mode",
             "label": "Sync Mode",
             "type": "select",
@@ -38611,6 +40085,25 @@
             "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
             "type": "string_list",
             "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
             "media_types": [
               "movie"
             ]

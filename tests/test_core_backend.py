@@ -1160,6 +1160,64 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert content_rating_us_entry["template_variables"]["limit_other"] == "5"
 
 
+def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {"sho-library_shows-library": "Shows"},
+            {
+                "movies": {
+                    "mov-library_movies-collection_franchise": True,
+                    "mov-library_movies-template_collection_franchise_radarr_folder": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_franchise_radarr_tag": '["4k", "favorite"]',
+                    "mov-library_movies-template_collection_franchise_item_radarr_tag": '["collected", "franchise"]',
+                }
+            },
+            {
+                "shows": {
+                    "sho-library_shows-collection_franchise": True,
+                    "sho-library_shows-template_collection_franchise_sonarr_folder": r"C:\Media\Shows",
+                    "sho-library_shows-template_collection_franchise_sonarr_monitor": "future",
+                    "sho-library_shows-template_collection_franchise_sonarr_tag": '["ongoing", "priority"]',
+                    "sho-library_shows-template_collection_franchise_item_sonarr_tag": '["watched", "tracked"]',
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    movie_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "franchise"),
+        None,
+    )
+    show_entry = next(
+        (entry for entry in libraries_section["libraries"]["Shows"]["collection_files"] if entry.get("default") == "franchise"),
+        None,
+    )
+
+    assert movie_entry is not None
+    assert show_entry is not None
+    assert movie_entry["template_variables"]["radarr_folder"] == r"C:\Media\Movies"
+    assert movie_entry["template_variables"]["radarr_tag"] == ["4k", "favorite"]
+    assert movie_entry["template_variables"]["item_radarr_tag"] == ["collected", "franchise"]
+    assert show_entry["template_variables"]["sonarr_folder"] == r"C:\Media\Shows"
+    assert show_entry["template_variables"]["sonarr_monitor"] == "future"
+    assert show_entry["template_variables"]["sonarr_tag"] == ["ongoing", "priority"]
+    assert show_entry["template_variables"]["item_sonarr_tag"] == ["watched", "tracked"]
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 
