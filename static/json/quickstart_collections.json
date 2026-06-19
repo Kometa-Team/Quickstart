@@ -13,8 +13,7 @@
         ],
         "readonly": true,
         "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
-        "tooltip_variant": "danger",
-        "template_variables": []
+        "tooltip_variant": "danger"
       },
       {
         "id": "collection_oscars",
@@ -12435,8 +12434,7 @@
         ],
         "readonly": true,
         "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
-        "tooltip_variant": "danger",
-        "template_variables": []
+        "tooltip_variant": "danger"
       },
       {
         "id": "collection_basic",
