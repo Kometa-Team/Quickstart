@@ -13,22 +13,13 @@ def _seed_schema_files(config_dir):
     schema_root = os.path.join(repo_root, "config", ".schema")
     target_schema_root = os.path.join(str(config_dir), ".schema")
     os.makedirs(target_schema_root, exist_ok=True)
-    for name in (
-        "README.md",
-        "collection-schema.json",
-        "config-schema.json",
-        "config.yml.template",
-        "kitchen_sink_config.yml",
-        "metadata-schema.json",
-        "overlay-schema.json",
-        "playlist-schema.json",
-        "prototype_comprehensive.yml",
-        "prototype_config.yml",
-        "file_hashes.txt",
-    ):
-        source = os.path.join(schema_root, name)
-        if os.path.exists(source):
-            shutil.copy2(source, os.path.join(target_schema_root, name))
+    for current_root, _dirs, files in os.walk(schema_root):
+        rel_root = os.path.relpath(current_root, schema_root)
+        target_root = target_schema_root if rel_root == "." else os.path.join(target_schema_root, rel_root)
+        os.makedirs(target_root, exist_ok=True)
+        for name in files:
+            source = os.path.join(current_root, name)
+            shutil.copy2(source, os.path.join(target_root, name))
 
 
 def _load_app(config_dir, kometa_root):

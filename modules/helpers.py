@@ -76,6 +76,7 @@ IMAGEMAID_BRANCH_OVERRIDES = {"master", "develop"}
 
 JSON_SCHEMA_SYNC_FILES = (
     ("README.md", "json-schema/README.md"),
+    ("MODULE.md", "json-schema/MODULE.md"),
     ("collection-schema.json", "json-schema/collection-schema.json"),
     ("config-schema.json", "json-schema/config-schema.json"),
     ("kitchen_sink_config.yml", "json-schema/kitchen_sink_config.yml"),
@@ -84,6 +85,25 @@ JSON_SCHEMA_SYNC_FILES = (
     ("playlist-schema.json", "json-schema/playlist-schema.json"),
     ("prototype_comprehensive.yml", "json-schema/prototype_comprehensive.yml"),
     ("prototype_config.yml", "json-schema/prototype_config.yml"),
+    ("template-schema.json", "json-schema/template-schema.json"),
+    ("builders/anidb.yml", "json-schema/builders/anidb.yml"),
+    ("builders/anilist.yml", "json-schema/builders/anilist.yml"),
+    ("builders/dynamic_collections.yml", "json-schema/builders/dynamic_collections.yml"),
+    ("builders/imdb.yml", "json-schema/builders/imdb.yml"),
+    ("builders/letterboxd.yml", "json-schema/builders/letterboxd.yml"),
+    ("builders/mdblist.yml", "json-schema/builders/mdblist.yml"),
+    ("builders/metadata.yml", "json-schema/builders/metadata.yml"),
+    ("builders/myanimelist.yml", "json-schema/builders/myanimelist.yml"),
+    ("builders/other.yml", "json-schema/builders/other.yml"),
+    ("builders/overlays.yml", "json-schema/builders/overlays.yml"),
+    ("builders/playlists.yml", "json-schema/builders/playlists.yml"),
+    ("builders/plex.yml", "json-schema/builders/plex.yml"),
+    ("builders/radarr.yml", "json-schema/builders/radarr.yml"),
+    ("builders/sonarr.yml", "json-schema/builders/sonarr.yml"),
+    ("builders/tautulli.yml", "json-schema/builders/tautulli.yml"),
+    ("builders/tmdb.yml", "json-schema/builders/tmdb.yml"),
+    ("builders/trakt.yml", "json-schema/builders/trakt.yml"),
+    ("builders/tvdb.yml", "json-schema/builders/tvdb.yml"),
     ("config.yml.template", "config/config.yml.template"),
 )
 
@@ -496,6 +516,7 @@ def ensure_json_schema():
                 continue
 
             # Save the new file if hash has changed
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
