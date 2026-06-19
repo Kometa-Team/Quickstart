@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults"
@@ -61,16 +60,8 @@ def test_use_all_exists_for_every_shared_collection_family_with_child_use_toggle
             if "use_all" not in expected_keys:
                 continue
 
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
-            child_use_keys = {
-                key
-                for key in keys
-                if key.startswith("use_") and key not in EXCLUDED_USE_KEYS
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
+            child_use_keys = {key for key in keys if key.startswith("use_") and key not in EXCLUDED_USE_KEYS}
             if not child_use_keys:
                 continue
             if "use_all" not in keys:
@@ -90,22 +81,12 @@ def test_use_all_field_matches_the_shared_collection_contract():
         for collection in collections:
             if collection.get("readonly"):
                 continue
-            keys = [
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            ]
-            child_use_keys = [
-                key for key in keys if key.startswith("use_") and key not in EXCLUDED_USE_KEYS
-            ]
+            keys = [item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")]
+            child_use_keys = [key for key in keys if key.startswith("use_") and key not in EXCLUDED_USE_KEYS]
             if not child_use_keys or "use_all" not in keys:
                 continue
 
-            field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == "use_all"
-            )
+            field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "use_all")
             assert field["type"] == "toggle"
             assert field["default"] is True
             assert "override" in field["tooltip"].lower()
