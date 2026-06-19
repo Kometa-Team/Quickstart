@@ -74,11 +74,7 @@ def test_shared_naming_keys_exist_for_every_supported_collection_family():
             if not expected_keys:
                 continue
 
-            keys = {
-                item["key"]
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key")
-            }
+            keys = {item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
             for key in sorted(expected_keys - keys):
                 missing.append(f"{collection['id']}:{','.join(sorted(media_types))}:{key}")
 
@@ -104,9 +100,5 @@ def test_shared_naming_key_types_match_the_defaults_contract():
                 continue
 
             for key in sorted(expected_keys):
-                field = next(
-                    item
-                    for item in collection.get("template_variables", [])
-                    if isinstance(item, dict) and item.get("key") == key
-                )
+                field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == key)
                 assert field["type"] == FIELD_TYPES[key]
