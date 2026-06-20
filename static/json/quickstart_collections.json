@@ -180,6 +180,20 @@
             "default": true
           },
           {
+            "key": "name_best_picture",
+            "label": "Oscars Best Picture Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Oscars Best Picture Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best_picture",
+            "label": "Oscars Best Picture Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Oscars Best Picture Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_best_picture",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -195,6 +209,20 @@
             "tooltip": "Collection of Oscars Best Director Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_best_director",
+            "label": "Oscars Best Director Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Oscars Best Director Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best_director",
+            "label": "Oscars Best Director Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Oscars Best Director Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_best_director",
@@ -971,6 +999,20 @@
             "default": true
           },
           {
+            "key": "name_golden",
+            "label": "Berlinale Golden Bears Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Berlinale Golden Bears collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_golden",
+            "label": "Berlinale Golden Bears Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Berlinale Golden Bears collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_golden",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -1713,6 +1755,20 @@
             "tooltip": "Collection of British Academy of Film and Television Arts Best Film Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_best",
+            "label": "BAFTA Best Films Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the BAFTA Best Films collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best",
+            "label": "BAFTA Best Films Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the BAFTA Best Films collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_best",
@@ -2459,6 +2515,20 @@
             "default": true
           },
           {
+            "key": "name_palm",
+            "label": "Cannes Golden Palm Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Cannes Golden Palm Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_palm",
+            "label": "Cannes Golden Palm Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Cannes Golden Palm Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_palm",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -3201,6 +3271,20 @@
             "tooltip": "Collection of César Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_best",
+            "label": "César Best Film Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the César Best Film Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best",
+            "label": "César Best Film Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the César Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_best",
@@ -3946,6 +4030,20 @@
             "tooltip": "Collection of Critics Choice Best Feature Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_best",
+            "label": "Critics Choice Best Picture Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Critics Choice Best Picture Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best",
+            "label": "Critics Choice Best Picture Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Critics Choice Best Picture Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_best",
@@ -4795,6 +4893,20 @@
             "default": true
           },
           {
+            "key": "name_best",
+            "label": "Emmys Best in Category Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Emmys Best in Category Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best",
+            "label": "Emmys Best in Category Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Emmys Best in Category Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_best",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -5642,6 +5754,20 @@
             "default": true
           },
           {
+            "key": "name_best_picture",
+            "label": "Golden Globes Best Picture Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Golden Globes Best Picture Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best_picture",
+            "label": "Golden Globes Best Picture Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Golden Globes Best Picture Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_best_picture",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -5667,6 +5793,20 @@
             "tooltip": "Collection of Golden Globe Best Director Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_best_director",
+            "label": "Golden Globes Best Director Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Golden Globes Best Director Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best_director",
+            "label": "Golden Globes Best Director Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Golden Globes Best Director Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_best_director",
@@ -6536,6 +6676,20 @@
             "default": true
           },
           {
+            "key": "name_best",
+            "label": "Independent Spirit Best Feature Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Independent Spirit Best Feature Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best",
+            "label": "Independent Spirit Best Feature Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Independent Spirit Best Feature Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_best",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -7278,6 +7432,20 @@
             "tooltip": "Collection of Films added to the National Film Registry.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_all_time",
+            "label": "National Film Registry All Time Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the National Film Registry All Time collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_all_time",
+            "label": "National Film Registry All Time Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the National Film Registry All Time collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_all_time",
@@ -8023,6 +8191,20 @@
             "tooltip": "Collection of People's Choice Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_pca",
+            "label": "People's Choice Award Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the People's Choice Award Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_pca",
+            "label": "People's Choice Award Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the People's Choice Award Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_pca",
@@ -8871,6 +9053,20 @@
             "default": true
           },
           {
+            "key": "name_golden",
+            "label": "Golden Raspberry Award Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Golden Raspberry Award Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_golden",
+            "label": "Golden Raspberry Award Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Golden Raspberry Award Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_golden",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -9613,6 +9809,20 @@
             "tooltip": "Collection of Screen Actors Guild Award Winners.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_golden",
+            "label": "Screen Actors Guild Award Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Screen Actors Guild Award Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_golden",
+            "label": "Screen Actors Guild Award Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Screen Actors Guild Award Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_golden",
@@ -10359,6 +10569,20 @@
             "default": true
           },
           {
+            "key": "name_grand",
+            "label": "Grand Jury Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Grand Jury Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_grand",
+            "label": "Grand Jury Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Grand Jury Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_grand",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11103,6 +11327,20 @@
             "default": true
           },
           {
+            "key": "name_best",
+            "label": "Toronto People's Choice Award Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Toronto People's Choice Award Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_best",
+            "label": "Toronto People's Choice Award Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Toronto People's Choice Award Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_best",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11839,6 +12077,20 @@
             "default": true
           },
           {
+            "key": "name_golden",
+            "label": "Golden Lion Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Golden Lion Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_golden",
+            "label": "Golden Lion Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Golden Lion Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_golden",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -12511,6 +12763,20 @@
             ]
           },
           {
+            "key": "name_episodes",
+            "label": "New Episodes Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the New Episodes collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_episodes",
+            "label": "New Episodes Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the New Episodes collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_episodes",
             "label": "New Episodes Limit",
             "tooltip": "Changes the Builder Limit of the New Episodes collection.",
@@ -12540,6 +12806,20 @@
             "tooltip_variant": "info",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_released",
+            "label": "Newly Released Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Newly Released collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_released",
+            "label": "Newly Released Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Newly Released collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_released",
@@ -13147,6 +13427,20 @@
             "default": true
           },
           {
+            "key": "name_popular",
+            "label": "Plex Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Plex Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_popular",
+            "label": "Plex Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Plex Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "list_days_popular",
             "label": "Plex Popular List Days",
             "type": "text_input",
@@ -13171,6 +13465,20 @@
             "tooltip_variant": "info",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_watched",
+            "label": "Plex Watched Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Plex Watched collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_watched",
+            "label": "Plex Watched Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Plex Watched collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "list_days_watched",
@@ -13789,6 +14097,20 @@
             "default": true
           },
           {
+            "key": "name_top",
+            "label": "IMDb Top 250 Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Top 250 collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_top",
+            "label": "IMDb Top 250 Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Top 250 collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_top",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -13817,6 +14139,20 @@
             "default": true
           },
           {
+            "key": "name_popular",
+            "label": "IMDb Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_popular",
+            "label": "IMDb Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_popular",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -13843,6 +14179,20 @@
             "tooltip_variant": "info",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_lowest",
+            "label": "IMDb Lowest Rated Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Lowest Rated collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_lowest",
+            "label": "IMDb Lowest Rated Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Lowest Rated collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_lowest",
@@ -14650,6 +15000,20 @@
             "default": true
           },
           {
+            "key": "name_airing",
+            "label": "TMDb Airing Today Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the TMDb Airing Today collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_airing",
+            "label": "TMDb Airing Today Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the TMDb Airing Today collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_airing",
             "label": "TMDb Airing Today Limit",
             "type": "text_input",
@@ -14684,6 +15048,20 @@
             "tooltip": "Collection of Shows currently On The Air on TMDb.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_air",
+            "label": "TMDb On The Air Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the TMDb On The Air collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_air",
+            "label": "TMDb On The Air Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the TMDb On The Air collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_air",
@@ -14722,6 +15100,20 @@
             "default": true
           },
           {
+            "key": "name_popular",
+            "label": "TMDb Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the TMDb Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_popular",
+            "label": "TMDb Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the TMDb Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_popular",
             "label": "TMDb Popular Limit",
             "type": "text_input",
@@ -14758,6 +15150,20 @@
             "default": true
           },
           {
+            "key": "name_top",
+            "label": "TMDb Top Rated Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the TMDb Top Rated collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_top",
+            "label": "TMDb Top Rated Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the TMDb Top Rated collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_top",
             "label": "TMDb Top Rated Limit",
             "type": "text_input",
@@ -14792,6 +15198,20 @@
             "tooltip": "Collection of Trending Movies/Shows on TMDb.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_trending",
+            "label": "TMDb Trending Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the TMDb Trending collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trending",
+            "label": "TMDb Trending Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the TMDb Trending collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_trending",
@@ -15652,6 +16072,20 @@
             "default": true
           },
           {
+            "key": "name_collected",
+            "label": "Trakt Collected Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Trakt Collected collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_collected",
+            "label": "Trakt Collected Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Trakt Collected collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_collected",
             "label": "Trakt Collected Limit",
             "type": "text_input",
@@ -15686,6 +16120,20 @@
             "tooltip": "Collection of the Most Popular Movies/Shows on Trakt.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_popular",
+            "label": "Trakt Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Trakt Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_popular",
+            "label": "Trakt Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Trakt Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_popular",
@@ -15724,6 +16172,20 @@
             "default": true
           },
           {
+            "key": "name_recommended",
+            "label": "Trakt Recommended Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Trakt Recommended collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_recommended",
+            "label": "Trakt Recommended Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Trakt Recommended collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_recommended",
             "label": "Trakt Recommended Limit",
             "type": "text_input",
@@ -15760,6 +16222,20 @@
             "default": true
           },
           {
+            "key": "name_trending",
+            "label": "Trakt Trending Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Trakt Trending collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trending",
+            "label": "Trakt Trending Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Trakt Trending collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_trending",
             "label": "Trakt Trending Limit",
             "type": "text_input",
@@ -15794,6 +16270,20 @@
             "tooltip": "Collection of the Most Watched Movies/Shows on Trakt.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_watched",
+            "label": "Trakt Watched Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Trakt Watched collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_watched",
+            "label": "Trakt Watched Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Trakt Watched collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_watched",
@@ -16651,6 +17141,20 @@
             "default": true
           },
           {
+            "key": "name_trending_today",
+            "label": "Simkl Trending Today Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Simkl Trending Today collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trending_today",
+            "label": "Simkl Trending Today Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Simkl Trending Today collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_trending_today",
             "label": "Simkl Trending Today Limit",
             "type": "text_input",
@@ -16685,6 +17189,20 @@
             "tooltip": "Collection of Simkl's Trending This Week list.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_trending_week",
+            "label": "Simkl Trending This Week Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Simkl Trending This Week collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trending_week",
+            "label": "Simkl Trending This Week Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Simkl Trending This Week collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_trending_week",
@@ -16723,6 +17241,20 @@
             "default": true
           },
           {
+            "key": "name_trending_month",
+            "label": "Simkl Trending This Month Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Simkl Trending This Month collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trending_month",
+            "label": "Simkl Trending This Month Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Simkl Trending This Month collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_trending_month",
             "label": "Simkl Trending This Month Limit",
             "type": "text_input",
@@ -16757,6 +17289,20 @@
             "tooltip": "Collection of Simkl's Recently Released on DVD list.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_dvd",
+            "label": "Simkl DVD Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Simkl DVD collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_dvd",
+            "label": "Simkl DVD Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Simkl DVD collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_dvd",
@@ -17266,6 +17812,20 @@
             "default": true
           },
           {
+            "key": "name_popular",
+            "label": "AniList Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the AniList Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_popular",
+            "label": "AniList Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the AniList Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_popular",
             "label": "AniList Popular Limit",
             "type": "text_input",
@@ -17300,6 +17860,20 @@
             "tooltip": "Collection of the Current Season's Anime on AniList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_season",
+            "label": "AniList Season Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the AniList Season collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_season",
+            "label": "AniList Season Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the AniList Season collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_season",
@@ -17338,6 +17912,20 @@
             "default": true
           },
           {
+            "key": "name_top",
+            "label": "AniList Top Rated Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the AniList Top Rated collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_top",
+            "label": "AniList Top Rated Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the AniList Top Rated collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_top",
             "label": "AniList Top Rated Limit",
             "type": "text_input",
@@ -17372,6 +17960,20 @@
             "tooltip": "Collection of the Trending Anime on AniList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_trending",
+            "label": "AniList Trending Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the AniList Trending collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trending",
+            "label": "AniList Trending Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the AniList Trending collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_trending",
@@ -18220,6 +18822,20 @@
             "default": true
           },
           {
+            "key": "name_favorited",
+            "label": "MyAnimeList Favorited Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the MyAnimeList Favorited collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_favorited",
+            "label": "MyAnimeList Favorited Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the MyAnimeList Favorited collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_favorited",
             "label": "MyAnimeList Favorited Limit",
             "type": "text_input",
@@ -18254,6 +18870,20 @@
             "tooltip": "Collection of the most Popular Anime on MyAnimeList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_popular",
+            "label": "MyAnimeList Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the MyAnimeList Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_popular",
+            "label": "MyAnimeList Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the MyAnimeList Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_popular",
@@ -18292,6 +18922,20 @@
             "default": true
           },
           {
+            "key": "name_season",
+            "label": "MyAnimeList Season Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the MyAnimeList Season collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_season",
+            "label": "MyAnimeList Season Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the MyAnimeList Season collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_season",
             "label": "MyAnimeList Season Limit",
             "type": "text_input",
@@ -18328,6 +18972,20 @@
             "default": true
           },
           {
+            "key": "name_airing",
+            "label": "MyAnimeList Top Airing Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the MyAnimeList Top Airing collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_airing",
+            "label": "MyAnimeList Top Airing Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the MyAnimeList Top Airing collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_airing",
             "label": "MyAnimeList Top Airing Limit",
             "type": "text_input",
@@ -18362,6 +19020,20 @@
             "tooltip": "Collection of the Top Rated Anime on MyAnimeList.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_top",
+            "label": "MyAnimeList Top Rated Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the MyAnimeList Top Rated collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_top",
+            "label": "MyAnimeList Top Rated Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the MyAnimeList Top Rated collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_top",
@@ -19208,6 +19880,20 @@
             "default": true
           },
           {
+            "key": "name_1001_movies",
+            "label": "1,001 To See Before You Die Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 1,001 To See Before You Die collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_1001_movies",
+            "label": "1,001 To See Before You Die Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 1,001 To See Before You Die collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_1001_movies",
             "label": "1,001 To See Before You Die Limit",
             "tooltip": "Changes the Builder Limit of the 1,001 To See Before You Die collection.",
@@ -19233,6 +19919,20 @@
             "tooltip": "Collection of AFI's 100 Years...100 Movies.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_afi_100",
+            "label": "AFI 100 Years 100 Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the AFI 100 Years 100 Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_afi_100",
+            "label": "AFI 100 Years 100 Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the AFI 100 Years 100 Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_afi_100",
@@ -19262,6 +19962,20 @@
             "default": true
           },
           {
+            "key": "name_boxofficemojo_100",
+            "label": "Box Office Mojo All Time 100 Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Box Office Mojo All Time 100 collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_boxofficemojo_100",
+            "label": "Box Office Mojo All Time 100 Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Box Office Mojo All Time 100 collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_boxofficemojo_100",
             "label": "Box Office Mojo All Time 100 Limit",
             "tooltip": "Changes the Builder Limit of the Box Office Mojo All Time 100 collection.",
@@ -19287,6 +20001,20 @@
             "tooltip": "Collection of films that have won the Palme d'Or at the Cannes Film Festival.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_cannes",
+            "label": "Cannes Palme d'Or Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Cannes Palme d'Or Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_cannes",
+            "label": "Cannes Palme d'Or Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Cannes Palme d'Or Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_cannes",
@@ -19316,6 +20044,20 @@
             "default": true
           },
           {
+            "key": "name_edgarwright",
+            "label": "Edgar Wright's 1,000 Favorites Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Edgar Wright's 1,000 Favorites collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_edgarwright",
+            "label": "Edgar Wright's 1,000 Favorites Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Edgar Wright's 1,000 Favorites collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_edgarwright",
             "label": "Edgar Wright's 1,000 Favorites Limit",
             "tooltip": "Changes the Builder Limit of the Edgar Wright's 1,000 Favorites collection.",
@@ -19341,6 +20083,20 @@
             "tooltip": "Collection of the Top 250 Movies on IMDb, from Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_imdb_top_250",
+            "label": "IMDb Top 250 (Letterboxd) Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Top 250 (Letterboxd) collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_imdb_top_250",
+            "label": "IMDb Top 250 (Letterboxd) Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Top 250 (Letterboxd) collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_imdb_top_250",
@@ -19370,6 +20126,20 @@
             "default": true
           },
           {
+            "key": "name_top_500",
+            "label": "Letterboxd Top 500 Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Letterboxd Top 500 collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_top_500",
+            "label": "Letterboxd Top 500 Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Letterboxd Top 500 collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_top_500",
             "label": "Letterboxd Top 500 Limit",
             "tooltip": "Changes the Builder Limit of the Letterboxd Top 500 collection.",
@@ -19395,6 +20165,20 @@
             "tooltip": "Collection of the Top 250 international films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_international",
+            "label": "Top 250 International Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 International collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_international",
+            "label": "Top 250 International Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 International collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_international",
@@ -19424,6 +20208,20 @@
             "default": true
           },
           {
+            "key": "name_science",
+            "label": "Top 250 Sci-Fi Films Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 Sci-Fi Films collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_science",
+            "label": "Top 250 Sci-Fi Films Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 Sci-Fi Films collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_science",
             "label": "Top 250 Sci-Fi Films Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Sci-Fi Films collection.",
@@ -19449,6 +20247,20 @@
             "tooltip": "Collection of the Top 100 western films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_western",
+            "label": "Top 100 Western Films Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 100 Western Films collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_western",
+            "label": "Top 100 Western Films Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 100 Western Films collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_western",
@@ -19478,6 +20290,20 @@
             "default": true
           },
           {
+            "key": "name_silent",
+            "label": "Top 100 Silent Films Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 100 Silent Films collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_silent",
+            "label": "Top 100 Silent Films Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 100 Silent Films collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_silent",
             "label": "Top 100 Silent Films Limit",
             "tooltip": "Changes the Builder Limit of the Top 100 Silent Films collection.",
@@ -19503,6 +20329,20 @@
             "tooltip": "Collection of films in the One Million Watched Club on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_million",
+            "label": "One Million Watched Club Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the One Million Watched Club collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_million",
+            "label": "One Million Watched Club Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the One Million Watched Club collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_million",
@@ -19532,6 +20372,20 @@
             "default": true
           },
           {
+            "key": "name_oscars",
+            "label": "Oscar Best Picture Winners Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Oscar Best Picture Winners collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_oscars",
+            "label": "Oscar Best Picture Winners Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Oscar Best Picture Winners collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_oscars",
             "label": "Oscar Best Picture Winners Limit",
             "tooltip": "Changes the Builder Limit of the Oscar Best Picture Winners collection.",
@@ -19557,6 +20411,20 @@
             "tooltip": "Collection of films from Roger Ebert's \"Great Movies\" essays.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_rogerebert",
+            "label": "Roger Ebert's Great Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Roger Ebert's Great Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_rogerebert",
+            "label": "Roger Ebert's Great Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Roger Ebert's Great Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_rogerebert",
@@ -19586,6 +20454,20 @@
             "default": true
           },
           {
+            "key": "name_sight_sound",
+            "label": "Sight & Sound Greatest Films Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Sight & Sound Greatest Films collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_sight_sound",
+            "label": "Sight & Sound Greatest Films Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Sight & Sound Greatest Films collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_sight_sound",
             "label": "Sight & Sound Greatest Films Limit",
             "tooltip": "Changes the Builder Limit of the Sight & Sound Greatest Films collection.",
@@ -19611,6 +20493,20 @@
             "tooltip": "Collection of the Top 100 animated films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_animation",
+            "label": "Top 100 Animation Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 100 Animation collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_animation",
+            "label": "Top 100 Animation Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 100 Animation collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_animation",
@@ -19640,6 +20536,20 @@
             "default": true
           },
           {
+            "key": "name_black_directors",
+            "label": "Top 250 Black-Directed Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 Black-Directed collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_black_directors",
+            "label": "Top 250 Black-Directed Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 Black-Directed collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_black_directors",
             "label": "Top 250 Black-Directed Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Black-Directed collection.",
@@ -19665,6 +20575,20 @@
             "tooltip": "Collection of the Top 250 documentary films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_documentaries",
+            "label": "Top 250 Documentaries Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 Documentaries collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_documentaries",
+            "label": "Top 250 Documentaries Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 Documentaries collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_documentaries",
@@ -19694,6 +20618,20 @@
             "default": true
           },
           {
+            "key": "name_horror",
+            "label": "Top 250 Horror Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 Horror collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_horror",
+            "label": "Top 250 Horror Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 Horror collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_horror",
             "label": "Top 250 Horror Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Horror collection.",
@@ -19721,6 +20659,20 @@
             "default": true
           },
           {
+            "key": "name_most_fans",
+            "label": "Top 250 Most Fans Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 Most Fans collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_most_fans",
+            "label": "Top 250 Most Fans Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 Most Fans collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_most_fans",
             "label": "Top 250 Most Fans Limit",
             "tooltip": "Changes the Builder Limit of the Top 250 Most Fans collection.",
@@ -19746,6 +20698,20 @@
             "tooltip": "Collection of the Top 250 Women-Directed films on Letterboxd.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_women_directors",
+            "label": "Top 250 Women-Directed Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 250 Women-Directed collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_women_directors",
+            "label": "Top 250 Women-Directed Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 250 Women-Directed collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_women_directors",
@@ -21018,6 +21984,20 @@
             "default": true
           },
           {
+            "key": "name_commonsense",
+            "label": "Common Sense Selection Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Common Sense Selection collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_commonsense",
+            "label": "Common Sense Selection Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Common Sense Selection collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_commonsense",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -21043,6 +22023,20 @@
             "tooltip": "Collection of Metacritic Must See Movies/Shows.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_metacritic",
+            "label": "Metacritic Must See Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Metacritic Must See collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_metacritic",
+            "label": "Metacritic Must See Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Metacritic Must See collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_metacritic",
@@ -21075,6 +22069,20 @@
             ]
           },
           {
+            "key": "name_stevenlu",
+            "label": "StevenLu's Popular Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the StevenLu's Popular Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_stevenlu",
+            "label": "StevenLu's Popular Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the StevenLu's Popular Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_stevenlu",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -21093,6 +22101,20 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "name_pirated",
+            "label": "Top 10 Pirated Movies of the Week Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 10 Pirated Movies of the Week collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_pirated",
+            "label": "Top 10 Pirated Movies of the Week Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 10 Pirated Movies of the Week collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_pirated",
@@ -23568,6 +24590,20 @@
             "default": true
           },
           {
+            "key": "name_avp",
+            "label": "Alien / Predator Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Alien / Predator collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_avp",
+            "label": "Alien / Predator Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Alien / Predator collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_avp",
             "label": "Alien / Predator Minimum Items",
             "type": "text_input",
@@ -23602,6 +24638,20 @@
             "tooltip": "Collection of Movies in the The Arrow Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_arrow",
+            "label": "Arrowverse Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Arrowverse collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_arrow",
+            "label": "Arrowverse Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Arrowverse collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_arrow",
@@ -23640,6 +24690,20 @@
             "default": true
           },
           {
+            "key": "name_dca",
+            "label": "DC Animated Universe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the DC Animated Universe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_dca",
+            "label": "DC Animated Universe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the DC Animated Universe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_dca",
             "label": "DC Animated Universe Minimum Items",
             "type": "text_input",
@@ -23674,6 +24738,20 @@
             "tooltip": "Collection of Movies in the DC Extended Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_dcu",
+            "label": "DC Extended Universe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the DC Extended Universe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_dcu",
+            "label": "DC Extended Universe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the DC Extended Universe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_dcu",
@@ -23712,6 +24790,20 @@
             "default": true
           },
           {
+            "key": "name_fast",
+            "label": "Fast & Furious Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Fast & Furious collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_fast",
+            "label": "Fast & Furious Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Fast & Furious collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_fast",
             "label": "Fast & Furious Minimum Items",
             "type": "text_input",
@@ -23746,6 +24838,20 @@
             "tooltip": "Collection of Movies in the Marvel Universe (but not part of MCU)",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_marvel",
+            "label": "In Association with Marvel Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the In Association with Marvel collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_marvel",
+            "label": "In Association with Marvel Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the In Association with Marvel collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_marvel",
@@ -23784,6 +24890,20 @@
             "default": true
           },
           {
+            "key": "name_mcu",
+            "label": "Marvel Cinematic Universe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Marvel Cinematic Universe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_mcu",
+            "label": "Marvel Cinematic Universe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Marvel Cinematic Universe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_mcu",
             "label": "Marvel Cinematic Universe Minimum Items",
             "type": "text_input",
@@ -23818,6 +24938,20 @@
             "tooltip": "Collection of Movies in the Middle Earth Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_middle",
+            "label": "Middle Earth Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Middle Earth collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_middle",
+            "label": "Middle Earth Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Middle Earth collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_middle",
@@ -23856,6 +24990,20 @@
             "default": true
           },
           {
+            "key": "name_rocky",
+            "label": "Rocky / Creed Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Rocky / Creed collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_rocky",
+            "label": "Rocky / Creed Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Rocky / Creed collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_rocky",
             "label": "Rocky / Creed Minimum Items",
             "type": "text_input",
@@ -23890,6 +25038,20 @@
             "tooltip": "Collection of Movies in the Star Trek Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_trek",
+            "label": "Star Trek Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Star Trek collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_trek",
+            "label": "Star Trek Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Star Trek collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_trek",
@@ -23928,6 +25090,20 @@
             "default": true
           },
           {
+            "key": "name_star",
+            "label": "Star Wars Universe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Star Wars Universe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_star",
+            "label": "Star Wars Universe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Star Wars Universe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_star",
             "label": "Star Wars Universe Minimum Items",
             "type": "text_input",
@@ -23962,6 +25138,20 @@
             "tooltip": "Collection of Movies in the The Mummy Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_mummy",
+            "label": "The Mummy Universe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the The Mummy Universe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_mummy",
+            "label": "The Mummy Universe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the The Mummy Universe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_mummy",
@@ -24000,6 +25190,20 @@
             "default": true
           },
           {
+            "key": "name_askew",
+            "label": "View Askewverse Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the View Askewverse collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_askew",
+            "label": "View Askewverse Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the View Askewverse collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_askew",
             "label": "View Askewverse Minimum Items",
             "type": "text_input",
@@ -24036,6 +25240,20 @@
             "default": true
           },
           {
+            "key": "name_wizard",
+            "label": "Wizarding World Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Wizarding World collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_wizard",
+            "label": "Wizarding World Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Wizarding World collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "minimum_items_wizard",
             "label": "Wizarding World Minimum Items",
             "type": "text_input",
@@ -24070,6 +25288,20 @@
             "tooltip": "Collection of Movies in the X-Men Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_xmen",
+            "label": "X-Men Universe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the X-Men Universe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_xmen",
+            "label": "X-Men Universe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the X-Men Universe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "minimum_items_xmen",
@@ -25142,6 +26374,20 @@
             "default": true
           },
           {
+            "key": "name_books",
+            "label": "Based on a Book Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Based on a Book collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_books",
+            "label": "Based on a Book Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Based on a Book collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_books",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -25167,6 +26413,20 @@
             "tooltip": "Collection of Movies/Shows based on or inspired by comics",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_comics",
+            "label": "Based on a Comic Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Based on a Comic collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_comics",
+            "label": "Based on a Comic Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Based on a Comic collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_comics",
@@ -25196,6 +26456,20 @@
             "default": true
           },
           {
+            "key": "name_true_story",
+            "label": "Based on a True Story Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Based on a True Story collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_true_story",
+            "label": "Based on a True Story Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Based on a True Story collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "radarr_add_missing_true_story",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -25221,6 +26495,20 @@
             "tooltip": "Collection of Movies/Shows based on or inspired by video games",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_video_games",
+            "label": "Based on a Video Game Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Based on a Video Game collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_video_games",
+            "label": "Based on a Video Game Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Based on a Video Game collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "radarr_add_missing_video_games",
@@ -26394,6 +27682,20 @@
             "default": true
           },
           {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
@@ -26955,6 +28257,20 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -27519,6 +28835,20 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -28095,6 +29425,20 @@
             "default": true
           },
           {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
@@ -28667,6 +30011,20 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -29243,6 +30601,20 @@
             "default": true
           },
           {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
@@ -29817,6 +31189,20 @@
             "default": true
           },
           {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
@@ -30389,6 +31775,20 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -30981,6 +32381,20 @@
             "default": true
           },
           {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
@@ -31570,6 +32984,20 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -32164,6 +33592,20 @@
             "default": true
           },
           {
+            "key": "name_Northern Africa",
+            "label": "Northern Africa Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Northern Africa collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Northern Africa",
+            "label": "Northern Africa Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Northern Africa collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Northern Africa",
             "label": "Northern Africa Limit",
             "type": "text_input",
@@ -32178,6 +33620,20 @@
             "tooltip": "Collection of Movies that have been filmed in Eastern Africa.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Eastern Africa",
+            "label": "Eastern Africa Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Eastern Africa collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Eastern Africa",
+            "label": "Eastern Africa Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Eastern Africa collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Eastern Africa",
@@ -32196,6 +33652,20 @@
             "default": true
           },
           {
+            "key": "name_Central Africa",
+            "label": "Central Africa Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Central Africa collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Central Africa",
+            "label": "Central Africa Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Central Africa collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Central Africa",
             "label": "Central Africa Limit",
             "type": "text_input",
@@ -32210,6 +33680,20 @@
             "tooltip": "Collection of Movies that have been filmed in Southern Africa.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Southern Africa",
+            "label": "Southern Africa Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Southern Africa collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Southern Africa",
+            "label": "Southern Africa Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Southern Africa collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Southern Africa",
@@ -32228,6 +33712,20 @@
             "default": true
           },
           {
+            "key": "name_Western Africa",
+            "label": "Western Africa Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Western Africa collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Western Africa",
+            "label": "Western Africa Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Western Africa collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Western Africa",
             "label": "Western Africa Limit",
             "type": "text_input",
@@ -32242,6 +33740,20 @@
             "tooltip": "Collection of Movies that have been filmed in the Caribbean.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Caribbean",
+            "label": "Caribbean Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Caribbean collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Caribbean",
+            "label": "Caribbean Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Caribbean collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Caribbean",
@@ -32260,6 +33772,20 @@
             "default": true
           },
           {
+            "key": "name_Central America",
+            "label": "Central America Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Central America collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Central America",
+            "label": "Central America Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Central America collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Central America",
             "label": "Central America Limit",
             "type": "text_input",
@@ -32274,6 +33800,20 @@
             "tooltip": "Collection of Movies that have been filmed in South America.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_South America",
+            "label": "South America Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the South America collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_South America",
+            "label": "South America Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the South America collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_South America",
@@ -32292,6 +33832,20 @@
             "default": true
           },
           {
+            "key": "name_North America",
+            "label": "North America Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the North America collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_North America",
+            "label": "North America Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the North America collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_North America",
             "label": "North America Limit",
             "type": "text_input",
@@ -32306,6 +33860,20 @@
             "tooltip": "Collection of Movies that have been filmed in Antarctica.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Antarctica",
+            "label": "Antarctica Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Antarctica collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Antarctica",
+            "label": "Antarctica Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Antarctica collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Antarctica",
@@ -32324,6 +33892,20 @@
             "default": true
           },
           {
+            "key": "name_Central Asia",
+            "label": "Central Asia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Central Asia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Central Asia",
+            "label": "Central Asia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Central Asia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Central Asia",
             "label": "Central Asia Limit",
             "type": "text_input",
@@ -32338,6 +33920,20 @@
             "tooltip": "Collection of Movies that have been filmed in Eastern Asia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Eastern Asia",
+            "label": "Eastern Asia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Eastern Asia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Eastern Asia",
+            "label": "Eastern Asia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Eastern Asia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Eastern Asia",
@@ -32356,6 +33952,20 @@
             "default": true
           },
           {
+            "key": "name_South-Eastern Asia",
+            "label": "South-Eastern Asia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the South-Eastern Asia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_South-Eastern Asia",
+            "label": "South-Eastern Asia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the South-Eastern Asia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_South-Eastern Asia",
             "label": "South-Eastern Asia Limit",
             "type": "text_input",
@@ -32370,6 +33980,20 @@
             "tooltip": "Collection of Movies that have been filmed in Southern Asia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Southern Asia",
+            "label": "Southern Asia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Southern Asia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Southern Asia",
+            "label": "Southern Asia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Southern Asia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Southern Asia",
@@ -32388,6 +34012,20 @@
             "default": true
           },
           {
+            "key": "name_Western Asia",
+            "label": "Western Asia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Western Asia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Western Asia",
+            "label": "Western Asia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Western Asia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Western Asia",
             "label": "Western Asia Limit",
             "type": "text_input",
@@ -32402,6 +34040,20 @@
             "tooltip": "Collection of Movies that have been filmed in Eastern Europe.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Eastern Europe",
+            "label": "Eastern Europe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Eastern Europe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Eastern Europe",
+            "label": "Eastern Europe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Eastern Europe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Eastern Europe",
@@ -32420,6 +34072,20 @@
             "default": true
           },
           {
+            "key": "name_Northern Europe",
+            "label": "Northern Europe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Northern Europe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Northern Europe",
+            "label": "Northern Europe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Northern Europe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Northern Europe",
             "label": "Northern Europe Limit",
             "type": "text_input",
@@ -32434,6 +34100,20 @@
             "tooltip": "Collection of Movies that have been filmed in Southern Europe.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Southern Europe",
+            "label": "Southern Europe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Southern Europe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Southern Europe",
+            "label": "Southern Europe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Southern Europe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Southern Europe",
@@ -32452,6 +34132,20 @@
             "default": true
           },
           {
+            "key": "name_Western Europe",
+            "label": "Western Europe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Western Europe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Western Europe",
+            "label": "Western Europe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Western Europe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Western Europe",
             "label": "Western Europe Limit",
             "type": "text_input",
@@ -32466,6 +34160,20 @@
             "tooltip": "Collection of Movies that have been filmed in Australia and New Zealand.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Australia and New Zealand",
+            "label": "Australia and New Zealand Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Australia and New Zealand collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Australia and New Zealand",
+            "label": "Australia and New Zealand Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Australia and New Zealand collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Australia and New Zealand",
@@ -32484,6 +34192,20 @@
             "default": true
           },
           {
+            "key": "name_Melanesia",
+            "label": "Melanesia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Melanesia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Melanesia",
+            "label": "Melanesia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Melanesia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Melanesia",
             "label": "Melanesia Limit",
             "type": "text_input",
@@ -32498,6 +34220,20 @@
             "tooltip": "Collection of Movies that have been filmed in Micronesia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Micronesia",
+            "label": "Micronesia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Micronesia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Micronesia",
+            "label": "Micronesia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Micronesia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Micronesia",
@@ -32516,6 +34252,20 @@
             "default": true
           },
           {
+            "key": "name_Polynesia",
+            "label": "Polynesia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Polynesia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Polynesia",
+            "label": "Polynesia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Polynesia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Polynesia",
             "label": "Polynesia Limit",
             "type": "text_input",
@@ -32530,6 +34280,20 @@
             "tooltip": "Collection of Movies that are in other uncommon Regions.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Regions Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other Regions collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Regions Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other Regions collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -33617,6 +35381,20 @@
             "default": true
           },
           {
+            "key": "name_Africa",
+            "label": "Africa Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Africa collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Africa",
+            "label": "Africa Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Africa collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Africa",
             "label": "Africa Limit",
             "type": "text_input",
@@ -33631,6 +35409,20 @@
             "tooltip": "Collection of Movies filmed in Americas.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Americas",
+            "label": "Americas Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Americas collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Americas",
+            "label": "Americas Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Americas collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Americas",
@@ -33649,6 +35441,20 @@
             "default": true
           },
           {
+            "key": "name_Antarctica",
+            "label": "Antarctica Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Antarctica collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Antarctica",
+            "label": "Antarctica Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Antarctica collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Antarctica",
             "label": "Antarctica Limit",
             "type": "text_input",
@@ -33663,6 +35469,20 @@
             "tooltip": "Collection of Movies filmed in Asia.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_Asia",
+            "label": "Asia Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Asia collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Asia",
+            "label": "Asia Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Asia collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_Asia",
@@ -33681,6 +35501,20 @@
             "default": true
           },
           {
+            "key": "name_Europe",
+            "label": "Europe Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Europe collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Europe",
+            "label": "Europe Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Europe collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Europe",
             "label": "Europe Limit",
             "type": "text_input",
@@ -33697,6 +35531,20 @@
             "default": true
           },
           {
+            "key": "name_Oceania",
+            "label": "Oceania Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Oceania collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_Oceania",
+            "label": "Oceania Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Oceania collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_Oceania",
             "label": "Oceania Limit",
             "type": "text_input",
@@ -33711,6 +35559,20 @@
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Continents Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other Continents collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Continents Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other Continents collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -34436,6 +36298,20 @@
             "default": true
           },
           {
+            "key": "name_1.33",
+            "label": "1.33 - Academy Aperture Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 1.33 - Academy Aperture collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_1.33",
+            "label": "1.33 - Academy Aperture Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 1.33 - Academy Aperture collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_1.33",
             "label": "1.33 - Academy Aperture Limit",
             "type": "text_input",
@@ -34450,6 +36326,20 @@
             "tooltip": "Collection of Movies/Shows with a 1.65 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_1.65",
+            "label": "1.65 - Early Widescreen Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 1.65 - Early Widescreen collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_1.65",
+            "label": "1.65 - Early Widescreen Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 1.65 - Early Widescreen collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_1.65",
@@ -34468,6 +36358,20 @@
             "default": true
           },
           {
+            "key": "name_1.66",
+            "label": "1.66 - European Widescreen Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 1.66 - European Widescreen collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_1.66",
+            "label": "1.66 - European Widescreen Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 1.66 - European Widescreen collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_1.66",
             "label": "1.66 - European Widescreen Limit",
             "type": "text_input",
@@ -34482,6 +36386,20 @@
             "tooltip": "Collection of Movies/Shows with a 1.78 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_1.78",
+            "label": "1.78 - Widescreen TV Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 1.78 - Widescreen TV collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_1.78",
+            "label": "1.78 - Widescreen TV Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 1.78 - Widescreen TV collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_1.78",
@@ -34500,6 +36418,20 @@
             "default": true
           },
           {
+            "key": "name_1.85",
+            "label": "1.85 - American Widescreen Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 1.85 - American Widescreen collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_1.85",
+            "label": "1.85 - American Widescreen Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 1.85 - American Widescreen collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_1.85",
             "label": "1.85 - American Widescreen Limit",
             "type": "text_input",
@@ -34514,6 +36446,20 @@
             "tooltip": "Collection of Movies/Shows with a 2.2 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_2.2",
+            "label": "2.2 - 70mm Frame Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 2.2 - 70mm Frame collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_2.2",
+            "label": "2.2 - 70mm Frame Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 2.2 - 70mm Frame collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_2.2",
@@ -34532,6 +36478,20 @@
             "default": true
           },
           {
+            "key": "name_2.35",
+            "label": "2.35 - Anamorphic Projection Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 2.35 - Anamorphic Projection collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_2.35",
+            "label": "2.35 - Anamorphic Projection Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 2.35 - Anamorphic Projection collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_2.35",
             "label": "2.35 - Anamorphic Projection Limit",
             "type": "text_input",
@@ -34546,6 +36506,20 @@
             "tooltip": "Collection of Movies/Shows with a 2.77 aspect ratio.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_2.77",
+            "label": "2.77 - Cinerama Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the 2.77 - Cinerama collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_2.77",
+            "label": "2.77 - Cinerama Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the 2.77 - Cinerama collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_2.77",
@@ -35804,6 +37778,20 @@
             "default": true
           },
           {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "limit_other",
             "label": "Other Limit",
             "type": "text_input",
@@ -36361,6 +38349,20 @@
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_other",
+            "label": "Other Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Other collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_other",
+            "label": "Other Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Other collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "limit_other",
@@ -39202,6 +41204,20 @@
             "default": true
           },
           {
+            "key": "name_appletv",
+            "label": "Apple TV Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Apple TV Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_appletv",
+            "label": "Apple TV Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Apple TV Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_appletv",
             "label": "Apple TV Movies/Shows Sync Mode",
             "type": "select",
@@ -39248,6 +41264,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on BET+.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_bet",
+            "label": "BET+ Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the BET+ Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_bet",
+            "label": "BET+ Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the BET+ Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_bet",
@@ -39298,6 +41328,20 @@
             "default": true
           },
           {
+            "key": "name_channel4",
+            "label": "Channel 4 Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Channel 4 Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_channel4",
+            "label": "Channel 4 Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Channel 4 Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_channel4",
             "label": "Channel 4 Movies/Shows Sync Mode",
             "type": "select",
@@ -39344,6 +41388,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on Crave.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_crave",
+            "label": "Crave Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Crave Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_crave",
+            "label": "Crave Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Crave Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_crave",
@@ -39394,6 +41452,20 @@
             "default": true
           },
           {
+            "key": "name_crunchyroll",
+            "label": "Crunchyroll Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Crunchyroll Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_crunchyroll",
+            "label": "Crunchyroll Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Crunchyroll Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_crunchyroll",
             "label": "Crunchyroll Shows Sync Mode",
             "type": "select",
@@ -39440,6 +41512,20 @@
             "tooltip": "Collection of Shows Streaming on discovery+.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_discovery",
+            "label": "discovery+ Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the discovery+ Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_discovery",
+            "label": "discovery+ Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the discovery+ Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_discovery",
@@ -39490,6 +41576,20 @@
             "default": true
           },
           {
+            "key": "name_disney",
+            "label": "Disney+ Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Disney+ Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_disney",
+            "label": "Disney+ Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Disney+ Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_disney",
             "label": "Disney+ Movies/Shows Sync Mode",
             "type": "select",
@@ -39536,6 +41636,20 @@
             "tooltip": "Collection of Shows Streaming on Hulu.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_hayu",
+            "label": "Hayu Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Hayu Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_hayu",
+            "label": "Hayu Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Hayu Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_hayu",
@@ -39586,6 +41700,20 @@
             "default": true
           },
           {
+            "key": "name_hulu",
+            "label": "Hulu Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Hulu Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_hulu",
+            "label": "Hulu Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Hulu Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_hulu",
             "label": "Hulu Movies/Shows Sync Mode",
             "type": "select",
@@ -39632,6 +41760,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on ITVX.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_itvx",
+            "label": "ITVX Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the ITVX Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_itvx",
+            "label": "ITVX Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the ITVX Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_itvx",
@@ -39682,6 +41824,20 @@
             "default": true
           },
           {
+            "key": "name_hbomax",
+            "label": "HBO Max Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the HBO Max Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_hbomax",
+            "label": "HBO Max Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the HBO Max Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_hbomax",
             "label": "HBO Max Movies/Shows Sync Mode",
             "type": "select",
@@ -39728,6 +41884,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on Netflix.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_netflix",
+            "label": "Netflix Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Netflix Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_netflix",
+            "label": "Netflix Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Netflix Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_netflix",
@@ -39778,6 +41948,20 @@
             "default": true
           },
           {
+            "key": "name_now",
+            "label": "NOW Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the NOW Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_now",
+            "label": "NOW Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the NOW Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_now",
             "label": "NOW Movies/Shows Sync Mode",
             "type": "select",
@@ -39824,6 +42008,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on Paramount+.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_paramount",
+            "label": "Paramount+ Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Paramount+ Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_paramount",
+            "label": "Paramount+ Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Paramount+ Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_paramount",
@@ -39874,6 +42072,20 @@
             "default": true
           },
           {
+            "key": "name_peacock",
+            "label": "Peacock Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Peacock Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_peacock",
+            "label": "Peacock Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Peacock Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_peacock",
             "label": "Peacock Movies/Shows Sync Mode",
             "type": "select",
@@ -39920,6 +42132,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on Prime Video.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_amazon",
+            "label": "Prime Video Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Prime Video Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_amazon",
+            "label": "Prime Video Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Prime Video Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_amazon",
@@ -39970,6 +42196,20 @@
             "default": true
           },
           {
+            "key": "name_youtube",
+            "label": "YouTube Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the YouTube Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_youtube",
+            "label": "YouTube Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the YouTube Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_youtube",
             "label": "YouTube Movies/Shows Sync Mode",
             "type": "select",
@@ -40016,6 +42256,20 @@
             "tooltip": "Collection of Movies/Shows Streaming on tubi.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_tubi",
+            "label": "tubi Movies/Shows Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the tubi Movies/Shows collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_tubi",
+            "label": "tubi Movies/Shows Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the tubi Movies/Shows collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_tubi",
@@ -42205,6 +44459,20 @@
             "default": true
           },
           {
+            "key": "name_aapi",
+            "label": "Asian American Pacific Islander Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Asian American Pacific Islander Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_aapi",
+            "label": "Asian American Pacific Islander Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Asian American Pacific Islander Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_aapi",
             "label": "Asian American Pacific Islander Movies Sync Mode",
             "type": "select",
@@ -42258,6 +44526,20 @@
             "tooltip": "Movies related to Black History Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_black_history",
+            "label": "Black History Month Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Black History Month Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_black_history",
+            "label": "Black History Month Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Black History Month Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_black_history",
@@ -42315,6 +44597,20 @@
             "default": true
           },
           {
+            "key": "name_christmas",
+            "label": "Christmas Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Christmas Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_christmas",
+            "label": "Christmas Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Christmas Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_christmas",
             "label": "Christmas Movies Sync Mode",
             "type": "select",
@@ -42368,6 +44664,20 @@
             "tooltip": "Movies related to Disability Awareness Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_disabilities",
+            "label": "Disability Month Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Disability Month Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_disabilities",
+            "label": "Disability Month Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Disability Month Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_disabilities",
@@ -42425,6 +44735,20 @@
             "default": true
           },
           {
+            "key": "name_easter",
+            "label": "Easter Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Easter Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_easter",
+            "label": "Easter Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Easter Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_easter",
             "label": "Easter Movies Sync Mode",
             "type": "select",
@@ -42478,6 +44802,20 @@
             "tooltip": "Movies related to Father's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_father",
+            "label": "Father's Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Father's Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_father",
+            "label": "Father's Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Father's Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_father",
@@ -42535,6 +44873,20 @@
             "default": true
           },
           {
+            "key": "name_halloween",
+            "label": "Halloween Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Halloween Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_halloween",
+            "label": "Halloween Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Halloween Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_halloween",
             "label": "Halloween Movies Sync Mode",
             "type": "select",
@@ -42588,6 +44940,20 @@
             "tooltip": "Movies related to Independence Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_independence",
+            "label": "Independence Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Independence Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_independence",
+            "label": "Independence Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Independence Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_independence",
@@ -42645,6 +45011,20 @@
             "default": true
           },
           {
+            "key": "name_labor",
+            "label": "Labor Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Labor Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_labor",
+            "label": "Labor Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Labor Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_labor",
             "label": "Labor Day Movies Sync Mode",
             "type": "select",
@@ -42698,6 +45078,20 @@
             "tooltip": "Movies related to LGBTQ Pride Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_lgbtq",
+            "label": "LGBTQ Month Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the LGBTQ Month Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_lgbtq",
+            "label": "LGBTQ Month Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the LGBTQ Month Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_lgbtq",
@@ -42755,6 +45149,20 @@
             "default": true
           },
           {
+            "key": "name_memorial",
+            "label": "Memorial Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Memorial Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_memorial",
+            "label": "Memorial Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Memorial Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_memorial",
             "label": "Memorial Day Movies Sync Mode",
             "type": "select",
@@ -42808,6 +45216,20 @@
             "tooltip": "Movies related to Mother's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_mother",
+            "label": "Mother's Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Mother's Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_mother",
+            "label": "Mother's Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Mother's Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_mother",
@@ -42865,6 +45287,20 @@
             "default": true
           },
           {
+            "key": "name_latinx",
+            "label": "National Hispanic Heritage Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the National Hispanic Heritage Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_latinx",
+            "label": "National Hispanic Heritage Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the National Hispanic Heritage Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_latinx",
             "label": "National Hispanic Heritage Movies Sync Mode",
             "type": "select",
@@ -42918,6 +45354,20 @@
             "tooltip": "Movies related to New Year's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_years",
+            "label": "New Year's Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the New Year's Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_years",
+            "label": "New Year's Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the New Year's Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_years",
@@ -42975,6 +45425,20 @@
             "default": true
           },
           {
+            "key": "name_patrick",
+            "label": "St. Patrick's Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the St. Patrick's Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_patrick",
+            "label": "St. Patrick's Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the St. Patrick's Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_patrick",
             "label": "St. Patrick's Day Movies Sync Mode",
             "type": "select",
@@ -43028,6 +45492,20 @@
             "tooltip": "Movies related to Thanksgiving",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_thanksgiving",
+            "label": "Thanksgiving Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Thanksgiving Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_thanksgiving",
+            "label": "Thanksgiving Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Thanksgiving Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_thanksgiving",
@@ -43085,6 +45563,20 @@
             "default": true
           },
           {
+            "key": "name_valentine",
+            "label": "Valentine's Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Valentine's Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_valentine",
+            "label": "Valentine's Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Valentine's Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_valentine",
             "label": "Valentine's Day Movies Sync Mode",
             "type": "select",
@@ -43140,6 +45632,20 @@
             "default": true
           },
           {
+            "key": "name_veteran",
+            "label": "Veteran's Day Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Veteran's Day Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_veteran",
+            "label": "Veteran's Day Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Veteran's Day Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
+          },
+          {
             "key": "sync_mode_veteran",
             "label": "Veteran's Day Movies Sync Mode",
             "type": "select",
@@ -43193,6 +45699,20 @@
             "tooltip": "Movies related to Women's History Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "name_women",
+            "label": "Women's History Month Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Women's History Month Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format"
+          },
+          {
+            "key": "summary_women",
+            "label": "Women's History Month Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Women's History Month Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format"
           },
           {
             "key": "sync_mode_women",
