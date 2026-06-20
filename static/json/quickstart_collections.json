@@ -3040,7 +3040,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "C\u00e9sar Awards",
+        "label": "César Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -3197,8 +3197,8 @@
           },
           {
             "key": "use_best",
-            "label": "C\u00e9sar Best Film Winners",
-            "tooltip": "Collection of C\u00e9sar Award Winners.",
+            "label": "César Best Film Winners",
+            "tooltip": "Collection of César Award Winners.",
             "type": "toggle",
             "default": true
           },
@@ -3397,9 +3397,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "C\u00e9sar Best Film Winners Visible Home",
+            "label": "César Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3407,9 +3407,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "C\u00e9sar Best Film Winners Visible Library",
+            "label": "César Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3417,9 +3417,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "C\u00e9sar Best Film Winners Visible Shared",
+            "label": "César Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -23568,6 +23568,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_avp",
+            "label": "Alien / Predator Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Alien / Predator collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_avp",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23593,6 +23602,15 @@
             "tooltip": "Collection of Movies in the The Arrow Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_arrow",
+            "label": "Arrowverse Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Arrowverse collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_arrow",
@@ -23622,6 +23640,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_dca",
+            "label": "DC Animated Universe Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the DC Animated Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_dca",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23647,6 +23674,15 @@
             "tooltip": "Collection of Movies in the DC Extended Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_dcu",
+            "label": "DC Extended Universe Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the DC Extended Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_dcu",
@@ -23676,6 +23712,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_fast",
+            "label": "Fast & Furious Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Fast & Furious collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_fast",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23701,6 +23746,15 @@
             "tooltip": "Collection of Movies in the Marvel Universe (but not part of MCU)",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_marvel",
+            "label": "In Association with Marvel Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the In Association with Marvel collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_marvel",
@@ -23730,6 +23784,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_mcu",
+            "label": "Marvel Cinematic Universe Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Marvel Cinematic Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_mcu",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23755,6 +23818,15 @@
             "tooltip": "Collection of Movies in the Middle Earth Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_middle",
+            "label": "Middle Earth Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Middle Earth collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_middle",
@@ -23784,6 +23856,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_rocky",
+            "label": "Rocky / Creed Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Rocky / Creed collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_rocky",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23809,6 +23890,15 @@
             "tooltip": "Collection of Movies in the Star Trek Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_trek",
+            "label": "Star Trek Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Star Trek collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_trek",
@@ -23838,6 +23928,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_star",
+            "label": "Star Wars Universe Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Star Wars Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_star",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23863,6 +23962,15 @@
             "tooltip": "Collection of Movies in the The Mummy Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_mummy",
+            "label": "The Mummy Universe Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the The Mummy Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_mummy",
@@ -23892,6 +24000,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_askew",
+            "label": "View Askewverse Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the View Askewverse collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_askew",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23919,6 +24036,15 @@
             "default": true
           },
           {
+            "key": "minimum_items_wizard",
+            "label": "Wizarding World Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the Wizarding World collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "radarr_add_missing_wizard",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -23944,6 +24070,15 @@
             "tooltip": "Collection of Movies in the X-Men Universe",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "minimum_items_xmen",
+            "label": "X-Men Universe Minimum Items",
+            "type": "text_input",
+            "tooltip": "Override the minimum_items value for the X-Men Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "radarr_add_missing_xmen",
@@ -39067,6 +39202,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_appletv",
+            "label": "Apple TV Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Apple TV Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_appletv",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39092,6 +39248,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on BET+.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_bet",
+            "label": "BET+ Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the BET+ Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_bet",
@@ -39121,6 +39298,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_channel4",
+            "label": "Channel 4 Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Channel 4 Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_channel4",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39146,6 +39344,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on Crave.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_crave",
+            "label": "Crave Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Crave Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_crave",
@@ -39175,6 +39394,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_crunchyroll",
+            "label": "Crunchyroll Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Crunchyroll Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_crunchyroll",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39200,6 +39440,27 @@
             "tooltip": "Collection of Shows Streaming on discovery+.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_discovery",
+            "label": "discovery+ Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the discovery+ Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_discovery",
@@ -39229,6 +39490,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_disney",
+            "label": "Disney+ Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Disney+ Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_disney",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39254,6 +39536,27 @@
             "tooltip": "Collection of Shows Streaming on Hulu.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_hayu",
+            "label": "Hayu Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Hayu Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_hayu",
@@ -39283,6 +39586,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_hulu",
+            "label": "Hulu Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Hulu Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_hulu",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39308,6 +39632,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on ITVX.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_itvx",
+            "label": "ITVX Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the ITVX Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_itvx",
@@ -39337,6 +39682,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_hbomax",
+            "label": "HBO Max Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the HBO Max Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_hbomax",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39362,6 +39728,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on Netflix.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_netflix",
+            "label": "Netflix Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Netflix Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_netflix",
@@ -39391,6 +39778,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_now",
+            "label": "NOW Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the NOW Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_now",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39416,6 +39824,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on Paramount+.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_paramount",
+            "label": "Paramount+ Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Paramount+ Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_paramount",
@@ -39445,6 +39874,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_peacock",
+            "label": "Peacock Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Peacock Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_peacock",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39470,6 +39920,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on Prime Video.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_amazon",
+            "label": "Prime Video Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Prime Video Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_amazon",
@@ -39499,6 +39970,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_youtube",
+            "label": "YouTube Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the YouTube Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "radarr_add_missing_youtube",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -39524,6 +40016,27 @@
             "tooltip": "Collection of Movies/Shows Streaming on tubi.",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_tubi",
+            "label": "tubi Movies/Shows Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the tubi Movies/Shows collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "radarr_add_missing_tubi",
@@ -41692,6 +42205,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_aapi",
+            "label": "Asian American Pacific Islander Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Asian American Pacific Islander Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_aapi",
             "label": "Asian American Pacific Islander Movies Limit",
             "type": "text_input",
@@ -41724,6 +42258,27 @@
             "tooltip": "Movies related to Black History Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_black_history",
+            "label": "Black History Month Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Black History Month Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_black_history",
@@ -41760,6 +42315,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_christmas",
+            "label": "Christmas Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Christmas Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_christmas",
             "label": "Christmas Movies Limit",
             "type": "text_input",
@@ -41792,6 +42368,27 @@
             "tooltip": "Movies related to Disability Awareness Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_disabilities",
+            "label": "Disability Month Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Disability Month Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_disabilities",
@@ -41828,6 +42425,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_easter",
+            "label": "Easter Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Easter Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_easter",
             "label": "Easter Movies Limit",
             "type": "text_input",
@@ -41860,6 +42478,27 @@
             "tooltip": "Movies related to Father's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_father",
+            "label": "Father's Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Father's Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_father",
@@ -41896,6 +42535,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_halloween",
+            "label": "Halloween Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Halloween Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_halloween",
             "label": "Halloween Movies Limit",
             "type": "text_input",
@@ -41928,6 +42588,27 @@
             "tooltip": "Movies related to Independence Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_independence",
+            "label": "Independence Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Independence Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_independence",
@@ -41964,6 +42645,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_labor",
+            "label": "Labor Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Labor Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_labor",
             "label": "Labor Day Movies Limit",
             "type": "text_input",
@@ -41996,6 +42698,27 @@
             "tooltip": "Movies related to LGBTQ Pride Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_lgbtq",
+            "label": "LGBTQ Month Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the LGBTQ Month Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_lgbtq",
@@ -42032,6 +42755,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_memorial",
+            "label": "Memorial Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Memorial Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_memorial",
             "label": "Memorial Day Movies Limit",
             "type": "text_input",
@@ -42064,6 +42808,27 @@
             "tooltip": "Movies related to Mother's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_mother",
+            "label": "Mother's Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Mother's Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_mother",
@@ -42100,6 +42865,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_latinx",
+            "label": "National Hispanic Heritage Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the National Hispanic Heritage Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_latinx",
             "label": "National Hispanic Heritage Movies Limit",
             "type": "text_input",
@@ -42132,6 +42918,27 @@
             "tooltip": "Movies related to New Year's Day",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_years",
+            "label": "New Year's Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the New Year's Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_years",
@@ -42168,6 +42975,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_patrick",
+            "label": "St. Patrick's Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the St. Patrick's Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_patrick",
             "label": "St. Patrick's Day Movies Limit",
             "type": "text_input",
@@ -42200,6 +43028,27 @@
             "tooltip": "Movies related to Thanksgiving",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_thanksgiving",
+            "label": "Thanksgiving Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Thanksgiving Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_thanksgiving",
@@ -42236,6 +43085,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_valentine",
+            "label": "Valentine's Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Valentine's Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_valentine",
             "label": "Valentine's Day Movies Limit",
             "type": "text_input",
@@ -42270,6 +43140,27 @@
             "default": true
           },
           {
+            "key": "sync_mode_veteran",
+            "label": "Veteran's Day Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Veteran's Day Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
+          },
+          {
             "key": "limit_veteran",
             "label": "Veteran's Day Movies Limit",
             "type": "text_input",
@@ -42302,6 +43193,27 @@
             "tooltip": "Movies related to Women's History Month",
             "type": "toggle",
             "default": true
+          },
+          {
+            "key": "sync_mode_women",
+            "label": "Women's History Month Movies Sync Mode",
+            "type": "select",
+            "tooltip": "Override the sync_mode for the Women's History Month Movies collection. Leave blank to inherit the family Sync Mode value.",
+            "options": [
+              {
+                "value": "",
+                "label": "Use Family Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "default": ""
           },
           {
             "key": "limit_women",
