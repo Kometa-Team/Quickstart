@@ -61,6 +61,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -880,6 +887,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -1636,6 +1650,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -2396,6 +2417,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -3152,6 +3180,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -3911,6 +3946,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -4774,6 +4816,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -5633,6 +5682,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -6557,6 +6613,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -7313,6 +7376,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -8072,6 +8142,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -8934,6 +9011,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -9690,6 +9774,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_year_collections",
@@ -10450,6 +10541,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -11208,6 +11306,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_year_collections",
             "label": "Use Year Collections",
             "type": "toggle",
@@ -11964,6 +12069,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "data_starting",
@@ -22927,6 +23039,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -26336,6 +26455,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -27652,6 +27778,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -28227,6 +28360,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -28805,6 +28945,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -29395,6 +29542,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -29981,6 +30135,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -30571,6 +30732,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -31159,6 +31327,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -31745,6 +31920,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -32338,6 +32520,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -32945,6 +33134,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -33549,6 +33745,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -35340,6 +35543,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -36266,6 +36476,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -37199,6 +37416,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -37746,6 +37970,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -38319,6 +38550,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -38902,6 +39140,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -38966,6 +39211,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "tmdb_birthday",
+            "label": "TMDb Birthday",
+            "type": "text_input",
+            "tooltip": "Controls whether these TMDb person collections only run around a person's birthday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>. Examples: <code>{\"this_month\": true}</code>, <code>{\"before\": 7}</code>, or <code>{\"before\": 7, \"after\": 7}</code>.",
+            "placeholder": "{\"this_month\": true}"
           },
           {
             "key": "include",
@@ -39461,6 +39713,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -39525,6 +39784,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "tmdb_birthday",
+            "label": "TMDb Birthday",
+            "type": "text_input",
+            "tooltip": "Controls whether these TMDb person collections only run around a person's birthday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>. Examples: <code>{\"this_month\": true}</code>, <code>{\"before\": 7}</code>, or <code>{\"before\": 7, \"after\": 7}</code>.",
+            "placeholder": "{\"this_month\": true}"
           },
           {
             "key": "include",
@@ -40019,6 +40285,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -40083,6 +40356,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "tmdb_birthday",
+            "label": "TMDb Birthday",
+            "type": "text_input",
+            "tooltip": "Controls whether these TMDb person collections only run around a person's birthday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>. Examples: <code>{\"this_month\": true}</code>, <code>{\"before\": 7}</code>, or <code>{\"before\": 7, \"after\": 7}</code>.",
+            "placeholder": "{\"this_month\": true}"
           },
           {
             "key": "include",
@@ -40577,6 +40857,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -40641,6 +40928,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "tmdb_birthday",
+            "label": "TMDb Birthday",
+            "type": "text_input",
+            "tooltip": "Controls whether these TMDb person collections only run around a person's birthday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>. Examples: <code>{\"this_month\": true}</code>, <code>{\"before\": 7}</code>, or <code>{\"before\": 7, \"after\": 7}</code>.",
+            "placeholder": "{\"this_month\": true}"
           },
           {
             "key": "include",
@@ -41140,6 +41434,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -43378,6 +43679,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
@@ -43899,6 +44207,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "use_separator",
@@ -44427,6 +44742,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",
@@ -46908,6 +47230,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -47473,6 +47802,13 @@
             "placeholder": "Custom collection summary format"
           },
           {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
+          },
+          {
             "key": "limit",
             "label": "Limit",
             "type": "text_input",
@@ -47960,6 +48296,13 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format"
           },
           {
             "key": "limit",

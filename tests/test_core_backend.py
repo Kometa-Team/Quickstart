@@ -1464,6 +1464,14 @@ def test_normalize_collection_template_var_value_handles_dynamic_family_controls
         "append_addons",
         '{"Top 250": ["IMDb Top 250"]}',
     ) == {"Top 250": ["IMDb Top 250"]}
+    assert output._normalize_collection_template_var_value(
+        "tmdb_birthday",
+        '{"this_month": true, "before": 7, "after": "2"}',
+    ) == {"this_month": True, "before": 7, "after": 2}
+    assert output._normalize_collection_template_var_value(
+        "tmdb_birthday",
+        "before=14, after=3",
+    ) == {"before": 14, "after": 3}
 
 
 def test_dynamic_family_template_var_normalization_matches_collection_export_shapes():

@@ -354,6 +354,75 @@ def _parse_string_list_mapping(value):
     return normalized
 
 
+def _parse_tmdb_person_window(value):
+    if value is None:
+        return None
+
+    raw_text = None
+    parsed = value
+    if isinstance(value, str):
+        raw_text = value.strip()
+        if not raw_text:
+            return None
+        try:
+            parsed = json.loads(raw_text)
+        except Exception:
+            try:
+                parsed = ast.literal_eval(raw_text)
+            except Exception:
+                candidate = {}
+                valid_candidate = True
+                for part in re.split(r"[\n;,]+", raw_text):
+                    piece = str(part or "").strip()
+                    if not piece:
+                        continue
+                    if "=" in piece:
+                        key_text, raw_val = piece.split("=", 1)
+                    elif ":" in piece:
+                        key_text, raw_val = piece.split(":", 1)
+                    else:
+                        valid_candidate = False
+                        break
+                    key_text = key_text.strip()
+                    raw_val = raw_val.strip()
+                    if not key_text:
+                        valid_candidate = False
+                        break
+                    candidate[key_text] = raw_val
+                parsed = candidate if valid_candidate and candidate else raw_text
+
+    if not isinstance(parsed, dict):
+        return raw_text if raw_text is not None else value
+
+    normalized = {}
+    raw_this_month = parsed.get("this_month")
+    if raw_this_month not in (None, ""):
+        bool_value = _coerce_bool(raw_this_month)
+        normalized["this_month"] = bool_value if bool_value is not None else raw_this_month
+
+    for key in ("before", "after"):
+        raw_number = parsed.get(key)
+        if raw_number in (None, ""):
+            continue
+        number = _to_number(raw_number)
+        if number is None:
+            normalized[key] = raw_number
+        elif float(number).is_integer():
+            normalized[key] = int(number)
+        else:
+            normalized[key] = number
+
+    for raw_key, raw_value in parsed.items():
+        key_text = str(raw_key or "").strip()
+        if not key_text or key_text in normalized or key_text in {"this_month", "before", "after"}:
+            continue
+        if raw_value in (None, ""):
+            continue
+        normalized[key_text] = raw_value
+
+    return normalized or (raw_text if raw_text is not None else value)
+
+
 def _normalize_collection_template_var_value(key, value):
     if key in {"ignore_ids", "ignore_imdb_ids"}:
         list_values = _parse_string_list(value)
@@ -364,6 +433,8 @@ def _normalize_collection_template_var_value(key, value):
     if key in {"addons", "append_addons"}:
         mapping_values = _parse_string_list_mapping(value)
         return mapping_values if mapping_values else None
+    if key in {"tmdb_birthday", "tmdb_deathday"}:
+        return _parse_tmdb_person_window(value)
     if key == "remove_suffix":
         list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
