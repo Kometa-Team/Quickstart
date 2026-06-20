@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
 
@@ -25,11 +24,7 @@ def _find_collection(collection_id, media_types):
 
 
 def _keys(collection):
-    return [
-        item["key"]
-        for item in collection.get("template_variables", [])
-        if isinstance(item, dict) and item.get("key")
-    ]
+    return [item["key"] for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")]
 
 
 def _child_suffixes(collection):
@@ -58,11 +53,7 @@ def test_streaming_and_seasonal_sync_mode_child_overrides_follow_child_toggles()
             child_key = f"sync_mode_{suffix}"
             assert child_key in keys
 
-            field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == child_key
-            )
+            field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == child_key)
             assert field["type"] == "select"
             assert field["default"] == ""
             assert field["options"][0] == {"value": "", "label": "Use Family Default"}
@@ -79,11 +70,7 @@ def test_universe_minimum_items_child_overrides_follow_child_toggles():
         child_key = f"minimum_items_{suffix}"
         assert child_key in keys
 
-        field = next(
-            item
-            for item in collection.get("template_variables", [])
-            if isinstance(item, dict) and item.get("key") == child_key
-        )
+        field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == child_key)
         assert field["type"] == "text_input"
         assert field["input_type"] == "number"
         assert field["min"] == 1
@@ -107,16 +94,8 @@ def test_name_and_summary_child_overrides_follow_child_toggles_for_shared_naming
             assert name_key in keys
             assert summary_key in keys
 
-            name_field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == name_key
-            )
-            summary_field = next(
-                item
-                for item in collection.get("template_variables", [])
-                if isinstance(item, dict) and item.get("key") == summary_key
-            )
+            name_field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == name_key)
+            summary_field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == summary_key)
 
             assert name_field["type"] == "text_input"
             assert summary_field["type"] == "text_input"
