@@ -5334,7 +5334,7 @@ def generate_preview():
 
     # Lazy-load overlay metadata so we can honor JSON-defined URLs (e.g., edition overlays)
     if not hasattr(generate_preview, "_overlay_meta"):
-        overlay_cfg = helpers.load_quickstart_config("quickstart_overlays.json") or []
+        overlay_cfg = helpers.load_quickstart_overlay_config() or []
         meta = {}
         for group in overlay_cfg:
             for ov in group.get("overlays", []):
@@ -8178,54 +8178,13 @@ def step(name):
         settings = persistence.retrieve_settings(section)
         service_validations[key] = helpers.booler(settings.get("validated", False))
 
-    def add_offset_vars(config):  # noqa: ANN001
-        """
-        Ensure each overlay exposes positional offsets with sensible defaults.
-        """
-        for group in config or []:
-            overlays = group.get("overlays", [])
-            for ov in overlays:
-                tv = ov.get("template_variables")
-                if tv is None:
-                    tv = {}
-                    ov["template_variables"] = tv
-                elif not isinstance(tv, dict):
-                    # leave lists (legacy) untouched
-                    continue
-                offsets = ov.get("default_offsets", {}) if isinstance(ov.get("default_offsets"), dict) else {}
-                # Respect initial_* overrides (used for YAML naming) but surface as horizontal/vertical inputs
-                if "initial_horizontal_offset" in tv and isinstance(tv["initial_horizontal_offset"], dict):
-                    offsets["horizontal"] = tv["initial_horizontal_offset"].get("default", offsets.get("horizontal", 0))
-                if "initial_vertical_offset" in tv and isinstance(tv["initial_vertical_offset"], dict):
-                    offsets["vertical"] = tv["initial_vertical_offset"].get("default", offsets.get("vertical", 0))
-                h_def = offsets.get("horizontal", 0)
-                v_def = offsets.get("vertical", 0)
-                # Only add if not already present
-                tv.setdefault(
-                    "horizontal_offset",
-                    {
-                        "input_type": "number",
-                        "default": h_def,
-                        "label": "Horizontal Offset",
-                    },
-                )
-                tv.setdefault(
-                    "vertical_offset",
-                    {
-                        "input_type": "number",
-                        "default": v_def,
-                        "label": "Vertical Offset",
-                    },
-                )
-
     if needs_library_payload:
         helpers.ts_log(f"Loading attribute_config...", level="TIMING")
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
         helpers.ts_log(f"Loading collection_config...", level="TIMING")
         collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         helpers.ts_log(f"Loading overlay_config...", level="TIMING")
-        overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
-        add_offset_vars(overlay_config)
+        overlay_config = helpers.load_quickstart_overlay_config()
         helpers.ts_log(f"Loading preview image data...", level="TIMING")
         image_data = _build_preview_image_data()
         overlay_fonts = list_overlay_fonts()
@@ -8667,7 +8626,7 @@ def library_fragment(library_id):
 
     attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
     collection_config = helpers.load_quickstart_config("quickstart_collections.json")
-    overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
+    overlay_config = helpers.load_quickstart_overlay_config()
 
     legacy_playlist_libraries = _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries, show_libraries)
     data = persistence.retrieve_settings("025-libraries")

@@ -634,7 +634,7 @@ def _resolve_overlay_id(raw_default: str, overlay_by_id: dict, overlay_by_alias:
 
 def infer_library_types(config_data: dict) -> tuple[dict[str, str], list[dict]]:
     collection_config = helpers.load_quickstart_config("quickstart_collections.json") or []
-    overlay_config = helpers.load_quickstart_config("quickstart_overlays.json") or []
+    overlay_config = helpers.load_quickstart_overlay_config() or []
     collection_by_id, collection_by_alias = _build_collection_index(collection_config)
     overlay_by_id, overlay_by_alias, _ = _build_overlay_index(overlay_config)
 
@@ -824,7 +824,7 @@ def prepare_import_payload(
     payload: dict[str, dict] = {}
 
     collection_config = helpers.load_quickstart_config("quickstart_collections.json") or []
-    overlay_config = helpers.load_quickstart_config("quickstart_overlays.json") or []
+    overlay_config = helpers.load_quickstart_overlay_config() or []
     attribute_config = helpers.load_quickstart_config("quickstart_attributes.json") or {}
     inferred_types, _ = infer_library_types(config_data)
 

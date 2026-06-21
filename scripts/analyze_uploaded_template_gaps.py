@@ -2124,8 +2124,6 @@ QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
     ("library", "metadata_path"): "legacy_library_path_key_not_recommended",
     ("library", "overlay_path"): "legacy_library_path_key_not_recommended",
     ("library", "reapply_overlays"): "valid_but_not_recommended_for_quickstart",
-    ("overlay", "horizontal_align"): "offset_ui_workaround_available",
-    ("overlay", "vertical_align"): "offset_ui_workaround_available",
 }
 
 

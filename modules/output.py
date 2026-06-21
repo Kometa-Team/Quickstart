@@ -701,7 +701,7 @@ def _extract_offset_defaults(overlay):
 def _build_overlay_defaults():
     defaults = {}
     try:
-        data = helpers.load_quickstart_config("quickstart_overlays.json")
+        data = helpers.load_quickstart_overlay_config()
     except Exception as e:
         helpers.ts_log(f"Failed to load quickstart_overlays.json: {e}", level="ERROR")
         return defaults

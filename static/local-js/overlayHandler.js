@@ -3611,6 +3611,45 @@ const OverlayHandler = {
         return { hAlign, vAlign }
       }
 
+      const buildOrigin = (hAlign = 'left', vAlign = 'top') => {
+        const safeH = ['left', 'center', 'right'].includes(hAlign) ? hAlign : 'left'
+        const safeV = ['top', 'center', 'bottom'].includes(vAlign) ? vAlign : 'top'
+
+        if (safeH === 'center' && safeV === 'center') return 'center'
+        if (safeH === 'center') return `${safeV}_center`
+        if (safeV === 'center') return `center_${safeH}`
+        return `${safeV}_${safeH}`
+      }
+
+      const getAlignmentInputs = (cfg) => {
+        const templateName = cfg?.container?.dataset?.overlayTemplate
+        if (!templateName || !cfg?.container) {
+          return { hAlignInput: null, vAlignInput: null }
+        }
+        return {
+          hAlignInput: cfg.container.querySelector(`[name="${templateName}[horizontal_align]"]`),
+          vAlignInput: cfg.container.querySelector(`[name="${templateName}[vertical_align]"]`)
+        }
+      }
+
+      const syncOriginFromAlignmentInputs = (cfg) => {
+        const { hAlignInput, vAlignInput } = getAlignmentInputs(cfg)
+        if (!hAlignInput && !vAlignInput) return false
+
+        const current = parseOrigin(cfg.origin || '')
+        const rawH = (hAlignInput?.value || hAlignInput?.dataset?.default || current.hAlign || '').toString().trim().toLowerCase()
+        const rawV = (vAlignInput?.value || vAlignInput?.dataset?.default || current.vAlign || '').toString().trim().toLowerCase()
+        const nextH = ['left', 'center', 'right'].includes(rawH) ? rawH : current.hAlign
+        const nextV = ['top', 'center', 'bottom'].includes(rawV) ? rawV : current.vAlign
+        const nextOrigin = buildOrigin(nextH, nextV)
+
+        if (nextOrigin && cfg.origin !== nextOrigin) {
+          cfg.origin = nextOrigin
+          return true
+        }
+        return false
+      }
+
       const getLayerMetrics = (cfg, layer) => {
         const baseW = Number(cfg.baseWidth) || baseWidth
         const baseH = Number(cfg.baseHeight) || baseHeight
@@ -3855,6 +3894,8 @@ const OverlayHandler = {
         if (!layer) return
         const { hInput, vInput } = getInputs(cfg)
         if (!hInput || !vInput) return
+
+        syncOriginFromAlignmentInputs(cfg)
 
         const { scaleX, scaleY } = getScale()
         if (!cfg.naturalWidth && layer.naturalWidth) {
@@ -4397,6 +4438,17 @@ const OverlayHandler = {
         configs.push(cfg)
         configsById.set(cfg.instanceId, cfg)
         const layer = addOverlayLayer(cfg)
+        const { hAlignInput, vAlignInput } = getAlignmentInputs(cfg)
+        ;[hAlignInput, vAlignInput].forEach(input => {
+          if (!input || input.dataset.overlayAlignBound === 'true') return
+          const refreshAlignment = () => {
+            syncOriginFromAlignmentInputs(cfg)
+            applyPosition(cfg)
+          }
+          input.addEventListener('input', refreshAlignment)
+          input.addEventListener('change', refreshAlignment)
+          input.dataset.overlayAlignBound = 'true'
+        })
 
         if (cfg.id === 'overlay_runtimes' && layer) {
           const { font } = getRuntimeVars(cfg)

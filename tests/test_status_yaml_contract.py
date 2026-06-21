@@ -72,3 +72,17 @@ def test_status_yaml_contract_keeps_use_key_toggles(monkeypatch, qs_module):
     assert template_vars["use_returning"] is False
     assert template_vars["use_canceled"] is False
     assert template_vars["use_ended"] is False
+
+
+def test_status_yaml_contract_emits_alignment_template_variables(monkeypatch, qs_module):
+    payload = _build_library_payload(
+        {
+            "horizontal_align": "center",
+            "vertical_align": "bottom",
+        }
+    )
+
+    template_vars = _template_vars_from_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+
+    assert template_vars["horizontal_align"] == "center"
+    assert template_vars["vertical_align"] == "bottom"

@@ -262,7 +262,7 @@ def test_quickstart_recommendation_summary_excludes_legacy_or_not_recommended_li
     summary = module.build_quickstart_recommendation_summary(rows)
     ranked = module.serialize_ranked_summary(summary)
 
-    assert [item["key"] for item in ranked] == ["library_name"]
+    assert [item["key"] for item in ranked] == ["library_name", "horizontal_align"]
 
 
 def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys():
@@ -324,10 +324,9 @@ def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys(
         key=lambda item: str(item["key"]),
     )
 
-    assert [item["key"] for item in excluded] == ["metadata_path", "reapply_overlays", "vertical_align"]
+    assert [item["key"] for item in excluded] == ["metadata_path", "reapply_overlays"]
     assert excluded[0]["reason"] == "legacy_library_path_key_not_recommended"
     assert excluded[1]["reason"] == "valid_but_not_recommended_for_quickstart"
-    assert excluded[2]["reason"] == "offset_ui_workaround_available"
 
 
 def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_file():
@@ -810,7 +809,9 @@ def test_build_merged_fix_queue_suppresses_excluded_quickstart_only_keys():
 
     ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
 
-    assert ranked == []
+    assert len(ranked) == 1
+    assert ranked[0]["key"] == "horizontal_align"
+    assert ranked[0]["action_targets"] == ["quickstart", "importer"]
 
 
 def test_looks_like_kometa_config_text_accepts_non_template_variable_configs():

@@ -372,6 +372,36 @@ def test_prepare_import_payload_accepts_status_use_key_template_variables():
     assert any("libraries.Shows.overlay_files[0].template_variables.use_ended" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_status_alignment_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Shows": {
+                    "overlay_files": [
+                        {
+                            "default": "status",
+                            "template_variables": {
+                                "horizontal_align": "center",
+                                "vertical_align": "bottom",
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        set(),
+        {"Shows"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["sho-library_shows-show-overlay_status"] is True
+    assert libraries_payload["sho-library_shows-show-template_overlay_status[horizontal_align]"] == "center"
+    assert libraries_payload["sho-library_shows-show-template_overlay_status[vertical_align]"] == "bottom"
+    assert any("libraries.Shows.overlay_files[0].template_variables.horizontal_align" in line for line in report.lines)
+    assert any("libraries.Shows.overlay_files[0].template_variables.vertical_align" in line for line in report.lines)
+
+
 def test_prepare_import_payload_accepts_streaming_use_key_template_variables():
     payload, report = importer.prepare_import_payload(
         {
