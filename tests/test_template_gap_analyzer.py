@@ -1,4 +1,7 @@
 import importlib.util
+import tarfile
+import zipfile
+from gzip import open as gzip_open
 from pathlib import Path
 
 
@@ -178,7 +181,7 @@ def test_quickstart_recommendation_summary_includes_runtime_supported_overlay_ke
         {
             "kind": "overlay",
             "default": "status",
-            "key": "horizontal_align",
+            "key": "back_width",
             "file": "config.yml",
             "library": "Shows",
             "matched_default_files": ["overlays/status.yml"],
@@ -197,9 +200,134 @@ def test_quickstart_recommendation_summary_includes_runtime_supported_overlay_ke
     ranked = module.serialize_ranked_summary(summary)
 
     assert len(ranked) == 1
-    assert ranked[0]["key"] == "horizontal_align"
+    assert ranked[0]["key"] == "back_width"
     assert ranked[0]["supported_in_quickstart"] is True
     assert ranked[0]["quickstart_declared"] is False
+
+
+def test_quickstart_recommendation_summary_excludes_legacy_or_not_recommended_library_keys():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "metadata_path",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "path",
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "library_name",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+        {
+            "kind": "overlay",
+            "default": "status",
+            "key": "horizontal_align",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": ["overlays/status.yml"],
+            "supported_in_quickstart": True,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "supported_in_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+    ]
+
+    summary = module.build_quickstart_recommendation_summary(rows)
+    ranked = module.serialize_ranked_summary(summary)
+
+    assert [item["key"] for item in ranked] == ["library_name"]
+
+
+def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "metadata_path",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "path",
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "reapply_overlays",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "boolean",
+        },
+        {
+            "kind": "overlay",
+            "default": "status",
+            "key": "vertical_align",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": ["overlays/status.yml"],
+            "supported_in_quickstart": True,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "supported_in_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+    ]
+
+    excluded = sorted(
+        module.build_quickstart_recommendation_exclusion_summary(rows).values(),
+        key=lambda item: str(item["key"]),
+    )
+
+    assert [item["key"] for item in excluded] == ["metadata_path", "reapply_overlays", "vertical_align"]
+    assert excluded[0]["reason"] == "legacy_library_path_key_not_recommended"
+    assert excluded[1]["reason"] == "valid_but_not_recommended_for_quickstart"
+    assert excluded[2]["reason"] == "offset_ui_workaround_available"
 
 
 def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_file():
@@ -258,6 +386,473 @@ def test_key_is_valid_for_default_uses_repo_yaml_for_streaming_and_letterboxd_ca
     assert streaming_valid is True
     assert letterboxd_valid is True
     assert imdb_top_250_valid is True
+
+
+def test_classify_yaml_document_type_distinguishes_config_and_external_yaml():
+    module = _load_gap_analyzer_module()
+
+    assert module.classify_yaml_document_type({"libraries": {}}) == "config"
+    assert module.classify_yaml_document_type({"collections": {}}) == "external_collection"
+    assert module.classify_yaml_document_type({"dynamic_collections": {}}) == "external_collection"
+    assert module.classify_yaml_document_type({"overlays": {}}) == "external_overlay"
+    assert module.classify_yaml_document_type({"metadata": {}}) == "external_metadata"
+    assert module.classify_yaml_document_type({"playlists": {}}) == "external_playlist"
+    assert module.classify_yaml_document_type({"templates": {}}) == "external_template_bundle"
+    assert module.classify_yaml_document_type(["not", "a", "mapping"]) == "unknown"
+
+
+def test_prefilter_yaml_files_keeps_external_yaml_for_later_type_classification(tmp_path):
+    module = _load_gap_analyzer_module()
+    overlay_file = tmp_path / "overlay.yml"
+    overlay_file.write_text(
+        """
+overlays:
+  Resolution:
+    overlay:
+      name: text(4K)
+""".strip(),
+        encoding="utf-8",
+    )
+
+    candidates, skipped, stats = module.prefilter_yaml_files([overlay_file], yaml_type_focus="config")
+
+    assert candidates == [overlay_file]
+    assert skipped == []
+    assert stats["non_kometa_skips"] == 0
+
+
+def test_prefilter_yaml_files_does_not_skip_real_config_just_because_filename_looks_like_artifact(tmp_path):
+    module = _load_gap_analyzer_module()
+    config_file = tmp_path / "parsed_message.txt_config_Mel-46174d489990d66d.yml"
+    config_file.write_text(
+        """
+libraries:
+  Movies:
+    collection_files:
+      - pmm: basic
+settings:
+  cache: true
+""".strip(),
+        encoding="utf-8",
+    )
+
+    candidates, skipped, stats = module.prefilter_yaml_files([config_file], yaml_type_focus="config")
+
+    assert candidates == [config_file]
+    assert skipped == []
+    assert stats["artifact_skips"] == 0
+
+
+def test_scan_uploaded_configs_excludes_external_yaml_when_focus_is_config(tmp_path):
+    module = _load_gap_analyzer_module()
+    overlay_file = tmp_path / "overlay.yml"
+    overlay_file.write_text(
+        """
+overlays:
+  Resolution:
+    overlay:
+      name: text(4K)
+""".strip(),
+        encoding="utf-8",
+    )
+
+    findings, importer_findings, skipped, parsed_paths, stats = module.scan_uploaded_configs(
+        [overlay_file],
+        yaml_type_focus="config",
+    )
+
+    assert findings == []
+    assert importer_findings == []
+    assert parsed_paths == []
+    assert stats["type_excluded"] == 1
+    assert skipped[0]["error_type"] == "YamlTypeExcluded"
+    assert skipped[0]["yaml_document_type"] == "external_overlay"
+    assert skipped[0]["noise_reason"] == "yaml_type_excluded"
+
+
+def test_collect_yaml_files_recurses_into_nested_zip_archives(tmp_path):
+    module = _load_gap_analyzer_module()
+    inner_yaml = "libraries:\n  Movies:\n    collection_files:\n      - pmm: basic\n"
+    inner_zip = tmp_path / "inner.zip"
+    with zipfile.ZipFile(inner_zip, "w") as inner_handle:
+        inner_handle.writestr("config.yml", inner_yaml)
+
+    outer_zip = tmp_path / "outer.zip"
+    with zipfile.ZipFile(outer_zip, "w") as outer_handle:
+        outer_handle.write(inner_zip, arcname="nested/inner.zip")
+
+    yaml_files, temp_dirs = module.collect_yaml_files([outer_zip], include_archives=True)
+
+    try:
+        assert len(yaml_files) == 1
+        assert yaml_files[0].name == "config.yml"
+        assert yaml_files[0].read_text(encoding="utf-8") == inner_yaml
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+
+def test_collect_yaml_files_reuses_persistent_archive_cache_without_reopening_zip(tmp_path):
+    module = _load_gap_analyzer_module()
+    archive_cache_dir = tmp_path / "archive_cache"
+    zip_path = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(zip_path, "w") as handle:
+        handle.writestr("config.yml", "libraries:\n  Movies:\n    collection_files:\n      - pmm: basic\n")
+
+    yaml_files, temp_dirs = module.collect_yaml_files([zip_path], include_archives=True, archive_cache_dir=archive_cache_dir)
+    try:
+        assert len(yaml_files) == 1
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+    original_zipfile = module.zipfile.ZipFile
+
+    class FailIfOpenedZipFile:
+        def __init__(self, *_args, **_kwargs):
+            raise AssertionError("zip should not be reopened when archive cache is warm")
+
+    module.zipfile.ZipFile = FailIfOpenedZipFile
+    try:
+        yaml_files_second, temp_dirs_second = module.collect_yaml_files([zip_path], include_archives=True, archive_cache_dir=archive_cache_dir)
+        try:
+            assert len(yaml_files_second) == 1
+            assert yaml_files_second[0].read_text(encoding="utf-8").startswith("libraries:")
+        finally:
+            for temp_dir in temp_dirs_second:
+                temp_dir.cleanup()
+    finally:
+        module.zipfile.ZipFile = original_zipfile
+
+
+def test_collect_yaml_files_archive_cache_falls_back_when_move_fails(tmp_path):
+    module = _load_gap_analyzer_module()
+    archive_cache_dir = tmp_path / "archive_cache"
+    zip_path = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(zip_path, "w") as handle:
+        handle.writestr("config.yml", "libraries:\n  Movies:\n    collection_files:\n      - pmm: basic\n")
+
+    original_move = module.shutil.move
+    move_calls = {"count": 0}
+
+    def flaky_move(src, dst, *args, **kwargs):
+        move_calls["count"] += 1
+        raise PermissionError("simulated windows directory move failure")
+
+    module.shutil.move = flaky_move
+    try:
+        yaml_files, temp_dirs = module.collect_yaml_files([zip_path], include_archives=True, archive_cache_dir=archive_cache_dir)
+        try:
+            assert len(yaml_files) == 1
+            assert yaml_files[0].read_text(encoding="utf-8").startswith("libraries:")
+            assert move_calls["count"] >= 1
+            cache_entries = [path for path in archive_cache_dir.iterdir() if path.is_dir() and not path.name.startswith(".")]
+            assert cache_entries
+        finally:
+            for temp_dir in temp_dirs:
+                temp_dir.cleanup()
+    finally:
+        module.shutil.move = original_move
+
+
+def test_collect_yaml_files_reads_yaml_from_tar_gz_archive(tmp_path):
+    module = _load_gap_analyzer_module()
+    source_yaml = tmp_path / "config.yml"
+    source_yaml.write_text("libraries:\n  Movies:\n    collection_files:\n      - pmm: basic\n", encoding="utf-8")
+    tar_gz = tmp_path / "bundle.tar.gz"
+
+    with tarfile.open(tar_gz, "w:gz") as tf:
+        tf.add(source_yaml, arcname="bundle/config.yml")
+
+    yaml_files, temp_dirs = module.collect_yaml_files([tar_gz], include_archives=True)
+
+    try:
+        assert len(yaml_files) == 1
+        assert yaml_files[0].name == "config.yml"
+        assert "libraries:" in yaml_files[0].read_text(encoding="utf-8")
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+
+def test_collect_yaml_files_reads_yaml_from_plain_gz_archive(tmp_path):
+    module = _load_gap_analyzer_module()
+    gz_path = tmp_path / "config.yml.gz"
+    with gzip_open(gz_path, "wt", encoding="utf-8") as handle:
+        handle.write("libraries:\n  Movies:\n    collection_files:\n      - pmm: basic\n")
+
+    yaml_files, temp_dirs = module.collect_yaml_files([gz_path], include_archives=True)
+
+    try:
+        assert len(yaml_files) == 1
+        assert yaml_files[0].name == "config.yml"
+        assert "libraries:" in yaml_files[0].read_text(encoding="utf-8")
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+
+def test_collect_yaml_files_ignores_plain_gz_that_expands_to_non_yaml_file(tmp_path):
+    module = _load_gap_analyzer_module()
+    gz_path = tmp_path / "meta.log.gz"
+    with gzip_open(gz_path, "wt", encoding="utf-8") as handle:
+        handle.write("this is not yaml\njust a plain log file\n")
+
+    yaml_files, temp_dirs = module.collect_yaml_files([gz_path], include_archives=True)
+
+    try:
+        assert yaml_files == []
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+
+def test_collect_yaml_files_skips_7z_when_optional_dependency_is_unavailable(tmp_path):
+    module = _load_gap_analyzer_module()
+    archive_path = tmp_path / "bundle.7z"
+    archive_path.write_bytes(b"not-a-real-7z")
+    original_py7zr = module.py7zr
+    module.py7zr = None
+
+    try:
+        yaml_files, temp_dirs = module.collect_yaml_files([archive_path], include_archives=True)
+        assert yaml_files == []
+        assert temp_dirs == []
+    finally:
+        module.py7zr = original_py7zr
+
+
+def test_collect_yaml_files_skips_archives_by_default(tmp_path):
+    module = _load_gap_analyzer_module()
+    zip_path = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(zip_path, "w") as handle:
+        handle.writestr("config.yml", "libraries:\n  Movies:\n    collection_files:\n      - pmm: basic\n")
+
+    yaml_files, temp_dirs = module.collect_yaml_files([zip_path])
+
+    try:
+        assert yaml_files == []
+        assert temp_dirs == []
+    finally:
+        for temp_dir in temp_dirs:
+            temp_dir.cleanup()
+
+
+def test_should_exclude_directory_skips_analyzer_runtime_cache_dirs(tmp_path):
+    module = _load_gap_analyzer_module()
+    root = tmp_path / "scan-root"
+    archive_cache_dir = root / "repo" / "artifacts" / "template_gap_archive_cache"
+    verify_dir = root / "repo" / "artifacts" / "template_gap_verify_checkpoint"
+
+    assert module.should_exclude_directory(archive_cache_dir, root, enabled=True) is True
+    assert module.should_exclude_directory(verify_dir, root, enabled=True) is True
+
+
+def test_extract_importer_findings_from_data_maps_collection_template_var_miss_to_alias():
+    module = _load_gap_analyzer_module()
+
+    data = {
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "default": "streaming",
+                        "template_variables": {
+                            "not_a_real_qs_key": True,
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    findings = module.extract_importer_findings_from_data(data, Path("sample.yml"))
+
+    assert any(
+        row["kind"] == "collection"
+        and row["default"] == "streaming"
+        and row["key"] == "not_a_real_qs_key"
+        and row["reason_class"] == "missing_template_variable_support"
+        for row in findings
+    )
+
+
+def test_extract_importer_findings_from_data_captures_unsupported_top_level_section():
+    module = _load_gap_analyzer_module()
+
+    data = {
+        "bogus_section": {
+            "enabled": True,
+        }
+    }
+
+    findings = module.extract_importer_findings_from_data(data, Path("sample.yml"))
+
+    assert any(
+        row["kind"] == "section"
+        and row["key"] == "bogus_section"
+        and row["reason_class"] == "unsupported_section"
+        for row in findings
+    )
+
+
+def test_serialize_importer_ranked_summary_groups_by_status_key_and_reason():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "file": "a.yml",
+            "library": "Movies",
+            "section": "collection_files",
+            "default": "streaming",
+            "kind": "collection",
+            "key": "not_a_real_qs_key",
+            "detail_key": "template_variables.not_a_real_qs_key",
+            "import_status": "unmapped",
+            "import_reason": "Template variable not available in Quickstart.",
+            "reason_class": "missing_template_variable_support",
+            "raw_path": "libraries.Movies.collection_files[0].template_variables.not_a_real_qs_key",
+            "source": "importer",
+        },
+        {
+            "file": "b.yml",
+            "library": "Movies",
+            "section": "collection_files",
+            "default": "streaming",
+            "kind": "collection",
+            "key": "not_a_real_qs_key",
+            "detail_key": "template_variables.not_a_real_qs_key",
+            "import_status": "unmapped",
+            "import_reason": "Template variable not available in Quickstart.",
+            "reason_class": "missing_template_variable_support",
+            "raw_path": "libraries.Movies.collection_files[0].template_variables.not_a_real_qs_key",
+            "source": "importer",
+        },
+    ]
+
+    ranked = module.serialize_importer_ranked_summary(module.build_importer_summary(rows))
+
+    assert len(ranked) == 1
+    assert ranked[0]["kind"] == "collection"
+    assert ranked[0]["default"] == "streaming"
+    assert ranked[0]["key"] == "not_a_real_qs_key"
+    assert ranked[0]["import_status"] == "unmapped"
+    assert ranked[0]["reason_class"] == "missing_template_variable_support"
+    assert ranked[0]["occurrences"] == 2
+
+
+def test_build_merged_fix_queue_combines_schema_quickstart_and_importer_actions():
+    module = _load_gap_analyzer_module()
+
+    verified_rows = [
+        {
+            "kind": "collection",
+            "default": "streaming",
+            "key": "discover_limit",
+            "occurrences": 3,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "matched_default_files": ["both/streaming.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+        }
+    ]
+    importer_rows = [
+        {
+            "kind": "collection",
+            "default": "streaming",
+            "key": "discover_limit",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 2,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        }
+    ]
+
+    ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
+
+    assert len(ranked) == 1
+    assert ranked[0]["key"] == "discover_limit"
+    assert ranked[0]["action_targets"] == ["schema", "quickstart", "importer"]
+    assert ranked[0]["total_occurrences"] == 5
+    assert ranked[0]["importer_reason_classes"] == ["missing_template_variable_support"]
+
+
+def test_build_merged_fix_queue_suppresses_excluded_quickstart_only_keys():
+    module = _load_gap_analyzer_module()
+
+    verified_rows = [
+        {
+            "kind": "overlay",
+            "default": "status",
+            "key": "horizontal_align",
+            "occurrences": 4,
+            "files": ["config.yml"],
+            "libraries": ["Shows"],
+            "matched_default_files": ["overlays/status.yml"],
+            "supported_in_quickstart": True,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+        }
+    ]
+    importer_rows = [
+        {
+            "kind": "overlay",
+            "default": "status",
+            "key": "horizontal_align",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 1,
+            "files": ["config.yml"],
+            "libraries": ["Shows"],
+            "reasons": ["Template variable not available in Quickstart."],
+        }
+    ]
+
+    ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
+
+    assert ranked == []
+
+
+def test_looks_like_kometa_config_text_accepts_non_template_variable_configs():
+    module = _load_gap_analyzer_module()
+
+    raw_text = """
+libraries:
+  Movies:
+    operations:
+      mass_genre_update:
+        - source: trakt_list
+"""
+
+    assert module.looks_like_kometa_config_text(raw_text) is True
+
+
+def test_is_probable_non_config_artifact_flags_parsed_log_extract_name():
+    module = _load_gap_analyzer_module()
+
+    path = Path(r"C:\temp\fromDownloads\parsed_meta.log_config-371b30add732f96d.yml")
+
+    assert module.is_probable_non_config_artifact(path) is True
+
+
+def test_read_text_with_fallbacks_accepts_cp1252_file(tmp_path):
+    module = _load_gap_analyzer_module()
+
+    path = tmp_path / "config.yml"
+    path.write_bytes("libraries:\n  Movies:\n    note: smart’quote\n".encode("cp1252"))
+
+    text, encoding = module.read_text_with_fallbacks(path)
+
+    assert "smart’quote" in text
+    assert encoding in {"cp1252", "latin-1"}
 
 
 def test_key_is_valid_for_default_only_uses_referenced_template_chain():

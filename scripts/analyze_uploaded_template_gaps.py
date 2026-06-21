@@ -1,9 +1,12 @@
 import argparse
+import gzip
 import hashlib
 import json
 import os
 import re
+import shutil
 import sys
+import tarfile
 import tempfile
 import time
 import warnings
@@ -18,13 +21,25 @@ from ruamel.yaml import YAML
 from ruamel.yaml.composer import ReusedAnchorWarning
 
 ROOT = Path(__file__).resolve().parents[1]
-CACHE_VERSION = 3
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from modules import importer
+
+try:
+    import py7zr
+except ImportError:
+    py7zr = None
+
+CACHE_VERSION = 4
 CACHE_SAVE_EVERY_ITEMS = 1000
 CACHE_SAVE_EVERY_SECS = 60.0
-VERIFY_CHECKPOINT_VERSION = 1
+VERIFY_CHECKPOINT_VERSION = 2
 VERIFY_CHECKPOINT_EVERY_ITEMS = 1000
 VERIFY_CHECKPOINT_EVERY_SECS = 30.0
 VERIFY_CHECKPOINT_DIRNAME = "template_gap_verify_checkpoint"
+ARCHIVE_CACHE_VERSION = 1
+ARCHIVE_CACHE_DIRNAME = "template_gap_archive_cache"
 QS_SPECIAL_LIBRARY_TEMPLATE_KEYS = {
     "placeholder_imdb_id",
     "sep_style",
@@ -63,10 +78,50 @@ DEFAULT_EXCLUDED_DIR_NAMES = {
     "photos",
     "pictures",
     "site-packages",
+    ARCHIVE_CACHE_DIRNAME,
+    VERIFY_CHECKPOINT_DIRNAME,
     "vendor",
     "videos",
     "venv",
 }
+
+READ_TEXT_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
+KOMETA_TOP_LEVEL_MARKERS = (
+    "libraries",
+    "playlist_files",
+    "plex",
+    "tmdb",
+    "omdb",
+    "mdblist",
+    "tautulli",
+    "notifiarr",
+    "gotify",
+    "ntfy",
+    "apprise",
+    "github",
+    "radarr",
+    "sonarr",
+    "trakt",
+    "mal",
+    "anidb",
+    "webhooks",
+    "settings",
+)
+EXTERNAL_TOP_LEVEL_MARKERS = (
+    "collections",
+    "dynamic_collections",
+    "overlays",
+    "metadata",
+    "playlists",
+)
+PROBABLE_ARTIFACT_NAME_PATTERNS = (
+    re.compile(r"^parsed_.*(?:\.log|\.txt)_config_.*\.ya?ml$", re.IGNORECASE),
+    re.compile(r"^parsed_.*\.ya?ml$", re.IGNORECASE),
+)
+PROBABLE_ARTIFACT_PATH_PARTS = {
+    "fromdownloads",
+}
+YAML_SUFFIXES = {".yml", ".yaml"}
 
 
 def json_default(value: Any) -> Any:
@@ -100,10 +155,69 @@ DEFAULT_EXCLUDED_PATH_SEQUENCES = {
 yaml = YAML(typ="safe", pure=True)
 
 
-def load_yaml(path: Path) -> Any:
+def read_text_with_fallbacks(path: Path) -> tuple[str, str]:
+    last_exc: Exception | None = None
+    for encoding in READ_TEXT_ENCODINGS:
+        try:
+            return path.read_text(encoding=encoding), encoding
+        except UnicodeDecodeError as exc:
+            last_exc = exc
+    if last_exc:
+        raise last_exc
+    raise UnicodeDecodeError("utf-8", b"", 0, 1, f"unable to decode {path}")
+
+
+def load_yaml(path: Path) -> tuple[Any, str]:
+    raw_text, encoding = read_text_with_fallbacks(path)
     with warnings.catch_warnings():
         warnings.simplefilter("error", ReusedAnchorWarning)
-        return yaml.load(path.read_text(encoding="utf-8"))
+        return yaml.load(raw_text), encoding
+
+
+def looks_like_kometa_config_text(raw_text: str) -> bool:
+    if not isinstance(raw_text, str) or not raw_text.strip():
+        return False
+    pattern = rf"(?m)^\s*(?:{'|'.join(re.escape(marker) for marker in KOMETA_TOP_LEVEL_MARKERS)})\s*:"
+    return re.search(pattern, raw_text) is not None
+
+
+def classify_yaml_document_type(data: Any) -> str:
+    if not isinstance(data, dict):
+        return "unknown"
+
+    keys = {str(key) for key in data.keys()}
+
+    if keys.intersection(KOMETA_TOP_LEVEL_MARKERS):
+        return "config"
+    if "collections" in keys or "dynamic_collections" in keys:
+        return "external_collection"
+    if "overlays" in keys:
+        return "external_overlay"
+    if "metadata" in keys:
+        return "external_metadata"
+    if "playlists" in keys:
+        return "external_playlist"
+    if "templates" in keys or "external_templates" in keys:
+        return "external_template_bundle"
+    return "unknown"
+
+
+def yaml_type_matches_focus(document_type: str, focus: str) -> bool:
+    if focus == "all":
+        return True
+    if focus == "config":
+        return document_type == "config"
+    return document_type == focus
+
+
+def is_probable_non_config_artifact(path: Path) -> bool:
+    filename = path.name
+    if any(pattern.match(filename) for pattern in PROBABLE_ARTIFACT_NAME_PATTERNS):
+        return True
+    lower_parts = {part.lower() for part in path.parts}
+    if lower_parts.intersection(PROBABLE_ARTIFACT_PATH_PARTS) and filename.lower().startswith("parsed_"):
+        return True
+    return False
 
 
 def load_json(path: Path) -> Any:
@@ -143,6 +257,10 @@ def get_cache_path(root: Path, requested_path: str | None) -> Path:
 
 def get_verification_checkpoint_dir(root: Path) -> Path:
     return root / "artifacts" / VERIFY_CHECKPOINT_DIRNAME
+
+
+def get_archive_cache_dir(root: Path) -> Path:
+    return root / "artifacts" / ARCHIVE_CACHE_DIRNAME
 
 
 def remove_tree(path: Path) -> None:
@@ -347,6 +465,7 @@ def build_cache_context(
     qs_overlays_path: Path,
     qs_attributes_path: Path,
     kometa_defaults: Path,
+    yaml_type_focus: str,
 ) -> dict[str, Any]:
     quickstart_support_files = [qs_collections_path, qs_overlays_path, qs_attributes_path]
     kometa_default_files = [path for path in kometa_defaults.rglob("*.yml") if path.is_file()]
@@ -357,6 +476,7 @@ def build_cache_context(
         "quickstart_support_fingerprint": fingerprint_paths(quickstart_support_files, root),
         "kometa_defaults_fingerprint": fingerprint_paths(kometa_default_files, root),
         "kometa_default_file_count": len(kometa_default_files),
+        "yaml_type_focus": yaml_type_focus,
     }
 
 
@@ -933,67 +1053,683 @@ def extract_findings_from_data(data: dict[str, Any], path: Path) -> list[dict[st
     return findings
 
 
+def classify_importer_reason(reason: str | None) -> str:
+    if not reason:
+        return "unknown"
+    lowered = reason.strip().lower()
+    if "template variable not available in quickstart" in lowered:
+        return "missing_template_variable_support"
+    if "section not supported in quickstart" in lowered:
+        return "unsupported_section"
+    if "library type could not be determined" in lowered:
+        return "library_type_unknown"
+    if "unsupported" in lowered and "format" in lowered:
+        return "unsupported_format"
+    if "missing default" in lowered:
+        return "missing_default"
+    if "unsupported playlist default" in lowered:
+        return "unsupported_default"
+    if "missing playlist library entries" in lowered:
+        return "missing_playlist_libraries"
+    if "service override not supported for import" in lowered:
+        return "unsupported_service_override"
+    if "invalid boolean value" in lowered:
+        return "invalid_boolean"
+    if "override value is empty" in lowered:
+        return "empty_override_value"
+    if "unsupported override value format" in lowered:
+        return "unsupported_override_value_format"
+    if "no importable values found" in lowered:
+        return "no_importable_values"
+    if "radarr overrides are only supported on movie libraries" in lowered:
+        return "radarr_wrong_library_type"
+    if "sonarr overrides are only supported on show libraries" in lowered:
+        return "sonarr_wrong_library_type"
+    if "warning - include and exclude were both imported" in lowered:
+        return "include_exclude_warning"
+    if "unsupported option" in lowered:
+        return "unsupported_option"
+    if "unsupported library entry" in lowered:
+        return "unsupported_library_entry"
+    if "unsupported mass update" in lowered:
+        return "unsupported_mass_update"
+    if "custom values are not supported" in lowered:
+        return "custom_values_unsupported"
+    return "other"
+
+
+def _split_library_status_path(status_path: str, libraries_payload: dict[str, Any]) -> tuple[str | None, str]:
+    if not status_path.startswith("libraries."):
+        return None, status_path
+    remainder = status_path[len("libraries.") :]
+    for lib_name in sorted((str(name) for name in libraries_payload.keys()), key=len, reverse=True):
+        if remainder == lib_name:
+            return lib_name, ""
+        prefix = f"{lib_name}."
+        if remainder.startswith(prefix):
+            return lib_name, remainder[len(prefix) :]
+    return None, remainder
+
+
+def _lookup_indexed_entry(lib_cfg: dict[str, Any], section_name: str, index_text: str) -> dict[str, Any] | None:
+    entries = lib_cfg.get(section_name)
+    if not isinstance(entries, list):
+        return None
+    try:
+        index = int(index_text)
+    except (TypeError, ValueError):
+        return None
+    if index < 0 or index >= len(entries):
+        return None
+    entry = entries[index]
+    return entry if isinstance(entry, dict) else None
+
+
+def _normalize_importer_template_key(path_tail: str) -> str:
+    if path_tail.startswith("template_variables."):
+        key = path_tail[len("template_variables.") :]
+        if key.startswith("data."):
+            return f"data_{key[len('data.') :]}"
+        return key
+    return path_tail or "entry"
+
+
+def infer_analyzer_library_type_overrides(config_data: dict[str, Any]) -> dict[str, str]:
+    overrides: dict[str, str] = {}
+    libraries_payload = config_data.get("libraries")
+    if not isinstance(libraries_payload, dict):
+        return overrides
+    for raw_name in libraries_payload.keys():
+        name = str(raw_name).strip().lower()
+        if any(token in name for token in ("movie", "movies", "film", "films", "cinema")):
+            overrides[str(raw_name)] = "movie"
+        elif any(token in name for token in ("show", "shows", "series", "tv", "anime", "season", "episode")):
+            overrides[str(raw_name)] = "show"
+    return overrides
+
+
+def _importer_row(
+    *,
+    file: Path,
+    kind: str,
+    key: str,
+    status: str,
+    reason: str | None,
+    raw_path: str,
+    default: str | None = None,
+    library: str | None = None,
+    section: str | None = None,
+    detail_key: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "file": str(file),
+        "library": library,
+        "section": section,
+        "default": default,
+        "kind": kind,
+        "key": key,
+        "detail_key": detail_key or key,
+        "import_status": status,
+        "import_reason": reason,
+        "reason_class": classify_importer_reason(reason),
+        "raw_path": raw_path,
+        "source": "importer",
+    }
+
+
+def extract_importer_findings_from_data(data: dict[str, Any], path: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    if not isinstance(data, dict):
+        return findings
+
+    analyzer_overrides = infer_analyzer_library_type_overrides(data)
+    payload, report = importer.prepare_import_payload(data, set(), set(), library_type_overrides=analyzer_overrides or None)
+    _ = payload
+    status_map, reason_map = importer._parse_report_details(report.lines)
+    libraries_payload = data.get("libraries") if isinstance(data.get("libraries"), dict) else {}
+
+    for status_path, mapped_status in status_map.items():
+        if mapped_status == "mapped":
+            continue
+        reason = reason_map.get(status_path)
+
+        if status_path.startswith("playlist_files["):
+            match = re.match(r"playlist_files\[(\d+)\](?:\.(.*))?$", status_path)
+            if match:
+                index_text, tail = match.groups()
+                playlist_files = data.get("playlist_files")
+                entry = None
+                if isinstance(playlist_files, list):
+                    try:
+                        idx = int(index_text)
+                    except (TypeError, ValueError):
+                        idx = -1
+                    if 0 <= idx < len(playlist_files) and isinstance(playlist_files[idx], dict):
+                        entry = playlist_files[idx]
+                alias = str(entry.get("default")) if isinstance(entry, dict) and entry.get("default") else None
+                key = _normalize_importer_template_key(tail or "")
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind="playlist",
+                        default=alias,
+                        key=key,
+                        detail_key=tail or key,
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section="playlist_files",
+                    )
+                )
+                continue
+
+        if status_path == "playlist_files":
+            findings.append(
+                _importer_row(
+                    file=path,
+                    kind="playlist",
+                    key="playlist_files",
+                    status=mapped_status,
+                    reason=reason,
+                    raw_path=status_path,
+                    section="playlist_files",
+                )
+            )
+            continue
+
+        if status_path.startswith("libraries."):
+            lib_name, remainder = _split_library_status_path(status_path, libraries_payload if isinstance(libraries_payload, dict) else {})
+            lib_cfg = libraries_payload.get(lib_name) if lib_name and isinstance(libraries_payload, dict) else None
+            if not remainder:
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind="library",
+                        library=lib_name,
+                        key="library_type",
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section="libraries",
+                    )
+                )
+                continue
+
+            section_match = re.match(r"(collection_files|overlay_files)\[(\d+)\](?:\.(.*))?$", remainder)
+            if section_match and isinstance(lib_cfg, dict):
+                section_name, index_text, tail = section_match.groups()
+                entry = _lookup_indexed_entry(lib_cfg, section_name, index_text)
+                alias = str(entry.get("default")) if isinstance(entry, dict) and entry.get("default") else None
+                kind = "collection" if section_name == "collection_files" else "overlay"
+                key = _normalize_importer_template_key(tail or "")
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind=kind,
+                        library=lib_name,
+                        default=alias,
+                        key=key,
+                        detail_key=tail or key,
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section=section_name,
+                    )
+                )
+                continue
+
+            if remainder in {"collection_files", "overlay_files", "metadata_files", "settings", "operations", "radarr", "sonarr"}:
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind="library",
+                        library=lib_name,
+                        key=remainder,
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section=remainder,
+                    )
+                )
+                continue
+
+            if remainder.startswith("template_variables."):
+                key = _normalize_importer_template_key(remainder)
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind="library",
+                        library=lib_name,
+                        key=key,
+                        detail_key=remainder,
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section="library_template_variables",
+                    )
+                )
+                continue
+
+            if remainder.startswith(("settings.", "radarr.", "sonarr.")):
+                key = remainder.split(".", 1)[1] if "." in remainder else remainder
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind="library",
+                        library=lib_name,
+                        key=key,
+                        detail_key=remainder,
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section=remainder.split(".", 1)[0],
+                    )
+                )
+                continue
+
+            if remainder.startswith("operations."):
+                op_tail = remainder[len("operations.") :]
+                op_parts = op_tail.split(".") if op_tail else []
+                if len(op_parts) >= 2:
+                    key = f"operations.{op_parts[-1]}"
+                elif op_parts:
+                    key = f"operations.{op_parts[0]}"
+                else:
+                    key = "operations"
+                findings.append(
+                    _importer_row(
+                        file=path,
+                        kind="library",
+                        library=lib_name,
+                        key=key,
+                        detail_key=remainder,
+                        status=mapped_status,
+                        reason=reason,
+                        raw_path=status_path,
+                        section="operations",
+                    )
+                )
+                continue
+
+            findings.append(
+                _importer_row(
+                    file=path,
+                    kind="library",
+                    library=lib_name,
+                    key=remainder,
+                    detail_key=remainder,
+                    status=mapped_status,
+                    reason=reason,
+                    raw_path=status_path,
+                    section="libraries",
+                )
+            )
+            continue
+
+        findings.append(
+            _importer_row(
+                file=path,
+                kind="section",
+                key=status_path,
+                status=mapped_status,
+                reason=reason,
+                raw_path=status_path,
+                section="top_level",
+            )
+        )
+
+    return findings
+
+
+def is_yaml_path(path: Path) -> bool:
+    return path.suffix.lower() in YAML_SUFFIXES
+
+
+def classify_archive_type(path: Path) -> str | None:
+    lower_name = path.name.lower()
+    if lower_name.endswith(".tar.gz") or lower_name.endswith(".tgz"):
+        return "targz"
+    if lower_name.endswith(".tar"):
+        return "tar"
+    if lower_name.endswith(".zip"):
+        return "zip"
+    if lower_name.endswith(".7z"):
+        return "7z"
+    if lower_name.endswith(".gz"):
+        return "gz"
+    return None
+
+
+def archive_type_is_supported(archive_type: str) -> bool:
+    if archive_type == "7z" and py7zr is None:
+        return False
+    return archive_type in {"zip", "tar", "targz", "gz", "7z"}
+
+
+def build_archive_cache_key(path: Path, archive_type: str) -> str:
+    signature = file_signature(path)
+    digest = hashlib.sha256()
+    digest.update(str(path.resolve()).encode("utf-8"))
+    digest.update(archive_type.encode("utf-8"))
+    digest.update(str(signature["size"]).encode("utf-8"))
+    digest.update(str(signature["mtime_ns"]).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def load_archive_cache_manifest(path: Path) -> dict[str, Any] | None:
+    try:
+        data = load_json(path)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def build_archive_manifest(archive_type: str, extracted_path: Path, base_dir: Path) -> dict[str, Any]:
+    return {
+        "version": ARCHIVE_CACHE_VERSION,
+        "archive_type": archive_type,
+        "relative_output": str(extracted_path.relative_to(base_dir)),
+        "is_dir": extracted_path.is_dir(),
+    }
+
+
+def resolve_cached_archive_output(entry_dir: Path) -> Path | None:
+    manifest = load_archive_cache_manifest(entry_dir / "_archive_manifest.json")
+    if not manifest:
+        return None
+    if manifest.get("version") != ARCHIVE_CACHE_VERSION:
+        return None
+    relative_output = manifest.get("relative_output")
+    if not isinstance(relative_output, str) or not relative_output:
+        return None
+    output_path = entry_dir / relative_output
+    if not output_path.exists():
+        return None
+    return output_path
+
+
+def prepare_archive_extraction_target(
+    path: Path,
+    archive_type: str,
+    temp_dirs: list[tempfile.TemporaryDirectory],
+    archive_cache_dir: Path | None,
+) -> tuple[Path, Path | None, Path | None]:
+    if archive_cache_dir is None:
+        temp_dir = tempfile.TemporaryDirectory(prefix="qs_template_gap_")
+        temp_dirs.append(temp_dir)
+        extract_root = Path(temp_dir.name)
+        return extract_root, None, None
+
+    archive_cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_key = build_archive_cache_key(path, archive_type)
+    entry_dir = archive_cache_dir / cache_key
+    cached_output = resolve_cached_archive_output(entry_dir)
+    if cached_output is not None:
+        return cached_output, entry_dir, None
+
+    staging_dir = archive_cache_dir / f".{cache_key}.tmp-{os.getpid()}-{time.time_ns()}"
+    staging_dir.mkdir(parents=True, exist_ok=True)
+    extract_root = staging_dir / "payload"
+    extract_root.mkdir(parents=True, exist_ok=True)
+    return extract_root, entry_dir, staging_dir
+
+
+def finalize_archive_extraction(
+    extracted_path: Path,
+    archive_type: str,
+    archive_cache_entry_dir: Path | None,
+    staging_root: Path | None,
+) -> Path:
+    if archive_cache_entry_dir is None:
+        return extracted_path
+
+    if staging_root is None:
+        raise RuntimeError(f"missing staging root for archive cache entry {archive_cache_entry_dir}")
+
+    if archive_cache_entry_dir.exists():
+        cached_output = resolve_cached_archive_output(archive_cache_entry_dir)
+        if cached_output is not None:
+            remove_tree(staging_root)
+            return cached_output
+        remove_tree(archive_cache_entry_dir)
+
+    manifest = build_archive_manifest(archive_type, extracted_path, staging_root)
+    write_text_atomic(staging_root / "_archive_manifest.json", json.dumps(manifest, indent=2, default=json_default))
+    try:
+        shutil.move(str(staging_root), str(archive_cache_entry_dir))
+    except (PermissionError, OSError):
+        if archive_cache_entry_dir.exists():
+            remove_tree(archive_cache_entry_dir)
+        archive_cache_entry_dir.mkdir(parents=True, exist_ok=True)
+        for child in staging_root.iterdir():
+            target = archive_cache_entry_dir / child.name
+            if child.is_dir():
+                shutil.copytree(child, target, dirs_exist_ok=True)
+            else:
+                shutil.copy2(child, target)
+        remove_tree(staging_root)
+    cached_output = resolve_cached_archive_output(archive_cache_entry_dir)
+    if cached_output is None:
+        raise RuntimeError(f"archive cache finalize failed for {archive_cache_entry_dir}")
+    return cached_output
+
+
+def extract_archive(
+    path: Path,
+    archive_type: str,
+    temp_dirs: list[tempfile.TemporaryDirectory],
+    archive_cache_dir: Path | None = None,
+) -> Path:
+    prepared_path, archive_cache_entry_dir, staging_root = prepare_archive_extraction_target(path, archive_type, temp_dirs, archive_cache_dir)
+    if archive_cache_entry_dir is not None and prepared_path.exists():
+        maybe_cached = resolve_cached_archive_output(archive_cache_entry_dir)
+        if maybe_cached is not None:
+            return maybe_cached
+    extract_root = prepared_path
+
+    if archive_type == "zip":
+        with zipfile.ZipFile(path) as zf:
+            zf.extractall(extract_root)
+        return finalize_archive_extraction(extract_root, archive_type, archive_cache_entry_dir, staging_root)
+
+    if archive_type in {"tar", "targz"}:
+        with tarfile.open(path, mode="r:*") as tf:
+            extract_kwargs: dict[str, Any] = {}
+            if "filter" in tarfile.TarFile.extractall.__code__.co_varnames:
+                extract_kwargs["filter"] = "data"
+            tf.extractall(extract_root, **extract_kwargs)
+        return finalize_archive_extraction(extract_root, archive_type, archive_cache_entry_dir, staging_root)
+
+    if archive_type == "7z":
+        if py7zr is None:
+            raise RuntimeError("7z archive support requires the optional py7zr dependency")
+        with py7zr.SevenZipFile(path, mode="r") as zf:
+            zf.extractall(path=extract_root)
+        return finalize_archive_extraction(extract_root, archive_type, archive_cache_entry_dir, staging_root)
+
+    if archive_type == "gz":
+        output_name = path.name[:-3] if path.name.lower().endswith(".gz") else path.stem
+        output_path = extract_root / output_name
+        with gzip.open(path, "rb") as source_handle, output_path.open("wb") as target_handle:
+            shutil.copyfileobj(source_handle, target_handle)
+        return finalize_archive_extraction(output_path, archive_type, archive_cache_entry_dir, staging_root)
+
+    raise ValueError(f"Unsupported archive type {archive_type} for {path}")
+
+
+def append_yaml_path(yaml_files: list[Path], seen_yaml_paths: set[str], path: Path) -> None:
+    key = str(path)
+    if key in seen_yaml_paths:
+        return
+    seen_yaml_paths.add(key)
+    yaml_files.append(path)
+
+
+def walk_for_yaml_and_archives(
+    root_path: Path,
+    walk_base: Path,
+    yaml_files: list[Path],
+    temp_dirs: list[tempfile.TemporaryDirectory],
+    include_archives: bool,
+    archive_cache_dir: Path | None,
+    seen_yaml_paths: set[str],
+    seen_archive_paths: set[str],
+    discovery_callback=None,
+    exclude_defaults: bool = True,
+) -> None:
+    for current_root, dirnames, filenames in os.walk(root_path, topdown=True):
+        current_path = Path(current_root)
+        if should_exclude_directory(current_path, walk_base, enabled=exclude_defaults):
+            dirnames[:] = []
+            continue
+        dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, walk_base, enabled=exclude_defaults)]
+        if discovery_callback:
+            discovery_callback("dir", current_path, len(yaml_files))
+        for filename in filenames:
+            candidate_path = current_path / filename
+            if is_yaml_path(candidate_path):
+                append_yaml_path(yaml_files, seen_yaml_paths, candidate_path)
+                continue
+            archive_type = classify_archive_type(candidate_path)
+            if archive_type:
+                collect_supported_file(
+                    candidate_path,
+                    yaml_files,
+                    temp_dirs,
+                    include_archives,
+                    archive_cache_dir,
+                    seen_yaml_paths,
+                    seen_archive_paths,
+                    discovery_callback=discovery_callback,
+                    exclude_defaults=exclude_defaults,
+                )
+
+
+def collect_supported_file(
+    input_path: Path,
+    yaml_files: list[Path],
+    temp_dirs: list[tempfile.TemporaryDirectory],
+    include_archives: bool,
+    archive_cache_dir: Path | None,
+    seen_yaml_paths: set[str],
+    seen_archive_paths: set[str],
+    discovery_callback=None,
+    exclude_defaults: bool = True,
+    allow_unsupported_file: bool = False,
+) -> None:
+    if input_path.is_dir():
+        if discovery_callback:
+            discovery_callback("root", input_path, len(yaml_files))
+        walk_for_yaml_and_archives(
+            input_path,
+            input_path,
+            yaml_files,
+            temp_dirs,
+            include_archives,
+            archive_cache_dir,
+            seen_yaml_paths,
+            seen_archive_paths,
+            discovery_callback=discovery_callback,
+            exclude_defaults=exclude_defaults,
+        )
+        if discovery_callback:
+            discovery_callback("root_done", input_path, len(yaml_files))
+        return
+
+    if input_path.is_file() and is_yaml_path(input_path):
+        append_yaml_path(yaml_files, seen_yaml_paths, input_path)
+        return
+
+    if input_path.is_file():
+        archive_type = classify_archive_type(input_path)
+        if archive_type is None:
+            if allow_unsupported_file:
+                return
+            raise FileNotFoundError(f"Unsupported input path: {input_path}")
+        if not include_archives:
+            if discovery_callback:
+                discovery_callback("archive_skipped", input_path, len(yaml_files))
+            return
+        if not archive_type_is_supported(archive_type):
+            if discovery_callback:
+                discovery_callback("archive_unsupported", input_path, len(yaml_files))
+            return
+        archive_key = str(input_path.resolve())
+        if archive_key in seen_archive_paths:
+            return
+        seen_archive_paths.add(archive_key)
+        if discovery_callback:
+            discovery_callback("archive", input_path, len(yaml_files))
+        extracted_path = extract_archive(input_path, archive_type, temp_dirs, archive_cache_dir=archive_cache_dir)
+        if extracted_path.is_dir():
+            walk_for_yaml_and_archives(
+                extracted_path,
+                extracted_path,
+                yaml_files,
+                temp_dirs,
+                include_archives,
+                archive_cache_dir,
+                seen_yaml_paths,
+                seen_archive_paths,
+                discovery_callback=discovery_callback,
+                exclude_defaults=exclude_defaults,
+            )
+        else:
+            collect_supported_file(
+                extracted_path,
+                yaml_files,
+                temp_dirs,
+                include_archives,
+                archive_cache_dir,
+                seen_yaml_paths,
+                seen_archive_paths,
+                discovery_callback=discovery_callback,
+                exclude_defaults=exclude_defaults,
+                allow_unsupported_file=True,
+            )
+        return
+
+    raise FileNotFoundError(f"Unsupported input path: {input_path}")
+
+
 def collect_yaml_files(
     inputs: list[Path],
     discovery_callback=None,
     exclude_defaults: bool = True,
+    include_archives: bool = False,
+    archive_cache_dir: Path | None = None,
 ) -> tuple[list[Path], list[tempfile.TemporaryDirectory]]:
     yaml_files: list[Path] = []
     temp_dirs: list[tempfile.TemporaryDirectory] = []
+    seen_yaml_paths: set[str] = set()
+    seen_archive_paths: set[str] = set()
     for input_path in inputs:
-        if input_path.is_dir():
-            if discovery_callback:
-                discovery_callback("root", input_path, len(yaml_files))
-            for current_root, dirnames, filenames in os.walk(input_path, topdown=True):
-                current_path = Path(current_root)
-                if should_exclude_directory(current_path, input_path, enabled=exclude_defaults):
-                    dirnames[:] = []
-                    continue
-                dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, input_path, enabled=exclude_defaults)]
-                if discovery_callback:
-                    discovery_callback("dir", current_path, len(yaml_files))
-                for filename in filenames:
-                    lower = filename.lower()
-                    if lower.endswith(".yml") or lower.endswith(".yaml"):
-                        yaml_files.append(current_path / filename)
-            if discovery_callback:
-                discovery_callback("root_done", input_path, len(yaml_files))
-        elif input_path.is_file() and input_path.suffix.lower() in {".yml", ".yaml"}:
-            yaml_files.append(input_path)
-        elif input_path.is_file() and input_path.suffix.lower() == ".zip":
-            temp_dir = tempfile.TemporaryDirectory(prefix="qs_template_gap_")
-            temp_dirs.append(temp_dir)
-            extract_root = Path(temp_dir.name)
-            with zipfile.ZipFile(input_path) as zf:
-                zf.extractall(extract_root)
-            if discovery_callback:
-                discovery_callback("zip", input_path, len(yaml_files))
-            for current_root, dirnames, filenames in os.walk(extract_root, topdown=True):
-                current_path = Path(current_root)
-                if should_exclude_directory(current_path, extract_root, enabled=exclude_defaults):
-                    dirnames[:] = []
-                    continue
-                dirnames[:] = [dirname for dirname in dirnames if not should_exclude_directory(current_path / dirname, extract_root, enabled=exclude_defaults)]
-                if discovery_callback:
-                    discovery_callback("dir", current_path, len(yaml_files))
-                for filename in filenames:
-                    lower = filename.lower()
-                    if lower.endswith(".yml") or lower.endswith(".yaml"):
-                        yaml_files.append(current_path / filename)
-        else:
-            raise FileNotFoundError(f"Unsupported input path: {input_path}")
+        collect_supported_file(
+            input_path,
+            yaml_files,
+            temp_dirs,
+            include_archives,
+            archive_cache_dir,
+            seen_yaml_paths,
+            seen_archive_paths,
+            discovery_callback=discovery_callback,
+            exclude_defaults=exclude_defaults,
+        )
     return sorted(yaml_files), temp_dirs
 
 
 def prefilter_yaml_files(
     input_files: list[Path],
+    yaml_type_focus: str = "config",
     cache_data: dict[str, Any] | None = None,
     progress_callback=None,
     checkpoint_callback=None,
 ) -> tuple[list[Path], list[dict[str, str]], dict[str, int]]:
     candidate_files: list[Path] = []
     skipped_files: list[dict[str, str]] = []
-    stats = {"cache_hits": 0, "cache_misses": 0}
+    stats = {"cache_hits": 0, "cache_misses": 0, "decode_fallbacks": 0, "artifact_skips": 0, "non_kometa_skips": 0}
     files_cache = cache_data.get("files", {}) if isinstance(cache_data, dict) else {}
     total_files = len(input_files)
     for idx, path in enumerate(input_files, start=1):
@@ -1016,7 +1752,7 @@ def prefilter_yaml_files(
                 checkpoint_callback(idx, total_files)
             continue
         cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
-        if isinstance(cached, dict) and cached.get("signature") == signature and "contains_template_variables" in cached:
+        if isinstance(cached, dict) and cached.get("signature") == signature and "contains_relevant_yaml" in cached:
             stats["cache_hits"] += 1
             if cached.get("prefilter_skip"):
                 skipped_files.append(dict(cached["prefilter_skip"]))
@@ -1025,17 +1761,16 @@ def prefilter_yaml_files(
                 if checkpoint_callback:
                     checkpoint_callback(idx, total_files)
                 continue
-            if cached.get("contains_template_variables"):
+            if cached.get("contains_relevant_yaml"):
                 candidate_files.append(path)
             if progress_callback:
                 progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
             if checkpoint_callback:
                 checkpoint_callback(idx, total_files)
             continue
-            continue
         stats["cache_misses"] += 1
         try:
-            raw_text = path.read_text(encoding="utf-8")
+            raw_text, encoding_used = read_text_with_fallbacks(path)
         except Exception as exc:
             skip_record = {
                 "file": str(path),
@@ -1046,16 +1781,60 @@ def prefilter_yaml_files(
             }
             skipped_files.append(skip_record)
             if isinstance(files_cache, dict):
-                files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_template_variables": False}
+                files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_relevant_yaml": False}
             if progress_callback:
                 progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
             if checkpoint_callback:
                 checkpoint_callback(idx, total_files)
             continue
-        contains_template_variables = "template_variables" in raw_text
+        if encoding_used not in {"utf-8", "utf-8-sig"}:
+            stats["decode_fallbacks"] += 1
+        contains_relevant_yaml = (
+            "template_variables" in raw_text
+            or looks_like_kometa_config_text(raw_text)
+            or any(f"{marker}:" in raw_text for marker in EXTERNAL_TOP_LEVEL_MARKERS)
+        )
+        if not contains_relevant_yaml:
+            if is_probable_non_config_artifact(path):
+                skip_record = {
+                    "file": str(path),
+                    "error_type": "IgnoredArtifact",
+                    "reason": "probable extracted log or message artifact",
+                    "detail": f"IgnoredArtifact: {path.name}",
+                    "stage": "prefilter",
+                    "noise": True,
+                    "noise_reason": "artifact_filename_heuristic",
+                }
+                skipped_files.append(skip_record)
+                stats["artifact_skips"] += 1
+                if isinstance(files_cache, dict):
+                    files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_relevant_yaml": False}
+                if progress_callback:
+                    progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+                if checkpoint_callback:
+                    checkpoint_callback(idx, total_files)
+                continue
+            skip_record = {
+                "file": str(path),
+                "error_type": "NotKometaConfig",
+                "reason": "did not look like a Kometa config and had no template_variables",
+                "detail": f"NotKometaConfig: {path.name}",
+                "stage": "prefilter",
+                "noise": True,
+                "noise_reason": "non_kometa_content",
+            }
+            skipped_files.append(skip_record)
+            stats["non_kometa_skips"] += 1
+            if isinstance(files_cache, dict):
+                files_cache[cache_key] = {"signature": signature, "prefilter_skip": skip_record, "contains_relevant_yaml": False}
+            if progress_callback:
+                progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
+            continue
         if isinstance(files_cache, dict):
-            files_cache[cache_key] = {"signature": signature, "contains_template_variables": contains_template_variables}
-        if contains_template_variables:
+            files_cache[cache_key] = {"signature": signature, "contains_relevant_yaml": contains_relevant_yaml}
+        if contains_relevant_yaml:
             candidate_files.append(path)
         if progress_callback:
             progress_callback(idx, total_files, len(candidate_files), len(skipped_files), path)
@@ -1066,16 +1845,18 @@ def prefilter_yaml_files(
 
 def scan_uploaded_configs(
     input_files: list[Path],
+    yaml_type_focus: str = "config",
     progress_callback=None,
     cache_data: dict[str, Any] | None = None,
     checkpoint_callback=None,
-) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[str], dict[str, int]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, str]], list[str], dict[str, int]]:
     findings: list[dict[str, Any]] = []
+    importer_findings: list[dict[str, Any]] = []
     skipped_files: list[dict[str, str]] = []
     parsed_file_paths: list[str] = []
     parsed_count = 0
     total_files = len(input_files)
-    stats = {"cache_hits": 0, "cache_misses": 0}
+    stats = {"cache_hits": 0, "cache_misses": 0, "decode_fallbacks": 0, "type_excluded": 0}
     files_cache = cache_data.get("files", {}) if isinstance(cache_data, dict) else {}
     for idx, path in enumerate(input_files, start=1):
         cache_key = str(path)
@@ -1097,7 +1878,7 @@ def scan_uploaded_configs(
                 checkpoint_callback(idx, total_files)
             continue
         cached = files_cache.get(cache_key) if isinstance(files_cache, dict) else None
-        if isinstance(cached, dict) and cached.get("signature") == signature and "scan_result" in cached:
+        if isinstance(cached, dict) and cached.get("signature") == signature and cached.get("yaml_type_focus") == yaml_type_focus and "scan_result" in cached:
             stats["cache_hits"] += 1
             scan_result = cached["scan_result"]
             if scan_result.get("status") == "skip":
@@ -1108,6 +1889,7 @@ def scan_uploaded_configs(
             parsed_file_paths.append(str(path))
             parsed_count += 1
             findings.extend(scan_result.get("findings", []))
+            importer_findings.extend(scan_result.get("importer_findings", []))
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             if checkpoint_callback:
@@ -1115,7 +1897,7 @@ def scan_uploaded_configs(
             continue
         stats["cache_misses"] += 1
         try:
-            data = load_yaml(path)
+            data, encoding_used = load_yaml(path)
         except ReusedAnchorWarning as exc:
             skip_record = {
                 "file": str(path),
@@ -1128,7 +1910,12 @@ def scan_uploaded_configs(
             }
             skipped_files.append(skip_record)
             if isinstance(files_cache, dict):
-                files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "skip", "skip_record": skip_record}}
+                files_cache[cache_key] = {
+                    "signature": signature,
+                    "contains_relevant_yaml": True,
+                    "yaml_type_focus": yaml_type_focus,
+                    "scan_result": {"status": "skip", "skip_record": skip_record},
+                }
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             if checkpoint_callback:
@@ -1144,7 +1931,40 @@ def scan_uploaded_configs(
             }
             skipped_files.append(skip_record)
             if isinstance(files_cache, dict):
-                files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "skip", "skip_record": skip_record}}
+                files_cache[cache_key] = {
+                    "signature": signature,
+                    "contains_relevant_yaml": True,
+                    "yaml_type_focus": yaml_type_focus,
+                    "scan_result": {"status": "skip", "skip_record": skip_record},
+                }
+            if progress_callback:
+                progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
+            if checkpoint_callback:
+                checkpoint_callback(idx, total_files)
+            continue
+        if encoding_used not in {"utf-8", "utf-8-sig"}:
+            stats["decode_fallbacks"] += 1
+        document_type = classify_yaml_document_type(data)
+        if not yaml_type_matches_focus(document_type, yaml_type_focus):
+            skip_record = {
+                "file": str(path),
+                "error_type": "YamlTypeExcluded",
+                "reason": f"document type {document_type} excluded by yaml_type focus {yaml_type_focus}",
+                "detail": f"YamlTypeExcluded: {document_type}",
+                "stage": "parse",
+                "yaml_document_type": document_type,
+                "noise": True,
+                "noise_reason": "yaml_type_excluded",
+            }
+            skipped_files.append(skip_record)
+            stats["type_excluded"] += 1
+            if isinstance(files_cache, dict):
+                files_cache[cache_key] = {
+                    "signature": signature,
+                    "contains_relevant_yaml": True,
+                    "yaml_type_focus": yaml_type_focus,
+                    "scan_result": {"status": "skip", "skip_record": skip_record},
+                }
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             if checkpoint_callback:
@@ -1154,22 +1974,34 @@ def scan_uploaded_configs(
         if not isinstance(data, dict):
             parsed_count += 1
             if isinstance(files_cache, dict):
-                files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "ok", "findings": []}}
+                files_cache[cache_key] = {
+                    "signature": signature,
+                    "contains_relevant_yaml": True,
+                    "yaml_type_focus": yaml_type_focus,
+                    "scan_result": {"status": "ok", "findings": [], "importer_findings": []},
+                }
             if progress_callback:
                 progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
             if checkpoint_callback:
                 checkpoint_callback(idx, total_files)
             continue
         file_findings = extract_findings_from_data(data, path)
+        file_importer_findings = extract_importer_findings_from_data(data, path)
         findings.extend(file_findings)
+        importer_findings.extend(file_importer_findings)
         parsed_count += 1
         if isinstance(files_cache, dict):
-            files_cache[cache_key] = {"signature": signature, "contains_template_variables": True, "scan_result": {"status": "ok", "findings": file_findings}}
+            files_cache[cache_key] = {
+                "signature": signature,
+                "contains_relevant_yaml": True,
+                "yaml_type_focus": yaml_type_focus,
+                "scan_result": {"status": "ok", "findings": file_findings, "importer_findings": file_importer_findings},
+            }
         if progress_callback:
             progress_callback(idx, total_files, parsed_count, len(skipped_files), path)
         if checkpoint_callback:
             checkpoint_callback(idx, total_files)
-    return findings, skipped_files, parsed_file_paths, stats
+    return findings, importer_findings, skipped_files, parsed_file_paths, stats
 
 
 def make_periodic_persistor(callback, every_items: int, every_seconds: float):
@@ -1247,8 +2079,68 @@ def build_gap_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None,
     return summary
 
 
+def accumulate_importer_summary(summary: dict[tuple[str, str | None, str, str, str], dict[str, Any]], row: dict[str, Any]) -> None:
+    bucket = summary.setdefault(
+        (
+            str(row.get("kind")),
+            row.get("default"),
+            str(row.get("key")),
+            str(row.get("import_status")),
+            str(row.get("reason_class")),
+        ),
+        {
+            "kind": row.get("kind"),
+            "default": row.get("default"),
+            "key": row.get("key"),
+            "import_status": row.get("import_status"),
+            "reason_class": row.get("reason_class"),
+            "occurrences": 0,
+            "files": set(),
+            "libraries": set(),
+            "sections": set(),
+            "detail_keys": set(),
+            "reasons": set(),
+        },
+    )
+    bucket["occurrences"] += 1
+    if row.get("file"):
+        bucket["files"].add(row["file"])
+    if row.get("library"):
+        bucket["libraries"].add(row["library"])
+    if row.get("section"):
+        bucket["sections"].add(row["section"])
+    if row.get("detail_key"):
+        bucket["detail_keys"].add(row["detail_key"])
+    if row.get("import_reason"):
+        bucket["reasons"].add(row["import_reason"])
+
+
+def build_importer_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None, str, str, str], dict[str, Any]]:
+    summary: dict[tuple[str, str | None, str, str, str], dict[str, Any]] = {}
+    for row in rows:
+        accumulate_importer_summary(summary, row)
+    return summary
+
+
+QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
+    ("library", "metadata_path"): "legacy_library_path_key_not_recommended",
+    ("library", "overlay_path"): "legacy_library_path_key_not_recommended",
+    ("library", "reapply_overlays"): "valid_but_not_recommended_for_quickstart",
+    ("overlay", "horizontal_align"): "offset_ui_workaround_available",
+    ("overlay", "vertical_align"): "offset_ui_workaround_available",
+}
+
+
+def get_quickstart_recommendation_exclusion(row: dict[str, Any]) -> str | None:
+    kind = str(row.get("kind") or "")
+    key = str(row.get("key") or "")
+    return QUICKSTART_RECOMMENDATION_EXCLUSIONS.get((kind, key))
+
+
 def accumulate_quickstart_recommendation_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]], row: dict[str, Any]) -> None:
     if not row.get("name_verified") or row.get("quickstart_declared"):
+        return
+    if get_quickstart_recommendation_exclusion(row):
         return
     accumulate_ranked_summary(summary, row)
 
@@ -1257,6 +2149,39 @@ def build_quickstart_recommendation_summary(rows: list[dict[str, Any]]) -> dict[
     summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
     for row in rows:
         accumulate_quickstart_recommendation_summary(summary, row)
+    return summary
+
+
+def build_quickstart_recommendation_exclusion_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None, str], dict[str, Any]]:
+    summary: dict[tuple[str, str | None, str], dict[str, Any]] = {}
+    for row in rows:
+        if not row.get("name_verified") or row.get("quickstart_declared"):
+            continue
+        exclusion_reason = get_quickstart_recommendation_exclusion(row)
+        if not exclusion_reason:
+            continue
+        bucket = summary.setdefault(
+            (str(row.get("kind") or ""), str(row.get("default") or ""), str(row.get("key") or "")),
+            {
+                "kind": str(row.get("kind") or ""),
+                "default": row.get("default"),
+                "key": str(row.get("key") or ""),
+                "occurrences": 0,
+                "file_count": 0,
+                "files": set(),
+                "libraries": set(),
+                "reason": exclusion_reason,
+            },
+        )
+        bucket["occurrences"] += 1
+        if row.get("file"):
+            bucket["files"].add(str(row["file"]))
+        if row.get("library"):
+            bucket["libraries"].add(str(row["library"]))
+    for bucket in summary.values():
+        bucket["file_count"] = len(bucket["files"])
+        bucket["files"] = sorted(bucket["files"])
+        bucket["libraries"] = sorted(bucket["libraries"])
     return summary
 
 
@@ -1292,6 +2217,157 @@ def serialize_ranked_summary(summary: dict[tuple[str, str | None, str], dict[str
     return serializable_ranked
 
 
+def serialize_importer_ranked_summary(
+    summary: dict[tuple[str, str | None, str, str, str], dict[str, Any]]
+) -> list[dict[str, Any]]:
+    ranked = sorted(
+        summary.values(),
+        key=lambda item: (
+            item["import_status"] != "unmapped",
+            -item["occurrences"],
+            -len(item["files"]),
+            str(item["default"]),
+            str(item["key"]),
+        ),
+    )
+    serializable_ranked: list[dict[str, Any]] = []
+    for item in ranked:
+        serializable_ranked.append(
+            {
+                "kind": item["kind"],
+                "default": item["default"],
+                "key": item["key"],
+                "import_status": item["import_status"],
+                "reason_class": item["reason_class"],
+                "occurrences": item["occurrences"],
+                "file_count": len(item["files"]),
+                "files": sorted(item["files"]),
+                "libraries": sorted(item["libraries"]),
+                "sections": sorted(item["sections"]),
+                "detail_keys": sorted(item["detail_keys"]),
+                "reasons": sorted(item["reasons"]),
+            }
+        )
+    return serializable_ranked
+
+
+def build_merged_fix_queue(
+    verified_rows: list[dict[str, Any]],
+    importer_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    queue: dict[tuple[str, str | None, str], dict[str, Any]] = {}
+
+    def ensure_bucket(kind: str, default: str | None, key: str) -> dict[str, Any]:
+        return queue.setdefault(
+            (kind, default, key),
+            {
+                "kind": kind,
+                "default": default,
+                "key": key,
+                "verified_occurrences": 0,
+                "importer_occurrences": 0,
+                "verified_files": set(),
+                "importer_files": set(),
+                "libraries": set(),
+                "matched_default_files": set(),
+                "validation_levels": set(),
+                "importer_statuses": set(),
+                "importer_reason_classes": set(),
+                "importer_reasons": set(),
+                "needs_schema_support": False,
+                "needs_quickstart_support": False,
+                "needs_importer_support": False,
+                "quickstart_exclusion_reason": QUICKSTART_RECOMMENDATION_EXCLUSIONS.get((kind, key)),
+            },
+        )
+
+    for item in verified_rows:
+        kind = str(item.get("kind") or "")
+        default = item.get("default")
+        key = str(item.get("key") or "")
+        bucket = ensure_bucket(kind, default, key)
+        bucket["verified_occurrences"] += int(item.get("occurrences", 0) or 0)
+        bucket["verified_files"].update(str(path) for path in item.get("files", []) if path)
+        bucket["libraries"].update(str(lib) for lib in item.get("libraries", []) if lib)
+        bucket["matched_default_files"].update(str(path) for path in item.get("matched_default_files", []) if path)
+        if item.get("validation_level"):
+            bucket["validation_levels"].add(str(item.get("validation_level")))
+        if item.get("kometa_declared") and not item.get("schema_declared"):
+            bucket["needs_schema_support"] = True
+        if item.get("kometa_declared") and not item.get("quickstart_declared") and not bucket["quickstart_exclusion_reason"]:
+            bucket["needs_quickstart_support"] = True
+
+    for item in importer_rows:
+        kind = str(item.get("kind") or "")
+        default = item.get("default")
+        key = str(item.get("key") or "")
+        bucket = ensure_bucket(kind, default, key)
+        bucket["importer_occurrences"] += int(item.get("occurrences", 0) or 0)
+        bucket["importer_files"].update(str(path) for path in item.get("files", []) if path)
+        bucket["libraries"].update(str(lib) for lib in item.get("libraries", []) if lib)
+        if item.get("import_status"):
+            bucket["importer_statuses"].add(str(item.get("import_status")))
+        if item.get("reason_class"):
+            bucket["importer_reason_classes"].add(str(item.get("reason_class")))
+        for reason in item.get("reasons", []):
+            if reason:
+                bucket["importer_reasons"].add(str(reason))
+        if item.get("import_status") != "mapped" and not bucket["quickstart_exclusion_reason"]:
+            bucket["needs_importer_support"] = True
+
+    ranked: list[dict[str, Any]] = []
+    for bucket in queue.values():
+        action_targets: list[str] = []
+        if bucket["needs_schema_support"]:
+            action_targets.append("schema")
+        if bucket["needs_quickstart_support"]:
+            action_targets.append("quickstart")
+        if bucket["needs_importer_support"]:
+            action_targets.append("importer")
+        if not action_targets:
+            continue
+        importer_priority = 2
+        if "unmapped" in bucket["importer_statuses"]:
+            importer_priority = 0
+        elif bucket["importer_statuses"]:
+            importer_priority = 1
+        ranked.append(
+            {
+                "kind": bucket["kind"],
+                "default": bucket["default"],
+                "key": bucket["key"],
+                "action_targets": action_targets,
+                "action_target_count": len(action_targets),
+                "verified_occurrences": bucket["verified_occurrences"],
+                "importer_occurrences": bucket["importer_occurrences"],
+                "total_occurrences": bucket["verified_occurrences"] + bucket["importer_occurrences"],
+                "verified_file_count": len(bucket["verified_files"]),
+                "importer_file_count": len(bucket["importer_files"]),
+                "libraries": sorted(bucket["libraries"]),
+                "matched_default_files": sorted(bucket["matched_default_files"]),
+                "validation_levels": sorted(bucket["validation_levels"]),
+                "importer_statuses": sorted(bucket["importer_statuses"]),
+                "importer_reason_classes": sorted(bucket["importer_reason_classes"]),
+                "importer_reasons": sorted(bucket["importer_reasons"]),
+                "quickstart_exclusion_reason": bucket["quickstart_exclusion_reason"],
+                "_importer_priority": importer_priority,
+            }
+        )
+    ranked.sort(
+        key=lambda item: (
+            -item["action_target_count"],
+            item["_importer_priority"],
+            -item["total_occurrences"],
+            -len(item["libraries"]),
+            str(item["default"]),
+            str(item["key"]),
+        )
+    )
+    for item in ranked:
+        item.pop("_importer_priority", None)
+    return ranked
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Find template variables used in uploaded configs that are valid in Kometa but not exposed in Quickstart.")
     parser.add_argument(
@@ -1313,9 +2389,9 @@ def parse_args() -> argparse.Namespace:
         help="Optional cache JSON path. Defaults to artifacts/template_gap_cache.json.",
     )
     parser.add_argument(
-        "--no-cache",
+        "--use-cache",
         action="store_true",
-        help="Disable incremental file-result caching for this run.",
+        help="Enable incremental file-result caching for this run. Default is off.",
     )
     parser.add_argument(
         "--no-progress",
@@ -1323,9 +2399,29 @@ def parse_args() -> argparse.Namespace:
         help="Disable periodic progress output during long scans.",
     )
     parser.add_argument(
+        "--include-archives",
+        action="store_true",
+        help="Enable entering archive files during discovery. Default is off.",
+    )
+    parser.add_argument(
         "--no-default-excludes",
         action="store_true",
         help="Disable built-in excludes such as Windows, Program Files, ProgramData, $Recycle.Bin, dot-prefixed folders, .git, node_modules, common virtualenv folders, all AppData trees, OneDrive, common media/output/cache/build directories, and VS Code history folders.",
+    )
+    parser.add_argument(
+        "--yaml-type",
+        choices=[
+            "config",
+            "all",
+            "external_collection",
+            "external_overlay",
+            "external_metadata",
+            "external_playlist",
+            "external_template_bundle",
+            "unknown",
+        ],
+        default="config",
+        help="Which YAML document type to analyze. Default is config so external collection/overlay/metadata/playlist files are excluded.",
     )
     return parser.parse_args()
 
@@ -1335,7 +2431,16 @@ def build_progress_callbacks(enabled: bool):
         return None, None, None, None
 
     start_time = time.monotonic()
-    discovery_state = {"last_time": 0.0, "last_dirs": 0}
+    discovery_state = {
+        "last_time": 0.0,
+        "last_dirs": 0,
+        "dirs": 0,
+        "archives": 0,
+        "skipped_archives": 0,
+        "unsupported_archives": 0,
+        "roots_started": 0,
+        "roots_done": 0,
+    }
     prefilter_state = {"last_time": 0.0, "last_index": 0}
     scan_state = {"last_time": 0.0, "last_index": 0}
     verify_state = {"last_time": 0.0, "last_index": 0, "last_stage": ""}
@@ -1348,30 +2453,83 @@ def build_progress_callbacks(enabled: bool):
             return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
         return f"{minutes:02d}:{seconds:02d}"
 
+    def short_path(path: Path, max_len: int = 110) -> str:
+        text = str(path)
+        if len(text) <= max_len:
+            return text
+        keep = max_len - 3
+        head = keep // 2
+        tail = keep - head
+        return f"{text[:head]}...{text[-tail:]}"
+
+    def stage_rate(count: int) -> str:
+        elapsed = max(time.monotonic() - start_time, 0.001)
+        return f"{count / elapsed:.1f}/s"
+
+    def percent(index: int, total: int) -> str:
+        if total <= 0:
+            return "0.0%"
+        return f"{(index / total) * 100:.1f}%"
+
     def emit_discovery(event: str, current_path: Path, yaml_found: int) -> None:
         now = time.monotonic()
         if event == "root":
-            print(f"[progress][{elapsed_label()}] scanning root {current_path}", file=sys.stderr, flush=True)
-            discovery_state["last_time"] = now
-            return
-        if event == "zip":
-            print(f"[progress][{elapsed_label()}] extracting and scanning zip {current_path}", file=sys.stderr, flush=True)
-            discovery_state["last_time"] = now
-            return
-        if event == "root_done":
+            discovery_state["roots_started"] += 1
             print(
-                f"[progress][{elapsed_label()}] finished root {current_path} | discovered {yaml_found} YAML files so far",
+                f"[progress][{elapsed_label()}] discovery start | root {discovery_state['roots_started']} | {short_path(current_path)}",
                 file=sys.stderr,
                 flush=True,
             )
             discovery_state["last_time"] = now
             return
-        discovery_state["last_dirs"] += 1
-        should_emit = discovery_state["last_dirs"] == 1 or discovery_state["last_dirs"] % 100 == 0 or now - discovery_state["last_time"] >= 5.0
+        if event == "archive_skipped":
+            discovery_state["skipped_archives"] += 1
+        elif event == "archive_unsupported":
+            discovery_state["unsupported_archives"] += 1
+        elif event == "archive":
+            discovery_state["archives"] += 1
+        elif event == "root_done":
+            discovery_state["roots_done"] += 1
+            print(
+                f"[progress][{elapsed_label()}] discovery root done | {discovery_state['roots_done']}/{discovery_state['roots_started']} roots | "
+                f"dirs {discovery_state['dirs']} | archives {discovery_state['archives']} | skipped-archives {discovery_state['skipped_archives']} | "
+                f"yaml {yaml_found} | "
+                f"{short_path(current_path)}",
+                file=sys.stderr,
+                flush=True,
+            )
+            discovery_state["last_time"] = now
+            return
+        else:
+            discovery_state["dirs"] += 1
+            discovery_state["last_dirs"] += 1
+
+        should_emit = (
+            discovery_state["dirs"] == 1
+            or discovery_state["archives"] == 1
+            or discovery_state["skipped_archives"] == 1
+            or discovery_state["last_dirs"] % 250 == 0
+            or (discovery_state["archives"] > 0 and discovery_state["archives"] % 25 == 0)
+            or now - discovery_state["last_time"] >= 5.0
+            or event in {"archive_skipped", "archive_unsupported"}
+        )
         if not should_emit:
             return
+
+        if event == "archive_skipped":
+            current_summary = f"skipped archive by default {short_path(current_path)}"
+        elif event == "archive_unsupported":
+            current_summary = f"skipped unsupported archive {short_path(current_path)}"
+        elif event == "archive":
+            current_summary = f"current archive {short_path(current_path)}"
+        else:
+            current_summary = f"current dir {short_path(current_path)}"
+
         print(
-            f"[progress][{elapsed_label()}] scanning directory {current_path} | discovered {yaml_found} YAML files",
+            f"[progress][{elapsed_label()}] discovery | dirs {discovery_state['dirs']} ({stage_rate(discovery_state['dirs'])}) | "
+            f"archives {discovery_state['archives']} ({stage_rate(discovery_state['archives'])}) | "
+            f"skipped-archives {discovery_state['skipped_archives']} | unsupported {discovery_state['unsupported_archives']} | "
+            f"yaml {yaml_found} | {current_summary}",
             file=sys.stderr,
             flush=True,
         )
@@ -1383,7 +2541,8 @@ def build_progress_callbacks(enabled: bool):
         if not should_emit:
             return
         print(
-            f"[progress][{elapsed_label()}] {index}/{total} files | parsed {parsed} | skipped {skipped} | {current_path}",
+            f"[progress][{elapsed_label()}] parse {index}/{total} ({percent(index, total)}) | "
+            f"parsed {parsed} | skipped {skipped} | rate {stage_rate(index)} | {short_path(current_path)}",
             file=sys.stderr,
             flush=True,
         )
@@ -1396,7 +2555,8 @@ def build_progress_callbacks(enabled: bool):
         if not should_emit:
             return
         print(
-            f"[progress][{elapsed_label()}] prefilter {index}/{total} files | selected {selected} | skipped {skipped} | {current_path}",
+            f"[progress][{elapsed_label()}] prefilter {index}/{total} ({percent(index, total)}) | "
+            f"selected {selected} | skipped {skipped} | rate {stage_rate(index)} | {short_path(current_path)}",
             file=sys.stderr,
             flush=True,
         )
@@ -1474,6 +2634,37 @@ def render_table(title: str, rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_importer_table(title: str, rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return f"{title}\n  none\n"
+    headers = ["kind", "default", "key", "status", "reason", "occ", "files", "libraries"]
+    table_rows = []
+    for row in rows:
+        table_rows.append(
+            [
+                str(row.get("kind") or "-"),
+                str(row.get("default") or "-"),
+                str(row.get("key") or "-"),
+                str(row.get("import_status") or "-"),
+                str(row.get("reason_class") or "-"),
+                str(row.get("occurrences", 0)),
+                str(row.get("file_count", 0)),
+                compact_path_list(row.get("libraries", []), limit=2),
+            ]
+        )
+    widths = []
+    for col_idx, header in enumerate(headers):
+        widths.append(max(len(header), *(len(r[col_idx]) for r in table_rows)))
+    lines = [title]
+    header_line = "  " + " | ".join(header.ljust(widths[idx]) for idx, header in enumerate(headers))
+    separator = "  " + "-+-".join("-" * widths[idx] for idx in range(len(headers)))
+    lines.append(header_line)
+    lines.append(separator)
+    for row in table_rows:
+        lines.append("  " + " | ".join(row[idx].ljust(widths[idx]) for idx in range(len(headers))))
+    return "\n".join(lines) + "\n"
+
+
 def render_grouped_default_table(title: str, rows: list[dict[str, Any]]) -> str:
     if not rows:
         return f"{title}\n  none\n"
@@ -1506,33 +2697,57 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
     collections = report.get("verified_gaps_by_kind", {}).get("collection", [])
     playlists = report.get("verified_gaps_by_kind", {}).get("playlist", [])
     libraries = report.get("verified_gaps_by_kind", {}).get("library", [])
+    importer_section = report.get("importer_findings_by_kind", {}).get("section", [])
+    importer_library = report.get("importer_findings_by_kind", {}).get("library", [])
+    importer_collection = report.get("importer_findings_by_kind", {}).get("collection", [])
+    importer_overlay = report.get("importer_findings_by_kind", {}).get("overlay", [])
+    importer_playlist = report.get("importer_findings_by_kind", {}).get("playlist", [])
     schema_backlog = report.get("schema_backlog_by_default", [])
     quickstart_backlog = report.get("quickstart_backlog_by_default", [])
+    quickstart_excluded = report.get("quickstart_recommendation_exclusions", [])
 
     lines = [
         "Template Variable Gap Summary",
+        f"  yaml type focus: {report.get('yaml_type_focus', 'config')}",
+        f"  include archives: {report.get('include_archives', False)}",
         f"  files discovered: {report.get('discovered_file_count', 0)}",
-        f"  files prefiltered: {report.get('prefiltered_file_count', 0)}",
-        f"  files parsed: {report.get('parsed_file_count', 0)}",
+        f"  candidate YAML after prefilter: {report.get('candidate_yaml_file_count', report.get('prefiltered_file_count', 0))}",
+        f"  files parsed under yaml type focus: {report.get('parsed_file_count', 0)}",
         f"  files skipped: {report.get('skipped_file_count', 0)}",
-        f"  files with template variables: {report.get('files_with_template_variables_count', 0)}",
+        f"  files matching yaml type focus: {report.get('yaml_type_matched_file_count', report.get('files_with_relevant_yaml_count', 0))}",
         f"  cache enabled: {report.get('cache_enabled', False)}",
         f"  default excludes: {report.get('default_excludes_enabled', True)}",
         f"  cache hits: {report.get('cache_hit_count', 0)}",
         f"  cache misses: {report.get('cache_miss_count', 0)}",
         "  cache invalidates on: analyzer, Quickstart support JSON, Kometa defaults, or source file changes",
         f"  template variable occurrences scanned: {report.get('template_variable_occurrences_scanned', 0)}",
+        f"  importer candidate files scanned: {report.get('importer_candidate_file_count', 0)}",
+        f"  decode fallbacks used: {report.get('decode_fallback_count', 0)}",
+        f"  probable artifact skips: {report.get('artifact_skipped_file_count', 0)}",
+        f"  non-Kometa YAML skips: {report.get('non_kometa_skipped_file_count', 0)}",
+        f"  YAML type excluded skips: {report.get('yaml_type_excluded_file_count', 0)}",
+        "  note: prefilter is intentionally broad; yaml-type focus is enforced after parsing",
+        f"  importer issues: {report.get('importer_issue_count', 0)}",
+        f"  importer unmapped: {report.get('importer_unmapped_count', 0)}",
+        f"  importer skipped: {report.get('importer_skipped_count', 0)}",
+        f"  importer files with issues: {report.get('importer_files_with_issues_count', 0)}",
         f"  verified gaps: {report.get('verified_gap_count', 0)}",
         f"  schema-declared verified gaps: {report.get('schema_declared_gap_count', 0)}",
         f"  kometa-declared verified gaps: {report.get('kometa_declared_gap_count', 0)}",
         f"  verified gaps missing from schema but supported by Kometa: {report.get('kometa_missing_schema_gap_count', 0)}",
         f"  value-shape verified gaps: {report.get('value_shape_verified_gap_count', 0)}",
         f"  quickstart recommendations: {report.get('quickstart_recommendation_count', 0)}",
+        f"  excluded quickstart recommendation candidates: {report.get('quickstart_recommendation_exclusion_count', 0)}",
         f"  runtime-supported quickstart recommendations: {report.get('quickstart_runtime_supported_recommendation_count', 0)}",
         f"  overlay gaps: {len(overlays)}",
         f"  collection gaps: {len(collections)}",
         f"  playlist gaps: {len(playlists)}",
         f"  library gaps: {len(libraries)}",
+        f"  importer section issues: {len(importer_section)}",
+        f"  importer library issues: {len(importer_library)}",
+        f"  importer collection issues: {len(importer_collection)}",
+        f"  importer overlay issues: {len(importer_overlay)}",
+        f"  importer playlist issues: {len(importer_playlist)}",
         "  runtime guaranteed: false",
         "",
     ]
@@ -1549,6 +2764,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         lines.append("")
     lines.extend(
         [
+            render_importer_table("Top Importer Misses", report.get("importer_findings_ranked", [])[:20]),
             render_table("Overlay Gaps", overlays),
             render_table("Collection Gaps", collections),
         ]
@@ -1561,16 +2777,33 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         lines.append(render_table("Playlist Gaps", playlists))
     if libraries:
         lines.append(render_table("Library Gaps", libraries))
+    if quickstart_excluded:
+        lines.append("Excluded Quickstart Recommendation Candidates")
+        for item in quickstart_excluded[:10]:
+            lines.append(
+                f"  {item.get('kind')} {item.get('default') or '-'} {item.get('key')}: "
+                f"{item.get('reason')} (occ={item.get('occurrences', 0)}, files={item.get('file_count', 0)})"
+            )
+        remaining = len(quickstart_excluded) - min(len(quickstart_excluded), 10)
+        if remaining > 0:
+            lines.append(f"  ... plus {remaining} more excluded recommendation candidates")
     skipped_files = report.get("skipped_files", [])
     if skipped_files:
         lines.append("Skipped Files")
         for item in skipped_files[:10]:
-            lines.append(f"  {item.get('file')}: {item.get('error_type')}")
+            suffix_parts = []
+            if item.get("stage"):
+                suffix_parts.append(str(item.get("stage")))
+            if item.get("noise_reason"):
+                suffix_parts.append(str(item.get("noise_reason")))
+            suffix = f" ({', '.join(suffix_parts)})" if suffix_parts else ""
+            lines.append(f"  {item.get('file')}: {item.get('error_type')}{suffix}")
         remaining = len(skipped_files) - min(len(skipped_files), 10)
         if remaining > 0:
             lines.append(f"  ... plus {remaining} more skipped files")
     if report.get("cache_enabled", False):
         lines.append(f"Cache file: {report.get('cache_path')}")
+        lines.append(f"Archive cache: {report.get('archive_cache_path')}")
     lines.append(f"Full JSON report: {json_output_path}")
     return "\n".join(lines)
 
@@ -1589,12 +2822,14 @@ def main() -> None:
         qs_overlays_path,
         qs_attributes_path,
         kometa_defaults,
+        args.yaml_type,
     )
     cache_path = get_cache_path(root, args.cache_path)
+    archive_cache_dir = get_archive_cache_dir(root)
     verification_checkpoint_dir = get_verification_checkpoint_dir(root)
     verification_meta_path = verification_checkpoint_dir / "metadata.json"
     verification_rows_path = verification_checkpoint_dir / "all_rows.ndjson"
-    cache_enabled = not args.no_cache
+    cache_enabled = args.use_cache
     cache_data = load_cache(cache_path, expected_context=cache_context) if cache_enabled else empty_cache(cache_context)
     cache_persist = make_periodic_persistor(lambda: save_cache(cache_path, cache_data), CACHE_SAVE_EVERY_ITEMS, CACHE_SAVE_EVERY_SECS) if cache_enabled else None
     default_excludes_enabled = not args.no_default_excludes
@@ -1606,9 +2841,12 @@ def main() -> None:
         inputs,
         discovery_callback=discovery_callback,
         exclude_defaults=default_excludes_enabled,
+        include_archives=args.include_archives,
+        archive_cache_dir=archive_cache_dir if (cache_enabled and args.include_archives) else None,
     )
     candidate_files, prefilter_skipped_files, prefilter_cache_stats = prefilter_yaml_files(
         input_files,
+        yaml_type_focus=args.yaml_type,
         cache_data=cache_data if cache_enabled else None,
         progress_callback=prefilter_progress_callback,
         checkpoint_callback=cache_persist,
@@ -1629,12 +2867,14 @@ def main() -> None:
                 flush=True,
             )
             print(
-                f"[progress][prefilter] selected {len(candidate_files)} YAML files containing template_variables",
+                f"[progress][prefilter] selected {len(candidate_files)} candidate YAML files for later yaml-type classification "
+                f"(focus: {args.yaml_type})",
                 file=sys.stderr,
                 flush=True,
             )
-        uploaded, parse_skipped_files, parsed_file_paths, parse_cache_stats = scan_uploaded_configs(
+        uploaded, importer_rows, parse_skipped_files, parsed_file_paths, parse_cache_stats = scan_uploaded_configs(
             candidate_files,
+            yaml_type_focus=args.yaml_type,
             progress_callback=progress_callback,
             cache_data=cache_data if cache_enabled else None,
             checkpoint_callback=cache_persist,
@@ -1790,6 +3030,11 @@ def main() -> None:
         flush_verification_checkpoint(len(all_rows), force=True)
         serializable_ranked = serialize_ranked_summary(summary)
         quickstart_recommendation_ranked = serialize_ranked_summary(build_quickstart_recommendation_summary(all_rows))
+        quickstart_recommendation_excluded = sorted(
+            build_quickstart_recommendation_exclusion_summary(all_rows).values(),
+            key=lambda item: (-item["occurrences"], -item["file_count"], str(item["default"]), str(item["key"])),
+        )
+        importer_ranked = serialize_importer_ranked_summary(build_importer_summary(importer_rows))
 
         by_kind: dict[str, list[dict[str, Any]]] = {"overlay": [], "collection": [], "playlist": [], "library": []}
         for item in serializable_ranked:
@@ -1800,6 +3045,17 @@ def main() -> None:
         for item in quickstart_recommendation_ranked:
             kind_key = item["kind"] if item["kind"] in quickstart_recommendations_by_kind else "library"
             quickstart_recommendations_by_kind[kind_key].append(item)
+
+        importer_by_kind: dict[str, list[dict[str, Any]]] = {
+            "section": [],
+            "library": [],
+            "collection": [],
+            "overlay": [],
+            "playlist": [],
+        }
+        for item in importer_ranked:
+            kind_key = item["kind"] if item["kind"] in importer_by_kind else "library"
+            importer_by_kind[kind_key].append(item)
 
         schema_backlog_summary: dict[tuple[str, str | None], dict[str, Any]] = {}
         for item in serializable_ranked:
@@ -1866,8 +3122,11 @@ def main() -> None:
         report = {
             "quickstart_root": str(root),
             "inputs": [str(p) for p in inputs],
+            "yaml_type_focus": args.yaml_type,
             "cache_enabled": cache_enabled,
+            "include_archives": args.include_archives,
             "cache_path": str(cache_path),
+            "archive_cache_path": str(archive_cache_dir) if (cache_enabled and args.include_archives) else None,
             "cache_context": cache_context,
             "verification_checkpoint_path": str(verification_rows_path),
             "verification_resume_used": resume_used,
@@ -1882,6 +3141,7 @@ def main() -> None:
             },
             "discovered_file_count": len(input_files),
             "prefiltered_file_count": len(candidate_files),
+            "candidate_yaml_file_count": len(candidate_files),
             "parsed_files": sorted(parsed_file_paths),
             "uploaded_files_scanned": sorted({row["file"] for row in uploaded}),
             "skipped_files": skipped_files,
@@ -1889,14 +3149,26 @@ def main() -> None:
             "malformed_files": malformed_files,
             "malformed_file_count": len(malformed_files),
             "parsed_file_count": len(parsed_file_paths),
+            "yaml_type_matched_file_count": len(parsed_file_paths),
             "files_with_template_variables_count": len(sorted({row["file"] for row in uploaded})),
+            "files_with_relevant_yaml_count": len(parsed_file_paths),
             "template_variable_occurrences_scanned": len(uploaded),
+            "importer_candidate_file_count": len(parsed_file_paths),
+            "decode_fallback_count": prefilter_cache_stats.get("decode_fallbacks", 0) + parse_cache_stats.get("decode_fallbacks", 0),
+            "artifact_skipped_file_count": sum(1 for item in skipped_files if item.get("noise_reason") == "artifact_filename_heuristic"),
+            "non_kometa_skipped_file_count": sum(1 for item in skipped_files if item.get("noise_reason") == "non_kometa_content"),
+            "yaml_type_excluded_file_count": sum(1 for item in skipped_files if item.get("noise_reason") == "yaml_type_excluded"),
+            "importer_issue_count": len(importer_rows),
+            "importer_unmapped_count": sum(1 for item in importer_rows if item.get("import_status") == "unmapped"),
+            "importer_skipped_count": sum(1 for item in importer_rows if item.get("import_status") == "skipped"),
+            "importer_files_with_issues_count": len(sorted({row["file"] for row in importer_rows})),
             "verified_gap_count": len(serializable_ranked),
             "schema_declared_gap_count": sum(1 for item in serializable_ranked if item["schema_declared"]),
             "kometa_declared_gap_count": sum(1 for item in serializable_ranked if item["kometa_declared"]),
             "kometa_missing_schema_gap_count": sum(1 for item in serializable_ranked if item["kometa_declared"] and not item["schema_declared"]),
             "value_shape_verified_gap_count": sum(1 for item in serializable_ranked if item["value_shape_verified_occurrences"] > 0),
             "quickstart_recommendation_count": len(quickstart_recommendation_ranked),
+            "quickstart_recommendation_exclusion_count": len(quickstart_recommendation_excluded),
             "quickstart_runtime_supported_recommendation_count": sum(
                 1 for item in quickstart_recommendation_ranked if item["supported_in_quickstart"] and not item["quickstart_declared"]
             ),
@@ -1912,10 +3184,14 @@ def main() -> None:
             "verified_gaps_ranked": serializable_ranked,
             "verified_gaps_by_kind": by_kind,
             "quickstart_recommendations_ranked": quickstart_recommendation_ranked,
+            "quickstart_recommendation_exclusions": quickstart_recommendation_excluded,
             "quickstart_recommendations_by_kind": quickstart_recommendations_by_kind,
+            "importer_findings_ranked": importer_ranked,
+            "importer_findings_by_kind": importer_by_kind,
             "quickstart_backlog_by_default": quickstart_backlog_by_default,
             "schema_backlog_by_default": schema_backlog_by_default,
             "all_rows": all_rows,
+            "importer_rows": importer_rows,
         }
     finally:
         for temp_dir in temp_dirs:
