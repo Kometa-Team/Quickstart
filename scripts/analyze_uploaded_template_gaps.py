@@ -2665,6 +2665,37 @@ def render_importer_table(title: str, rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_action_queue_table(title: str, rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return f"{title}\n  none\n"
+    headers = ["kind", "default", "key", "targets", "occ", "importer", "status", "libraries"]
+    table_rows = []
+    for row in rows:
+        table_rows.append(
+            [
+                str(row.get("kind") or "-"),
+                str(row.get("default") or "-"),
+                str(row.get("key") or "-"),
+                ",".join(str(target) for target in row.get("action_targets", [])) or "-",
+                str(row.get("total_occurrences", 0)),
+                compact_path_list(row.get("importer_reason_classes", []), limit=2),
+                compact_path_list(row.get("validation_levels", []), limit=2),
+                compact_path_list(row.get("libraries", []), limit=2),
+            ]
+        )
+    widths = []
+    for col_idx, header in enumerate(headers):
+        widths.append(max(len(header), *(len(r[col_idx]) for r in table_rows)))
+    lines = [title]
+    header_line = "  " + " | ".join(header.ljust(widths[idx]) for idx, header in enumerate(headers))
+    separator = "  " + "-+-".join("-" * widths[idx] for idx in range(len(headers)))
+    lines.append(header_line)
+    lines.append(separator)
+    for row in table_rows:
+        lines.append("  " + " | ".join(row[idx].ljust(widths[idx]) for idx in range(len(headers))))
+    return "\n".join(lines) + "\n"
+
+
 def render_grouped_default_table(title: str, rows: list[dict[str, Any]]) -> str:
     if not rows:
         return f"{title}\n  none\n"
@@ -2704,6 +2735,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
     importer_playlist = report.get("importer_findings_by_kind", {}).get("playlist", [])
     schema_backlog = report.get("schema_backlog_by_default", [])
     quickstart_backlog = report.get("quickstart_backlog_by_default", [])
+    merged_fix_queue = report.get("merged_fix_queue_ranked", [])
     quickstart_excluded = report.get("quickstart_recommendation_exclusions", [])
 
     lines = [
@@ -2739,6 +2771,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         f"  quickstart recommendations: {report.get('quickstart_recommendation_count', 0)}",
         f"  excluded quickstart recommendation candidates: {report.get('quickstart_recommendation_exclusion_count', 0)}",
         f"  runtime-supported quickstart recommendations: {report.get('quickstart_runtime_supported_recommendation_count', 0)}",
+        f"  merged fix queue items: {report.get('merged_fix_queue_count', 0)}",
         f"  overlay gaps: {len(overlays)}",
         f"  collection gaps: {len(collections)}",
         f"  playlist gaps: {len(playlists)}",
@@ -2764,6 +2797,7 @@ def render_summary(report: dict[str, Any], json_output_path: Path) -> str:
         lines.append("")
     lines.extend(
         [
+            render_action_queue_table("Merged Fix Queue", merged_fix_queue[:25]),
             render_importer_table("Top Importer Misses", report.get("importer_findings_ranked", [])[:20]),
             render_table("Overlay Gaps", overlays),
             render_table("Collection Gaps", collections),
@@ -3035,6 +3069,7 @@ def main() -> None:
             key=lambda item: (-item["occurrences"], -item["file_count"], str(item["default"]), str(item["key"])),
         )
         importer_ranked = serialize_importer_ranked_summary(build_importer_summary(importer_rows))
+        merged_fix_queue_ranked = build_merged_fix_queue(serializable_ranked, importer_ranked)
 
         by_kind: dict[str, list[dict[str, Any]]] = {"overlay": [], "collection": [], "playlist": [], "library": []}
         for item in serializable_ranked:
@@ -3172,6 +3207,7 @@ def main() -> None:
             "quickstart_runtime_supported_recommendation_count": sum(
                 1 for item in quickstart_recommendation_ranked if item["supported_in_quickstart"] and not item["quickstart_declared"]
             ),
+            "merged_fix_queue_count": len(merged_fix_queue_ranked),
             "verification_notes": {
                 "name_verified": "Key name matched a variable declared or referenced in the corresponding built-in Kometa default or shared built-in templates.yml.",
                 "quickstart_declared": "Key name was explicitly declared in Quickstart's shipped support metadata or modeled alias mapping, without relying on runtime-injected overlay controls.",
@@ -3179,6 +3215,7 @@ def main() -> None:
                 "kometa_declared": "Key name was found in Kometa's bundled built-in defaults/templates, which is treated as the stronger local source of truth.",
                 "validation_level": "works_in_kometa_missing_from_quickstart_and_schema means the key was not found in Quickstart or schema, but was found in Kometa built-in defaults/templates.",
                 "value_shape_verified": "Best-effort local heuristic that the supplied value looks like the expected basic type. Null means no reliable local rule was inferred.",
+                "merged_fix_queue": "Combined per-key action queue that merges schema gaps, Quickstart support gaps, and importer misses into one ranked backlog.",
                 "runtime_guaranteed": False,
             },
             "verified_gaps_ranked": serializable_ranked,
@@ -3188,6 +3225,7 @@ def main() -> None:
             "quickstart_recommendations_by_kind": quickstart_recommendations_by_kind,
             "importer_findings_ranked": importer_ranked,
             "importer_findings_by_kind": importer_by_kind,
+            "merged_fix_queue_ranked": merged_fix_queue_ranked,
             "quickstart_backlog_by_default": quickstart_backlog_by_default,
             "schema_backlog_by_default": schema_backlog_by_default,
             "all_rows": all_rows,
