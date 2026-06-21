@@ -154,9 +154,7 @@ def test_validate_library_auto_sort_hubs_rejects_invalid_value(qs_module):
         ["mov-library_movies"],
     )
 
-    assert errors == [
-        "Movies: auto_sort_hubs must be one of: alpha, alpha.desc, configured, configured.desc, random, sort_title, sort_title.desc"
-    ]
+    assert errors == ["Movies: auto_sort_hubs must be one of: alpha, alpha.desc, configured, configured.desc, random, sort_title, sort_title.desc"]
 
 
 def test_library_fragment_disables_auto_sort_hubs_without_plex_pass(client, monkeypatch, qs_module):
