@@ -1147,9 +1147,12 @@ def enrich_quickstart_overlay_config(config):
             default_offsets = overlay.get("default_offsets")
             offsets_by_type = overlay.get("default_offsets_by_type")
 
-            supports_runtime_offsets = isinstance(default_offsets, dict) or (
-                isinstance(offsets_by_type, dict) and any(isinstance(value, dict) for value in offsets_by_type.values())
-            ) or "initial_horizontal_offset" in existing_keys or "initial_vertical_offset" in existing_keys
+            supports_runtime_offsets = (
+                isinstance(default_offsets, dict)
+                or (isinstance(offsets_by_type, dict) and any(isinstance(value, dict) for value in offsets_by_type.values()))
+                or "initial_horizontal_offset" in existing_keys
+                or "initial_vertical_offset" in existing_keys
+            )
 
             offset_defaults = default_offsets if isinstance(default_offsets, dict) else {}
             if not offset_defaults and isinstance(offsets_by_type, dict):
