@@ -103,15 +103,49 @@ def test_name_and_summary_child_overrides_follow_child_toggles_for_shared_naming
             assert "default" not in summary_field
 
 
-def test_franchise_has_no_predefined_child_toggle_surface_yet():
-    for media_types in (("movie",), ("show",)):
-        collection = _find_collection("collection_franchise", media_types)
-        keys = _keys(collection)
+def test_franchise_uses_generic_dynamic_child_override_surface():
+    expected_by_media = {
+        ("movie",): {
+            "child_name_overrides": ("name_", "string"),
+            "child_summary_overrides": ("summary_", "string"),
+            "child_sort_title_overrides": ("sort_title_", "string"),
+            "child_sync_mode_overrides": ("sync_mode_", "select"),
+            "child_collection_order_overrides": ("collection_order_", "select"),
+            "child_url_poster_overrides": ("url_poster_", "string"),
+            "child_radarr_add_missing_overrides": ("radarr_add_missing_", "boolean"),
+            "child_radarr_folder_overrides": ("radarr_folder_", "string"),
+            "child_radarr_tag_overrides": ("radarr_tag_", "string_list"),
+            "child_item_radarr_tag_overrides": ("item_radarr_tag_", "string_list"),
+            "child_radarr_monitor_overrides": ("radarr_monitor_", "boolean"),
+        },
+        ("show",): {
+            "child_name_overrides": ("name_", "string"),
+            "child_summary_overrides": ("summary_", "string"),
+            "child_sort_title_overrides": ("sort_title_", "string"),
+            "child_sync_mode_overrides": ("sync_mode_", "select"),
+            "child_collection_order_overrides": ("collection_order_", "select"),
+            "child_url_poster_overrides": ("url_poster_", "string"),
+            "child_sonarr_add_missing_overrides": ("sonarr_add_missing_", "boolean"),
+            "child_sonarr_folder_overrides": ("sonarr_folder_", "string"),
+            "child_sonarr_tag_overrides": ("sonarr_tag_", "string_list"),
+            "child_item_sonarr_tag_overrides": ("item_sonarr_tag_", "string_list"),
+            "child_sonarr_monitor_overrides": ("sonarr_monitor_", "select"),
+        },
+    }
 
-        assert all(not key.startswith("use_") for key in keys)
-        assert all(not key.startswith("sync_mode_") for key in keys)
-        assert all(not key.startswith("collection_order_") for key in keys)
-        assert all(not key.startswith("sort_title_") for key in keys)
+    for media_types, expected_fields in expected_by_media.items():
+        collection = _find_collection("collection_franchise", media_types)
+        fields = {
+            item["key"]: item
+            for item in collection.get("template_variables", [])
+            if isinstance(item, dict) and item.get("key")
+        }
+
+        for field_key, (child_prefix, value_kind) in expected_fields.items():
+            assert field_key in fields
+            assert fields[field_key]["type"] == "mapping_list"
+            assert fields[field_key]["dynamic_child_prefix"] == child_prefix
+            assert fields[field_key]["dynamic_child_value_kind"] == value_kind
 
 
 def test_year_collections_master_toggle_does_not_get_fake_child_name_or_summary_overrides():

@@ -363,6 +363,50 @@ def _collect_template_keys(template_vars: Any) -> set[str]:
     return keys
 
 
+def _collect_dynamic_child_field_specs(template_vars: Any) -> list[dict[str, str]]:
+    specs: list[dict[str, str]] = []
+    if not isinstance(template_vars, list):
+        return specs
+
+    for item in template_vars:
+        if not isinstance(item, dict):
+            continue
+        field_key = str(item.get("key") or "").strip()
+        child_prefix = str(item.get("dynamic_child_prefix") or "").strip()
+        if not field_key or not child_prefix:
+            continue
+        specs.append(
+            {
+                "field_key": field_key,
+                "child_prefix": child_prefix,
+                "value_kind": str(item.get("dynamic_child_value_kind") or "string").strip().lower(),
+            }
+        )
+    return specs
+
+
+def _coerce_import_bool_text(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    lowered = str(value or "").strip().lower()
+    if lowered in {"true", "1", "yes", "on"}:
+        return "true"
+    if lowered in {"false", "0", "no", "off"}:
+        return "false"
+    return str(value or "").strip()
+
+
+def _serialize_dynamic_child_mapping_value(value: Any, value_kind: str) -> str:
+    kind = str(value_kind or "string").strip().lower()
+    if kind == "string_list":
+        if isinstance(value, list):
+            return ",".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "").strip()
+    if kind == "boolean":
+        return _coerce_import_bool_text(value)
+    return str(value or "").strip()
+
+
 def _has_template_string_list_values(value: Any) -> bool:
     if value is None:
         return False
@@ -390,6 +434,44 @@ def _build_collection_index(collection_config: list[dict]) -> tuple[dict[str, di
             cid = collection.get("id")
             if not cid:
                 continue
+            if cid in by_id:
+                existing = by_id[cid]
+                if isinstance(existing, dict):
+                    existing_media = existing.get("media_types")
+                    new_media = collection.get("media_types")
+                    if isinstance(existing_media, list) or isinstance(new_media, list):
+                        merged_media = []
+                        for entry in existing_media or []:
+                            if entry not in merged_media:
+                                merged_media.append(entry)
+                        for entry in new_media or []:
+                            if entry not in merged_media:
+                                merged_media.append(entry)
+                        existing["media_types"] = merged_media
+
+                    existing_templates = existing.get("template_variables")
+                    new_templates = collection.get("template_variables")
+                    if isinstance(existing_templates, list) and isinstance(new_templates, list):
+                        seen_keys = {
+                            str(item.get("key"))
+                            for item in existing_templates
+                            if isinstance(item, dict) and item.get("key")
+                        }
+                        for item in new_templates:
+                            if not isinstance(item, dict):
+                                continue
+                            key = str(item.get("key") or "").strip()
+                            if key and key in seen_keys:
+                                continue
+                            existing_templates.append(item)
+                            if key:
+                                seen_keys.add(key)
+                    elif existing.get("template_variables") in (None, [], {}):
+                        existing["template_variables"] = new_templates
+                alias = cid.replace("collection_", "", 1)
+                by_alias[alias] = cid
+                continue
+
             by_id[cid] = collection
             alias = cid.replace("collection_", "", 1)
             by_alias[alias] = cid
@@ -1311,10 +1393,12 @@ def prepare_import_payload(
 
                     if isinstance(template_values, dict):
                         allowed = _collect_template_keys(collection_by_id[collection_id].get("template_variables"))
+                        dynamic_child_fields = _collect_dynamic_child_field_specs(collection_by_id[collection_id].get("template_variables"))
                         clean_id = collection_id.replace("collection_", "", 1)
                         expanded_template_values = dict(template_values)
                         data_block = expanded_template_values.get("data")
                         data_reported = set()
+                        pending_dynamic_child_maps: dict[str, dict[str, str]] = {}
                         if isinstance(data_block, dict):
                             for subkey, subval in data_block.items():
                                 flat_key = f"data_{subkey}"
@@ -1351,11 +1435,40 @@ def prepare_import_payload(
                                     f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
                                 )
                             else:
+                                matched_dynamic_child = next(
+                                    (
+                                        spec
+                                        for spec in dynamic_child_fields
+                                        if key.startswith(spec["child_prefix"]) and key != spec["child_prefix"]
+                                    ),
+                                    None,
+                                )
+                                if matched_dynamic_child:
+                                    suffix = key[len(matched_dynamic_child["child_prefix"]) :].strip()
+                                    serialized_value = _serialize_dynamic_child_mapping_value(
+                                        value,
+                                        matched_dynamic_child["value_kind"],
+                                    )
+                                    if suffix and serialized_value:
+                                        pending_dynamic_child_maps.setdefault(
+                                            matched_dynamic_child["field_key"],
+                                            {},
+                                        )[suffix] = serialized_value
+                                        report.add(
+                                            "imported",
+                                            f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
+                                        )
+                                        continue
                                 report.add(
                                     "unmapped",
                                     f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
                                     "Template variable not available in Quickstart.",
                                 )
+
+                        for field_key, field_map in pending_dynamic_child_maps.items():
+                            if not field_map:
+                                continue
+                            libraries_data[f"{lib_id}-template_collection_{clean_id}_{field_key}"] = json.dumps(field_map, ensure_ascii=True)
 
                 if imported_collection_files:
                     libraries_data[f"{lib_id}-collection_files"] = json.dumps(imported_collection_files, ensure_ascii=True)

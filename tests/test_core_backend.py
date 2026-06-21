@@ -1218,6 +1218,66 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
     assert show_entry["template_variables"]["item_sonarr_tag"] == ["watched", "tracked"]
 
 
+def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {"sho-library_shows-library": "Shows"},
+            {
+                "movies": {
+                    "mov-library_movies-collection_franchise": True,
+                    "mov-library_movies-template_collection_franchise_child_name_overrides": '{"10": "Skywalker Saga"}',
+                    "mov-library_movies-template_collection_franchise_child_sync_mode_overrides": '{"10": "append"}',
+                    "mov-library_movies-template_collection_franchise_child_radarr_tag_overrides": '{"10": "4k,franchise"}',
+                    "mov-library_movies-template_collection_franchise_child_radarr_add_missing_overrides": '{"10": "true"}',
+                }
+            },
+            {
+                "shows": {
+                    "sho-library_shows-collection_franchise": True,
+                    "sho-library_shows-template_collection_franchise_child_summary_overrides": '{"1399": "Dragons and dynasties"}',
+                    "sho-library_shows-template_collection_franchise_child_collection_order_overrides": '{"1399": "custom"}',
+                    "sho-library_shows-template_collection_franchise_child_sonarr_monitor_overrides": '{"1399": "future"}',
+                    "sho-library_shows-template_collection_franchise_child_item_sonarr_tag_overrides": '{"1399": "tracked,priority"}',
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    movie_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "franchise"),
+        None,
+    )
+    show_entry = next(
+        (entry for entry in libraries_section["libraries"]["Shows"]["collection_files"] if entry.get("default") == "franchise"),
+        None,
+    )
+
+    assert movie_entry is not None
+    assert show_entry is not None
+    assert movie_entry["template_variables"]["name_10"] == "Skywalker Saga"
+    assert movie_entry["template_variables"]["sync_mode_10"] == "append"
+    assert movie_entry["template_variables"]["radarr_tag_10"] == ["4k", "franchise"]
+    assert movie_entry["template_variables"]["radarr_add_missing_10"] is True
+    assert show_entry["template_variables"]["summary_1399"] == "Dragons and dynasties"
+    assert show_entry["template_variables"]["collection_order_1399"] == "custom"
+    assert show_entry["template_variables"]["sonarr_monitor_1399"] == "future"
+    assert show_entry["template_variables"]["item_sonarr_tag_1399"] == ["tracked", "priority"]
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 

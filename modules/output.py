@@ -38,6 +38,25 @@ LIBRARY_RADARR_FIELDS = {
     "radarr_path": "string",
     "plex_path": "string",
 }
+
+FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
+    "child_name_overrides": ("name_", "string"),
+    "child_summary_overrides": ("summary_", "string"),
+    "child_sort_title_overrides": ("sort_title_", "string"),
+    "child_sync_mode_overrides": ("sync_mode_", "select"),
+    "child_collection_order_overrides": ("collection_order_", "select"),
+    "child_url_poster_overrides": ("url_poster_", "string"),
+    "child_radarr_add_missing_overrides": ("radarr_add_missing_", "boolean"),
+    "child_radarr_folder_overrides": ("radarr_folder_", "string"),
+    "child_radarr_tag_overrides": ("radarr_tag_", "string_list"),
+    "child_item_radarr_tag_overrides": ("item_radarr_tag_", "string_list"),
+    "child_radarr_monitor_overrides": ("radarr_monitor_", "boolean"),
+    "child_sonarr_add_missing_overrides": ("sonarr_add_missing_", "boolean"),
+    "child_sonarr_folder_overrides": ("sonarr_folder_", "string"),
+    "child_sonarr_tag_overrides": ("sonarr_tag_", "string_list"),
+    "child_item_sonarr_tag_overrides": ("item_sonarr_tag_", "string_list"),
+    "child_sonarr_monitor_overrides": ("sonarr_monitor_", "select"),
+}
 LIBRARY_SONARR_FIELDS = {
     "url": "string",
     "token": "string",
@@ -438,10 +457,70 @@ def _normalize_collection_template_var_value(key, value):
     if key == "remove_suffix":
         list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
-    if key in {"radarr_tag", "sonarr_tag", "item_radarr_tag", "item_sonarr_tag"}:
+    if key in {"radarr_tag", "sonarr_tag", "item_radarr_tag", "item_sonarr_tag"} or key.startswith(
+        ("radarr_tag_", "sonarr_tag_", "item_radarr_tag_", "item_sonarr_tag_")
+    ):
         list_values = _parse_string_list(value)
         return list_values if list_values else None
     return value
+
+
+def _parse_template_mapping_dict(value):
+    if isinstance(value, dict):
+        return value
+    if value in (None, ""):
+        return {}
+
+    raw_text = str(value).strip()
+    if not raw_text:
+        return {}
+
+    try:
+        parsed = json.loads(raw_text)
+    except Exception:
+        try:
+            parsed = ast.literal_eval(raw_text)
+        except Exception:
+            return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _normalize_dynamic_child_override_value(value_kind, raw_value):
+    if raw_value in (None, ""):
+        return None
+
+    kind = str(value_kind or "string").strip().lower()
+    if kind == "string_list":
+        list_values = _parse_comma_string_list(raw_value)
+        return list_values if list_values else None
+    if kind == "boolean":
+        bool_value = _coerce_bool(raw_value)
+        return bool_value if bool_value is not None else raw_value
+    return raw_value
+
+
+def _expand_franchise_dynamic_child_overrides(template_vars):
+    if not isinstance(template_vars, dict):
+        return
+
+    for field_key, (child_prefix, value_kind) in FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS.items():
+        if field_key not in template_vars:
+            continue
+
+        raw_mapping = template_vars.pop(field_key, None)
+        mapping = _parse_template_mapping_dict(raw_mapping)
+        if not mapping:
+            continue
+
+        for raw_suffix, raw_value in mapping.items():
+            suffix = str(raw_suffix or "").strip()
+            if not suffix:
+                continue
+            normalized_value = _normalize_dynamic_child_override_value(value_kind, raw_value)
+            if normalized_value is None:
+                continue
+            template_vars[f"{child_prefix}{suffix}"] = normalized_value
 
 
 def _normalize_settings_section_value(key, value):
@@ -1651,6 +1730,8 @@ def build_libraries_section(
                         k: (True if isinstance(v, (bool, str)) and str(v).lower() == "true" else False if isinstance(v, (bool, str)) and str(v).lower() == "false" else v)
                         for k, v in all_children.items()
                     }
+                    if raw_id == "franchise":
+                        _expand_franchise_dynamic_child_overrides(template_vars)
                     # Normalize legacy Region key spelling so final YAML always uses
                     # the current Kometa key with a hyphen.
                     legacy_region_keys = {

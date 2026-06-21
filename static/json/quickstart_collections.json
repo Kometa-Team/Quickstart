@@ -23582,6 +23582,116 @@
             "default": 2
           },
           {
+            "key": "child_name_overrides",
+            "label": "Franchise Name Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom collection name. Quickstart exports these as <code>name_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "Custom collection name",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Franchise Summary Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom collection summary. Quickstart exports these as <code>summary_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "Custom collection summary",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_sort_title_overrides",
+            "label": "Franchise Sort Title Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom sort title. Quickstart exports these as <code>sort_title_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "Custom sort title",
+            "dynamic_child_prefix": "sort_title_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Franchise Sync Mode Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a sync mode override. Use <code>append</code> or <code>sync</code>. Quickstart exports these as <code>sync_mode_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "append or sync",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select"
+          },
+          {
+            "key": "child_collection_order_overrides",
+            "label": "Franchise Collection Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a collection order override. Quickstart exports these as <code>collection_order_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "release, alpha, custom, etc.",
+            "dynamic_child_prefix": "collection_order_",
+            "dynamic_child_value_kind": "select"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Franchise Poster URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom poster URL. Quickstart exports these as <code>url_poster_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_radarr_add_missing_overrides",
+            "label": "Franchise Radarr Add Missing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a Radarr add_missing override. Use <code>true</code> or <code>false</code>. Quickstart exports these as <code>radarr_add_missing_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_add_missing_",
+            "dynamic_child_value_kind": "boolean"
+          },
+          {
+            "key": "child_radarr_folder_overrides",
+            "label": "Franchise Radarr Folder Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a Radarr root folder override. Quickstart exports these as <code>radarr_folder_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "C:\\Media\\Movies",
+            "dynamic_child_prefix": "radarr_folder_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_radarr_tag_overrides",
+            "label": "Franchise Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to comma-separated Radarr tags. Quickstart exports these as <code>radarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "4k,franchise",
+            "dynamic_child_prefix": "radarr_tag_",
+            "dynamic_child_value_kind": "string_list"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Franchise Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to comma-separated item Radarr tags. Quickstart exports these as <code>item_radarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "collection,tracked",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list"
+          },
+          {
+            "key": "child_radarr_monitor_overrides",
+            "label": "Franchise Radarr Monitor Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a Radarr monitor override. Use <code>true</code> or <code>false</code>. Quickstart exports these as <code>radarr_monitor_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 10)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_monitor_",
+            "dynamic_child_value_kind": "boolean"
+          },
+          {
             "key": "radarr_add_missing",
             "label": "Add missing items to Radarr",
             "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
@@ -24111,6 +24221,116 @@
             "min": 1,
             "step": 1,
             "default": 2
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Franchise Name Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom collection name. Quickstart exports these as <code>name_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "Custom collection name",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Franchise Summary Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom collection summary. Quickstart exports these as <code>summary_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "Custom collection summary",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_sort_title_overrides",
+            "label": "Franchise Sort Title Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom sort title. Quickstart exports these as <code>sort_title_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "Custom sort title",
+            "dynamic_child_prefix": "sort_title_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Franchise Sync Mode Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a sync mode override. Use <code>append</code> or <code>sync</code>. Quickstart exports these as <code>sync_mode_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "append or sync",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select"
+          },
+          {
+            "key": "child_collection_order_overrides",
+            "label": "Franchise Collection Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a collection order override. Quickstart exports these as <code>collection_order_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "release, alpha, custom, etc.",
+            "dynamic_child_prefix": "collection_order_",
+            "dynamic_child_value_kind": "select"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Franchise Poster URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a custom poster URL. Quickstart exports these as <code>url_poster_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_sonarr_add_missing_overrides",
+            "label": "Franchise Sonarr Add Missing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a Sonarr add_missing override. Use <code>true</code> or <code>false</code>. Quickstart exports these as <code>sonarr_add_missing_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_add_missing_",
+            "dynamic_child_value_kind": "boolean"
+          },
+          {
+            "key": "child_sonarr_folder_overrides",
+            "label": "Franchise Sonarr Folder Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a Sonarr root folder override. Quickstart exports these as <code>sonarr_folder_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "C:\\Media\\Shows",
+            "dynamic_child_prefix": "sonarr_folder_",
+            "dynamic_child_value_kind": "string"
+          },
+          {
+            "key": "child_sonarr_tag_overrides",
+            "label": "Franchise Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to comma-separated Sonarr tags. Quickstart exports these as <code>sonarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "ongoing,tracked",
+            "dynamic_child_prefix": "sonarr_tag_",
+            "dynamic_child_value_kind": "string_list"
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Franchise Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to comma-separated item Sonarr tags. Quickstart exports these as <code>item_sonarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "watched,tracked",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list"
+          },
+          {
+            "key": "child_sonarr_monitor_overrides",
+            "label": "Franchise Sonarr Monitor Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a franchise child key to a Sonarr monitor override. Use <code>all</code>, <code>none</code>, <code>future</code>, <code>missing</code>, <code>existing</code>, <code>pilot</code>, <code>first</code>, or <code>latest</code>. Quickstart exports these as <code>sonarr_monitor_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Franchise key (e.g. 1399)",
+            "value_placeholder": "future, all, latest, etc.",
+            "dynamic_child_prefix": "sonarr_monitor_",
+            "dynamic_child_value_kind": "select"
           },
           {
             "key": "sonarr_add_missing",
