@@ -145,6 +145,51 @@ def test_settings_page_enables_auto_sort_hubs_with_plex_pass(client, monkeypatch
     assert 'value="configured.desc" selected' in html
 
 
+def test_validate_library_auto_sort_hubs_rejects_invalid_value(qs_module):
+    errors = qs_module._validate_library_auto_sort_hubs(
+        {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-top_level_auto_sort_hubs": "bogus",
+        },
+        ["mov-library_movies"],
+    )
+
+    assert errors == [
+        "Movies: auto_sort_hubs must be one of: alpha, alpha.desc, configured, configured.desc, random, sort_title, sort_title.desc"
+    ]
+
+
+def test_library_fragment_disables_auto_sort_hubs_without_plex_pass(client, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_library_lists",
+        lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": False}),
+    )
+    monkeypatch.setattr(qs_module, "_migrate_legacy_playlist_libraries_to_library_toggles", lambda *_args: set())
+    monkeypatch.setattr(qs_module, "_build_preview_image_data", lambda: {"movie": {}, "show": {}})
+
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "025-libraries":
+            return {"libraries": {"mov-library_movies-top_level_auto_sort_hubs": "alpha"}}
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/library_fragment/mov-library_movies")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    match = re.search(r'<select class="form-select" id="mov-library_movies-top_level_auto_sort_hubs"([^>]*)>', html)
+    assert match is not None
+    attrs = match.group(1)
+    assert 'disabled aria-disabled="true"' in attrs
+    assert 'name="mov-library_movies-top_level_auto_sort_hubs"' not in attrs
+    assert 'name="mov-library_movies-top_level_auto_sort_hubs" value="alpha"' in html
+    assert "Requires Plex Pass. Validate Plex first if this should be available." in html
+
+
 def test_validate_apprise_rejects_bad_url(client):
     resp = client.post("/validate_apprise", json={"apprise_location": "not-a-url"})
     assert resp.status_code == 400
@@ -3591,6 +3636,34 @@ def test_build_libraries_section_emits_schedule_overlays(app):
     assert list(movies.keys())[:2] == ["schedule_overlays", "template_variables"]
 
 
+def test_build_libraries_section_emits_auto_sort_hubs(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {"movies": {"mov-library_movies-top_level_auto_sort_hubs": "configured.desc"}},
+            {},
+        )
+
+    movies = libraries_section["libraries"]["Movies"]
+    assert movies["auto_sort_hubs"] == "configured.desc"
+    assert list(movies.keys())[:2] == ["auto_sort_hubs", "template_variables"]
+
+
 def test_build_libraries_section_keeps_default_ratings_overlay_when_overlay_files_exist(app):
     from modules import output
 
@@ -3849,6 +3922,7 @@ def test_reorder_library_section_keeps_settings_and_operations_before_library_fi
         {
             "report_path": "config/Movies_Report.yml",
             "schedule": "weekly(mon)",
+            "auto_sort_hubs": "configured.desc",
             "schedule_overlays": "weekly(wed)",
             "template_variables": {"sep_style": "gray"},
             "metadata_files": [{"folder": "config/example/metadata"}],
@@ -3863,6 +3937,7 @@ def test_reorder_library_section_keeps_settings_and_operations_before_library_fi
     assert list(reordered.keys()) == [
         "report_path",
         "schedule",
+        "auto_sort_hubs",
         "schedule_overlays",
         "template_variables",
         "settings",

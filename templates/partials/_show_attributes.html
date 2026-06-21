@@ -28,7 +28,9 @@
         preview_image=true,
         tooltip_variant=section.tooltip_variant,
         container_class=section.container_class,
-        yml_location=section.yml_location
+        yml_location=section.yml_location,
+        telemetry=telemetry,
+        requires_plex_pass=section.requires_plex_pass | default(false)
         ) }}
         {% endfor %}
       </div>
@@ -62,7 +64,9 @@
         section.options,
         tooltip_variant=section.tooltip_variant,
         container_class=section.container_class,
-        yml_location=section.yml_location
+        yml_location=section.yml_location,
+        telemetry=telemetry,
+        requires_plex_pass=section.requires_plex_pass | default(false)
         ) }}
         {% elif section.type == 'boolean_toggle' %}
         {{ macros.boolean_toggle_section(
@@ -210,7 +214,9 @@
         section.options,
         tooltip_variant=section.tooltip_variant,
         container_class=section.container_class,
-        yml_location=section.yml_location
+        yml_location=section.yml_location,
+        telemetry=telemetry,
+        requires_plex_pass=section.requires_plex_pass | default(false)
         ) }}
 
         {% elif section.type == 'text_input' and section.prefix == 'asset_directory' %}
@@ -277,7 +283,9 @@
               section.options,
               tooltip_variant=section.tooltip_variant,
               container_class=section.container_class,
-              yml_location=section.yml_location
+              yml_location=section.yml_location,
+              telemetry=telemetry,
+              requires_plex_pass=section.requires_plex_pass | default(false)
             ) }}
           {% elif section.type == 'text_input' and section.prefix == 'asset_directory' %}
             {{ macros.asset_directory_list_section(

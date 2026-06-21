@@ -285,7 +285,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 
 {% macro select_section(library, data, prefix, title, description, wiki, options,
 preview_image=False, tooltip_variant="info", container_class="border rounded p-3 mb-2",
-yml_location="attribute") %}
+yml_location="attribute", telemetry=None, requires_plex_pass=False) %}
 
 {# raw_prefix can contain brackets for name, but needs cleaning for id #}
 {% set raw_prefix =
@@ -296,6 +296,12 @@ prefix if yml_location == "top_level" else
 
 {% set field_id = (library.id ~ "-" ~ raw_prefix).replace("[", "_").replace("]", "") %}
 {% set field_name = library.id ~ "-" ~ raw_prefix %}
+{% set selected = data.libraries.get(field_name, '') %}
+{% set has_plex_pass = false %}
+{% if telemetry is mapping and telemetry.get("plex_pass") is sameas true %}
+{% set has_plex_pass = true %}
+{% endif %}
+{% set disable_for_plex_pass = requires_plex_pass and not has_plex_pass %}
 <div class="{{ container_class }}">
     <div class="row">
         <div class="col-md-6 mb-2">
@@ -308,14 +314,17 @@ prefix if yml_location == "top_level" else
                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                     </span>
                 </span>
-                <select class="form-select" id="{{ field_id }}" name="{{ field_name }}"
-                    aria-describedby="{{ field_id }}_text" {% if preview_image %}data-preview="true" {% endif %}>
-                    {% set selected = data.libraries.get(field_name, '') %}
+                <select class="form-select" id="{{ field_id }}" {% if not disable_for_plex_pass %}name="{{ field_name }}"{% endif %}
+                    aria-describedby="{{ field_id }}_text" {% if preview_image %}data-preview="true" {% endif %}{% if disable_for_plex_pass %} disabled aria-disabled="true"{% endif %}>
                     {% for value, label in options %}
                     <option value="{{ value }}" {% if selected==value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
+            {% if disable_for_plex_pass %}
+            <input type="hidden" name="{{ field_name }}" value="{{ selected }}">
+            <div class="form-text text-warning">Requires Plex Pass. Validate Plex first if this should be available.</div>
+            {% endif %}
         </div>
 
         {% if preview_image and prefix != "placeholder_imdb_id" %}

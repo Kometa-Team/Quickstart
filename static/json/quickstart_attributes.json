@@ -221,6 +221,56 @@
       "yml_location": "top_level"
     },
     {
+      "prefix": "top_level_auto_sort_hubs",
+      "type": "select",
+      "accordion": "miscellaneous",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Auto Sort Hubs",
+      "wiki": "https://kometa.wiki/en/nightly/config/settings/?h=auto_sort#auto-sort-hubs",
+      "description": "Override Plex Recommendation Hub sorting for this library. This requires Plex Pass. Leave blank to keep Plex or global Kometa behavior.",
+      "tooltip_variant": "info",
+      "container_class": "",
+      "yml_location": "top_level",
+      "requires_plex_pass": true,
+      "options": [
+        [
+          "",
+          "Disabled / Not Set"
+        ],
+        [
+          "sort_title",
+          "Sort Title Ascending"
+        ],
+        [
+          "sort_title.desc",
+          "Sort Title Descending"
+        ],
+        [
+          "alpha",
+          "Alphabetical Ascending"
+        ],
+        [
+          "alpha.desc",
+          "Alphabetical Descending"
+        ],
+        [
+          "configured",
+          "Configured Order Ascending"
+        ],
+        [
+          "configured.desc",
+          "Configured Order Descending"
+        ],
+        [
+          "random",
+          "Random"
+        ]
+      ]
+    },
+    {
       "prefix": "top_level_remove_overlays",
       "type": "boolean_toggle",
       "accordion": "overlays",

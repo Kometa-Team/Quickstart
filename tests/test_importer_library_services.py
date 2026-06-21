@@ -78,3 +78,15 @@ def test_prepare_import_payload_maps_library_schedule():
     libraries = payload["libraries"]["libraries"]
     assert libraries["mov-library_movies-top_level_schedule"] == "weekly(saturday)"
     assert any("libraries.Movies.schedule" in line for line in report.lines)
+
+
+def test_prepare_import_payload_maps_library_auto_sort_hubs():
+    payload, report = importer.prepare_import_payload(
+        {"libraries": {"Movies": {"auto_sort_hubs": "configured.desc"}}},
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-top_level_auto_sort_hubs"] == "configured.desc"
+    assert any("libraries.Movies.auto_sort_hubs" in line for line in report.lines)

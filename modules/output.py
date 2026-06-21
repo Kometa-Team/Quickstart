@@ -2668,12 +2668,14 @@ def build_libraries_section(
         remove_key = f"{library_type}-library_{lib_id}-top_level_remove_overlays"
         reset_key = f"{library_type}-library_{lib_id}-top_level_reset_overlays"
         schedule_key = f"{library_type}-library_{lib_id}-top_level_schedule"
+        auto_sort_hubs_key = f"{library_type}-library_{lib_id}-top_level_auto_sort_hubs"
         schedule_overlays_key = f"{library_type}-library_{lib_id}-top_level_schedule_overlays"
         report_path_key = f"{library_type}-library_{lib_id}-top_level_report_path"
 
         remove_overlays = top_group.get(remove_key)
         reset_overlays = top_group.get(reset_key)
         schedule = top_group.get(schedule_key)
+        auto_sort_hubs = top_group.get(auto_sort_hubs_key)
         schedule_overlays = top_group.get(schedule_overlays_key)
         report_path = top_group.get(report_path_key)
 
@@ -2681,6 +2683,8 @@ def build_libraries_section(
             entry["report_path"] = report_path
         if schedule not in [None, ""]:
             entry["schedule"] = schedule
+        if auto_sort_hubs not in [None, ""]:
+            entry["auto_sort_hubs"] = auto_sort_hubs
         if remove_overlays:
             entry["remove_overlays"] = True
         if reset_overlays not in [None, "None", ""]:
@@ -2692,6 +2696,7 @@ def build_libraries_section(
             helpers.ts_log(f"Top Level for {lib_id}: {top_group}", level="DEBUG")
             helpers.ts_log(f"{report_path_key} = {report_path}", level="DEBUG")
             helpers.ts_log(f"{schedule_key} = {schedule}", level="DEBUG")
+            helpers.ts_log(f"{auto_sort_hubs_key} = {auto_sort_hubs}", level="DEBUG")
             helpers.ts_log(f"{remove_key} = {remove_overlays}", level="DEBUG")
             helpers.ts_log(f"{reset_key} = {reset_overlays}", level="DEBUG")
             helpers.ts_log(f"{schedule_overlays_key} = {schedule_overlays}", level="DEBUG")
@@ -2746,6 +2751,7 @@ def reorder_library_section(library_data):
     Reorders library data so that:
     - `report_path` appears first.
     - `schedule` comes next.
+    - `auto_sort_hubs` comes after `schedule`.
     - `remove_overlays`, `reset_overlays`, and `schedule_overlays` come after that.
     - `template_variables` next.
     - `settings` appears before `radarr` / `sonarr` / `operations`.
@@ -2765,7 +2771,11 @@ def reorder_library_section(library_data):
     if "schedule" in library_data:
         reordered_data["schedule"] = library_data["schedule"]
 
-    # 3. Then remove/reset overlays
+    # 3. Then library-level hub sorting
+    if "auto_sort_hubs" in library_data:
+        reordered_data["auto_sort_hubs"] = library_data["auto_sort_hubs"]
+
+    # 4. Then remove/reset overlays
     if "remove_overlays" in library_data:
         reordered_data["remove_overlays"] = library_data["remove_overlays"]
     if "reset_overlays" in library_data:
@@ -2773,21 +2783,21 @@ def reorder_library_section(library_data):
     if "schedule_overlays" in library_data:
         reordered_data["schedule_overlays"] = library_data["schedule_overlays"]
 
-    # 4. Then template_variables
+    # 5. Then template_variables
     if "template_variables" in library_data:
         reordered_data["template_variables"] = library_data["template_variables"]
 
-    # 5. Then library settings
+    # 6. Then library settings
     if "settings" in library_data:
         reordered_data["settings"] = library_data["settings"]
 
-    # 6. Then per-library Arr overrides
+    # 7. Then per-library Arr overrides
     if "radarr" in library_data:
         reordered_data["radarr"] = library_data["radarr"]
     if "sonarr" in library_data:
         reordered_data["sonarr"] = library_data["sonarr"]
 
-    # 7. Reorder operations
+    # 8. Reorder operations
     operations_order = [
         "assets_for_all",
         "assets_for_all_collections",

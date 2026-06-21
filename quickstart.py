@@ -1567,6 +1567,22 @@ def _validate_library_overlay_files(libraries_data, selected_library_ids):
     return errors
 
 
+def _validate_library_auto_sort_hubs(libraries_data, selected_library_ids):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    errors = []
+    allowed_values = ", ".join(sorted(SETTINGS_AUTO_SORT_HUBS_VALUES))
+    for lib_id in selected_library_ids or []:
+        value = libraries_data.get(f"{lib_id}-top_level_auto_sort_hubs")
+        if _is_valid_auto_sort_hubs_value(value):
+            continue
+        library_name = libraries_data.get(f"{lib_id}-library") or lib_id
+        errors.append(f"{library_name}: auto_sort_hubs must be one of: {allowed_values}")
+
+    return errors
+
+
 def _validate_and_organize_library_file_request(kind, data, type_key, location_key):
     validator_info = LIBRARY_FILE_VALIDATORS.get(kind)
     if not validator_info:
@@ -7809,6 +7825,7 @@ def step(name):
             validation_errors += _validate_library_collection_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_metadata_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_overlay_files(incoming_libraries, selected_library_ids)
+            validation_errors += _validate_library_auto_sort_hubs(incoming_libraries, selected_library_ids)
             for lib_id in selected_library_ids:
                 override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
                 if not override_result.get("valid") and not override_result.get("skipped"):
@@ -8691,12 +8708,15 @@ def autosave_library(library_id):
         collection_errors = _validate_library_collection_files(incoming_libraries, selected_library_ids)
         metadata_errors = _validate_library_metadata_files(incoming_libraries, selected_library_ids)
         overlay_errors = _validate_library_overlay_files(incoming_libraries, selected_library_ids)
+        auto_sort_hubs_errors = _validate_library_auto_sort_hubs(incoming_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
         if metadata_errors:
             return jsonify({"success": False, "error": "Invalid metadata files.", "errors": metadata_errors}), 400
         if overlay_errors:
             return jsonify({"success": False, "error": "Invalid overlay files.", "errors": overlay_errors}), 400
+        if auto_sort_hubs_errors:
+            return jsonify({"success": False, "error": "Invalid library settings.", "errors": auto_sort_hubs_errors}), 400
         normalized_libraries, normalization_errors, changed = _normalize_library_file_entries_payload(
             incoming_libraries,
             config_name,
@@ -8969,6 +8989,7 @@ def copy_library_settings():
         source_collection_errors = _validate_library_collection_files(libraries_data, [source_prefix])
         source_metadata_errors = _validate_library_metadata_files(libraries_data, [source_prefix])
         source_overlay_errors = _validate_library_overlay_files(libraries_data, [source_prefix])
+        source_auto_sort_hubs_errors = _validate_library_auto_sort_hubs(libraries_data, [source_prefix])
         if source_errors:
             return (
                 jsonify(
@@ -9009,6 +9030,17 @@ def copy_library_settings():
                         "success": False,
                         "error": "Invalid overlay files found in source library: " + " ".join(source_overlay_errors),
                         "errors": source_overlay_errors,
+                    }
+                ),
+                400,
+            )
+        if source_auto_sort_hubs_errors:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Invalid library settings found in source library: " + " ".join(source_auto_sort_hubs_errors),
+                        "errors": source_auto_sort_hubs_errors,
                     }
                 ),
                 400,
@@ -10396,6 +10428,7 @@ def validate_all_services():
             collection_file_errors = _validate_library_collection_files(libraries_data, selected_library_ids)
             metadata_file_errors = _validate_library_metadata_files(libraries_data, selected_library_ids)
             overlay_file_errors = _validate_library_overlay_files(libraries_data, selected_library_ids)
+            auto_sort_hubs_errors = _validate_library_auto_sort_hubs(libraries_data, selected_library_ids)
             arr_override_errors = []
             if path_errors:
                 libraries_reason = "invalid_paths"
@@ -10405,6 +10438,8 @@ def validate_all_services():
                 libraries_reason = "invalid_overlay_files"
             elif metadata_file_errors:
                 libraries_reason = "invalid_metadata_files"
+            elif auto_sort_hubs_errors:
+                libraries_reason = "invalid_library_settings"
             else:
 
                 def has_minimal_library_yaml_selection(lib_id):
@@ -10468,7 +10503,12 @@ def validate_all_services():
                 "libraries",
                 libraries_reason is None,
                 reason=libraries_reason,
-                details=(missing_placeholders if libraries_reason == "missing_placeholder_imdb" else arr_override_errors if libraries_reason == "invalid_arr_overrides" else None),
+                details=(
+                    missing_placeholders if libraries_reason == "missing_placeholder_imdb"
+                    else arr_override_errors if libraries_reason == "invalid_arr_overrides"
+                    else auto_sort_hubs_errors if libraries_reason == "invalid_library_settings"
+                    else None
+                ),
             )
 
     # Bulk validation for settings
