@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 
@@ -66,6 +68,81 @@ def test_step_rejects_invalid_path_payload(client, isolated_config_dir):
     assert data is None
     assert validated is False
     assert user_entered is False
+
+
+def test_step_rejects_invalid_auto_sort_hubs_payload(client, isolated_config_dir):
+    from modules import database
+
+    config_name = "pytest_invalid_auto_sort_hubs"
+    step_name = "150-settings"
+
+    resp = client.post(
+        f"/step/{step_name}",
+        data={"configSelector": config_name, "auto_sort_hubs": "bogus"},
+        headers={"Referer": f"http://localhost/step/{step_name}"},
+    )
+    assert resp.status_code == 200
+    assert b"auto_sort_hubs must be one of" in resp.data
+
+    validated, user_entered, data = database.retrieve_section_data(config_name, "settings")
+    assert data is None
+    assert validated is False
+    assert user_entered is False
+
+
+def test_settings_page_disables_auto_sort_hubs_without_plex_pass(client, monkeypatch, qs_module):
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        data = original_retrieve_settings(target)
+        if target == "150-settings":
+            data.setdefault("settings", {})["auto_sort_hubs"] = "alpha"
+        elif target == "010-plex":
+            data.setdefault("plex", {})["telemetry"] = {"plex_pass": False}
+        elif target == "plex_telemetry":
+            data["plex_telemetry"] = {"plex_pass": False}
+        return data
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/step/150-settings")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    match = re.search(r'<select class="form-select" id="auto_sort_hubs"([^>]*)>', html)
+    assert match is not None
+    attrs = match.group(1)
+    assert 'disabled aria-disabled="true"' in attrs
+    assert 'name="auto_sort_hubs"' not in attrs
+    assert 'name="auto_sort_hubs" value="alpha"' in html
+    assert "Requires Plex Pass. Validate Plex first if this should be available." in html
+
+
+def test_settings_page_enables_auto_sort_hubs_with_plex_pass(client, monkeypatch, qs_module):
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        data = original_retrieve_settings(target)
+        if target == "150-settings":
+            data.setdefault("settings", {})["auto_sort_hubs"] = "configured.desc"
+        elif target == "010-plex":
+            data.setdefault("plex", {})["telemetry"] = {"plex_pass": True}
+        elif target == "plex_telemetry":
+            data["plex_telemetry"] = {"plex_pass": True}
+        return data
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/step/150-settings")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    match = re.search(r'<select class="form-select" id="auto_sort_hubs"([^>]*)>', html)
+    assert match is not None
+    attrs = match.group(1)
+    assert 'name="auto_sort_hubs"' in attrs
+    assert "disabled" not in attrs
+    assert 'value="configured.desc" selected' in html
 
 
 def test_validate_apprise_rejects_bad_url(client):

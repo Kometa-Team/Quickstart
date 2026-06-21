@@ -184,6 +184,15 @@ VALIDATION_REASON_LABELS = {
     "account_locked": "Account locked",
     "validation_error": "Validation error",
 }
+SETTINGS_AUTO_SORT_HUBS_VALUES = {
+    "sort_title",
+    "sort_title.desc",
+    "alpha",
+    "alpha.desc",
+    "configured",
+    "configured.desc",
+    "random",
+}
 
 
 def _copy_background_job(job):
@@ -509,6 +518,18 @@ QS_FINAL_VALIDATION_TTL_HOURS = 12
 
 def utc_now_iso():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _normalize_auto_sort_hubs_value(value):
+    text = str(value or "").strip()
+    return text or None
+
+
+def _is_valid_auto_sort_hubs_value(value):
+    normalized = _normalize_auto_sort_hubs_value(value)
+    if normalized is None:
+        return True
+    return normalized in SETTINGS_AUTO_SORT_HUBS_VALUES
 
 
 def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
@@ -7800,6 +7821,8 @@ def step(name):
                 )
                 if normalization_errors:
                     validation_errors += normalization_errors
+        elif save_source_name == "settings" and not _is_valid_auto_sort_hubs_value(request.form.get("auto_sort_hubs")):
+            validation_errors.append("auto_sort_hubs must be one of: sort_title, sort_title.desc, alpha, alpha.desc, configured, configured.desc, random")
         if validation_errors:
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
@@ -10484,6 +10507,9 @@ def validate_all_services():
         ignore_imdb_ids_values = _parse_optional_id_list(settings_section.get("ignore_imdb_ids"))
         if any(not re.match(r"^tt\d{7,8}$", item, re.IGNORECASE) for item in ignore_imdb_ids_values):
             invalid_fields.append("ignore_imdb_ids")
+
+        if not _is_valid_auto_sort_hubs_value(settings_section.get("auto_sort_hubs")):
+            invalid_fields.append("auto_sort_hubs")
 
         check_regex("custom_repo", r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$", flags=re.IGNORECASE, allow_blank=True)
 

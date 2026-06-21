@@ -2,6 +2,7 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
 <input type="hidden" id="qs-validate-tmdb" value="{{ 'true' if service_validations.tmdb else 'false' }}">
+{% set has_plex_pass = page_info.telemetry.plex_pass is sameas true %}
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
 </div>
 <div class="form-floating mb-2">
@@ -616,6 +617,41 @@
       </h2>
       <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
         <div class="accordion-body">
+          {% set auto_sort_hubs_value = data['settings'].get('auto_sort_hubs', '') %}
+          <div class="row mb-2">
+            <div class="col-md-12">
+              <div class="input-group">
+                <span class="input-group-text" style="width: 170px; justify-content: space-between;">
+                  Auto Sort Hubs
+                  <i class="bi bi-info-circle-fill text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="Automatically sorts Plex hubs on supported libraries.<br><br><b>Accepted Values:</b><br> - <code>sort_title</code><br> - <code>sort_title.desc</code><br> - <code>alpha</code><br> - <code>alpha.desc</code><br> - <code>configured</code><br> - <code>configured.desc</code><br> - <code>random</code><br><br><b>Requirement:</b> Plex Pass is required.">
+                  </i>
+                </span>
+
+                <select class="form-select" id="auto_sort_hubs" {% if has_plex_pass %}name="auto_sort_hubs"{% endif %}
+                  {% if not has_plex_pass %}disabled aria-disabled="true"{% endif %}>
+                  <option value="" {% if not auto_sort_hubs_value %}selected{% endif %}>Disabled / Not Set</option>
+                  <option value="sort_title" {% if auto_sort_hubs_value == 'sort_title' %}selected{% endif %}>Sort Title Ascending</option>
+                  <option value="sort_title.desc" {% if auto_sort_hubs_value == 'sort_title.desc' %}selected{% endif %}>Sort Title Descending</option>
+                  <option value="alpha" {% if auto_sort_hubs_value == 'alpha' %}selected{% endif %}>Alphabetical Ascending</option>
+                  <option value="alpha.desc" {% if auto_sort_hubs_value == 'alpha.desc' %}selected{% endif %}>Alphabetical Descending</option>
+                  <option value="configured" {% if auto_sort_hubs_value == 'configured' %}selected{% endif %}>Configured Order Ascending</option>
+                  <option value="configured.desc" {% if auto_sort_hubs_value == 'configured.desc' %}selected{% endif %}>Configured Order Descending</option>
+                  <option value="random" {% if auto_sort_hubs_value == 'random' %}selected{% endif %}>Random</option>
+                </select>
+                {% if not has_plex_pass %}
+                <input type="hidden" name="auto_sort_hubs" value="{{ auto_sort_hubs_value }}">
+                {% endif %}
+                <a href="https://kometa.wiki/en/nightly/config/settings/?h=auto_sort#auto-sort-hubs" target="_blank"
+                  class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Open Kometa auto_sort_hubs documentation">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+              </div>
+              {% if not has_plex_pass %}
+              <div class="form-text text-warning">Requires Plex Pass. Validate Plex first if this should be available.</div>
+              {% endif %}
+            </div>
+          </div>
 
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="missing_only_released" name="missing_only_released"
