@@ -452,11 +452,7 @@ def _build_collection_index(collection_config: list[dict]) -> tuple[dict[str, di
                     existing_templates = existing.get("template_variables")
                     new_templates = collection.get("template_variables")
                     if isinstance(existing_templates, list) and isinstance(new_templates, list):
-                        seen_keys = {
-                            str(item.get("key"))
-                            for item in existing_templates
-                            if isinstance(item, dict) and item.get("key")
-                        }
+                        seen_keys = {str(item.get("key")) for item in existing_templates if isinstance(item, dict) and item.get("key")}
                         for item in new_templates:
                             if not isinstance(item, dict):
                                 continue
@@ -1436,11 +1432,7 @@ def prepare_import_payload(
                                 )
                             else:
                                 matched_dynamic_child = next(
-                                    (
-                                        spec
-                                        for spec in dynamic_child_fields
-                                        if key.startswith(spec["child_prefix"]) and key != spec["child_prefix"]
-                                    ),
+                                    (spec for spec in dynamic_child_fields if key.startswith(spec["child_prefix"]) and key != spec["child_prefix"]),
                                     None,
                                 )
                                 if matched_dynamic_child:

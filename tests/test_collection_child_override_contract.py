@@ -135,11 +135,7 @@ def test_franchise_uses_generic_dynamic_child_override_surface():
 
     for media_types, expected_fields in expected_by_media.items():
         collection = _find_collection("collection_franchise", media_types)
-        fields = {
-            item["key"]: item
-            for item in collection.get("template_variables", [])
-            if isinstance(item, dict) and item.get("key")
-        }
+        fields = {item["key"]: item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key")}
 
         for field_key, (child_prefix, value_kind) in expected_fields.items():
             assert field_key in fields

@@ -669,10 +669,7 @@ def test_extract_importer_findings_from_data_maps_collection_template_var_miss_t
     findings = module.extract_importer_findings_from_data(data, Path("sample.yml"))
 
     assert any(
-        row["kind"] == "collection"
-        and row["default"] == "streaming"
-        and row["key"] == "not_a_real_qs_key"
-        and row["reason_class"] == "missing_template_variable_support"
+        row["kind"] == "collection" and row["default"] == "streaming" and row["key"] == "not_a_real_qs_key" and row["reason_class"] == "missing_template_variable_support"
         for row in findings
     )
 
@@ -688,12 +685,7 @@ def test_extract_importer_findings_from_data_captures_unsupported_top_level_sect
 
     findings = module.extract_importer_findings_from_data(data, Path("sample.yml"))
 
-    assert any(
-        row["kind"] == "section"
-        and row["key"] == "bogus_section"
-        and row["reason_class"] == "unsupported_section"
-        for row in findings
-    )
+    assert any(row["kind"] == "section" and row["key"] == "bogus_section" and row["reason_class"] == "unsupported_section" for row in findings)
 
 
 def test_serialize_importer_ranked_summary_groups_by_status_key_and_reason():

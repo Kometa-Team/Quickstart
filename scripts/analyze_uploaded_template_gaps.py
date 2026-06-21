@@ -1790,9 +1790,7 @@ def prefilter_yaml_files(
         if encoding_used not in {"utf-8", "utf-8-sig"}:
             stats["decode_fallbacks"] += 1
         contains_relevant_yaml = (
-            "template_variables" in raw_text
-            or looks_like_kometa_config_text(raw_text)
-            or any(f"{marker}:" in raw_text for marker in EXTERNAL_TOP_LEVEL_MARKERS)
+            "template_variables" in raw_text or looks_like_kometa_config_text(raw_text) or any(f"{marker}:" in raw_text for marker in EXTERNAL_TOP_LEVEL_MARKERS)
         )
         if not contains_relevant_yaml:
             if is_probable_non_config_artifact(path):
@@ -2217,9 +2215,7 @@ def serialize_ranked_summary(summary: dict[tuple[str, str | None, str], dict[str
     return serializable_ranked
 
 
-def serialize_importer_ranked_summary(
-    summary: dict[tuple[str, str | None, str, str, str], dict[str, Any]]
-) -> list[dict[str, Any]]:
+def serialize_importer_ranked_summary(summary: dict[tuple[str, str | None, str, str, str], dict[str, Any]]) -> list[dict[str, Any]]:
     ranked = sorted(
         summary.values(),
         key=lambda item: (
@@ -2901,8 +2897,7 @@ def main() -> None:
                 flush=True,
             )
             print(
-                f"[progress][prefilter] selected {len(candidate_files)} candidate YAML files for later yaml-type classification "
-                f"(focus: {args.yaml_type})",
+                f"[progress][prefilter] selected {len(candidate_files)} candidate YAML files for later yaml-type classification " f"(focus: {args.yaml_type})",
                 file=sys.stderr,
                 flush=True,
             )
