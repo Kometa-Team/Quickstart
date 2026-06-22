@@ -5,6 +5,10 @@ on:
     branches: [ develop ]
     types: [ closed ]
 
+concurrency:
+  group: increment-build-develop
+  cancel-in-progress: false
+
 jobs:
 
   verify-changes:
