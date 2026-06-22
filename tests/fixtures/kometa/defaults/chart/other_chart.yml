@@ -1,0 +1,65 @@
+##############################################################################
+#                          Other Charts Collections                          #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/chart/other              #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+
+templates:
+  commonsense:
+    mdblist_list: https://mdblist.com/lists/k0meta/cssfamilies<<library_type>>s
+  metacritic:
+    mdblist_list: https://mdblist.com/lists/k0meta/metacriticmustsee<<library_type>>s
+
+collections:
+  Common Sense Selection:
+    variables:
+      style: color
+      key: commonsense
+    template:
+      - name: commonsense
+      - name: shared
+        translation_key: commonsense_selection
+      - name: arr
+      - name: custom
+
+  StevenLu's Popular Movies:
+    variables:
+      style: color
+      key: stevenlu
+    stevenlu_popular: true
+    template:
+      - name: shared
+        allowed_libraries: movie
+        translation_key:  stevenlu_popular
+      - name: arr
+      - name: custom
+
+  Top 10 Pirated Movies of the Week:
+    variables:
+      style: color
+      key: pirated
+    mdblist_list: https://mdblist.com/lists/k0meta/top-ten-pirated-movies-of-the-week-torrent-freakcom
+    template:
+      - name: shared
+        allowed_libraries: movie
+        translation_key: pirated_popular
+      - name: arr
+      - name: custom
+
+  Metacritic Must See:
+    variables:
+      style: color
+      key: metacritic
+    template:
+      - name: metacritic
+      - name: shared
+        translation_key: metacritic_must_see
+      - name: arr
+      - name: custom

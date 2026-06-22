@@ -1,0 +1,39 @@
+##############################################################################
+#                          Basic Charts Collections                          #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/chart/basic              #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "010"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+
+collections:
+  Newly Released:
+    variables:
+      style: color
+      key: released
+    template:
+      - name: smart_filter
+        search_term: release
+        search_value: <<in_the_last_released>>
+        in_the_last_released: 90
+      - name: shared
+        translation_key: basic_released
+
+  New Episodes:
+    variables:
+      style: color
+      key: episodes
+    template:
+      - name: smart_filter
+        search_term: episode_air_date
+        search_value: <<in_the_last_episodes>>
+        in_the_last_episodes: 7
+        type: episodes
+      - name: shared
+        allowed_libraries: show
+        translation_key: basic_episodes

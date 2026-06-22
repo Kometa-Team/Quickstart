@@ -5,13 +5,25 @@ import jsonschema
 from ruamel.yaml import YAML
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXTURES_ROOT = ROOT / "tests" / "fixtures"
+
+# `config/.schema` and `config/kometa/defaults` are gitignored local caches that the app
+# populates at runtime (schema downloads, a real Kometa install). On a fresh checkout
+# neither exists, so fall back to the checked-in fixtures to keep this test reproducible.
 SCHEMA_PATH = ROOT / "config" / ".schema" / "collection-schema.json"
+if not SCHEMA_PATH.exists():
+    SCHEMA_PATH = FIXTURES_ROOT / "schema" / "collection-schema.json"
+
+_DEFAULTS_BASE = ROOT / "config" / "kometa" / "defaults"
+if not _DEFAULTS_BASE.exists():
+    _DEFAULTS_BASE = FIXTURES_ROOT / "kometa" / "defaults"
+
 DEFAULTS_ROOTS = [
-    ROOT / "config" / "kometa" / "defaults" / "award",
-    ROOT / "config" / "kometa" / "defaults" / "both",
-    ROOT / "config" / "kometa" / "defaults" / "chart",
-    ROOT / "config" / "kometa" / "defaults" / "movie",
-    ROOT / "config" / "kometa" / "defaults" / "show",
+    _DEFAULTS_BASE / "award",
+    _DEFAULTS_BASE / "both",
+    _DEFAULTS_BASE / "chart",
+    _DEFAULTS_BASE / "movie",
+    _DEFAULTS_BASE / "show",
 ]
 
 

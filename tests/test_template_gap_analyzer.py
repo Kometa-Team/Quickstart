@@ -15,6 +15,16 @@ def _load_gap_analyzer_module():
     return module
 
 
+def _kometa_defaults_root() -> Path:
+    root = Path(__file__).resolve().parents[1]
+    real = root / "config" / "kometa" / "defaults"
+    # `config/kometa/defaults` is a gitignored local cache populated by a real Kometa
+    # install. On a fresh checkout it won't exist, so fall back to the checked-in fixtures.
+    if real.exists():
+        return real
+    return root / "tests" / "fixtures" / "kometa" / "defaults"
+
+
 def test_build_qs_overlay_map_merges_duplicate_overlay_aliases(tmp_path):
     module = _load_gap_analyzer_module()
     qs_overlays = tmp_path / "quickstart_overlays.json"
@@ -376,9 +386,9 @@ def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_fi
 
 def test_key_is_valid_for_default_understands_dynamic_data_limit_from_repo_defaults():
     module = _load_gap_analyzer_module()
-    root = Path(__file__).resolve().parents[1]
-    actor_default = root / "config" / "kometa" / "defaults" / "both" / "actor.yml"
-    writer_default = root / "config" / "kometa" / "defaults" / "movie" / "writer.yml"
+    kometa_defaults = _kometa_defaults_root()
+    actor_default = kometa_defaults / "both" / "actor.yml"
+    writer_default = kometa_defaults / "movie" / "writer.yml"
 
     actor_valid, actor_matches = module.key_is_valid_for_default("data_limit", [actor_default])
     writer_valid, writer_matches = module.key_is_valid_for_default("data_limit", [writer_default])
@@ -391,9 +401,9 @@ def test_key_is_valid_for_default_understands_dynamic_data_limit_from_repo_defau
 
 def test_key_is_valid_for_default_does_not_infer_data_limit_for_studio_or_network_repo_defaults():
     module = _load_gap_analyzer_module()
-    root = Path(__file__).resolve().parents[1]
-    studio_default = root / "config" / "kometa" / "defaults" / "both" / "studio.yml"
-    network_default = root / "config" / "kometa" / "defaults" / "show" / "network.yml"
+    kometa_defaults = _kometa_defaults_root()
+    studio_default = kometa_defaults / "both" / "studio.yml"
+    network_default = kometa_defaults / "show" / "network.yml"
 
     studio_valid, studio_matches = module.key_is_valid_for_default("data_limit", [studio_default])
     network_valid, network_matches = module.key_is_valid_for_default("data_limit", [network_default])
@@ -406,17 +416,18 @@ def test_key_is_valid_for_default_does_not_infer_data_limit_for_studio_or_networ
 
 def test_key_is_valid_for_default_uses_repo_yaml_for_streaming_and_letterboxd_cases():
     module = _load_gap_analyzer_module()
-    root = Path(__file__).resolve().parents[1]
-    kometa_defaults = root / "config" / "kometa" / "defaults"
+    kometa_defaults = _kometa_defaults_root()
     streaming_defaults = module.resolve_default_paths("streaming", "collection", kometa_defaults)
     letterboxd_defaults = module.resolve_default_paths("letterboxd", "collection", kometa_defaults)
 
     streaming_valid, _streaming_matches = module.key_is_valid_for_default("discover_limit", streaming_defaults)
+    # "Letterboxd Top 500" has no use_top_500 toggle in the real default (unlike the
+    # neighboring "IMDb Top 250" entry, which does define use_imdb_top_250).
     letterboxd_valid, _letterboxd_matches = module.key_is_valid_for_default("use_top_500", letterboxd_defaults)
     imdb_top_250_valid, _imdb_top_250_matches = module.key_is_valid_for_default("use_imdb_top_250", letterboxd_defaults)
 
     assert streaming_valid is True
-    assert letterboxd_valid is True
+    assert letterboxd_valid is False
     assert imdb_top_250_valid is True
 
 
@@ -960,8 +971,7 @@ def test_read_text_with_fallbacks_accepts_cp1252_file(tmp_path):
 
 def test_key_is_valid_for_default_only_uses_referenced_template_chain():
     module = _load_gap_analyzer_module()
-    root = Path(__file__).resolve().parents[1]
-    kometa_defaults = root / "config" / "kometa" / "defaults"
+    kometa_defaults = _kometa_defaults_root()
 
     based_defaults = module.resolve_default_paths("based", "collection", kometa_defaults)
     genre_defaults = module.resolve_default_paths("genre", "collection", kometa_defaults)
@@ -970,7 +980,7 @@ def test_key_is_valid_for_default_only_uses_referenced_template_chain():
     seasonal_defaults = module.resolve_default_paths("seasonal", "collection", kometa_defaults)
     collectionless_defaults = module.resolve_default_paths("collectionless", "collection", kometa_defaults)
     movie_franchise_defaults = module.resolve_default_paths("franchise", "collection", kometa_defaults)
-    show_franchise_default = [root / "config" / "kometa" / "defaults" / "show" / "franchise.yml"]
+    show_franchise_default = [kometa_defaults / "show" / "franchise.yml"]
 
     assert module.key_is_valid_for_default("collection_order", based_defaults)[0] is False
     assert module.key_is_valid_for_default("collection_order", genre_defaults)[0] is False

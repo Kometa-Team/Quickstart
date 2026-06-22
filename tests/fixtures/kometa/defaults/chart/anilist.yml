@@ -1,0 +1,77 @@
+##############################################################################
+#                         AniList Charts Collections                         #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#           https://kometa.wiki/en/latest/defaults/chart/anilist             #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+
+templates:
+  anilist:
+    default:
+      style: color
+      limit: 100
+      limit_<<key>>: <<limit>>
+      chart: <<key>>
+    anilist_<<chart>>: <<limit_<<key>>>>
+
+  season:
+    default:
+      limit: 100
+      limit_season: <<limit>>
+    anilist_search:
+      season: current
+      year:
+      sort_by: popular
+      limit: <<limit_season>>
+
+collections:
+  AniList Popular:
+    variables:
+      style: color
+      key: popular
+    template:
+      - name: anilist
+      - name: shared
+        translation_key: anilist_popular
+      - name: arr
+      - name: custom
+
+  AniList Top Rated:
+    variables:
+      style: color
+      key: top
+    template:
+      - name: anilist
+        chart: top_rated
+      - name: shared
+        translation_key: anilist_top_rated
+      - name: arr
+      - name: custom
+
+  AniList Trending:
+    variables:
+      style: color
+      key: trending
+    template:
+      - name: anilist
+      - name: shared
+        translation_key: anilist_trending
+      - name: arr
+      - name: custom
+
+  AniList Season:
+    variables:
+      style: color
+      key: season
+    template:
+      - name: season
+      - name: shared
+        translation_key: anilist_season
+      - name: arr
+      - name: custom

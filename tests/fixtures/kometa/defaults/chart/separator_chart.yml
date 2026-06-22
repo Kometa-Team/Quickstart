@@ -1,0 +1,19 @@
+##############################################################################
+#                        Chart Separator Collections                         #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#        https://kometa.wiki/en/latest/defaults/award/separator_chart        #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+
+collections:
+  Chart Collections:
+    template:
+      - name: separator
+        separator: chart
+        key_name: Chart
+        translation_key: separator

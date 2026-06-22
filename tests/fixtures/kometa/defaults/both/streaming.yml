@@ -1,0 +1,196 @@
+##############################################################################
+#                           Streaming Collections                            #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#           https://kometa.wiki/en/latest/defaults/both/streaming            #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "030"
+
+templates:
+  streaming:
+    optional:
+      - use_<<key>>
+      - use_<<tmdb_key>>
+      - allowed_libraries
+      - originals_only
+      - delete_collections_named
+    conditionals:
+
+      discover_sort:
+        conditions:
+          - originals_only: false
+            library_type: movie
+            value: popularity.desc
+          - originals_only: false
+            library_type: show
+            value: popularity.desc
+      originals:
+        conditions:
+          - originals_only: true
+            value: originals
+      discover_region:
+        conditions:
+          - originals_only: false
+            value: <<region>>
+      final_tmdb_key:
+        default: <<tmdb_key>>
+        conditions:
+          - region: [CA, AU, NL, ES]
+            tmdb_key: [9]
+            value: 119
+
+      discover_with:
+        conditions:
+          - originals_only: false
+            value: <<final_tmdb_key>>
+      discover_limit:
+        conditions:
+          - originals_only: false
+            value: 0
+      allowed_streaming:
+        conditions:
+          - originals_only: true
+            tmdb_key: [103, 1759, 41, 2300, 230, 283, 510, 39, 37, 188]
+            value: False
+          - region.not: GB
+            tmdb_key: [103, 41, 2300, 39]
+            value: False
+          - region.not: ES
+            tmdb_key: [149, 339, 2241, 62, 2162, 63]
+            value: False
+          - region.not: CA
+            tmdb_key: [230]
+            value: False
+          - region: CA
+            tmdb_key: [1899, 37]
+            value: False
+      final_use:
+        conditions:
+          - use_<<key>>.exists: true
+            value: <<use_<<key>>>>
+          - use_all: false
+            value: false
+    default:
+      region: "US"
+      limit: "500"
+      sync_mode: sync
+      sync_mode_<<key>>: <<sync_mode>>
+      discover_with_<<key>>: <<discover_with>>
+      sort_by: release.desc
+      sort_by_<<key>>: <<sort_by>>
+      delete_collections_named_<<key>>: <<delete_collections_named>>
+    run_definition:
+      - <<final_use>>
+      - <<use_<<tmdb_key>>>>
+      - <<allowed_libraries>>
+      - <<allowed_streaming>>
+    cache_builders: 1
+    smart_label: <<sort_by_<<key>>>>
+    sync_mode: <<sync_mode_<<key>>>>
+    mdblist_list: https://mdblist.com/lists/k0meta/<<key>>-<<originals>>
+    delete_collections_named: <<delete_collections_named_<<key>>>>
+    limit: <<limit>>
+    tmdb_discover:
+      limit: <<discover_limit>>
+      with_watch_providers: <<discover_with_<<key>>>>
+      watch_region: <<discover_region>>
+      sort_by: <<discover_sort>>
+
+collections:
+  Streaming Collections:
+    template:
+      - name: separator
+        separator: streaming
+        key_name: Streaming
+        translation_key: separator
+
+dynamic_collections:
+  Streaming:
+    type: custom
+    data:
+      channel4: Channel 4
+      appletv: Apple TV
+      bet: BET+
+      crave: Crave
+      crunchyroll: Crunchyroll
+      discovery: discovery+
+      disney: Disney+
+      itvx: ITVX
+      hbomax: HBO Max
+      hayu: hayu
+      hulu: Hulu
+      movistar: Movistar Plus+
+      atresplayer: Atres Player
+      netflix: Netflix
+      now: NOW
+      paramount: Paramount+
+      peacock: Peacock
+      amazon: Prime Video
+      amc: AMC+
+      filmin: Filmin
+      youtube: YouTube
+      tubi: tubi
+    title_format: <<key_name>> <<library_typeU>>s
+    template:
+      - streaming
+      - shared
+      - arr
+    template_variables:
+      image:
+        default: streaming/<<style>>/<<key_name_encoded>>
+      tmdb_key:
+        channel4: 103
+        appletv: 350
+        bet: 1759
+        crave: 230
+        crunchyroll: 283
+        discovery: 510
+        disney: 337
+        hbomax: 1899
+        hayu: 223
+        hulu: 15
+        itvx: 41|2300
+        movistar: 149|339|2241
+        netflix: 8
+        now: 39
+        paramount: 531|1770
+        peacock: 387
+        amazon: 9
+        amc: 528|1854
+        filmin: 63
+        showtime: 37
+        youtube: 188
+        tubi: 73
+        atresplayer: 62|2162
+      originals_only:
+        default: false
+      allowed_libraries:
+        hayu: show
+        discovery: show
+        crunchyroll: show
+      translation_key:
+        default: streaming
+      dynamic:
+        default: true
+      style:
+        default: color
+      delete_collections_named:
+        channel4:
+          - All 4 Movies
+          - All 4 Shows
+        paramount:
+          - Showtime Movies
+          - Showtime Shows
+        itvx:
+          - BritBox Movies
+          - BritBox Shows
+        hbomax:
+          - Max Movies
+          - Max Shows
+        appletv:
+          - Apple TV+ Movies
+          - Apple TV+ Shows

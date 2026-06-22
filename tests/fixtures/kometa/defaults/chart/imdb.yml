@@ -1,0 +1,53 @@
+##############################################################################
+#                          IMDb Charts Collections                           #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#             https://kometa.wiki/en/latest/defaults/chart/imdb              #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+
+templates:
+  imdb_chart:
+    imdb_chart: <<chart>>_<<library_type>>s
+
+collections:
+  IMDb Popular:
+    variables:
+      style: color
+      key: popular
+    template:
+      - name: imdb_chart
+        chart: popular
+      - name: shared
+        translation_key: imdb_popular
+      - name: arr
+      - name: custom
+
+  IMDb Top 250:
+    variables:
+      style: color
+      key: top
+    template:
+      - name: imdb_chart
+        chart: top
+      - name: shared
+        translation_key: imdb_top
+      - name: arr
+      - name: custom
+
+  IMDb Lowest Rated:
+    variables:
+      style: color
+      key: lowest
+    imdb_chart: lowest_rated
+    template:
+      - name: shared
+        allowed_libraries: movie
+        translation_key: imdb_lowest
+      - name: arr
+      - name: custom

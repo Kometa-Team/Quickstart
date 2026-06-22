@@ -1,0 +1,48 @@
+##############################################################################
+#                        Tautulli Charts Collections                         #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#           https://kometa.wiki/en/latest/defaults/chart/tautulli            #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+
+templates:
+  tautulli:
+    default:
+      list_days: 30
+      list_size: 20
+      list_days_<<key>>: <<list_days>>
+      list_size_<<key>>: <<list_size>>
+    tautulli_<<type>>:
+      list_days: <<list_days_<<key>>>>
+      list_size: <<list_size_<<key>>>>
+
+collections:
+  Plex Popular:
+    variables:
+      style: color
+      key: popular
+    template:
+      - name: tautulli
+        type: popular
+      - name: shared
+        translation_key: tautulli_popular
+      - name: custom
+        cache_builders: 0
+
+  Plex Watched:
+    variables:
+      style: color
+      key: watched
+    template:
+      - name: tautulli
+        type: watched
+      - name: shared
+        translation_key: tautulli_watched
+      - name: custom
+        cache_builders: 0

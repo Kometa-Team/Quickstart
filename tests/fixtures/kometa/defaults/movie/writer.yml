@@ -1,0 +1,47 @@
+##############################################################################
+#                             Writer Collections                             #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/movie/writer             #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "170"
+
+collections:
+  Writers Collections:
+    template:
+      - name: separator
+        separator: writer
+        key_name: Writers
+        translation_key: separator
+
+dynamic_collections:
+  Top Writers:
+    type: writer
+    data:
+      depth: 5
+      limit: 25
+    title_format: <<key_name>> (Writer)
+    template:
+      - tmdb_person
+      - smart_filter
+      - shared
+    template_variables:
+      tmdb_person:
+        default: <<value>>
+      tmdb_person_offset:
+        default: 0
+        Charles Bennett: 1
+      search_term:
+        default: writer
+      search_value:
+        default: tmdb
+      translation_key:
+        default: writer
+      style:
+        default: bw
+      dynamic:
+        default: true

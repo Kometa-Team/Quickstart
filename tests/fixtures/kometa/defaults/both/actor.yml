@@ -1,0 +1,46 @@
+##############################################################################
+#                             Actor Collections                              #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#             https://kometa.wiki/en/latest/defaults/both/actor              #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "140"
+
+collections:
+  Actors Collections:
+    template:
+      - name: separator
+        separator: actor
+        key_name: Actors
+        translation_key: separator
+
+dynamic_collections:
+  Top Actors:
+    type: actor
+    data:
+      depth: 5
+      limit: 25
+    title_format: <<key_name>>
+    template:
+      - tmdb_person
+      - smart_filter
+      - shared
+    template_variables:
+      tmdb_person:
+        default: <<value>>
+      tmdb_person_offset:
+        default: 0
+      search_term:
+        default: actor
+      search_value:
+        default: tmdb
+      translation_key:
+        default: actor
+      style:
+        default: bw
+      dynamic:
+        default: true

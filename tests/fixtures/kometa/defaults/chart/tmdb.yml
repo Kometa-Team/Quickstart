@@ -1,0 +1,82 @@
+##############################################################################
+#                          TMDb Charts Collections                           #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#             https://kometa.wiki/en/latest/defaults/chart/tmdb              #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+
+templates:
+  tmdb:
+    default:
+      limit: 100
+      limit_<<key>>: <<limit>>
+      chart: <<key>>
+    tmdb_<<chart>>: <<limit_<<key>>>>
+
+collections:
+  TMDb Popular:
+    variables:
+      style: color
+      key: popular
+    template:
+      - name: tmdb
+      - name: shared
+        translation_key: tmdb_popular
+      - name: arr
+      - name: custom
+
+  TMDb Top Rated:
+    variables:
+      style: color
+      key: top
+    template:
+      - name: tmdb
+        chart: top_rated
+      - name: shared
+        translation_key: tmdb_top
+      - name: arr
+      - name: custom
+
+  TMDb Trending:
+    variables:
+      style: color
+      key: trending
+    template:
+      - name: tmdb
+        chart: trending_weekly
+      - name: shared
+        translation_key: tmdb_trending
+      - name: arr
+      - name: custom
+
+  TMDb Airing Today:
+    variables:
+      style: color
+      key: airing
+    template:
+      - name: tmdb
+        chart: airing_today
+      - name: shared
+        allowed_libraries: show
+        translation_key: tmdb_airing
+      - name: arr
+      - name: custom
+
+  TMDb On The Air:
+    variables:
+      style: color
+      key: air
+    template:
+      - name: tmdb
+        chart: on_the_air
+      - name: shared
+        allowed_libraries: show
+        translation_key: tmdb_air
+      - name: arr
+      - name: custom

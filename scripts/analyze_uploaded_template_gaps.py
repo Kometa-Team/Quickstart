@@ -211,10 +211,13 @@ def yaml_type_matches_focus(document_type: str, focus: str) -> bool:
 
 
 def is_probable_non_config_artifact(path: Path) -> bool:
-    filename = path.name
+    # Uploaded paths may carry Windows-style separators even when this analyzer runs on
+    # a POSIX host, where pathlib won't split on backslashes — normalize before splitting.
+    normalized = str(path).replace("\\", "/")
+    filename = normalized.rsplit("/", 1)[-1]
     if any(pattern.match(filename) for pattern in PROBABLE_ARTIFACT_NAME_PATTERNS):
         return True
-    lower_parts = {part.lower() for part in path.parts}
+    lower_parts = {part.lower() for part in normalized.split("/") if part}
     if lower_parts.intersection(PROBABLE_ARTIFACT_PATH_PARTS) and filename.lower().startswith("parsed_"):
         return True
     return False

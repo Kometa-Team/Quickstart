@@ -1,0 +1,58 @@
+##############################################################################
+#                         Cannes Awards Collections                          #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/award/cannes             #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: 130
+
+collections:
+  Cannes Golden Palm Winners:
+    variables:
+      key: palm
+    template:
+      - name: shared
+        sort: Cannes !
+        allowed_libraries: movie
+        image: award/cannes/winner
+        translation_key: cannes_best
+      - name: arr
+      - name: custom
+    imdb_award:
+      event_id: ev0000147
+      event_year: all
+      award_filter: palme d'or
+      winning: true
+
+dynamic_collections:
+  Cannes Awards:
+    type: imdb_awards
+    sync: true
+    data:
+      event_id: ev0000147
+      starting: latest-4
+      ending: latest
+    title_format: Cannes <<key_name>>
+    template:
+      - use_year_collections
+      - imdb_award
+      - shared
+      - arr
+      - custom
+    template_variables:
+      winning:
+        default: true
+      collection_order:
+        default: release
+      allowed_libraries:
+        default: movie
+      image:
+        default: award/cannes/<<key>>
+      translation_key:
+        default: cannes_year
+      dynamic:
+        default: true

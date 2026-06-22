@@ -1,0 +1,19 @@
+##############################################################################
+#                        Award Separator Collections                         #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#        https://kometa.wiki/en/latest/defaults/award/separator_award        #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: 130
+
+collections:
+  Award Collections:
+    template:
+      - name: separator
+        separator: award
+        key_name: Award
+        translation_key: separator

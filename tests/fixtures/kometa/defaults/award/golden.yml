@@ -1,0 +1,92 @@
+##############################################################################
+#                      Golden Globes Awards Collections                      #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/award/golden             #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: 130
+
+collections:
+  Golden Globes Best Picture Winners:
+    variables:
+      key: best_picture
+    template:
+      - name: shared
+        sort: Golden Globe !1
+        allowed_libraries: movie
+        image: award/golden/best_picture_winner
+        translation_key: golden_picture
+      - name: arr
+      - name: custom
+    delete_collections_named:
+      - Golden Globe Best Motion Pictures
+    imdb_award:
+      event_id: ev0000292
+      event_year: all
+      category_filter:
+        - best animated feature film
+        - best animated film
+        - best foreign film
+        - best foreign language film
+        - best foreign-language foreign film
+        - best motion picture - animated
+        - best motion picture - comedy
+        - best motion picture - comedy or musical
+        - best motion picture - drama
+        - best motion picture - foreign language
+        - best motion picture - musical
+        - best motion picture - musical or comedy
+        - best motion picture - non-english language
+        - best motion picture, musical or comedy
+        - best picture
+      winning: true
+
+  Golden Globes Best Director Winners:
+    variables:
+      key: best_director
+    template:
+      - name: shared
+        sort: Golden Globes !2
+        allowed_libraries: movie
+        image: award/golden/best_director_winner
+        translation_key: golden_director
+      - name: arr
+      - name: custom
+    imdb_award:
+      event_id: ev0000292
+      event_year: all
+      category_filter:
+        - best director
+        - best director - motion picture
+      winning: true
+    
+dynamic_collections:
+  Golden Globes Awards:
+    type: imdb_awards
+    sync: true
+    data:
+      event_id: ev0000292
+      starting: latest-4
+      ending: latest
+    title_format: Golden Globe <<key_name>>
+    template:
+      - use_year_collections
+      - imdb_award
+      - shared
+      - arr
+      - custom
+    template_variables:
+      winning:
+        default: true
+      collection_order:
+        default: release
+      image:
+        default: award/golden/winner/<<key>>
+      translation_key:
+        default: golden_year
+      dynamic:
+        default: true

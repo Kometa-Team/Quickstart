@@ -1,0 +1,83 @@
+##############################################################################
+#                    Academy Awards (Oscars) Collections                     #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/award/oscars             #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: 130
+
+collections:
+  Oscars Best Picture Winners:
+    variables:
+      key: best_picture
+    template:
+      - name: shared
+        sort: Oscars !1
+        allowed_libraries: movie
+        image: award/oscars/best_picture_winner
+        translation_key: oscars_picture
+      - name: arr
+      - name: custom
+    imdb_award:
+      event_id: ev0000003
+      event_year: all
+      category_filter:
+        - best motion picture of the year
+        - best picture
+        - best picture, production
+        - best picture, unique and artistic production
+      winning: true
+
+  Oscars Best Director Winners:
+    variables:
+      key: best_director
+    template:
+      - name: shared
+        sort: Oscars !2
+        allowed_libraries: movie
+        image: award/oscars/best_director_winner
+        translation_key: oscars_director
+      - name: arr
+      - name: custom
+    imdb_award:
+      event_id: ev0000003
+      event_year: all
+      category_filter:
+        - best achievement in directing
+        - best director
+        - best director, comedy picture
+        - best director, dramatic picture
+      winning: true
+
+dynamic_collections:
+  Oscars Winners Awards:
+    type: imdb_awards
+    sync: true
+    data:
+      event_id: ev0000003
+      starting: latest-4
+      ending: latest
+    title_format: Oscars Winners <<key_name>>
+    template:
+      - use_year_collections
+      - imdb_award
+      - shared
+      - arr
+      - custom
+    template_variables:
+      winning:
+        default: true
+      collection_order:
+        default: release
+      allowed_libraries:
+        default: movie
+      image:
+        default: award/oscars/winner/<<key>>
+      translation_key:
+        default: oscars_year
+      dynamic:
+        default: true

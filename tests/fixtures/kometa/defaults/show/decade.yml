@@ -1,0 +1,40 @@
+##############################################################################
+#                             Decade Collections                             #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#            https://kometa.wiki/en/latest/defaults/show/decade              #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "100"
+
+collections:
+  Decade Collections:
+    template:
+      - name: separator
+        separator: decade
+        key_name: Decade
+        translation_key: separator
+
+dynamic_collections:
+  Decade:
+    type: decade
+    title_format: Best of <<key_name>>
+    template:
+      - smart_filter
+      - shared
+    template_variables:
+      search_term:
+        default: year
+      sort_by:
+        default: critic_rating.desc
+      limit:
+        default: 100
+      image:
+        default: decade/best/<<key>>
+      translation_key:
+        default: decade
+      dynamic:
+        default: true

@@ -3264,7 +3264,7 @@ def normalize_config_name_for_storage(config_name: str | None) -> str:
     if not raw:
         return "default"
 
-    name = Path(raw).name.strip().lower()
+    name = Path(raw.replace("\\", "/")).name.strip().lower()
     if name.endswith("_config.yml"):
         name = name[:-11]
     elif name.endswith("_config.yaml"):

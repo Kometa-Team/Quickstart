@@ -1,0 +1,246 @@
+##############################################################################
+#                               Ribbon Overlay                               #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#           https://kometa.wiki/en/latest/defaults/overlays/ribbon           #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    default:
+      style: yellow
+    conditionals:
+      final_style:
+        default: yellow
+        conditions:
+          - style: gray
+            value: gray
+          - style: black
+            value: black
+          - style: red
+            value: red
+      default:
+        conditions:
+          - file.exists: false
+            file_<<key>>.exists: false
+            url.exists: false
+            url_<<key>>.exists: false
+            git.exists: false
+            git_<<key>>.exists: false
+            repo.exists: false
+            repo_<<key>>.exists: false
+            value: ribbon/<<final_style>>/<<key>>
+    group: ribbon
+    horizontal_offset: 0
+    horizontal_align: right
+    vertical_offset: 0
+    vertical_align: bottom
+
+templates:
+  ribbon:
+    optional:
+      - mdb_key
+      - imdb_key
+    mdblist_list: https://mdblist.com/lists/k0meta/<<mdb_key>><<library_type>>s
+    imdb_chart: <<imdb_key>>_<<library_type>>s
+
+overlays:
+
+  Oscars Best Picture:
+    variables: {key: oscars, weight: 190}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000003
+      event_year: all
+      category_filter:
+        - best picture
+        - best motion picture of the year
+      winning: true
+
+  Oscars Best Director:
+    variables: {key: oscars_director, weight: 180}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000003
+      event_year: all
+      category_filter:
+        - best achievement in directing
+        - best director
+        - best director, comedy picture
+        - best director, dramatic picture
+      winning: true
+
+  Golden Globe Winner:
+    variables: {key: golden, weight: 170}
+    template: [name: standard, name: ribbon]
+    imdb_award:
+      event_id: ev0000292
+      event_year: all
+      category_filter:
+        - best animated feature film
+        - best animated film
+        - best foreign film
+        - best foreign language film
+        - best foreign-language foreign film
+        - best motion picture - animated
+        - best motion picture - comedy
+        - best motion picture - comedy or musical
+        - best motion picture - drama
+        - best motion picture - foreign language
+        - best motion picture - musical
+        - best motion picture - musical or comedy
+        - best motion picture - non-english language
+        - best motion picture, musical or comedy
+        - best picture
+      winning: true
+
+  Golden Globe Best Director:
+    variables: {key: golden_director, weight: 160}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000292
+      event_year: all
+      category_filter:
+        - best director
+        - best director - motion picture
+      winning: true
+
+  BAFTA Winners:
+    variables: {key: bafta, weight: 150}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000123
+      event_year: all
+      category_filter: best film
+      winning: true
+
+  Cannes Winners:
+    variables: {key: cannes, weight: 140}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000147
+      event_year: all
+      award_filter: palme d'or
+      winning: true
+
+  Berlinale Winners:
+    variables: {key: berlinale, weight: 130}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000091
+      event_year: all
+      category_filter: best film
+      winning: true
+
+  Venice Winners:
+    variables: {key: venice, weight: 120}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000681
+      event_year: all
+      award_filter: golden lion
+      winning: true
+
+  Sundance Winners:
+    variables: {key: sundance, weight: 110}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000631
+      event_year: all
+      award_filter: grand jury prize
+      winning: true
+
+  Emmys Winner:
+    variables: {key: emmys, weight: 100}
+    template: [name: standard, name: ribbon]
+    imdb_award:
+      event_id: ev0000223
+      event_year: all
+      category_filter:
+        - best comedy series
+        - best comedy show
+        - best dramatic anthology series
+        - best dramatic program
+        - best dramatic series
+        - best dramatic series - less than one hour
+        - best dramatic series - one hour or longer
+        - best series - half hour or less
+        - best series - one hour or more
+        - outstanding animated program
+        - outstanding animated program (for programming less than one hour)
+        - outstanding animated program (for programming more than one hour)
+        - outstanding animated program (for programming one hour or less)
+        - outstanding animated program (for programming one hour or more)
+        - outstanding animated programming
+        - outstanding comedy series
+        - outstanding drama series
+        - outstanding drama series - continuing
+        - outstanding drama/comedy - limited episodes
+        - outstanding dramatic program
+        - outstanding dramatic series
+        - outstanding miniseries
+        - outstanding series - comedy
+        - outstanding series - drama
+      winning: true
+
+  Critics Choice Winners:
+    variables: {key: choice, weight: 90}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000133
+      event_year: all
+      category_filter: best picture
+      winning: true
+
+  Spirit Winners:
+    variables: {key: spirit, weight: 80}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000349
+      event_year: all
+      category_filter: best feature
+      winning: true
+
+  Cesar Winners:
+    variables: {key: cesar, weight: 70}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000157
+      event_year: all
+      category_filter: best film (meilleur film)
+      winning: true
+
+  IMDb Top 250:
+    variables: {key: imdb, weight: 60, imdb_key: top}
+    template: [name: standard, name: ribbon]
+
+  Letterboxd Top 500:
+    variables: {key: letterboxd, weight: 50}
+    template: {name: standard, allowed_libraries: movie}
+    letterboxd_list: https://letterboxd.com/official/list/letterboxds-top-500-films/
+
+  Rotten Tomatoes Verified Hot:
+    variables: {key: rottenverified, weight: 45, mdb_key: verifiedhot}
+    template: [{name: standard, allowed_libraries: movie}, {name: ribbon}]
+
+  Rotten Tomatoes Certified Fresh:
+    variables: {key: rotten, weight: 40, mdb_key: certifiedfresh}
+    template: [name: standard, name: ribbon]
+
+  Metacritic Must See:
+    variables: {key: metacritic, weight: 30, mdb_key: metacriticmustsee}
+    template: [name: standard, name: ribbon]
+
+  Commonsense Selection:
+    variables: {key: common, weight: 20, mdb_key: cssfamilies}
+    template: [name: standard, name: ribbon]
+
+  Razzies Winner:
+    variables: {key: razzie, weight: 10}
+    template: {name: standard, allowed_libraries: movie}
+    imdb_award:
+      event_id: ev0000558
+      event_year: all
+      category_filter: worst picture
+      winning: true

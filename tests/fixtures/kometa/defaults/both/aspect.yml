@@ -1,0 +1,54 @@
+##############################################################################
+#                         Aspect Ratio Collections                           #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#             https://kometa.wiki/en/latest/defaults/both/aspect             #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "125"
+
+collections:
+  Aspect Ratio Collections:
+    template:
+      - name: separator
+        separator: aspect
+        key_name: Aspect Ratio
+        translation_key: separator
+
+dynamic_collections:
+  Aspect:
+    type: custom
+    data:
+      "1.33": 1.33 - Academy Aperture
+      "1.65": 1.65 - Early Widescreen
+      "1.66": 1.66 - European Widescreen
+      "1.78": 1.78 - Widescreen TV
+      "1.85": 1.85 - American Widescreen
+      "2.2": 2.2 - 70mm Frame
+      "2.35": 2.35 - Anamorphic Projection
+      "2.77": 2.77 - Cinerama
+    title_format: <<key_name>>
+    template:
+      - filter
+      - shared
+    template_variables:
+      filter_term:
+        default: aspect
+      filter_value:
+        "1.33": 1.33
+        "1.65": 1.65
+        "1.66": 1.66
+        "1.78": 1.78
+        "1.85": 1.85
+        "2.2": 2.2
+        "2.35": 2.35
+        "2.77": 2.77
+      image:
+        default: aspect/<<key>>
+      translation_key:
+        default: aspect
+      dynamic:
+        default: true

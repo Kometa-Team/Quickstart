@@ -1,0 +1,319 @@
+##############################################################################
+#                      Letterboxd Charts Collections                         #
+#                 Created by Yozora, Bullmoose20, & Sohjiro                  #
+#      Special thanks to Kevin2kkelly for their contributions to this        #
+#          EDITING THIS FILE MAY CAUSE PULLING NEW UPDATES TO FAIL           #
+#       https://kometa.wiki/en/latest/defaults/chart/letterboxd.html         #
+##############################################################################
+
+external_templates:
+  default: templates
+  template_variables:
+    collection_section: "020"
+    image: chart/<<style>>/<<mapping_name_encoded>>
+    allowed_libraries: movie
+    sort_title: <<sort_prefix>><<collection_section>><<pre>><<order_<<key>>>>LB_<<sort>>
+
+templates:
+  letterboxd_list:
+    letterboxd_list: https://letterboxd.com/<<user>>/list/<<list>>
+
+collections:
+  "Letterboxd Top 500":
+    variables:
+      style: color
+      key: top_500
+    template:
+      - name: letterboxd_list
+        user: official
+        list: letterboxds-top-500-films
+      - name: shared
+        translation_key: letterboxd_top_500
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+    delete_collections_named: "Letterboxd Top 250"
+
+  "Box Office Mojo All Time 100":
+    variables:
+      style: color
+      key: boxofficemojo_100
+    template:
+      - name: letterboxd_list
+        user: matthew
+        list: all-time-worldwide-box-office
+      - name: shared
+        translation_key: box_office_mojo_all_time_100
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "AFI 100 Years 100 Movies":
+    variables:
+      style: color
+      key: afi_100
+    template:
+      - name: letterboxd_list
+        user: afi
+        list: afis-100-years100-movies-10th-anniversary
+      - name: shared
+        translation_key: afi_100_years_100_movies
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Sight & Sound Greatest Films":
+    variables:
+      style: color
+      key: sight_sound
+    template:
+      - name: letterboxd_list
+        user: bfi
+        list: sight-and-sounds-greatest-films-of-all-time
+      - name: shared
+        translation_key: sight_and_sound_greatest_films
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "1,001 To See Before You Die":
+    variables:
+      style: color
+      key: 1001_movies
+    template:
+      - name: letterboxd_list
+        user: gubarenko
+        list: 1001-movies-you-must-see-before-you-die-2024
+      - name: shared
+        translation_key: 1001_movies_to_see_before_you_die
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Edgar Wright's 1,000 Favorites":
+    variables:
+      style: color
+      key: edgarwright
+    template:
+      - name: letterboxd_list
+        user: crew
+        list: edgar-wrights-1000-favorite-movies
+      - name: shared
+        translation_key: edgar_wrights_1000_favorites
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Roger Ebert's Great Movies":
+    variables:
+      style: color
+      key: rogerebert
+    template:
+      - name: letterboxd_list
+        user: dvideostor
+        list: roger-eberts-great-movies
+      - name: shared
+        translation_key: roger_eberts_great_movies
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 250 Women-Directed":
+    variables:
+      style: color
+      key: women_directors
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-films-by-women-directors
+      - name: shared
+        translation_key: top_250_women_directed
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 250 Black-Directed":
+    variables:
+      style: color
+      key: black_directors
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-films-by-black-directors
+      - name: shared
+        translation_key: top_250_black_directed
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+    delete_collections_named: "Top 100 Black-Directed"
+
+  "Top 250 Most Fans":
+    variables:
+      style: color
+      key: most_fans
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-films-with-the-most-fans
+      - name: shared
+        translation_key: top_250_most_fans
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 250 Documentaries":
+    variables:
+      style: color
+      key: documentaries
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-documentary-films
+      - name: shared
+        translation_key: top_250_documentaries
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 100 Animation":
+    variables:
+      style: color
+      key: animation
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-animated-films
+      - name: shared
+        translation_key: top_100_animation
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 250 Horror":
+    variables:
+      style: color
+      key: horror
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-horror-films
+      - name: shared
+        translation_key: top_250_horror
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 250 International":
+    variables:
+      style: color
+      key: international
+    template:
+      - name: letterboxd_list
+        user: brsan
+        list: letterboxds-top-250-international-films
+      - name: shared
+        translation_key: top_250_international
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 250 Sci-Fi Films":
+    variables:
+      style: color
+      key: science
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-250-science-fiction-films
+      - name: shared
+        translation_key: top_250_sci-fi_films
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "One Million Watched Club":
+    variables:
+      style: color
+      key: million
+    template:
+      - name: letterboxd_list
+        user: alexanderh
+        list: letterboxd-one-million-watched-club
+      - name: shared
+        translation_key: one_million_watched_club
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 100 Western Films":
+    variables:
+      style: color
+      key: western
+    template:
+      - name: letterboxd_list
+        user: official
+        list: top-100-western-films
+      - name: shared
+        translation_key: top_100_western_films
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "Top 100 Silent Films":
+    variables:
+      style: color
+      key: silent
+    template:
+      - name: letterboxd_list
+        user: brsan
+        list: letterboxds-top-100-silent-films
+      - name: shared
+        translation_key: top_100_silent_films
+        summary: <<summary_<<key>>>>
+      - name: arr
+      - name: custom
+
+  "IMDb Top 250 (Letterboxd)":
+    variables:
+      style: color
+      key: imdb_top_250
+    template:
+      - name: letterboxd_list
+        user: dave
+        list: imdb-top-250
+      - name: shared
+        translation_key: imdb_top_250
+        summary: <<summary_<<key>>>>
+        use_imdb_top_250: false
+      - name: arr
+      - name: custom
+
+  "Oscar Best Picture Winners":
+    variables:
+      style: color
+      key: oscars
+    template:
+      - name: letterboxd_list
+        user: oscars
+        list: oscar-winning-films-best-picture
+      - name: shared
+        translation_key: oscars_best_picture_winners
+        summary: <<summary_<<key>>>>
+        use_oscars: false
+      - name: arr
+      - name: custom
+
+  "Cannes Palme d'Or Winners":
+    variables:
+      style: color
+      key: cannes
+    template:
+      - name: letterboxd_list
+        user: brsan
+        list: cannes-palme-dor-winners
+      - name: shared
+        translation_key: cannes_palmes_dor_winners
+        summary: <<summary_<<key>>>>
+        use_cannes: false
+      - name: arr
+      - name: custom
