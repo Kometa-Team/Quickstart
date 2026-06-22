@@ -17,9 +17,9 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
 
-_EMPTY_OUTPUT = object()
-
 from modules import helpers, persistence, database
+
+_EMPTY_OUTPUT = object()
 
 LIBRARY_RADARR_FIELDS = {
     "url": "string",

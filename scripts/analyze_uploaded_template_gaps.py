@@ -11,7 +11,6 @@ import tempfile
 import time
 import warnings
 import zipfile
-from collections import defaultdict
 from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
@@ -24,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from modules import importer
+from modules import importer  # noqa: E402
 
 try:
     import py7zr

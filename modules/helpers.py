@@ -17,7 +17,6 @@ import copy
 
 from pathlib import Path
 from plexapi.server import PlexServer
-from plexapi.exceptions import NotFound
 from modules import persistence
 
 import requests

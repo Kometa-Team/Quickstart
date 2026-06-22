@@ -11097,7 +11097,6 @@ def kometa_status():
 
 @app.route("/tail-log")
 def tail_log():
-    kometa_root = helpers.get_kometa_root_path()
     log_path = helpers.get_kometa_log_dir() / "meta.log"
 
     if not log_path.exists():
@@ -11223,7 +11222,6 @@ def tail_log():
 
 @app.route("/logscan/analyze", methods=["GET"])
 def logscan_analyze():
-    kometa_root = helpers.get_kometa_root_path()
     log_path = helpers.get_kometa_log_dir() / "meta.log"
     config_name = session.get("config_name")
     normalized_name = (config_name or "").strip().lower().replace(" ", "_") or "default"
