@@ -748,8 +748,10 @@ def extract_template_names(raw: Any) -> set[str]:
 
 
 @lru_cache(maxsize=None)
-def load_template_sections(path: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    parsed = load_yaml(path) or {}
+def load_template_sections(path: Path) -> tuple[Any, dict[str, dict[str, Any]]]:
+    parsed, _encoding = load_yaml(path)
+    if parsed is None:
+        parsed = {}
     local_templates = parsed.get("templates") if isinstance(parsed, dict) else {}
     if not isinstance(local_templates, dict):
         local_templates = {}
@@ -772,7 +774,9 @@ def load_template_sections(path: Path) -> tuple[dict[str, Any], dict[str, dict[s
         template_path = defaults_root / f"{template_default}.yml"
         if not template_path.exists():
             continue
-        shared_parsed = load_yaml(template_path) or {}
+        shared_parsed, _shared_encoding = load_yaml(template_path)
+        if shared_parsed is None:
+            shared_parsed = {}
         shared_section = shared_parsed.get("templates") if isinstance(shared_parsed, dict) else {}
         if isinstance(shared_section, dict):
             for template_name, template_cfg in shared_section.items():

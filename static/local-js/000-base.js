@@ -3034,11 +3034,9 @@ document.addEventListener('DOMContentLoaded', () => {
           window.history.replaceState(null, '', nextUrl)
         }
         const navigate = () => window.location.replace(nextUrl)
-        if (typeof window.requestAnimationFrame === 'function') {
-          window.requestAnimationFrame(navigate)
-        } else {
-          navigate()
-        }
+        // Yield one task so the updated config badge/state becomes observable
+        // before the page unload starts.
+        window.setTimeout(navigate, 0)
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
         confirmBtn.disabled = false
