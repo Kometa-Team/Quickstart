@@ -184,7 +184,7 @@ def test_overlay_key_supported_in_quickstart_uses_direct_alias_match_when_availa
     assert module.overlay_key_supported_in_quickstart("ratings", "rating3_image", qs_overlays) is True
 
 
-def test_quickstart_recommendation_summary_includes_runtime_supported_overlay_keys():
+def test_quickstart_recommendation_summary_skips_runtime_supported_overlay_keys():
     module = _load_gap_analyzer_module()
 
     rows = [
@@ -209,10 +209,7 @@ def test_quickstart_recommendation_summary_includes_runtime_supported_overlay_ke
     summary = module.build_quickstart_recommendation_summary(rows)
     ranked = module.serialize_ranked_summary(summary)
 
-    assert len(ranked) == 1
-    assert ranked[0]["key"] == "back_width"
-    assert ranked[0]["supported_in_quickstart"] is True
-    assert ranked[0]["quickstart_declared"] is False
+    assert ranked == []
 
 
 def test_quickstart_recommendation_summary_excludes_legacy_or_not_recommended_library_keys():
@@ -288,7 +285,7 @@ def test_quickstart_recommendation_summary_excludes_legacy_or_not_recommended_li
     summary = module.build_quickstart_recommendation_summary(rows)
     ranked = module.serialize_ranked_summary(summary)
 
-    assert [item["key"] for item in ranked] == ["library_name", "horizontal_align"]
+    assert [item["key"] for item in ranked] == ["library_name"]
 
 
 def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys():
@@ -444,7 +441,7 @@ def test_classify_yaml_document_type_distinguishes_config_and_external_yaml():
     assert module.classify_yaml_document_type(["not", "a", "mapping"]) == "unknown"
 
 
-def test_prefilter_yaml_files_keeps_external_yaml_for_later_type_classification(tmp_path):
+def test_prefilter_yaml_files_skips_external_yaml_early_when_focus_is_config(tmp_path):
     module = _load_gap_analyzer_module()
     overlay_file = tmp_path / "overlay.yml"
     overlay_file.write_text(
@@ -459,9 +456,10 @@ overlays:
 
     candidates, skipped, stats = module.prefilter_yaml_files([overlay_file], yaml_type_focus="config")
 
-    assert candidates == [overlay_file]
-    assert skipped == []
-    assert stats["non_kometa_skips"] == 0
+    assert candidates == []
+    assert len(skipped) == 1
+    assert skipped[0]["error_type"] == "NotKometaConfig"
+    assert stats["non_kometa_skips"] == 1
 
 
 def test_prefilter_yaml_files_does_not_skip_real_config_just_because_filename_looks_like_artifact(tmp_path):
@@ -511,6 +509,29 @@ overlays:
     assert skipped[0]["error_type"] == "YamlTypeExcluded"
     assert skipped[0]["yaml_document_type"] == "external_overlay"
     assert skipped[0]["noise_reason"] == "yaml_type_excluded"
+
+
+def test_prefilter_yaml_files_skips_template_variable_only_external_yaml_when_focus_is_config(tmp_path):
+    module = _load_gap_analyzer_module()
+    external_file = tmp_path / "collection.yml"
+    external_file.write_text(
+        """
+collections:
+  Test:
+    template:
+      name: test
+    template_variables:
+      visible_home: true
+""".strip(),
+        encoding="utf-8",
+    )
+
+    candidates, skipped, stats = module.prefilter_yaml_files([external_file], yaml_type_focus="config")
+
+    assert candidates == []
+    assert len(skipped) == 1
+    assert skipped[0]["error_type"] == "NotKometaConfig"
+    assert stats["non_kometa_skips"] == 1
 
 
 def test_collect_yaml_files_recurses_into_nested_zip_archives(tmp_path):
@@ -855,7 +876,7 @@ def test_build_merged_fix_queue_suppresses_excluded_quickstart_only_keys():
 
     assert len(ranked) == 1
     assert ranked[0]["key"] == "horizontal_align"
-    assert ranked[0]["action_targets"] == ["quickstart", "importer"]
+    assert ranked[0]["action_targets"] == ["importer"]
 
 
 def test_build_merged_fix_queue_excludes_internal_library_type_metadata():
