@@ -1245,18 +1245,8 @@ def extract_importer_findings_from_data(data: dict[str, Any], path: Path) -> lis
             lib_name, remainder = _split_library_status_path(status_path, libraries_payload if isinstance(libraries_payload, dict) else {})
             lib_cfg = libraries_payload.get(lib_name) if lib_name and isinstance(libraries_payload, dict) else None
             if not remainder:
-                findings.append(
-                    _importer_row(
-                        file=path,
-                        kind="library",
-                        library=lib_name,
-                        key="library_type",
-                        status=mapped_status,
-                        reason=reason,
-                        raw_path=status_path,
-                        section="libraries",
-                    )
-                )
+                # Bare library container statuses are importer/analyzer bookkeeping,
+                # not a real user-facing Kometa config key.
                 continue
 
             section_match = re.match(r"(collection_files|overlay_files)\[(\d+)\](?:\.(.*))?$", remainder)
@@ -2082,6 +2072,8 @@ def build_gap_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | None,
 
 
 def accumulate_importer_summary(summary: dict[tuple[str, str | None, str, str, str], dict[str, Any]], row: dict[str, Any]) -> None:
+    if get_merged_fix_queue_exclusion(row):
+        return
     bucket = summary.setdefault(
         (
             str(row.get("kind")),
@@ -2128,6 +2120,7 @@ QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
     ("library", "metadata_path"): "legacy_library_path_key_not_recommended",
     ("library", "overlay_path"): "legacy_library_path_key_not_recommended",
     ("library", "reapply_overlays"): "valid_but_not_recommended_for_quickstart",
+    ("library", "library_type"): "internal_importer_or_analyzer_metadata",
 }
 
 
@@ -2135,6 +2128,17 @@ def get_quickstart_recommendation_exclusion(row: dict[str, Any]) -> str | None:
     kind = str(row.get("kind") or "")
     key = str(row.get("key") or "")
     return QUICKSTART_RECOMMENDATION_EXCLUSIONS.get((kind, key))
+
+
+MERGED_FIX_QUEUE_EXCLUSIONS: dict[tuple[str, str], str] = {
+    ("library", "library_type"): "internal_importer_or_analyzer_metadata",
+}
+
+
+def get_merged_fix_queue_exclusion(row: dict[str, Any]) -> str | None:
+    kind = str(row.get("kind") or "")
+    key = str(row.get("key") or "")
+    return MERGED_FIX_QUEUE_EXCLUSIONS.get((kind, key))
 
 
 def accumulate_quickstart_recommendation_summary(summary: dict[tuple[str, str | None, str], dict[str, Any]], row: dict[str, Any]) -> None:
@@ -2315,6 +2319,8 @@ def build_merged_fix_queue(
 
     ranked: list[dict[str, Any]] = []
     for bucket in queue.values():
+        if get_merged_fix_queue_exclusion(bucket):
+            continue
         action_targets: list[str] = []
         if bucket["needs_schema_support"]:
             action_targets.append("schema")
