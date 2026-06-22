@@ -1435,24 +1435,6 @@ def build_libraries_section(
         operations = {}
         attr_group = attributes.get(lib_id, {})
         # Begin: Mass Genre Update Section
-        mass_genre_update_keys = [
-            "tmdb",
-            "tvdb",
-            "imdb",
-            "omdb",
-            "anidb",
-            "anidb_3_0",
-            "anidb_2_5",
-            "anidb_2_0",
-            "anidb_1_5",
-            "anidb_1_0",
-            "anidb_0_5",
-            "mal",
-            "lock",
-            "unlock",
-            "remove",
-            "reset",
-        ]
         mass_genre_update = []
 
         # Grab the full reordered list from hidden input
@@ -2754,7 +2736,7 @@ def build_libraries_section(
         )
 
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"Generated YAML Output:\n", level="DEBUG")
+        helpers.ts_log("Generated YAML Output:\n", level="DEBUG")
         buf = io.BytesIO()
         YAML().dump({"libraries": libraries_section}, buf)
         helpers.ts_log(buf.getvalue().decode("utf-8"))
@@ -2953,7 +2935,7 @@ def build_config(header_style="standard", config_name=None):
         # Format playlist_files data
         formatted_playlist_files = _format_playlist_files(libraries_list)
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
+            helpers.ts_log("Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
 
         # Replace in config_data
         config_data["playlist_files"] = formatted_playlist_files
@@ -2978,7 +2960,7 @@ def build_config(header_style="standard", config_name=None):
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}", level="DEBUG")
             if "webhooks" not in config_data:
-                helpers.ts_log(f"Webhooks section completely removed.", level="DEBUG")
+                helpers.ts_log("Webhooks section completely removed.", level="DEBUG")
 
     if "apprise" in config_data:
         apprise_data = config_data["apprise"]
@@ -3012,7 +2994,7 @@ def build_config(header_style="standard", config_name=None):
 
         # Debugging
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Raw nested libraries data:", nested_libraries_data, level="DEBUG")
+            helpers.ts_log("Raw nested libraries data:", nested_libraries_data, level="DEBUG")
 
         # Extract selected libraries
         movie_libraries = {
@@ -3034,8 +3016,8 @@ def build_config(header_style="standard", config_name=None):
 
         # Debugging
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Movie Library Names:", movie_library_names, level="DEBUG")
-            helpers.ts_log(f"Show Library Names:", show_library_names, level="DEBUG")
+            helpers.ts_log("Movie Library Names:", movie_library_names, level="DEBUG")
+            helpers.ts_log("Show Library Names:", show_library_names, level="DEBUG")
 
         def group_by_library(prefix, names, normalize_overlays=False):
             """

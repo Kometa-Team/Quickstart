@@ -842,7 +842,6 @@ class LogscanAnalyzer:
         git_kometa_errors = []
         pmm_legacy_errors = []
         image_size = []
-        incomplete_errors = []
         internal_server_errors = []
         lsio_errors = []
         mal_connection_errors = []

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import requests
 from ruamel.yaml import YAML
-from flask import current_app as app
 from flask import jsonify, flash
 from plexapi.server import PlexServer
 
@@ -823,7 +822,7 @@ def validate_gotify_server(data):
 
     try:
         response_json = response.json()
-    except JSONDecodeError as e:
+    except JSONDecodeError:
         status = response.status_code
         content_type = response.headers.get("Content-Type")
         helpers.ts_log(

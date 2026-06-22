@@ -17,7 +17,7 @@ import copy
 
 from pathlib import Path
 from plexapi.server import PlexServer
-from plexapi.exceptions import BadRequest, NotFound, Unauthorized
+from plexapi.exceptions import NotFound
 from modules import persistence
 
 import requests
@@ -633,7 +633,7 @@ def check_for_update():
 
 def get_running_os():
     # Preserve build for backward compatibility, even if unused
-    build = os.getenv("BUILD_OS", "local").lower()
+    build = os.getenv("BUILD_OS", "local").lower()  # noqa: F841
 
     # 1. Docker check via env
     if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
@@ -1293,7 +1293,7 @@ def load_quickstart_overlay_config():
 
 
 def get_top_imdb_items(library_id, media_type, placeholder_id=None):
-    ts_log(f"Fetching Plex credentials for '010-plex'", level="DEBUG")
+    ts_log("Fetching Plex credentials for '010-plex'", level="DEBUG")
     plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
 
     ts_log(f"Connecting to Plex with URL: {plex_url}", level="DEBUG")
@@ -2128,8 +2128,9 @@ def rotate_logs():
 def initialize_logging():
     os.makedirs(LOG_DIR, exist_ok=True)
     rotate_logs()
-    with open(LOG_FILE, "w", encoding="utf-8") as f:
-        ts_log(f"New log started at {datetime.datetime.now()}", level="INFO")
+    with open(LOG_FILE, "w", encoding="utf-8"):
+        pass
+    ts_log(f"New log started at {datetime.datetime.now()}", level="INFO")
 
 
 def redact_string(text):
@@ -2541,7 +2542,8 @@ def _ensure_venv(kometa_dir: Path, logs: list[str], venv_name: str = "kometa-ven
     Create (if missing) and validate a venv at <kometa_dir>/kometa-venv.
     Returns (python_bin, pip_bin) or None on failure.
     """
-    import shutil, time
+    import shutil
+    import time
 
     is_windows = os.name == "nt"
     venv_dir = kometa_dir / venv_name

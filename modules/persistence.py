@@ -308,7 +308,7 @@ def save_settings(raw_source, form_data):
     )
 
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"Data saved successfully.", level="DEBUG")
+        helpers.ts_log("Data saved successfully.", level="DEBUG")
 
 
 def get_stored_plex_credentials(name):
@@ -327,7 +327,7 @@ def get_stored_plex_credentials(name):
         if plex_url and plex_token:
             return plex_url, plex_token
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Plex URL or Token is missing in stored settings", level="ERROR")
+            helpers.ts_log("Plex URL or Token is missing in stored settings", level="ERROR")
     except Exception as e:
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Failed to retrieve Plex credentials: {e}", level="ERROR")
@@ -340,7 +340,7 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         # Fetch existing settings from DB before updating
         settings_before = retrieve_settings(name)
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Settings before update:", settings_before, level="DEBUG")
+            helpers.ts_log("Settings before update:", settings_before, level="DEBUG")
 
         if "plex" not in settings_before:
             settings_before["plex"] = {}
@@ -374,7 +374,7 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         # Fetch updated settings from DB after updating
         settings_after = retrieve_settings(name)
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Settings after update:", settings_after, level="DEBUG")
+            helpers.ts_log("Settings after update:", settings_after, level="DEBUG")
 
     except Exception as e:
         helpers.ts_log(f"Failed to update Plex libraries in DB: {e}", level="ERROR")

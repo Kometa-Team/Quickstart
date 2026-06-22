@@ -52,12 +52,11 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 
 from werkzeug.wrappers import Request
-
-Request.max_form_parts = 100000  # Allow more form fields if needed
-
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database, logscan, importer, path_validation, url_validation
 from typing import Dict, Any
+
+Request.max_form_parts = 100000  # Allow more form fields if needed
 
 # Shared in-memory background job store
 BACKGROUND_JOBS: Dict[str, Dict[str, Any]] = {}
@@ -5612,10 +5611,10 @@ def serve_preview_image(filename):
     return send_file(os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png")
     try:
         data = request.get_json()
-        helpers.ts_log(f"Received data: %s", data, level="INFO")  # Log the received data
+        helpers.ts_log("Received data: %s", data, level="INFO")  # Log the received data
         return jsonify({"status": "success"})
     except Exception as e:
-        helpers.ts_log(f"Error updating libraries: %s", str(e), level="ERROR")
+        helpers.ts_log("Error updating libraries: %s", str(e), level="ERROR")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -6666,20 +6665,6 @@ def import_config_preview():
         if isinstance(value, list):
             return {str(v).strip() for v in value if str(v).strip()}
         return set()
-
-    def parse_base_plex_libraries(base_name: str):
-        if not base_name:
-            return set(), set()
-        try:
-            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
-        except Exception:
-            return set(), set()
-        if not isinstance(stored, dict):
-            return set(), set()
-        plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
-        if not isinstance(plex_block, dict):
-            return set(), set()
-        return parse_list(plex_block.get("tmp_movie_libraries", "")), parse_list(plex_block.get("tmp_show_libraries", ""))
 
     def parse_base_plex_libraries(base_name: str):
         if not base_name:
@@ -8094,7 +8079,7 @@ def step(name):
             helpers.ts_log(f"Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}", level="WARNING")
     else:
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Using telemetry from fresh plex_data", level="DEBUG")
+            helpers.ts_log("Using telemetry from fresh plex_data", level="DEBUG")
 
     page_info["telemetry"] = telemetry_data
 
@@ -8104,19 +8089,19 @@ def step(name):
 
     # Debugging extracted values
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"Extracted movie libraries:", movie_libraries_raw, level="DEBUG")
-        helpers.ts_log(f"Extracted show libraries:", show_libraries_raw, level="DEBUG")
+        helpers.ts_log("Extracted movie libraries:", movie_libraries_raw, level="DEBUG")
+        helpers.ts_log("Extracted show libraries:", show_libraries_raw, level="DEBUG")
 
     # Ensure it's a string before splitting
     if not isinstance(movie_libraries_raw, str):
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"tmp_movie_libraries is not a string!", level="ERROR")
+            helpers.ts_log("tmp_movie_libraries is not a string!", level="ERROR")
 
         movie_libraries_raw = ""
 
     if not isinstance(show_libraries_raw, str):
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"tmp_show_libraries is not a string!", level="ERROR")
+            helpers.ts_log("tmp_show_libraries is not a string!", level="ERROR")
 
         show_libraries_raw = ""
 
@@ -8154,7 +8139,7 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"************************************************************************", level="DEBUG")
+        helpers.ts_log("************************************************************************", level="DEBUG")
         helpers.ts_log(f"Data retrieved for {name}", level="DEBUG")
 
     (
@@ -8219,13 +8204,13 @@ def step(name):
         service_validations[key] = helpers.booler(settings.get("validated", False))
 
     if needs_library_payload:
-        helpers.ts_log(f"Loading attribute_config...", level="TIMING")
+        helpers.ts_log("Loading attribute_config...", level="TIMING")
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
-        helpers.ts_log(f"Loading collection_config...", level="TIMING")
+        helpers.ts_log("Loading collection_config...", level="TIMING")
         collection_config = helpers.load_quickstart_config("quickstart_collections.json")
-        helpers.ts_log(f"Loading overlay_config...", level="TIMING")
+        helpers.ts_log("Loading overlay_config...", level="TIMING")
         overlay_config = helpers.load_quickstart_overlay_config()
-        helpers.ts_log(f"Loading preview image data...", level="TIMING")
+        helpers.ts_log("Loading preview image data...", level="TIMING")
         image_data = _build_preview_image_data()
         overlay_fonts = list_overlay_fonts()
 
@@ -8431,9 +8416,9 @@ def step(name):
         return html
 
     else:
-        helpers.ts_log(f"Loading quickstart_root...", level="TIMING")
+        helpers.ts_log("Loading quickstart_root...", level="TIMING")
         page_info["quickstart_root"] = helpers.get_app_root()
-        helpers.ts_log(f"Start render_template...", level="TIMING")
+        helpers.ts_log("Start render_template...", level="TIMING")
 
     configured_ids = _configured_library_ids(data.get("libraries", {}))
     configured_counts = {
@@ -10715,10 +10700,10 @@ def validate_all_services():
 
     failed_keys = [key for key, result in results.items() if result.get("status") == "failed"]
     failed_labels = [format_with_reason(key, results[key]) for key in failed_keys]
-    failed_detail = f" Failed: {', '.join(failed_labels)}." if failed_labels else ""
+    failed_detail = f" Failed: {', '.join(failed_labels)}." if failed_labels else ""  # noqa: F841
     skipped_keys = [key for key, result in results.items() if result.get("status") == "skipped"]
     skipped_labels = [format_with_reason(key, results[key]) for key in skipped_keys]
-    skipped_detail = f" Skipped: {', '.join(skipped_labels)}." if skipped_labels else ""
+    skipped_detail = f" Skipped: {', '.join(skipped_labels)}." if skipped_labels else ""  # noqa: F841
     ok = summary.get("validated", 0)
     failed = summary.get("failed", 0)
     skipped = summary.get("skipped", 0)
@@ -18924,7 +18909,7 @@ if __name__ == "__main__":
         with app_in.app_context():
             while True:
                 app_in.config["VERSION_CHECK"] = helpers.check_for_update()
-                helpers.ts_log(f"Checked for updates.", level="INFO")
+                helpers.ts_log("Checked for updates.", level="INFO")
                 time.sleep(86400)
 
     update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
@@ -18967,19 +18952,19 @@ if __name__ == "__main__":
             has_tray = True
         else:
             has_tray = False
-    except (ModuleNotFoundError, ImportError) as ie:
+    except (ModuleNotFoundError, ImportError):
         has_tray = False
 
     if not has_tray:
         # Headless mode: skip system tray
-        helpers.ts_log(f"Running in headless mode — no system tray will be shown...", level="INFO")
+        helpers.ts_log("Running in headless mode — no system tray will be shown...", level="INFO")
         if app.config["QUICKSTART_DOCKER"]:
-            helpers.ts_log(f"Quickstart is Running inside Docker.", level="INFO")
+            helpers.ts_log("Quickstart is Running inside Docker.", level="INFO")
             helpers.ts_log(f"Access it at http://<your-server-ip>:{running_port}", level="INFO")
-            helpers.ts_log(f"Note: This IP is the HOST machine IP, not the container IP.", level="INFO")
+            helpers.ts_log("Note: This IP is the HOST machine IP, not the container IP.", level="INFO")
         else:
             ip_address = get_lan_ip()
-            helpers.ts_log(f"Quickstart is Running", level="INFO")
+            helpers.ts_log("Quickstart is Running", level="INFO")
             helpers.ts_log(f"Access it at http://{ip_address}:{running_port}", level="INFO")
 
         helpers.ts_log(
@@ -19060,7 +19045,7 @@ if __name__ == "__main__":
                     8000,
                 )
 
-                helpers.ts_log(f"Quickstart is Running", level="INFO")
+                helpers.ts_log("Quickstart is Running", level="INFO")
                 helpers.ts_log(f"Access it locally at: http://localhost:{running_port}", level="INFO")
                 helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}", level="INFO")
                 helpers.ts_log(
@@ -19107,7 +19092,7 @@ if __name__ == "__main__":
             def change_port(self):
                 global port
                 try:
-                    helpers.ts_log(f"Launching custom port input dialog...", level="DEBUG")
+                    helpers.ts_log("Launching custom port input dialog...", level="DEBUG")
 
                     dialog = QInputDialog(self.dialog_parent)
                     dialog.setWindowTitle("Change Port")
@@ -19123,7 +19108,7 @@ if __name__ == "__main__":
 
                     # Execute dialog
                     if dialog.exec() != QInputDialog.Accepted:
-                        helpers.ts_log(f"Port change canceled by user.", level="INFO")
+                        helpers.ts_log("Port change canceled by user.", level="INFO")
                         return
 
                     new_port = dialog.intValue()
@@ -19158,7 +19143,7 @@ if __name__ == "__main__":
             def quit_app(self):
                 global server_thread, update_thread
 
-                helpers.ts_log(f"Shutting down Quickstart...", level="INFO")
+                helpers.ts_log("Shutting down Quickstart...", level="INFO")
 
                 # Stop tray icon
                 self.tray.hide()
@@ -19166,11 +19151,11 @@ if __name__ == "__main__":
                 # Optionally stop Flask server (if you have added a stop hook)
                 # For now, just wait for background threads to finish
                 if server_thread and server_thread.is_alive():
-                    helpers.ts_log(f"Waiting for server thread to exit...", level="DEBUG")
+                    helpers.ts_log("Waiting for server thread to exit...", level="DEBUG")
                     server_thread.join(timeout=2)
 
                 if update_thread and update_thread.is_alive():
-                    helpers.ts_log(f"Waiting for update thread to exit...", level="DEBUG")
+                    helpers.ts_log("Waiting for update thread to exit...", level="DEBUG")
                     update_thread.join(timeout=2)
 
                 # Exit the Qt app loop
@@ -19178,7 +19163,7 @@ if __name__ == "__main__":
 
             def restart_quickstart(self):
                 """Cleanly restart the Quickstart application."""
-                helpers.ts_log(f"Restarting Quickstart...", level="INFO")
+                helpers.ts_log("Restarting Quickstart...", level="INFO")
                 self.tray.hide()
 
                 python = sys.executable

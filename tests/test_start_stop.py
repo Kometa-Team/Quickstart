@@ -1,3 +1,6 @@
+import time
+
+
 def test_start_kometa_queues_during_maintenance(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
@@ -1240,7 +1243,3 @@ def test_build_imagemaid_command_parts_only_adds_supported_optional_flags(tmp_pa
 
     assert "--no-verify-ssl" in parts
     assert "--overlays-only" in parts
-
-
-import os
-import time
