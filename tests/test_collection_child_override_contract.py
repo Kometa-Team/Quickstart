@@ -170,3 +170,20 @@ def test_award_defaults_with_year_dynamic_support_expose_use_year_collections():
             actual_ids.add(collection.get("id"))
 
     assert expected_ids <= actual_ids
+
+
+def test_award_defaults_with_imdb_award_winning_support_expose_winning():
+    expected_ids = set()
+    for path in sorted(AWARD_DEFAULTS_ROOT.glob("*.yml")):
+        text = path.read_text(encoding="utf-8")
+        if "winning:" not in text:
+            continue
+        expected_ids.add(f"collection_{path.stem}")
+
+    actual_ids = set()
+    for collection in _load_collections():
+        keys = _keys(collection)
+        if "winning" in keys:
+            actual_ids.add(collection.get("id"))
+
+    assert expected_ids <= actual_ids

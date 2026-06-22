@@ -76,6 +76,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -902,6 +910,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -1664,6 +1680,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -2432,6 +2456,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -3138,7 +3170,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "César Awards",
+        "label": "C\u00e9sar Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -3194,6 +3226,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -3302,23 +3342,23 @@
           },
           {
             "key": "use_best",
-            "label": "César Best Film Winners",
-            "tooltip": "Collection of César Award Winners.",
+            "label": "C\u00e9sar Best Film Winners",
+            "tooltip": "Collection of C\u00e9sar Award Winners.",
             "type": "toggle",
             "default": true
           },
           {
             "key": "name_best",
-            "label": "César Best Film Winners Name",
+            "label": "C\u00e9sar Best Film Winners Name",
             "type": "text_input",
-            "tooltip": "Override the collection name for the César Best Film Winners collection. Leave blank to inherit the family Name Format value.",
+            "tooltip": "Override the collection name for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Name Format value.",
             "placeholder": "Custom collection name format"
           },
           {
             "key": "summary_best",
-            "label": "César Best Film Winners Summary",
+            "label": "C\u00e9sar Best Film Winners Summary",
             "type": "text_input",
-            "tooltip": "Override the collection summary for the César Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
+            "tooltip": "Override the collection summary for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
             "placeholder": "Custom collection summary format"
           },
           {
@@ -3516,9 +3556,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "César Best Film Winners Visible Home",
+            "label": "C\u00e9sar Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3526,9 +3566,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "César Best Film Winners Visible Library",
+            "label": "C\u00e9sar Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3536,9 +3576,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "César Best Film Winners Visible Shared",
+            "label": "C\u00e9sar Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3960,6 +4000,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -4831,6 +4879,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -5696,6 +5752,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -6628,6 +6692,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -7390,6 +7462,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -8156,6 +8236,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -9026,6 +9114,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -9788,6 +9884,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
@@ -10556,6 +10660,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -11321,6 +11433,14 @@
             "tooltip_variant": "info"
           },
           {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",
@@ -12083,6 +12203,14 @@
             "type": "toggle",
             "default": true,
             "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
+            "key": "winning",
+            "label": "Winning Only",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Keep enabled to limit this award default to winning titles only. Turn it off to allow non-winning nominees or related award entries when the underlying default supports them.",
             "tooltip_variant": "info"
           },
           {
