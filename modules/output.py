@@ -2472,7 +2472,9 @@ def build_libraries_section(
         template_data = templates.get(template_key, {})
 
         sep_color_key = None
-        placeholder_key = None
+        placeholder_imdb_key = None
+        placeholder_tmdb_movie_key = None
+        placeholder_tvdb_show_key = None
         language_key = None
         collection_mode_key = None
 
@@ -2480,14 +2482,20 @@ def build_libraries_section(
             if key.endswith("-template_variables[use_separator]") and key.startswith(f"{library_type}-library_{template_key}"):
                 sep_color_key = key
             if key.endswith("-attribute_template_variables[placeholder_imdb_id]") and key.startswith(f"{library_type}-library_{template_key}"):
-                placeholder_key = key
+                placeholder_imdb_key = key
+            if key.endswith("-attribute_template_variables[placeholder_tmdb_movie]") and key.startswith(f"{library_type}-library_{template_key}"):
+                placeholder_tmdb_movie_key = key
+            if key.endswith("-attribute_template_variables[placeholder_tvdb_show]") and key.startswith(f"{library_type}-library_{template_key}"):
+                placeholder_tvdb_show_key = key
             if key.endswith("-template_variables[language]") and key.startswith(f"{library_type}-library_{template_key}"):
                 language_key = key
             if key.endswith("-template_variables[collection_mode]") and key.startswith(f"{library_type}-library_{template_key}"):
                 collection_mode_key = key
 
         sep_color = template_data.get(sep_color_key)
-        placeholder_id = template_data.get(placeholder_key)
+        placeholder_imdb_id = template_data.get(placeholder_imdb_key)
+        placeholder_tmdb_movie = template_data.get(placeholder_tmdb_movie_key)
+        placeholder_tvdb_show = template_data.get(placeholder_tvdb_show_key)
         language_value = template_data.get(language_key)
         collection_mode_value = template_data.get(collection_mode_key)
 
@@ -2496,8 +2504,16 @@ def build_libraries_section(
         if sep_color:
             template_vars["sep_style"] = sep_color
 
-        if placeholder_id:
-            template_vars["placeholder_imdb_id"] = placeholder_id
+        if library_type == "mov":
+            if placeholder_tmdb_movie:
+                template_vars["placeholder_tmdb_movie"] = placeholder_tmdb_movie
+            elif placeholder_imdb_id:
+                template_vars["placeholder_imdb_id"] = placeholder_imdb_id
+        else:
+            if placeholder_tvdb_show:
+                template_vars["placeholder_tvdb_show"] = placeholder_tvdb_show
+            elif placeholder_imdb_id:
+                template_vars["placeholder_imdb_id"] = placeholder_imdb_id
 
         if language_value:
             template_vars["language"] = language_value

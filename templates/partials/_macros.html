@@ -338,34 +338,110 @@ prefix if yml_location == "top_level" else
     </div>
 </div>
 
-{# IMDb placeholder dropdown (conditionally shown with JS) #}
+{# Separator placeholder controls (conditionally shown with JS) #}
 {% if prefix == "use_separator" %}
-{% set imdb_select_name = library.id ~ "-attribute_template_variables[placeholder_imdb_id]" %}
-{% set imdb_select_id = imdb_select_name.replace("[", "_").replace("]", "") %}
-{% set imdb_data = data.libraries.get(imdb_select_name, "") %}
-<div class="row mt-2 imdb-placeholder-wrapper visually-hidden" data-library-id="{{ library.name }}"
-    data-library-type="{{ 'movie' if library.id.startswith('mov-') else 'show' }}">
-    <div class="col-md-6">
+{% set library_media_type = 'movie' if library.id.startswith('mov-') else 'show' %}
+{% set source_select_id = library.id ~ "-attribute_template_variables_placeholder_source" %}
+{% set imdb_name = library.id ~ "-attribute_template_variables[placeholder_imdb_id]" %}
+{% set imdb_id = imdb_name.replace("[", "_").replace("]", "") %}
+{% set imdb_data = data.libraries.get(imdb_name, "") %}
+{% set tmdb_name = library.id ~ "-attribute_template_variables[placeholder_tmdb_movie]" %}
+{% set tmdb_id = tmdb_name.replace("[", "_").replace("]", "") %}
+{% set tmdb_data = data.libraries.get(tmdb_name, "") %}
+{% set tvdb_name = library.id ~ "-attribute_template_variables[placeholder_tvdb_show]" %}
+{% set tvdb_id = tvdb_name.replace("[", "_").replace("]", "") %}
+{% set tvdb_data = data.libraries.get(tvdb_name, "") %}
+{% if library_media_type == 'movie' and tmdb_data %}
+{% set active_source = 'tmdb_movie' %}
+{% elif library_media_type == 'show' and tvdb_data %}
+{% set active_source = 'tvdb_show' %}
+{% elif imdb_data %}
+{% set active_source = 'imdb' %}
+{% else %}
+{% set active_source = 'imdb' %}
+{% endif %}
+<div class="row mt-2 separator-placeholder-wrapper visually-hidden"
+    data-separator-placeholder-wrapper="true"
+    data-library-id="{{ library.name }}"
+    data-library-prefix="{{ library.id }}"
+    data-library-type="{{ library_media_type }}">
+    <div class="col-12 col-xl-5">
         <div class="input-group mb-2">
-            <span class="input-group-text" id="{{ imdb_select_id }}_text">
+            <span class="input-group-text" id="{{ source_select_id }}_text">
                 <a href="https://kometa.wiki/en/nightly/defaults/separators/#important-note" target="_blank"
-                    rel="noopener noreferrer">Placeholder IMDb ID</a>
+                    rel="noopener noreferrer">Placeholder Source</a>
                 <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
-                    title="Choose an item to use as the placeholder for the Separator.">
+                    title="Choose exactly one placeholder source for separators in this library.">
                     <i
                         class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                 </span>
             </span>
-            <select class="form-select placeholder-imdb-dropdown" id="{{ imdb_select_id }}"
-                name="{{ imdb_select_name }}" aria-describedby="{{ imdb_select_id }}_text"
-                data-library-id="{{ library.name }}"
-                data-library-type="{{ 'movie' if library.id.startswith('mov-') else 'show' }}">
-                <option value="">None</option>
-                {% if imdb_data %}
-                <option selected value="{{ imdb_data }}">{{ imdb_data }}</option>
+            <select class="form-select separator-placeholder-source" id="{{ source_select_id }}"
+                aria-describedby="{{ source_select_id }}_text"
+                data-default="imdb"
+                data-library-type="{{ library_media_type }}"
+                data-active-source="{{ active_source }}">
+                <option value="imdb" {% if active_source == 'imdb' %}selected{% endif %}>IMDb ID</option>
+                {% if library_media_type == 'movie' %}
+                <option value="tmdb_movie" {% if active_source == 'tmdb_movie' %}selected{% endif %}>TMDb Movie ID</option>
+                {% else %}
+                <option value="tvdb_show" {% if active_source == 'tvdb_show' %}selected{% endif %}>TVDb Show ID</option>
                 {% endif %}
             </select>
         </div>
+    </div>
+    <div class="col-12 col-xl-7">
+        <div class="input-group mb-2 separator-placeholder-field" data-placeholder-source="imdb">
+            <span class="input-group-text" id="{{ imdb_id }}_text">
+                <a href="https://kometa.wiki/en/nightly/defaults/separators/#important-note" target="_blank"
+                    rel="noopener noreferrer">Placeholder IMDb ID</a>
+            </span>
+            <input type="text" class="form-control" id="{{ imdb_id }}" name="{{ imdb_name }}"
+                value="{{ imdb_data | default('', true) }}"
+                data-default=""
+                data-separator-placeholder-input="imdb"
+                aria-describedby="{{ imdb_id }}_text"
+                placeholder="tt1234567"
+                pattern="tt\d{7,8}"
+                title="IMDb IDs must look like tt1234567"
+                inputmode="text"
+                autocapitalize="off">
+        </div>
+        {% if library_media_type == 'movie' %}
+        <div class="input-group mb-2 separator-placeholder-field d-none" data-placeholder-source="tmdb_movie">
+            <span class="input-group-text" id="{{ tmdb_id }}_text">
+                <a href="https://kometa.wiki/en/nightly/defaults/separators/#important-note" target="_blank"
+                    rel="noopener noreferrer">Placeholder TMDb Movie ID</a>
+            </span>
+            <input type="text" class="form-control" id="{{ tmdb_id }}" name="{{ tmdb_name }}"
+                value="{{ tmdb_data | default('', true) }}"
+                data-default=""
+                data-separator-placeholder-input="tmdb_movie"
+                aria-describedby="{{ tmdb_id }}_text"
+                placeholder="603"
+                pattern="\d+"
+                title="TMDb movie IDs must be numeric"
+                inputmode="numeric"
+                data-numeric-only="true">
+        </div>
+        {% else %}
+        <div class="input-group mb-2 separator-placeholder-field d-none" data-placeholder-source="tvdb_show">
+            <span class="input-group-text" id="{{ tvdb_id }}_text">
+                <a href="https://kometa.wiki/en/nightly/defaults/separators/#important-note" target="_blank"
+                    rel="noopener noreferrer">Placeholder TVDb Show ID</a>
+            </span>
+            <input type="text" class="form-control" id="{{ tvdb_id }}" name="{{ tvdb_name }}"
+                value="{{ tvdb_data | default('', true) }}"
+                data-default=""
+                data-separator-placeholder-input="tvdb_show"
+                aria-describedby="{{ tvdb_id }}_text"
+                placeholder="121361"
+                pattern="\d+"
+                title="TVDb show IDs must be numeric"
+                inputmode="numeric"
+                data-numeric-only="true">
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}

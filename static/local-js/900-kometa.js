@@ -3329,7 +3329,7 @@ $(document).ready(function () {
     no_libraries: 'No libraries selected',
     invalid_paths: 'Invalid paths',
     missing_library_defaults: 'Missing library defaults',
-    missing_placeholder_imdb: 'Missing placeholder IMDb ID',
+    missing_separator_placeholder: 'Missing separator placeholder',
     invalid_fields: 'Invalid fields',
     no_webhooks: 'No webhooks configured',
     disabled: 'Disabled',

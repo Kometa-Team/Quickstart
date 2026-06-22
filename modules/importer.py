@@ -534,7 +534,14 @@ def _build_attribute_sets(
     template_var_keys = set()
     simple_attribute_keys = set()
     top_level_map: dict[str, str] = {}
-    special_template_vars = {"placeholder_imdb_id", "sep_style", "collection_mode", "use_separator"}
+    special_template_vars = {
+        "placeholder_imdb_id",
+        "placeholder_tmdb_movie",
+        "placeholder_tvdb_show",
+        "sep_style",
+        "collection_mode",
+        "use_separator",
+    }
     simple_types = {"boolean_toggle", "select", "text_input", "number"}
     mass_update_defs: dict[str, dict] = {}
     toggle_select_defs: dict[str, dict] = {}
@@ -1326,7 +1333,7 @@ def prepare_import_payload(
             if isinstance(lib_template_vars, dict):
                 for key, value in lib_template_vars.items():
                     if key in template_vars or key in special_template_vars:
-                        if key == "placeholder_imdb_id":
+                        if key in {"placeholder_imdb_id", "placeholder_tmdb_movie", "placeholder_tvdb_show"}:
                             name = f"{lib_id}-attribute_template_variables[{key}]"
                             libraries_data[name] = value
                         elif key == "sep_style":

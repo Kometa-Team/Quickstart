@@ -90,3 +90,27 @@ def test_prepare_import_payload_maps_library_auto_sort_hubs():
     libraries = payload["libraries"]["libraries"]
     assert libraries["mov-library_movies-top_level_auto_sort_hubs"] == "configured.desc"
     assert any("libraries.Movies.auto_sort_hubs" in line for line in report.lines)
+
+
+def test_prepare_import_payload_maps_movie_separator_placeholder_tmdb_movie():
+    payload, report = importer.prepare_import_payload(
+        {"libraries": {"Movies": {"template_variables": {"placeholder_tmdb_movie": 603}}}},
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-attribute_template_variables[placeholder_tmdb_movie]"] == 603
+    assert any("libraries.Movies.template_variables.placeholder_tmdb_movie" in line for line in report.lines)
+
+
+def test_prepare_import_payload_maps_show_separator_placeholder_tvdb_show():
+    payload, report = importer.prepare_import_payload(
+        {"libraries": {"Shows": {"template_variables": {"placeholder_tvdb_show": 121361}}}},
+        set(),
+        {"Shows"},
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["sho-library_shows-attribute_template_variables[placeholder_tvdb_show]"] == 121361
+    assert any("libraries.Shows.template_variables.placeholder_tvdb_show" in line for line in report.lines)

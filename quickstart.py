@@ -170,7 +170,7 @@ VALIDATION_REASON_LABELS = {
     "invalid_paths": "Invalid paths",
     "invalid_arr_overrides": "Invalid Arr overrides",
     "missing_library_defaults": "Missing library defaults",
-    "missing_placeholder_imdb": "Missing placeholder IMDb ID",
+    "missing_separator_placeholder": "Missing separator placeholder",
     "invalid_metadata_files": "Invalid metadata files",
     "invalid_collection_files": "Invalid collection files",
     "invalid_overlay_files": "Invalid overlay files",
@@ -416,7 +416,7 @@ QS_ERROR_REASONS = {
     "invalid_fields",
     "invalid_metadata_files",
     "missing_library_defaults",
-    "missing_placeholder_imdb",
+    "missing_separator_placeholder",
 }
 LIBRARY_RADARR_FIELDS = [
     "url",
@@ -10484,11 +10484,29 @@ def validate_all_services():
                         use_separator = find_library_value(lib_id, ["template_variables[use_separator]", "attribute_use_separator"])
                         if is_blank_value(use_separator) or str(use_separator).strip().lower() == "none":
                             continue
-                        placeholder = find_library_value(lib_id, ["attribute_template_variables[placeholder_imdb_id]", "template_variables[placeholder_imdb_id]"])
+                        placeholder_keys = [
+                            "attribute_template_variables[placeholder_imdb_id]",
+                            "template_variables[placeholder_imdb_id]",
+                        ]
+                        if str(lib_id).startswith("mov-"):
+                            placeholder_keys.extend(
+                                [
+                                    "attribute_template_variables[placeholder_tmdb_movie]",
+                                    "template_variables[placeholder_tmdb_movie]",
+                                ]
+                            )
+                        else:
+                            placeholder_keys.extend(
+                                [
+                                    "attribute_template_variables[placeholder_tvdb_show]",
+                                    "template_variables[placeholder_tvdb_show]",
+                                ]
+                            )
+                        placeholder = find_library_value(lib_id, placeholder_keys)
                         if is_blank_value(placeholder):
                             missing_placeholders.append(library_names.get(lib_id, lib_id))
                 if libraries_reason is None and missing_placeholders:
-                    libraries_reason = "missing_placeholder_imdb"
+                    libraries_reason = "missing_separator_placeholder"
 
                 if libraries_reason is None:
                     for lib_id in selected_library_ids:
@@ -10505,7 +10523,7 @@ def validate_all_services():
                 reason=libraries_reason,
                 details=(
                     missing_placeholders
-                    if libraries_reason == "missing_placeholder_imdb"
+                    if libraries_reason == "missing_separator_placeholder"
                     else arr_override_errors if libraries_reason == "invalid_arr_overrides" else auto_sort_hubs_errors if libraries_reason == "invalid_library_settings" else None
                 ),
             )
@@ -10659,7 +10677,7 @@ def validate_all_services():
         "invalid_paths": "Invalid paths",
         "invalid_arr_overrides": "Invalid Arr overrides",
         "missing_library_defaults": "Missing library defaults",
-        "missing_placeholder_imdb": "Missing placeholder IMDb ID",
+        "missing_separator_placeholder": "Missing separator placeholder",
         "invalid_fields": "Invalid fields",
         "no_webhooks": "No webhooks configured",
         "disabled": "Disabled",

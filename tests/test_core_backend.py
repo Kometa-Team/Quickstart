@@ -3913,6 +3913,76 @@ def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
     assert template_variables["collection_mode"] == "hide"
 
 
+def test_build_libraries_section_includes_separator_placeholder_tmdb_movie(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-template_variables[use_separator]": "gray",
+                    "mov-library_movies-attribute_template_variables[placeholder_tmdb_movie]": "603",
+                    "mov-library_movies-template_variables[language]": "en",
+                }
+            },
+            {},
+            {},
+            {},
+        )
+
+    template_variables = libraries_section["libraries"]["Movies"]["template_variables"]
+    assert template_variables["sep_style"] == "gray"
+    assert template_variables["placeholder_tmdb_movie"] == "603"
+    assert "placeholder_imdb_id" not in template_variables
+
+
+def test_build_libraries_section_includes_separator_placeholder_tvdb_show(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {},
+            {"sho-library_shows-library": "Shows"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "shows": {
+                    "sho-library_shows-template_variables[use_separator]": "gray",
+                    "sho-library_shows-attribute_template_variables[placeholder_tvdb_show]": "121361",
+                    "sho-library_shows-template_variables[language]": "en",
+                }
+            },
+            {},
+            {},
+        )
+
+    template_variables = libraries_section["libraries"]["Shows"]["template_variables"]
+    assert template_variables["sep_style"] == "gray"
+    assert template_variables["placeholder_tvdb_show"] == "121361"
+    assert "placeholder_imdb_id" not in template_variables
+
+
 def test_reorder_library_section_keeps_settings_and_operations_before_library_files():
     from modules import output
 

@@ -17,7 +17,7 @@ const OverlayHandler = {
         const selectedStyle = separatorDropdown.value !== 'none'
         OverlayHandler.updateSeparatorToggles(libraryId, selectedStyle)
         OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
-        OverlayHandler.toggleImdbPlaceholder(libraryId, isMovie ? 'movie' : 'show', selectedStyle)
+        OverlayHandler.toggleSeparatorPlaceholder(libraryId, selectedStyle)
         OverlayHandler.updateHiddenInputs(libraryId, isMovie)
         EventHandler.updateAccordionHighlights()
       })
@@ -28,9 +28,20 @@ const OverlayHandler = {
       const initialSelected = separatorDropdown.value !== 'none'
       OverlayHandler.updateSeparatorToggles(libraryId, initialSelected)
       OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
-      OverlayHandler.toggleImdbPlaceholder(libraryId, isMovie ? 'movie' : 'show', initialSelected)
+      OverlayHandler.toggleSeparatorPlaceholder(libraryId, initialSelected)
       OverlayHandler.updateHiddenInputs(libraryId, isMovie)
       EventHandler.updateAccordionHighlights()
+    }
+
+    const placeholderWrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
+    const sourceSelect = placeholderWrapper?.querySelector('.separator-placeholder-source')
+    if (sourceSelect && !sourceSelect.dataset.listenerAdded) {
+      sourceSelect.addEventListener('change', () => {
+        const separatorsEnabled = separatorDropdown ? separatorDropdown.value !== 'none' : true
+        OverlayHandler.syncSeparatorPlaceholderFields(placeholderWrapper, { show: separatorsEnabled })
+        EventHandler.updateAccordionHighlights()
+      })
+      sourceSelect.dataset.listenerAdded = 'true'
     }
   },
 
@@ -100,14 +111,10 @@ const OverlayHandler = {
     const selectedValue = useSeparatorsDropdown.value
     const isEnabled = selectedValue !== 'none'
 
-    // Clear IMDb placeholder selection if separator is disabled
+    // Clear separator placeholder values if separator is disabled
     if (!isEnabled) {
-      const imdbDropdown = document.querySelector(`#${libraryId}-attribute_template_variables_placeholder_imdb_id`)
-      if (imdbDropdown) {
-        imdbDropdown.value = ''
-        const optionsToRemove = [...imdbDropdown.options].slice(1) // skip the first option
-        optionsToRemove.forEach(opt => imdbDropdown.remove(opt.index))
-      }
+      const placeholderWrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
+      OverlayHandler.syncSeparatorPlaceholderFields(placeholderWrapper, { show: false })
     }
 
     // Create hidden inputs dynamically if missing
@@ -144,72 +151,53 @@ const OverlayHandler = {
     OverlayHandler.updateSeparatorPreview(fieldId, selectedValue)
   },
 
-  toggleImdbPlaceholder: function (libraryId, mediaType, show) {
-    const dropdown = document.getElementById(`${libraryId}-attribute_template_variables_placeholder_imdb_id`)
-    if (!dropdown) {
-      console.error(`[ERROR] IMDb dropdown not found for libraryId: ${libraryId}`)
-      return
-    }
-
-    const libraryName = dropdown.dataset.libraryId
-    const imdbBlock = document.querySelector(`.imdb-placeholder-wrapper[data-library-id="${libraryName}"]`)
-    if (!imdbBlock) {
-      console.error(`[ERROR] IMDb block not found for libraryName: ${libraryName}`)
-      return
-    }
-
-    if (show) {
-      imdbBlock.classList.remove('visually-hidden')
-      const currentValue = dropdown.value
-      OverlayHandler.populateImdbDropdown(dropdown, libraryName, mediaType, currentValue)
-    } else {
-      imdbBlock.classList.add('visually-hidden')
-    }
+  getSeparatorPlaceholderWrapper: function (libraryId) {
+    return document.querySelector(`[data-separator-placeholder-wrapper="true"][data-library-prefix="${libraryId}"]`)
   },
 
-  populateImdbDropdown: function (dropdown, libraryName, mediaType, placeholderId = '') {
-    console.log(`[DEBUG] Fetching top IMDb items for "${libraryName}" (type=${mediaType})`)
+  syncSeparatorPlaceholderFields: function (wrapper, options = {}) {
+    if (!wrapper) return
 
-    const url = `/get_top_imdb_items/${encodeURIComponent(libraryName)}?type=${mediaType}` + (placeholderId ? `&placeholder_id=${placeholderId}` : '')
+    const show = options.show !== false
+    const libraryType = String(wrapper.dataset.libraryType || '').trim().toLowerCase()
+    const allowedSources = libraryType === 'movie' ? ['imdb', 'tmdb_movie'] : ['imdb', 'tvdb_show']
+    const sourceSelect = wrapper.querySelector('.separator-placeholder-source')
+    const fieldInputs = Array.from(wrapper.querySelectorAll('[data-separator-placeholder-input]'))
+    if (!sourceSelect || !fieldInputs.length) return
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') {
-          // Clear existing options
-          dropdown.replaceChildren()
+    const valueBySource = {}
+    fieldInputs.forEach(input => {
+      valueBySource[input.dataset.separatorPlaceholderInput] = String(input.value || '').trim()
+      input.classList.remove('is-invalid')
+    })
 
-          // Add "None" option
-          const noneOption = document.createElement('option')
-          noneOption.value = ''
-          noneOption.textContent = 'None'
-          dropdown.appendChild(noneOption)
+    let activeSource = String(sourceSelect.value || '').trim()
+    if (!allowedSources.includes(activeSource)) {
+      activeSource = allowedSources.find(source => valueBySource[source]) || 'imdb'
+    }
+    sourceSelect.value = activeSource
+    sourceSelect.disabled = !show
+    sourceSelect.classList.remove('is-invalid')
+    wrapper.classList.toggle('visually-hidden', !show)
 
-          // Add items
-          data.items.forEach(item => {
-            const option = document.createElement('option')
-            option.value = item.id
-            option.textContent = `${item.title} (${item.id})`
-            dropdown.appendChild(option)
-          })
+    fieldInputs.forEach(input => {
+      const source = String(input.dataset.separatorPlaceholderInput || '').trim()
+      const fieldGroup = input.closest('.separator-placeholder-field')
+      const isActive = show && source === activeSource
+      if (fieldGroup) fieldGroup.classList.toggle('d-none', !isActive)
+      if (!isActive) {
+        input.value = ''
+      }
+    })
+  },
 
-          // Insert saved placeholder item if returned separately
-          if (data.saved_item) {
-            const savedOption = document.createElement('option')
-            savedOption.value = data.saved_item.id
-            savedOption.textContent = `${data.saved_item.title} (${data.saved_item.id}) (Not in Top 25)`
-            dropdown.appendChild(savedOption)
-          }
-
-          // Restore previous selection
-          dropdown.value = placeholderId || ''
-        } else {
-          console.warn('Failed to load IMDb titles for', libraryName, data.message)
-        }
-      })
-      .catch(err => {
-        console.error('IMDb fetch failed for', libraryName, err)
-      })
+  toggleSeparatorPlaceholder: function (libraryId, show) {
+    const wrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
+    if (!wrapper) {
+      console.error(`[ERROR] Separator placeholder block not found for libraryId: ${libraryId}`)
+      return
+    }
+    OverlayHandler.syncSeparatorPlaceholderFields(wrapper, { show })
   },
 
   /**
@@ -4988,25 +4976,24 @@ const OverlayHandler = {
 }
 
 function bootstrapOverlayHandler () {
-  const imdbDropdowns = document.querySelectorAll('.placeholder-imdb-dropdown')
+  const separatorPlaceholders = document.querySelectorAll('[data-separator-placeholder-wrapper="true"]')
 
-  imdbDropdowns.forEach(dropdown => {
-    const libraryId = dropdown.id.split('-attribute_template_variables')[0]
-    const isMovie = dropdown.dataset.libraryType === 'movie'
-    const libraryName = dropdown.dataset.libraryId
+  separatorPlaceholders.forEach(wrapper => {
+    const libraryId = String(wrapper.dataset.libraryPrefix || '').trim()
+    const isMovie = wrapper.dataset.libraryType === 'movie'
+    if (!libraryId) return
 
     // 1. Initialize overlay dropdowns and separator preview
     OverlayHandler.initializeOverlays(libraryId, isMovie)
-
-    // 2. Populate IMDb dropdown options
-    const currentValue = dropdown.value
-    OverlayHandler.populateImdbDropdown(dropdown, libraryName, isMovie ? 'movie' : 'show', currentValue)
+    OverlayHandler.syncSeparatorPlaceholderFields(wrapper, {
+      show: String(document.querySelector(`[name="${libraryId}-template_variables[use_separator]"]`)?.value || '').trim() !== 'none'
+    })
   })
 
-  // 3. Sync parent/child toggle checked state
+  // 2. Sync parent/child toggle checked state
   setupParentChildToggleSync()
 
-  // 4. Toggle child wrapper visibility for both collections and overlays
+  // 3. Toggle child wrapper visibility for both collections and overlays
   document.querySelectorAll('input[data-template-group]').forEach(parent => {
     const parentId = parent.id
     const childWrapper = document.querySelector(`.child-toggle-wrapper[data-toggle-parent="${parentId}"]`)
@@ -5021,7 +5008,7 @@ function bootstrapOverlayHandler () {
     })
   })
 
-  // 5. Initialize overlay previews (combined + per-overlay)
+  // 4. Initialize overlay previews (combined + per-overlay)
   OverlayHandler.initializeOverlayBoards()
   OverlayHandler.initializeOverlayPositioners()
   OverlayHandler.initializeJumpButtons()
