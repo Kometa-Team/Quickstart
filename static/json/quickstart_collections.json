@@ -12078,6 +12078,14 @@
             "placeholder": "Custom dynamic collection title format"
           },
           {
+            "key": "use_year_collections",
+            "label": "Use Year Collections",
+            "type": "toggle",
+            "default": true,
+            "tooltip": "Leave enabled to create the individual year collections for this award default. Turn it off to keep only the main award collections.",
+            "tooltip_variant": "info"
+          },
+          {
             "key": "data_starting",
             "label": "Data Starting",
             "type": "relative_year",

@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
+AWARD_DEFAULTS_ROOT = ROOT / "config" / "kometa" / "defaults" / "award"
 
 
 def _load_collections():
@@ -152,3 +153,20 @@ def test_year_collections_master_toggle_does_not_get_fake_child_name_or_summary_
 
         assert "name_year_collections" not in keys
         assert "summary_year_collections" not in keys
+
+
+def test_award_defaults_with_year_dynamic_support_expose_use_year_collections():
+    expected_ids = set()
+    for path in sorted(AWARD_DEFAULTS_ROOT.glob("*.yml")):
+        text = path.read_text(encoding="utf-8")
+        if "use_year_collections" not in text:
+            continue
+        expected_ids.add(f"collection_{path.stem}")
+
+    actual_ids = set()
+    for collection in _load_collections():
+        keys = _keys(collection)
+        if "use_year_collections" in keys:
+            actual_ids.add(collection.get("id"))
+
+    assert expected_ids <= actual_ids
