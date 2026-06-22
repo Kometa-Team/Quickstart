@@ -10,16 +10,30 @@ _LOADED = {}
 
 def _seed_schema_files(config_dir):
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    schema_root = os.path.join(repo_root, "config", ".schema")
+    # `config/.schema` is a gitignored local cache that the app populates at runtime by
+    # downloading from GitHub. It won't exist on a fresh checkout (e.g. CI), so fall back
+    # to the checked-in fixtures in tests/fixtures/schema to keep tests reproducible offline.
+    schema_roots = [
+        os.path.join(repo_root, "config", ".schema"),
+        os.path.join(os.path.dirname(__file__), "fixtures", "schema"),
+    ]
     target_schema_root = os.path.join(str(config_dir), ".schema")
     os.makedirs(target_schema_root, exist_ok=True)
-    for current_root, _dirs, files in os.walk(schema_root):
-        rel_root = os.path.relpath(current_root, schema_root)
-        target_root = target_schema_root if rel_root == "." else os.path.join(target_schema_root, rel_root)
-        os.makedirs(target_root, exist_ok=True)
-        for name in files:
-            source = os.path.join(current_root, name)
-            shutil.copy2(source, os.path.join(target_root, name))
+    copied = set()
+    for schema_root in schema_roots:
+        if not os.path.isdir(schema_root):
+            continue
+        for current_root, _dirs, files in os.walk(schema_root):
+            rel_root = os.path.relpath(current_root, schema_root)
+            target_root = target_schema_root if rel_root == "." else os.path.join(target_schema_root, rel_root)
+            for name in files:
+                rel_name = name if rel_root == "." else os.path.join(rel_root, name)
+                if rel_name in copied:
+                    continue
+                os.makedirs(target_root, exist_ok=True)
+                source = os.path.join(current_root, name)
+                shutil.copy2(source, os.path.join(target_root, name))
+                copied.add(rel_name)
 
 
 def _load_app(config_dir, kometa_root):
