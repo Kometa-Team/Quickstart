@@ -111,6 +111,45 @@ def utc_now_iso():
     return datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
 
 
+def safe_rel_path(raw_path: str | None, allow_subdirs: bool = False) -> str | None:
+    if not isinstance(raw_path, str):
+        return None
+    raw_path = raw_path.strip()
+    if not raw_path:
+        return None
+    if "\x00" in raw_path:
+        return None
+
+    drive, _ = os.path.splitdrive(raw_path)
+    if drive:
+        return None
+    if os.path.isabs(raw_path):
+        return None
+
+    normalized = os.path.normpath(raw_path)
+    if normalized in (".", ""):
+        return None
+    if normalized.startswith("..") or normalized.startswith("../") or normalized.startswith("..\\"):
+        return None
+    if not allow_subdirs and ("/" in normalized or "\\" in normalized):
+        return None
+
+    return normalized
+
+
+def safe_join(base_dir: str | Path, raw_path: str | None, allow_subdirs: bool = False) -> Path | None:
+    rel = safe_rel_path(raw_path, allow_subdirs=allow_subdirs)
+    if not rel:
+        return None
+    try:
+        base = Path(base_dir).resolve()
+        candidate = (base / rel).resolve()
+        candidate.relative_to(base)
+        return candidate
+    except Exception:
+        return None
+
+
 def detect_git_branch(repo_root=None, default="develop"):
     root = Path(repo_root or get_app_root()).resolve()
 

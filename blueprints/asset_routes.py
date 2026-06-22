@@ -1,0 +1,540 @@
+import hashlib
+import os
+import time
+from io import BytesIO
+from urllib.parse import urlparse
+
+import requests
+from flask import Blueprint, abort, has_request_context, jsonify, request, send_file, send_from_directory, session
+from PIL import Image, ImageColor, ImageDraw, ImageFont
+from werkzeug.utils import secure_filename
+
+from modules import assets, helpers, url_validation
+
+bp = Blueprint("asset_routes", __name__)
+
+
+@bp.route("/upload_library_image", methods=["POST"])
+def upload_library_image():
+    if "image" not in request.files:
+        return jsonify({"status": "error", "message": "No image uploaded"}), 400
+    image = request.files["image"]
+    image_type = request.form.get("type")
+
+    if not image or image_type not in assets.UPLOAD_FOLDERS:
+        return (
+            jsonify({"status": "error", "message": "Invalid request parameters"}),
+            400,
+        )
+
+    # Validate extension
+    filename = secure_filename(image.filename)
+    ext = filename.rsplit(".", 1)[-1].lower()
+    if ext not in helpers.ALLOWED_EXTENSIONS:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": f"Invalid file type. Allowed: {helpers.allowed_extensions_string()}",
+                }
+            ),
+            400,
+        )
+
+    # Open and validate image
+    img = Image.open(image)
+    aspect_ratio = "16:9" if image_type == "episode" else "2:3"
+    if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
+        message = "Image must have a 16:9 aspect ratio (e.g., 1920x1080)." if image_type == "episode" else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
+        return jsonify({"status": "error", "message": message}), 400
+
+    # Resize to target size
+    target_size = (1920, 1080) if image_type == "episode" else (1000, 1500)
+    img = img.resize(target_size, Image.LANCZOS)
+
+    # Save image
+    save_folder = assets.UPLOAD_FOLDERS[image_type]
+    os.makedirs(save_folder, exist_ok=True)
+    save_path = os.path.join(save_folder, filename)
+    base, ext = os.path.splitext(filename)
+    counter = 1
+    while os.path.exists(save_path):
+        filename = f"{base}_{counter}{ext}"
+        save_path = os.path.join(save_folder, filename)
+        counter += 1
+    img.save(save_path)
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"Image uploaded and saved as {filename}",
+            "filename": filename,
+        }
+    )
+
+
+@bp.route("/upload-fonts", methods=["POST"])
+def upload_fonts():
+    files = request.files.getlist("fonts")
+    if not files:
+        return jsonify({"status": "error", "message": "No fonts uploaded"}), 400
+
+    config_name = (request.form.get("config_name") or session.get("config_name") or "").strip()
+    fonts_dir = helpers.get_custom_fonts_dir(config_name or None)
+
+    os.makedirs(fonts_dir, exist_ok=True)
+    saved = []
+    errors = []
+
+    for font_file in files:
+        if not font_file or not font_file.filename:
+            continue
+        filename = secure_filename(font_file.filename)
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in helpers.FONT_EXTENSIONS:
+            errors.append(f"Invalid font type: {filename}")
+            continue
+        save_path = os.path.join(str(fonts_dir), filename)
+        font_file.save(save_path)
+        saved.append(filename)
+
+    if saved:
+        assets.clear_font_cache()
+
+    if not saved:
+        return jsonify({"status": "error", "message": "No valid fonts uploaded.", "errors": errors}), 400
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"Uploaded {len(saved)} font(s).",
+            "saved": saved,
+            "errors": errors,
+            "fonts": assets.list_overlay_fonts(),
+        }
+    )
+
+
+@bp.route("/custom-fonts/<path:filename>", methods=["GET"])
+def custom_fonts(filename):
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        abort(404)
+    if not safe_name.lower().endswith((".ttf", ".otf")):
+        abort(404)
+
+    current_config = session.get("config_name") if has_request_context() else None
+    for fdir in helpers.get_font_dirs(include_static=True, include_custom=True, config_name=current_config):
+        candidate = os.path.join(str(fdir), safe_name)
+        if os.path.exists(candidate):
+            return send_from_directory(str(fdir), safe_name)
+
+    abort(404)
+
+
+@bp.route("/fetch_library_image", methods=["POST"])
+def fetch_library_image():
+    data = request.json
+    image_url = data.get("url")
+    image_type = data.get("type")
+
+    if not image_url or image_type not in assets.UPLOAD_FOLDERS:
+        return (
+            jsonify({"status": "error", "message": "Invalid request parameters"}),
+            400,
+        )
+
+    valid_url, url_message = url_validation.validate_url(image_url, allow_local=False)
+    if not valid_url:
+        return (
+            jsonify({"status": "error", "message": f"Invalid image URL: {url_message}"}),
+            400,
+        )
+
+    try:
+        response = requests.get(image_url, stream=True, timeout=5)
+        response.raise_for_status()
+        img = Image.open(BytesIO(response.content))
+
+        file_extension = img.format.lower()
+        if file_extension not in helpers.ALLOWED_EXTENSIONS:
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": f"Invalid file type. Allowed: {helpers.allowed_extensions_string()}",
+                    }
+                ),
+                400,
+            )
+
+        # Validate aspect ratio
+        aspect_ratio = "16:9" if image_type == "episode" else "2:3"
+        if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
+            message = "Image must have a 16:9 aspect ratio (e.g., 1920x1080)." if image_type == "episode" else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
+            return jsonify({"status": "error", "message": message}), 400
+
+        # Resize to target size
+        target_size = (1920, 1080) if image_type == "episode" else (1000, 1500)
+        img = img.resize(target_size, Image.LANCZOS)
+
+        # Generate filename
+        filename = secure_filename(os.path.basename(image_url))
+        if "." not in filename or filename.split(".")[-1].lower() not in helpers.ALLOWED_EXTENSIONS:
+            filename += ".png"
+
+        # Save image
+        save_folder = assets.UPLOAD_FOLDERS[image_type]
+        os.makedirs(save_folder, exist_ok=True)
+        save_path = os.path.join(save_folder, filename)
+        base, ext = os.path.splitext(filename)
+        counter = 1
+        while os.path.exists(save_path):
+            filename = f"{base}_{counter}{ext}"
+            save_path = os.path.join(save_folder, filename)
+            counter += 1
+        img.save(save_path)
+
+        return jsonify(
+            {
+                "status": "success",
+                "message": f"Image fetched and saved as {filename}",
+                "filename": filename,
+            }
+        )
+
+    except requests.exceptions.RequestException as e:
+        return (
+            jsonify({"status": "error", "message": f"Failed to fetch image: {str(e)}"}),
+            400,
+        )
+    except Exception as e:
+        return (
+            jsonify({"status": "error", "message": f"Processing error: {str(e)}"}),
+            400,
+        )
+
+
+@bp.route("/rename_library_image", methods=["POST"])
+def rename_library_image():
+    data = request.json
+    old_name = data.get("old_name")
+    new_name = data.get("new_name")
+    image_type = data.get("type")
+
+    if not old_name or not new_name or image_type not in assets.UPLOAD_FOLDERS:
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+
+    save_folder = assets.UPLOAD_FOLDERS[image_type]
+    old_path = helpers.safe_join(save_folder, old_name)
+    if not old_path:
+        return jsonify({"status": "error", "message": "Invalid file name"}), 400
+
+    if not old_path.exists():
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    old_ext = old_path.suffix
+    safe_new_name = str(new_name).strip()
+    if not safe_new_name:
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+    if old_ext:
+        if "." not in safe_new_name:
+            safe_new_name += old_ext
+        elif not safe_new_name.endswith(old_ext):
+            safe_new_name += old_ext
+
+    new_path = helpers.safe_join(save_folder, safe_new_name)
+    if not new_path:
+        return jsonify({"status": "error", "message": "Invalid file name"}), 400
+    if new_path.exists():
+        return (
+            jsonify({"status": "error", "message": "File with new name already exists"}),
+            400,
+        )
+
+    try:
+        os.rename(old_path, new_path)
+        return jsonify({"status": "success", "message": "File renamed successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@bp.route("/list_uploaded_images", methods=["GET"])
+def list_uploaded_images():
+    image_type = request.args.get("type")
+    if image_type not in assets.UPLOAD_FOLDERS:
+        return jsonify({"status": "error", "message": "Invalid image type"}), 400
+
+    return jsonify({"status": "success", "images": assets.list_preview_images_for_type(image_type)})
+
+
+@bp.route("/generate_preview", methods=["POST"])
+def generate_preview():
+    data = request.json
+    img_type = data.get("type", "movie")
+    selected_image = data.get("selected_image", "default.png")
+    library_id = data.get("library_id", "default-library")
+
+    # Lazy-load overlay metadata so we can honor JSON-defined URLs (e.g., edition overlays)
+    if not hasattr(generate_preview, "_overlay_meta"):
+        overlay_cfg = helpers.load_quickstart_overlay_config() or []
+        meta = {}
+        for group in overlay_cfg:
+            for ov in group.get("overlays", []):
+                ov_id = ov.get("id")
+                if ov_id:
+                    meta[ov_id] = ov
+        generate_preview._overlay_meta = meta
+    overlay_meta = getattr(generate_preview, "_overlay_meta", {})
+
+    def fetch_image_from_url(url: str) -> Image.Image | None:
+        try:
+            if not url:
+                return None
+            cache_path = None
+            try:
+                ext = os.path.splitext(urlparse(url).path)[1].lower()
+                if ext not in [".png", ".jpg", ".jpeg", ".webp"]:
+                    ext = ".png"
+                cache_key = hashlib.sha256(url.encode("utf-8")).hexdigest()
+                cache_path = os.path.join(assets.OVERLAY_CACHE_FOLDER, f"{cache_key}{ext}")
+                if os.path.exists(cache_path):
+                    age = time.time() - os.path.getmtime(cache_path)
+                    if age <= assets.OVERLAY_CACHE_TTL_SECONDS:
+                        with Image.open(cache_path) as cached_img:
+                            return cached_img.copy()
+            except Exception:
+                cache_path = None
+
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            content = resp.content
+            if cache_path:
+                try:
+                    with open(cache_path, "wb") as handle:
+                        handle.write(content)
+                except Exception as e:
+                    helpers.ts_log(f"Failed to cache overlay image {cache_path}: {e}", level="WARNING")
+            return Image.open(BytesIO(content))
+        except Exception as e:
+            helpers.ts_log(f"Failed to fetch overlay image from {url}: {e}", level="WARNING")
+            return None
+
+    # Normalize overlays from dict (by type) or flat list
+    raw_overlays = data.get("overlays", {})
+    if isinstance(raw_overlays, dict):
+        overlays = raw_overlays.get(img_type, [])
+    elif isinstance(raw_overlays, list):
+        overlays = raw_overlays
+    else:
+        overlays = []
+
+    if img_type not in ["movie", "show", "season", "episode"]:
+        return jsonify({"status": "error", "message": "Invalid type"}), 400
+
+    if not os.path.exists(assets.PREVIEW_FOLDER):
+        os.makedirs(assets.PREVIEW_FOLDER)
+
+    preview_filename = f"{library_id}-{img_type}_preview.png"
+    preview_filepath = os.path.join(assets.PREVIEW_FOLDER, preview_filename)
+
+    # Resolve base image
+    base_image_path = assets.resolve_preview_base_image_path(img_type, selected_image)
+    if not os.path.exists(base_image_path):
+        fallback_size = (1920, 1080) if img_type == "episode" else (1000, 1500)
+        base_img = Image.new("RGBA", fallback_size, (128, 128, 128, 255))
+        base_img.save(base_image_path)
+
+    if not os.path.exists(base_image_path):
+        return jsonify({"status": "error", "message": "Selected image not found."}), 400
+
+    # Open and resize base image
+    base_img = Image.open(base_image_path).convert("RGBA")
+    size = (1920, 1080) if img_type == "episode" else (1000, 1500)
+    base_img = base_img.resize(size, Image.LANCZOS)
+
+    # Determine filename prefix
+    if img_type == "movie":
+        prefix = "mov-"
+    elif img_type == "episode":
+        prefix = "epi-sho-"
+    elif img_type == "season":
+        prefix = "sho-season-"
+    elif img_type == "show":
+        prefix = "sho-"
+    else:
+        prefix = ""
+
+    def render_runtime_overlay(tv: dict, canvas_size: tuple[int, int]) -> Image.Image | None:
+        try:
+            width, height = canvas_size
+            img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(img)
+
+            prefix = str(tv.get("text", "Runtime: "))
+            fmt = str(tv.get("format", "<<runtimeH>>h <<runtimeM>>m"))
+            runtime_minutes = tv.get("runtime_minutes", 93)
+            try:
+                runtime_minutes = int(runtime_minutes)
+            except Exception:
+                runtime_minutes = 93
+            runtime_h = runtime_minutes // 60
+            runtime_m = runtime_minutes % 60
+
+            rendered_fmt = (
+                fmt.replace("<<runtimeH>>", str(runtime_h))
+                .replace("<<runtimeM>>", str(runtime_m))
+                .replace("<<runtime_total>>", str(runtime_minutes))
+                .replace("<<runtime>>", str(runtime_minutes))
+            )
+            text = f"{prefix}{rendered_fmt}"
+
+            font_size = tv.get("font_size", 55)
+            try:
+                font_size = int(font_size)
+            except Exception:
+                font_size = 55
+            font_path = str(tv.get("font", "") or "").strip()
+
+            # Resolve font path against known font directory if a basename is given
+            font = None
+            font_candidates = []
+            if font_path:
+                font_candidates.append(font_path)
+                base_font = os.path.basename(font_path)
+                for fdir in helpers.get_font_dirs(include_static=True, include_custom=True):
+                    font_candidates.append(os.path.join(str(fdir), base_font))
+            seen_candidates = set()
+            font_candidates = [c for c in font_candidates if c and not (c in seen_candidates or seen_candidates.add(c))]
+            for candidate in font_candidates:
+                if candidate and os.path.exists(candidate):
+                    try:
+                        font = ImageFont.truetype(candidate, font_size)
+                        break
+                    except Exception:
+                        font = None
+            if font is None:
+                font = ImageFont.load_default()
+
+            color_val = tv.get("font_color", "#FFFFFF")
+            try:
+                fill = ImageColor.getcolor(str(color_val), "RGBA")
+            except Exception:
+                fill = (255, 255, 255, 255)
+
+            margin = 20
+            draw.text((width - margin, height - margin), text, fill=fill, font=font, anchor="rb")
+            return img
+        except Exception as e:
+            helpers.ts_log(f"Failed to render runtime overlay: {e}", level="WARNING")
+            return None
+
+    # Apply overlays with template_variables support
+    for overlay_entry in overlays:
+        if isinstance(overlay_entry, str):
+            overlay_id = overlay_entry
+            template_vars = {}
+        elif isinstance(overlay_entry, dict):
+            overlay_id = overlay_entry.get("id")
+            template_vars = overlay_entry.get("template_variables", {})
+
+            # Normalize booleans to lowercase strings (e.g., True → "true")
+            template_vars = {k: str(v).lower() if isinstance(v, bool) else v for k, v in template_vars.items()}
+        else:
+            continue  # skip invalid overlay data
+
+        # Build filename suffix from all template_variables (sorted for consistency)
+        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size", "color"}]
+        suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
+        filename = f"{prefix}{img_type}-{overlay_id}{suffix}.png"
+        overlay_path = os.path.join(assets.OVERLAY_FOLDER, filename)
+
+        # Fallback to default overlay if specific style not found
+        if not os.path.exists(overlay_path) and suffix:
+            fallback_filename = f"{prefix}{img_type}-{overlay_id}.png"
+            fallback_path = os.path.join(assets.OVERLAY_FOLDER, fallback_filename)
+            if os.path.exists(fallback_path):
+                overlay_path = fallback_path
+
+        if os.path.exists(overlay_path):
+            if overlay_id == "overlay_runtimes":
+                runtime_img = render_runtime_overlay(template_vars, base_img.size)
+                if runtime_img:
+                    base_img.paste(runtime_img, (0, 0), runtime_img)
+                    continue  # skip default image paste
+
+            overlay_img = Image.open(overlay_path).convert("RGBA")
+            base_img.paste(overlay_img, (0, 0), overlay_img)
+
+            # Stack edition overlay below resolution when enabled.
+            if overlay_id == "overlay_resolution":
+                use_edition = str(template_vars.get("use_edition", "false")).lower() == "true"
+                if use_edition:
+                    bbox = overlay_img.getbbox()
+                    if bbox:
+                        edition_url = overlay_meta.get("overlay_resolution", {}).get("edition_overlay_url")
+                        edition_img = fetch_image_from_url(edition_url) if edition_url else None
+                        if edition_img:
+                            edition_img = edition_img.convert("RGBA")
+                            x_offset = bbox[0]
+                            spacing = 15
+                            y_offset = bbox[3] + spacing
+                            base_img.paste(edition_img, (x_offset, y_offset), edition_img)
+
+    base_img.save(preview_filepath)
+
+    return jsonify({"status": "success", "preview_url": f"/{preview_filepath}"})
+
+
+@bp.route("/config/previews/<path:filename>")
+def serve_previews(filename):
+    return send_from_directory(assets.PREVIEW_FOLDER, filename)
+
+
+@bp.route("/config/uploads/<path:filename>")
+def serve_uploaded_file(filename):
+    return send_from_directory(assets.UPLOAD_FOLDER, filename)
+
+
+@bp.route("/get_preview_image/<img_type>", methods=["GET"])
+def get_preview_image(img_type):
+    preview_filename = f"{img_type}_preview.png"
+    preview_path = os.path.join(assets.PREVIEW_FOLDER, preview_filename)
+
+    if not os.path.exists(preview_path):
+        generate_preview()
+
+    if os.path.exists(preview_path):
+        return send_file(preview_path, mimetype="image/png")
+
+    return jsonify({"status": "error", "message": "Preview image not found"}), 400
+
+
+@bp.route("/config/previews/<filename>")
+def serve_preview_image(filename):
+    safe_path = helpers.safe_join(assets.PREVIEW_FOLDER, filename)
+    if safe_path and safe_path.exists():
+        return send_file(safe_path, mimetype="image/png")
+    return send_file(os.path.join(assets.IMAGES_FOLDER, "default.png"), mimetype="image/png")
+
+
+@bp.route("/delete_library_image/<filename>", methods=["DELETE"])
+def delete_library_image(filename):
+    image_type = request.args.get("type")
+
+    if image_type not in assets.UPLOAD_FOLDERS:
+        return jsonify({"status": "error", "message": "Invalid image type"}), 400
+
+    uploads_dir = assets.UPLOAD_FOLDERS[image_type]
+    file_path = helpers.safe_join(uploads_dir, filename)
+    if not file_path:
+        return jsonify({"status": "error", "message": "Invalid file name"}), 400
+
+    if not file_path.exists():
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    try:
+        os.remove(file_path)
+        return jsonify({"status": "success", "message": f"Deleted {filename}"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
