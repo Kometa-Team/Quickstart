@@ -107,6 +107,10 @@ JSON_SCHEMA_SYNC_FILES = (
 )
 
 
+def utc_now_iso():
+    return datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+
+
 def detect_git_branch(repo_root=None, default="develop"):
     root = Path(repo_root or get_app_root()).resolve()
 

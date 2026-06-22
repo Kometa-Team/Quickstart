@@ -6,7 +6,7 @@ import datetime
 import copy
 
 from flask import current_app as app
-from flask import session
+from flask import has_request_context, session
 from ruamel.yaml import YAML
 from ruamel.yaml.constructor import DuplicateKeyError  # noqa
 from urllib.parse import urlparse
@@ -72,6 +72,19 @@ def ensure_session_config_name():
     if app.config["QS_DEBUG"]:
         helpers.ts_log(f"Initialized missing session config_name: {session['config_name']}", level="DEBUG")
     return session["config_name"]
+
+
+def resolve_request_config_name(payload=None):
+    raw_config_name = str((payload or {}).get("config_name") or "").strip() if isinstance(payload, dict) else ""
+    normalized = helpers.normalize_config_name_for_storage(raw_config_name) if raw_config_name else ""
+    if normalized:
+        if has_request_context():
+            session["config_name"] = normalized
+        return normalized
+    resolved = session.get("config_name") or ensure_session_config_name()
+    if has_request_context() and resolved:
+        session["config_name"] = resolved
+    return resolved
 
 
 def clean_form_data(form_data):
