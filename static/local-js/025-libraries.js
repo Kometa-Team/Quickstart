@@ -1982,6 +1982,58 @@ document.addEventListener('DOMContentLoaded', function () {
         input.disabled = !!disabled
       }
 
+      function syncTemplateRequirementState (group) {
+        if (!group) return
+
+        const fieldByKey = new Map()
+        Array.from(group.querySelectorAll('[data-template-variable-key]')).forEach(field => {
+          const key = String(field.dataset.templateVariableKey || '').trim()
+          if (key && !fieldByKey.has(key)) fieldByKey.set(key, field)
+        })
+
+        const dependentFields = Array.from(group.querySelectorAll('[data-template-variable-key][data-requires-any-of-template-keys]'))
+        dependentFields.forEach(field => {
+          if (field.dataset.requirementBaseDisabled === undefined) {
+            field.dataset.requirementBaseDisabled = field.disabled ? 'true' : 'false'
+          }
+
+          const baseDisabled = field.dataset.requirementBaseDisabled === 'true'
+          const requiresPlexPass = field.dataset.requiresPlexPass === 'true'
+          const plexPassAvailable = field.dataset.plexPassAvailable !== 'false'
+          const wrapper = field.closest('[data-collection-field-wrapper="true"]')
+          const requiredKeys = String(field.dataset.requiresAnyOfTemplateKeys || '')
+            .split(',')
+            .map(key => key.trim())
+            .filter(Boolean)
+          const anyActive = requiredKeys.some(key => isActiveField(fieldByKey.get(key)))
+          const shouldDisableForDependency = !anyActive
+          const shouldDisable = baseDisabled || (requiresPlexPass && !plexPassAvailable) || shouldDisableForDependency
+
+          field.disabled = shouldDisable
+
+          if (!wrapper || (requiresPlexPass && !plexPassAvailable)) return
+
+          const hintId = field.id ? `${field.id}_requirement_hint` : ''
+          let hint = hintId ? group.querySelector(`[data-requirement-hint-for="${field.id}"]`) : null
+          if (!hint && hintId) {
+            hint = document.createElement('div')
+            hint.className = 'form-text text-warning mb-2 d-none'
+            hint.id = hintId
+            hint.dataset.requirementHintFor = field.id
+            wrapper.insertAdjacentElement('afterend', hint)
+          }
+          if (!hint) return
+
+          if (shouldDisableForDependency) {
+            hint.textContent = String(field.dataset.requirementHint || 'Requires one of Visible Home, Visible Library, or Visible Shared to be enabled first.').trim()
+            hint.classList.remove('d-none')
+          } else {
+            hint.classList.add('d-none')
+            hint.textContent = ''
+          }
+        })
+      }
+
       function syncMutualState (group) {
         if (!group) return
         const fields = Array.from(group.querySelectorAll('[data-template-variable-key][data-mutually-exclusive-with]'))
@@ -2063,14 +2115,17 @@ document.addEventListener('DOMContentLoaded', function () {
           input.addEventListener('input', () => {
             normalizeFieldValue(input)
             syncMutualState(group)
+            syncTemplateRequirementState(group)
           })
           input.addEventListener('change', () => {
             normalizeFieldValue(input)
             syncMutualState(group)
+            syncTemplateRequirementState(group)
           })
         })
 
         syncMutualState(group)
+        syncTemplateRequirementState(group)
         group.dataset.templateFieldRulesBound = 'true'
       })
     }

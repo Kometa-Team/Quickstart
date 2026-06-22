@@ -1338,6 +1338,49 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
     assert show_entry["template_variables"]["item_sonarr_tag"] == ["watched", "tracked"]
 
 
+def test_build_libraries_section_emits_collection_hub_priority(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-collection_content_rating_uk": True,
+                    "mov-library_movies-template_collection_content_rating_uk_visible_home": "true",
+                    "mov-library_movies-template_collection_content_rating_uk_hub_priority": "2",
+                    "mov-library_movies-template_collection_content_rating_uk_visible_home_12A": "true",
+                    "mov-library_movies-template_collection_content_rating_uk_hub_priority_12A": "1",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    movie_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "content_rating_uk"),
+        None,
+    )
+
+    assert movie_entry is not None
+    assert movie_entry["template_variables"]["visible_home"] is True
+    assert movie_entry["template_variables"]["hub_priority"] == "2"
+    assert movie_entry["template_variables"]["visible_home_12A"] is True
+    assert movie_entry["template_variables"]["hub_priority_12A"] == "1"
+
+
 def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(app):
     from modules import output
 

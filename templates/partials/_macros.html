@@ -1221,6 +1221,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                     {% set ordered_collection_items = prioritized_collection_items.priority + prioritized_collection_items.remaining %}
                     {% endif %}
                     {% set season = namespace(open=false) %}
+                    {% set has_plex_pass = telemetry is mapping and telemetry.get("plex_pass") is sameas true %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
                         <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
@@ -1233,6 +1234,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
                         {% set clean_id = collection.id.replace('collection_', '') %}
                         {% set input_name = (library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key) if item.key is defined else '' %}
+                        {% set field_requires_plex_pass = item.requires_plex_pass is defined and item.requires_plex_pass %}
+                        {% set field_disabled = disable_toggle or (field_requires_plex_pass and not has_plex_pass) %}
 
                         {% if is_seasonal and item.key is defined and item.key.startswith('use_') %}
                         {% if season.open %}
@@ -1254,7 +1257,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 data-default="{{ item.default | default('false', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
-                                {% if disable_toggle
+                                {% if field_disabled
                                 %}disabled{% endif %} {% if not disable_toggle and
                                 (stored_true or (not has_stored and default_true)) %}checked{% endif %}>
                             <input type="hidden" name="{{ input_name }}" value="false">
@@ -1266,7 +1269,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         </div>
                         {% elif item.type == 'select' %}
                         {% set stored_select_val = data['libraries'].get(input_name, item.default) | default('', true) %}
-                        <div class="input-group mb-2">
+                        <div class="input-group mb-2" data-collection-field-wrapper="true">
                             <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
                                 {{ item.label }}
                                 {% if item.tooltip %}
@@ -1319,6 +1322,10 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 {% endif %}
                             </select>
                         </div>
+                        {% if field_requires_plex_pass and not has_plex_pass %}
+                        <input type="hidden" name="{{ input_name }}" value="{{ stored_select_val }}">
+                        <div class="form-text text-warning mb-2">Requires Plex Pass. Validate Plex first if this should be available.</div>
+                        {% endif %}
                         {% set preview_options = [] %}
                         {% if item.options is defined %}
                         {% for val in item.options %}
@@ -1446,7 +1453,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             {'value': 'relative_latest', 'label': 'Relative Latest (latest-#)', 'kind': 'relative', 'prefix': 'latest-'},
                             {'value': 'year', 'label': 'Specific Year', 'kind': 'year'}
                         ] %}
-                        {% set label_width = item.label_width if item.label_width is defined else ((320 if item.label|length > 24 else 240) if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')) else 170) %}
+                        {% set label_width = item.label_width if item.label_width is defined else ((320 if item.label|length > 24 else 240) if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_') or item.key.startswith('hub_priority_')) else 170) %}
                         <div class="input-group mb-2" data-relative-year data-hidden-input="{{ input_name }}"
                             data-default-value="{{ item.default | default('', true) }}"
                             data-min-year="{{ item.min | default(1) }}">
@@ -1607,8 +1614,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
-                        {% set label_width = item.label_width if item.label_width is defined else ((320 if item.label|length > 24 else 240) if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_')) else 170) %}
-                        <div class="input-group mb-2">
+                        {% set label_width = item.label_width if item.label_width is defined else ((320 if item.label|length > 24 else 240) if item.key is defined and (item.key.startswith('limit_') or item.key.startswith('list_days_') or item.key.startswith('list_size_') or item.key.startswith('hub_priority_')) else 170) %}
+                        <div class="input-group mb-2" data-collection-field-wrapper="true">
                             <span class="input-group-text qs-template-variable-label" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
                                 {% if item.url %}
                                 <a href="{{ item.url }}" target="_blank">
@@ -1629,6 +1636,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
                                 data-default="{{ item.default | default('', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                {% if field_requires_plex_pass %}data-requires-plex-pass="true" data-plex-pass-available="{{ 'true' if has_plex_pass else 'false' }}"{% endif %}
+                                {% if item.requires_any_of_template_keys is defined and item.requires_any_of_template_keys %}data-requires-any-of-template-keys="{{ item.requires_any_of_template_keys | join(',') }}" data-requirement-hint="{{ item.requirement_hint | default('', true) }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
                                 {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
                                 {% if is_number_input %}
@@ -1643,8 +1652,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 {% if item.inputmode is defined %}inputmode="{{ item.inputmode }}"{% endif %}
                                 {% if item.autocapitalize is defined %}autocapitalize="{{ item.autocapitalize }}"{% endif %}
                                 {% endif %}
-                                {% if disable_toggle %}disabled{% endif %}>
+                                {% if field_disabled %}disabled{% endif %}>
                         </div>
+                        {% if field_requires_plex_pass and not has_plex_pass %}
+                        <input type="hidden" name="{{ input_name }}" value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}">
+                        <div class="form-text text-warning mb-2">Requires Plex Pass. Validate Plex first if this should be available.</div>
+                        {% endif %}
                         {% endif %}
 
                         {% if is_seasonal and item.key is defined and item.key.startswith('schedule_') and season.open %}
