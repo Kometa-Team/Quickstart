@@ -2,7 +2,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from flask import current_app as app, has_request_context, session
+from flask import current_app as app, has_app_context, has_request_context, session
 from ruamel.yaml import YAML
 
 from modules import helpers, persistence
@@ -193,6 +193,9 @@ def apply_kometa_selection(selection):
         session["kometa_root"] = resolved_root.as_posix() if resolved_root else (fallback_root.as_posix() if fallback_root else "")
         session["kometa_config_dir"] = resolved_config_dir.as_posix() if resolved_config_dir else ""
         session["kometa_log_dir"] = resolved_log_dir.as_posix() if resolved_log_dir else ""
+
+    if not has_app_context():
+        return
 
     if resolved_root:
         app.config["KOMETA_ROOT"] = str(resolved_root)

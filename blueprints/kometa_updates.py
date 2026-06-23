@@ -417,7 +417,9 @@ def probe_kometa_root():
             )
     p = target["path_obj"]
 
-    state = kometa_install.probe_kometa_root_state(p)
+    import quickstart
+
+    state = quickstart._probe_kometa_root_state(p)
     log(f"🔍 Probing Kometa path: {state['kometa_root_display']}")
     if not state["root_exists"]:
         log("ℹ️ Kometa root does not exist yet. Install required.")
@@ -496,7 +498,9 @@ def check_kometa_update():
             )
     p = target["path_obj"]
 
-    state = kometa_install.probe_kometa_root_state(p)
+    import quickstart
+
+    state = quickstart._probe_kometa_root_state(p)
     if not state["kometa_installed"]:
         log("ℹ️ Kometa is not installed yet; update check skipped.")
         return (
