@@ -2138,6 +2138,8 @@ QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
     ("library", "overlay_path"): "legacy_library_path_key_not_recommended",
     ("library", "reapply_overlays"): "valid_but_not_recommended_for_quickstart",
     ("library", "library_type"): "internal_importer_or_analyzer_metadata",
+    ("library", "sort_by"): "library_template_variable_not_documented_for_quickstart",
+    ("library", "exclude"): "library_template_variable_not_documented_for_quickstart",
 }
 
 
@@ -2149,6 +2151,8 @@ def get_quickstart_recommendation_exclusion(row: dict[str, Any]) -> str | None:
 
 MERGED_FIX_QUEUE_EXCLUSIONS: dict[tuple[str, str], str] = {
     ("library", "library_type"): "internal_importer_or_analyzer_metadata",
+    ("library", "sort_by"): "library_template_variable_not_documented_for_quickstart",
+    ("library", "exclude"): "library_template_variable_not_documented_for_quickstart",
 }
 
 

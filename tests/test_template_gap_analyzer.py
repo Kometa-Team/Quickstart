@@ -265,6 +265,38 @@ def test_quickstart_recommendation_summary_excludes_legacy_or_not_recommended_li
             "value_shape_rule": "string",
         },
         {
+            "kind": "library",
+            "default": None,
+            "key": "sort_by",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "exclude",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "list",
+        },
+        {
             "kind": "overlay",
             "default": "status",
             "key": "horizontal_align",
@@ -341,6 +373,38 @@ def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys(
             "value_shape_rule": "string",
         },
         {
+            "kind": "library",
+            "default": None,
+            "key": "sort_by",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "exclude",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "list",
+        },
+        {
             "kind": "overlay",
             "default": "status",
             "key": "vertical_align",
@@ -363,10 +427,13 @@ def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys(
         key=lambda item: str(item["key"]),
     )
 
-    assert [item["key"] for item in excluded] == ["library_type", "metadata_path", "reapply_overlays"]
-    assert excluded[0]["reason"] == "internal_importer_or_analyzer_metadata"
-    assert excluded[1]["reason"] == "legacy_library_path_key_not_recommended"
-    assert excluded[2]["reason"] == "valid_but_not_recommended_for_quickstart"
+    assert [item["key"] for item in excluded] == ["exclude", "library_type", "metadata_path", "reapply_overlays", "sort_by"]
+    reasons = {item["key"]: item["reason"] for item in excluded}
+    assert reasons["library_type"] == "internal_importer_or_analyzer_metadata"
+    assert reasons["metadata_path"] == "legacy_library_path_key_not_recommended"
+    assert reasons["reapply_overlays"] == "valid_but_not_recommended_for_quickstart"
+    assert reasons["sort_by"] == "library_template_variable_not_documented_for_quickstart"
+    assert reasons["exclude"] == "library_template_variable_not_documented_for_quickstart"
 
 
 def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_file():
@@ -940,6 +1007,69 @@ def test_build_merged_fix_queue_excludes_internal_library_type_metadata():
     assert len(ranked) == 1
     assert ranked[0]["key"] == "library_name"
     assert ranked[0]["action_targets"] == ["quickstart", "importer"]
+
+
+def test_build_merged_fix_queue_excludes_undocumented_library_template_variables():
+    module = _load_gap_analyzer_module()
+
+    verified_rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "sort_by",
+            "occurrences": 4,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "exclude",
+            "occurrences": 4,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "matched_default_files": ["config/config.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+        },
+    ]
+    importer_rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "sort_by",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 1,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "exclude",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 1,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        },
+    ]
+
+    ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
+
+    assert ranked == []
 
 
 def test_extract_importer_findings_from_data_ignores_bare_library_container_status():
