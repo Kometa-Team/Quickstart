@@ -403,11 +403,7 @@ def _collect_overlay_source_override_keys(overlay_meta: Any) -> set[str]:
     if str(config.get("key_mode") or "").strip().lower() != "from_use_toggles":
         return allowed
 
-    excluded_toggle_keys = {
-        str(item).strip()
-        for item in (config.get("exclude_toggle_keys") or [])
-        if str(item).strip()
-    }
+    excluded_toggle_keys = {str(item).strip() for item in (config.get("exclude_toggle_keys") or []) if str(item).strip()}
     template_keys = _collect_template_keys(overlay_meta.get("template_variables"))
     for template_key in template_keys:
         if not template_key.startswith("use_") or template_key in excluded_toggle_keys:
