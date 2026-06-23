@@ -44,7 +44,7 @@ jobs:
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Checkout Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
@@ -107,7 +107,7 @@ jobs:
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -189,7 +189,7 @@ jobs:
     steps:
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -227,7 +227,7 @@ jobs:
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -291,7 +291,7 @@ jobs:
     steps:
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -343,7 +343,7 @@ jobs:
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Checkout Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Print Links
         run: |

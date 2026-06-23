@@ -27,7 +27,7 @@ jobs:
           echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: develop
@@ -71,7 +71,7 @@ jobs:
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: develop
@@ -131,7 +131,7 @@ jobs:
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: develop
