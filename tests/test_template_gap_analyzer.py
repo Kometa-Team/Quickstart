@@ -502,7 +502,7 @@ def test_resolve_default_paths_for_collection_does_not_cross_into_overlay_defaul
     network_defaults = module.resolve_default_paths("network", "collection", kometa_defaults)
 
     assert all("overlays" not in str(path).lower() for path in network_defaults)
-    assert any(str(path).lower().endswith("show\\network.yml") for path in network_defaults)
+    assert any(path.parts[-2:] == ("show", "network.yml") for path in network_defaults)
     assert module.key_is_valid_for_default("horizontal_align", network_defaults)[0] is False
     assert module.key_is_valid_for_default("vertical_align", network_defaults)[0] is False
 
