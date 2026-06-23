@@ -678,8 +678,15 @@ def resolve_default_paths(alias: str, kind: str, kometa_defaults: Path) -> list[
         if path.exists():
             support_files.append(path)
         return support_files
-    matches = sorted(kometa_defaults.rglob(f"{alias}.yml"))
-    support_files.extend([p for p in matches if p.is_file()])
+    if kind == "collection":
+        collection_dirs = ("award", "both", "chart", "movie", "show")
+        for dirname in collection_dirs:
+            path = kometa_defaults / dirname / f"{alias}.yml"
+            if path.exists():
+                support_files.append(path)
+    else:
+        matches = sorted(kometa_defaults.rglob(f"{alias}.yml"))
+        support_files.extend([p for p in matches if p.is_file()])
     deduped: list[Path] = []
     seen: set[Path] = set()
     for path in support_files:
