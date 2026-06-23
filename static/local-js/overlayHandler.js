@@ -900,7 +900,6 @@ const OverlayHandler = {
           title: String(parsed.title || 'Image Source Overrides').trim(),
           description: String(parsed.description || 'Advanced source overrides for this overlay.').trim(),
           addLabel: String(parsed.add_label || 'Add override').trim(),
-          baseLabel: String(parsed.base_label || 'All badges').trim(),
           keyMode: String(parsed.key_mode || '').trim().toLowerCase(),
           sourceTypes,
           excludeToggleKeys: Array.isArray(parsed.exclude_toggle_keys)
@@ -935,18 +934,13 @@ const OverlayHandler = {
     }
 
     const getOverlaySourceOverrideKeyOptions = (cfg, config) => {
-      const options = [
-        {
-          value: '',
-          label: config.baseLabel || 'All badges'
-        }
-      ]
+      const options = []
       if (!cfg.container || config.keyMode !== 'from_use_toggles') return options
 
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return options
 
-      const seen = new Set([''])
+      const seen = new Set()
       const excludedToggleKeys = new Set(config.excludeToggleKeys || [])
       const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
 
@@ -1016,6 +1010,7 @@ const OverlayHandler = {
         const decoded = decodeOverlaySourceOverrideVarName(config.sourceTypes, varName)
         const value = String(input.value || '').trim()
         if (!decoded || !value) return
+        if (config.keyMode === 'from_use_toggles' && !decoded.badgeKey) return
         state.push({
           sourceType: decoded.sourceType,
           badgeKey: decoded.badgeKey,
@@ -1077,6 +1072,7 @@ const OverlayHandler = {
       valueInput.type = 'text'
       valueInput.className = 'form-control form-control-sm'
       valueInput.dataset.overlaySourceValue = 'true'
+      valueInput.dataset.skipLibraryInputBubble = 'true'
       valueInput.value = String(entry.value || '').trim()
       valueCol.appendChild(valueInput)
       layout.appendChild(valueCol)
@@ -1101,21 +1097,21 @@ const OverlayHandler = {
         const sourceType = String(sourceSelect.value || '').trim()
         if (sourceType === 'url') {
           valueInput.placeholder = 'https://example.com/badge.png'
-          help.textContent = 'Use a direct URL to a badge image.'
+          help.textContent = 'Use a direct URL to a badge image. Quickstart stores this value as-is and does not live-check the target.'
           return
         }
         if (sourceType === 'git') {
           valueInput.placeholder = 'defaults/overlays/images/resolution/custom.png'
-          help.textContent = 'Use a Community-Configs git path.'
+          help.textContent = 'Use a Community-Configs git path. Quickstart stores this value as-is and does not live-check the target.'
           return
         }
         if (sourceType === 'repo') {
           valueInput.placeholder = 'overlays/resolution/custom.png'
-          help.textContent = 'Use a custom_repo-backed repo path.'
+          help.textContent = 'Use a custom_repo-backed repo path. Quickstart stores this value as-is and does not live-check the target.'
           return
         }
         valueInput.placeholder = 'config/overlays/resolution/custom.png'
-        help.textContent = 'Use a local file path that Kometa can read.'
+        help.textContent = 'Use a local file path that Kometa can read. Quickstart stores this value as-is and does not verify the file exists yet.'
       }
 
       updatePlaceholder()
@@ -1149,6 +1145,14 @@ const OverlayHandler = {
         const value = String(valueInput.value || '').trim()
         if (!value) return
 
+        if (!badgeKey) {
+          if (!warningText) {
+            warningText = 'Each source override needs a specific badge key.'
+          }
+          keySelect.classList.add('is-invalid')
+          return
+        }
+
         if (!sourceType) {
           if (!warningText) {
             warningText = 'Each source override needs a source type and a value.'
@@ -1171,11 +1175,15 @@ const OverlayHandler = {
         nextState.push({ badgeKey, sourceType, value })
       })
 
-      hiddenHost.innerHTML = ''
-      nextState.forEach(entry => {
-        const varName = encodeOverlaySourceOverrideVarName(entry.sourceType, entry.badgeKey)
-        createOverlaySourceOverrideHiddenInput(cfg, hiddenHost, varName, entry.value)
-      })
+      const serializedState = JSON.stringify(nextState)
+      if (hiddenHost.dataset.overlaySourceSerialized !== serializedState) {
+        hiddenHost.replaceChildren()
+        nextState.forEach(entry => {
+          const varName = encodeOverlaySourceOverrideVarName(entry.sourceType, entry.badgeKey)
+          createOverlaySourceOverrideHiddenInput(cfg, hiddenHost, varName, entry.value)
+        })
+        hiddenHost.dataset.overlaySourceSerialized = serializedState
+      }
 
       warning.textContent = warningText
       warning.classList.toggle('d-none', !warningText)
@@ -1218,8 +1226,14 @@ const OverlayHandler = {
         })
       })
 
-      rowsHost.querySelectorAll('[data-overlay-source-key="true"], [data-overlay-source-type="true"], [data-overlay-source-value="true"]').forEach(input => {
-        input.addEventListener('input', () => syncOverlaySourceOverrideRows(cfg, config, section))
+      rowsHost.querySelectorAll('[data-overlay-source-key="true"], [data-overlay-source-type="true"]').forEach(input => {
+        input.addEventListener('change', () => syncOverlaySourceOverrideRows(cfg, config, section))
+      })
+
+      rowsHost.querySelectorAll('[data-overlay-source-value="true"]').forEach(input => {
+        input.addEventListener('input', () => {
+          input.classList.remove('is-invalid')
+        })
         input.addEventListener('change', () => syncOverlaySourceOverrideRows(cfg, config, section))
       })
     }
@@ -1269,7 +1283,7 @@ const OverlayHandler = {
           const keyOptions = getOverlaySourceOverrideKeyOptions(cfg, config)
           rowsHost.appendChild(buildOverlaySourceOverrideRow(cfg, config, keyOptions, {
             sourceType: config.sourceTypes[0] || 'file',
-            badgeKey: '',
+            badgeKey: keyOptions[0]?.value || '',
             value: ''
           }))
           renderOverlaySourceOverrideRows(cfg, config, section, Array.from(rowsHost.querySelectorAll('[data-overlay-source-row="true"]')).map(row => ({

@@ -1416,9 +1416,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% else %}
                         {% set map_default_json = '{}' %}
                         {% endif %}
-                        <div class="mb-2" data-template-mapping-list data-hidden-input="{{ input_name }}">
+                        {% set label_width = item.label_width if item.label_width is defined else (320 if item.label|length > 24 else 170) %}
+                        <div class="mb-2" data-template-mapping-list data-hidden-input="{{ input_name }}"
+                            data-validation-preset="{{ item.validation_preset | default('') }}"
+                            data-mapping-value-kind="{{ item.dynamic_child_value_kind | default('string_list') }}">
                             <div class="input-group">
-                                <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                                <span class="input-group-text qs-template-variable-label" id="{{ input_name }}_text"
+                                    style="width: {{ label_width }}px;">
                                     {{ item.label }}
                                     {% if item.tooltip %}
                                     <span class="text-{{ item.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"

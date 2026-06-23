@@ -104,6 +104,12 @@ const URLValidation = (() => {
 
   function validateAll (container = document) {
     let allValid = true
+    const candidates = Array.from(container.querySelectorAll('input[type="text"], input[type="url"], input[type="search"], textarea'))
+    candidates.forEach(input => {
+      if (isUrlField(input) && input.dataset.urlValidationBound !== 'true') {
+        bindInput(input)
+      }
+    })
     const inputs = Array.from(container.querySelectorAll('[data-url-validation-bound="true"]'))
     inputs.forEach(input => {
       const result = validateValue(input.value)
@@ -115,7 +121,8 @@ const URLValidation = (() => {
 
   return {
     attach,
-    validateAll
+    validateAll,
+    validateValue
   }
 })()
 

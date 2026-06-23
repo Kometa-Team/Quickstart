@@ -1,4 +1,5 @@
 import ipaddress
+import json
 import re
 from urllib.parse import urlparse
 
@@ -111,6 +112,21 @@ def validate_payload(payload):
     if payload is None:
         return errors
 
+    def append_structured_url_errors(base_key, parsed_value):
+        if isinstance(parsed_value, dict):
+            for child_key, child_value in parsed_value.items():
+                valid, message = validate_url(child_value)
+                if not valid:
+                    errors.append(f"{base_key}[{child_key}]: {message}")
+            return True
+        if isinstance(parsed_value, list):
+            for index, child_value in enumerate(parsed_value):
+                valid, message = validate_url(child_value)
+                if not valid:
+                    errors.append(f"{base_key}[{index}]: {message}")
+            return True
+        return False
+
     items = payload.items() if isinstance(payload, dict) else []
     if hasattr(payload, "getlist"):
         items = []
@@ -129,6 +145,15 @@ def validate_payload(payload):
             continue
         if is_boolean_value(value):
             continue
+        if isinstance(value, str):
+            raw_text = value.strip()
+            if raw_text.startswith("{") or raw_text.startswith("["):
+                try:
+                    parsed = json.loads(raw_text)
+                except Exception:
+                    parsed = None
+                if append_structured_url_errors(key, parsed):
+                    continue
         valid, message = validate_url(value)
         if not valid:
             errors.append(f"{key}: {message}")

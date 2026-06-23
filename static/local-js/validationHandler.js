@@ -1,4 +1,4 @@
-/* global $, PathValidation */
+/* global $, PathValidation, URLValidation */
 
 const librariesValidatedAtInput = document.getElementById('libraries_validated_at')
 let librariesTouched = false
@@ -67,6 +67,35 @@ const ValidationHandler = {
     }
 
     return true
+  },
+
+  showAccordionForField: function (field) {
+    if (!field) return
+    let collapse = field.closest('.accordion-collapse')
+    while (collapse) {
+      if (!collapse.classList.contains('show')) {
+        const button = collapse.previousElementSibling?.querySelector('button.accordion-button')
+        if (button) {
+          button.click()
+        } else {
+          collapse.classList.add('show')
+        }
+      }
+      collapse = collapse.parentElement?.closest('.accordion-collapse')
+    }
+  },
+
+  focusFirstInvalidField: function (scope = document) {
+    if (!scope) return
+    const first = scope.querySelector('.is-invalid')
+    if (!first) return
+    ValidationHandler.showAccordionForField(first)
+    window.setTimeout(() => {
+      first.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (typeof first.focus === 'function') {
+        first.focus({ preventScroll: true })
+      }
+    }, 180)
   },
 
   validateForm: function () {
@@ -204,12 +233,16 @@ const ValidationHandler = {
     const pathValid = (typeof PathValidation !== 'undefined' && PathValidation.validateAll)
       ? PathValidation.validateAll()
       : true
+    const urlValid = (typeof URLValidation !== 'undefined' && URLValidation.validateAll)
+      ? URLValidation.validateAll()
+      : true
 
     console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
     console.log(`[DEBUG] Placeholders Valid: ${allPlaceholdersValid}`)
     console.log(`[DEBUG] Paths Valid: ${pathValid}`)
+    console.log(`[DEBUG] URLs Valid: ${urlValid}`)
 
-    if (allLibrariesValid && allPlaceholdersValid && pathValid) {
+    if (allLibrariesValid && allPlaceholdersValid && pathValid && urlValid) {
       console.log('[DEBUG] Validation Passed! Enabling navigation.')
       ValidationHandler.showValidationMessage('Validation successful! You may proceed.', 'success')
       ValidationHandler.enableNavigation()
@@ -217,7 +250,7 @@ const ValidationHandler = {
     } else {
       console.log('[DEBUG] Some validations failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Each selected library must have at least one highlighted item, a valid separator placeholder must be selected if a separator is enabled, and any path fields must be valid.',
+        'Each selected library must have at least one highlighted item, a valid separator placeholder must be selected if a separator is enabled, and any path or URL fields must be valid.',
         'danger'
       )
       ValidationHandler.disableNavigation(false)

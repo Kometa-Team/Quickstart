@@ -4423,7 +4423,7 @@
         "edition_overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/edition/enhanced.png",
         "source_overrides": {
           "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for all badges or for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "description": "Advanced: override the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -4435,7 +4435,6 @@
             "use_resolution",
             "use_edition"
           ],
-          "base_label": "All badges",
           "add_label": "Add override"
         },
         "default_offsets": {

@@ -25624,6 +25624,7 @@
             "tooltip": "Map a franchise child key to a custom poster URL. Quickstart exports these as <code>url_poster_&lt;&lt;key&gt;&gt;</code> template variables.",
             "key_placeholder": "Franchise key (e.g. 10)",
             "value_placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
             "dynamic_child_prefix": "url_poster_",
             "dynamic_child_value_kind": "string"
           },
@@ -26282,6 +26283,7 @@
             "tooltip": "Map a franchise child key to a custom poster URL. Quickstart exports these as <code>url_poster_&lt;&lt;key&gt;&gt;</code> template variables.",
             "key_placeholder": "Franchise key (e.g. 1399)",
             "value_placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
             "dynamic_child_prefix": "url_poster_",
             "dynamic_child_value_kind": "string"
           },

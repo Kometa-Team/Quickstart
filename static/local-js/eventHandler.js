@@ -5,13 +5,16 @@ const EventHandler = {
     document.querySelectorAll('.library-checkbox').forEach((checkbox) => {
       const libraryId = checkbox.id.replace(/-(library|card-container)$/, '')
 
-      console.log(`[DEBUG] Attaching toggle listener for Library: ${libraryId}`)
+      if (checkbox.dataset.listenerAdded !== 'true') {
+        console.log(`[DEBUG] Attaching toggle listener for Library: ${libraryId}`)
 
-      // Attach event listener to each checkbox
-      checkbox.addEventListener('change', () => {
-        EventHandler.toggleLibraryVisibility(libraryId, checkbox.checked)
-        ValidationHandler.updateValidationState()
-      })
+        // Attach event listener to each checkbox
+        checkbox.addEventListener('change', () => {
+          EventHandler.toggleLibraryVisibility(libraryId, checkbox.checked)
+          ValidationHandler.updateValidationState()
+        })
+        checkbox.dataset.listenerAdded = 'true'
+      }
 
       // Ensure libraries are HIDDEN by default on first entry
       if (!checkbox.checked) {
@@ -201,12 +204,14 @@ const EventHandler = {
 
       // Automatically trigger preview updates when overlays are toggled or content rating changes
       library.querySelectorAll('input[type="checkbox"].overlay-toggle, input[type="radio"].overlay-toggle').forEach(input => {
+        if (input.dataset.previewListenerAdded === 'true') return
         input.addEventListener('change', () => {
           console.log(`[DEBUG] Overlay toggle changed: ${input.id}`)
           const match = input.id.match(/-(movie|show|season|episode)-overlay_/)
           const inputType = match ? match[1] : (isMovie ? 'movie' : 'show')
           ImageHandler.generateSinglePreview(libraryId, inputType)
         })
+        input.dataset.previewListenerAdded = 'true'
       })
 
       // Attach separator preview logic (Now handled by OverlayHandler)
@@ -345,7 +350,17 @@ const EventHandler = {
       })
 
       // Any change/input inside this library should update highlights/validation (not just toggles)
-      const bubbleHandler = () => {
+      const bubbleHandler = (event) => {
+        const target = event?.target
+        if (
+          target && target.nodeType === 1 &&
+          (
+            target.dataset.skipLibraryInputBubble === 'true' ||
+            target.closest('[data-overlay-source-editor="true"]')
+          )
+        ) {
+          return
+        }
         if (typeof EventHandler.updateAccordionHighlights === 'function') {
           EventHandler.updateAccordionHighlights()
         }
@@ -354,6 +369,7 @@ const EventHandler = {
         }
       }
       library.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
+        if (el.dataset.highlightListener === 'true') return
         el.addEventListener('change', bubbleHandler, true)
         el.addEventListener('input', bubbleHandler, true)
         el.dataset.highlightListener = 'true'
@@ -620,13 +636,27 @@ const EventHandler = {
 }
 
 // MutationObserver for dynamically added elements
+const shouldReattachForNode = (node) => {
+  if (!node || node.nodeType !== 1) return false
+  if (node.closest('[data-overlay-source-editor="true"]') || node.closest('[data-overlay-source-hidden]')) return false
+  if (node.matches("[id$='-card-container']")) return true
+  if (node.matches('input[type="hidden"]')) return false
+  if (node.matches('.accordion input:not([type="hidden"]), .accordion select, .accordion textarea')) return true
+
+  const descendants = node.querySelectorAll?.('.accordion input:not([type="hidden"]), .accordion select, .accordion textarea')
+  return Array.from(descendants || []).some(descendant => {
+    return !descendant.closest('[data-overlay-source-editor="true"]') &&
+      !descendant.closest('[data-overlay-source-hidden]')
+  })
+}
+
 const observer = new MutationObserver((mutations) => {
   let needsReattachment = false
 
   mutations.forEach((mutation) => {
     if (mutation.addedNodes.length > 0) {
       mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1 && node.matches("[id$='-card-container'], .accordion input")) {
+        if (shouldReattachForNode(node)) {
           console.log(`[DEBUG] New element detected: ${node.id || node.className}, triggering re-attachment.`)
           needsReattachment = true
         }
