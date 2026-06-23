@@ -87,6 +87,33 @@ def resolve_request_config_name(payload=None):
     return resolved
 
 
+def retrieve_settings_for_config(config_name, target):
+    source, source_name = extract_names(target)
+    stored_validated, stored_user_entered, stored_payload = database.retrieve_section_data(config_name, source_name)
+    payload = stored_payload if isinstance(stored_payload, dict) else {}
+    section = payload.get(source_name, {}) if isinstance(payload.get(source_name), dict) else {}
+    if not section:
+        section = get_dummy_data(source_name)
+    return {
+        "validated": helpers.booler(stored_validated),
+        "user_entered": helpers.booler(stored_user_entered),
+        "validated_at": payload.get("validated_at") if isinstance(payload, dict) else None,
+        source_name: section,
+    }
+
+
+def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
+    if not isinstance(stored_data, dict):
+        stored_data = {}
+    stored_data["validation_status"] = status
+    if reason is not None:
+        stored_data["validation_reason"] = reason
+    if details is not None:
+        stored_data["validation_details"] = details
+    stored_data["validation_updated_at"] = updated_at or helpers.utc_now_iso()
+    return stored_data
+
+
 def clean_form_data(form_data):
     # Make sure form_data is MultiDict for compatibility
     if not hasattr(form_data, "getlist"):

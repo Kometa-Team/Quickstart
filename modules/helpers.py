@@ -150,6 +150,28 @@ def safe_join(base_dir: str | Path, raw_path: str | None, allow_subdirs: bool = 
         return None
 
 
+def resolve_user_dir(raw_path: str | None) -> Path | None:
+    if not isinstance(raw_path, str):
+        return None
+    raw_path = raw_path.strip()
+    if not raw_path:
+        return None
+    if "\x00" in raw_path:
+        return None
+    try:
+        path = Path(raw_path)
+    except Exception:
+        return None
+    if not path.is_absolute():
+        return None
+    if any(part == ".." for part in path.parts):
+        return None
+    try:
+        return path.resolve()
+    except Exception:
+        return None
+
+
 def detect_git_branch(repo_root=None, default="develop"):
     root = Path(repo_root or get_app_root()).resolve()
 
