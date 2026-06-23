@@ -1,4 +1,5 @@
 import datetime
+import gzip
 import hashlib
 import io
 import platform
@@ -170,6 +171,38 @@ def resolve_user_dir(raw_path: str | None) -> Path | None:
         return path.resolve()
     except Exception:
         return None
+
+
+def is_logscan_gzip_path(path):
+    try:
+        suffixes = [suffix.lower() for suffix in Path(path).suffixes]
+    except Exception:
+        return False
+    return bool(suffixes and suffixes[-1] == ".gz")
+
+
+def read_logscan_text(path, encoding="utf-8", errors="replace"):
+    path = Path(path)
+    if is_logscan_gzip_path(path):
+        with gzip.open(path, "rt", encoding=encoding, errors=errors) as handle:
+            return handle.read()
+    content = path.read_text(encoding=encoding, errors=errors)
+    try:
+        if path.name.lower() == "meta.log":
+            sidecar_path = path.parent / "meta.quickstart-maintenance.log"
+            if sidecar_path.exists() and sidecar_path.is_file():
+                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
+                if sidecar_content:
+                    content = f"{content.rstrip()}\n{sidecar_content}\n"
+        elif path.suffix.lower() == ".log":
+            sidecar_path = path.parent / "imagemaid.quickstart-maintenance.log"
+            if sidecar_path.exists() and sidecar_path.is_file():
+                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
+                if sidecar_content:
+                    content = f"{content.rstrip()}\n{sidecar_content}\n"
+    except Exception:
+        pass
+    return content
 
 
 def detect_git_branch(repo_root=None, default="develop"):
