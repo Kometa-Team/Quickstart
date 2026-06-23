@@ -385,6 +385,42 @@ def _collect_dynamic_child_field_specs(template_vars: Any) -> list[dict[str, str
     return specs
 
 
+def _collect_overlay_source_override_keys(overlay_meta: Any) -> set[str]:
+    if not isinstance(overlay_meta, dict):
+        return set()
+
+    config = overlay_meta.get("source_overrides")
+    if not isinstance(config, dict):
+        return set()
+
+    raw_types = config.get("source_types")
+    if isinstance(raw_types, list):
+        source_types = [str(item).strip() for item in raw_types if str(item).strip()]
+    else:
+        source_types = ["file", "url", "git", "repo"]
+
+    allowed = set(source_types)
+    if str(config.get("key_mode") or "").strip().lower() != "from_use_toggles":
+        return allowed
+
+    excluded_toggle_keys = {
+        str(item).strip()
+        for item in (config.get("exclude_toggle_keys") or [])
+        if str(item).strip()
+    }
+    template_keys = _collect_template_keys(overlay_meta.get("template_variables"))
+    for template_key in template_keys:
+        if not template_key.startswith("use_") or template_key in excluded_toggle_keys:
+            continue
+        child_key = template_key[4:]
+        if not child_key:
+            continue
+        for source_type in source_types:
+            allowed.add(f"{source_type}_{child_key}")
+
+    return allowed
+
+
 def _coerce_import_bool_text(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
@@ -1557,6 +1593,7 @@ def prepare_import_payload(
 
                     if isinstance(template_values, dict):
                         allowed = _collect_template_keys(overlay_meta.get("template_variables"))
+                        allowed.update(_collect_overlay_source_override_keys(overlay_meta))
                         if overlay_id in {"overlay_languages", "overlay_languages_subtitles"}:
                             allowed = set(allowed)
                             allowed.update(language_weight_template_keys)

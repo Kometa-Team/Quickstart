@@ -91,6 +91,42 @@ def test_prepare_import_payload_accepts_resolution_template_variables():
     assert any("libraries.Movies.overlay_files[0].template_variables.use_extended" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_resolution_source_override_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "resolution",
+                            "template_variables": {
+                                "file_4k": "config/overlays/resolution/4k.png",
+                                "url_1080p_dv": "https://example.com/1080p-dv.png",
+                                "git_extended": "defaults/overlays/images/edition/extended.png",
+                                "repo_openmatte": "overlays/resolution/open-matte.png",
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_resolution"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[file_4k]"] == "config/overlays/resolution/4k.png"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[url_1080p_dv]"] == "https://example.com/1080p-dv.png"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[git_extended]"] == "defaults/overlays/images/edition/extended.png"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_resolution[repo_openmatte]"] == "overlays/resolution/open-matte.png"
+    assert any("libraries.Movies.overlay_files[0].template_variables.file_4k" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.url_1080p_dv" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.git_extended" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.repo_openmatte" in line for line in report.lines)
+
+
 def test_prepare_import_payload_accepts_audio_codec_template_variables():
     payload, report = importer.prepare_import_payload(
         {

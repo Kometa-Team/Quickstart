@@ -1,4 +1,4 @@
-/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser */
+/* global EventHandler, ValidationHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -884,6 +884,414 @@ const OverlayHandler = {
         }
       }
       warning.classList.toggle('d-none', useResolution || useEdition)
+    }
+
+    const getOverlaySourceOverrideConfig = (cfg) => {
+      if (!cfg.container) return null
+      const raw = String(cfg.container.dataset.overlaySourceOverrides || '').trim()
+      if (!raw) return null
+      try {
+        const parsed = JSON.parse(raw)
+        if (!parsed || parsed.enabled === false) return null
+        const sourceTypes = Array.isArray(parsed.source_types) && parsed.source_types.length
+          ? parsed.source_types.map(item => String(item || '').trim()).filter(Boolean)
+          : ['file', 'url', 'git', 'repo']
+        return {
+          title: String(parsed.title || 'Image Source Overrides').trim(),
+          description: String(parsed.description || 'Advanced source overrides for this overlay.').trim(),
+          addLabel: String(parsed.add_label || 'Add override').trim(),
+          baseLabel: String(parsed.base_label || 'All badges').trim(),
+          keyMode: String(parsed.key_mode || '').trim().toLowerCase(),
+          sourceTypes,
+          excludeToggleKeys: Array.isArray(parsed.exclude_toggle_keys)
+            ? parsed.exclude_toggle_keys.map(item => String(item || '').trim()).filter(Boolean)
+            : []
+        }
+      } catch (error) {
+        console.warn('[OverlaySourceOverrides] Failed to parse config', { overlayId: cfg.id, error })
+        return null
+      }
+    }
+
+    const decodeOverlaySourceOverrideVarName = (sourceTypes, varName) => {
+      const normalizedVarName = String(varName || '').trim()
+      if (!normalizedVarName) return null
+      for (const sourceType of sourceTypes) {
+        if (normalizedVarName === sourceType) {
+          return { sourceType, badgeKey: '' }
+        }
+        const prefix = `${sourceType}_`
+        if (normalizedVarName.startsWith(prefix)) {
+          return { sourceType, badgeKey: normalizedVarName.slice(prefix.length) }
+        }
+      }
+      return null
+    }
+
+    const encodeOverlaySourceOverrideVarName = (sourceType, badgeKey) => {
+      const normalizedType = String(sourceType || '').trim()
+      const normalizedKey = String(badgeKey || '').trim()
+      return normalizedKey ? `${normalizedType}_${normalizedKey}` : normalizedType
+    }
+
+    const getOverlaySourceOverrideKeyOptions = (cfg, config) => {
+      const options = [
+        {
+          value: '',
+          label: config.baseLabel || 'All badges'
+        }
+      ]
+      if (!cfg.container || config.keyMode !== 'from_use_toggles') return options
+
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return options
+
+      const seen = new Set([''])
+      const excludedToggleKeys = new Set(config.excludeToggleKeys || [])
+      const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+
+      toggleInputs.forEach(input => {
+        const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
+        const toggleKey = String(keyMatch?.[1] || '').trim()
+        if (!toggleKey.startsWith('use_') || excludedToggleKeys.has(toggleKey)) return
+        const badgeKey = toggleKey.slice(4)
+        if (!badgeKey || seen.has(badgeKey)) return
+
+        const labelEl = input.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) {
+          label = label.slice(4).trim()
+        }
+        seen.add(badgeKey)
+        options.push({ value: badgeKey, label })
+      })
+
+      return options
+    }
+
+    const createOverlaySourceOverrideHiddenInput = (cfg, hiddenHost, varName, value) => {
+      const templateName = cfg.container?.dataset?.overlayTemplate
+      if (!hiddenHost || !templateName) return null
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = `${templateName}[${varName}]`
+      input.value = String(value || '').trim()
+      input.dataset.default = ''
+      input.dataset.overlaySourceOverride = 'true'
+      hiddenHost.appendChild(input)
+      return input
+    }
+
+    const materializeOverlaySourceOverrideSeed = (cfg, config, hiddenHost) => {
+      if (!cfg.container || !hiddenHost || cfg.container.dataset.overlaySourceSeedApplied === 'true') return
+      const rawSeed = String(cfg.container.dataset.overlaySourceSeed || '').trim()
+      if (!rawSeed) {
+        cfg.container.dataset.overlaySourceSeedApplied = 'true'
+        return
+      }
+      try {
+        const parsed = JSON.parse(rawSeed)
+        if (Array.isArray(parsed)) {
+          parsed.forEach(entry => {
+            if (!entry || typeof entry !== 'object') return
+            const varName = String(entry.key || '').trim()
+            const value = String(entry.value || '').trim()
+            if (!value) return
+            if (!decodeOverlaySourceOverrideVarName(config.sourceTypes, varName)) return
+            createOverlaySourceOverrideHiddenInput(cfg, hiddenHost, varName, value)
+          })
+        }
+      } catch (error) {
+        console.warn('[OverlaySourceOverrides] Failed to parse seed', { overlayId: cfg.id, error })
+      }
+      cfg.container.dataset.overlaySourceSeedApplied = 'true'
+    }
+
+    const readOverlaySourceOverrideState = (cfg, config, hiddenHost) => {
+      materializeOverlaySourceOverrideSeed(cfg, config, hiddenHost)
+      const state = []
+      hiddenHost.querySelectorAll('input[data-overlay-source-override="true"]').forEach(input => {
+        const varMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
+        const varName = String(varMatch?.[1] || '').trim()
+        const decoded = decodeOverlaySourceOverrideVarName(config.sourceTypes, varName)
+        const value = String(input.value || '').trim()
+        if (!decoded || !value) return
+        state.push({
+          sourceType: decoded.sourceType,
+          badgeKey: decoded.badgeKey,
+          value
+        })
+      })
+      return state
+    }
+
+    const buildOverlaySourceOverrideRow = (cfg, config, keyOptions, entry = {}) => {
+      const row = document.createElement('div')
+      row.className = 'border rounded-3 p-2'
+      row.dataset.overlaySourceRow = 'true'
+
+      const layout = document.createElement('div')
+      layout.className = 'row g-2 align-items-start'
+      row.appendChild(layout)
+
+      const keyCol = document.createElement('div')
+      keyCol.className = 'col-lg-4'
+      const keySelect = document.createElement('select')
+      keySelect.className = 'form-select form-select-sm'
+      keySelect.dataset.overlaySourceKey = 'true'
+      keyOptions.forEach(option => {
+        const opt = document.createElement('option')
+        opt.value = option.value
+        opt.textContent = option.label
+        keySelect.appendChild(opt)
+      })
+      const requestedKey = String(entry.badgeKey || '').trim()
+      if (requestedKey && !keyOptions.some(option => option.value === requestedKey)) {
+        const opt = document.createElement('option')
+        opt.value = requestedKey
+        opt.textContent = requestedKey
+        keySelect.appendChild(opt)
+      }
+      keySelect.value = requestedKey
+      keyCol.appendChild(keySelect)
+      layout.appendChild(keyCol)
+
+      const sourceCol = document.createElement('div')
+      sourceCol.className = 'col-lg-2'
+      const sourceSelect = document.createElement('select')
+      sourceSelect.className = 'form-select form-select-sm'
+      sourceSelect.dataset.overlaySourceType = 'true'
+      config.sourceTypes.forEach(sourceType => {
+        const opt = document.createElement('option')
+        opt.value = sourceType
+        opt.textContent = sourceType
+        sourceSelect.appendChild(opt)
+      })
+      sourceSelect.value = String(entry.sourceType || config.sourceTypes[0] || 'file').trim()
+      sourceCol.appendChild(sourceSelect)
+      layout.appendChild(sourceCol)
+
+      const valueCol = document.createElement('div')
+      valueCol.className = 'col-lg-5'
+      const valueInput = document.createElement('input')
+      valueInput.type = 'text'
+      valueInput.className = 'form-control form-control-sm'
+      valueInput.dataset.overlaySourceValue = 'true'
+      valueInput.value = String(entry.value || '').trim()
+      valueCol.appendChild(valueInput)
+      layout.appendChild(valueCol)
+
+      const removeCol = document.createElement('div')
+      removeCol.className = 'col-lg-1 d-grid'
+      const removeBtn = document.createElement('button')
+      removeBtn.type = 'button'
+      removeBtn.className = 'btn btn-outline-danger btn-sm'
+      removeBtn.dataset.overlaySourceRemove = 'true'
+      removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
+      removeBtn.setAttribute('aria-label', 'Remove source override')
+      removeCol.appendChild(removeBtn)
+      layout.appendChild(removeCol)
+
+      const help = document.createElement('div')
+      help.className = 'small text-muted mt-2'
+      help.dataset.overlaySourceHelp = 'true'
+      row.appendChild(help)
+
+      const updatePlaceholder = () => {
+        const sourceType = String(sourceSelect.value || '').trim()
+        if (sourceType === 'url') {
+          valueInput.placeholder = 'https://example.com/badge.png'
+          help.textContent = 'Use a direct URL to a badge image.'
+          return
+        }
+        if (sourceType === 'git') {
+          valueInput.placeholder = 'defaults/overlays/images/resolution/custom.png'
+          help.textContent = 'Use a Community-Configs git path.'
+          return
+        }
+        if (sourceType === 'repo') {
+          valueInput.placeholder = 'overlays/resolution/custom.png'
+          help.textContent = 'Use a custom_repo-backed repo path.'
+          return
+        }
+        valueInput.placeholder = 'config/overlays/resolution/custom.png'
+        help.textContent = 'Use a local file path that Kometa can read.'
+      }
+
+      updatePlaceholder()
+      sourceSelect.addEventListener('change', updatePlaceholder)
+      return row
+    }
+
+    const syncOverlaySourceOverrideRows = (cfg, config, section) => {
+      if (!cfg.container || !section) return
+      const hiddenHost = section.querySelector('[data-overlay-source-hidden]')
+      const rows = Array.from(section.querySelectorAll('[data-overlay-source-row="true"]'))
+      const warning = section.querySelector('[data-overlay-source-warning]')
+      if (!hiddenHost || !warning) return
+
+      const seen = new Set()
+      const nextState = []
+      let warningText = ''
+
+      rows.forEach(row => {
+        const keySelect = row.querySelector('[data-overlay-source-key="true"]')
+        const sourceSelect = row.querySelector('[data-overlay-source-type="true"]')
+        const valueInput = row.querySelector('[data-overlay-source-value="true"]')
+        if (!keySelect || !sourceSelect || !valueInput) return
+
+        keySelect.classList.remove('is-invalid')
+        sourceSelect.classList.remove('is-invalid')
+        valueInput.classList.remove('is-invalid')
+
+        const badgeKey = String(keySelect.value || '').trim()
+        const sourceType = String(sourceSelect.value || '').trim()
+        const value = String(valueInput.value || '').trim()
+        if (!value) return
+
+        if (!sourceType) {
+          if (!warningText) {
+            warningText = 'Each source override needs a source type and a value.'
+          }
+          sourceSelect.classList.toggle('is-invalid', !sourceType)
+          return
+        }
+
+        const combo = `${sourceType}:${badgeKey}`
+        if (seen.has(combo)) {
+          if (!warningText) {
+            warningText = 'Duplicate source overrides for the same badge and source type are ignored.'
+          }
+          keySelect.classList.add('is-invalid')
+          sourceSelect.classList.add('is-invalid')
+          return
+        }
+
+        seen.add(combo)
+        nextState.push({ badgeKey, sourceType, value })
+      })
+
+      hiddenHost.innerHTML = ''
+      nextState.forEach(entry => {
+        const varName = encodeOverlaySourceOverrideVarName(entry.sourceType, entry.badgeKey)
+        createOverlaySourceOverrideHiddenInput(cfg, hiddenHost, varName, entry.value)
+      })
+
+      warning.textContent = warningText
+      warning.classList.toggle('d-none', !warningText)
+
+      const emptyState = section.querySelector('[data-overlay-source-empty]')
+      if (emptyState) {
+        emptyState.classList.toggle('d-none', rows.length > 0)
+      }
+
+      if (typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
+        EventHandler.updateAccordionHighlights()
+      }
+      if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
+        ValidationHandler.updateValidationState()
+      }
+    }
+
+    const renderOverlaySourceOverrideRows = (cfg, config, section, state) => {
+      const rowsHost = section.querySelector('[data-overlay-source-rows]')
+      const hiddenHost = section.querySelector('[data-overlay-source-hidden]')
+      const emptyState = section.querySelector('[data-overlay-source-empty]')
+      if (!rowsHost || !hiddenHost) return
+
+      const keyOptions = getOverlaySourceOverrideKeyOptions(cfg, config)
+      rowsHost.innerHTML = ''
+      const entries = Array.isArray(state) && state.length ? state : []
+      entries.forEach(entry => {
+        const row = buildOverlaySourceOverrideRow(cfg, config, keyOptions, entry)
+        rowsHost.appendChild(row)
+      })
+
+      if (emptyState) {
+        emptyState.classList.toggle('d-none', rowsHost.children.length > 0)
+      }
+
+      rowsHost.querySelectorAll('[data-overlay-source-remove="true"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.closest('[data-overlay-source-row="true"]')?.remove()
+          syncOverlaySourceOverrideRows(cfg, config, section)
+        })
+      })
+
+      rowsHost.querySelectorAll('[data-overlay-source-key="true"], [data-overlay-source-type="true"], [data-overlay-source-value="true"]').forEach(input => {
+        input.addEventListener('input', () => syncOverlaySourceOverrideRows(cfg, config, section))
+        input.addEventListener('change', () => syncOverlaySourceOverrideRows(cfg, config, section))
+      })
+    }
+
+    const ensureOverlaySourceOverrideEditor = (cfg) => {
+      if (!cfg.container) return
+      const config = getOverlaySourceOverrideConfig(cfg)
+      if (!config) return
+
+      const details = cfg.container.querySelector('.overlay-template-section')
+      if (!details) return
+
+      let section = cfg.container.querySelector('[data-overlay-source-editor="true"]')
+      if (!section) {
+        section = document.createElement('section')
+        section.className = 'border rounded-3 px-3 pt-3 pb-2 mb-3 bg-body-tertiary'
+        section.dataset.overlaySourceEditor = 'true'
+        section.innerHTML = `
+          <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap mb-2">
+            <div>
+              <div class="small text-uppercase fw-semibold text-secondary">${config.title}</div>
+              <div class="form-text">${config.description}</div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-source-add="true">${config.addLabel}</button>
+          </div>
+          <div class="alert alert-warning py-2 px-3 small d-none mb-2" data-overlay-source-warning></div>
+          <div class="d-flex flex-column gap-2" data-overlay-source-rows></div>
+          <div class="small text-muted fst-italic" data-overlay-source-empty>No source overrides configured.</div>
+          <div data-overlay-source-hidden class="d-none"></div>
+        `
+        details.prepend(section)
+      }
+
+      const hiddenHost = section.querySelector('[data-overlay-source-hidden]')
+      if (!hiddenHost) return
+
+      const state = readOverlaySourceOverrideState(cfg, config, hiddenHost)
+      renderOverlaySourceOverrideRows(cfg, config, section, state)
+      syncOverlaySourceOverrideRows(cfg, config, section)
+
+      const addBtn = section.querySelector('[data-overlay-source-add="true"]')
+      if (addBtn && addBtn.dataset.listenerAdded !== 'true') {
+        addBtn.dataset.listenerAdded = 'true'
+        addBtn.addEventListener('click', () => {
+          const rowsHost = section.querySelector('[data-overlay-source-rows]')
+          if (!rowsHost) return
+          const keyOptions = getOverlaySourceOverrideKeyOptions(cfg, config)
+          rowsHost.appendChild(buildOverlaySourceOverrideRow(cfg, config, keyOptions, {
+            sourceType: config.sourceTypes[0] || 'file',
+            badgeKey: '',
+            value: ''
+          }))
+          renderOverlaySourceOverrideRows(cfg, config, section, Array.from(rowsHost.querySelectorAll('[data-overlay-source-row="true"]')).map(row => ({
+            badgeKey: String(row.querySelector('[data-overlay-source-key="true"]')?.value || '').trim(),
+            sourceType: String(row.querySelector('[data-overlay-source-type="true"]')?.value || '').trim(),
+            value: String(row.querySelector('[data-overlay-source-value="true"]')?.value || '').trim()
+          })))
+          syncOverlaySourceOverrideRows(cfg, config, section)
+        })
+      }
+
+      const resetBtn = cfg.container.querySelector('.reset-offset-btn')
+      if (resetBtn && resetBtn.dataset.sourceOverrideResetBound !== 'true') {
+        resetBtn.dataset.sourceOverrideResetBound = 'true'
+        resetBtn.addEventListener('click', () => {
+          setTimeout(() => {
+            const nextState = readOverlaySourceOverrideState(cfg, config, hiddenHost)
+            renderOverlaySourceOverrideRows(cfg, config, section, nextState)
+            syncOverlaySourceOverrideRows(cfg, config, section)
+          }, 0)
+        })
+      }
     }
 
     const syncFlagSizeDefaults = (cfg, emit = true) => {
@@ -4418,6 +4826,7 @@ const OverlayHandler = {
           }
         }
         ensureResolutionToggleFamilyGroups(cfg)
+        ensureOverlaySourceOverrideEditor(cfg)
         syncAudioCodecBackdropHeight(cfg, false)
         syncResolutionBackdropHeight(cfg, false)
         syncResolutionEditionVisibility(cfg, false)

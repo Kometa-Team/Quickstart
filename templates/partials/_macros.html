@@ -1754,6 +1754,24 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                         current_radio_value == input_value if input_type == "radio"
                                         else data.libraries[input_name]|string|lower == "true"
                                         ) %}
+                                        {% set source_override_seed = [] %}
+                                        {% if overlay.source_overrides is defined %}
+                                            {% for raw_key, raw_val in data.libraries.items() %}
+                                                {% if raw_key.startswith(template_name ~ '[') and raw_key.endswith(']') and raw_val not in [none, '', 'None', 'none', '[]'] %}
+                                                    {% set source_var = raw_key | replace(template_name ~ '[', '') | replace(']', '') %}
+                                                    {% set is_source_override =
+                                                        source_var in ['file', 'url', 'git', 'repo']
+                                                        or source_var.startswith('file_')
+                                                        or source_var.startswith('url_')
+                                                        or source_var.startswith('git_')
+                                                        or source_var.startswith('repo_')
+                                                    %}
+                                                    {% if is_source_override %}
+                                                        {% set _ = source_override_seed.append({'key': source_var, 'value': raw_val}) %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
 
                                         <div class="template-toggle-group ms-3 mb-2 overlay-config-target"
                                             id="{{ base_id }}-overlay-config"
@@ -1768,6 +1786,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                             data-library-id="{{ library.id }}"
                                             data-base-width="{{ base_width }}"
                                             data-base-height="{{ base_height }}"
+                                            {% if overlay.source_overrides is defined %}data-overlay-source-overrides='{{ overlay.source_overrides | tojson | e }}'{% endif %}
+                                            {% if source_override_seed %}data-overlay-source-seed='{{ source_override_seed | tojson | e }}'{% endif %}
                                             {% if effective_offsets and effective_offsets.origin %}data-overlay-origin="{{ effective_offsets.origin }}"{% endif %}>
                                             <div class="form-check form-switch">
                                                 <input
