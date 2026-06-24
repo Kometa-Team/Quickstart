@@ -789,6 +789,8 @@ def _is_allowed_bundle_member(path_value):
     lowered = normalized.lower()
     if _is_bundled_library_archive_member(normalized):
         return _yaml_path_suffix(normalized)
+    if _is_bundled_overlay_image_archive_member(normalized):
+        return lowered.endswith(tuple(f".{ext}" for ext in helpers.ALLOWED_EXTENSIONS))
     if _yaml_path_suffix(normalized):
         return True
     if lowered.endswith((".ttf", ".otf")):
@@ -856,6 +858,90 @@ def _display_library_managed_location(location):
     if not raw:
         return raw
     normalized_relative = _normalized_managed_library_relative_path(raw)
+    if normalized_relative:
+        return Path("config", *normalized_relative.split("/")).as_posix()
+    return raw
+
+
+def _is_overlay_source_override_file_key(key):
+    normalized = str(key or "").strip()
+    return normalized == "file" or normalized.startswith("file_")
+
+
+def _parse_managed_overlay_image_relative_path(path_value):
+    normalized = str(path_value or "").replace("\\", "/").lstrip("/")
+    if not normalized:
+        return None
+    parts = [part for part in normalized.split("/") if part]
+    if len(parts) >= 3 and parts[1] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
+        return {"config_name": parts[0], "remainder": parts[2:], "layout": "config_root"}
+    if len(parts) >= 4 and parts[0] == "config" and parts[2] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
+        return {"config_name": parts[1], "remainder": parts[3:], "layout": "display"}
+    return None
+
+
+def _normalized_managed_overlay_image_relative_path(path_value):
+    info = _parse_managed_overlay_image_relative_path(path_value)
+    if not info:
+        return None
+    return Path(info["config_name"], helpers.MANAGED_OVERLAY_IMAGE_DIR, *info["remainder"]).as_posix()
+
+
+def _is_bundled_overlay_image_archive_member(path_value):
+    return _normalized_managed_overlay_image_relative_path(str(path_value or "").replace("\\", "/").lstrip("/")) is not None
+
+
+def _resolve_local_overlay_image_source(location):
+    raw = str(location or "").strip()
+    if not raw:
+        return None
+    expanded = Path(os.path.expandvars(os.path.expanduser(raw)))
+    if expanded.is_absolute():
+        try:
+            return expanded.resolve()
+        except OSError:
+            return expanded
+    managed_relative = _normalized_managed_overlay_image_relative_path(expanded)
+    if managed_relative:
+        try:
+            return (Path(helpers.CONFIG_DIR) / managed_relative).resolve()
+        except OSError:
+            return Path(helpers.CONFIG_DIR) / managed_relative
+    normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
+    if normalized_parts and normalized_parts[0] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
+        try:
+            return (Path(helpers.CONFIG_DIR) / expanded).resolve()
+        except OSError:
+            return Path(helpers.CONFIG_DIR) / expanded
+    try:
+        return (Path.cwd() / expanded).resolve()
+    except OSError:
+        return Path.cwd() / expanded
+
+
+def _managed_overlay_image_bundle_location_for_path(path):
+    config_root = Path(helpers.CONFIG_DIR).resolve()
+    try:
+        relative = Path(path).resolve().relative_to(config_root)
+    except Exception:
+        return None
+    normalized_relative = _normalized_managed_overlay_image_relative_path(Path(*relative.parts).as_posix())
+    if not normalized_relative:
+        return None
+    return normalized_relative
+
+
+def _safe_overlay_bundle_slug(value, fallback):
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value or "").strip())
+    slug = slug.strip("._-")
+    return slug or fallback
+
+
+def _display_managed_overlay_image_location(location):
+    raw = str(location or "").strip().replace("\\", "/")
+    if not raw:
+        return raw
+    normalized_relative = _normalized_managed_overlay_image_relative_path(raw)
     if normalized_relative:
         return Path("config", *normalized_relative.split("/")).as_posix()
     return raw
@@ -1035,6 +1121,8 @@ def _normalize_imported_libraries_payload(payload_section, config_name):
     if not isinstance(libraries_data, dict):
         return payload_section, []
     normalized, errors, _changed = _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True)
+    normalized, overlay_errors, _overlay_changed = _normalize_overlay_source_override_entries_payload(normalized, config_name)
+    errors.extend(overlay_errors)
     if errors:
         return None, errors
     updated = dict(payload_section)
@@ -1043,6 +1131,46 @@ def _normalize_imported_libraries_payload(payload_section, config_name):
     else:
         updated = normalized
     return updated, []
+
+
+def _normalize_overlay_source_override_entries_payload(libraries_data, config_name):
+    if not isinstance(libraries_data, dict):
+        return {}, [], False
+
+    normalized = dict(libraries_data)
+    errors = []
+    changed = False
+    pattern = re.compile(
+        r"^(?P<library_id>(?:mov|sho)-library_.+?)-(?P<builder>movie|show|season|episode)-template_(?P<overlay_id>[^\[]+)\[(?P<template_key>[^\]]+)\]$"
+    )
+
+    for key, raw_value in list(normalized.items()):
+        if not isinstance(key, str) or "-template_overlay_" not in key or not key.endswith("]"):
+            continue
+        match = pattern.match(key)
+        if not match:
+            continue
+        template_key = str(match.group("template_key") or "").strip()
+        if not _is_overlay_source_override_file_key(template_key):
+            continue
+        location = str(raw_value or "").strip()
+        if not location:
+            continue
+        try:
+            normalized_location, entry_changed = validations.normalize_overlay_source_override_file_location(
+                location,
+                config_name=config_name,
+                library_id=match.group("library_id"),
+                overlay_id=match.group("overlay_id"),
+                template_key=template_key,
+            )
+        except ValueError as exc:
+            errors.append(f"{match.group('library_id')}: {match.group('overlay_id')}[{template_key}] {exc}")
+            continue
+        normalized[key] = normalized_location
+        changed = changed or bool(entry_changed) or normalized_location != location
+
+    return normalized, errors, changed
 
 
 def _rewrite_bundle_library_paths(config_data, bundle_root):
@@ -1076,6 +1204,40 @@ def _rewrite_bundle_library_paths(config_data, bundle_root):
                         continue
                     entry[entry_type] = str(candidate.resolve())
                     break
+    return config_data
+
+
+def _rewrite_bundle_overlay_image_paths(config_data, bundle_root):
+    if not isinstance(config_data, dict):
+        return config_data
+    libraries = config_data.get("libraries")
+    if not isinstance(libraries, dict):
+        return config_data
+    root = Path(bundle_root).resolve()
+    for lib_cfg in libraries.values():
+        if not isinstance(lib_cfg, dict):
+            continue
+        overlay_entries = lib_cfg.get("overlay_files")
+        if not isinstance(overlay_entries, list):
+            continue
+        for entry in overlay_entries:
+            if not isinstance(entry, dict):
+                continue
+            template_vars = entry.get("template_variables")
+            if not isinstance(template_vars, dict):
+                continue
+            for key, value in list(template_vars.items()):
+                if not _is_overlay_source_override_file_key(key) or not value:
+                    continue
+                raw_location = str(value).strip()
+                candidate = root / Path(raw_location)
+                if not candidate.exists():
+                    normalized_relative = _normalized_managed_overlay_image_relative_path(raw_location)
+                    if normalized_relative:
+                        candidate = root / Path(normalized_relative)
+                if not candidate.exists():
+                    continue
+                template_vars[key] = str(candidate.resolve())
     return config_data
 
 
@@ -1181,6 +1343,71 @@ def _iter_bundle_artifacts(config_data):
                     )
                     break
     return artifacts
+
+
+def _iter_overlay_source_bundle_artifacts(config_data, config_name):
+    seen = set()
+    changed = False
+    if not isinstance(config_data, dict):
+        return [], changed
+    libraries = config_data.get("libraries")
+    if not isinstance(libraries, dict):
+        return [], changed
+
+    config_slug = _normalize_config_name(config_name)
+    artifacts = []
+    for library_name, lib_cfg in libraries.items():
+        if not isinstance(lib_cfg, dict):
+            continue
+        overlay_entries = lib_cfg.get("overlay_files")
+        if not isinstance(overlay_entries, list):
+            continue
+        for entry in overlay_entries:
+            if not isinstance(entry, dict):
+                continue
+            template_vars = entry.get("template_variables")
+            if not isinstance(template_vars, dict):
+                continue
+            overlay_name = str(entry.get("default") or "overlay").strip()
+            for template_key, raw_value in list(template_vars.items()):
+                if not _is_overlay_source_override_file_key(template_key):
+                    continue
+                raw_location = str(raw_value or "").strip()
+                if not raw_location:
+                    continue
+                source_path = _resolve_local_overlay_image_source(raw_location)
+                if source_path is None or not source_path.exists() or not source_path.is_file():
+                    continue
+
+                archive_path = _managed_overlay_image_bundle_location_for_path(source_path)
+                if not archive_path:
+                    library_slug = _safe_overlay_bundle_slug(library_name, "library")
+                    overlay_slug = _safe_overlay_bundle_slug(overlay_name, "overlay")
+                    template_slug = _safe_overlay_bundle_slug(template_key, "image")
+                    stem_slug = _safe_overlay_bundle_slug(source_path.stem, "image")
+                    digest_source = f"{str(source_path).replace('\\', '/').lower()}|{library_slug}|{overlay_slug}|{template_slug}"
+                    digest = hashlib.sha1(digest_source.encode("utf-8", errors="ignore")).hexdigest()[:10]
+                    suffix = source_path.suffix or ".png"
+                    archive_path = Path(
+                        config_slug,
+                        helpers.MANAGED_OVERLAY_IMAGE_DIR,
+                        library_slug,
+                        overlay_slug,
+                        f"{template_slug}_{stem_slug}_{digest}{suffix}",
+                    ).as_posix()
+
+                display_location = _display_managed_overlay_image_location(archive_path)
+                if raw_location != display_location:
+                    template_vars[template_key] = display_location
+                    changed = True
+
+                dedupe_key = (str(source_path), archive_path)
+                if dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                artifacts.append({"source": source_path, "archive": archive_path, "type": "overlay_image"})
+
+    return artifacts, changed
 
 
 def _bundle_write_path(zf, archive_name, source_path, redacted=False):
@@ -5266,6 +5493,7 @@ def import_config_preview():
                 archive_members = archive.namelist()
                 unexpected_members = []
                 bundled_library_files = []
+                bundled_overlay_images = []
                 config_files = []
                 font_files = []
 
@@ -5278,6 +5506,8 @@ def import_config_preview():
                         continue
                     if _is_bundled_library_archive_member(normalized_member):
                         bundled_library_files.append(member_name)
+                    elif _is_bundled_overlay_image_archive_member(normalized_member):
+                        bundled_overlay_images.append(member_name)
                     elif _yaml_path_suffix(normalized_member):
                         config_files.append(member_name)
                     elif normalized_member.lower().endswith((".ttf", ".otf")):
@@ -5299,7 +5529,7 @@ def import_config_preview():
                 except Exception:
                     return jsonify(success=False, message="Unable to read config from zip."), 400
 
-                if font_files or bundled_library_files:
+                if font_files or bundled_library_files or bundled_overlay_images:
                     cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
                     cache_dir.mkdir(parents=True, exist_ok=True)
                     extracted_dir = cache_dir / f"bundle_{secrets.token_urlsafe(8)}"
@@ -5342,6 +5572,21 @@ def import_config_preview():
                                 dest.write(source.read())
                         except Exception:
                             continue
+                    for member_name in bundled_overlay_images:
+                        normalized_member = str(member_name).replace("\\", "/").lstrip("/")
+                        if not normalized_member or normalized_member.endswith("/"):
+                            continue
+                        target = (extracted_dir / Path(normalized_member)).resolve()
+                        try:
+                            target.relative_to(extracted_dir.resolve())
+                        except Exception:
+                            continue
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        try:
+                            with archive.open(member_name) as source, open(target, "wb") as dest:
+                                dest.write(source.read())
+                        except Exception:
+                            continue
         except Exception:
             return jsonify(success=False, message="Unable to read zip file."), 400
     else:
@@ -5360,6 +5605,7 @@ def import_config_preview():
         return jsonify(success=False, message="Unable to parse config file."), 400
     if extracted_dir:
         parsed = _rewrite_bundle_library_paths(parsed, extracted_dir)
+        parsed = _rewrite_bundle_overlay_image_paths(parsed, extracted_dir)
 
     def parse_list(value):
         if isinstance(value, str):
@@ -7850,9 +8096,16 @@ def _get_custom_font_files(config_name: str | None = None) -> list[Path]:
     return font_files
 
 
-def _bundle_artifacts_from_yaml(yaml_text):
+def _bundle_artifacts_from_yaml(yaml_text, config_name=None):
     parsed = importer.load_yaml_config(yaml_text)
-    return _iter_bundle_artifacts(parsed)
+    if not parsed:
+        return [], yaml_text
+    artifact_files = list(_iter_bundle_artifacts(parsed))
+    overlay_artifacts, overlay_changed = _iter_overlay_source_bundle_artifacts(parsed, config_name)
+    artifact_files.extend(overlay_artifacts)
+    if overlay_changed:
+        return artifact_files, _dump_yaml_text(parsed)
+    return artifact_files, yaml_text
 
 
 def _build_config_bundle(
@@ -7880,7 +8133,7 @@ def _build_config_bundle(
         readme_lines.append(f"- {name}/fonts/ (custom fonts uploaded in Quickstart)")
         readme_lines.append(f"- Fonts included: {', '.join(font_names)}")
     if has_artifacts:
-        readme_lines.append(f"- {name}/metadata_files/, {name}/collection_files/, {name}/overlay_files/ (config-owned library files)")
+        readme_lines.append(f"- {name}/metadata_files/, {name}/collection_files/, {name}/overlay_files/, {name}/overlay_images/ (config-owned library files and overlay images)")
     readme_lines += [
         "",
         "Install steps:",
@@ -7921,10 +8174,10 @@ def download():
     if yaml_content:
         config_name = session.get("config_name")
         custom_fonts = _get_custom_font_files(config_name)
-        artifact_files = _bundle_artifacts_from_yaml(yaml_content)
+        artifact_files, bundle_yaml = _bundle_artifacts_from_yaml(yaml_content, config_name=config_name)
         if custom_fonts or artifact_files:
             bundle = _build_config_bundle(
-                yaml_content,
+                bundle_yaml,
                 "config.yml",
                 custom_fonts,
                 artifact_files=artifact_files,
@@ -7958,10 +8211,10 @@ def download_redacted():
         # Serve the redacted YAML as a file download
         config_name = session.get("config_name")
         custom_fonts = _get_custom_font_files(config_name)
-        artifact_files = _bundle_artifacts_from_yaml(yaml_content)
+        artifact_files, bundle_yaml = _bundle_artifacts_from_yaml(redacted_content, config_name=config_name)
         if custom_fonts or artifact_files:
             bundle = _build_config_bundle(
-                redacted_content,
+                bundle_yaml,
                 "config_redacted.yml",
                 custom_fonts,
                 artifact_files=artifact_files,

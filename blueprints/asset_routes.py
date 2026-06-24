@@ -2,6 +2,7 @@ import hashlib
 import os
 import time
 from io import BytesIO
+from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
@@ -9,7 +10,7 @@ from flask import Blueprint, abort, has_request_context, jsonify, request, send_
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 from werkzeug.utils import secure_filename
 
-from modules import assets, helpers, url_validation
+from modules import assets, helpers, url_validation, validations
 
 bp = Blueprint("asset_routes", __name__)
 
@@ -266,6 +267,44 @@ def list_uploaded_images():
         return jsonify({"status": "error", "message": "Invalid image type"}), 400
 
     return jsonify({"status": "success", "images": assets.list_preview_images_for_type(image_type)})
+
+
+@bp.route("/overlay-source-preview", methods=["GET"])
+def overlay_source_preview():
+    source_type = str(request.args.get("source_type") or "").strip().lower()
+    source_value = str(request.args.get("source_value") or "").strip()
+
+    if source_type not in {"file", "url", "git", "repo"}:
+        return jsonify({"status": "error", "message": "Invalid overlay source type."}), 400
+    if not source_value:
+        return jsonify({"status": "error", "message": "Missing overlay source value."}), 400
+
+    if source_type == "file":
+        try:
+            resolved_path = Path(validations._resolve_managed_library_path(source_value)).resolve()  # noqa: SLF001
+            config_root = Path(helpers.CONFIG_DIR).resolve()
+            resolved_path.relative_to(config_root)
+        except Exception:
+            return jsonify({"status": "error", "message": "Unable to resolve overlay file path."}), 400
+
+        if resolved_path.exists() and resolved_path.is_file():
+            return send_file(resolved_path)
+        return jsonify({"status": "error", "message": "Overlay preview file must be within managed config storage."}), 400
+
+    resolved_url, resolve_error = validations._resolve_overlay_source_override_remote_url(source_type, source_value)  # noqa: SLF001
+    if resolve_error or not resolved_url:
+        return jsonify({"status": "error", "message": resolve_error or "Unable to resolve overlay preview URL."}), 400
+
+    try:
+        response = requests.get(resolved_url, timeout=15)
+    except requests.RequestException as exc:
+        return jsonify({"status": "error", "message": f"Unable to fetch overlay preview image. {exc}"}), 400
+
+    if response.status_code >= 400:
+        return jsonify({"status": "error", "message": f"Overlay preview URL returned HTTP {response.status_code} {response.reason}."}), 400
+
+    content_type = response.headers.get("Content-Type") or "application/octet-stream"
+    return send_file(BytesIO(response.content), mimetype=content_type)
 
 
 @bp.route("/generate_preview", methods=["POST"])

@@ -3388,7 +3388,9 @@ def require_config_name_for_storage(config_name: str | None, context: str = "Art
 
 
 MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
-MANAGED_CONFIG_ARTIFACT_DIRS = ("fonts",) + MANAGED_LIBRARY_FILE_DIRS
+MANAGED_OVERLAY_IMAGE_DIR = "overlay_images"
+MANAGED_SYNC_ARTIFACT_DIRS = MANAGED_LIBRARY_FILE_DIRS + (MANAGED_OVERLAY_IMAGE_DIR,)
+MANAGED_CONFIG_ARTIFACT_DIRS = ("fonts",) + MANAGED_SYNC_ARTIFACT_DIRS
 
 
 def get_managed_config_artifact_root(config_name: str | None) -> Path:
@@ -3423,7 +3425,7 @@ def sync_managed_library_artifacts_to_kometa(config_name: str | None, kometa_roo
     missing: list[str] = []
     errors: list[str] = []
 
-    for folder in MANAGED_LIBRARY_FILE_DIRS:
+    for folder in MANAGED_SYNC_ARTIFACT_DIRS:
         source_dir = source_root / folder
         destination_dir = destination_root / folder
 

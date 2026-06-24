@@ -30,6 +30,18 @@ def validate_apprise():
     return validations.validate_apprise_server(data)
 
 
+@bp.route("/validate_overlay_source_override", methods=["POST"])
+def validate_overlay_source_override():
+    data = request.get_json(silent=True) or {}
+    return validations.validate_overlay_source_override_server(data)
+
+
+@bp.route("/overlay-source-make-local", methods=["POST"])
+def overlay_source_make_local():
+    data = request.get_json(silent=True) or {}
+    return validations.make_overlay_source_override_local_server(data)
+
+
 @bp.route("/validate_plex", methods=["POST"])
 def validate_plex():
     data = request.get_json(silent=True) or {}
