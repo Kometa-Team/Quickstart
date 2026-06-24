@@ -33,7 +33,6 @@ from werkzeug.utils import secure_filename
 
 from modules import helpers, validations
 
-
 # --- constants -------------------------------------------------------------
 
 LIBRARY_FILE_KINDS = ("metadata_files", "collection_files", "overlay_files")
