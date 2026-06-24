@@ -807,13 +807,16 @@ const OverlayHandler = {
       return ''
     }
 
-    const getOverlayPreviewFilename = (badgeKey) => {
-      const normalizedKey = String(badgeKey || '').trim().replace(/_/g, '')
+    const getOverlayPreviewFilename = (badgeKey, family = '') => {
+      const normalizedFamily = String(family || '').trim().toLowerCase()
+      const normalizedKey = normalizedFamily === 'audio_codec'
+        ? String(badgeKey || '').trim()
+        : String(badgeKey || '').trim().replace(/_/g, '')
       return normalizedKey ? `${normalizedKey}.png` : ''
     }
 
     const buildBundledOverlayPreviewUrl = (family, badgeKey, variant = '') => {
-      const filename = getOverlayPreviewFilename(badgeKey)
+      const filename = getOverlayPreviewFilename(badgeKey, family)
       if (!family || !filename) return ''
       const normalizedVariant = String(variant || '').trim().toLowerCase()
       if (family === 'audio_codec') {
