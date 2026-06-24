@@ -162,11 +162,7 @@ def _list_bundled_overlay_preview_keys(family):
         raise ValueError(f"Bundled overlay preview folder not found for {normalized_family}.")
 
     keys = sorted(
-        {
-            image_path.stem
-            for image_path in image_root.rglob("*.png")
-            if image_path.is_file()
-        },
+        {image_path.stem for image_path in image_root.rglob("*.png") if image_path.is_file()},
         key=lambda item: item.casefold(),
     )
     if not keys:
