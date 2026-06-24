@@ -17,8 +17,11 @@ bp = Blueprint("asset_routes", __name__)
 OVERLAY_PREVIEW_ROOT = Path(__file__).resolve().parent.parent / "static" / "images" / "overlay-defaults"
 
 
-def _overlay_preview_filename(badge_key):
-    normalized_key = str(badge_key or "").strip().replace("_", "")
+def _overlay_preview_filename(badge_key, family=None):
+    normalized_family = str(family or "").strip().lower()
+    normalized_key = str(badge_key or "").strip()
+    if normalized_family != "audio_codec":
+        normalized_key = normalized_key.replace("_", "")
     return f"{normalized_key}.png" if normalized_key else ""
 
 
@@ -80,7 +83,7 @@ def _load_overlay_preview_image(source_type, source_value):
 
 def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
     normalized_family = str(family or "").strip().lower()
-    filename = _overlay_preview_filename(badge_key)
+    filename = _overlay_preview_filename(badge_key, normalized_family)
     normalized_variant = str(variant or "").strip().lower()
     if normalized_family not in {"resolution", "edition", "audio_codec"} or not filename:
         raise ValueError("Invalid bundled overlay preview request.")

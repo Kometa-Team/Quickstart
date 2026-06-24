@@ -775,6 +775,30 @@ def test_overlay_render_preview_returns_audio_codec_badge_from_file_source(clien
         assert rendered.size == (180, 60)
 
 
+def test_overlay_render_preview_returns_bundled_audio_codec_badge_with_underscores(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_audio_codec",
+            "audio_codec": {
+                "badge_key": "plus_atmos",
+                "source_type": "",
+                "source_value": "",
+                "variant": "compact",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):
     collection_file = tmp_path / "collections.yml"
     collection_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")
