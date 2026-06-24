@@ -5,7 +5,6 @@ from pathlib import Path
 
 from modules import logscan_command
 
-
 # ---------------------------------------------------------------------------
 # extract_plex_config_section
 # ---------------------------------------------------------------------------
@@ -212,10 +211,7 @@ def test_extract_config_path_quoted_value_without_spaces():
     # Known limitation: shlex with posix=False does not honor quoted values
     # that contain spaces. This documents the current behavior rather than
     # endorses it.
-    assert (
-        logscan_command.extract_config_path_from_command('kometa --config="/tmp/foo bar.yml"')
-        == '/tmp/foo'
-    )
+    assert logscan_command.extract_config_path_from_command('kometa --config="/tmp/foo bar.yml"') == "/tmp/foo"
 
 
 def test_extract_config_path_returns_none_when_absent():
@@ -247,9 +243,7 @@ def test_derive_config_name_handles_path_objects():
 
 
 def test_sanitize_run_command_replaces_config_path():
-    cleaned = logscan_command.sanitize_run_command(
-        "kometa --config=/etc/secrets/mine.yml --run", config_path="/etc/secrets/mine.yml"
-    )
+    cleaned = logscan_command.sanitize_run_command("kometa --config=/etc/secrets/mine.yml --run", config_path="/etc/secrets/mine.yml")
     assert "/etc/secrets/mine.yml" not in cleaned
     assert "<config>" in cleaned
 
@@ -261,9 +255,7 @@ def test_sanitize_run_command_redacts_secret_flags():
 
 
 def test_sanitize_run_command_replaces_path_with_alt_separators():
-    cleaned = logscan_command.sanitize_run_command(
-        "kometa --config C:\\Users\\test\\config.yml", config_path="C:/Users/test/config.yml"
-    )
+    cleaned = logscan_command.sanitize_run_command("kometa --config C:\\Users\\test\\config.yml", config_path="C:/Users/test/config.yml")
     assert "config.yml" not in cleaned
     assert "<config>" in cleaned
 

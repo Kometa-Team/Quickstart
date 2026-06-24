@@ -29,9 +29,7 @@ _logger = logging.getLogger("logscan")
 _PLEX_CONFIG_START_MARKER = "Plex Configuration"
 _PLEX_CONFIG_END_MARKERS = (" Scanning ", "Library Connection Failed")
 _PLEX_TRACEBACK_MARKER = "Traceback (most recent call last):"
-_SERVER_INFO_RE = re.compile(
-    r"Connected to server\s+([\w\s]+)\s+version\s+(\d+\.\d+\.\d+\.\d+-[\w\d]+)"
-)
+_SERVER_INFO_RE = re.compile(r"Connected to server\s+([\w\s]+)\s+version\s+(\d+\.\d+\.\d+\.\d+-[\w\d]+)")
 
 # Versions inside (stable_version, good_version) are flagged as potentially
 # affected by the Plex "rounding issue" that older logscan recommendations call
@@ -40,9 +38,7 @@ _PLEX_STABLE_VERSION = "1.40.0.7998-c29d4c0c8"
 _PLEX_GOOD_VERSION = "1.40.3.8555-fef15d30c"
 
 
-def extract_plex_config_section(
-    lines: list[str], start_index: int, end_markers: Iterable[str]
-) -> str | None:
+def extract_plex_config_section(lines: list[str], start_index: int, end_markers: Iterable[str]) -> str | None:
     """Pull a single Plex Configuration block from ``lines`` and strip out any
     traceback noise that landed inside it.
 
@@ -67,7 +63,7 @@ def extract_plex_config_section(
         total_lines = len(config_section)
         start_remove = traceback_line_number + 1
         end_remove = total_lines - 2
-        config_section = config_section[:start_remove] + config_section[end_remove + 1:]
+        config_section = config_section[:start_remove] + config_section[end_remove + 1 :]
 
     return "\n".join(config_section) if config_section else None
 
@@ -130,10 +126,7 @@ def extract_plex_config(content: str) -> dict:
                         )
                         server_versions.append((my_server_name, my_server_version))
                     else:
-                        _logger.debug(
-                            f"Server Name: {my_server_name} has Version: "
-                            f"{my_server_version}. ALL GOOD"
-                        )
+                        _logger.debug(f"Server Name: {my_server_name} has Version: " f"{my_server_version}. ALL GOOD")
         i += 1
 
     return {
@@ -189,9 +182,7 @@ def extract_header_lines(content: str) -> tuple[str, str | None, str | None]:
 # ---------------------------------------------------------------------------
 
 _RUN_COMMAND_RE = re.compile(r"Run Command:\s*(.+)$")
-_SENSITIVE_FLAG_RE = re.compile(
-    r"(?i)(--?[\w-]*(token|apikey|api-key|api_key|secret)\w*)(=|\s+)(\S+)"
-)
+_SENSITIVE_FLAG_RE = re.compile(r"(?i)(--?[\w-]*(token|apikey|api-key|api_key|secret)\w*)(=|\s+)(\S+)")
 
 
 def extract_run_command(content: str) -> str | None:
