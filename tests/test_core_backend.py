@@ -679,6 +679,73 @@ def test_overlay_source_make_local_rejects_file_source(client):
     assert "Only URL, git, or repo overlay sources can be made local." in payload["error"]
 
 
+def test_overlay_source_cleanup_removes_requested_managed_file(client, isolated_config_dir):
+
+    config_name = "pytest_overlay_cleanup_remove"
+    managed_dir = isolated_config_dir / config_name / "overlay_images" / "mov-library_movies" / "overlay_resolution"
+    managed_dir.mkdir(parents=True, exist_ok=True)
+    managed_file = managed_dir / "file_4k.png"
+    managed_file.write_bytes(b"png")
+
+    resp = client.post(
+        "/overlay-source-cleanup",
+        json={
+            "config_name": config_name,
+            "library_id": "mov-library_movies",
+            "overlay_id": "overlay_resolution",
+            "remove_locations": [f"config/{config_name}/overlay_images/mov-library_movies/overlay_resolution/file_4k.png"],
+            "retain_locations": [],
+            "sweep": False,
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert managed_file.exists() is False
+    assert f"config/{config_name}/overlay_images/mov-library_movies/overlay_resolution/file_4k.png" in payload["removed"]
+    assert payload["errors"] == []
+
+
+def test_overlay_source_cleanup_sweeps_only_unreferenced_files_in_scope(client, isolated_config_dir):
+    config_name = "pytest_overlay_cleanup_sweep"
+    scope_dir = isolated_config_dir / config_name / "overlay_images" / "mov-library_movies" / "overlay_resolution"
+    other_overlay_dir = isolated_config_dir / config_name / "overlay_images" / "mov-library_movies" / "overlay_audio_codec"
+    other_library_dir = isolated_config_dir / config_name / "overlay_images" / "sho-library_shows" / "overlay_resolution"
+    scope_dir.mkdir(parents=True, exist_ok=True)
+    other_overlay_dir.mkdir(parents=True, exist_ok=True)
+    other_library_dir.mkdir(parents=True, exist_ok=True)
+
+    keep_file = scope_dir / "keep.png"
+    orphan_file = scope_dir / "orphan.png"
+    other_overlay_file = other_overlay_dir / "other.png"
+    other_library_file = other_library_dir / "show.png"
+    keep_file.write_bytes(b"keep")
+    orphan_file.write_bytes(b"orphan")
+    other_overlay_file.write_bytes(b"other-overlay")
+    other_library_file.write_bytes(b"other-library")
+
+    resp = client.post(
+        "/overlay-source-cleanup",
+        json={
+            "config_name": config_name,
+            "library_id": "mov-library_movies",
+            "overlay_id": "overlay_resolution",
+            "retain_locations": [f"config/{config_name}/overlay_images/mov-library_movies/overlay_resolution/keep.png"],
+            "sweep": True,
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert keep_file.exists() is True
+    assert orphan_file.exists() is False
+    assert other_overlay_file.exists() is True
+    assert other_library_file.exists() is True
+    assert f"config/{config_name}/overlay_images/mov-library_movies/overlay_resolution/orphan.png" in payload["removed"]
+
+
 def test_overlay_render_preview_stacks_resolution_and_edition_sources(client, isolated_config_dir):
     import io
 

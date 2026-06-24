@@ -2053,11 +2053,16 @@ const OverlayHandler = {
       rowsHost.querySelectorAll('[data-overlay-source-remove="true"]').forEach(btn => {
         btn.addEventListener('click', () => {
           const row = btn.closest('[data-overlay-source-row="true"]')
+          const previousManagedLocation = getTrackedManagedOverlaySourceLocation(row)
           if (row?._overlaySourceAbortController) {
             row._overlaySourceAbortController.abort()
           }
           btn.closest('[data-overlay-source-row="true"]')?.remove()
           syncOverlaySourceOverrideRows(cfg, config, section)
+          cleanupManagedOverlaySourceImages(cfg, config, section, {
+            removeLocations: previousManagedLocation ? [previousManagedLocation] : [],
+            sweep: true
+          }).catch(() => {})
         })
       })
 
@@ -2157,10 +2162,17 @@ const OverlayHandler = {
       if (resetBtn && resetBtn.dataset.sourceOverrideResetBound !== 'true') {
         resetBtn.dataset.sourceOverrideResetBound = 'true'
         resetBtn.addEventListener('click', () => {
+          const previousManagedLocations = Array.from(section.querySelectorAll('[data-overlay-source-row="true"]'))
+            .map(row => getTrackedManagedOverlaySourceLocation(row))
+            .filter(Boolean)
           setTimeout(() => {
             const nextState = readOverlaySourceOverrideState(cfg, config, hiddenHost)
             renderOverlaySourceOverrideRows(cfg, config, section, nextState)
             syncOverlaySourceOverrideRows(cfg, config, section)
+            cleanupManagedOverlaySourceImages(cfg, config, section, {
+              removeLocations: previousManagedLocations,
+              sweep: true
+            }).catch(() => {})
           }, 0)
         })
       }

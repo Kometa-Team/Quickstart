@@ -124,6 +124,8 @@ def _resolve_managed_library_path(location):
     if expanded.is_absolute():
         return str(expanded)
     normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
+    if normalized_parts and normalized_parts[0] == "config":
+        return str(Path(helpers.CONFIG_DIR) / Path(*normalized_parts[1:]))
     if len(normalized_parts) >= 3 and normalized_parts[1] in helpers.MANAGED_LIBRARY_FILE_DIRS:
         return str(Path(helpers.CONFIG_DIR) / Path(*normalized_parts))
     if len(normalized_parts) >= 3 and normalized_parts[1] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
