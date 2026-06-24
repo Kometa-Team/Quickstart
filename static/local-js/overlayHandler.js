@@ -1473,6 +1473,75 @@ const OverlayHandler = {
       return String(document.getElementById('qs-active-config-input')?.value || '').trim()
     }
 
+    const isManagedOverlaySourceLocation = (value) => {
+      const normalized = String(value || '').trim().replace(/\\/g, '/').toLowerCase()
+      if (!normalized) return false
+      return normalized.startsWith('config/') && normalized.includes('/overlay_images/')
+    }
+
+    const getTrackedManagedOverlaySourceLocation = (row) => {
+      const tracked = String(row?.dataset?.overlaySourceManagedLocation || '').trim()
+      return isManagedOverlaySourceLocation(tracked) ? tracked : ''
+    }
+
+    const setTrackedManagedOverlaySourceLocation = (row, value) => {
+      if (!row) return
+      const normalized = String(value || '').trim()
+      if (isManagedOverlaySourceLocation(normalized)) {
+        row.dataset.overlaySourceManagedLocation = normalized
+      } else {
+        delete row.dataset.overlaySourceManagedLocation
+      }
+    }
+
+    const collectManagedOverlaySourceRetainLocations = (cfg, config, section) => {
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+        .filter(entry => entry.sourceType === 'file' && isManagedOverlaySourceLocation(entry.value))
+        .map(entry => String(entry.value || '').trim())
+    }
+
+    const cleanupManagedOverlaySourceImages = async (cfg, config, section, options = {}) => {
+      if (!cfg?.container || !config || !section) return null
+
+      const configName = getOverlaySourceOverrideActiveConfigName()
+      const libraryId = String(cfg.container.dataset.libraryId || '').trim()
+      const overlayId = String(cfg.id || '').trim()
+      if (!configName || !libraryId || !overlayId) return null
+
+      const removeLocations = Array.isArray(options.removeLocations)
+        ? options.removeLocations.map(value => String(value || '').trim()).filter(Boolean)
+        : []
+      const sweep = Boolean(options.sweep)
+      if (!removeLocations.length && !sweep) return null
+
+      const retainLocations = collectManagedOverlaySourceRetainLocations(cfg, config, section)
+      try {
+        const response = await fetch('/overlay-source-cleanup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config_name: configName,
+            library_id: libraryId,
+            overlay_id: overlayId,
+            remove_locations: removeLocations,
+            retain_locations: retainLocations,
+            sweep
+          })
+        })
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok || payload.valid === false) {
+          console.warn('[OverlaySourceOverrides] Cleanup request failed', { overlayId, payload })
+          return null
+        }
+        return payload
+      } catch (error) {
+        console.warn('[OverlaySourceOverrides] Cleanup request errored', { overlayId, error })
+        return null
+      }
+    }
+
     const updateOverlaySourceOverrideRowActions = (row) => {
       if (!row) return
       const sourceSelect = row.querySelector('[data-overlay-source-type="true"]')
@@ -1564,6 +1633,7 @@ const OverlayHandler = {
       const controller = new AbortController()
       row._overlaySourceAbortController = controller
 
+      const previousManagedLocation = getTrackedManagedOverlaySourceLocation(row)
       row._overlaySourceValidationPayload = null
       setOverlaySourceOverrideRowState(row, 'pending', 'Validating image source...')
 
@@ -1593,6 +1663,10 @@ const OverlayHandler = {
           valueInput.value = String(payload.normalized_location).trim()
         }
 
+        const nextManagedLocation = sourceType === 'file' && payload.normalized_location
+          ? String(payload.normalized_location || '').trim()
+          : ''
+        setTrackedManagedOverlaySourceLocation(row, nextManagedLocation)
         row._overlaySourceValidationPayload = payload
         const message = String(payload.warning || payload.message || 'Validated overlay image source.').trim()
         const state = payload.warning ? 'warn' : 'valid'
@@ -1610,6 +1684,12 @@ const OverlayHandler = {
           refreshAudioCodecOverlayPreview(cfg)
         }
         syncOverlaySourceOverrideRows(cfg, config, section)
+        if (previousManagedLocation && previousManagedLocation !== nextManagedLocation) {
+          await cleanupManagedOverlaySourceImages(cfg, config, section, {
+            removeLocations: [previousManagedLocation],
+            sweep: true
+          })
+        }
       } catch (error) {
         if (error?.name === 'AbortError') return
         setOverlaySourceOverrideRowState(row, 'invalid', 'Overlay image validation request failed.')
@@ -1640,6 +1720,7 @@ const OverlayHandler = {
       makeLocalBtn.textContent = 'Making local...'
       updateOverlaySourceOverrideRowActions(row)
       setOverlaySourceOverrideRowState(row, 'pending', 'Saving local copy of overlay image...')
+      const previousManagedLocation = getTrackedManagedOverlaySourceLocation(row)
 
       try {
         const response = await fetch('/overlay-source-make-local', {
@@ -1666,6 +1747,8 @@ const OverlayHandler = {
 
         sourceSelect.value = 'file'
         valueInput.value = String(payload.normalized_location || '').trim()
+        const nextManagedLocation = String(payload.normalized_location || '').trim()
+        setTrackedManagedOverlaySourceLocation(row, nextManagedLocation)
         row._overlaySourceValidationPayload = payload
 
         const message = String(payload.warning || payload.message || 'Saved overlay image into managed storage.').trim()
@@ -1684,6 +1767,12 @@ const OverlayHandler = {
           setAudioCodecPreviewSelectedKey(cfg, badgeKey)
           syncAudioCodecPreviewControls(cfg)
           refreshAudioCodecOverlayPreview(cfg)
+        }
+        if (previousManagedLocation && previousManagedLocation !== nextManagedLocation) {
+          await cleanupManagedOverlaySourceImages(cfg, config, section, {
+            removeLocations: [previousManagedLocation],
+            sweep: true
+          })
         }
       } catch (error) {
         row._overlaySourceValidationPayload = null
@@ -1750,6 +1839,9 @@ const OverlayHandler = {
       valueInput.dataset.overlaySourceValue = 'true'
       valueInput.dataset.skipLibraryInputBubble = 'true'
       valueInput.value = String(entry.value || '').trim()
+      if (String(entry.sourceType || '').trim() === 'file' && isManagedOverlaySourceLocation(entry.value)) {
+        row.dataset.overlaySourceManagedLocation = String(entry.value || '').trim()
+      }
       valueCol.appendChild(valueInput)
       layout.appendChild(valueCol)
 

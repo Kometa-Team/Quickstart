@@ -233,6 +233,153 @@ def store_overlay_source_override_image_bytes(
     return _display_managed_overlay_image_location(relative)
 
 
+def _managed_overlay_scope_dir(*, config_name, library_id, overlay_id):
+    normalized_name = helpers.require_config_name_for_storage(config_name, context="Managed overlay image cleanup")
+    library_slug = _safe_overlay_image_slug(library_id, "library")
+    overlay_slug = _safe_overlay_image_slug(overlay_id, "overlay")
+    return helpers.get_managed_config_artifact_root(normalized_name) / helpers.MANAGED_OVERLAY_IMAGE_DIR / library_slug / overlay_slug
+
+
+def _resolve_scoped_managed_overlay_image_path(location, *, config_name, library_id, overlay_id):
+    raw_location = str(location or "").strip()
+    if not raw_location:
+        return None
+
+    scope_dir = _managed_overlay_scope_dir(config_name=config_name, library_id=library_id, overlay_id=overlay_id)
+    try:
+        scope_resolved = scope_dir.resolve()
+    except OSError:
+        scope_resolved = scope_dir
+
+    candidate = Path(_resolve_managed_library_path(raw_location))
+    try:
+        candidate_resolved = candidate.resolve()
+    except OSError:
+        candidate_resolved = candidate
+
+    try:
+        candidate_resolved.relative_to(scope_resolved)
+    except Exception:
+        return None
+    return candidate_resolved
+
+
+def _prune_empty_managed_overlay_dirs(path, *, config_name):
+    config_root = helpers.get_managed_config_artifact_root(config_name)
+    try:
+        stop_dir = config_root.resolve()
+    except OSError:
+        stop_dir = config_root
+
+    current = Path(path).parent
+    while current.exists():
+        try:
+            current_resolved = current.resolve()
+        except OSError:
+            current_resolved = current
+        if current_resolved == stop_dir:
+            break
+        try:
+            next(current.iterdir())
+            break
+        except StopIteration:
+            try:
+                current.rmdir()
+            except OSError:
+                break
+            current = current.parent
+        except OSError:
+            break
+
+
+def _coerce_overlay_source_locations(values):
+    if isinstance(values, (list, tuple, set)):
+        return [str(item or "").strip() for item in values if str(item or "").strip()]
+    text = str(values or "").strip()
+    return [text] if text else []
+
+
+def cleanup_overlay_source_override_payload(data):
+    config_name = str(data.get("config_name") or "").strip()
+    library_id = str(data.get("library_id") or "").strip()
+    overlay_id = str(data.get("overlay_id") or "").strip()
+    if not config_name or not library_id or not overlay_id:
+        return False, "Config, library, and overlay are required for overlay source cleanup.", {}
+
+    remove_locations = _coerce_overlay_source_locations(data.get("remove_locations"))
+    retain_locations = _coerce_overlay_source_locations(data.get("retain_locations"))
+    sweep = helpers.booler(data.get("sweep"))
+
+    removed = []
+    skipped = []
+    errors = []
+
+    retain_paths = set()
+    for location in retain_locations:
+        resolved = _resolve_scoped_managed_overlay_image_path(
+            location,
+            config_name=config_name,
+            library_id=library_id,
+            overlay_id=overlay_id,
+        )
+        if resolved:
+            retain_paths.add(resolved)
+
+    processed = set()
+    for location in remove_locations:
+        resolved = _resolve_scoped_managed_overlay_image_path(
+            location,
+            config_name=config_name,
+            library_id=library_id,
+            overlay_id=overlay_id,
+        )
+        if not resolved:
+            skipped.append(location)
+            continue
+        if resolved in processed:
+            continue
+        processed.add(resolved)
+        if resolved in retain_paths:
+            skipped.append(location)
+            continue
+        if not resolved.exists() or not resolved.is_file():
+            skipped.append(location)
+            continue
+        try:
+            resolved.unlink()
+            relative = resolved.relative_to(Path(helpers.CONFIG_DIR).resolve())
+            removed.append(_display_managed_overlay_image_location(relative))
+            _prune_empty_managed_overlay_dirs(resolved, config_name=config_name)
+        except Exception as exc:
+            errors.append(f"Failed to remove {location}: {exc}")
+
+    if sweep:
+        scope_dir = _managed_overlay_scope_dir(config_name=config_name, library_id=library_id, overlay_id=overlay_id)
+        if scope_dir.exists():
+            try:
+                for candidate in scope_dir.rglob("*"):
+                    if not candidate.is_file():
+                        continue
+                    try:
+                        candidate_resolved = candidate.resolve()
+                    except OSError:
+                        candidate_resolved = candidate
+                    if candidate_resolved in retain_paths or candidate_resolved in processed:
+                        continue
+                    try:
+                        candidate.unlink()
+                        relative = candidate_resolved.relative_to(Path(helpers.CONFIG_DIR).resolve())
+                        removed.append(_display_managed_overlay_image_location(relative))
+                        processed.add(candidate_resolved)
+                        _prune_empty_managed_overlay_dirs(candidate_resolved, config_name=config_name)
+                    except Exception as exc:
+                        errors.append(f"Failed to sweep {candidate}: {exc}")
+            except Exception as exc:
+                errors.append(f"Failed to sweep managed overlay image directory {scope_dir}: {exc}")
+
+    return True, None, {"removed": removed, "skipped": skipped, "errors": errors}
+
+
 def _validate_allowed_image_format(image_format, label):
     fmt = str(image_format or "").strip().lower()
     if fmt not in helpers.ALLOWED_EXTENSIONS:
@@ -1076,6 +1223,19 @@ def make_overlay_source_override_local_server(data):
     if details.get("warning"):
         payload["warning"] = details["warning"]
     for key in ("image_format", "width", "height", "resolved_url", "normalized_location", "target", "organized", "size_bytes", "warning_list"):
+        if key in details:
+            payload[key] = details[key]
+    return jsonify(payload), 200
+
+
+def cleanup_overlay_source_override_server(data):
+    valid, message, details = cleanup_overlay_source_override_payload(data)
+    if not valid:
+        payload = {"valid": False, "error": message}
+        return jsonify(payload), 400
+
+    payload = {"valid": True}
+    for key in ("removed", "skipped", "errors"):
         if key in details:
             payload[key] = details[key]
     return jsonify(payload), 200

@@ -42,6 +42,12 @@ def overlay_source_make_local():
     return validations.make_overlay_source_override_local_server(data)
 
 
+@bp.route("/overlay-source-cleanup", methods=["POST"])
+def overlay_source_cleanup():
+    data = request.get_json(silent=True) or {}
+    return validations.cleanup_overlay_source_override_server(data)
+
+
 @bp.route("/validate_plex", methods=["POST"])
 def validate_plex():
     data = request.get_json(silent=True) or {}
