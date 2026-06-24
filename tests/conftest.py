@@ -128,6 +128,20 @@ def import_config_routes_module(qs_module):
     return ic
 
 
+@pytest.fixture(scope="session")
+def imagemaid_routes_module(qs_module):
+    """Direct handle to ``blueprints.imagemaid_routes``.
+
+    Same rationale as the other ``*_routes_module`` fixtures -- patches on
+    ``qs_module._foo`` only update the re-export.  Use this fixture to
+    monkeypatch helpers that route callers inside the imagemaid-runtime
+    blueprint resolve through their own module namespace.
+    """
+    import blueprints.imagemaid_routes as ir
+
+    return ir
+
+
 @pytest.fixture()
 def client(app):
     return app.test_client()

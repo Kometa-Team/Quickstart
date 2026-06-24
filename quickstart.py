@@ -204,6 +204,16 @@ from blueprints.import_config_routes import (  # noqa: F401 (re-exports for test
     import_config_preview_mapped,
     import_config_report,
 )
+from blueprints.imagemaid_routes import (  # noqa: F401 (re-exports for tests/legacy in-module callers)
+    bp as imagemaid_routes_bp,
+    IMAGEMAID_STARTUP_GRACE_SECONDS,
+    _schedule_quickstart_imagemaid_run_marker,
+    autosave_imagemaid,
+    imagemaid_status,
+    start_imagemaid,
+    stop_imagemaid,
+    validate_imagemaid,
+)
 from modules.assets import build_preview_image_data as _build_preview_image_data, list_overlay_fonts
 from modules.test_libraries import (
     resolve_test_libraries_paths as _resolve_test_libraries_paths,  # noqa: F401 (used directly by tests as qs_module._resolve_test_libraries_paths)
@@ -267,15 +277,15 @@ from modules.kometa_install import (
 )
 from modules.imagemaid import (
     probe_imagemaid_root_state as _probe_imagemaid_root_state,
-    imagemaid_settings_to_form_payload as _imagemaid_settings_to_form_payload,
-    get_stored_plex_credentials_for_config as _get_stored_plex_credentials_for_config,
+    imagemaid_settings_to_form_payload as _imagemaid_settings_to_form_payload,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module._imagemaid_settings_to_form_payload)
+    get_stored_plex_credentials_for_config as _get_stored_plex_credentials_for_config,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     save_imagemaid_settings_for_config as _save_imagemaid_settings_for_config,
     get_imagemaid_settings_section as _get_imagemaid_settings_section,
     persist_imagemaid_validation as _persist_imagemaid_validation,
-    build_imagemaid_command_parts as _build_imagemaid_command_parts,
-    build_imagemaid_command as _build_imagemaid_command,
-    validate_imagemaid_settings as _validate_imagemaid_settings,
-    get_latest_imagemaid_log_path as _get_latest_imagemaid_log_path,
+    build_imagemaid_command_parts as _build_imagemaid_command_parts,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
+    build_imagemaid_command as _build_imagemaid_command,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
+    validate_imagemaid_settings as _validate_imagemaid_settings,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
+    get_latest_imagemaid_log_path as _get_latest_imagemaid_log_path,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     get_imagemaid_supported_options as _get_imagemaid_supported_options,  # noqa: F401 (used directly by tests as qs_module._get_imagemaid_supported_options)
 )
 from modules.process_control import (
@@ -302,17 +312,17 @@ from modules.process_control import (
     clear_pending_kometa_start as _clear_pending_kometa_start,  # noqa: F401 (used directly by tests as qs_module._clear_pending_kometa_start)
     find_running_kometa_processes as _find_running_kometa_processes,  # noqa: F401 (used directly by tests as qs_module._find_running_kometa_processes)
     find_running_kometa_process as _find_running_kometa_process,
-    find_running_imagemaid_processes as _find_running_imagemaid_processes,
-    find_running_imagemaid_process as _find_running_imagemaid_process,
+    find_running_imagemaid_processes as _find_running_imagemaid_processes,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
+    find_running_imagemaid_process as _find_running_imagemaid_process,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     stop_process_tree as _stop_process_tree,
     launch_kometa_command as _launch_kometa_command,
-    launch_imagemaid_command as _launch_imagemaid_command,
+    launch_imagemaid_command as _launch_imagemaid_command,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     reset_imagemaid_runtime_env as _reset_imagemaid_runtime_env,  # noqa: F401 (used directly by tests as qs_module._reset_imagemaid_runtime_env)
     update_run_context as _update_run_context,
     get_run_context as _get_run_context,
     clear_run_context as _clear_run_context,
-    get_imagemaid_run_context as _get_imagemaid_run_context,
-    clear_imagemaid_run_context as _clear_imagemaid_run_context,
+    get_imagemaid_run_context as _get_imagemaid_run_context,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
+    clear_imagemaid_run_context as _clear_imagemaid_run_context,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     suspend_process_tree as _suspend_process_tree,  # noqa: F401 (used directly by tests as qs_module._suspend_process_tree)
     resume_process_tree as _resume_process_tree,  # noqa: F401 (used directly by tests as qs_module._resume_process_tree)
     maintenance_guard_loop as _maintenance_guard_loop,
@@ -320,10 +330,10 @@ from modules.process_control import (
     get_kometa_maintenance_sidecar_path as _get_kometa_maintenance_sidecar_path,  # noqa: F401 (used directly by tests as qs_module._get_kometa_maintenance_sidecar_path)
     is_logscan_maintenance_sidecar as _is_logscan_maintenance_sidecar,
     write_quickstart_maintenance_marker as _write_quickstart_maintenance_marker,  # noqa: F401 (used directly by tests as qs_module._write_quickstart_maintenance_marker)
-    write_quickstart_imagemaid_run_marker as _write_quickstart_imagemaid_run_marker,
+    write_quickstart_imagemaid_run_marker as _write_quickstart_imagemaid_run_marker,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     write_quickstart_stop_marker as _write_quickstart_stop_marker,
-    write_quickstart_imagemaid_stop_marker as _write_quickstart_imagemaid_stop_marker,
-    write_quickstart_imagemaid_maintenance_marker as _write_quickstart_imagemaid_maintenance_marker,
+    write_quickstart_imagemaid_stop_marker as _write_quickstart_imagemaid_stop_marker,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
+    write_quickstart_imagemaid_maintenance_marker as _write_quickstart_imagemaid_maintenance_marker,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
 )
 
 Request.max_form_parts = 100000  # Allow more form fields if needed
@@ -387,7 +397,6 @@ ACTIVE_WORK_POLICIES = {
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
-IMAGEMAID_STARTUP_GRACE_SECONDS = 10
 
 VALIDATION_DOC_BASE = "/step/"
 VALIDATION_DOC_FALLBACK = "/step/900-kometa"
@@ -1311,6 +1320,7 @@ app.register_blueprint(config_routes_bp)
 app.register_blueprint(test_libraries_routes_bp)
 app.register_blueprint(library_routes_bp)
 app.register_blueprint(import_config_routes_bp)
+app.register_blueprint(imagemaid_routes_bp)
 
 # Run version check at startup
 app.config["VERSION_CHECK"] = helpers.check_for_update()
@@ -6630,437 +6640,6 @@ def header_style_previews():
         previews.append({"font": font_name, "preview": _render_header_style_preview(font_name)})
 
     return jsonify(success=True, previews=previews)
-
-
-@app.route("/validate-imagemaid", methods=["POST"])
-def validate_imagemaid():
-    payload = request.get_json(silent=True) or {}
-    config_name = _resolve_request_config_name(payload)
-    form_payload = _imagemaid_settings_to_form_payload(payload)
-    if form_payload:
-        _save_imagemaid_settings_for_config(config_name, form_payload)
-
-    settings, section_data = _get_imagemaid_settings_section(config_name)
-    is_valid, reason, details = _validate_imagemaid_settings(section_data, config_name=config_name)
-    _persist_imagemaid_validation(config_name, section_data, is_valid, reason=reason, details=details)
-
-    plex_url, plex_token = _get_stored_plex_credentials_for_config(config_name)
-    preview_command = _build_imagemaid_command(section_data, plex_url or "", plex_token or "", redact=True)
-    return jsonify(success=is_valid, validated=is_valid, reason=reason, details=details, command_preview=preview_command), (200 if is_valid else 400)
-
-
-@app.route("/autosave-imagemaid", methods=["POST"])
-def autosave_imagemaid():
-    payload = request.get_json(silent=True) or {}
-    config_name = _resolve_request_config_name(payload)
-    form_payload = _imagemaid_settings_to_form_payload(payload)
-    changed = False
-    if form_payload:
-        _saved_payload, changed = _save_imagemaid_settings_for_config(config_name, form_payload)
-
-    settings, section_data = _get_imagemaid_settings_section(config_name)
-    if changed and helpers.booler(settings.get("validated", False)):
-        _persist_imagemaid_validation(
-            config_name,
-            section_data,
-            False,
-            reason="config_changed",
-            details="Configuration changed. Validate ImageMaid again.",
-        )
-        validated = False
-    else:
-        validated = helpers.booler(settings.get("validated", False))
-
-    return jsonify(success=True, changed=changed, validated=validated)
-
-
-@app.route("/start-imagemaid", methods=["POST"])
-def start_imagemaid():
-    payload = request.get_json(silent=True) or {}
-    config_name = _resolve_request_config_name(payload)
-    form_payload = _imagemaid_settings_to_form_payload(payload)
-    if form_payload:
-        _save_imagemaid_settings_for_config(config_name, form_payload)
-
-    if helpers.is_imagemaid_running():
-        pid = helpers.get_imagemaid_pid()
-        try:
-            proc = psutil.Process(pid)
-            started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
-            return jsonify({"error": f"ImageMaid is already running (PID: {pid}) since {started_at}.", "status": "running", "pid": pid, "started_at": started_at}), 400
-        except Exception:
-            return jsonify({"error": f"ImageMaid is already running (PID: {pid}).", "status": "running", "pid": pid}), 400
-    else:
-        proc = _find_running_imagemaid_process()
-        if proc:
-            try:
-                with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
-                    f.write(str(proc.pid))
-                started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
-            except Exception:
-                started_at = None
-            payload = {"error": f"ImageMaid is already running (PID: {proc.pid}).", "status": "running", "pid": proc.pid}
-            if started_at:
-                payload["started_at"] = started_at
-            return jsonify(payload), 400
-
-    blocker = _get_active_work_blocker("imagemaid_run")
-    if blocker:
-        job = blocker.get("job") if isinstance(blocker.get("job"), dict) else {}
-        response = {
-            "error": blocker.get("message") or "Cannot start ImageMaid right now.",
-            "status": "blocked",
-            "blocked_by": blocker.get("blocked_by"),
-            "target_page": blocker.get("target_page"),
-        }
-        if blocker.get("pid"):
-            response["pid"] = blocker.get("pid")
-        if job.get("job_id"):
-            response["job_id"] = job.get("job_id")
-        if job.get("phase"):
-            response["phase"] = job.get("phase")
-        return jsonify(response), 409
-
-    settings, section_data = _get_imagemaid_settings_section(config_name)
-    is_valid, reason, details = _validate_imagemaid_settings(section_data, config_name=config_name)
-    _persist_imagemaid_validation(config_name, section_data, is_valid, reason=reason, details=details)
-    if not is_valid:
-        return jsonify({"error": details or "ImageMaid settings are not valid.", "status": "invalid", "reason": reason}), 400
-
-    start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=config_name)
-    if start_min is None or end_min is None:
-        start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=config_name)
-    if _is_within_maintenance_window(datetime.now(), start_min, end_min):
-        try:
-            _write_quickstart_imagemaid_maintenance_marker(
-                helpers.get_imagemaid_root_path(),
-                "blocked_start",
-                mode=section_data.get("mode"),
-                config_name=config_name,
-                window=window_str,
-                log_path=_get_latest_imagemaid_log_path(),
-            )
-        except Exception:
-            pass
-        window_label = f" ({window_str})" if window_str else ""
-        return (
-            jsonify(
-                {
-                    "error": f"ImageMaid cannot start during the Plex maintenance window{window_label}.",
-                    "status": "maintenance_blocked",
-                    "maintenance_window": window_str,
-                }
-            ),
-            409,
-        )
-
-    plex_url, plex_token = _get_stored_plex_credentials_for_config(config_name)
-    command = _build_imagemaid_command_parts(section_data, plex_url, plex_token, redact=False)
-    ok, result = _launch_imagemaid_command(command, mode=section_data.get("mode"), config_name=config_name)
-    if ok:
-        return jsonify({"status": "ImageMaid started", "pid": result, "command_preview": _build_imagemaid_command(section_data, plex_url, plex_token, redact=True)})
-    code = 500
-    if isinstance(result, str):
-        lowered = result.lower()
-        if lowered.startswith("imagemaid.py not found"):
-            code = 404
-        elif "exited immediately" in lowered or "finished immediately" in lowered:
-            code = 400
-    return jsonify({"error": result}), code
-
-
-@app.route("/stop-imagemaid", methods=["POST"])
-def stop_imagemaid():
-    config_name = session.get("config_name") or persistence.ensure_session_config_name()
-    pid = helpers.get_imagemaid_pid()
-    pid_file = helpers.get_imagemaid_pid_file()
-
-    if not pid:
-        procs = _find_running_imagemaid_processes()
-        if not procs:
-            return jsonify({"warning": "No active ImageMaid PID"}), 200
-    else:
-        proc = _find_running_imagemaid_process()
-        procs = [proc] if proc is not None else []
-
-    try:
-        if not procs:
-            return jsonify({"warning": "No active ImageMaid process found."}), 200
-
-        _settings, section_data = _get_imagemaid_settings_section()
-        imagemaid_mode = section_data.get("mode") if isinstance(section_data, dict) else None
-        not_imagemaid = []
-        alive_after = []
-        for proc in procs:
-            cmdline = " ".join(proc.cmdline() or [])
-            if "imagemaid.py" not in cmdline:
-                not_imagemaid.append(proc.pid)
-                continue
-            alive_after.extend(_stop_process_tree(proc))
-
-        try:
-            os.remove(pid_file)
-        except Exception:
-            pass
-        _clear_imagemaid_run_context()
-        try:
-            _write_quickstart_imagemaid_stop_marker(
-                helpers.get_imagemaid_root_path(),
-                mode=imagemaid_mode,
-                config_name=config_name,
-                log_path=_get_latest_imagemaid_log_path(),
-                reason="user_stop",
-            )
-        except Exception:
-            pass
-
-        if alive_after:
-            alive_pids = ", ".join(str(p.pid) for p in alive_after if p is not None)
-            return jsonify({"warning": f"ImageMaid stop requested, but some processes are still running: {alive_pids}"}), 200
-        if not_imagemaid:
-            return jsonify({"warning": f"Cleaned PID file. Non-ImageMaid PIDs detected: {', '.join(map(str, not_imagemaid))}"}), 200
-        return jsonify({"success": True, "message": "ImageMaid stopped and cleaned up."}), 200
-    except psutil.NoSuchProcess:
-        try:
-            os.remove(pid_file)
-        except Exception:
-            pass
-        _clear_imagemaid_run_context()
-        try:
-            _settings, section_data = _get_imagemaid_settings_section()
-            imagemaid_mode = section_data.get("mode") if isinstance(section_data, dict) else None
-            _write_quickstart_imagemaid_stop_marker(
-                helpers.get_imagemaid_root_path(),
-                mode=imagemaid_mode,
-                config_name=config_name,
-                log_path=_get_latest_imagemaid_log_path(),
-                reason="process_missing",
-            )
-        except Exception:
-            pass
-        return jsonify({"warning": "Process not found. Cleaned up PID file."}), 200
-    except Exception as e:
-        return jsonify({"error": f"Failed to stop ImageMaid: {str(e)}"}), 500
-
-
-@app.route("/imagemaid-status", methods=["GET"])
-def imagemaid_status():
-    try:
-        _refresh_maintenance_window_availability(preserve_active_state=True)
-    except Exception:
-        pass
-    pid = helpers.get_imagemaid_pid()
-    pid_file = Path(helpers.get_imagemaid_pid_file())
-    imagemaid_ctx = _get_imagemaid_run_context()
-    with MAINTENANCE_STATE_LOCK:
-        maintenance_active = MAINTENANCE_STATE["active"]
-        maintenance_window = MAINTENANCE_STATE["window"]
-        maintenance_paused = MAINTENANCE_STATE["imagemaid_paused"]
-        maintenance_paused_since = MAINTENANCE_STATE["imagemaid_paused_since"]
-
-    def pid_file_age_seconds():
-        try:
-            if pid_file.exists():
-                return max(0.0, time.time() - pid_file.stat().st_mtime)
-        except Exception:
-            return None
-        return None
-
-    if not pid:
-        proc = _find_running_imagemaid_process()
-        if proc:
-            try:
-                with open(pid_file, "w", encoding="utf-8") as f:
-                    f.write(str(proc.pid))
-                pid = proc.pid
-            except Exception:
-                pid = None
-    if not pid:
-        try:
-            _ingest_completed_live_logs("imagemaid")
-        except Exception:
-            pass
-        _clear_imagemaid_run_context()
-        return jsonify(
-            status="not started",
-            maintenance_active=maintenance_active,
-            maintenance_paused=maintenance_paused,
-            maintenance_window=maintenance_window,
-            maintenance_paused_since=maintenance_paused_since,
-        )
-
-    try:
-        proc = psutil.Process(pid)
-        started_at_ts = None
-        elapsed_seconds = None
-        within_grace = False
-        try:
-            started_at_ts = proc.create_time()
-            elapsed_seconds = max(0, int(time.time() - started_at_ts))
-            within_grace = elapsed_seconds < IMAGEMAID_STARTUP_GRACE_SECONDS
-        except Exception:
-            age = pid_file_age_seconds()
-            if age is not None:
-                elapsed_seconds = max(0, int(age))
-                within_grace = age < IMAGEMAID_STARTUP_GRACE_SECONDS
-        if proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE:
-            try:
-                cmdline = " ".join(proc.cmdline() or [])
-            except Exception:
-                cmdline = ""
-            if "imagemaid.py" in cmdline:
-                started_at = datetime.fromtimestamp(started_at_ts).isoformat()
-                cpu_percent = _calculate_process_cpu_percent(proc)
-                io_stats = _calculate_process_io_stats(proc, "imagemaid") or {}
-                mem_rss = proc.memory_info().rss
-                try:
-                    for child in proc.children(recursive=True):
-                        try:
-                            mem_rss += child.memory_info().rss
-                        except Exception:
-                            continue
-                except Exception:
-                    pass
-                mem_rss_mb = mem_rss / (1024 * 1024)
-                system_cpu_percent = _calculate_system_cpu_percent()
-                vm = psutil.virtual_memory()
-                system_mem_used_mb = (vm.total - vm.available) / (1024 * 1024)
-                system_mem_total_mb = vm.total / (1024 * 1024)
-                mem_percent = (mem_rss / vm.total) * 100.0 if vm.total else None
-                return jsonify(
-                    status="running",
-                    pid=pid,
-                    started_at=started_at,
-                    started_at_ts=started_at_ts,
-                    elapsed_seconds=elapsed_seconds,
-                    cpu_percent=round(cpu_percent, 1) if cpu_percent is not None else None,
-                    memory_rss_mb=round(mem_rss_mb, 1),
-                    memory_percent=round(mem_percent, 2) if mem_percent is not None else None,
-                    disk_read_mb=round(io_stats.get("disk_read_mb"), 1) if io_stats.get("disk_read_mb") is not None else None,
-                    disk_write_mb=round(io_stats.get("disk_write_mb"), 1) if io_stats.get("disk_write_mb") is not None else None,
-                    disk_read_rate_mb_s=round(io_stats.get("disk_read_rate_mb_s"), 2) if io_stats.get("disk_read_rate_mb_s") is not None else None,
-                    disk_write_rate_mb_s=round(io_stats.get("disk_write_rate_mb_s"), 2) if io_stats.get("disk_write_rate_mb_s") is not None else None,
-                    system_cpu_percent=round(system_cpu_percent, 1) if system_cpu_percent is not None else None,
-                    system_memory_percent=round(vm.percent, 1),
-                    system_memory_used_mb=round(system_mem_used_mb, 1),
-                    system_memory_total_mb=round(system_mem_total_mb, 1),
-                    maintenance_active=maintenance_active,
-                    maintenance_paused=maintenance_paused,
-                    maintenance_window=maintenance_window,
-                    maintenance_paused_since=maintenance_paused_since,
-                    active_command=imagemaid_ctx.get("command"),
-                    mode=imagemaid_ctx.get("mode"),
-                    config_name=imagemaid_ctx.get("config_name"),
-                )
-            if within_grace:
-                payload = {"status": "starting", "pid": pid, "elapsed_seconds": elapsed_seconds}
-                if started_at_ts is not None:
-                    payload["started_at"] = datetime.fromtimestamp(started_at_ts).isoformat()
-                    payload["started_at_ts"] = started_at_ts
-                payload["maintenance_active"] = maintenance_active
-                payload["maintenance_paused"] = maintenance_paused
-                payload["maintenance_window"] = maintenance_window
-                payload["maintenance_paused_since"] = maintenance_paused_since
-                return jsonify(payload)
-        try:
-            rc = proc.wait(timeout=0.1)
-        except psutil.TimeoutExpired:
-            if within_grace:
-                payload = {"status": "starting", "pid": pid, "elapsed_seconds": elapsed_seconds}
-                if started_at_ts is not None:
-                    payload["started_at"] = datetime.fromtimestamp(started_at_ts).isoformat()
-                    payload["started_at_ts"] = started_at_ts
-                payload["maintenance_active"] = maintenance_active
-                payload["maintenance_paused"] = maintenance_paused
-                payload["maintenance_window"] = maintenance_window
-                payload["maintenance_paused_since"] = maintenance_paused_since
-                return jsonify(payload)
-            rc = None
-        finally:
-            if not within_grace:
-                try:
-                    os.remove(pid_file)
-                except Exception:
-                    pass
-                _clear_process_metric_cache(pid, "imagemaid")
-                _clear_imagemaid_run_context()
-        if not within_grace:
-            try:
-                _ingest_completed_live_logs("imagemaid")
-            except Exception:
-                pass
-        return jsonify(
-            status="done",
-            return_code=rc if rc is not None else -1,
-            maintenance_active=maintenance_active,
-            maintenance_paused=maintenance_paused,
-            maintenance_window=maintenance_window,
-            maintenance_paused_since=maintenance_paused_since,
-        )
-    except psutil.NoSuchProcess:
-        age = pid_file_age_seconds()
-        if age is not None and age < IMAGEMAID_STARTUP_GRACE_SECONDS:
-            return jsonify(
-                status="starting",
-                pid=pid,
-                elapsed_seconds=max(0, int(age)),
-                maintenance_active=maintenance_active,
-                maintenance_paused=maintenance_paused,
-                maintenance_window=maintenance_window,
-                maintenance_paused_since=maintenance_paused_since,
-            )
-        try:
-            os.remove(pid_file)
-        except Exception:
-            pass
-        _clear_process_metric_cache(pid, "imagemaid")
-        _clear_imagemaid_run_context()
-        return jsonify(
-            status="not started",
-            maintenance_active=maintenance_active,
-            maintenance_paused=maintenance_paused,
-            maintenance_window=maintenance_window,
-            maintenance_paused_since=maintenance_paused_since,
-        )
-
-
-def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, timeout_seconds=20):
-    root = Path(imagemaid_root)
-    log_dir = root / "config" / "logs"
-    initial = {}
-    if log_dir.exists():
-        for path in log_dir.glob("*.log"):
-            try:
-                stat = path.stat()
-                initial[str(path)] = (stat.st_mtime, stat.st_size)
-            except OSError:
-                continue
-
-    def worker():
-        deadline = time.time() + timeout_seconds
-        while time.time() < deadline:
-            try:
-                if log_dir.exists():
-                    candidates = sorted(log_dir.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
-                    for path in candidates:
-                        try:
-                            stat = path.stat()
-                        except OSError:
-                            continue
-                        prev = initial.get(str(path))
-                        if prev is None:
-                            if stat.st_size > 0:
-                                _write_quickstart_imagemaid_run_marker(root, mode=mode, config_name=config_name, log_path=path)
-                                return
-                        elif (stat.st_mtime, stat.st_size) != prev and stat.st_size > 0:
-                            _write_quickstart_imagemaid_run_marker(root, mode=mode, config_name=config_name, log_path=path)
-                            return
-            except Exception:
-                pass
-            time.sleep(0.5)
-        _write_quickstart_imagemaid_run_marker(root, mode=mode, config_name=config_name)
-
-    threading.Thread(target=worker, daemon=True).start()
 
 
 @app.route("/validate_metadata_file", methods=["POST"])
