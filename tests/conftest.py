@@ -95,6 +95,23 @@ def workspace_status_module(qs_module):
     return ws
 
 
+@pytest.fixture(scope="session")
+def library_routes_module(qs_module):
+    """Direct handle to ``blueprints.library_routes``.
+
+    Same rationale as ``workspace_status_module`` -- when a test needs to
+    monkeypatch a helper (e.g. ``_build_library_lists``,
+    ``_migrate_legacy_playlist_libraries_to_library_toggles``,
+    ``_build_preview_image_data``) that is called from *inside* a route in
+    ``blueprints/library_routes.py``, patching ``qs_module`` will only
+    update the re-export; the actual call resolves through the blueprint
+    module's own namespace.
+    """
+    import blueprints.library_routes as lr
+
+    return lr
+
+
 @pytest.fixture()
 def client(app):
     return app.test_client()

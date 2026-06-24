@@ -157,14 +157,14 @@ def test_validate_library_auto_sort_hubs_rejects_invalid_value(qs_module):
     assert errors == ["Movies: auto_sort_hubs must be one of: alpha, alpha.desc, configured, configured.desc, random, sort_title, sort_title.desc"]
 
 
-def test_library_fragment_disables_auto_sort_hubs_without_plex_pass(client, monkeypatch, qs_module):
+def test_library_fragment_disables_auto_sort_hubs_without_plex_pass(client, monkeypatch, qs_module, library_routes_module):
     monkeypatch.setattr(
-        qs_module,
+        library_routes_module,
         "_build_library_lists",
         lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": False}),
     )
-    monkeypatch.setattr(qs_module, "_migrate_legacy_playlist_libraries_to_library_toggles", lambda *_args: set())
-    monkeypatch.setattr(qs_module, "_build_preview_image_data", lambda: {"movie": {}, "show": {}})
+    monkeypatch.setattr(library_routes_module, "_migrate_legacy_playlist_libraries_to_library_toggles", lambda *_args: set())
+    monkeypatch.setattr(library_routes_module, "_build_preview_image_data", lambda: {"movie": {}, "show": {}})
 
     original_retrieve_settings = qs_module.persistence.retrieve_settings
 
@@ -4047,7 +4047,7 @@ def test_retrieve_settings_sanitizes_already_persisted_transient_fields(client, 
     assert "importMode" not in stored["anidb"]
 
 
-def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_dir, monkeypatch, app, qs_module):
+def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_dir, monkeypatch, app, qs_module, library_routes_module):
     import json
     from pathlib import Path
 
@@ -4083,7 +4083,7 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
         },
     )
     monkeypatch.setattr(
-        qs_module,
+        library_routes_module,
         "_build_library_lists",
         lambda: (
             [
