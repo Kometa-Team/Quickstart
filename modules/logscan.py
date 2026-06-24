@@ -3,12 +3,13 @@ import json
 import logging
 import os
 import re
-import shlex
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
 import requests
+
+from modules import logscan_command
 
 # Create logger
 mylogger = logging.getLogger("logscan")
@@ -1966,227 +1967,51 @@ class LogscanAnalyzer:
         return sorted_recommendations
 
     def extract_plex_config(self, content):
+        """Extract Plex configuration sections from ``content``.
+
+        Delegates to :mod:`modules.logscan_command` and folds any flagged
+        server versions onto ``self.server_versions`` so the legacy
+        ``make_recommendations`` lookup keeps working.
         """
-        Extract Plex configuration sections from the content.
-        """
-        lines = content.splitlines()
-        plex_config_content = []
-
-        start_marker = "Plex Configuration"
-        # end_markers = [" Scanning Metadata and", "Library Connection Failed"]
-        end_markers = [" Scanning ", "Library Connection Failed"]
-        mylogger.debug("extract_plex_config")
-
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            if start_marker in line:
-                config_section = self.extract_plex_config_section(lines, i + 1, end_markers)
-                if config_section:
-                    # Call parse_server_info
-                    server_info, all_lines = self.parse_server_info(config_section)
-                    plex_config_content.append(config_section)
-
-                    # Store the extracted server info in a variable
-                    if server_info:
-                        my_server_name = server_info["server_name"]
-                        my_server_version = server_info["version"]
-
-                        stable_version = "1.40.0.7998-c29d4c0c8"
-                        good_version = "1.40.3.8555-fef15d30c"
-
-                        if stable_version < my_server_version < good_version:
-                            mylogger.debug(
-                                f"Server Name: {my_server_name} has Version: {my_server_version}. Potential Rounding Issue because > {stable_version} and < {good_version}"
-                            )
-                            # Store the server version globally in a list
-                            self.server_versions.append((my_server_name, my_server_version))
-                        elif my_server_version >= good_version:
-                            mylogger.debug(f"Server Name: {my_server_name} has Version: {my_server_version}. ALL GOOD")
-                        else:
-                            mylogger.debug(f"Server Name: {my_server_name} has Version: {my_server_version}. ALL GOOD")
-
-            i += 1
-
-        if plex_config_content:
-            return plex_config_content  # Return the list of extracted server info
-        else:
-            return None
+        result = logscan_command.extract_plex_config(content)
+        self.server_versions.extend(result["server_versions"])
+        return result["plex_config_content"]
 
     def extract_plex_config_section(self, lines, start_index, end_markers):
-        """
-        Extract a Plex configuration section starting from a specific index.
-        """
-        config_section = []
-
-        for i in range(start_index, len(lines)):
-            line = lines[i].strip()
-            if any(marker in line for marker in end_markers):
-                break
-            if line:
-                config_section.append(line)
-
-        # Find the index of "Traceback (most recent call last):"
-        traceback_marker = "Traceback (most recent call last):"
-        traceback_line_number = -1
-        for i, line in enumerate(config_section):
-            if traceback_marker in line:
-                traceback_line_number = i
-                break
-
-        # Remove lines after traceback_marker + 1 and before (total_lines - 2)
-        if traceback_line_number >= 0:
-            total_lines = len(config_section)
-            start_remove = traceback_line_number + 1
-            end_remove = total_lines - 2
-            config_section = config_section[:start_remove] + config_section[end_remove + 1 :]
-
-        return "\n".join(config_section) if config_section else None
+        return logscan_command.extract_plex_config_section(lines, start_index, end_markers)
 
     def parse_server_info(self, config_section):
-        """
-        Parse the server name and version from the Plex configuration section.
-        """
-        server_info = {}
-
-        # Initialize a list to keep all lines, including the ones not matched
-        all_lines = []
-
-        # Iterate through each line in the config_section
-        for line in config_section.splitlines():
-            # Add each line to the all_lines list
-            all_lines.append(line)
-
-            # Attempt to match the regex pattern in the current line
-            match = re.search(r"Connected to server\s+([\w\s]+)\s+version\s+(\d+\.\d+\.\d+\.\d+-[\w\d]+)", line)
-            if match:
-                # Extract server name and version from the regex match
-                server_name = match.group(1).strip()
-                version = match.group(2).strip()
-
-                # Store server name and version in dictionary
-                server_info["server_name"] = server_name
-                server_info["version"] = version
-
-        # Log if server info extraction failed for all lines
-        if not server_info:
-            mylogger.debug("Failed to extract server info from config_section")
-
-        return server_info, all_lines
+        return logscan_command.parse_server_info(config_section)
 
     def extract_header_lines(self, content):
-        start_marker_current = "Version: "
-        start_marker_newest = "Newest Version: "
-        end_marker = "Run Command: "
-
-        lines = content.splitlines()
-        header_lines = []
-
-        for i, line in enumerate(lines):
-            if start_marker_current in line:
-                version_value = line.split(start_marker_current)[1].strip()  # Extract version value
-                self.current_kometa_version = version_value  # Store the version as a class variable
-                while line and end_marker not in line:
-                    header_lines.append(line.strip())  # Trim leading and trailing spaces
-                    i += 1
-                    line = lines[i] if i < len(lines) else ""
-                    if start_marker_newest in line:
-                        newest_version_value = line.split(start_marker_newest)[1].strip()  # Extract newest version value
-                        self.kometa_newest_version = newest_version_value  # Store the newest version as a class variable
-                header_lines.append(line.strip())  # Append the "Run Command" line
-                # mylogger.info(f"header_lines bef replacement: {header_lines}")
-                break  # Stop after the first occurrence
-
-        # Perform the replacement after all lines have been added to header_lines
-        header_lines = [line.replace("(redacted)", "") for line in header_lines]
-        header_lines = [line.replace("(redacted)", "") for line in header_lines]
-        # mylogger.info(f"header_lines aft replacement: {header_lines}")
-
-        return "\n".join(header_lines)
+        """Capture the header block and stash the Kometa versions on ``self``."""
+        header_text, current_version, newest_version = logscan_command.extract_header_lines(content)
+        if current_version is not None:
+            self.current_kometa_version = current_version
+        if newest_version is not None:
+            self.kometa_newest_version = newest_version
+        return header_text
 
     def extract_run_command(self, content):
-        if not content:
-            return None
-        for line in content.splitlines():
-            match = re.search(r"Run Command:\s*(.+)$", line)
-            if match:
-                return match.group(1).strip()
-        return None
+        return logscan_command.extract_run_command(content)
 
     def _split_command(self, command):
-        if not command:
-            return []
-        try:
-            return shlex.split(command, posix=False)
-        except Exception:
-            return command.split()
+        return logscan_command.split_command(command)
 
     def compute_command_signature(self, run_command):
-        if not run_command:
-            return None
-        tokens = self._split_command(run_command)
-        flags = []
-        for token in tokens:
-            if token.startswith("-"):
-                flag = token.split("=", 1)[0]
-                flags.append(flag)
-        return " ".join(flags)
+        return logscan_command.compute_command_signature(run_command)
 
     def _extract_config_path_from_command(self, run_command):
-        if not run_command:
-            return None
-        tokens = self._split_command(run_command)
-        for idx, token in enumerate(tokens):
-            if token.startswith("--config="):
-                return token.split("=", 1)[1].strip('"')
-            if token == "--config" and idx + 1 < len(tokens):
-                return tokens[idx + 1].strip('"')
-        return None
+        return logscan_command.extract_config_path_from_command(run_command)
 
     def _derive_config_name_from_path(self, config_path):
-        try:
-            config_path = Path(config_path)
-        except Exception:
-            return None
-        stem = config_path.stem
-        if stem.endswith("_config"):
-            stem = stem[: -len("_config")]
-        return stem or None
+        return logscan_command.derive_config_name_from_path(config_path)
 
     def sanitize_run_command(self, run_command, config_path=None):
-        if not run_command:
-            return None
-        cleaned = run_command
-        if config_path:
-            config_path = str(config_path)
-            cleaned = cleaned.replace(config_path, "<config>")
-            cleaned = cleaned.replace(config_path.replace("\\", "/"), "<config>")
-            cleaned = cleaned.replace(config_path.replace("/", "\\"), "<config>")
-        cleaned = re.sub(
-            r"(?i)(--?[\w-]*(token|apikey|api-key|api_key|secret)\w*)(=|\s+)(\S+)",
-            r"\1\3<redacted>",
-            cleaned,
-        )
-        return cleaned
+        return logscan_command.sanitize_run_command(run_command, config_path=config_path)
 
     def _hash_file(self, path):
-        if not path:
-            return None
-        try:
-            path = Path(path)
-        except Exception:
-            return None
-        if not path.exists():
-            return None
-        hasher = hashlib.sha256()
-        try:
-            with path.open("rb") as handle:
-                for chunk in iter(lambda: handle.read(8192), b""):
-                    hasher.update(chunk)
-            return hasher.hexdigest()
-        except Exception as exc:
-            mylogger.warning(f"Failed to hash config file {path}: {exc}")
-            return None
+        return logscan_command.hash_file(path)
 
     def _parse_finished_datetime(self, value):
         if not value:
