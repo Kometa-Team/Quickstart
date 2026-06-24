@@ -90,65 +90,6 @@ const EventHandler = {
       // Initialize overlays after image listeners
       OverlayHandler.initializeOverlays(libraryId, isMovie)
 
-      // Allow unselecting Content Rating radio buttons
-      library.querySelectorAll('input[type="radio"][id*="-overlay_content_rating_"]').forEach(radio => {
-        if (!radio.dataset.listenerAdded) {
-          radio.addEventListener('click', function () {
-            console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
-
-            // More reliable way to get libraryId from DOM
-            const cardContainer = this.closest('.library-settings-card')
-            const clickedLibraryId = cardContainer?.id?.replace('-card-container', '')
-            if (!clickedLibraryId) {
-              console.warn(`[WARNING] Could not determine libraryId from ${this.id}`)
-              return
-            }
-            const isMovieRadio = clickedLibraryId.startsWith('mov-library_')
-
-            if (this.checked && this.dataset.wasChecked === 'true') {
-              // Unselect if clicked again
-              this.checked = false
-              this.dataset.wasChecked = 'false'
-
-              // Clear corresponding hidden input
-              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_content_rating"]`)
-              if (hiddenInput) {
-                hiddenInput.value = ''
-              }
-
-              console.log(`[DEBUG] Unselected radio button: ${this.name}`)
-            } else {
-              // Reset all radios in group
-              document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
-                r.dataset.wasChecked = 'false'
-              })
-              this.dataset.wasChecked = 'true'
-
-              const selectedValue = this.value
-              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_content_rating"]`)
-              if (hiddenInput) {
-                hiddenInput.value = selectedValue
-              }
-
-              console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
-            }
-
-            // Update UI and preview
-            EventHandler.updateAccordionHighlights()
-            ValidationHandler.updateValidationState()
-            if (isMovieRadio) {
-              ImageHandler.generateSinglePreview(clickedLibraryId, 'movie')
-            } else {
-              ['show', 'season', 'episode'].forEach(type => {
-                ImageHandler.generateSinglePreview(clickedLibraryId, type)
-              })
-            }
-          })
-
-          radio.dataset.listenerAdded = 'true'
-          radio.dataset.wasChecked = 'false'
-        }
-      })
       // Attach overlay selection listeners (CHANGE events)
       library.querySelectorAll('.accordion input').forEach((input) => {
         library.querySelectorAll('.accordion select').forEach(select => {

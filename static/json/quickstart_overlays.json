@@ -145,6 +145,26 @@
             "input_type": "toggle",
             "default": true
           },
+          "horizontal_align": {
+            "input_type": "select",
+            "default": "right",
+            "label": "Horizontal Alignment",
+            "options": [
+              "left",
+              "center",
+              "right"
+            ]
+          },
+          "vertical_align": {
+            "input_type": "select",
+            "default": "bottom",
+            "label": "Vertical Alignment",
+            "options": [
+              "top",
+              "center",
+              "bottom"
+            ]
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 0,

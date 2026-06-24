@@ -429,7 +429,6 @@ const OverlayHandler = {
     }
 
     const BACKDROP_IMAGE_OVERLAYS = new Set([
-      'overlay_ribbon',
       'overlay_mediastinger',
       'overlay_versions',
       'overlay_audio_codec',
@@ -2252,7 +2251,7 @@ const OverlayHandler = {
 
     const refreshRibbonOverlayPreview = (cfg) => {
       if (cfg?.id !== 'overlay_ribbon' || !cfg.layer) return
-      buildBackdropDataUrl(cfg).then(dataUrl => {
+      buildRibbonCompositeDataUrl(cfg).then(dataUrl => {
         if (!dataUrl) return
         cfg.layer.src = dataUrl
       })
@@ -6672,19 +6671,30 @@ const OverlayHandler = {
         layer.addEventListener('load', handleLoad)
 
         let initialSrc = resolveOverlayImage(cfg)
+        let shouldAssignInitialSrc = true
         if (isFlagsOverlay(cfg)) {
+          shouldAssignInitialSrc = false
           updateFlagsLayer(cfg, layer)
+        } else if (cfg.id === 'overlay_ribbon') {
+          shouldAssignInitialSrc = false
+          buildRibbonCompositeDataUrl(cfg).then(dataUrl => {
+            layer.src = dataUrl
+            applyPosition(cfg)
+          })
         } else if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
+          shouldAssignInitialSrc = false
           buildBackdropDataUrl(cfg).then(dataUrl => {
             layer.src = dataUrl
             applyPosition(cfg)
           })
         } else if (cfg.id && cfg.id.startsWith('overlay_content_rating_') && cfg.id !== 'overlay_content_rating_commonsense') {
+          shouldAssignInitialSrc = false
           buildBackdropDataUrl(cfg).then(dataUrl => {
             layer.src = dataUrl
             applyPosition(cfg)
           })
         } else if (cfg.id === 'overlay_content_rating_commonsense') {
+          shouldAssignInitialSrc = false
           buildCommonsenseDataUrl(cfg).then(dataUrl => {
             buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
               layer.src = backdropUrl
@@ -6694,6 +6704,7 @@ const OverlayHandler = {
         } else if (cfg.id === 'overlay_runtimes') {
           initialSrc = buildRuntimeDataUrl(cfg)
           if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            shouldAssignInitialSrc = false
             buildBackdropDataUrl(cfg, initialSrc).then(backdropUrl => {
               layer.src = backdropUrl
               applyPosition(cfg)
@@ -6702,6 +6713,7 @@ const OverlayHandler = {
         } else if (cfg.id === 'overlay_status') {
           initialSrc = buildSimpleTextDataUrl(cfg, getStatusTextVars(cfg))
           if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            shouldAssignInitialSrc = false
             buildBackdropDataUrl(cfg, initialSrc).then(backdropUrl => {
               layer.src = backdropUrl
               applyPosition(cfg)
@@ -6710,7 +6722,9 @@ const OverlayHandler = {
         } else if (cfg.id === 'overlay_episode_info') {
           initialSrc = buildSimpleTextDataUrl(cfg, getSimpleTextVars(cfg))
         }
-        layer.src = initialSrc
+        if (shouldAssignInitialSrc && initialSrc) {
+          layer.src = initialSrc
+        }
         if (layer.complete) handleLoad()
 
         bindDrag(cfg, layer)
@@ -6723,6 +6737,13 @@ const OverlayHandler = {
             }
             if (isFlagsOverlay(cfg)) {
               updateFlagsLayer(cfg, layer)
+              return
+            }
+            if (cfg.id === 'overlay_ribbon') {
+              buildRibbonCompositeDataUrl(cfg).then(dataUrl => {
+                layer.src = dataUrl
+                applyPosition(cfg)
+              })
               return
             }
             if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
@@ -7544,6 +7565,9 @@ function setupParentChildToggleSync () {
     const groupId = parent.dataset.templateGroup
     const wrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
     const isRadioStyle = parent.type === 'radio' || parent.dataset.radioGroup === 'true'
+    if (isRadioStyle) {
+      parent.dataset.wasChecked = parent.checked ? 'true' : 'false'
+    }
 
     const groupName = parent.name
     const childToggles = wrapper?.querySelectorAll('.template-child-toggle') || []
