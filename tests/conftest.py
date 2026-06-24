@@ -112,6 +112,22 @@ def library_routes_module(qs_module):
     return lr
 
 
+@pytest.fixture(scope="session")
+def import_config_routes_module(qs_module):
+    """Direct handle to ``blueprints.import_config_routes``.
+
+    Same rationale as ``workspace_status_module`` and
+    ``library_routes_module`` -- patches on ``qs_module._foo`` only update
+    the re-export.  Use this fixture to monkeypatch helpers that route
+    callers inside the import-config blueprint resolve through their own
+    module namespace (e.g. ``_coerce_validation_response_payload``,
+    ``_map_playlist_libraries``, ``count_annotated_lines``).
+    """
+    import blueprints.import_config_routes as ic
+
+    return ic
+
+
 @pytest.fixture()
 def client(app):
     return app.test_client()
