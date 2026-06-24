@@ -747,6 +747,57 @@ const OverlayHandler = {
       'use_opus'
     ]
 
+    const STREAMING_CHILD_TOGGLE_KEYS = [
+      'use_netflix',
+      'use_amazon',
+      'use_disney',
+      'use_hbomax',
+      'use_crunchyroll',
+      'use_movistar',
+      'use_atresplayer',
+      'use_youtube',
+      'use_hulu',
+      'use_paramount',
+      'use_amc',
+      'use_appletv',
+      'use_peacock',
+      'use_discovery',
+      'use_crave',
+      'use_now',
+      'use_channel4',
+      'use_itvx',
+      'use_bet',
+      'use_hayu',
+      'use_tubi',
+      'use_filmin'
+    ]
+
+    const STREAMING_BADGE_FILENAME_MAP = {
+      amazon: 'Prime Video',
+      amc: 'AMC+',
+      appletv: 'AppleTV',
+      atresplayer: 'Atres Player',
+      bet: 'BET+',
+      channel4: 'Channel 4',
+      crave: 'Crave',
+      crunchyroll: 'Crunchyroll',
+      discovery: 'discovery+',
+      disney: 'Disney',
+      filmin: 'Filmin',
+      hayu: 'hayu',
+      hbomax: 'HBO Max',
+      hulu: 'Hulu',
+      itvx: 'ITVX',
+      max: 'Max',
+      movistar: 'Movistar Plus+',
+      netflix: 'Netflix',
+      now: 'NOW',
+      paramount: 'Paramount+',
+      peacock: 'Peacock',
+      tubi: 'tubi',
+      youtube: 'YouTube'
+    }
+
     const BUNDLED_OVERLAY_PREVIEW_ROOT = '/static/images/overlay-defaults'
 
     const getResolutionToggleFamilyDef = (family) => {
@@ -796,6 +847,7 @@ const OverlayHandler = {
       if (family === 'resolution') return getResolutionFamilyToggleKeys(cfg)
       if (family === 'edition') return EDITION_CHILD_TOGGLE_KEYS.slice()
       if (family === 'audio_codec') return AUDIO_CODEC_CHILD_TOGGLE_KEYS.slice()
+      if (family === 'streaming') return STREAMING_CHILD_TOGGLE_KEYS.slice()
       return []
     }
 
@@ -809,9 +861,12 @@ const OverlayHandler = {
 
     const getOverlayPreviewFilename = (badgeKey, family = '') => {
       const normalizedFamily = String(family || '').trim().toLowerCase()
+      const rawKey = String(badgeKey || '').trim()
       const normalizedKey = normalizedFamily === 'audio_codec'
-        ? String(badgeKey || '').trim()
-        : String(badgeKey || '').trim().replace(/_/g, '')
+        ? rawKey
+        : normalizedFamily === 'streaming'
+          ? (STREAMING_BADGE_FILENAME_MAP[rawKey] || rawKey)
+          : rawKey.replace(/_/g, '')
       return normalizedKey ? `${normalizedKey}.png` : ''
     }
 
@@ -821,6 +876,10 @@ const OverlayHandler = {
       const normalizedVariant = String(variant || '').trim().toLowerCase()
       if (family === 'audio_codec') {
         const style = normalizedVariant === 'standard' ? 'standard' : 'compact'
+        return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
+      }
+      if (family === 'streaming') {
+        const style = normalizedVariant === 'white' ? 'white' : 'color'
         return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
       }
       return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${filename}`
@@ -875,6 +934,11 @@ const OverlayHandler = {
     const getAudioCodecStyle = (cfg) => {
       const style = String(cfg?.styleInput?.value || 'compact').trim().toLowerCase()
       return style === 'standard' ? 'standard' : 'compact'
+    }
+
+    const getStreamingStyle = (cfg) => {
+      const style = String(cfg?.styleInput?.value || 'color').trim().toLowerCase()
+      return style === 'white' ? 'white' : 'color'
     }
 
     const getAudioCodecPreviewOptions = (cfg) => {
@@ -936,6 +1000,69 @@ const OverlayHandler = {
           source_type: override?.sourceType || '',
           source_value: override?.value || '',
           variant: getAudioCodecStyle(cfg)
+        }
+      }
+    }
+
+    const getStreamingPreviewOptions = (cfg) => {
+      if (!cfg?.container) return []
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+      const options = []
+      const childKeys = getToggleFamilyChildKeys(cfg, 'streaming')
+      childKeys.forEach(toggleKey => {
+        const badgeKey = String(toggleKey || '').trim().replace(/^use_/, '')
+        if (!badgeKey) return
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        const labelEl = input?.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) {
+          label = label.slice(4).trim()
+        }
+        options.push({
+          value: badgeKey,
+          label,
+          enabled: input ? input.checked : false
+        })
+      })
+      return options
+    }
+
+    const getStreamingPreviewSelectedKey = (cfg) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getStreamingPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const current = String(state.streaming || '').trim()
+      if (current && values.has(current)) return current
+      const fallback = options.find(option => option.enabled)?.value || options[0]?.value || ''
+      state.streaming = fallback
+      return fallback
+    }
+
+    const setStreamingPreviewSelectedKey = (cfg, badgeKey) => {
+      const state = ensureResolutionPreviewState(cfg)
+      state.streaming = String(badgeKey || '').trim()
+    }
+
+    const getStreamingPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getStreamingRenderPayload = (cfg) => {
+      const overrideEntries = getStreamingPreviewOverrideEntries(cfg)
+      const badgeKey = getStreamingPreviewSelectedKey(cfg)
+      const override = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      return {
+        overlay_id: cfg.id,
+        streaming: {
+          badge_key: badgeKey,
+          source_type: override?.sourceType || '',
+          source_value: override?.value || '',
+          variant: getStreamingStyle(cfg)
         }
       }
     }
@@ -1394,6 +1521,34 @@ const OverlayHandler = {
       })
     }
 
+    const ensureStreamingPreviewControl = (cfg) => {
+      if (cfg?.id !== 'overlay_streaming' || !cfg.container || !cfg.styleInput) return
+      const styleRow = cfg.styleInput.closest('.input-group') || cfg.styleInput.closest('.mb-3') || cfg.styleInput.parentElement
+      if (!styleRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-streaming-preview-wrap]')
+      let previewSelect = cfg.container.querySelector('[data-streaming-preview-select]')
+      if (!previewWrap) {
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3'
+        previewWrap.dataset.streamingPreviewWrap = 'true'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">Preview badge</label>
+          <select class="form-select form-select-sm" data-streaming-preview-select="true"></select>
+        `
+        styleRow.insertAdjacentElement('afterend', previewWrap)
+        previewSelect = previewWrap.querySelector('[data-streaming-preview-select]')
+      }
+
+      if (previewSelect && previewSelect.dataset.listenerAdded !== 'true') {
+        previewSelect.dataset.listenerAdded = 'true'
+        previewSelect.addEventListener('change', () => {
+          setStreamingPreviewSelectedKey(cfg, previewSelect.value)
+          refreshStreamingOverlayPreview(cfg)
+        })
+      }
+    }
+
     const ensureAudioCodecPreviewControl = (cfg) => {
       if (cfg?.id !== 'overlay_audio_codec' || !cfg.container || !cfg.styleInput) return
       const styleRow = cfg.styleInput.closest('.input-group') || cfg.styleInput.closest('.mb-3') || cfg.styleInput.parentElement
@@ -1445,6 +1600,29 @@ const OverlayHandler = {
       select.disabled = options.length === 0
     }
 
+    const syncStreamingPreviewControls = (cfg) => {
+      if (cfg?.id !== 'overlay_streaming' || !cfg.container) return
+      const select = cfg.container.querySelector('[data-streaming-preview-select]')
+      if (!select) return
+      const options = getStreamingPreviewOptions(cfg)
+      const selected = getStreamingPreviewSelectedKey(cfg)
+
+      select.replaceChildren()
+      options.forEach((option) => {
+        const el = document.createElement('option')
+        el.value = option.value
+        el.textContent = option.label
+        select.appendChild(el)
+      })
+      if (selected && options.some(option => option.value === selected)) {
+        select.value = selected
+      } else if (options[0]?.value) {
+        setStreamingPreviewSelectedKey(cfg, options[0].value)
+        select.value = options[0].value
+      }
+      select.disabled = options.length === 0
+    }
+
     const bindAudioCodecPreviewInputs = (cfg) => {
       if (cfg?.id !== 'overlay_audio_codec' || !cfg.container) return
       const templateName = cfg.container.dataset.overlayTemplate
@@ -1461,8 +1639,32 @@ const OverlayHandler = {
       })
     }
 
+    const bindStreamingPreviewInputs = (cfg) => {
+      if (cfg?.id !== 'overlay_streaming' || !cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const toggleKeys = getToggleFamilyChildKeys(cfg, 'streaming')
+      toggleKeys.forEach((toggleKey) => {
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        if (!input || input.dataset.streamingPreviewBound === 'true') return
+        input.dataset.streamingPreviewBound = 'true'
+        input.addEventListener('change', () => {
+          syncStreamingPreviewControls(cfg)
+          refreshStreamingOverlayPreview(cfg)
+        })
+      })
+    }
+
     const refreshAudioCodecOverlayPreview = (cfg) => {
       if (cfg?.id !== 'overlay_audio_codec' || !cfg.layer) return
+      buildBackdropDataUrl(cfg).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+      })
+    }
+
+    const refreshStreamingOverlayPreview = (cfg) => {
+      if (cfg?.id !== 'overlay_streaming' || !cfg.layer) return
       buildBackdropDataUrl(cfg).then(dataUrl => {
         if (!dataUrl) return
         cfg.layer.src = dataUrl
@@ -1682,6 +1884,10 @@ const OverlayHandler = {
           setAudioCodecPreviewSelectedKey(cfg, badgeKey)
           syncAudioCodecPreviewControls(cfg)
           refreshAudioCodecOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_streaming' && badgeKey) {
+          setStreamingPreviewSelectedKey(cfg, badgeKey)
+          syncStreamingPreviewControls(cfg)
+          refreshStreamingOverlayPreview(cfg)
         }
         syncOverlaySourceOverrideRows(cfg, config, section)
         if (previousManagedLocation && previousManagedLocation !== nextManagedLocation) {
@@ -1767,6 +1973,10 @@ const OverlayHandler = {
           setAudioCodecPreviewSelectedKey(cfg, badgeKey)
           syncAudioCodecPreviewControls(cfg)
           refreshAudioCodecOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_streaming' && badgeKey) {
+          setStreamingPreviewSelectedKey(cfg, badgeKey)
+          syncStreamingPreviewControls(cfg)
+          refreshStreamingOverlayPreview(cfg)
         }
         if (previousManagedLocation && previousManagedLocation !== nextManagedLocation) {
           await cleanupManagedOverlaySourceImages(cfg, config, section, {
@@ -2028,6 +2238,12 @@ const OverlayHandler = {
         syncAudioCodecPreviewControls(cfg)
         if (didStateChange) {
           refreshAudioCodecOverlayPreview(cfg)
+        }
+      }
+      if (cfg.id === 'overlay_streaming') {
+        syncStreamingPreviewControls(cfg)
+        if (didStateChange) {
+          refreshStreamingOverlayPreview(cfg)
         }
       }
     }
@@ -4090,6 +4306,41 @@ const OverlayHandler = {
       }
     }
 
+    const buildStreamingCompositeDataUrl = async (cfg) => {
+      if (cfg.id !== 'overlay_streaming') return null
+
+      const payload = getStreamingRenderPayload(cfg)
+      try {
+        const response = await fetch('/overlay-render-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`
+          try {
+            const errorPayload = await response.json()
+            message = errorPayload?.message || errorPayload?.error || message
+          } catch (err) {
+            // ignore JSON parse failure and keep HTTP message
+          }
+          throw new Error(message)
+        }
+        const blob = await response.blob()
+        return await blobToDataUrl(blob)
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to build server-rendered streaming preview', err)
+        const badgeKey = getStreamingPreviewSelectedKey(cfg)
+        const overrideEntry = getStreamingPreviewOverrideEntries(cfg).find(entry => {
+          return entry.badgeKey === badgeKey && entry.sourceType && entry.value
+        })
+        if (overrideEntry) {
+          return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+        }
+        return buildBundledOverlayPreviewUrl('streaming', badgeKey, getStreamingStyle(cfg)) || resolveOverlayImage(cfg)
+      }
+    }
+
     const buildBackdropDataUrl = async (cfg, baseOverride = null) => {
       const vars = getBackdropVars(cfg)
       const pad = Math.max(0, Number(vars.back_padding) || 0)
@@ -4105,6 +4356,10 @@ const OverlayHandler = {
       }
       if (!baseOverride && cfg.id === 'overlay_audio_codec') {
         const composite = await buildAudioCodecCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
+      if (!baseOverride && cfg.id === 'overlay_streaming') {
+        const composite = await buildStreamingCompositeDataUrl(cfg)
         if (composite) baseImg = composite
       }
       if (!baseOverride && cfg.id === 'overlay_ratings') {
@@ -5754,10 +6009,13 @@ const OverlayHandler = {
           }
         }
         ensureResolutionToggleFamilyGroups(cfg)
+        ensureStreamingPreviewControl(cfg)
         ensureAudioCodecPreviewControl(cfg)
         ensureOverlaySourceOverrideEditor(cfg)
         bindResolutionPreviewInputs(cfg)
+        bindStreamingPreviewInputs(cfg)
         bindAudioCodecPreviewInputs(cfg)
+        syncStreamingPreviewControls(cfg)
         syncAudioCodecBackdropHeight(cfg, false)
         syncAudioCodecPreviewControls(cfg)
         syncResolutionBackdropHeight(cfg, false)

@@ -866,6 +866,57 @@ def test_overlay_render_preview_returns_bundled_audio_codec_badge_with_underscor
         assert rendered.size[1] > 0
 
 
+def test_overlay_render_preview_returns_streaming_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    streaming_path = isolated_config_dir / "overlay_images" / "Prime Video.png"
+    streaming_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (220, 72), (255, 0, 0, 0)).save(streaming_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_streaming",
+            "streaming": {
+                "badge_key": "amazon",
+                "source_type": "file",
+                "source_value": str(streaming_path),
+                "variant": "color",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (220, 72)
+
+
+def test_overlay_render_preview_returns_bundled_streaming_badge_from_key_map(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_streaming",
+            "streaming": {
+                "badge_key": "amazon",
+                "source_type": "",
+                "source_value": "",
+                "variant": "white",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):
     collection_file = tmp_path / "collections.yml"
     collection_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")

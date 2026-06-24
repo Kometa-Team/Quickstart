@@ -16,12 +16,45 @@ bp = Blueprint("asset_routes", __name__)
 
 OVERLAY_PREVIEW_ROOT = Path(__file__).resolve().parent.parent / "static" / "images" / "overlay-defaults"
 
+STREAMING_PREVIEW_FILENAME_MAP = {
+    "amazon": "Prime Video",
+    "amc": "AMC+",
+    "appletv": "AppleTV",
+    "atresplayer": "Atres Player",
+    "bet": "BET+",
+    "channel4": "Channel 4",
+    "crave": "Crave",
+    "crunchyroll": "Crunchyroll",
+    "discovery": "discovery+",
+    "disney": "Disney",
+    "filmin": "Filmin",
+    "hayu": "hayu",
+    "hbomax": "HBO Max",
+    "hulu": "Hulu",
+    "itvx": "ITVX",
+    "max": "Max",
+    "movistar": "Movistar Plus+",
+    "netflix": "Netflix",
+    "now": "NOW",
+    "paramount": "Paramount+",
+    "peacock": "Peacock",
+    "tubi": "tubi",
+    "youtube": "YouTube",
+}
 
-def _overlay_preview_filename(badge_key, family=None):
+
+def _overlay_preview_basename(badge_key, family=None):
     normalized_family = str(family or "").strip().lower()
     normalized_key = str(badge_key or "").strip()
-    if normalized_family != "audio_codec":
-        normalized_key = normalized_key.replace("_", "")
+    if normalized_family == "audio_codec":
+        return normalized_key
+    if normalized_family == "streaming":
+        return STREAMING_PREVIEW_FILENAME_MAP.get(normalized_key, normalized_key)
+    return normalized_key.replace("_", "")
+
+
+def _overlay_preview_filename(badge_key, family=None):
+    normalized_key = _overlay_preview_basename(badge_key, family)
     return f"{normalized_key}.png" if normalized_key else ""
 
 
@@ -85,12 +118,15 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
     normalized_family = str(family or "").strip().lower()
     filename = _overlay_preview_filename(badge_key, normalized_family)
     normalized_variant = str(variant or "").strip().lower()
-    if normalized_family not in {"resolution", "edition", "audio_codec"} or not filename:
+    if normalized_family not in {"resolution", "edition", "audio_codec", "streaming"} or not filename:
         raise ValueError("Invalid bundled overlay preview request.")
 
     image_root = OVERLAY_PREVIEW_ROOT / normalized_family
     if normalized_family == "audio_codec":
         normalized_variant = normalized_variant if normalized_variant in {"compact", "standard"} else "compact"
+        image_root = image_root / normalized_variant
+    elif normalized_family == "streaming":
+        normalized_variant = normalized_variant if normalized_variant in {"color", "white"} else "color"
         image_root = image_root / normalized_variant
 
     image_path = image_root.resolve() / filename
@@ -397,12 +433,13 @@ def overlay_render_preview():
     data = request.get_json(silent=True) or {}
     overlay_id = str(data.get("overlay_id") or "").strip()
 
-    if overlay_id not in {"overlay_resolution", "overlay_audio_codec"}:
+    if overlay_id not in {"overlay_resolution", "overlay_audio_codec", "overlay_streaming"}:
         return jsonify({"status": "error", "message": "Unsupported overlay render preview request."}), 400
 
-    if overlay_id == "overlay_audio_codec":
+    if overlay_id in {"overlay_audio_codec", "overlay_streaming"}:
+        family = "audio_codec" if overlay_id == "overlay_audio_codec" else "streaming"
         try:
-            rendered, _ = _load_render_preview_image(data, "audio_codec")
+            rendered, _ = _load_render_preview_image(data, family)
         except ValueError as exc:
             return jsonify({"status": "error", "message": str(exc)}), 400
 
