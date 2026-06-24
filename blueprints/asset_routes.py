@@ -46,7 +46,7 @@ STREAMING_PREVIEW_FILENAME_MAP = {
 def _overlay_preview_basename(badge_key, family=None):
     normalized_family = str(family or "").strip().lower()
     normalized_key = str(badge_key or "").strip()
-    if normalized_family == "audio_codec":
+    if normalized_family in {"audio_codec", "ribbon"}:
         return normalized_key
     if normalized_family == "streaming":
         return STREAMING_PREVIEW_FILENAME_MAP.get(normalized_key, normalized_key)
@@ -118,7 +118,12 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
     normalized_family = str(family or "").strip().lower()
     filename = _overlay_preview_filename(badge_key, normalized_family)
     normalized_variant = str(variant or "").strip().lower()
-    if normalized_family not in {"resolution", "edition", "audio_codec", "streaming", "network", "studio"} or not filename:
+    if normalized_family == "language_count":
+        if normalized_variant not in {"audio", "subs"} or not str(badge_key or "").strip():
+            raise ValueError("Invalid bundled overlay preview request.")
+        filename = f"{str(badge_key or '').strip()}_{normalized_variant}.png"
+
+    if normalized_family not in {"resolution", "edition", "audio_codec", "streaming", "network", "studio", "ribbon", "language_count", "versions", "mediastinger", "direct_play"} or not filename:
         raise ValueError("Invalid bundled overlay preview request.")
 
     image_root = OVERLAY_PREVIEW_ROOT / normalized_family
@@ -133,6 +138,9 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
         image_root = image_root / normalized_variant
     elif normalized_family == "studio":
         normalized_variant = normalized_variant if normalized_variant in {"standard", "bigger"} else "standard"
+        image_root = image_root / normalized_variant
+    elif normalized_family == "ribbon":
+        normalized_variant = normalized_variant if normalized_variant in {"yellow", "gray", "black", "red"} else "yellow"
         image_root = image_root / normalized_variant
 
     image_path = image_root.resolve() / filename
@@ -467,15 +475,20 @@ def overlay_render_preview():
     data = request.get_json(silent=True) or {}
     overlay_id = str(data.get("overlay_id") or "").strip()
 
-    if overlay_id not in {"overlay_resolution", "overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio"}:
+    if overlay_id not in {"overlay_resolution", "overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio", "overlay_ribbon", "overlay_language_count", "overlay_versions", "overlay_mediastinger", "overlay_direct_play"}:
         return jsonify({"status": "error", "message": "Unsupported overlay render preview request."}), 400
 
-    if overlay_id in {"overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio"}:
+    if overlay_id in {"overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio", "overlay_ribbon", "overlay_language_count", "overlay_versions", "overlay_mediastinger", "overlay_direct_play"}:
         family = {
             "overlay_audio_codec": "audio_codec",
             "overlay_streaming": "streaming",
             "overlay_network": "network",
             "overlay_studio": "studio",
+            "overlay_ribbon": "ribbon",
+            "overlay_language_count": "language_count",
+            "overlay_versions": "versions",
+            "overlay_mediastinger": "mediastinger",
+            "overlay_direct_play": "direct_play",
         }.get(overlay_id)
         try:
             rendered, _ = _load_render_preview_image(data, family)

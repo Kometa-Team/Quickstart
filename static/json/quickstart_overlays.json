@@ -12,6 +12,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ribbon/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ribbon.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/yellow/oscars.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in ribbon image for a specific ribbon key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 0,
           "vertical": 0,
@@ -160,6 +172,19 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/mediastinger/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/mediastinger.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Mediastinger.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in Mediastinger image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "fixed_key",
+          "fixed_key": "Mediastinger",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 200,
           "vertical": 15,
@@ -2982,6 +3007,21 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/language_count/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/language_count.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/multi_audio.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in language count image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "exclude_toggle_keys": [
+            "use_subtitles"
+          ],
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 0,
           "vertical": 30,
@@ -5427,6 +5467,19 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/versions/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/versions.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/versions.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in Versions image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "fixed_key",
+          "fixed_key": "versions",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 335,
@@ -6264,6 +6317,19 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/direct_play/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/direct_play.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Direct-Play.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in Direct Play image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "fixed_key",
+          "fixed_key": "Direct-Play",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 0,
           "vertical": 150,

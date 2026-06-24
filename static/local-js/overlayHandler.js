@@ -429,6 +429,7 @@ const OverlayHandler = {
     }
 
     const BACKDROP_IMAGE_OVERLAYS = new Set([
+      'overlay_ribbon',
       'overlay_mediastinger',
       'overlay_versions',
       'overlay_audio_codec',
@@ -772,6 +773,34 @@ const OverlayHandler = {
       'use_filmin'
     ]
 
+    const RIBBON_CHILD_TOGGLE_KEYS = [
+      'use_oscars',
+      'use_oscars_director',
+      'use_golden',
+      'use_golden_director',
+      'use_bafta',
+      'use_cannes',
+      'use_berlinale',
+      'use_venice',
+      'use_sundance',
+      'use_emmys',
+      'use_choice',
+      'use_spirit',
+      'use_cesar',
+      'use_imdb',
+      'use_letterboxd',
+      'use_rottenverified',
+      'use_rotten',
+      'use_metacritic',
+      'use_common',
+      'use_razzie'
+    ]
+
+    const LANGUAGE_COUNT_CHILD_TOGGLE_KEYS = [
+      'use_dual',
+      'use_multi'
+    ]
+
     const STREAMING_BADGE_FILENAME_MAP = {
       amazon: 'Prime Video',
       amc: 'AMC+',
@@ -801,6 +830,18 @@ const OverlayHandler = {
     const SINGLE_BADGE_OVERLAY_FAMILY_BY_ID = {
       overlay_network: 'network',
       overlay_studio: 'studio'
+    }
+
+    const FIXED_BADGE_OVERLAY_FAMILY_BY_ID = {
+      overlay_mediastinger: 'mediastinger',
+      overlay_versions: 'versions',
+      overlay_direct_play: 'direct_play'
+    }
+
+    const FIXED_BADGE_OVERLAY_KEY_BY_ID = {
+      overlay_mediastinger: 'Mediastinger',
+      overlay_versions: 'versions',
+      overlay_direct_play: 'Direct-Play'
     }
 
     const BUNDLED_OVERLAY_PREVIEW_ROOT = '/static/images/overlay-defaults'
@@ -855,6 +896,8 @@ const OverlayHandler = {
       if (family === 'edition') return EDITION_CHILD_TOGGLE_KEYS.slice()
       if (family === 'audio_codec') return AUDIO_CODEC_CHILD_TOGGLE_KEYS.slice()
       if (family === 'streaming') return STREAMING_CHILD_TOGGLE_KEYS.slice()
+      if (family === 'ribbon') return RIBBON_CHILD_TOGGLE_KEYS.slice()
+      if (family === 'language_count') return LANGUAGE_COUNT_CHILD_TOGGLE_KEYS.slice()
       return []
     }
 
@@ -869,7 +912,7 @@ const OverlayHandler = {
     const getOverlayPreviewFilename = (badgeKey, family = '') => {
       const normalizedFamily = String(family || '').trim().toLowerCase()
       const rawKey = String(badgeKey || '').trim()
-      const normalizedKey = normalizedFamily === 'audio_codec'
+      const normalizedKey = normalizedFamily === 'audio_codec' || normalizedFamily === 'ribbon'
         ? rawKey
         : normalizedFamily === 'streaming'
           ? (STREAMING_BADGE_FILENAME_MAP[rawKey] || rawKey)
@@ -888,6 +931,14 @@ const OverlayHandler = {
       if (family === 'streaming') {
         const style = normalizedVariant === 'white' ? 'white' : 'color'
         return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
+      }
+      if (family === 'ribbon') {
+        const style = ['yellow', 'gray', 'black', 'red'].includes(normalizedVariant) ? normalizedVariant : 'yellow'
+        return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
+      }
+      if (family === 'language_count') {
+        const style = normalizedVariant === 'subs' ? 'subs' : 'audio'
+        return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${String(badgeKey || '').trim()}_${style}.png`
       }
       return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${filename}`
     }
@@ -956,6 +1007,16 @@ const OverlayHandler = {
     const getStudioStyle = (cfg) => {
       const style = String(cfg?.styleInput?.value || 'standard').trim().toLowerCase()
       return style === 'bigger' ? 'bigger' : 'standard'
+    }
+
+    const getRibbonStyle = (cfg) => {
+      const style = String(cfg?.styleInput?.value || 'yellow').trim().toLowerCase()
+      return ['yellow', 'gray', 'black', 'red'].includes(style) ? style : 'yellow'
+    }
+
+    const getLanguageCountVariant = (cfg) => {
+      const subtitlesToggle = getTemplateInput(cfg, 'use_subtitles')
+      return subtitlesToggle?.checked ? 'subs' : 'audio'
     }
 
     const getAudioCodecPreviewOptions = (cfg) => {
@@ -1084,6 +1145,128 @@ const OverlayHandler = {
       }
     }
 
+    const getRibbonPreviewOptions = (cfg) => {
+      if (!cfg?.container) return []
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+      const options = []
+      const childKeys = getToggleFamilyChildKeys(cfg, 'ribbon')
+      childKeys.forEach(toggleKey => {
+        const badgeKey = String(toggleKey || '').trim().replace(/^use_/, '')
+        if (!badgeKey) return
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        const labelEl = input?.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) label = label.slice(4).trim()
+        options.push({
+          value: badgeKey,
+          label,
+          enabled: input ? input.checked : false
+        })
+      })
+      return options
+    }
+
+    const getRibbonPreviewSelectedKey = (cfg) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getRibbonPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const current = String(state.ribbon || '').trim()
+      if (current && values.has(current)) return current
+      const fallback = options.find(option => option.enabled)?.value || options[0]?.value || ''
+      state.ribbon = fallback
+      return fallback
+    }
+
+    const setRibbonPreviewSelectedKey = (cfg, badgeKey) => {
+      const state = ensureResolutionPreviewState(cfg)
+      state.ribbon = String(badgeKey || '').trim()
+    }
+
+    const getRibbonPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getRibbonRenderPayload = (cfg) => {
+      const overrideEntries = getRibbonPreviewOverrideEntries(cfg)
+      const badgeKey = getRibbonPreviewSelectedKey(cfg)
+      const override = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      return {
+        overlay_id: cfg.id,
+        ribbon: {
+          badge_key: badgeKey,
+          source_type: override?.sourceType || '',
+          source_value: override?.value || '',
+          variant: getRibbonStyle(cfg)
+        }
+      }
+    }
+
+    const getLanguageCountPreviewOptions = (cfg) => {
+      if (!cfg?.container) return []
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+      const options = []
+      const childKeys = getToggleFamilyChildKeys(cfg, 'language_count')
+      childKeys.forEach(toggleKey => {
+        const badgeKey = String(toggleKey || '').trim().replace(/^use_/, '')
+        if (!badgeKey) return
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        const labelEl = input?.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) label = label.slice(4).trim()
+        options.push({
+          value: badgeKey,
+          label,
+          enabled: input ? input.checked : false
+        })
+      })
+      return options
+    }
+
+    const getLanguageCountPreviewSelectedKey = (cfg) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getLanguageCountPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const current = String(state.language_count || '').trim()
+      if (current && values.has(current)) return current
+      const fallback = options.find(option => option.enabled)?.value || options[0]?.value || ''
+      state.language_count = fallback
+      return fallback
+    }
+
+    const setLanguageCountPreviewSelectedKey = (cfg, badgeKey) => {
+      const state = ensureResolutionPreviewState(cfg)
+      state.language_count = String(badgeKey || '').trim()
+    }
+
+    const getLanguageCountPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getLanguageCountRenderPayload = (cfg) => {
+      const overrideEntries = getLanguageCountPreviewOverrideEntries(cfg)
+      const badgeKey = getLanguageCountPreviewSelectedKey(cfg)
+      const override = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      return {
+        overlay_id: cfg.id,
+        language_count: {
+          badge_key: badgeKey,
+          source_type: override?.sourceType || '',
+          source_value: override?.value || '',
+          variant: getLanguageCountVariant(cfg)
+        }
+      }
+    }
+
     const getSingleBadgeOverlayPreviewDefaultKey = (cfg) => {
       const imageUrl = String(cfg?.image || '').trim()
       if (!imageUrl) return ''
@@ -1104,6 +1287,14 @@ const OverlayHandler = {
 
     const getSingleBadgeOverlayFamily = (cfg) => {
       return SINGLE_BADGE_OVERLAY_FAMILY_BY_ID[String(cfg?.id || '').trim()] || ''
+    }
+
+    const getFixedBadgeOverlayFamily = (cfg) => {
+      return FIXED_BADGE_OVERLAY_FAMILY_BY_ID[String(cfg?.id || '').trim()] || ''
+    }
+
+    const getFixedBadgeOverlayKey = (cfg) => {
+      return FIXED_BADGE_OVERLAY_KEY_BY_ID[String(cfg?.id || '').trim()] || ''
     }
 
     const getBundledOverlayKeyOptions = (cfg) => {
@@ -1200,6 +1391,30 @@ const OverlayHandler = {
           source_type: override?.sourceType || '',
           source_value: override?.value || '',
           variant: typeof variantResolver === 'function' ? variantResolver(cfg) : ''
+        }
+      }
+    }
+
+    const getFixedBadgeOverlayPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getFixedBadgeOverlayRenderPayload = (cfg) => {
+      const family = getFixedBadgeOverlayFamily(cfg)
+      const badgeKey = getFixedBadgeOverlayKey(cfg)
+      const overrideEntries = getFixedBadgeOverlayPreviewOverrideEntries(cfg)
+      const override = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      return {
+        overlay_id: cfg.id,
+        [family]: {
+          badge_key: badgeKey,
+          source_type: override?.sourceType || '',
+          source_value: override?.value || '',
+          variant: ''
         }
       }
     }
@@ -1503,6 +1718,7 @@ const OverlayHandler = {
           description: String(parsed.description || 'Advanced source overrides for this overlay.').trim(),
           addLabel: String(parsed.add_label || 'Add override').trim(),
           keyMode: String(parsed.key_mode || '').trim().toLowerCase(),
+          fixedKey: String(parsed.fixed_key || '').trim(),
           keyPlaceholder: String(parsed.key_placeholder || '').trim(),
           sourceTypes,
           excludeToggleKeys: Array.isArray(parsed.exclude_toggle_keys)
@@ -1539,6 +1755,9 @@ const OverlayHandler = {
     const getOverlaySourceOverrideKeyOptions = (cfg, config) => {
       const options = []
       if (!cfg.container) return options
+      if (config.keyMode === 'fixed_key' && config.fixedKey) {
+        return [{ value: config.fixedKey, label: config.fixedKey }]
+      }
       if (config.keyMode === 'bundled_preview_keys') {
         return getBundledOverlayKeyOptions(cfg)
       }
@@ -1733,6 +1952,63 @@ const OverlayHandler = {
       }
     }
 
+    const ensureRibbonPreviewControl = (cfg) => {
+      if (cfg?.id !== 'overlay_ribbon' || !cfg.container || !cfg.styleInput) return
+      const styleRow = cfg.styleInput.closest('.input-group') || cfg.styleInput.closest('.mb-3') || cfg.styleInput.parentElement
+      if (!styleRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-ribbon-preview-wrap]')
+      let previewSelect = cfg.container.querySelector('[data-ribbon-preview-select]')
+      if (!previewWrap) {
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3'
+        previewWrap.dataset.ribbonPreviewWrap = 'true'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">Preview badge</label>
+          <select class="form-select form-select-sm" data-ribbon-preview-select="true"></select>
+        `
+        styleRow.insertAdjacentElement('afterend', previewWrap)
+        previewSelect = previewWrap.querySelector('[data-ribbon-preview-select]')
+      }
+
+      if (previewSelect && previewSelect.dataset.listenerAdded !== 'true') {
+        previewSelect.dataset.listenerAdded = 'true'
+        previewSelect.addEventListener('change', () => {
+          setRibbonPreviewSelectedKey(cfg, previewSelect.value)
+          refreshRibbonOverlayPreview(cfg)
+        })
+      }
+    }
+
+    const ensureLanguageCountPreviewControl = (cfg) => {
+      if (cfg?.id !== 'overlay_language_count' || !cfg.container) return
+      const anchorInput = getTemplateInput(cfg, 'use_dual') || getTemplateInput(cfg, 'use_multi')
+      const anchorRow = anchorInput?.closest('.form-check') || anchorInput?.closest('.input-group') || anchorInput?.closest('.mb-3') || anchorInput?.parentElement
+      if (!anchorRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-language-count-preview-wrap]')
+      let previewSelect = cfg.container.querySelector('[data-language-count-preview-select]')
+      if (!previewWrap) {
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3'
+        previewWrap.dataset.languageCountPreviewWrap = 'true'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">Preview badge</label>
+          <select class="form-select form-select-sm" data-language-count-preview-select="true"></select>
+        `
+        anchorRow.insertAdjacentElement('afterend', previewWrap)
+        previewSelect = previewWrap.querySelector('[data-language-count-preview-select]')
+      }
+
+      if (previewSelect && previewSelect.dataset.listenerAdded !== 'true') {
+        previewSelect.dataset.listenerAdded = 'true'
+        previewSelect.addEventListener('change', () => {
+          setLanguageCountPreviewSelectedKey(cfg, previewSelect.value)
+          refreshLanguageCountOverlayPreview(cfg)
+        })
+      }
+    }
+
     const ensureAudioCodecPreviewControl = (cfg) => {
       if (cfg?.id !== 'overlay_audio_codec' || !cfg.container || !cfg.styleInput) return
       const styleRow = cfg.styleInput.closest('.input-group') || cfg.styleInput.closest('.mb-3') || cfg.styleInput.parentElement
@@ -1779,6 +2055,52 @@ const OverlayHandler = {
         select.value = selected
       } else if (options[0]?.value) {
         setAudioCodecPreviewSelectedKey(cfg, options[0].value)
+        select.value = options[0].value
+      }
+      select.disabled = options.length === 0
+    }
+
+    const syncRibbonPreviewControls = (cfg) => {
+      if (cfg?.id !== 'overlay_ribbon' || !cfg.container) return
+      const select = cfg.container.querySelector('[data-ribbon-preview-select]')
+      if (!select) return
+      const options = getRibbonPreviewOptions(cfg)
+      const selected = getRibbonPreviewSelectedKey(cfg)
+
+      select.replaceChildren()
+      options.forEach((option) => {
+        const el = document.createElement('option')
+        el.value = option.value
+        el.textContent = option.label
+        select.appendChild(el)
+      })
+      if (selected && options.some(option => option.value === selected)) {
+        select.value = selected
+      } else if (options[0]?.value) {
+        setRibbonPreviewSelectedKey(cfg, options[0].value)
+        select.value = options[0].value
+      }
+      select.disabled = options.length === 0
+    }
+
+    const syncLanguageCountPreviewControls = (cfg) => {
+      if (cfg?.id !== 'overlay_language_count' || !cfg.container) return
+      const select = cfg.container.querySelector('[data-language-count-preview-select]')
+      if (!select) return
+      const options = getLanguageCountPreviewOptions(cfg)
+      const selected = getLanguageCountPreviewSelectedKey(cfg)
+
+      select.replaceChildren()
+      options.forEach((option) => {
+        const el = document.createElement('option')
+        el.value = option.value
+        el.textContent = option.label
+        select.appendChild(el)
+      })
+      if (selected && options.some(option => option.value === selected)) {
+        select.value = selected
+      } else if (options[0]?.value) {
+        setLanguageCountPreviewSelectedKey(cfg, options[0].value)
         select.value = options[0].value
       }
       select.disabled = options.length === 0
@@ -1857,6 +2179,45 @@ const OverlayHandler = {
       })
     }
 
+    const bindRibbonPreviewInputs = (cfg) => {
+      if (cfg?.id !== 'overlay_ribbon' || !cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const toggleKeys = getToggleFamilyChildKeys(cfg, 'ribbon')
+      toggleKeys.forEach((toggleKey) => {
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        if (!input || input.dataset.ribbonPreviewBound === 'true') return
+        input.dataset.ribbonPreviewBound = 'true'
+        input.addEventListener('change', () => {
+          syncRibbonPreviewControls(cfg)
+          refreshRibbonOverlayPreview(cfg)
+        })
+      })
+    }
+
+    const bindLanguageCountPreviewInputs = (cfg) => {
+      if (cfg?.id !== 'overlay_language_count' || !cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const toggleKeys = getToggleFamilyChildKeys(cfg, 'language_count')
+      toggleKeys.forEach((toggleKey) => {
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        if (!input || input.dataset.languageCountPreviewBound === 'true') return
+        input.dataset.languageCountPreviewBound = 'true'
+        input.addEventListener('change', () => {
+          syncLanguageCountPreviewControls(cfg)
+          refreshLanguageCountOverlayPreview(cfg)
+        })
+      })
+      const subtitlesInput = cfg.container.querySelector(`[name="${templateName}[use_subtitles]"]`)
+      if (subtitlesInput && subtitlesInput.dataset.languageCountVariantBound !== 'true') {
+        subtitlesInput.dataset.languageCountVariantBound = 'true'
+        subtitlesInput.addEventListener('change', () => {
+          refreshLanguageCountOverlayPreview(cfg)
+        })
+      }
+    }
+
     const bindSingleBadgeOverlayPreviewInputs = (cfg) => {
       if (!cfg?.container || !['overlay_network', 'overlay_studio'].includes(cfg.id)) return
       getBundledOverlayPreviewKeyOptions(cfg).then(() => {
@@ -1883,6 +2244,30 @@ const OverlayHandler = {
 
     const refreshStreamingOverlayPreview = (cfg) => {
       if (cfg?.id !== 'overlay_streaming' || !cfg.layer) return
+      buildBackdropDataUrl(cfg).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+      })
+    }
+
+    const refreshRibbonOverlayPreview = (cfg) => {
+      if (cfg?.id !== 'overlay_ribbon' || !cfg.layer) return
+      buildBackdropDataUrl(cfg).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+      })
+    }
+
+    const refreshLanguageCountOverlayPreview = (cfg) => {
+      if (cfg?.id !== 'overlay_language_count' || !cfg.layer) return
+      buildBackdropDataUrl(cfg).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+      })
+    }
+
+    const refreshFixedBadgeOverlayPreview = (cfg) => {
+      if (!cfg?.layer || !getFixedBadgeOverlayFamily(cfg)) return
       buildBackdropDataUrl(cfg).then(dataUrl => {
         if (!dataUrl) return
         cfg.layer.src = dataUrl
@@ -2106,10 +2491,20 @@ const OverlayHandler = {
           setStreamingPreviewSelectedKey(cfg, badgeKey)
           syncStreamingPreviewControls(cfg)
           refreshStreamingOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_ribbon' && badgeKey) {
+          setRibbonPreviewSelectedKey(cfg, badgeKey)
+          syncRibbonPreviewControls(cfg)
+          refreshRibbonOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_language_count' && badgeKey) {
+          setLanguageCountPreviewSelectedKey(cfg, badgeKey)
+          syncLanguageCountPreviewControls(cfg)
+          refreshLanguageCountOverlayPreview(cfg)
         } else if ((cfg.id === 'overlay_network' || cfg.id === 'overlay_studio') && badgeKey) {
           setSingleBadgeOverlayPreviewSelectedKey(cfg, badgeKey)
           syncSingleBadgeOverlayPreviewControls(cfg)
           refreshSingleBadgeOverlayPreview(cfg)
+        } else if (getFixedBadgeOverlayFamily(cfg)) {
+          refreshFixedBadgeOverlayPreview(cfg)
         }
         syncOverlaySourceOverrideRows(cfg, config, section)
         if (previousManagedLocation && previousManagedLocation !== nextManagedLocation) {
@@ -2199,10 +2594,20 @@ const OverlayHandler = {
           setStreamingPreviewSelectedKey(cfg, badgeKey)
           syncStreamingPreviewControls(cfg)
           refreshStreamingOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_ribbon' && badgeKey) {
+          setRibbonPreviewSelectedKey(cfg, badgeKey)
+          syncRibbonPreviewControls(cfg)
+          refreshRibbonOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_language_count' && badgeKey) {
+          setLanguageCountPreviewSelectedKey(cfg, badgeKey)
+          syncLanguageCountPreviewControls(cfg)
+          refreshLanguageCountOverlayPreview(cfg)
         } else if ((cfg.id === 'overlay_network' || cfg.id === 'overlay_studio') && badgeKey) {
           setSingleBadgeOverlayPreviewSelectedKey(cfg, badgeKey)
           syncSingleBadgeOverlayPreviewControls(cfg)
           refreshSingleBadgeOverlayPreview(cfg)
+        } else if (getFixedBadgeOverlayFamily(cfg)) {
+          refreshFixedBadgeOverlayPreview(cfg)
         }
         if (previousManagedLocation && previousManagedLocation !== nextManagedLocation) {
           await cleanupManagedOverlaySourceImages(cfg, config, section, {
@@ -2234,9 +2639,18 @@ const OverlayHandler = {
       keyCol.className = 'col-12 col-xl-4'
       const requestedKey = String(entry.badgeKey || '').trim()
       const useBundledPreviewKeys = config.keyMode === 'bundled_preview_keys'
-      const useFreeTextKey = config.keyMode !== 'from_use_toggles'
+      const useFixedKey = config.keyMode === 'fixed_key'
+      const useFreeTextKey = config.keyMode !== 'from_use_toggles' && !useFixedKey
       let keySelect
-      if (useBundledPreviewKeys) {
+      if (useFixedKey) {
+        keySelect = document.createElement('input')
+        keySelect.type = 'hidden'
+        keySelect.value = requestedKey || config.fixedKey || ''
+        const fixedKeyLabel = document.createElement('div')
+        fixedKeyLabel.className = 'form-control form-control-sm bg-body-secondary-subtle'
+        fixedKeyLabel.textContent = keySelect.value || 'Badge key'
+        keyCol.appendChild(fixedKeyLabel)
+      } else if (useBundledPreviewKeys) {
         keySelect = document.createElement('input')
         keySelect.type = 'text'
         keySelect.className = 'form-control form-control-sm'
@@ -2502,11 +2916,26 @@ const OverlayHandler = {
           refreshStreamingOverlayPreview(cfg)
         }
       }
+      if (cfg.id === 'overlay_ribbon') {
+        syncRibbonPreviewControls(cfg)
+        if (didStateChange) {
+          refreshRibbonOverlayPreview(cfg)
+        }
+      }
+      if (cfg.id === 'overlay_language_count') {
+        syncLanguageCountPreviewControls(cfg)
+        if (didStateChange) {
+          refreshLanguageCountOverlayPreview(cfg)
+        }
+      }
       if (cfg.id === 'overlay_network' || cfg.id === 'overlay_studio') {
         syncSingleBadgeOverlayPreviewControls(cfg)
         if (didStateChange) {
           refreshSingleBadgeOverlayPreview(cfg)
         }
+      }
+      if (getFixedBadgeOverlayFamily(cfg) && didStateChange) {
+        refreshFixedBadgeOverlayPreview(cfg)
       }
     }
 
@@ -2633,7 +3062,9 @@ const OverlayHandler = {
           const rowsHost = section.querySelector('[data-overlay-source-rows]')
           if (!rowsHost) return
           const keyOptions = getOverlaySourceOverrideKeyOptions(cfg, config)
-          const fallbackBadgeKey = keyOptions[0]?.value || getSingleBadgeOverlayPreviewSelectedKey(cfg) || ''
+          const fallbackBadgeKey = config.keyMode === 'fixed_key'
+            ? String(config.fixedKey || '').trim()
+            : keyOptions[0]?.value || getSingleBadgeOverlayPreviewSelectedKey(cfg) || ''
           rowsHost.appendChild(buildOverlaySourceOverrideRow(cfg, config, keyOptions, {
             sourceType: config.sourceTypes[0] || 'file',
             badgeKey: fallbackBadgeKey,
@@ -4615,6 +5046,74 @@ const OverlayHandler = {
       }
     }
 
+    const buildRibbonCompositeDataUrl = async (cfg) => {
+      if (cfg.id !== 'overlay_ribbon') return null
+
+      const payload = getRibbonRenderPayload(cfg)
+      try {
+        const response = await fetch('/overlay-render-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`
+          try {
+            const errorPayload = await response.json()
+            message = errorPayload?.message || errorPayload?.error || message
+          } catch (err) {
+          }
+          throw new Error(message)
+        }
+        const blob = await response.blob()
+        return await blobToDataUrl(blob)
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to build server-rendered ribbon preview', err)
+        const badgeKey = getRibbonPreviewSelectedKey(cfg)
+        const overrideEntry = getRibbonPreviewOverrideEntries(cfg).find(entry => {
+          return entry.badgeKey === badgeKey && entry.sourceType && entry.value
+        })
+        if (overrideEntry) {
+          return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+        }
+        return buildBundledOverlayPreviewUrl('ribbon', badgeKey, getRibbonStyle(cfg)) || resolveOverlayImage(cfg)
+      }
+    }
+
+    const buildLanguageCountCompositeDataUrl = async (cfg) => {
+      if (cfg.id !== 'overlay_language_count') return null
+
+      const payload = getLanguageCountRenderPayload(cfg)
+      try {
+        const response = await fetch('/overlay-render-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`
+          try {
+            const errorPayload = await response.json()
+            message = errorPayload?.message || errorPayload?.error || message
+          } catch (err) {
+          }
+          throw new Error(message)
+        }
+        const blob = await response.blob()
+        return await blobToDataUrl(blob)
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to build server-rendered language count preview', err)
+        const badgeKey = getLanguageCountPreviewSelectedKey(cfg)
+        const overrideEntry = getLanguageCountPreviewOverrideEntries(cfg).find(entry => {
+          return entry.badgeKey === badgeKey && entry.sourceType && entry.value
+        })
+        if (overrideEntry) {
+          return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+        }
+        return buildBundledOverlayPreviewUrl('language_count', badgeKey, getLanguageCountVariant(cfg)) || resolveOverlayImage(cfg)
+      }
+    }
+
     const buildNetworkCompositeDataUrl = async (cfg) => {
       if (cfg.id !== 'overlay_network') return null
 
@@ -4683,6 +5182,41 @@ const OverlayHandler = {
       }
     }
 
+    const buildFixedBadgeCompositeDataUrl = async (cfg) => {
+      const family = getFixedBadgeOverlayFamily(cfg)
+      if (!family) return null
+
+      const payload = getFixedBadgeOverlayRenderPayload(cfg)
+      try {
+        const response = await fetch('/overlay-render-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`
+          try {
+            const errorPayload = await response.json()
+            message = errorPayload?.message || errorPayload?.error || message
+          } catch (err) {
+          }
+          throw new Error(message)
+        }
+        const blob = await response.blob()
+        return await blobToDataUrl(blob)
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to build server-rendered fixed badge preview', { family, err })
+        const badgeKey = getFixedBadgeOverlayKey(cfg)
+        const overrideEntry = getFixedBadgeOverlayPreviewOverrideEntries(cfg).find(entry => {
+          return entry.badgeKey === badgeKey && entry.sourceType && entry.value
+        })
+        if (overrideEntry) {
+          return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+        }
+        return buildBundledOverlayPreviewUrl(family, badgeKey) || resolveOverlayImage(cfg)
+      }
+    }
+
     const buildBackdropDataUrl = async (cfg, baseOverride = null) => {
       const vars = getBackdropVars(cfg)
       const pad = Math.max(0, Number(vars.back_padding) || 0)
@@ -4704,12 +5238,24 @@ const OverlayHandler = {
         const composite = await buildStreamingCompositeDataUrl(cfg)
         if (composite) baseImg = composite
       }
+      if (!baseOverride && cfg.id === 'overlay_ribbon') {
+        const composite = await buildRibbonCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
+      if (!baseOverride && cfg.id === 'overlay_language_count') {
+        const composite = await buildLanguageCountCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
       if (!baseOverride && cfg.id === 'overlay_network') {
         const composite = await buildNetworkCompositeDataUrl(cfg)
         if (composite) baseImg = composite
       }
       if (!baseOverride && cfg.id === 'overlay_studio') {
         const composite = await buildStudioCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
+      if (!baseOverride && getFixedBadgeOverlayFamily(cfg)) {
+        const composite = await buildFixedBadgeCompositeDataUrl(cfg)
         if (composite) baseImg = composite
       }
       if (!baseOverride && cfg.id === 'overlay_ratings') {
@@ -6362,13 +6908,19 @@ const OverlayHandler = {
         ensureSingleBadgeOverlayPreviewControl(cfg)
         ensureStreamingPreviewControl(cfg)
         ensureAudioCodecPreviewControl(cfg)
+        ensureRibbonPreviewControl(cfg)
+        ensureLanguageCountPreviewControl(cfg)
         ensureOverlaySourceOverrideEditor(cfg)
         bindResolutionPreviewInputs(cfg)
         bindSingleBadgeOverlayPreviewInputs(cfg)
         bindStreamingPreviewInputs(cfg)
         bindAudioCodecPreviewInputs(cfg)
+        bindRibbonPreviewInputs(cfg)
+        bindLanguageCountPreviewInputs(cfg)
         syncSingleBadgeOverlayPreviewControls(cfg)
         syncStreamingPreviewControls(cfg)
+        syncRibbonPreviewControls(cfg)
+        syncLanguageCountPreviewControls(cfg)
         syncAudioCodecBackdropHeight(cfg, false)
         syncAudioCodecPreviewControls(cfg)
         syncResolutionBackdropHeight(cfg, false)

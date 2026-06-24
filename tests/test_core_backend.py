@@ -1019,6 +1019,261 @@ def test_overlay_render_preview_returns_bundled_studio_badge(client):
         assert rendered.size[1] > 0
 
 
+def test_overlay_render_preview_returns_ribbon_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    ribbon_path = isolated_config_dir / "overlay_images" / "oscars_director.png"
+    ribbon_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (210, 60), (255, 0, 0, 0)).save(ribbon_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_ribbon",
+            "ribbon": {
+                "badge_key": "oscars_director",
+                "source_type": "file",
+                "source_value": str(ribbon_path),
+                "variant": "gray",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (210, 60)
+
+
+def test_overlay_render_preview_returns_bundled_ribbon_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_ribbon",
+            "ribbon": {
+                "badge_key": "oscars_director",
+                "source_type": "",
+                "source_value": "",
+                "variant": "black",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
+def test_overlay_render_preview_returns_language_count_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    language_path = isolated_config_dir / "overlay_images" / "dual_audio.png"
+    language_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (166, 84), (255, 0, 0, 0)).save(language_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_language_count",
+            "language_count": {
+                "badge_key": "dual",
+                "source_type": "file",
+                "source_value": str(language_path),
+                "variant": "audio",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (166, 84)
+
+
+def test_overlay_render_preview_returns_bundled_language_count_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_language_count",
+            "language_count": {
+                "badge_key": "multi",
+                "source_type": "",
+                "source_value": "",
+                "variant": "subs",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
+def test_overlay_render_preview_returns_versions_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    versions_path = isolated_config_dir / "overlay_images" / "versions.png"
+    versions_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (105, 105), (255, 0, 0, 0)).save(versions_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_versions",
+            "versions": {
+                "badge_key": "versions",
+                "source_type": "file",
+                "source_value": str(versions_path),
+                "variant": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (105, 105)
+
+
+def test_overlay_render_preview_returns_bundled_versions_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_versions",
+            "versions": {
+                "badge_key": "versions",
+                "source_type": "",
+                "source_value": "",
+                "variant": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
+def test_overlay_render_preview_returns_mediastinger_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    mediastinger_path = isolated_config_dir / "overlay_images" / "Mediastinger.png"
+    mediastinger_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (85, 88), (255, 0, 0, 0)).save(mediastinger_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_mediastinger",
+            "mediastinger": {
+                "badge_key": "Mediastinger",
+                "source_type": "file",
+                "source_value": str(mediastinger_path),
+                "variant": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (85, 88)
+
+
+def test_overlay_render_preview_returns_bundled_mediastinger_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_mediastinger",
+            "mediastinger": {
+                "badge_key": "Mediastinger",
+                "source_type": "",
+                "source_value": "",
+                "variant": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
+def test_overlay_render_preview_returns_direct_play_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    direct_play_path = isolated_config_dir / "overlay_images" / "Direct-Play.png"
+    direct_play_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (270, 132), (255, 0, 0, 0)).save(direct_play_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_direct_play",
+            "direct_play": {
+                "badge_key": "Direct-Play",
+                "source_type": "file",
+                "source_value": str(direct_play_path),
+                "variant": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (270, 132)
+
+
+def test_overlay_render_preview_returns_bundled_direct_play_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_direct_play",
+            "direct_play": {
+                "badge_key": "Direct-Play",
+                "source_type": "",
+                "source_value": "",
+                "variant": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
 def test_overlay_preview_keys_returns_network_keys(client):
     resp = client.get("/overlay-preview-keys?family=network")
 
