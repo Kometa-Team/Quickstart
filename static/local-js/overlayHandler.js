@@ -3649,23 +3649,86 @@ const OverlayHandler = {
       const { useResolution, useEdition } = getResolutionToggleState(cfg)
       const baseSrc = useResolution ? (resolveResolutionPreviewImage(cfg, 'resolution') || resolveOverlayImage(cfg)) : null
       const editionSrc = useEdition ? (resolveResolutionPreviewImage(cfg, 'edition') || cfg.edition?.image) : null
+      const baseReferenceSrc = resolveOverlayImage(cfg)
+      const editionReferenceSrc = cfg.edition?.image || null
       if (!useResolution && !useEdition) return resolveOverlayImage(cfg)
-      if (!useResolution) return editionSrc || cfg.edition?.image || resolveOverlayImage(cfg)
-      if (!useEdition || !editionSrc) return baseSrc
+      if (!useResolution && editionSrc && editionReferenceSrc) {
+        try {
+          const [editionImg, editionRefImg] = await Promise.all([
+            loadImage(editionSrc),
+            loadImage(editionReferenceSrc)
+          ])
+          const canvas = document.createElement('canvas')
+          canvas.width = editionRefImg.width
+          canvas.height = editionRefImg.height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return editionSrc
+          const scale = Math.min(canvas.width / editionImg.width, canvas.height / editionImg.height)
+          const drawW = editionImg.width * scale
+          const drawH = editionImg.height * scale
+          const drawX = (canvas.width - drawW) / 2
+          const drawY = (canvas.height - drawH) / 2
+          ctx.drawImage(editionImg, drawX, drawY, drawW, drawH)
+          return canvas.toDataURL('image/png')
+        } catch (err) {
+          console.warn('[OverlayBoards] Failed to normalize edition preview', err)
+          return editionSrc || cfg.edition?.image || resolveOverlayImage(cfg)
+        }
+      }
+      if (!useEdition || !editionSrc || !editionReferenceSrc) {
+        if (!baseSrc || !baseReferenceSrc) return baseSrc
+        try {
+          const [baseImg, baseRefImg] = await Promise.all([
+            loadImage(baseSrc),
+            loadImage(baseReferenceSrc)
+          ])
+          const canvas = document.createElement('canvas')
+          canvas.width = baseRefImg.width
+          canvas.height = baseRefImg.height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return baseSrc
+          const scale = Math.min(canvas.width / baseImg.width, canvas.height / baseImg.height)
+          const drawW = baseImg.width * scale
+          const drawH = baseImg.height * scale
+          const drawX = (canvas.width - drawW) / 2
+          const drawY = (canvas.height - drawH) / 2
+          ctx.drawImage(baseImg, drawX, drawY, drawW, drawH)
+          return canvas.toDataURL('image/png')
+        } catch (err) {
+          console.warn('[OverlayBoards] Failed to normalize resolution preview', err)
+          return baseSrc
+        }
+      }
 
       try {
-        const [baseImg, editionImg] = await Promise.all([
+        const [baseImg, editionImg, baseRefImg, editionRefImg] = await Promise.all([
           loadImage(baseSrc),
-          loadImage(editionSrc)
+          loadImage(editionSrc),
+          loadImage(baseReferenceSrc),
+          loadImage(editionReferenceSrc)
         ])
         const spacing = Number(cfg.edition?.spacing) || 15
         const canvas = document.createElement('canvas')
-        canvas.width = Math.max(baseImg.width, editionImg.width)
-        canvas.height = baseImg.height + spacing + editionImg.height
+        const baseSlotW = baseRefImg.width
+        const baseSlotH = baseRefImg.height
+        const editionSlotW = editionRefImg.width
+        const editionSlotH = editionRefImg.height
+        canvas.width = Math.max(baseSlotW, editionSlotW)
+        canvas.height = baseSlotH + spacing + editionSlotH
         const ctx = canvas.getContext('2d')
         if (!ctx) return baseSrc
-        ctx.drawImage(baseImg, 0, 0)
-        ctx.drawImage(editionImg, 0, baseImg.height + spacing)
+
+        const drawContained = (img, x, y, boxW, boxH) => {
+          const scale = Math.min(boxW / img.width, boxH / img.height)
+          const drawW = img.width * scale
+          const drawH = img.height * scale
+          const drawX = x + ((boxW - drawW) / 2)
+          const drawY = y + ((boxH - drawH) / 2)
+          ctx.drawImage(img, drawX, drawY, drawW, drawH)
+        }
+
+        drawContained(baseImg, 0, 0, baseSlotW, baseSlotH)
+        drawContained(editionImg, 0, baseSlotH + spacing, editionSlotW, editionSlotH)
         return canvas.toDataURL('image/png')
       } catch (err) {
         console.warn('[OverlayBoards] Failed to build resolution composite', err)
