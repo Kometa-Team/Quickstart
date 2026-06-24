@@ -1,15 +1,20 @@
 import hashlib
-import json
 import logging
-import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import unquote
 
-import requests
+from modules import logscan_command, logscan_people
 
-from modules import logscan_command
+# Re-exported for back-compat with tests / quickstart imports.
+from modules.logscan_people import (  # noqa: F401
+    PEOPLE_MISSING_WARNING_RE,
+    PEOPLE_MISSING_WARNING_REGEX,
+    PEOPLE_README_URLS,
+    PEOPLE_SECTION_END_PATTERNS,
+    PEOPLE_SECTION_START_STRONG,
+    PEOPLE_SECTION_START_WEAK,
+)
 
 # Create logger
 mylogger = logging.getLogger("logscan")
@@ -40,29 +45,6 @@ def _version_in_inclusive_range(ver: str, low: tuple, high: tuple) -> bool:
 # Vulnerable range you want to flag (adjust as needed)
 _PMS_VULN_LOW = (1, 41, 7, 0)  # 1.41.7.x
 _PMS_VULN_HIGH = (1, 42, 0, 99999)  # through 1.42.0.x
-
-PEOPLE_README_URLS = [
-    "https://raw.githubusercontent.com/Kometa-Team/People-Images/refs/heads/master/README.md",
-]
-PEOPLE_MISSING_WARNING_REGEX = (
-    r"Collection Warning: No Poster Found at "
-    r"(https://raw\.githubusercontent\.com/"
-    r"(?:Kometa-Team/People-Images(?:-[^/]+)?|meisnate12/Plex-Meta-Manager-People(?:-[^/]+)?)"
-    r"/[^\s\]]+)"
-)
-PEOPLE_MISSING_WARNING_RE = re.compile(PEOPLE_MISSING_WARNING_REGEX, re.IGNORECASE)
-PEOPLE_SECTION_START_STRONG = [
-    r"^(.+?) Collection in .+$",
-    r"^Running .+ Collection$",
-]
-PEOPLE_SECTION_START_WEAK = [
-    r"^Updating Details of .+ Collection$",
-    r"^Validating .+ Attributes$",
-]
-PEOPLE_SECTION_END_PATTERNS = [
-    r"^Finished .+ Collection$",
-]
-
 
 class LogscanAnalyzer:
     def __init__(self):
@@ -403,91 +385,27 @@ class LogscanAnalyzer:
         return cleaned_content
 
     def extract_filename_from_url(self, url):
-        return unquote(os.path.splitext(os.path.basename(url))[0])
+        return logscan_people.extract_filename_from_url(url)
 
     def _get_people_cache_path(self, log_path):
-        cache_dir = Path(__file__).resolve().parent.parent / "config" / "cache" / "logscan"
-        try:
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            return cache_dir / "logscan_people_readme.json"
-        except Exception:
-            pass
-        if log_path:
-            try:
-                log_path = Path(log_path)
-                if log_path.is_file():
-                    return log_path.parent / ".logscan_people_cache.json"
-            except Exception:
-                pass
-        return Path.cwd() / ".logscan_people_cache.json"
+        return logscan_people.get_people_cache_path(log_path)
 
     def _load_people_cache(self, cache_path):
-        try:
-            if not cache_path or not Path(cache_path).exists():
-                return {}
-            with open(cache_path, "r", encoding="utf-8") as handle:
-                return json.load(handle) or {}
-        except Exception:
-            return {}
+        return logscan_people.load_people_cache(cache_path)
 
     def _save_people_cache(self, cache_path, payload):
-        try:
-            if not cache_path:
-                return
-            with open(cache_path, "w", encoding="utf-8") as handle:
-                json.dump(payload, handle, ensure_ascii=True, indent=2)
-        except Exception:
-            return
+        return logscan_people.save_people_cache(cache_path, payload)
 
     def _fetch_people_readme(self, cache_path):
-        cache = self._load_people_cache(cache_path)
-        cached_content = cache.get("content")
-
-        for url in PEOPLE_README_URLS:
-            headers = {"User-Agent": "Quickstart-Logscan"}
-            if cache.get("url") == url:
-                if cache.get("etag"):
-                    headers["If-None-Match"] = cache["etag"]
-                if cache.get("last_modified"):
-                    headers["If-Modified-Since"] = cache["last_modified"]
-            try:
-                response = requests.get(url, headers=headers, timeout=5)
-            except Exception as exc:
-                mylogger.debug(f"People-Images README fetch failed for {url}: {exc}")
-                continue
-
-            if response.status_code == 304 and cached_content:
-                return cached_content, True
-            if response.status_code == 200 and response.text:
-                payload = {
-                    "url": url,
-                    "etag": response.headers.get("ETag"),
-                    "last_modified": response.headers.get("Last-Modified"),
-                    "fetched_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                    "content": response.text,
-                }
-                self._save_people_cache(cache_path, payload)
-                return response.text, False
-            if response.status_code in (404, 410):
-                continue
-
-        return cached_content, True if cached_content else False
+        return logscan_people.fetch_people_readme(cache_path)
 
     def _build_people_index(self, readme_text):
-        if not readme_text:
-            return set()
-        filenames = re.findall(r"([A-Za-z0-9_./%\-]+\.(?:jpg|jpeg|png|webp))", readme_text, flags=re.IGNORECASE)
-        names = set()
-        for name in filenames:
-            cleaned = self.extract_filename_from_url(name)
-            if cleaned:
-                names.add(cleaned.lower())
-        return names
+        return logscan_people.build_people_index(readme_text)
 
     def preload_people_index(self, log_path=None):
-        cache_path = self._get_people_cache_path(log_path)
-        readme_text, _used_cache = self._fetch_people_readme(cache_path)
-        self._people_index = self._build_people_index(readme_text)
+        cache_path = logscan_people.get_people_cache_path(log_path)
+        readme_text, _used_cache = logscan_people.fetch_people_readme(cache_path)
+        self._people_index = logscan_people.build_people_index(readme_text)
         self.people_index_available = bool(self._people_index)
         return self._people_index
 
@@ -498,189 +416,44 @@ class LogscanAnalyzer:
         if self._people_index is not None:
             self.people_index_available = bool(self._people_index)
             return self._people_index
-        cache_path = self._get_people_cache_path(log_path)
-        readme_text, _used_cache = self._fetch_people_readme(cache_path)
-        self._people_index = self._build_people_index(readme_text)
-        self.people_index_available = bool(self._people_index)
-        return self._people_index
+        return self.preload_people_index(log_path=log_path)
 
     def _is_blank_log_line(self, line):
-        return not line.strip()
+        return logscan_people.is_blank_log_line(line)
 
     def _is_divider_log_line(self, line):
-        stripped = line.strip()
-        if not stripped:
-            return False
-        compact = stripped.replace(" ", "")
-        if len(compact) < 8:
-            return False
-        return len(set(compact)) == 1
+        return logscan_people.is_divider_log_line(line)
 
     def _is_section_break(self, line):
-        return self._is_blank_log_line(line) or self._is_divider_log_line(line)
+        return logscan_people.is_section_break(line)
 
     def _matches_any_pattern(self, normalized, patterns):
-        for pattern in patterns:
-            if re.match(pattern, normalized):
-                return True
-        return False
+        return logscan_people.matches_any_pattern(normalized, patterns)
 
     def _find_log_section_bounds(self, cleaned_lines, index, max_span=300):
-        start = None
-        end = None
-
-        min_index = max(0, index - max_span)
-        for idx in range(index, min_index - 1, -1):
-            normalized = self._normalize_name_line(cleaned_lines[idx])
-            if not normalized:
-                continue
-            if self._matches_any_pattern(normalized, PEOPLE_SECTION_START_STRONG):
-                start = idx
-                break
-
-        if start is None:
-            for idx in range(index, min_index - 1, -1):
-                normalized = self._normalize_name_line(cleaned_lines[idx])
-                if not normalized:
-                    continue
-                if self._matches_any_pattern(normalized, PEOPLE_SECTION_START_WEAK):
-                    start = idx
-                    break
-
-        if start is not None:
-            while start > 0 and self._is_divider_log_line(cleaned_lines[start - 1]):
-                start -= 1
-
-        max_index = len(cleaned_lines) - 1
-        max_end = min(max_index, index + max_span)
-        for idx in range(index, max_end + 1):
-            normalized = self._normalize_name_line(cleaned_lines[idx])
-            if not normalized:
-                continue
-            if self._matches_any_pattern(normalized, PEOPLE_SECTION_END_PATTERNS):
-                end = idx
-                break
-
-        if end is not None:
-            while end < max_index and self._is_divider_log_line(cleaned_lines[end + 1]):
-                end += 1
-
-        if start is None or end is None:
-            fallback_start = index
-            while fallback_start > 0 and (index - fallback_start) < max_span:
-                if self._is_section_break(cleaned_lines[fallback_start - 1]):
-                    if self._is_divider_log_line(cleaned_lines[fallback_start - 1]):
-                        fallback_start -= 1
-                    break
-                fallback_start -= 1
-
-            fallback_end = index
-            while fallback_end < max_index and (fallback_end - index) < max_span:
-                if self._is_section_break(cleaned_lines[fallback_end + 1]):
-                    if self._is_divider_log_line(cleaned_lines[fallback_end + 1]):
-                        fallback_end += 1
-                    break
-                fallback_end += 1
-
-            start = fallback_start if start is None else start
-            end = fallback_end if end is None else end
-
-        return start, end
+        return logscan_people.find_log_section_bounds(cleaned_lines, index, max_span=max_span)
 
     def _normalize_name_line(self, line):
-        if not line:
-            return ""
-        return line.strip().strip("= ").strip()
+        return logscan_people.normalize_name_line(line)
 
     def _extract_key_name_from_block(self, cleaned_lines, start, end):
-        block = cleaned_lines[start : end + 1]
-        for idx, line in enumerate(block):
-            if "Validating Method: key_name" in line:
-                for offset in range(1, 6):
-                    if idx + offset >= len(block):
-                        break
-                    candidate = block[idx + offset].strip()
-                    if not candidate:
-                        continue
-                    if "Value:" in candidate:
-                        value = candidate.split("Value:", 1)[1].strip()
-                        if value:
-                            return value
-                break
-
-        patterns = [
-            r"^Validating\s+(.+?)\s+Attributes$",
-            r"^Running\s+(.+?)\s+Collection$",
-            r"^Finished\s+(.+?)\s+Collection$",
-            r"^(.+?)\s+Collection\s+in\s+.+$",
-        ]
-        for line in block:
-            normalized = self._normalize_name_line(line)
-            if not normalized:
-                continue
-            for pattern in patterns:
-                match = re.match(pattern, normalized)
-                if match:
-                    return match.group(1).strip()
-        return None
+        return logscan_people.extract_key_name_from_block(cleaned_lines, start, end)
 
     def _extract_missing_people_names(self, lines, available, name_hint=None):
-        names = set()
-        for line in lines:
-            match = PEOPLE_MISSING_WARNING_RE.search(line)
-            if not match:
-                continue
-            name = name_hint
-            if not name:
-                url = match.group(1)
-                name = self.extract_filename_from_url(url)
-            if not name:
-                continue
-            key = name.lower()
-            if available and key in available:
-                continue
-            names.add(key)
-        return names
+        return logscan_people.extract_missing_people_names(lines, available, name_hint=name_hint)
 
     def collect_missing_people_lines(self, content, available_index=None, max_block_lines=300, log_path=None):
+        """Resolve the people index (caching it on ``self``) then delegate to
+        :func:`modules.logscan_people.collect_missing_people_lines`."""
         if not content:
             return []
         available = self._ensure_people_index(log_path=log_path, available_index=available_index)
-        raw_lines = content.splitlines()
-        cleaned_lines = self.cleanup_content(content).splitlines()
-        items = []
-        seen_blocks = set()
-
-        for idx, line in enumerate(raw_lines):
-            if not PEOPLE_MISSING_WARNING_RE.search(line):
-                continue
-
-            if idx < len(cleaned_lines):
-                start, end = self._find_log_section_bounds(cleaned_lines, idx, max_span=max_block_lines)
-            else:
-                start = max(0, idx - 2)
-                end = min(len(raw_lines) - 1, idx + 2)
-
-            block_lines = raw_lines[start : end + 1]
-            name_hint = None
-            if idx < len(cleaned_lines):
-                name_hint = self._extract_key_name_from_block(cleaned_lines, start, end)
-            names = self._extract_missing_people_names(block_lines, available, name_hint=name_hint)
-            if not names:
-                continue
-
-            block_text = "\n".join(block_lines)
-            if block_text in seen_blocks:
-                continue
-            seen_blocks.add(block_text)
-            items.append(
-                {
-                    "names": names,
-                    "block": block_text,
-                }
-            )
-
-        return items
+        return logscan_people.collect_missing_people_lines(
+            content,
+            available_index=available,
+            max_block_lines=max_block_lines,
+            cleanup_fn=self.cleanup_content,
+        )
 
     def scan_file_for_people_posters(self, content, log_path=None):
         if not content:
