@@ -555,7 +555,26 @@ def test_validate_overlay_source_override_warns_for_tiny_extreme_aspect_image(cl
     assert payload["valid"] is True
     assert "warning" in payload
     assert "extremely small" in payload["warning"]
-    assert "aspect ratio" in payload["warning"]
+
+
+def test_validate_overlay_source_override_does_not_warn_for_resolution_badge_aspect(client, tmp_path):
+    from PIL import Image
+
+    image_path = tmp_path / "4k.png"
+    Image.new("RGBA", (292, 60), (255, 0, 0, 0)).save(image_path)
+
+    resp = client.post(
+        "/validate_overlay_source_override",
+        json={
+            "source_type": "file",
+            "source_value": str(image_path),
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert "warning" not in payload
 
 
 def test_validate_overlay_source_override_rejects_oversized_file(client, tmp_path):
@@ -658,6 +677,75 @@ def test_overlay_source_make_local_rejects_file_source(client):
     payload = resp.get_json()
     assert payload["valid"] is False
     assert "Only URL, git, or repo overlay sources can be made local." in payload["error"]
+
+
+def test_overlay_render_preview_stacks_resolution_and_edition_sources(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    resolution_path = isolated_config_dir / "overlay_images" / "4k.png"
+    edition_path = isolated_config_dir / "overlay_images" / "enhanced.png"
+    resolution_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (160, 48), (255, 0, 0, 0)).save(resolution_path)
+    Image.new("RGBA", (220, 64), (0, 255, 0, 0)).save(edition_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_resolution",
+            "use_resolution": True,
+            "use_edition": True,
+            "spacing": 12,
+            "resolution": {
+                "badge_key": "4k",
+                "source_type": "file",
+                "source_value": str(resolution_path),
+            },
+            "edition": {
+                "badge_key": "enhanced",
+                "source_type": "file",
+                "source_value": str(edition_path),
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (220, 124)
+
+
+def test_overlay_render_preview_returns_single_resolution_badge(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    resolution_path = isolated_config_dir / "overlay_images" / "720p.png"
+    resolution_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (140, 52), (255, 0, 0, 0)).save(resolution_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_resolution",
+            "use_resolution": True,
+            "use_edition": False,
+            "resolution": {
+                "badge_key": "720p",
+                "source_type": "file",
+                "source_value": str(resolution_path),
+            },
+            "edition": {
+                "badge_key": "enhanced",
+                "source_type": "",
+                "source_value": "",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (140, 52)
 
 
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):

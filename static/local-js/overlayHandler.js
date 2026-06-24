@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser */
+/* global EventHandler, ValidationHandler, toggleOverlayTemplateSection, FontFace, FileReader, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -675,8 +675,13 @@ const OverlayHandler = {
       'use_dv',
       'use_hlg',
       'use_hdr',
+      'use_plus',
+      'use_dvhdr',
       'use_dvhdrplus'
     ]
+
+    const RESOLUTION_BASE_BADGE_KEYS = ['4k', '1080p', '720p', '576p', '480p']
+    const RESOLUTION_ALT_BADGE_KEYS = ['dvhdrplus', 'dvhdr', 'plus', 'dv', 'hlg', 'hdr']
 
     const EDITION_CHILD_TOGGLE_KEYS = [
       'use_extended',
@@ -729,10 +734,55 @@ const OverlayHandler = {
       return RESOLUTION_TOGGLE_FAMILIES.find(item => item.family === family) || null
     }
 
+    const parseResolutionBadgeKey = (badgeKey) => {
+      const key = String(badgeKey || '').trim().replace(/^use_/, '')
+      if (!key) return null
+      if (RESOLUTION_BASE_BADGE_KEYS.includes(key)) {
+        return { badgeKey: key, baseKey: key, altKey: '' }
+      }
+      if (RESOLUTION_ALT_BADGE_KEYS.includes(key)) {
+        return { badgeKey: key, baseKey: '', altKey: key }
+      }
+      for (const baseKey of RESOLUTION_BASE_BADGE_KEYS) {
+        const prefix = `${baseKey}_`
+        if (!key.startsWith(prefix)) continue
+        const altKey = key.slice(prefix.length)
+        if (RESOLUTION_ALT_BADGE_KEYS.includes(altKey)) {
+          return { badgeKey: key, baseKey, altKey }
+        }
+      }
+      return null
+    }
+
+    const getResolutionFamilyToggleKeys = (cfg) => {
+      if (!cfg?.container) return RESOLUTION_CHILD_TOGGLE_KEYS.slice()
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return RESOLUTION_CHILD_TOGGLE_KEYS.slice()
+
+      const seen = new Set()
+      const keys = []
+      const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+      toggleInputs.forEach(input => {
+        const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
+        const toggleKey = String(keyMatch?.[1] || '').trim()
+        if (toggleKey === 'use_resolution' || !parseResolutionBadgeKey(toggleKey) || seen.has(toggleKey)) return
+        seen.add(toggleKey)
+        keys.push(toggleKey)
+      })
+
+      return keys.length ? keys : RESOLUTION_CHILD_TOGGLE_KEYS.slice()
+    }
+
+    const getToggleFamilyChildKeys = (cfg, family) => {
+      if (family === 'resolution') return getResolutionFamilyToggleKeys(cfg)
+      if (family === 'edition') return EDITION_CHILD_TOGGLE_KEYS.slice()
+      return []
+    }
+
     const getResolutionToggleFamilyForBadgeKey = (badgeKey) => {
       const key = String(badgeKey || '').trim()
       if (!key) return ''
-      if (RESOLUTION_CHILD_TOGGLE_KEYS.includes(`use_${key}`)) return 'resolution'
+      if (parseResolutionBadgeKey(key)) return 'resolution'
       if (EDITION_CHILD_TOGGLE_KEYS.includes(`use_${key}`)) return 'edition'
       return ''
     }
@@ -759,13 +809,49 @@ const OverlayHandler = {
       return `/overlay-source-preview?${params.toString()}`
     }
 
+    const blobToDataUrl = (blob) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = () => reject(reader.error || new Error('Unable to read preview image blob'))
+        reader.readAsDataURL(blob)
+      })
+    }
+
+    const getResolutionRenderPayload = (cfg) => {
+      const { useResolution, useEdition } = getResolutionToggleState(cfg)
+      const overrideEntries = getResolutionPreviewOverrideEntries(cfg)
+      const resolutionBadgeKey = getResolutionPreviewSelectedKey(cfg, 'resolution')
+      const editionBadgeKey = getResolutionPreviewSelectedKey(cfg, 'edition')
+      const resolutionOverride = overrideEntries.find(entry => entry.badgeKey === resolutionBadgeKey && entry.sourceType && entry.value)
+      const editionOverride = overrideEntries.find(entry => entry.badgeKey === editionBadgeKey && entry.sourceType && entry.value)
+
+      return {
+        overlay_id: cfg.id,
+        use_resolution: useResolution,
+        use_edition: useEdition,
+        spacing: Number(cfg.edition?.spacing) || 15,
+        resolution: {
+          badge_key: resolutionBadgeKey,
+          source_type: resolutionOverride?.sourceType || '',
+          source_value: resolutionOverride?.value || ''
+        },
+        edition: {
+          badge_key: editionBadgeKey,
+          source_type: editionOverride?.sourceType || '',
+          source_value: editionOverride?.value || ''
+        }
+      }
+    }
+
     const getResolutionPreviewOptionsForFamily = (cfg, family) => {
       if (!cfg?.container) return []
       const templateName = cfg.container.dataset.overlayTemplate
       const familyDef = getResolutionToggleFamilyDef(family)
       if (!templateName || !familyDef) return []
       const options = []
-      familyDef.childKeys.forEach(toggleKey => {
+      const childKeys = getToggleFamilyChildKeys(cfg, family)
+      childKeys.forEach(toggleKey => {
         const badgeKey = String(toggleKey || '').trim().replace(/^use_/, '')
         if (!badgeKey) return
         const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
@@ -960,7 +1046,8 @@ const OverlayHandler = {
           })
         }
 
-        familyDef.childKeys.forEach((key) => {
+        const childKeys = getToggleFamilyChildKeys(cfg, familyDef.family)
+        childKeys.forEach((key) => {
           const input = cfg.container.querySelector(`[name="${templateName}[${key}]"]`)
           const row = input?.closest('.form-check')
           if (row && childContainer) {
@@ -1000,8 +1087,8 @@ const OverlayHandler = {
     const syncResolutionChildToggleVisibility = (cfg) => {
       if (cfg.id !== 'overlay_resolution' || !cfg.container) return
       const { useResolution, useEdition } = getResolutionToggleState(cfg)
-      syncResolutionToggleFamilyVisibility(cfg, 'resolution', RESOLUTION_CHILD_TOGGLE_KEYS, useResolution)
-      syncResolutionToggleFamilyVisibility(cfg, 'edition', EDITION_CHILD_TOGGLE_KEYS, useEdition)
+      syncResolutionToggleFamilyVisibility(cfg, 'resolution', getToggleFamilyChildKeys(cfg, 'resolution'), useResolution)
+      syncResolutionToggleFamilyVisibility(cfg, 'edition', getToggleFamilyChildKeys(cfg, 'edition'), useEdition)
       syncResolutionPreviewControls(cfg)
     }
 
@@ -1028,7 +1115,7 @@ const OverlayHandler = {
       if (cfg.id !== 'overlay_resolution' || !cfg.container) return
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return
-      const toggleKeys = ['use_resolution', 'use_edition', ...RESOLUTION_CHILD_TOGGLE_KEYS, ...EDITION_CHILD_TOGGLE_KEYS]
+      const toggleKeys = ['use_resolution', 'use_edition', ...getToggleFamilyChildKeys(cfg, 'resolution'), ...getToggleFamilyChildKeys(cfg, 'edition')]
       toggleKeys.forEach((toggleKey) => {
         const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
         if (!input || input.dataset.resolutionPreviewBound === 'true') return
@@ -3646,93 +3733,35 @@ const OverlayHandler = {
 
     const buildResolutionCompositeDataUrl = async (cfg) => {
       if (cfg.id !== 'overlay_resolution') return null
-      const { useResolution, useEdition } = getResolutionToggleState(cfg)
-      const baseSrc = useResolution ? (resolveResolutionPreviewImage(cfg, 'resolution') || resolveOverlayImage(cfg)) : null
-      const editionSrc = useEdition ? (resolveResolutionPreviewImage(cfg, 'edition') || cfg.edition?.image) : null
-      const baseReferenceSrc = resolveOverlayImage(cfg)
-      const editionReferenceSrc = cfg.edition?.image || null
-      if (!useResolution && !useEdition) return resolveOverlayImage(cfg)
-      if (!useResolution && editionSrc && editionReferenceSrc) {
-        try {
-          const [editionImg, editionRefImg] = await Promise.all([
-            loadImage(editionSrc),
-            loadImage(editionReferenceSrc)
-          ])
-          const canvas = document.createElement('canvas')
-          canvas.width = editionRefImg.width
-          canvas.height = editionRefImg.height
-          const ctx = canvas.getContext('2d')
-          if (!ctx) return editionSrc
-          const scale = Math.min(canvas.width / editionImg.width, canvas.height / editionImg.height)
-          const drawW = editionImg.width * scale
-          const drawH = editionImg.height * scale
-          const drawX = (canvas.width - drawW) / 2
-          const drawY = (canvas.height - drawH) / 2
-          ctx.drawImage(editionImg, drawX, drawY, drawW, drawH)
-          return canvas.toDataURL('image/png')
-        } catch (err) {
-          console.warn('[OverlayBoards] Failed to normalize edition preview', err)
-          return editionSrc || cfg.edition?.image || resolveOverlayImage(cfg)
-        }
-      }
-      if (!useEdition || !editionSrc || !editionReferenceSrc) {
-        if (!baseSrc || !baseReferenceSrc) return baseSrc
-        try {
-          const [baseImg, baseRefImg] = await Promise.all([
-            loadImage(baseSrc),
-            loadImage(baseReferenceSrc)
-          ])
-          const canvas = document.createElement('canvas')
-          canvas.width = baseRefImg.width
-          canvas.height = baseRefImg.height
-          const ctx = canvas.getContext('2d')
-          if (!ctx) return baseSrc
-          const scale = Math.min(canvas.width / baseImg.width, canvas.height / baseImg.height)
-          const drawW = baseImg.width * scale
-          const drawH = baseImg.height * scale
-          const drawX = (canvas.width - drawW) / 2
-          const drawY = (canvas.height - drawH) / 2
-          ctx.drawImage(baseImg, drawX, drawY, drawW, drawH)
-          return canvas.toDataURL('image/png')
-        } catch (err) {
-          console.warn('[OverlayBoards] Failed to normalize resolution preview', err)
-          return baseSrc
-        }
+
+      const payload = getResolutionRenderPayload(cfg)
+      if (!payload.use_resolution && !payload.use_edition) {
+        return resolveOverlayImage(cfg)
       }
 
       try {
-        const [baseImg, editionImg, baseRefImg, editionRefImg] = await Promise.all([
-          loadImage(baseSrc),
-          loadImage(editionSrc),
-          loadImage(baseReferenceSrc),
-          loadImage(editionReferenceSrc)
-        ])
-        const spacing = Number(cfg.edition?.spacing) || 15
-        const canvas = document.createElement('canvas')
-        const baseSlotW = baseRefImg.width
-        const baseSlotH = baseRefImg.height
-        const editionSlotW = editionRefImg.width
-        const editionSlotH = editionRefImg.height
-        canvas.width = Math.max(baseSlotW, editionSlotW)
-        canvas.height = baseSlotH + spacing + editionSlotH
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return baseSrc
-
-        const drawContained = (img, x, y, boxW, boxH) => {
-          const scale = Math.min(boxW / img.width, boxH / img.height)
-          const drawW = img.width * scale
-          const drawH = img.height * scale
-          const drawX = x + ((boxW - drawW) / 2)
-          const drawY = y + ((boxH - drawH) / 2)
-          ctx.drawImage(img, drawX, drawY, drawW, drawH)
+        const response = await fetch('/overlay-render-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`
+          try {
+            const errorPayload = await response.json()
+            message = errorPayload?.message || errorPayload?.error || message
+          } catch (err) {
+            // ignore JSON parse failure and keep HTTP message
+          }
+          throw new Error(message)
         }
-
-        drawContained(baseImg, 0, 0, baseSlotW, baseSlotH)
-        drawContained(editionImg, 0, baseSlotH + spacing, editionSlotW, editionSlotH)
-        return canvas.toDataURL('image/png')
+        const blob = await response.blob()
+        return await blobToDataUrl(blob)
       } catch (err) {
-        console.warn('[OverlayBoards] Failed to build resolution composite', err)
-        return baseSrc
+        console.warn('[OverlayBoards] Failed to build server-rendered resolution preview', err)
+        return payload.use_resolution
+          ? (resolveResolutionPreviewImage(cfg, 'resolution') || resolveOverlayImage(cfg))
+          : (resolveResolutionPreviewImage(cfg, 'edition') || cfg.edition?.image || resolveOverlayImage(cfg))
       }
     }
 

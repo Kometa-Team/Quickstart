@@ -26,8 +26,6 @@ OVERLAY_SOURCE_OVERRIDE_FORMAT_CONTENT_TYPES = {
 }
 OVERLAY_SOURCE_OVERRIDE_LARGE_DIMENSION = 800
 OVERLAY_SOURCE_OVERRIDE_MIN_DIMENSION = 20
-OVERLAY_SOURCE_OVERRIDE_MIN_ASPECT_RATIO = 0.25
-OVERLAY_SOURCE_OVERRIDE_MAX_ASPECT_RATIO = 4.0
 OVERLAY_SOURCE_OVERRIDE_POSTER_SIZES = (
     (1000, 1500),
     (1920, 1080),
@@ -302,13 +300,6 @@ def _collect_overlay_badge_warnings(width, height):
         warnings.append(
             f"This image is valid, but its dimensions ({width}x{height}) are extremely small and may render poorly."
         )
-
-    if height > 0:
-        ratio = width / height
-        if ratio < OVERLAY_SOURCE_OVERRIDE_MIN_ASPECT_RATIO or ratio > OVERLAY_SOURCE_OVERRIDE_MAX_ASPECT_RATIO:
-            warnings.append(
-                f"This image is valid, but its aspect ratio ({ratio:.2f}:1) looks unusual for a small corner badge."
-            )
 
     for target_width, target_height in OVERLAY_SOURCE_OVERRIDE_POSTER_SIZES:
         width_match = abs(width - target_width) <= max(40, int(target_width * 0.05))
