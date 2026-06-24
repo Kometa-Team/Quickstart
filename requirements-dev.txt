@@ -1,4 +1,4 @@
 playwright>=1.60.0
 pytest>=9.1.1
 pytest-playwright>=0.8.0
-ruff==0.15.18
+ruff==0.15.19
