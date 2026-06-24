@@ -748,6 +748,33 @@ def test_overlay_render_preview_returns_single_resolution_badge(client, isolated
         assert rendered.size == (140, 52)
 
 
+def test_overlay_render_preview_returns_audio_codec_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    audio_path = isolated_config_dir / "overlay_images" / "plus_atmos.png"
+    audio_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (180, 60), (255, 0, 0, 0)).save(audio_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_audio_codec",
+            "audio_codec": {
+                "badge_key": "plus_atmos",
+                "source_type": "file",
+                "source_value": str(audio_path),
+                "variant": "compact",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (180, 60)
+
+
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):
     collection_file = tmp_path / "collections.yml"
     collection_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")

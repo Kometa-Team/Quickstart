@@ -728,6 +728,25 @@ const OverlayHandler = {
       }
     ]
 
+    const AUDIO_CODEC_CHILD_TOGGLE_KEYS = [
+      'use_truehd_atmos',
+      'use_dtsx',
+      'use_plus_atmos',
+      'use_dolby_atmos',
+      'use_truehd',
+      'use_ma',
+      'use_flac',
+      'use_pcm',
+      'use_hra',
+      'use_plus',
+      'use_dtses',
+      'use_dts',
+      'use_digital',
+      'use_aac',
+      'use_mp3',
+      'use_opus'
+    ]
+
     const BUNDLED_OVERLAY_PREVIEW_ROOT = '/static/images/overlay-defaults'
 
     const getResolutionToggleFamilyDef = (family) => {
@@ -776,6 +795,7 @@ const OverlayHandler = {
     const getToggleFamilyChildKeys = (cfg, family) => {
       if (family === 'resolution') return getResolutionFamilyToggleKeys(cfg)
       if (family === 'edition') return EDITION_CHILD_TOGGLE_KEYS.slice()
+      if (family === 'audio_codec') return AUDIO_CODEC_CHILD_TOGGLE_KEYS.slice()
       return []
     }
 
@@ -787,14 +807,19 @@ const OverlayHandler = {
       return ''
     }
 
-    const getResolutionPreviewFilename = (badgeKey) => {
+    const getOverlayPreviewFilename = (badgeKey) => {
       const normalizedKey = String(badgeKey || '').trim().replace(/_/g, '')
       return normalizedKey ? `${normalizedKey}.png` : ''
     }
 
-    const buildBundledOverlayPreviewUrl = (family, badgeKey) => {
-      const filename = getResolutionPreviewFilename(badgeKey)
+    const buildBundledOverlayPreviewUrl = (family, badgeKey, variant = '') => {
+      const filename = getOverlayPreviewFilename(badgeKey)
       if (!family || !filename) return ''
+      const normalizedVariant = String(variant || '').trim().toLowerCase()
+      if (family === 'audio_codec') {
+        const style = normalizedVariant === 'standard' ? 'standard' : 'compact'
+        return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
+      }
       return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${filename}`
     }
 
@@ -840,6 +865,74 @@ const OverlayHandler = {
           badge_key: editionBadgeKey,
           source_type: editionOverride?.sourceType || '',
           source_value: editionOverride?.value || ''
+        }
+      }
+    }
+
+    const getAudioCodecStyle = (cfg) => {
+      const style = String(cfg?.styleInput?.value || 'compact').trim().toLowerCase()
+      return style === 'standard' ? 'standard' : 'compact'
+    }
+
+    const getAudioCodecPreviewOptions = (cfg) => {
+      if (!cfg?.container) return []
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+      const options = []
+      const childKeys = getToggleFamilyChildKeys(cfg, 'audio_codec')
+      childKeys.forEach(toggleKey => {
+        const badgeKey = String(toggleKey || '').trim().replace(/^use_/, '')
+        if (!badgeKey) return
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        const labelEl = input?.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) {
+          label = label.slice(4).trim()
+        }
+        options.push({
+          value: badgeKey,
+          label,
+          enabled: input ? input.checked : false
+        })
+      })
+      return options
+    }
+
+    const getAudioCodecPreviewSelectedKey = (cfg) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getAudioCodecPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const current = String(state.audio_codec || '').trim()
+      if (current && values.has(current)) return current
+      const fallback = options.find(option => option.enabled)?.value || options[0]?.value || ''
+      state.audio_codec = fallback
+      return fallback
+    }
+
+    const setAudioCodecPreviewSelectedKey = (cfg, badgeKey) => {
+      const state = ensureResolutionPreviewState(cfg)
+      state.audio_codec = String(badgeKey || '').trim()
+    }
+
+    const getAudioCodecPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getAudioCodecRenderPayload = (cfg) => {
+      const overrideEntries = getAudioCodecPreviewOverrideEntries(cfg)
+      const badgeKey = getAudioCodecPreviewSelectedKey(cfg)
+      const override = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      return {
+        overlay_id: cfg.id,
+        audio_codec: {
+          badge_key: badgeKey,
+          source_type: override?.sourceType || '',
+          source_value: override?.value || '',
+          variant: getAudioCodecStyle(cfg)
         }
       }
     }
@@ -1298,6 +1391,81 @@ const OverlayHandler = {
       })
     }
 
+    const ensureAudioCodecPreviewControl = (cfg) => {
+      if (cfg?.id !== 'overlay_audio_codec' || !cfg.container || !cfg.styleInput) return
+      const styleRow = cfg.styleInput.closest('.input-group') || cfg.styleInput.closest('.mb-3') || cfg.styleInput.parentElement
+      if (!styleRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-audio-codec-preview-wrap]')
+      let previewSelect = cfg.container.querySelector('[data-audio-codec-preview-select]')
+      if (!previewWrap) {
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3'
+        previewWrap.dataset.audioCodecPreviewWrap = 'true'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">Preview badge</label>
+          <select class="form-select form-select-sm" data-audio-codec-preview-select="true"></select>
+        `
+        styleRow.insertAdjacentElement('afterend', previewWrap)
+        previewSelect = previewWrap.querySelector('[data-audio-codec-preview-select]')
+      }
+
+      if (previewSelect && previewSelect.dataset.listenerAdded !== 'true') {
+        previewSelect.dataset.listenerAdded = 'true'
+        previewSelect.addEventListener('change', () => {
+          setAudioCodecPreviewSelectedKey(cfg, previewSelect.value)
+          refreshAudioCodecOverlayPreview(cfg)
+        })
+      }
+    }
+
+    const syncAudioCodecPreviewControls = (cfg) => {
+      if (cfg?.id !== 'overlay_audio_codec' || !cfg.container) return
+      const select = cfg.container.querySelector('[data-audio-codec-preview-select]')
+      if (!select) return
+      const options = getAudioCodecPreviewOptions(cfg)
+      const selected = getAudioCodecPreviewSelectedKey(cfg)
+
+      select.replaceChildren()
+      options.forEach((option) => {
+        const el = document.createElement('option')
+        el.value = option.value
+        el.textContent = option.label
+        select.appendChild(el)
+      })
+      if (selected && options.some(option => option.value === selected)) {
+        select.value = selected
+      } else if (options[0]?.value) {
+        setAudioCodecPreviewSelectedKey(cfg, options[0].value)
+        select.value = options[0].value
+      }
+      select.disabled = options.length === 0
+    }
+
+    const bindAudioCodecPreviewInputs = (cfg) => {
+      if (cfg?.id !== 'overlay_audio_codec' || !cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const toggleKeys = getToggleFamilyChildKeys(cfg, 'audio_codec')
+      toggleKeys.forEach((toggleKey) => {
+        const input = cfg.container.querySelector(`[name="${templateName}[${toggleKey}]"]`)
+        if (!input || input.dataset.audioCodecPreviewBound === 'true') return
+        input.dataset.audioCodecPreviewBound = 'true'
+        input.addEventListener('change', () => {
+          syncAudioCodecPreviewControls(cfg)
+          refreshAudioCodecOverlayPreview(cfg)
+        })
+      })
+    }
+
+    const refreshAudioCodecOverlayPreview = (cfg) => {
+      if (cfg?.id !== 'overlay_audio_codec' || !cfg.layer) return
+      buildBackdropDataUrl(cfg).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+      })
+    }
+
     const getOverlaySourceOverrideActiveConfigName = () => {
       return String(document.getElementById('qs-active-config-input')?.value || '').trim()
     }
@@ -1433,6 +1601,10 @@ const OverlayHandler = {
             syncResolutionPreviewControls(cfg)
             refreshResolutionOverlayPreview(cfg)
           }
+        } else if (cfg.id === 'overlay_audio_codec' && badgeKey) {
+          setAudioCodecPreviewSelectedKey(cfg, badgeKey)
+          syncAudioCodecPreviewControls(cfg)
+          refreshAudioCodecOverlayPreview(cfg)
         }
         syncOverlaySourceOverrideRows(cfg, config, section)
       } catch (error) {
@@ -1505,6 +1677,10 @@ const OverlayHandler = {
             syncResolutionPreviewControls(cfg)
             refreshResolutionOverlayPreview(cfg)
           }
+        } else if (cfg.id === 'overlay_audio_codec' && badgeKey) {
+          setAudioCodecPreviewSelectedKey(cfg, badgeKey)
+          syncAudioCodecPreviewControls(cfg)
+          refreshAudioCodecOverlayPreview(cfg)
         }
       } catch (error) {
         row._overlaySourceValidationPayload = null
@@ -1599,22 +1775,23 @@ const OverlayHandler = {
 
       const updatePlaceholder = () => {
         const sourceType = String(sourceSelect.value || '').trim()
+        const overlayFolder = String(cfg?.id || '').replace(/^overlay_/, '') || 'custom'
         if (sourceType === 'url') {
           valueInput.placeholder = 'https://example.com/badge.png'
           help.textContent = 'Use a direct URL to a badge image. Quickstart validates the image target and can rehome it into managed storage with Make Local.'
           return
         }
         if (sourceType === 'git') {
-          valueInput.placeholder = 'defaults/overlays/images/resolution/custom.png'
+          valueInput.placeholder = `defaults/overlays/images/${overlayFolder}/custom.png`
           help.textContent = 'Use a Community-Configs git path. Quickstart validates the resolved image and can rehome it into managed storage with Make Local.'
           return
         }
         if (sourceType === 'repo') {
-          valueInput.placeholder = 'overlays/resolution/custom.png'
+          valueInput.placeholder = `overlays/${overlayFolder}/custom.png`
           help.textContent = 'Use a custom_repo-backed repo path. Quickstart validates the resolved image and can rehome it into managed storage with Make Local.'
           return
         }
-        valueInput.placeholder = 'config/overlays/resolution/custom.png'
+        valueInput.placeholder = `config/overlays/${overlayFolder}/custom.png`
         help.textContent = 'Use a local file path that Kometa can read. Quickstart validates the image and copies it into managed config storage.'
       }
 
@@ -1750,6 +1927,12 @@ const OverlayHandler = {
         syncResolutionPreviewControls(cfg)
         if (didStateChange) {
           refreshResolutionOverlayPreview(cfg)
+        }
+      }
+      if (cfg.id === 'overlay_audio_codec') {
+        syncAudioCodecPreviewControls(cfg)
+        if (didStateChange) {
+          refreshAudioCodecOverlayPreview(cfg)
         }
       }
     }
@@ -3765,6 +3948,41 @@ const OverlayHandler = {
       }
     }
 
+    const buildAudioCodecCompositeDataUrl = async (cfg) => {
+      if (cfg.id !== 'overlay_audio_codec') return null
+
+      const payload = getAudioCodecRenderPayload(cfg)
+      try {
+        const response = await fetch('/overlay-render-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`
+          try {
+            const errorPayload = await response.json()
+            message = errorPayload?.message || errorPayload?.error || message
+          } catch (err) {
+            // ignore JSON parse failure and keep HTTP message
+          }
+          throw new Error(message)
+        }
+        const blob = await response.blob()
+        return await blobToDataUrl(blob)
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to build server-rendered audio codec preview', err)
+        const badgeKey = getAudioCodecPreviewSelectedKey(cfg)
+        const overrideEntry = getAudioCodecPreviewOverrideEntries(cfg).find(entry => {
+          return entry.badgeKey === badgeKey && entry.sourceType && entry.value
+        })
+        if (overrideEntry) {
+          return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+        }
+        return buildBundledOverlayPreviewUrl('audio_codec', badgeKey, getAudioCodecStyle(cfg)) || resolveOverlayImage(cfg)
+      }
+    }
+
     const buildBackdropDataUrl = async (cfg, baseOverride = null) => {
       const vars = getBackdropVars(cfg)
       const pad = Math.max(0, Number(vars.back_padding) || 0)
@@ -3776,6 +3994,10 @@ const OverlayHandler = {
       let baseImg = baseOverride || resolveOverlayImage(cfg)
       if (!baseOverride && cfg.id === 'overlay_resolution') {
         const composite = await buildResolutionCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
+      if (!baseOverride && cfg.id === 'overlay_audio_codec') {
+        const composite = await buildAudioCodecCompositeDataUrl(cfg)
         if (composite) baseImg = composite
       }
       if (!baseOverride && cfg.id === 'overlay_ratings') {
@@ -5425,9 +5647,12 @@ const OverlayHandler = {
           }
         }
         ensureResolutionToggleFamilyGroups(cfg)
+        ensureAudioCodecPreviewControl(cfg)
         ensureOverlaySourceOverrideEditor(cfg)
         bindResolutionPreviewInputs(cfg)
+        bindAudioCodecPreviewInputs(cfg)
         syncAudioCodecBackdropHeight(cfg, false)
+        syncAudioCodecPreviewControls(cfg)
         syncResolutionBackdropHeight(cfg, false)
         syncResolutionEditionVisibility(cfg, false)
         syncResolutionChildToggleVisibility(cfg)

@@ -78,13 +78,20 @@ def _load_overlay_preview_image(source_type, source_value):
         raise ValueError(f"Unable to read overlay preview image from {source_label}. {exc}") from exc
 
 
-def _load_bundled_overlay_preview_image(family, badge_key):
+def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
     normalized_family = str(family or "").strip().lower()
     filename = _overlay_preview_filename(badge_key)
-    if normalized_family not in {"resolution", "edition"} or not filename:
+    normalized_variant = str(variant or "").strip().lower()
+    if normalized_family not in {"resolution", "edition", "audio_codec"} or not filename:
         raise ValueError("Invalid bundled overlay preview request.")
 
-    image_path = (OVERLAY_PREVIEW_ROOT / normalized_family / filename).resolve()
+    image_root = OVERLAY_PREVIEW_ROOT / normalized_family
+    if normalized_family == "audio_codec":
+        normalized_variant = normalized_variant if normalized_variant in {"compact", "standard"} else "compact"
+        image_root = image_root / normalized_variant
+
+    image_path = image_root.resolve() / filename
+    image_path = image_path.resolve()
     try:
         image_path.relative_to(OVERLAY_PREVIEW_ROOT.resolve())
     except Exception as exc:
@@ -105,10 +112,11 @@ def _load_render_preview_image(payload, family):
     source_type = str(family_payload.get("source_type") or "").strip().lower()
     source_value = str(family_payload.get("source_value") or "").strip()
     badge_key = str(family_payload.get("badge_key") or "").strip()
+    variant = str(family_payload.get("variant") or "").strip()
 
     if source_type and source_value:
         return _load_overlay_preview_image(source_type, source_value)
-    return _load_bundled_overlay_preview_image(family, badge_key)
+    return _load_bundled_overlay_preview_image(family, badge_key, variant)
 
 
 @bp.route("/upload_library_image", methods=["POST"])
@@ -386,8 +394,19 @@ def overlay_render_preview():
     data = request.get_json(silent=True) or {}
     overlay_id = str(data.get("overlay_id") or "").strip()
 
-    if overlay_id != "overlay_resolution":
+    if overlay_id not in {"overlay_resolution", "overlay_audio_codec"}:
         return jsonify({"status": "error", "message": "Unsupported overlay render preview request."}), 400
+
+    if overlay_id == "overlay_audio_codec":
+        try:
+            rendered, _ = _load_render_preview_image(data, "audio_codec")
+        except ValueError as exc:
+            return jsonify({"status": "error", "message": str(exc)}), 400
+
+        image_bytes = BytesIO()
+        rendered.save(image_bytes, format="PNG")
+        image_bytes.seek(0)
+        return send_file(image_bytes, mimetype="image/png")
 
     use_resolution = bool(data.get("use_resolution", True))
     use_edition = bool(data.get("use_edition", True))

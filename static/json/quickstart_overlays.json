@@ -2781,6 +2781,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/audio_codec/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/audio_codec.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/audio_codec/compact/plus_atmos.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 0,
           "vertical": 15,
