@@ -441,22 +441,16 @@ def _collect_overlay_badge_warnings(width, height):
     warnings = []
 
     if width > OVERLAY_SOURCE_OVERRIDE_LARGE_DIMENSION or height > OVERLAY_SOURCE_OVERRIDE_LARGE_DIMENSION:
-        warnings.append(
-            f"This image is valid, but its dimensions ({width}x{height}) are unusually large for a badge overlay."
-        )
+        warnings.append(f"This image is valid, but its dimensions ({width}x{height}) are unusually large for a badge overlay.")
 
     if width < OVERLAY_SOURCE_OVERRIDE_MIN_DIMENSION or height < OVERLAY_SOURCE_OVERRIDE_MIN_DIMENSION:
-        warnings.append(
-            f"This image is valid, but its dimensions ({width}x{height}) are extremely small and may render poorly."
-        )
+        warnings.append(f"This image is valid, but its dimensions ({width}x{height}) are extremely small and may render poorly.")
 
     for target_width, target_height in OVERLAY_SOURCE_OVERRIDE_POSTER_SIZES:
         width_match = abs(width - target_width) <= max(40, int(target_width * 0.05))
         height_match = abs(height - target_height) <= max(40, int(target_height * 0.05))
         if width_match and height_match:
-            warnings.append(
-                f"This image is valid, but its dimensions ({width}x{height}) are close to a full poster/canvas size and may not behave like a badge overlay."
-            )
+            warnings.append(f"This image is valid, but its dimensions ({width}x{height}) are close to a full poster/canvas size and may not behave like a badge overlay.")
             break
 
     return warnings
@@ -569,7 +563,9 @@ def validate_overlay_source_override_payload(data):
             details["normalized_location"] = normalized_location
             details["organized"] = organized
             if organized:
-                details["message"] = f"Validated local {details['image_format'].upper()} image ({details['width']}x{details['height']}) and organized it into managed overlay storage."
+                details["message"] = (
+                    f"Validated local {details['image_format'].upper()} image ({details['width']}x{details['height']}) and organized it into managed overlay storage."
+                )
         return True, None, details
 
     resolved_url, resolve_error = _resolve_overlay_source_override_remote_url(source_type, source_value)

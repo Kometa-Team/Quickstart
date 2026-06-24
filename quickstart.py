@@ -1140,9 +1140,7 @@ def _normalize_overlay_source_override_entries_payload(libraries_data, config_na
     normalized = dict(libraries_data)
     errors = []
     changed = False
-    pattern = re.compile(
-        r"^(?P<library_id>(?:mov|sho)-library_.+?)-(?P<builder>movie|show|season|episode)-template_(?P<overlay_id>[^\[]+)\[(?P<template_key>[^\]]+)\]$"
-    )
+    pattern = re.compile(r"^(?P<library_id>(?:mov|sho)-library_.+?)-(?P<builder>movie|show|season|episode)-template_(?P<overlay_id>[^\[]+)\[(?P<template_key>[^\]]+)\]$")
 
     for key, raw_value in list(normalized.items()):
         if not isinstance(key, str) or "-template_overlay_" not in key or not key.endswith("]"):
