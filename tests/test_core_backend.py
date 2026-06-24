@@ -917,6 +917,108 @@ def test_overlay_render_preview_returns_bundled_streaming_badge_from_key_map(cli
         assert rendered.size[1] > 0
 
 
+def test_overlay_render_preview_returns_network_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    network_path = isolated_config_dir / "overlay_images" / "BBC One.png"
+    network_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (240, 80), (255, 0, 0, 0)).save(network_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_network",
+            "network": {
+                "badge_key": "BBC One",
+                "source_type": "file",
+                "source_value": str(network_path),
+                "variant": "white",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (240, 80)
+
+
+def test_overlay_render_preview_returns_bundled_network_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_network",
+            "network": {
+                "badge_key": "BBC One",
+                "source_type": "",
+                "source_value": "",
+                "variant": "color",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
+def test_overlay_render_preview_returns_studio_badge_from_file_source(client, isolated_config_dir):
+    import io
+
+    from PIL import Image
+
+    studio_path = isolated_config_dir / "overlay_images" / "8bit.png"
+    studio_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (260, 90), (255, 0, 0, 0)).save(studio_path)
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_studio",
+            "studio": {
+                "badge_key": "8bit",
+                "source_type": "file",
+                "source_value": str(studio_path),
+                "variant": "standard",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size == (260, 90)
+
+
+def test_overlay_render_preview_returns_bundled_studio_badge(client):
+    import io
+
+    from PIL import Image
+
+    resp = client.post(
+        "/overlay-render-preview",
+        json={
+            "overlay_id": "overlay_studio",
+            "studio": {
+                "badge_key": "8bit",
+                "source_type": "",
+                "source_value": "",
+                "variant": "bigger",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    with Image.open(io.BytesIO(resp.data)) as rendered:
+        assert rendered.size[0] > 0
+        assert rendered.size[1] > 0
+
+
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):
     collection_file = tmp_path / "collections.yml"
     collection_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")

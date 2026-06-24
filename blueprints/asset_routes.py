@@ -118,7 +118,7 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
     normalized_family = str(family or "").strip().lower()
     filename = _overlay_preview_filename(badge_key, normalized_family)
     normalized_variant = str(variant or "").strip().lower()
-    if normalized_family not in {"resolution", "edition", "audio_codec", "streaming"} or not filename:
+    if normalized_family not in {"resolution", "edition", "audio_codec", "streaming", "network", "studio"} or not filename:
         raise ValueError("Invalid bundled overlay preview request.")
 
     image_root = OVERLAY_PREVIEW_ROOT / normalized_family
@@ -127,6 +127,12 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
         image_root = image_root / normalized_variant
     elif normalized_family == "streaming":
         normalized_variant = normalized_variant if normalized_variant in {"color", "white"} else "color"
+        image_root = image_root / normalized_variant
+    elif normalized_family == "network":
+        normalized_variant = normalized_variant if normalized_variant in {"color", "white"} else "color"
+        image_root = image_root / normalized_variant
+    elif normalized_family == "studio":
+        normalized_variant = normalized_variant if normalized_variant in {"standard", "bigger"} else "standard"
         image_root = image_root / normalized_variant
 
     image_path = image_root.resolve() / filename
@@ -433,11 +439,16 @@ def overlay_render_preview():
     data = request.get_json(silent=True) or {}
     overlay_id = str(data.get("overlay_id") or "").strip()
 
-    if overlay_id not in {"overlay_resolution", "overlay_audio_codec", "overlay_streaming"}:
+    if overlay_id not in {"overlay_resolution", "overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio"}:
         return jsonify({"status": "error", "message": "Unsupported overlay render preview request."}), 400
 
-    if overlay_id in {"overlay_audio_codec", "overlay_streaming"}:
-        family = "audio_codec" if overlay_id == "overlay_audio_codec" else "streaming"
+    if overlay_id in {"overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio"}:
+        family = {
+            "overlay_audio_codec": "audio_codec",
+            "overlay_streaming": "streaming",
+            "overlay_network": "network",
+            "overlay_studio": "studio",
+        }.get(overlay_id)
         try:
             rendered, _ = _load_render_preview_image(data, family)
         except ValueError as exc:

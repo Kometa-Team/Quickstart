@@ -6018,6 +6018,19 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/standard/8bit.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific studio key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "free_text",
+          "key_placeholder": "8bit",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 150,
@@ -6124,6 +6137,19 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/network/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/network/color/BBC%20One.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific network key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "free_text",
+          "key_placeholder": "BBC One",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 510,
