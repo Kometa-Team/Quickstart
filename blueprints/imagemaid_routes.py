@@ -63,7 +63,6 @@ from modules.process_control import (
     MAINTENANCE_STATE_LOCK,
 )
 
-
 bp = Blueprint("imagemaid_routes", __name__)
 
 
@@ -77,6 +76,7 @@ IMAGEMAID_STARTUP_GRACE_SECONDS = 10
 @bp.route("/validate-imagemaid", methods=["POST"])
 def validate_imagemaid():
     import quickstart as _qs
+
     _build_imagemaid_command = _qs._build_imagemaid_command
     _get_imagemaid_settings_section = _qs._get_imagemaid_settings_section
     _get_stored_plex_credentials_for_config = _qs._get_stored_plex_credentials_for_config
@@ -104,6 +104,7 @@ def validate_imagemaid():
 @bp.route("/autosave-imagemaid", methods=["POST"])
 def autosave_imagemaid():
     import quickstart as _qs
+
     _get_imagemaid_settings_section = _qs._get_imagemaid_settings_section
     _imagemaid_settings_to_form_payload = _qs._imagemaid_settings_to_form_payload
     _persist_imagemaid_validation = _qs._persist_imagemaid_validation
@@ -136,6 +137,7 @@ def autosave_imagemaid():
 @bp.route("/start-imagemaid", methods=["POST"])
 def start_imagemaid():
     import quickstart as _qs
+
     _build_imagemaid_command = _qs._build_imagemaid_command
     _build_imagemaid_command_parts = _qs._build_imagemaid_command_parts
     _find_running_imagemaid_process = _qs._find_running_imagemaid_process
@@ -250,6 +252,7 @@ def start_imagemaid():
 @bp.route("/stop-imagemaid", methods=["POST"])
 def stop_imagemaid():
     import quickstart as _qs
+
     _clear_imagemaid_run_context = _qs._clear_imagemaid_run_context
     _find_running_imagemaid_process = _qs._find_running_imagemaid_process
     _find_running_imagemaid_processes = _qs._find_running_imagemaid_processes
@@ -333,6 +336,7 @@ def stop_imagemaid():
 @bp.route("/imagemaid-status", methods=["GET"])
 def imagemaid_status():
     import quickstart as _qs
+
     _calculate_process_cpu_percent = _qs._calculate_process_cpu_percent
     _calculate_process_io_stats = _qs._calculate_process_io_stats
     _calculate_system_cpu_percent = _qs._calculate_system_cpu_percent
@@ -524,6 +528,7 @@ def imagemaid_status():
 
 def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, timeout_seconds=20):
     import quickstart as _qs
+
     _write_quickstart_imagemaid_run_marker = _qs._write_quickstart_imagemaid_run_marker
 
     root = Path(imagemaid_root)
