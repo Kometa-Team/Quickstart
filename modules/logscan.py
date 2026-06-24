@@ -46,6 +46,7 @@ def _version_in_inclusive_range(ver: str, low: tuple, high: tuple) -> bool:
 _PMS_VULN_LOW = (1, 41, 7, 0)  # 1.41.7.x
 _PMS_VULN_HIGH = (1, 42, 0, 99999)  # through 1.42.0.x
 
+
 class LogscanAnalyzer:
     def __init__(self):
         self._raw_content = None

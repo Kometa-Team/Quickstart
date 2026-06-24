@@ -30,9 +30,7 @@ _logger = logging.getLogger("logscan")
 # Module-level constants
 # ---------------------------------------------------------------------------
 
-PEOPLE_README_URLS = (
-    "https://raw.githubusercontent.com/Kometa-Team/People-Images/refs/heads/master/README.md",
-)
+PEOPLE_README_URLS = ("https://raw.githubusercontent.com/Kometa-Team/People-Images/refs/heads/master/README.md",)
 
 PEOPLE_MISSING_WARNING_REGEX = (
     r"Collection Warning: No Poster Found at "
@@ -52,9 +50,7 @@ PEOPLE_SECTION_START_WEAK = (
 )
 PEOPLE_SECTION_END_PATTERNS = (r"^Finished .+ Collection$",)
 
-_PEOPLE_README_FILENAME_RE = re.compile(
-    r"([A-Za-z0-9_./%\-]+\.(?:jpg|jpeg|png|webp))", re.IGNORECASE
-)
+_PEOPLE_README_FILENAME_RE = re.compile(r"([A-Za-z0-9_./%\-]+\.(?:jpg|jpeg|png|webp))", re.IGNORECASE)
 _KEY_NAME_PATTERNS = (
     r"^Validating\s+(.+?)\s+Attributes$",
     r"^Running\s+(.+?)\s+Collection$",
@@ -216,9 +212,7 @@ def normalize_name_line(line: str) -> str:
     return line.strip().strip("= ").strip()
 
 
-def find_log_section_bounds(
-    cleaned_lines: list[str], index: int, max_span: int = 300
-) -> tuple[int, int]:
+def find_log_section_bounds(cleaned_lines: list[str], index: int, max_span: int = 300) -> tuple[int, int]:
     """Locate the start/end indices of the collection block containing
     ``cleaned_lines[index]``.
 
@@ -318,9 +312,7 @@ def extract_key_name_from_block(cleaned_lines: list[str], start: int, end: int) 
     return None
 
 
-def extract_missing_people_names(
-    lines: Iterable[str], available: set[str] | None, name_hint: str | None = None
-) -> set[str]:
+def extract_missing_people_names(lines: Iterable[str], available: set[str] | None, name_hint: str | None = None) -> set[str]:
     """For each log line that matches the People-Images missing-poster warning,
     add the (lowercased) person name to the result set — unless the name is
     already present in ``available``.

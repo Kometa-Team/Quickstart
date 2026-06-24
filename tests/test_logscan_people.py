@@ -7,7 +7,6 @@ import pytest
 
 from modules import logscan_people
 
-
 # ---------------------------------------------------------------------------
 # extract_filename_from_url
 # ---------------------------------------------------------------------------
@@ -85,26 +84,32 @@ def test_build_people_index_returns_empty_on_blank_input():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("line, expected", [
-    ("", True),
-    ("   ", True),
-    ("\t\n", True),
-    ("non-blank", False),
-])
+@pytest.mark.parametrize(
+    "line, expected",
+    [
+        ("", True),
+        ("   ", True),
+        ("\t\n", True),
+        ("non-blank", False),
+    ],
+)
 def test_is_blank_log_line(line, expected):
     assert logscan_people.is_blank_log_line(line) is expected
 
 
-@pytest.mark.parametrize("line, expected", [
-    ("========", True),
-    ("============", True),
-    ("= = = = = = = =", True),
-    ("=", False),  # too short (compact length < 8)
-    ("=======", False),  # 7 chars, just under the threshold
-    ("==!==!==", False),  # mixed chars
-    ("", False),
-    ("real text", False),
-])
+@pytest.mark.parametrize(
+    "line, expected",
+    [
+        ("========", True),
+        ("============", True),
+        ("= = = = = = = =", True),
+        ("=", False),  # too short (compact length < 8)
+        ("=======", False),  # 7 chars, just under the threshold
+        ("==!==!==", False),  # mixed chars
+        ("", False),
+        ("real text", False),
+    ],
+)
 def test_is_divider_log_line(line, expected):
     assert logscan_people.is_divider_log_line(line) is expected
 
@@ -220,12 +225,14 @@ def test_collect_missing_people_lines_handles_empty_input():
 
 
 def test_collect_missing_people_lines_returns_block_per_match():
-    content = "\n".join([
-        "Running Pamela Anderson Collection",
-        "stuff",
-        "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/P/Pamela%20Anderson.jpg",
-        "Finished Pamela Anderson Collection",
-    ])
+    content = "\n".join(
+        [
+            "Running Pamela Anderson Collection",
+            "stuff",
+            "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/P/Pamela%20Anderson.jpg",
+            "Finished Pamela Anderson Collection",
+        ]
+    )
     items = logscan_people.collect_missing_people_lines(content, available_index=set())
     assert len(items) == 1
     assert "pamela anderson" in items[0]["names"]
@@ -234,11 +241,13 @@ def test_collect_missing_people_lines_returns_block_per_match():
 
 def test_collect_missing_people_lines_dedupes_identical_blocks():
     # Same exact block appearing twice should only produce one entry.
-    block = "\n".join([
-        "Running Pamela Anderson Collection",
-        "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/P/Pamela%20Anderson.jpg",
-        "Finished Pamela Anderson Collection",
-    ])
+    block = "\n".join(
+        [
+            "Running Pamela Anderson Collection",
+            "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/P/Pamela%20Anderson.jpg",
+            "Finished Pamela Anderson Collection",
+        ]
+    )
     content = block + "\n" + block
     items = logscan_people.collect_missing_people_lines(content, available_index=set())
     # Both occurrences map to identical blocks => dedupe.
@@ -247,16 +256,22 @@ def test_collect_missing_people_lines_dedupes_identical_blocks():
 
 def test_collect_missing_people_lines_invokes_cleanup_fn():
     # When a cleanup_fn is provided, it should be called with the content.
-    cleanup = MagicMock(return_value="\n".join([
-        "Running Bob Collection",
-        "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/B/Bob.jpg",
-        "Finished Bob Collection",
-    ]))
-    content = "\n".join([
-        "Running Bob Collection",
-        "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/B/Bob.jpg",
-        "Finished Bob Collection",
-    ])
+    cleanup = MagicMock(
+        return_value="\n".join(
+            [
+                "Running Bob Collection",
+                "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/B/Bob.jpg",
+                "Finished Bob Collection",
+            ]
+        )
+    )
+    content = "\n".join(
+        [
+            "Running Bob Collection",
+            "Collection Warning: No Poster Found at https://raw.githubusercontent.com/Kometa-Team/People-Images/master/B/Bob.jpg",
+            "Finished Bob Collection",
+        ]
+    )
     items = logscan_people.collect_missing_people_lines(content, available_index=set(), cleanup_fn=cleanup)
     cleanup.assert_called_once_with(content)
     assert len(items) == 1
@@ -277,11 +292,15 @@ def _mock_response(status_code, text="", headers=None):
 
 def test_fetch_people_readme_uses_cache_on_304(tmp_path):
     cache_path = tmp_path / "cache.json"
-    cache_path.write_text(json.dumps({
-        "url": logscan_people.PEOPLE_README_URLS[0],
-        "content": "cached body",
-        "etag": "etag-1",
-    }))
+    cache_path.write_text(
+        json.dumps(
+            {
+                "url": logscan_people.PEOPLE_README_URLS[0],
+                "content": "cached body",
+                "etag": "etag-1",
+            }
+        )
+    )
     with patch("modules.logscan_people.requests.get", return_value=_mock_response(304)):
         text, used_cache = logscan_people.fetch_people_readme(cache_path)
     assert text == "cached body"
@@ -303,10 +322,14 @@ def test_fetch_people_readme_writes_cache_on_200(tmp_path):
 
 def test_fetch_people_readme_falls_back_to_cache_on_network_error(tmp_path):
     cache_path = tmp_path / "cache.json"
-    cache_path.write_text(json.dumps({
-        "url": logscan_people.PEOPLE_README_URLS[0],
-        "content": "stale body",
-    }))
+    cache_path.write_text(
+        json.dumps(
+            {
+                "url": logscan_people.PEOPLE_README_URLS[0],
+                "content": "stale body",
+            }
+        )
+    )
     with patch("modules.logscan_people.requests.get", side_effect=ConnectionError("offline")):
         text, used_cache = logscan_people.fetch_people_readme(cache_path)
     assert text == "stale body"
