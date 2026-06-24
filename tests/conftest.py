@@ -79,6 +79,22 @@ def qs_module(app):
     return sys.modules.get("quickstart") or _LOADED.get("module")
 
 
+@pytest.fixture(scope="session")
+def workspace_status_module(qs_module):
+    """Direct handle to ``modules.workspace_status``.
+
+    Tests must patch *this* module (not ``qs_module``) for symbols whose
+    runtime call site lives inside ``modules/workspace_status.py`` --
+    e.g. ``_build_kometa_install_context``, ``_build_final_gate``,
+    ``_get_imagemaid_settings_section``. ``qs_module`` re-exports these
+    names but the functions inside ``workspace_status`` resolve them in
+    their own module namespace.
+    """
+    import modules.workspace_status as ws
+
+    return ws
+
+
 @pytest.fixture()
 def client(app):
     return app.test_client()
