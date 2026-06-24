@@ -6027,7 +6027,7 @@
             "git",
             "repo"
           ],
-          "key_mode": "free_text",
+          "key_mode": "bundled_preview_keys",
           "key_placeholder": "8bit",
           "add_label": "Add override"
         },
@@ -6146,7 +6146,7 @@
             "git",
             "repo"
           ],
-          "key_mode": "free_text",
+          "key_mode": "bundled_preview_keys",
           "key_placeholder": "BBC One",
           "add_label": "Add override"
         },

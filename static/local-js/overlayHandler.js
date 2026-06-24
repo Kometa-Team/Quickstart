@@ -798,7 +798,14 @@ const OverlayHandler = {
       youtube: 'YouTube'
     }
 
+    const SINGLE_BADGE_OVERLAY_FAMILY_BY_ID = {
+      overlay_network: 'network',
+      overlay_studio: 'studio'
+    }
+
     const BUNDLED_OVERLAY_PREVIEW_ROOT = '/static/images/overlay-defaults'
+    const bundledOverlayKeyOptionsCache = new Map()
+    const bundledOverlayKeyOptionsInflight = new Map()
 
     const getResolutionToggleFamilyDef = (family) => {
       return RESOLUTION_TOGGLE_FAMILIES.find(item => item.family === family) || null
@@ -1093,6 +1100,63 @@ const OverlayHandler = {
           return rawName.replace(/\.[^.]+$/, '').trim()
         }
       }
+    }
+
+    const getSingleBadgeOverlayFamily = (cfg) => {
+      return SINGLE_BADGE_OVERLAY_FAMILY_BY_ID[String(cfg?.id || '').trim()] || ''
+    }
+
+    const getBundledOverlayKeyOptions = (cfg) => {
+      if (Array.isArray(cfg?.bundledPreviewKeyOptions) && cfg.bundledPreviewKeyOptions.length) {
+        return cfg.bundledPreviewKeyOptions
+      }
+      return []
+    }
+
+    const getBundledOverlayPreviewKeyOptions = async (cfg) => {
+      const family = getSingleBadgeOverlayFamily(cfg)
+      if (!family) return []
+      if (bundledOverlayKeyOptionsCache.has(family)) {
+        const cached = bundledOverlayKeyOptionsCache.get(family)
+        if (cfg) cfg.bundledPreviewKeyOptions = cached
+        return cached
+      }
+      if (bundledOverlayKeyOptionsInflight.has(family)) {
+        return bundledOverlayKeyOptionsInflight.get(family)
+      }
+
+      const request = fetch(`/overlay-preview-keys?family=${encodeURIComponent(family)}`)
+        .then(async response => {
+          if (!response.ok) {
+            let message = `HTTP ${response.status}`
+            try {
+              const payload = await response.json()
+              message = payload?.message || payload?.error || message
+            } catch (err) {
+            }
+            throw new Error(message)
+          }
+          const payload = await response.json()
+          const options = Array.isArray(payload?.keys)
+            ? payload.keys
+              .map(value => String(value || '').trim())
+              .filter(Boolean)
+              .map(value => ({ value, label: value }))
+            : []
+          bundledOverlayKeyOptionsCache.set(family, options)
+          if (cfg) cfg.bundledPreviewKeyOptions = options
+          return options
+        })
+        .catch(error => {
+          console.warn('[OverlayBoards] Failed to load bundled overlay preview keys', { family, error })
+          return []
+        })
+        .finally(() => {
+          bundledOverlayKeyOptionsInflight.delete(family)
+        })
+
+      bundledOverlayKeyOptionsInflight.set(family, request)
+      return request
     }
 
     const getSingleBadgeOverlayPreviewStateKey = (cfg) => {
@@ -1474,7 +1538,11 @@ const OverlayHandler = {
 
     const getOverlaySourceOverrideKeyOptions = (cfg, config) => {
       const options = []
-      if (!cfg.container || config.keyMode !== 'from_use_toggles') return options
+      if (!cfg.container) return options
+      if (config.keyMode === 'bundled_preview_keys') {
+        return getBundledOverlayKeyOptions(cfg)
+      }
+      if (config.keyMode !== 'from_use_toggles') return options
 
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return options
@@ -1602,17 +1670,26 @@ const OverlayHandler = {
 
       let previewWrap = cfg.container.querySelector('[data-single-badge-preview-wrap]')
       let previewInput = cfg.container.querySelector('[data-single-badge-preview-input]')
+      let previewList = cfg.container.querySelector('[data-single-badge-preview-list]')
       if (!previewWrap) {
         previewWrap = document.createElement('div')
         previewWrap.className = 'mb-3'
         previewWrap.dataset.singleBadgePreviewWrap = 'true'
         previewWrap.innerHTML = `
           <label class="form-label small fw-semibold mb-1">Preview badge key</label>
-          <input type="text" class="form-control form-control-sm" data-single-badge-preview-input="true">
-          <div class="form-text">Enter the exact Kometa badge key or filename label to preview, such as BBC One or 8bit.</div>
+          <input type="text" class="form-control form-control-sm" data-single-badge-preview-input="true" data-single-badge-preview-list-input="true">
+          <datalist data-single-badge-preview-list="true"></datalist>
+          <div class="form-text">Start typing to search bundled keys, or enter a custom key manually for edge cases.</div>
         `
         styleRow.insertAdjacentElement('afterend', previewWrap)
         previewInput = previewWrap.querySelector('[data-single-badge-preview-input]')
+        previewList = previewWrap.querySelector('[data-single-badge-preview-list]')
+      }
+
+      if (previewInput && previewList && !previewInput.hasAttribute('list')) {
+        const listId = `${cfg.instanceId}__single-badge-preview-list`
+        previewList.id = listId
+        previewInput.setAttribute('list', listId)
       }
 
       if (previewInput && previewInput.dataset.listenerAdded !== 'true') {
@@ -1733,7 +1810,18 @@ const OverlayHandler = {
     const syncSingleBadgeOverlayPreviewControls = (cfg) => {
       if (!cfg?.container || !['overlay_network', 'overlay_studio'].includes(cfg.id)) return
       const input = cfg.container.querySelector('[data-single-badge-preview-input]')
+      const list = cfg.container.querySelector('[data-single-badge-preview-list]')
       if (!input) return
+      const options = getBundledOverlayKeyOptions(cfg)
+      if (list) {
+        list.replaceChildren()
+        options.forEach((option) => {
+          const el = document.createElement('option')
+          el.value = option.value
+          list.appendChild(el)
+        })
+      }
+      input.placeholder = options.length ? 'Search bundled keys or enter custom key' : 'Enter badge key'
       input.value = getSingleBadgeOverlayPreviewSelectedKey(cfg)
     }
 
@@ -1771,6 +1859,9 @@ const OverlayHandler = {
 
     const bindSingleBadgeOverlayPreviewInputs = (cfg) => {
       if (!cfg?.container || !['overlay_network', 'overlay_studio'].includes(cfg.id)) return
+      getBundledOverlayPreviewKeyOptions(cfg).then(() => {
+        syncSingleBadgeOverlayPreviewControls(cfg)
+      })
       syncSingleBadgeOverlayPreviewControls(cfg)
     }
 
@@ -2142,9 +2233,27 @@ const OverlayHandler = {
       const keyCol = document.createElement('div')
       keyCol.className = 'col-12 col-xl-4'
       const requestedKey = String(entry.badgeKey || '').trim()
+      const useBundledPreviewKeys = config.keyMode === 'bundled_preview_keys'
       const useFreeTextKey = config.keyMode !== 'from_use_toggles'
       let keySelect
-      if (useFreeTextKey) {
+      if (useBundledPreviewKeys) {
+        keySelect = document.createElement('input')
+        keySelect.type = 'text'
+        keySelect.className = 'form-control form-control-sm'
+        keySelect.placeholder = config.keyPlaceholder || 'Badge key'
+        keySelect.value = requestedKey
+        const dataList = document.createElement('datalist')
+        dataList.id = `${cfg.instanceId}__overlay-source-key-list__${Math.random().toString(36).slice(2, 10)}`
+        dataList.dataset.overlaySourceKeyList = 'true'
+        keyOptions.forEach(option => {
+          const el = document.createElement('option')
+          el.value = option.value
+          dataList.appendChild(el)
+        })
+        keySelect.setAttribute('list', dataList.id)
+        keyCol.appendChild(keySelect)
+        keyCol.appendChild(dataList)
+      } else if (useFreeTextKey) {
         keySelect = document.createElement('input')
         keySelect.type = 'text'
         keySelect.className = 'form-control form-control-sm'
@@ -2168,7 +2277,9 @@ const OverlayHandler = {
         keySelect.value = requestedKey
       }
       keySelect.dataset.overlaySourceKey = 'true'
-      keyCol.appendChild(keySelect)
+      if (!useBundledPreviewKeys) {
+        keyCol.appendChild(keySelect)
+      }
       layout.appendChild(keyCol)
 
       const sourceCol = document.createElement('div')
@@ -2504,6 +2615,17 @@ const OverlayHandler = {
       renderOverlaySourceOverrideRows(cfg, config, section, state)
       syncOverlaySourceOverrideRows(cfg, config, section)
 
+      if (config.keyMode === 'bundled_preview_keys' && section.dataset.overlaySourceKeyOptionsLoaded !== 'true') {
+        section.dataset.overlaySourceKeyOptionsLoaded = 'loading'
+        getBundledOverlayPreviewKeyOptions(cfg).then(() => {
+          section.dataset.overlaySourceKeyOptionsLoaded = 'true'
+          const nextState = readOverlaySourceOverrideState(cfg, config, hiddenHost)
+          renderOverlaySourceOverrideRows(cfg, config, section, nextState)
+          syncOverlaySourceOverrideRows(cfg, config, section)
+          syncSingleBadgeOverlayPreviewControls(cfg)
+        })
+      }
+
       const addBtn = section.querySelector('[data-overlay-source-add="true"]')
       if (addBtn && addBtn.dataset.listenerAdded !== 'true') {
         addBtn.dataset.listenerAdded = 'true'
@@ -2511,9 +2633,10 @@ const OverlayHandler = {
           const rowsHost = section.querySelector('[data-overlay-source-rows]')
           if (!rowsHost) return
           const keyOptions = getOverlaySourceOverrideKeyOptions(cfg, config)
+          const fallbackBadgeKey = keyOptions[0]?.value || getSingleBadgeOverlayPreviewSelectedKey(cfg) || ''
           rowsHost.appendChild(buildOverlaySourceOverrideRow(cfg, config, keyOptions, {
             sourceType: config.sourceTypes[0] || 'file',
-            badgeKey: keyOptions[0]?.value || '',
+            badgeKey: fallbackBadgeKey,
             value: ''
           }))
           renderOverlaySourceOverrideRows(cfg, config, section, Array.from(rowsHost.querySelectorAll('[data-overlay-source-row="true"]')).map(row => ({

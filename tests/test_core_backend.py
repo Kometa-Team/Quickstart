@@ -1019,6 +1019,35 @@ def test_overlay_render_preview_returns_bundled_studio_badge(client):
         assert rendered.size[1] > 0
 
 
+def test_overlay_preview_keys_returns_network_keys(client):
+    resp = client.get("/overlay-preview-keys?family=network")
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["status"] == "success"
+    assert payload["family"] == "network"
+    assert "BBC One" in payload["keys"]
+
+
+def test_overlay_preview_keys_returns_studio_keys(client):
+    resp = client.get("/overlay-preview-keys?family=studio")
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["status"] == "success"
+    assert payload["family"] == "studio"
+    assert "8bit" in payload["keys"]
+
+
+def test_overlay_preview_keys_rejects_unsupported_family(client):
+    resp = client.get("/overlay-preview-keys?family=resolution")
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["status"] == "error"
+    assert "Unsupported bundled overlay key family" in payload["message"]
+
+
 def test_validate_collection_file_rejects_missing_top_level_collections(client, tmp_path):
     collection_file = tmp_path / "collections.yml"
     collection_file.write_text("templates:\n  test:\n    default: true\n", encoding="utf-8")

@@ -152,6 +152,28 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
         raise ValueError(f"Unable to read bundled overlay preview image {image_path.name}. {exc}") from exc
 
 
+def _list_bundled_overlay_preview_keys(family):
+    normalized_family = str(family or "").strip().lower()
+    if normalized_family not in {"network", "studio"}:
+        raise ValueError("Unsupported bundled overlay key family.")
+
+    image_root = (OVERLAY_PREVIEW_ROOT / normalized_family).resolve()
+    if not image_root.exists() or not image_root.is_dir():
+        raise ValueError(f"Bundled overlay preview folder not found for {normalized_family}.")
+
+    keys = sorted(
+        {
+            image_path.stem
+            for image_path in image_root.rglob("*.png")
+            if image_path.is_file()
+        },
+        key=lambda item: item.casefold(),
+    )
+    if not keys:
+        raise ValueError(f"No bundled overlay preview keys were found for {normalized_family}.")
+    return keys
+
+
 def _load_render_preview_image(payload, family):
     family_payload = payload.get(family) if isinstance(payload.get(family), dict) else {}
     source_type = str(family_payload.get("source_type") or "").strip().lower()
@@ -432,6 +454,16 @@ def overlay_source_preview():
         return send_file(Path(resolved_location))
 
     return send_file(BytesIO(content), mimetype=content_type)
+
+
+@bp.route("/overlay-preview-keys", methods=["GET"])
+def overlay_preview_keys():
+    family = str(request.args.get("family") or "").strip().lower()
+    try:
+        keys = _list_bundled_overlay_preview_keys(family)
+    except ValueError as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 400
+    return jsonify({"status": "success", "family": family, "keys": keys})
 
 
 @bp.route("/overlay-render-preview", methods=["POST"])
