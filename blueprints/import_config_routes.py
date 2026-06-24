@@ -188,6 +188,7 @@ def import_config_preview():
     # Bundle/overlay-image helpers still live in quickstart.py (PR G territory);
     # lazy-import to avoid a load-order cycle.
     import quickstart as _qs
+
     _is_allowed_bundle_member = _qs._is_allowed_bundle_member
     _is_bundled_overlay_image_archive_member = _qs._is_bundled_overlay_image_archive_member
     _normalize_bundle_member_name = _qs._normalize_bundle_member_name
