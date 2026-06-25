@@ -908,6 +908,79 @@ const OverlayHandler = {
       return ''
     }
 
+    const CONTENT_RATING_PREVIEW_FILENAMES = {
+      overlay_content_rating_us_movie: {
+        g: { color: 'usgc.png', mono: 'usg.png' },
+        pg: { color: 'uspgc.png', mono: 'uspg.png' },
+        'pg-13': { color: 'uspg-13c.png', mono: 'uspg-13.png' },
+        r: { color: 'usrc.png', mono: 'usr.png' },
+        'nc-17': { color: 'usnc-17c.png', mono: 'usnc-17.png' },
+        nr: { color: 'usnrc.png', mono: 'usnr.png' }
+      },
+      overlay_content_rating_us_show: {
+        'tv-g': { color: 'ustv-gc.png', mono: 'ustv-g.png' },
+        'tv-y': { color: 'ustv-yc.png', mono: 'ustv-y.png' },
+        'tv-pg': { color: 'ustv-pgc.png', mono: 'ustv-pg.png' },
+        'tv-14': { color: 'ustv-14c.png', mono: 'ustv-14.png' },
+        'tv-ma': { color: 'ustv-mac.png', mono: 'ustv-ma.png' },
+        nr: { color: 'usnrc.png', mono: 'usnr.png' }
+      },
+      overlay_content_rating_uk: {
+        u: { color: 'ukuc.png', mono: 'uku.png' },
+        pg: { color: 'ukpgc.png', mono: 'ukpg.png' },
+        12: { color: 'uk12c.png', mono: 'uk12.png' },
+        '12a': { color: 'uk12ac.png', mono: 'uk12a.png' },
+        15: { color: 'uk15c.png', mono: 'uk15.png' },
+        18: { color: 'uk18c.png', mono: 'uk18.png' },
+        r18: { color: 'ukr18c.png', mono: 'ukr18.png' },
+        nr: { color: 'uknrc.png', mono: 'uknr.png' }
+      },
+      overlay_content_rating_de: {
+        0: { color: 'de0c.png', mono: 'de0.png' },
+        6: { color: 'de6c.png', mono: 'de6.png' },
+        12: { color: 'de12c.png', mono: 'de12.png' },
+        16: { color: 'de16c.png', mono: 'de16.png' },
+        18: { color: 'de18c.png', mono: 'de18.png' },
+        bpjm: { color: 'debpjmc.png', mono: 'debpjm.png' },
+        nr: { color: 'denrc.png', mono: 'denr.png' }
+      },
+      overlay_content_rating_au: {
+        g: { color: 'au_gc.png', mono: 'au_g.png' },
+        pg: { color: 'au_pgc.png', mono: 'au_pg.png' },
+        m: { color: 'au_mc.png', mono: 'au_m.png' },
+        ma: { color: 'au_mac.png', mono: 'au_ma.png' },
+        r: { color: 'au_rc.png', mono: 'au_r.png' },
+        x: { color: 'au_xc.png', mono: 'au_x.png' },
+        nr: { color: 'au_nrc.png', mono: 'au_nr.png' }
+      },
+      overlay_content_rating_nz: {
+        g: { color: 'nz_gc.png', mono: 'nz_g.png' },
+        pg: { color: 'nz_pgc.png', mono: 'nz_pg.png' },
+        m: { color: 'nz_mc.png', mono: 'nz_m.png' },
+        r13: { color: 'nz_r13c.png', mono: 'nz_r13.png' },
+        rp13: { color: 'nz_rp13c.png', mono: 'nz_rp13.png' },
+        r15: { color: 'nz_r15c.png', mono: 'nz_r15.png' },
+        r16: { color: 'nz_r16c.png', mono: 'nz_r16.png' },
+        rp16: { color: 'nz_rp16c.png', mono: 'nz_rp16.png' },
+        R18: { color: 'nz_r18c.png', mono: 'nz_r18.png' },
+        rp18: { color: 'nz_rp18c.png', mono: 'nz_rp18.png' },
+        r: { color: 'nz_rc.png', mono: 'nz_r.png' },
+        nr: { color: 'nz_nrc.png', mono: 'nz_nr.png' }
+      },
+      overlay_content_rating_commonsense: {
+        commonsense: { color: 'Commonsense.png', mono: 'Commonsense.png' }
+      }
+    }
+
+    const REGIONAL_CONTENT_RATING_OVERLAY_IDS = new Set([
+      'overlay_content_rating_us_movie',
+      'overlay_content_rating_us_show',
+      'overlay_content_rating_uk',
+      'overlay_content_rating_de',
+      'overlay_content_rating_au',
+      'overlay_content_rating_nz'
+    ])
+
     const getOverlayPreviewFilename = (badgeKey, family = '') => {
       const normalizedFamily = String(family || '').trim().toLowerCase()
       const rawKey = String(badgeKey || '').trim()
@@ -940,6 +1013,105 @@ const OverlayHandler = {
         return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${String(badgeKey || '').trim()}_${style}.png`
       }
       return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${filename}`
+    }
+
+    const isRegionalContentRatingOverlay = (cfg) => {
+      return REGIONAL_CONTENT_RATING_OVERLAY_IDS.has(String(cfg?.id || '').trim())
+    }
+
+    const isCommonsenseContentRatingOverlay = (cfg) => {
+      return String(cfg?.id || '').trim() === 'overlay_content_rating_commonsense'
+    }
+
+    const getContentRatingPreviewOptions = (cfg) => {
+      if (!cfg?.container) return []
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+      const options = []
+      const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+      toggleInputs.forEach(input => {
+        const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
+        const toggleKey = String(keyMatch?.[1] || '').trim()
+        if (!toggleKey.startsWith('use_')) return
+        const badgeKey = toggleKey.replace(/^use_/, '')
+        if (!badgeKey) return
+        const labelEl = input.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) {
+          label = label.slice(4).trim()
+        }
+        options.push({
+          value: badgeKey,
+          label,
+          enabled: input.checked
+        })
+      })
+      return options
+    }
+
+    const pickDefaultContentRatingPreviewKey = (cfg) => {
+      const options = getContentRatingPreviewOptions(cfg)
+      return options.find(option => option.enabled)?.value || options[0]?.value || ''
+    }
+
+    const getContentRatingPreviewSelectedKey = (cfg) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getContentRatingPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const stateKey = String(cfg?.id || '').trim()
+      const current = String(state[stateKey] || '').trim()
+      if (current && values.has(current)) return current
+      const fallback = pickDefaultContentRatingPreviewKey(cfg)
+      state[stateKey] = fallback
+      return fallback
+    }
+
+    const setContentRatingPreviewSelectedKey = (cfg, badgeKey) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const stateKey = String(cfg?.id || '').trim()
+      state[stateKey] = String(badgeKey || '').trim()
+    }
+
+    const getContentRatingPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getContentRatingPreviewColorMode = (cfg) => {
+      if (isCommonsenseContentRatingOverlay(cfg)) return 'color'
+      const colorInput = getTemplateInput(cfg, 'color')
+      return String(colorInput?.value || 'true').toLowerCase() === 'false' ? 'mono' : 'color'
+    }
+
+    const buildBundledContentRatingPreviewUrl = (cfg, badgeKey) => {
+      const overlayId = String(cfg?.id || '').trim()
+      const filenameMap = CONTENT_RATING_PREVIEW_FILENAMES[overlayId]
+      const badgeMap = filenameMap?.[String(badgeKey || '').trim()]
+      if (!badgeMap) return ''
+      const colorMode = getContentRatingPreviewColorMode(cfg)
+      const filename = badgeMap[colorMode] || badgeMap.color || badgeMap.mono || ''
+      if (!filename) return ''
+      return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/content_rating/${filename}`
+    }
+
+    const resolveContentRatingPreviewImage = (cfg) => {
+      const overrideEntries = getContentRatingPreviewOverrideEntries(cfg)
+      if (isCommonsenseContentRatingOverlay(cfg)) {
+        const overrideEntry = overrideEntries.find(entry => entry.badgeKey === 'commonsense' && entry.sourceType && entry.value)
+        if (overrideEntry) {
+          return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+        }
+        return buildBundledContentRatingPreviewUrl(cfg, 'commonsense') || resolveOverlayImage(cfg)
+      }
+      const badgeKey = getContentRatingPreviewSelectedKey(cfg)
+      const overrideEntry = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      if (overrideEntry) {
+        return buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value)
+      }
+      return buildBundledContentRatingPreviewUrl(cfg, badgeKey) || resolveOverlayImage(cfg)
     }
 
     const buildOverlaySourcePreviewUrl = (sourceType, sourceValue) => {
@@ -1881,6 +2053,77 @@ const OverlayHandler = {
       })
     }
 
+    const syncContentRatingPreviewControls = (cfg) => {
+      if (!isRegionalContentRatingOverlay(cfg) || !cfg.container) return
+      const select = cfg.container.querySelector('[data-content-rating-preview-select="true"]')
+      if (!select) return
+      const options = getContentRatingPreviewOptions(cfg)
+      const selected = getContentRatingPreviewSelectedKey(cfg)
+
+      select.replaceChildren()
+      options.forEach((option) => {
+        const el = document.createElement('option')
+        el.value = option.value
+        el.textContent = option.label
+        select.appendChild(el)
+      })
+      if (selected && options.some(option => option.value === selected)) {
+        select.value = selected
+      } else if (options[0]?.value) {
+        setContentRatingPreviewSelectedKey(cfg, options[0].value)
+        select.value = options[0].value
+      }
+      select.disabled = options.length === 0
+    }
+
+    const refreshContentRatingOverlayPreview = (cfg) => {
+      if (!cfg?.layer || (!isRegionalContentRatingOverlay(cfg) && !isCommonsenseContentRatingOverlay(cfg))) return
+      if (isCommonsenseContentRatingOverlay(cfg)) {
+        const baseOverride = resolveContentRatingPreviewImage(cfg)
+        buildCommonsenseDataUrl(cfg, baseOverride).then(dataUrl => {
+          buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+            if (!backdropUrl) return
+            cfg.layer.src = backdropUrl
+          })
+        })
+        return
+      }
+      const baseOverride = resolveContentRatingPreviewImage(cfg)
+      buildBackdropDataUrl(cfg, baseOverride).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+      })
+    }
+
+    const ensureContentRatingPreviewControl = (cfg) => {
+      if (!isRegionalContentRatingOverlay(cfg) || !cfg.container) return
+      const colorInput = getTemplateInput(cfg, 'color')
+      const anchorRow = colorInput?.closest('.input-group') || colorInput?.closest('.mb-3') || colorInput?.parentElement
+      if (!anchorRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-content-rating-preview-wrap]')
+      let previewSelect = cfg.container.querySelector('[data-content-rating-preview-select]')
+      if (!previewWrap) {
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3'
+        previewWrap.dataset.contentRatingPreviewWrap = 'true'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">Preview badge</label>
+          <select class="form-select form-select-sm" data-content-rating-preview-select="true"></select>
+        `
+        anchorRow.insertAdjacentElement('afterend', previewWrap)
+        previewSelect = previewWrap.querySelector('[data-content-rating-preview-select]')
+      }
+
+      if (previewSelect && previewSelect.dataset.listenerAdded !== 'true') {
+        previewSelect.dataset.listenerAdded = 'true'
+        previewSelect.addEventListener('change', () => {
+          setContentRatingPreviewSelectedKey(cfg, previewSelect.value)
+          refreshContentRatingOverlayPreview(cfg)
+        })
+      }
+    }
+
     const ensureSingleBadgeOverlayPreviewControl = (cfg) => {
       if (!cfg?.container || !cfg.styleInput || !['overlay_network', 'overlay_studio'].includes(cfg.id)) return
       const styleRow = cfg.styleInput.closest('.input-group') || cfg.styleInput.closest('.mb-3') || cfg.styleInput.parentElement
@@ -2144,6 +2387,31 @@ const OverlayHandler = {
       }
       input.placeholder = options.length ? 'Search bundled keys or enter custom key' : 'Enter badge key'
       input.value = getSingleBadgeOverlayPreviewSelectedKey(cfg)
+    }
+
+    const bindContentRatingPreviewInputs = (cfg) => {
+      if (!isRegionalContentRatingOverlay(cfg) || !cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+      toggleInputs.forEach((input) => {
+        if (!input || input.dataset.contentRatingPreviewBound === 'true') return
+        input.dataset.contentRatingPreviewBound = 'true'
+        input.addEventListener('change', () => {
+          syncContentRatingPreviewControls(cfg)
+          refreshContentRatingOverlayPreview(cfg)
+        })
+      })
+      const colorInput = cfg.container.querySelector(`[name="${templateName}[color]"]`)
+      if (colorInput && colorInput.dataset.contentRatingColorPreviewBound !== 'true') {
+        colorInput.dataset.contentRatingColorPreviewBound = 'true'
+        colorInput.addEventListener('change', () => {
+          refreshContentRatingOverlayPreview(cfg)
+        })
+        colorInput.addEventListener('input', () => {
+          refreshContentRatingOverlayPreview(cfg)
+        })
+      }
     }
 
     const bindAudioCodecPreviewInputs = (cfg) => {
@@ -2498,6 +2766,12 @@ const OverlayHandler = {
           setLanguageCountPreviewSelectedKey(cfg, badgeKey)
           syncLanguageCountPreviewControls(cfg)
           refreshLanguageCountOverlayPreview(cfg)
+        } else if (isRegionalContentRatingOverlay(cfg) && badgeKey) {
+          setContentRatingPreviewSelectedKey(cfg, badgeKey)
+          syncContentRatingPreviewControls(cfg)
+          refreshContentRatingOverlayPreview(cfg)
+        } else if (isCommonsenseContentRatingOverlay(cfg)) {
+          refreshContentRatingOverlayPreview(cfg)
         } else if ((cfg.id === 'overlay_network' || cfg.id === 'overlay_studio') && badgeKey) {
           setSingleBadgeOverlayPreviewSelectedKey(cfg, badgeKey)
           syncSingleBadgeOverlayPreviewControls(cfg)
@@ -2601,6 +2875,12 @@ const OverlayHandler = {
           setLanguageCountPreviewSelectedKey(cfg, badgeKey)
           syncLanguageCountPreviewControls(cfg)
           refreshLanguageCountOverlayPreview(cfg)
+        } else if (isRegionalContentRatingOverlay(cfg) && badgeKey) {
+          setContentRatingPreviewSelectedKey(cfg, badgeKey)
+          syncContentRatingPreviewControls(cfg)
+          refreshContentRatingOverlayPreview(cfg)
+        } else if (isCommonsenseContentRatingOverlay(cfg)) {
+          refreshContentRatingOverlayPreview(cfg)
         } else if ((cfg.id === 'overlay_network' || cfg.id === 'overlay_studio') && badgeKey) {
           setSingleBadgeOverlayPreviewSelectedKey(cfg, badgeKey)
           syncSingleBadgeOverlayPreviewControls(cfg)
@@ -2926,6 +3206,15 @@ const OverlayHandler = {
         if (didStateChange) {
           refreshLanguageCountOverlayPreview(cfg)
         }
+      }
+      if (isRegionalContentRatingOverlay(cfg)) {
+        syncContentRatingPreviewControls(cfg)
+        if (didStateChange) {
+          refreshContentRatingOverlayPreview(cfg)
+        }
+      }
+      if (isCommonsenseContentRatingOverlay(cfg) && didStateChange) {
+        refreshContentRatingOverlayPreview(cfg)
       }
       if (cfg.id === 'overlay_network' || cfg.id === 'overlay_studio') {
         syncSingleBadgeOverlayPreviewControls(cfg)
@@ -5245,6 +5534,10 @@ const OverlayHandler = {
         const composite = await buildLanguageCountCompositeDataUrl(cfg)
         if (composite) baseImg = composite
       }
+      if (!baseOverride && (isRegionalContentRatingOverlay(cfg) || isCommonsenseContentRatingOverlay(cfg))) {
+        const composite = await resolveContentRatingPreviewImage(cfg)
+        if (composite) baseImg = composite
+      }
       if (!baseOverride && cfg.id === 'overlay_network') {
         const composite = await buildNetworkCompositeDataUrl(cfg)
         if (composite) baseImg = composite
@@ -5327,7 +5620,7 @@ const OverlayHandler = {
       return canvas.toDataURL('image/png')
     }
 
-    const buildCommonsenseDataUrl = async (cfg) => {
+    const buildCommonsenseDataUrl = async (cfg, baseOverride = null) => {
       const container = cfg.container
       const templateName = container?.dataset.overlayTemplate
       const getVal = (key, defaultVal) => {
@@ -5341,7 +5634,7 @@ const OverlayHandler = {
         return el.value || defaultVal
       }
 
-      const baseImg = cfg.image
+      const baseImg = baseOverride || cfg.image
       const textVal = getVal('text', 17)
       const postText = getVal('post_text', '+')
       const addonOffset = getVal('addon_offset', 15)
@@ -6689,18 +6982,18 @@ const OverlayHandler = {
           })
         } else if (cfg.id && cfg.id.startsWith('overlay_content_rating_') && cfg.id !== 'overlay_content_rating_commonsense') {
           shouldAssignInitialSrc = false
-          buildBackdropDataUrl(cfg).then(dataUrl => {
-            layer.src = dataUrl
+          const applyContentRatingPreview = () => {
+            refreshContentRatingOverlayPreview(cfg)
             applyPosition(cfg)
-          })
+          }
+          applyContentRatingPreview()
         } else if (cfg.id === 'overlay_content_rating_commonsense') {
           shouldAssignInitialSrc = false
-          buildCommonsenseDataUrl(cfg).then(dataUrl => {
-            buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
-              layer.src = backdropUrl
-              applyPosition(cfg)
-            })
-          })
+          const applyContentRatingPreview = () => {
+            refreshContentRatingOverlayPreview(cfg)
+            applyPosition(cfg)
+          }
+          applyContentRatingPreview()
         } else if (cfg.id === 'overlay_runtimes') {
           initialSrc = buildRuntimeDataUrl(cfg)
           if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
@@ -6807,20 +7100,16 @@ const OverlayHandler = {
           if (colorInput) {
             const refreshColor = () => {
               if (cfg.id === 'overlay_content_rating_commonsense') return
-              buildBackdropDataUrl(cfg).then(dataUrl => {
-                layer.src = dataUrl
-                applyPosition(cfg)
-              })
+              refreshContentRatingOverlayPreview(cfg)
+              applyPosition(cfg)
             }
             colorInput.addEventListener('change', refreshColor)
             colorInput.addEventListener('input', refreshColor)
           }
           if (cfg.id !== 'overlay_content_rating_commonsense') {
             const refreshBackdrop = () => {
-              buildBackdropDataUrl(cfg).then(dataUrl => {
-                layer.src = dataUrl
-                applyPosition(cfg)
-              })
+              refreshContentRatingOverlayPreview(cfg)
+              applyPosition(cfg)
             }
             const backInputs = cfg.container.querySelectorAll(
               `[name="${templateName}[back_align]"], [name="${templateName}[back_color]"], [name="${templateName}[back_height]"], [name="${templateName}[back_width]"], [name="${templateName}[back_line_color]"], [name="${templateName}[back_line_width]"], [name="${templateName}[back_padding]"], [name="${templateName}[back_radius]"]`
@@ -6926,6 +7215,7 @@ const OverlayHandler = {
           }
         }
         ensureResolutionToggleFamilyGroups(cfg)
+        ensureContentRatingPreviewControl(cfg)
         ensureSingleBadgeOverlayPreviewControl(cfg)
         ensureStreamingPreviewControl(cfg)
         ensureAudioCodecPreviewControl(cfg)
@@ -6933,11 +7223,13 @@ const OverlayHandler = {
         ensureLanguageCountPreviewControl(cfg)
         ensureOverlaySourceOverrideEditor(cfg)
         bindResolutionPreviewInputs(cfg)
+        bindContentRatingPreviewInputs(cfg)
         bindSingleBadgeOverlayPreviewInputs(cfg)
         bindStreamingPreviewInputs(cfg)
         bindAudioCodecPreviewInputs(cfg)
         bindRibbonPreviewInputs(cfg)
         bindLanguageCountPreviewInputs(cfg)
+        syncContentRatingPreviewControls(cfg)
         syncSingleBadgeOverlayPreviewControls(cfg)
         syncStreamingPreviewControls(cfg)
         syncRibbonPreviewControls(cfg)
@@ -7280,12 +7572,8 @@ const OverlayHandler = {
 
         if (cfg.id === 'overlay_content_rating_commonsense' && layer && cfg.container) {
           const refreshCommonsense = () => {
-            buildCommonsenseDataUrl(cfg).then(dataUrl => {
-              buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
-                layer.src = backdropUrl
-                applyPosition(cfg)
-              })
-            })
+            refreshContentRatingOverlayPreview(cfg)
+            applyPosition(cfg)
           }
           const templateName = cfg.container.dataset.overlayTemplate
           const inputs = cfg.container.querySelectorAll(

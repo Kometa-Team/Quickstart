@@ -1357,6 +1357,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_movie/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/usgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_movie.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
@@ -1471,6 +1483,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_show/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/ustv-pgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_show.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
@@ -1607,6 +1631,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_uk/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/uk18c.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_uk.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
@@ -1754,6 +1790,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_de/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/de16c.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_de.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
@@ -1896,6 +1944,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_au/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/au_pgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_au.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
@@ -2038,6 +2098,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_nz/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/nz_mc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_nz.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
@@ -2205,6 +2277,19 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/commonsense/",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Commonsense.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/commonsense.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in Common Sense base image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "fixed_key",
+          "fixed_key": "commonsense",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 270,
