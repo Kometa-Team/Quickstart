@@ -20,10 +20,10 @@ new ``_unpack_validation_result`` helper.
 import pytest
 from unittest.mock import MagicMock, patch
 
-
 # ===========================================================================
 # Bug 1: database.reset_data() on a fresh SQLite file
 # ===========================================================================
+
 
 def test_reset_data_does_not_crash_on_empty_db(isolated_config_dir):
     """reset_data() must not raise on a db file that has never had tables created."""
@@ -87,6 +87,7 @@ def test_reset_data_section_removes_only_named_section(isolated_config_dir):
 # Bug 2: validate_github route crashed when validator returns a tuple
 # ===========================================================================
 
+
 def _err_tuple(message="Error"):
     """Return the form validate_github_server uses on invalid-token: (jsonify({...}), 400)."""
     mock = MagicMock()
@@ -131,8 +132,10 @@ def test_validate_github_plain_error_still_returns_400(client):
 # _unpack_validation_result helper -- unit tests
 # ===========================================================================
 
+
 def test_unpack_validation_result_handles_plain_response():
     from blueprints.validation_routes import _unpack_validation_result
+
     mock = MagicMock()
     result, code = _unpack_validation_result(mock)
     assert result is mock
@@ -141,6 +144,7 @@ def test_unpack_validation_result_handles_plain_response():
 
 def test_unpack_validation_result_handles_tuple():
     from blueprints.validation_routes import _unpack_validation_result
+
     mock = MagicMock()
     result, code = _unpack_validation_result((mock, 400))
     assert result is mock
@@ -149,6 +153,7 @@ def test_unpack_validation_result_handles_tuple():
 
 def test_unpack_validation_result_coerces_status_to_int():
     from blueprints.validation_routes import _unpack_validation_result
+
     mock = MagicMock()
     _, code = _unpack_validation_result((mock, "400"))
     assert isinstance(code, int)
@@ -162,15 +167,17 @@ def test_unpack_validation_result_coerces_status_to_int():
 # ===========================================================================
 
 
-
-@pytest.mark.parametrize("route,mock_fn,payload", [
-    ("/validate_omdb",      "validate_omdb_server",      {"apikey": "k"}),
-    ("/validate_tmdb",      "validate_tmdb_server",      {"apikey": "k"}),
-    ("/validate_mdblist",   "validate_mdblist_server",   {"apikey": "k"}),
-    ("/validate_notifiarr", "validate_notifiarr_server", {"apikey": "k"}),
-    ("/validate_radarr",    "validate_radarr_server",    {"radarr_url": "http://r", "api_key": "k"}),
-    ("/validate_sonarr",    "validate_sonarr_server",    {"sonarr_url": "http://s", "api_key": "k"}),
-])
+@pytest.mark.parametrize(
+    "route,mock_fn,payload",
+    [
+        ("/validate_omdb", "validate_omdb_server", {"apikey": "k"}),
+        ("/validate_tmdb", "validate_tmdb_server", {"apikey": "k"}),
+        ("/validate_mdblist", "validate_mdblist_server", {"apikey": "k"}),
+        ("/validate_notifiarr", "validate_notifiarr_server", {"apikey": "k"}),
+        ("/validate_radarr", "validate_radarr_server", {"radarr_url": "http://r", "api_key": "k"}),
+        ("/validate_sonarr", "validate_sonarr_server", {"sonarr_url": "http://s", "api_key": "k"}),
+    ],
+)
 def test_validate_route_survives_tuple_return_from_validator(client, route, mock_fn, payload):
     """All seven routes must return 400 cleanly when the validator returns a tuple."""
     err = MagicMock()
