@@ -123,7 +123,10 @@ def _load_bundled_overlay_preview_image(family, badge_key, variant=None):
             raise ValueError("Invalid bundled overlay preview request.")
         filename = f"{str(badge_key or '').strip()}_{normalized_variant}.png"
 
-    if normalized_family not in {"resolution", "edition", "audio_codec", "streaming", "network", "studio", "ribbon", "language_count", "versions", "mediastinger", "direct_play"} or not filename:
+    if (
+        normalized_family not in {"resolution", "edition", "audio_codec", "streaming", "network", "studio", "ribbon", "language_count", "versions", "mediastinger", "direct_play"}
+        or not filename
+    ):
         raise ValueError("Invalid bundled overlay preview request.")
 
     image_root = OVERLAY_PREVIEW_ROOT / normalized_family
@@ -475,10 +478,31 @@ def overlay_render_preview():
     data = request.get_json(silent=True) or {}
     overlay_id = str(data.get("overlay_id") or "").strip()
 
-    if overlay_id not in {"overlay_resolution", "overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio", "overlay_ribbon", "overlay_language_count", "overlay_versions", "overlay_mediastinger", "overlay_direct_play"}:
+    if overlay_id not in {
+        "overlay_resolution",
+        "overlay_audio_codec",
+        "overlay_streaming",
+        "overlay_network",
+        "overlay_studio",
+        "overlay_ribbon",
+        "overlay_language_count",
+        "overlay_versions",
+        "overlay_mediastinger",
+        "overlay_direct_play",
+    }:
         return jsonify({"status": "error", "message": "Unsupported overlay render preview request."}), 400
 
-    if overlay_id in {"overlay_audio_codec", "overlay_streaming", "overlay_network", "overlay_studio", "overlay_ribbon", "overlay_language_count", "overlay_versions", "overlay_mediastinger", "overlay_direct_play"}:
+    if overlay_id in {
+        "overlay_audio_codec",
+        "overlay_streaming",
+        "overlay_network",
+        "overlay_studio",
+        "overlay_ribbon",
+        "overlay_language_count",
+        "overlay_versions",
+        "overlay_mediastinger",
+        "overlay_direct_play",
+    }:
         family = {
             "overlay_audio_codec": "audio_codec",
             "overlay_streaming": "streaming",
