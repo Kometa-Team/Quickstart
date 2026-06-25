@@ -879,6 +879,7 @@ const OverlayHandler = {
       const seen = new Set()
       const keys = []
       const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+        .filter(input => String(input?.type || '').toLowerCase() === 'checkbox')
       toggleInputs.forEach(input => {
         const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
         const toggleKey = String(keyMatch?.[1] || '').trim()
@@ -1027,14 +1028,14 @@ const OverlayHandler = {
       if (!cfg?.container) return []
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return []
+      const overlayId = String(cfg?.id || '').trim()
+      const filenameMap = CONTENT_RATING_PREVIEW_FILENAMES[overlayId]
+      if (!filenameMap) return []
       const options = []
-      const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
-      toggleInputs.forEach(input => {
-        const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
-        const toggleKey = String(keyMatch?.[1] || '').trim()
-        if (!toggleKey.startsWith('use_')) return
-        const badgeKey = toggleKey.replace(/^use_/, '')
-        if (!badgeKey) return
+      Object.keys(filenameMap).forEach((badgeKey) => {
+        const toggleKey = `use_${badgeKey}`
+        const input = cfg.container.querySelector(`input[type="checkbox"][name="${templateName}[${toggleKey}]"]`)
+        if (!input) return
         const labelEl = input.closest('.form-check')?.querySelector('.form-check-label')
         let label = String(labelEl?.textContent || badgeKey).replace(/\s+/g, ' ').trim()
         if (label.toLowerCase().startsWith('use ')) {
@@ -1940,6 +1941,7 @@ const OverlayHandler = {
       const seen = new Set()
       const excludedToggleKeys = new Set(config.excludeToggleKeys || [])
       const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+        .filter(input => String(input?.type || '').toLowerCase() === 'checkbox')
 
       toggleInputs.forEach(input => {
         const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
@@ -2394,6 +2396,7 @@ const OverlayHandler = {
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return
       const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+        .filter(input => String(input?.type || '').toLowerCase() === 'checkbox')
       toggleInputs.forEach((input) => {
         if (!input || input.dataset.contentRatingPreviewBound === 'true') return
         input.dataset.contentRatingPreviewBound = 'true'
@@ -6952,6 +6955,7 @@ const OverlayHandler = {
         layer.alt = instanceId
         layer.dataset.overlayId = instanceId
         layer.dataset.overlayType = cfg.id
+        cfg.layer = layer
         layers.set(instanceId, layer)
         canvas.appendChild(layer)
 
