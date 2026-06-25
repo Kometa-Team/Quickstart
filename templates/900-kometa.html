@@ -337,8 +337,8 @@
         <!-- Download Buttons -->
         {% if yaml_content %}
         <br>
-        <a href="{{ url_for('download') }}" id="download-btn" class="btn btn-success d-none">Download Config</a>
-        <a href="{{ url_for('download_redacted') }}" id="download-redacted-btn" class="btn btn-warning d-none">Download
+        <a href="{{ url_for('download_routes.download') }}" id="download-btn" class="btn btn-success d-none">Download Config</a>
+        <a href="{{ url_for('download_routes.download_redacted') }}" id="download-redacted-btn" class="btn btn-warning d-none">Download
           Redacted
           Config</a>
         {% endif %}

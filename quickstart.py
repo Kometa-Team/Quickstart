@@ -4,7 +4,6 @@ import inspect
 import io
 import json
 import os
-import hashlib
 import platform
 import psutil
 import re
@@ -16,9 +15,7 @@ import threading
 import time
 import uuid
 import webbrowser
-import zipfile
 import secrets
-from io import BytesIO
 from threading import Thread
 from pathlib import Path
 from collections import deque
@@ -35,20 +32,18 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash,
     session,
     send_file,
     abort,
     has_request_context,
 )
 from waitress import serve
-from ruamel.yaml import YAML
 from werkzeug.datastructures import MultiDict
-from werkzeug.utils import secure_filename
 
 from werkzeug.wrappers import Request
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database, logscan, importer, path_validation, url_validation
+from modules import validations, output, persistence, helpers, database, logscan, path_validation, url_validation
+from modules import importer  # noqa: F401 (load-bearing: tests do monkeypatch.setattr(qs_module.importer, ...))
 from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/legacy in-module callers)
     QS_ANIDB_DEP_SOURCE_PREFIXES,
     QS_ANIDB_OVERLAY_IMAGE_VALUES,
@@ -183,6 +178,7 @@ from blueprints.asset_routes import bp as asset_routes_bp
 from blueprints.kometa_updates import bp as kometa_updates_bp
 from blueprints.imagemaid_updates import bp as imagemaid_updates_bp
 from blueprints.config_routes import bp as config_routes_bp
+from blueprints.download_routes import bp as download_routes_bp
 from blueprints.test_libraries_routes import bp as test_libraries_routes_bp
 from blueprints.library_routes import (
     bp as library_routes_bp,
@@ -205,6 +201,7 @@ from blueprints.import_config_routes import (  # noqa: F401 (re-exports for test
     import_config_report,
 )
 from modules.assets import build_preview_image_data as _build_preview_image_data, list_overlay_fonts
+from modules.bundle_artifacts import dump_yaml_text as _dump_yaml_text
 from modules.test_libraries import (
     resolve_test_libraries_paths as _resolve_test_libraries_paths,  # noqa: F401 (used directly by tests as qs_module._resolve_test_libraries_paths)
     paths_overlap as _paths_overlap,  # noqa: F401 (used directly by tests as qs_module._paths_overlap)
@@ -656,244 +653,6 @@ def _safe_int(value, default=0):
         return default
 
 
-def _yaml_path_suffix(path_value):
-    return str(path_value or "").strip().lower().endswith((".yml", ".yaml"))
-
-
-def _normalize_bundle_member_name(path_value):
-    normalized = str(path_value or "").replace("\\", "/").lstrip("/")
-    return "/".join(part for part in normalized.split("/") if part)
-
-
-def _is_allowed_bundle_member(path_value):
-    normalized = _normalize_bundle_member_name(path_value)
-    if not normalized:
-        return True
-    lowered = normalized.lower()
-    if _is_bundled_library_archive_member(normalized):
-        return _yaml_path_suffix(normalized)
-    if _is_bundled_overlay_image_archive_member(normalized):
-        return lowered.endswith(tuple(f".{ext}" for ext in helpers.ALLOWED_EXTENSIONS))
-    if _yaml_path_suffix(normalized):
-        return True
-    if lowered.endswith((".ttf", ".otf")):
-        return True
-    if lowered == "readme.txt":
-        return True
-    return False
-
-
-def _dump_yaml_text(data):
-    buffer = io.StringIO()
-    YAML().dump(data, buffer)
-    return buffer.getvalue()
-
-
-def _managed_bundle_location_for_path(path):
-    config_root = Path(helpers.CONFIG_DIR).resolve()
-    try:
-        relative = Path(path).resolve().relative_to(config_root)
-    except Exception:
-        return None
-    normalized_relative = _normalized_managed_library_relative_path(Path(*relative.parts).as_posix())
-    if not normalized_relative:
-        return None
-    info = _parse_managed_library_relative_path(normalized_relative)
-    if not info or info["layout"] != "config_first":
-        return None
-    return normalized_relative
-
-
-def _is_overlay_source_override_file_key(key):
-    normalized = str(key or "").strip()
-    return normalized == "file" or normalized.startswith("file_")
-
-
-def _parse_managed_overlay_image_relative_path(path_value):
-    normalized = str(path_value or "").replace("\\", "/").lstrip("/")
-    if not normalized:
-        return None
-    parts = [part for part in normalized.split("/") if part]
-    if len(parts) >= 3 and parts[1] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
-        return {"config_name": parts[0], "remainder": parts[2:], "layout": "config_root"}
-    if len(parts) >= 4 and parts[0] == "config" and parts[2] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
-        return {"config_name": parts[1], "remainder": parts[3:], "layout": "display"}
-    return None
-
-
-def _normalized_managed_overlay_image_relative_path(path_value):
-    info = _parse_managed_overlay_image_relative_path(path_value)
-    if not info:
-        return None
-    return Path(info["config_name"], helpers.MANAGED_OVERLAY_IMAGE_DIR, *info["remainder"]).as_posix()
-
-
-def _is_bundled_overlay_image_archive_member(path_value):
-    return _normalized_managed_overlay_image_relative_path(str(path_value or "").replace("\\", "/").lstrip("/")) is not None
-
-
-def _resolve_local_overlay_image_source(location):
-    raw = str(location or "").strip()
-    if not raw:
-        return None
-    expanded = Path(os.path.expandvars(os.path.expanduser(raw)))
-    if expanded.is_absolute():
-        try:
-            return expanded.resolve()
-        except OSError:
-            return expanded
-    managed_relative = _normalized_managed_overlay_image_relative_path(expanded)
-    if managed_relative:
-        try:
-            return (Path(helpers.CONFIG_DIR) / managed_relative).resolve()
-        except OSError:
-            return Path(helpers.CONFIG_DIR) / managed_relative
-    normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
-    if normalized_parts and normalized_parts[0] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
-        try:
-            return (Path(helpers.CONFIG_DIR) / expanded).resolve()
-        except OSError:
-            return Path(helpers.CONFIG_DIR) / expanded
-    try:
-        return (Path.cwd() / expanded).resolve()
-    except OSError:
-        return Path.cwd() / expanded
-
-
-def _managed_overlay_image_bundle_location_for_path(path):
-    config_root = Path(helpers.CONFIG_DIR).resolve()
-    try:
-        relative = Path(path).resolve().relative_to(config_root)
-    except Exception:
-        return None
-    normalized_relative = _normalized_managed_overlay_image_relative_path(Path(*relative.parts).as_posix())
-    if not normalized_relative:
-        return None
-    return normalized_relative
-
-
-def _safe_overlay_bundle_slug(value, fallback):
-    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value or "").strip())
-    slug = slug.strip("._-")
-    return slug or fallback
-
-
-def _display_managed_overlay_image_location(location):
-    raw = str(location or "").strip().replace("\\", "/")
-    if not raw:
-        return raw
-    normalized_relative = _normalized_managed_overlay_image_relative_path(raw)
-    if normalized_relative:
-        return Path("config", *normalized_relative.split("/")).as_posix()
-    return raw
-
-
-def _normalize_overlay_source_override_entries_payload(libraries_data, config_name):
-    if not isinstance(libraries_data, dict):
-        return {}, [], False
-
-    normalized = dict(libraries_data)
-    errors = []
-    changed = False
-    pattern = re.compile(r"^(?P<library_id>(?:mov|sho)-library_.+?)-(?P<builder>movie|show|season|episode)-template_(?P<overlay_id>[^\[]+)\[(?P<template_key>[^\]]+)\]$")
-
-    for key, raw_value in list(normalized.items()):
-        if not isinstance(key, str) or "-template_overlay_" not in key or not key.endswith("]"):
-            continue
-        match = pattern.match(key)
-        if not match:
-            continue
-        template_key = str(match.group("template_key") or "").strip()
-        if not _is_overlay_source_override_file_key(template_key):
-            continue
-        location = str(raw_value or "").strip()
-        if not location:
-            continue
-        try:
-            normalized_location, entry_changed = validations.normalize_overlay_source_override_file_location(
-                location,
-                config_name=config_name,
-                library_id=match.group("library_id"),
-                overlay_id=match.group("overlay_id"),
-                template_key=template_key,
-            )
-        except ValueError as exc:
-            errors.append(f"{match.group('library_id')}: {match.group('overlay_id')}[{template_key}] {exc}")
-            continue
-        normalized[key] = normalized_location
-        changed = changed or bool(entry_changed) or normalized_location != location
-
-    return normalized, errors, changed
-
-
-def _rewrite_bundle_library_paths(config_data, bundle_root):
-    if not isinstance(config_data, dict):
-        return config_data
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return config_data
-    root = Path(bundle_root).resolve()
-    for lib_cfg in libraries.values():
-        if not isinstance(lib_cfg, dict):
-            continue
-        for kind in LIBRARY_FILE_KINDS:
-            entries = lib_cfg.get(kind)
-            if not isinstance(entries, list):
-                continue
-            for entry in entries:
-                if not isinstance(entry, dict):
-                    continue
-                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
-                    location = entry.get(entry_type)
-                    if not location:
-                        continue
-                    raw_location = str(location).strip()
-                    candidate = root / Path(raw_location)
-                    if not candidate.exists():
-                        normalized_relative = _normalized_managed_library_relative_path(raw_location)
-                        if normalized_relative:
-                            candidate = root / Path(normalized_relative)
-                    if not candidate.exists():
-                        continue
-                    entry[entry_type] = str(candidate.resolve())
-                    break
-    return config_data
-
-
-def _rewrite_bundle_overlay_image_paths(config_data, bundle_root):
-    if not isinstance(config_data, dict):
-        return config_data
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return config_data
-    root = Path(bundle_root).resolve()
-    for lib_cfg in libraries.values():
-        if not isinstance(lib_cfg, dict):
-            continue
-        overlay_entries = lib_cfg.get("overlay_files")
-        if not isinstance(overlay_entries, list):
-            continue
-        for entry in overlay_entries:
-            if not isinstance(entry, dict):
-                continue
-            template_vars = entry.get("template_variables")
-            if not isinstance(template_vars, dict):
-                continue
-            for key, value in list(template_vars.items()):
-                if not _is_overlay_source_override_file_key(key) or not value:
-                    continue
-                raw_location = str(value).strip()
-                candidate = root / Path(raw_location)
-                if not candidate.exists():
-                    normalized_relative = _normalized_managed_overlay_image_relative_path(raw_location)
-                    if normalized_relative:
-                        candidate = root / Path(normalized_relative)
-                if not candidate.exists():
-                    continue
-                template_vars[key] = str(candidate.resolve())
-    return config_data
-
-
 def _normalize_generated_config_library_files(config_data, config_name):
     if not isinstance(config_data, dict):
         return config_data, False, []
@@ -948,144 +707,6 @@ def _normalize_generated_config_library_files(config_data, config_name):
                     new_entries.append(entry)
             lib_cfg[kind] = new_entries
     return config_data, changed, errors
-
-
-def _iter_bundle_artifacts(config_data):
-    seen = set()
-    if not isinstance(config_data, dict):
-        return []
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return []
-    artifacts = []
-    for lib_cfg in libraries.values():
-        if not isinstance(lib_cfg, dict):
-            continue
-        for kind in LIBRARY_FILE_KINDS:
-            entries = lib_cfg.get(kind)
-            if not isinstance(entries, list):
-                continue
-            for entry in entries:
-                if not isinstance(entry, dict):
-                    continue
-                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
-                    location = entry.get(entry_type)
-                    if not location:
-                        continue
-                    raw_location = str(location).strip()
-                    if not raw_location:
-                        continue
-                    source_path = _resolve_local_library_source(raw_location)
-                    if source_path is None:
-                        continue
-                    if not source_path.exists():
-                        continue
-                    archive_path = _managed_bundle_location_for_path(source_path)
-                    if not archive_path:
-                        archive_path = _normalized_managed_library_relative_path(raw_location) or Path(raw_location).as_posix()
-                    dedupe_key = (str(source_path), archive_path)
-                    if dedupe_key in seen:
-                        break
-                    seen.add(dedupe_key)
-                    artifacts.append(
-                        {
-                            "source": source_path,
-                            "archive": archive_path,
-                            "type": entry_type,
-                        }
-                    )
-                    break
-    return artifacts
-
-
-def _iter_overlay_source_bundle_artifacts(config_data, config_name):
-    seen = set()
-    changed = False
-    if not isinstance(config_data, dict):
-        return [], changed
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return [], changed
-
-    config_slug = _normalize_config_name(config_name)
-    artifacts = []
-    for library_name, lib_cfg in libraries.items():
-        if not isinstance(lib_cfg, dict):
-            continue
-        overlay_entries = lib_cfg.get("overlay_files")
-        if not isinstance(overlay_entries, list):
-            continue
-        for entry in overlay_entries:
-            if not isinstance(entry, dict):
-                continue
-            template_vars = entry.get("template_variables")
-            if not isinstance(template_vars, dict):
-                continue
-            overlay_name = str(entry.get("default") or "overlay").strip()
-            for template_key, raw_value in list(template_vars.items()):
-                if not _is_overlay_source_override_file_key(template_key):
-                    continue
-                raw_location = str(raw_value or "").strip()
-                if not raw_location:
-                    continue
-                source_path = _resolve_local_overlay_image_source(raw_location)
-                if source_path is None or not source_path.exists() or not source_path.is_file():
-                    continue
-
-                archive_path = _managed_overlay_image_bundle_location_for_path(source_path)
-                if not archive_path:
-                    library_slug = _safe_overlay_bundle_slug(library_name, "library")
-                    overlay_slug = _safe_overlay_bundle_slug(overlay_name, "overlay")
-                    template_slug = _safe_overlay_bundle_slug(template_key, "image")
-                    stem_slug = _safe_overlay_bundle_slug(source_path.stem, "image")
-                    digest_source = f"{str(source_path).replace('\\', '/').lower()}|{library_slug}|{overlay_slug}|{template_slug}"
-                    digest = hashlib.sha1(digest_source.encode("utf-8", errors="ignore")).hexdigest()[:10]
-                    suffix = source_path.suffix or ".png"
-                    archive_path = Path(
-                        config_slug,
-                        helpers.MANAGED_OVERLAY_IMAGE_DIR,
-                        library_slug,
-                        overlay_slug,
-                        f"{template_slug}_{stem_slug}_{digest}{suffix}",
-                    ).as_posix()
-
-                display_location = _display_managed_overlay_image_location(archive_path)
-                if raw_location != display_location:
-                    template_vars[template_key] = display_location
-                    changed = True
-
-                dedupe_key = (str(source_path), archive_path)
-                if dedupe_key in seen:
-                    continue
-                seen.add(dedupe_key)
-                artifacts.append({"source": source_path, "archive": archive_path, "type": "overlay_image"})
-
-    return artifacts, changed
-
-
-def _bundle_write_path(zf, archive_name, source_path, redacted=False):
-    source_path = Path(source_path)
-    archive_name = Path(archive_name).as_posix()
-    if redacted and source_path.is_file() and _yaml_path_suffix(source_path.name):
-        text = source_path.read_text(encoding="utf-8", errors="replace")
-        zf.writestr(archive_name, helpers.redact_sensitive_data(text))
-        return
-    zf.write(source_path, archive_name)
-
-
-def _bundle_write_artifact(zf, artifact, redacted=False):
-    source_path = Path((artifact or {}).get("source", ""))
-    archive_path = Path(str((artifact or {}).get("archive", "")).replace("\\", "/"))
-    if not source_path.exists() or not str(archive_path):
-        return
-    if source_path.is_dir():
-        for child in sorted(source_path.rglob("*"), key=lambda item: item.as_posix().lower()):
-            if not child.is_file():
-                continue
-            relative_child = child.relative_to(source_path)
-            _bundle_write_path(zf, (archive_path / relative_child).as_posix(), child, redacted=redacted)
-        return
-    _bundle_write_path(zf, archive_path.as_posix(), source_path, redacted=redacted)
 
 
 def _is_blank_override_value(value):
@@ -1308,6 +929,7 @@ app.register_blueprint(asset_routes_bp)
 app.register_blueprint(kometa_updates_bp)
 app.register_blueprint(imagemaid_updates_bp)
 app.register_blueprint(config_routes_bp)
+app.register_blueprint(download_routes_bp)
 app.register_blueprint(test_libraries_routes_bp)
 app.register_blueprint(library_routes_bp)
 app.register_blueprint(import_config_routes_bp)
@@ -2817,180 +2439,6 @@ def workspace_app_readiness():
     config_name = request.args.get("config_name") or session.get("config_name")
     payload = _build_workspace_app_readiness(config_name)
     return jsonify(success=True, config_name=config_name, apps=payload)
-
-
-def _normalize_config_name(raw_name: str | None) -> str:
-    name = (raw_name or "").strip().lower().replace(" ", "_")
-    return name or "default"
-
-
-def _safe_bundle_name(raw_name: str | None) -> str:
-    safe = secure_filename(_normalize_config_name(raw_name))
-    return safe or "default"
-
-
-def _get_custom_font_files(config_name: str | None = None) -> list[Path]:
-    font_files: list[Path] = []
-    seen: set[str] = set()
-    candidate_dirs: list[Path] = []
-    if config_name:
-        helpers.migrate_legacy_custom_fonts_to_config(config_name)
-        candidate_dirs.append(helpers.get_custom_fonts_dir(config_name))
-    candidate_dirs.append(helpers.get_legacy_custom_fonts_dir())
-    for custom_dir in candidate_dirs:
-        if not custom_dir.is_dir():
-            continue
-        for entry in sorted(custom_dir.iterdir(), key=lambda p: p.name.lower()):
-            if not entry.is_file() or entry.suffix.lower() not in helpers.FONT_EXTENSIONS:
-                continue
-            if entry.name in seen:
-                continue
-            font_files.append(entry)
-            seen.add(entry.name)
-    return font_files
-
-
-def _bundle_artifacts_from_yaml(yaml_text, config_name=None):
-    parsed = importer.load_yaml_config(yaml_text)
-    if not parsed:
-        return [], yaml_text
-    artifact_files = list(_iter_bundle_artifacts(parsed))
-    overlay_artifacts, overlay_changed = _iter_overlay_source_bundle_artifacts(parsed, config_name)
-    artifact_files.extend(overlay_artifacts)
-    if overlay_changed:
-        return artifact_files, _dump_yaml_text(parsed)
-    return artifact_files, yaml_text
-
-
-def _build_config_bundle(
-    config_text: str,
-    config_filename: str,
-    font_files: list[Path],
-    artifact_files: list[dict] | None = None,
-    config_name: str | None = None,
-    redacted: bool = False,
-) -> BytesIO | None:
-    artifact_files = artifact_files or []
-    if not config_text or (not font_files and not artifact_files):
-        return None
-    name = _normalize_config_name(config_name)
-    font_names = [font.name for font in font_files]
-    has_artifacts = bool(artifact_files)
-    readme_lines = [
-        "Quickstart config bundle",
-        f"Config name: {name}",
-        "",
-        "This bundle includes:",
-        f"- {config_filename}",
-    ]
-    if font_names:
-        readme_lines.append(f"- {name}/fonts/ (custom fonts uploaded in Quickstart)")
-        readme_lines.append(f"- Fonts included: {', '.join(font_names)}")
-    if has_artifacts:
-        readme_lines.append(f"- {name}/metadata_files/, {name}/collection_files/, {name}/overlay_files/, {name}/overlay_images/ (config-owned library files and overlay images)")
-    readme_lines += [
-        "",
-        "Install steps:",
-        "1) Copy the config file into your Kometa config folder (config/).",
-    ]
-    if font_names:
-        readme_lines.append(f"2) Copy the font files from {name}/fonts/ into your Kometa config/fonts/ folder.")
-    if has_artifacts:
-        readme_lines.append(f"3) Copy {name}/ into your Kometa config/ folder.")
-    readme_lines += [
-        "",
-        "Note: Validate Kometa and Run Now both sync config-owned library files automatically.",
-        "Note: The Quickstart Run Now button also syncs referenced fonts automatically.",
-        "This bundle is for manual installs.",
-    ]
-    if redacted:
-        readme_lines += [
-            "",
-            "This bundle uses a redacted config and is safe to share.",
-            "Review before sharing in case you manually added sensitive data.",
-        ]
-    readme_lines.append("")
-    bundle = BytesIO()
-    with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(config_filename, config_text)
-        for font_path in font_files:
-            zf.write(font_path, f"{name}/fonts/{font_path.name}")
-        for artifact in artifact_files:
-            _bundle_write_artifact(zf, artifact, redacted=redacted)
-        zf.writestr("README.txt", "\n".join(readme_lines))
-    bundle.seek(0)
-    return bundle
-
-
-@app.route("/download")
-def download():
-    yaml_content = session.get("yaml_content", "")
-    if yaml_content:
-        config_name = session.get("config_name")
-        custom_fonts = _get_custom_font_files(config_name)
-        artifact_files, bundle_yaml = _bundle_artifacts_from_yaml(yaml_content, config_name=config_name)
-        if custom_fonts or artifact_files:
-            bundle = _build_config_bundle(
-                bundle_yaml,
-                "config.yml",
-                custom_fonts,
-                artifact_files=artifact_files,
-                config_name=config_name,
-            )
-            if bundle:
-                bundle_name = f"{_safe_bundle_name(config_name)}_config_bundle.zip"
-                return send_file(
-                    bundle,
-                    mimetype="application/zip",
-                    as_attachment=True,
-                    download_name=bundle_name,
-                )
-        return send_file(
-            io.BytesIO(yaml_content.encode("utf-8")),
-            mimetype="text/yaml",
-            as_attachment=True,
-            download_name="config.yml",
-        )
-    flash("No configuration to download", "danger")
-    return redirect(url_for("step", name="900-kometa"))
-
-
-@app.route("/download_redacted")
-def download_redacted():
-    yaml_content = session.get("yaml_content", "")
-    if yaml_content:
-        # Redact sensitive information
-        redacted_content = helpers.redact_sensitive_data(yaml_content)
-
-        # Serve the redacted YAML as a file download
-        config_name = session.get("config_name")
-        custom_fonts = _get_custom_font_files(config_name)
-        artifact_files, bundle_yaml = _bundle_artifacts_from_yaml(redacted_content, config_name=config_name)
-        if custom_fonts or artifact_files:
-            bundle = _build_config_bundle(
-                bundle_yaml,
-                "config_redacted.yml",
-                custom_fonts,
-                artifact_files=artifact_files,
-                config_name=config_name,
-                redacted=True,
-            )
-            if bundle:
-                bundle_name = f"{_safe_bundle_name(config_name)}_config_bundle_redacted.zip"
-                return send_file(
-                    bundle,
-                    mimetype="application/zip",
-                    as_attachment=True,
-                    download_name=bundle_name,
-                )
-        return send_file(
-            io.BytesIO(redacted_content.encode("utf-8")),
-            mimetype="text/yaml",
-            as_attachment=True,
-            download_name="config_redacted.yml",
-        )
-    flash("No configuration to download", "danger")
-    return redirect(url_for("step", name="900-kometa"))
 
 
 @app.route("/path-validation-rules", methods=["GET"])

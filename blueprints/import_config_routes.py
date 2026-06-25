@@ -34,15 +34,11 @@ from pathlib import Path
 
 from flask import Blueprint, Flask, current_app, jsonify, request, session
 
-from modules import assets, database, helpers, importer, persistence, validations
+from modules import assets, bundle_artifacts, database, helpers, importer, persistence, validations
 from modules.library_file_entries import (
     _is_bundled_library_archive_member,
     _normalize_imported_libraries_payload,
 )
-
-# A handful of bundle / overlay-image helpers (PR G territory) still live in
-# quickstart.py and are imported lazily inside the route bodies to avoid a
-# load-order cycle: see route bodies for the `import quickstart as _qs` calls.
 
 bp = Blueprint("import_config_routes", __name__)
 
@@ -185,17 +181,6 @@ def _map_playlist_libraries(payload, library_mapping, plex_names):
 
 @bp.route("/import-config/preview", methods=["POST"])
 def import_config_preview():
-    # Bundle/overlay-image helpers still live in quickstart.py (PR G territory);
-    # lazy-import to avoid a load-order cycle.
-    import quickstart as _qs
-
-    _is_allowed_bundle_member = _qs._is_allowed_bundle_member
-    _is_bundled_overlay_image_archive_member = _qs._is_bundled_overlay_image_archive_member
-    _normalize_bundle_member_name = _qs._normalize_bundle_member_name
-    _yaml_path_suffix = _qs._yaml_path_suffix
-    _rewrite_bundle_library_paths = _qs._rewrite_bundle_library_paths
-    _rewrite_bundle_overlay_image_paths = _qs._rewrite_bundle_overlay_image_paths
-
     def count_comment_lines(text: str) -> int:
         if not isinstance(text, str):
             return 0
@@ -244,17 +229,17 @@ def import_config_preview():
                 font_files = []
 
                 for member_name in archive_members:
-                    normalized_member = _normalize_bundle_member_name(member_name)
+                    normalized_member = bundle_artifacts.normalize_bundle_member_name(member_name)
                     if not normalized_member:
                         continue
-                    if not _is_allowed_bundle_member(normalized_member):
+                    if not bundle_artifacts.is_allowed_bundle_member(normalized_member):
                         unexpected_members.append(normalized_member)
                         continue
                     if _is_bundled_library_archive_member(normalized_member):
                         bundled_library_files.append(member_name)
-                    elif _is_bundled_overlay_image_archive_member(normalized_member):
+                    elif bundle_artifacts.is_bundled_overlay_image_archive_member(normalized_member):
                         bundled_overlay_images.append(member_name)
-                    elif _yaml_path_suffix(normalized_member):
+                    elif bundle_artifacts.yaml_path_suffix(normalized_member):
                         config_files.append(member_name)
                     elif normalized_member.lower().endswith((".ttf", ".otf")):
                         font_files.append(member_name)
@@ -350,8 +335,8 @@ def import_config_preview():
                 pass
         return jsonify(success=False, message="Unable to parse config file."), 400
     if extracted_dir:
-        parsed = _rewrite_bundle_library_paths(parsed, extracted_dir)
-        parsed = _rewrite_bundle_overlay_image_paths(parsed, extracted_dir)
+        parsed = bundle_artifacts.rewrite_bundle_library_paths(parsed, extracted_dir)
+        parsed = bundle_artifacts.rewrite_bundle_overlay_image_paths(parsed, extracted_dir)
 
     def parse_plex_credentials(config_data):
         plex_block = config_data.get("plex", {}) if isinstance(config_data, dict) else {}

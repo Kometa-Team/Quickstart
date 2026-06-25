@@ -294,15 +294,13 @@ def _remove_managed_path(path, root):
 
 
 def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_name, library_scope, force_clone_managed=False):
-    # _managed_bundle_location_for_path still lives in quickstart.py until PR G; lazy-import
-    # to avoid a load-order cycle.
-    import quickstart as _qs
+    from modules import bundle_artifacts
 
     source_path = _resolve_local_library_source(location)
     if source_path is None:
         raise RuntimeError("Path is required.")
 
-    managed_location = _qs._managed_bundle_location_for_path(source_path)
+    managed_location = bundle_artifacts.managed_bundle_location_for_path(source_path)
     if managed_location and not force_clone_managed:
         return managed_location
 
@@ -440,9 +438,7 @@ def _normalize_library_file_entries_payload(libraries_data, config_name, validat
 
 
 def _normalize_imported_libraries_payload(payload_section, config_name):
-    # _normalize_overlay_source_override_entries_payload stays in quickstart.py
-    # until PR G (overlay-image bundle cluster); lazy-import.
-    import quickstart as _qs
+    from modules import bundle_artifacts
 
     if not isinstance(payload_section, dict):
         return payload_section, []
@@ -450,7 +446,7 @@ def _normalize_imported_libraries_payload(payload_section, config_name):
     if not isinstance(libraries_data, dict):
         return payload_section, []
     normalized, errors, _changed = _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True)
-    normalized, overlay_errors, _overlay_changed = _qs._normalize_overlay_source_override_entries_payload(normalized, config_name)
+    normalized, overlay_errors, _overlay_changed = bundle_artifacts.normalize_overlay_source_override_entries_payload(normalized, config_name)
     errors.extend(overlay_errors)
     if errors:
         return None, errors
