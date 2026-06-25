@@ -2303,9 +2303,8 @@
         ],
         "template_variables": [
           {
-            "input_type": "number",
+            "input_type": "hidden",
             "key": "text",
-            "label": "Text",
             "default": 17
           },
           {

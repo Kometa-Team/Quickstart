@@ -1024,7 +1024,76 @@ const OverlayHandler = {
       return String(cfg?.id || '').trim() === 'overlay_content_rating_commonsense'
     }
 
+    const getCommonsensePreviewTextInput = (cfg) => {
+      if (!cfg?.container) return null
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return null
+      return cfg.container.querySelector(`[name="${templateName}[text]"]`)
+    }
+
+    const getCommonsensePreviewOptions = (cfg) => {
+      if (!cfg?.container) return []
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+      const options = []
+      cfg.container.querySelectorAll(`input[type="checkbox"][name^="${templateName}[use_"]`).forEach((input) => {
+        const rawName = String(input.name || '')
+        const match = new RegExp(`^${templateName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\[use_(.+)\\]$`).exec(rawName)
+        const value = String(match?.[1] || '').trim()
+        if (!value) return
+        const numericValue = Number(value)
+        const labelEl = input.closest('.form-check')?.querySelector('.form-check-label')
+        let label = String(labelEl?.textContent || `${value}+`).replace(/\s+/g, ' ').trim()
+        if (label.toLowerCase().startsWith('use ')) {
+          label = label.slice(4).trim()
+        }
+        options.push({
+          value,
+          label,
+          enabled: input.checked,
+          sortValue: Number.isFinite(numericValue) ? numericValue : Number.MAX_SAFE_INTEGER
+        })
+      })
+      options.sort((a, b) => {
+        if (a.sortValue !== b.sortValue) return a.sortValue - b.sortValue
+        return a.label.localeCompare(b.label)
+      })
+      return options
+    }
+
+    const pickDefaultCommonsensePreviewValue = (cfg) => {
+      const options = getCommonsensePreviewOptions(cfg)
+      return options.find(option => option.enabled)?.value || options[0]?.value || ''
+    }
+
+    const getCommonsensePreviewValue = (cfg) => {
+      const input = getCommonsensePreviewTextInput(cfg)
+      const current = String(input?.value || '').trim()
+      const options = getCommonsensePreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      if (current && values.has(current)) return current
+      const fallback = pickDefaultCommonsensePreviewValue(cfg)
+      if (input && fallback) input.value = fallback
+      return fallback
+    }
+
+    const setCommonsensePreviewValue = (cfg, value) => {
+      const input = getCommonsensePreviewTextInput(cfg)
+      if (input) {
+        input.value = String(value || '').trim()
+      }
+    }
+
+    const normalizeCommonsensePreviewText = (value) => {
+      const normalized = String(value || '').trim()
+      if (!normalized) return ''
+      return normalized.toLowerCase() === 'nr' ? 'NR' : normalized
+    }
+
     const getContentRatingPreviewOptions = (cfg) => {
+      if (isCommonsenseContentRatingOverlay(cfg)) {
+        return getCommonsensePreviewOptions(cfg)
+      }
       if (!cfg?.container) return []
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return []
@@ -1051,11 +1120,17 @@ const OverlayHandler = {
     }
 
     const pickDefaultContentRatingPreviewKey = (cfg) => {
+      if (isCommonsenseContentRatingOverlay(cfg)) {
+        return pickDefaultCommonsensePreviewValue(cfg)
+      }
       const options = getContentRatingPreviewOptions(cfg)
       return options.find(option => option.enabled)?.value || options[0]?.value || ''
     }
 
     const getContentRatingPreviewSelectedKey = (cfg) => {
+      if (isCommonsenseContentRatingOverlay(cfg)) {
+        return getCommonsensePreviewValue(cfg)
+      }
       const state = ensureResolutionPreviewState(cfg)
       const options = getContentRatingPreviewOptions(cfg)
       const values = new Set(options.map(option => option.value))
@@ -1068,6 +1143,10 @@ const OverlayHandler = {
     }
 
     const setContentRatingPreviewSelectedKey = (cfg, badgeKey) => {
+      if (isCommonsenseContentRatingOverlay(cfg)) {
+        setCommonsensePreviewValue(cfg, badgeKey)
+        return
+      }
       const state = ensureResolutionPreviewState(cfg)
       const stateKey = String(cfg?.id || '').trim()
       state[stateKey] = String(badgeKey || '').trim()
@@ -2056,7 +2135,7 @@ const OverlayHandler = {
     }
 
     const syncContentRatingPreviewControls = (cfg) => {
-      if (!isRegionalContentRatingOverlay(cfg) || !cfg.container) return
+      if ((!isRegionalContentRatingOverlay(cfg) && !isCommonsenseContentRatingOverlay(cfg)) || !cfg.container) return
       const select = cfg.container.querySelector('[data-content-rating-preview-select="true"]')
       if (!select) return
       const options = getContentRatingPreviewOptions(cfg)
@@ -2098,9 +2177,11 @@ const OverlayHandler = {
     }
 
     const ensureContentRatingPreviewControl = (cfg) => {
-      if (!isRegionalContentRatingOverlay(cfg) || !cfg.container) return
-      const colorInput = getTemplateInput(cfg, 'color')
-      const anchorRow = colorInput?.closest('.input-group') || colorInput?.closest('.mb-3') || colorInput?.parentElement
+      if ((!isRegionalContentRatingOverlay(cfg) && !isCommonsenseContentRatingOverlay(cfg)) || !cfg.container) return
+      const anchorInput = isCommonsenseContentRatingOverlay(cfg)
+        ? getTemplateInput(cfg, 'post_text')
+        : getTemplateInput(cfg, 'color')
+      const anchorRow = anchorInput?.closest('.input-group') || anchorInput?.closest('.mb-3') || anchorInput?.parentElement
       if (!anchorRow) return
 
       let previewWrap = cfg.container.querySelector('[data-content-rating-preview-wrap]')
@@ -2110,7 +2191,7 @@ const OverlayHandler = {
         previewWrap.className = 'mb-3'
         previewWrap.dataset.contentRatingPreviewWrap = 'true'
         previewWrap.innerHTML = `
-          <label class="form-label small fw-semibold mb-1">Preview badge</label>
+          <label class="form-label small fw-semibold mb-1">${isCommonsenseContentRatingOverlay(cfg) ? 'Preview rating' : 'Preview badge'}</label>
           <select class="form-select form-select-sm" data-content-rating-preview-select="true"></select>
         `
         anchorRow.insertAdjacentElement('afterend', previewWrap)
@@ -2392,7 +2473,7 @@ const OverlayHandler = {
     }
 
     const bindContentRatingPreviewInputs = (cfg) => {
-      if (!isRegionalContentRatingOverlay(cfg) || !cfg.container) return
+      if ((!isRegionalContentRatingOverlay(cfg) && !isCommonsenseContentRatingOverlay(cfg)) || !cfg.container) return
       const templateName = cfg.container.dataset.overlayTemplate
       if (!templateName) return
       const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
@@ -2405,6 +2486,16 @@ const OverlayHandler = {
           refreshContentRatingOverlayPreview(cfg)
         })
       })
+      const textInput = getCommonsensePreviewTextInput(cfg)
+      if (textInput && textInput.dataset.commonsensePreviewBound !== 'true') {
+        textInput.dataset.commonsensePreviewBound = 'true'
+        const refreshText = () => {
+          syncContentRatingPreviewControls(cfg)
+          refreshContentRatingOverlayPreview(cfg)
+        }
+        textInput.addEventListener('input', refreshText)
+        textInput.addEventListener('change', refreshText)
+      }
       const colorInput = cfg.container.querySelector(`[name="${templateName}[color]"]`)
       if (colorInput && colorInput.dataset.contentRatingColorPreviewBound !== 'true') {
         colorInput.dataset.contentRatingColorPreviewBound = 'true'
@@ -5638,7 +5729,7 @@ const OverlayHandler = {
       }
 
       const baseImg = baseOverride || cfg.image
-      const textVal = getVal('text', 17)
+      const textVal = normalizeCommonsensePreviewText(getVal('text', 17))
       const postText = getVal('post_text', '+')
       const addonOffset = getVal('addon_offset', 15)
       const font = getVal('font', 'Inter-Medium.ttf')
@@ -5653,7 +5744,8 @@ const OverlayHandler = {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       ctx.font = `${fontSize}px "${fontFamily}"`
-      const textString = `${textVal}${postText || ''}`
+      const effectivePostText = textVal === 'NR' ? '' : postText
+      const textString = `${textVal}${effectivePostText || ''}`
       const textBox = getTextBoxMetrics(ctx, textString, fontSize, 10, strokeWidth)
 
       canvas.width = img.width + addonOffset + textBox.width

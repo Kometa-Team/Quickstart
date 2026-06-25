@@ -2012,6 +2012,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                         </span>
                                                         {% endif %}
                                                     </div>
+                                                    {% elif var_details.input_type == "hidden" %}
+                                                    {% set hidden_value = '' if selected_value in [none, 'None'] else selected_value %}
+                                                    <input type="hidden"
+                                                        id="{{ template_name }}-{{ var_name }}"
+                                                        name="{{ template_name }}[{{ var_name }}]"
+                                                        value="{{ hidden_value if hidden_value != '' else var_details.default }}">
                                                     {% elif var_details.input_type == "number" %}
                                                     {% if var_name in ['horizontal_offset', 'initial_horizontal_offset'] %}{% set ns.has_offsets = true %}{% set ns.h_id = template_name ~ '-' ~ var_name %}{% endif %}
                                                     {% if var_name in ['vertical_offset', 'initial_vertical_offset'] %}{% set ns.has_offsets = true %}{% set ns.v_id = template_name ~ '-' ~ var_name %}{% endif %}
