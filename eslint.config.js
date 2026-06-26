@@ -70,8 +70,8 @@ module.exports = [
     },
     rules: {
       'no-undef': 'error',
-      'no-unused-vars': ['warn', { args: 'none', ignoreRestSiblings: true }],
-      'no-shadow': 'warn',
+      'no-unused-vars': ['error', { args: 'none', ignoreRestSiblings: true }],
+      'no-shadow': 'error',
       'no-global-assign': 'error',
       'no-implied-eval': 'error'
     }
