@@ -8,11 +8,10 @@ Covers:
   - quickstart.py                → /lookup_template_string_value
 """
 
-
-
 # ===========================================================================
 # /activate-config
 # ===========================================================================
+
 
 def test_activate_config_creates_new_config_and_sets_session(client, isolated_config_dir):
     resp = client.post("/activate-config", json={"name": "myprofile"})
@@ -58,8 +57,10 @@ def test_activate_config_sanitises_name(client, isolated_config_dir):
 # /clear_session
 # ===========================================================================
 
+
 def test_clear_session_returns_success(client, isolated_config_dir):
     from modules import database
+
     # Ensure the DB table exists before the route tries to flush it
     database.get_unique_config_names()
     with client.session_transaction() as sess:
@@ -73,6 +74,7 @@ def test_clear_session_returns_success(client, isolated_config_dir):
 
 def test_clear_session_without_name_uses_session_config(client, isolated_config_dir):
     from modules import database
+
     database.get_unique_config_names()
     with client.session_transaction() as sess:
         sess["config_name"] = "fallback_config"
@@ -86,8 +88,10 @@ def test_clear_session_without_name_uses_session_config(client, isolated_config_
 # /clear_data/<name>  and  /clear_data/<name>/<section>
 # ===========================================================================
 
+
 def test_clear_data_redirects_to_root(client, isolated_config_dir):
     from modules import database
+
     # Ensure section_data table exists (reset_data does not CREATE TABLE IF NOT EXISTS)
     database.get_unique_config_names()
     resp = client.get("/clear_data/some_config")
@@ -97,6 +101,7 @@ def test_clear_data_redirects_to_root(client, isolated_config_dir):
 
 def test_clear_data_section_redirects_to_root(client, isolated_config_dir):
     from modules import database
+
     database.get_unique_config_names()
     resp = client.get("/clear_data/some_config/010-plex")
     assert resp.status_code == 302
@@ -104,6 +109,7 @@ def test_clear_data_section_redirects_to_root(client, isolated_config_dir):
 
 def test_clear_data_removes_db_entries(client, isolated_config_dir):
     from modules import database
+
     config_name = "clear_data_test"
     # Seed some data (also initialises the table)
     database.save_section_data(
@@ -123,6 +129,7 @@ def test_clear_data_removes_db_entries(client, isolated_config_dir):
 # ===========================================================================
 # /autosave_library/<library_id>
 # ===========================================================================
+
 
 def test_autosave_library_returns_success_for_empty_payload(client, isolated_config_dir, qs_module, monkeypatch):
     """Empty libraries payload (no fields) should autosave without error."""
@@ -224,6 +231,7 @@ def test_autosave_library_reports_normalized_flag(client, isolated_config_dir, q
 # /autosave-imagemaid
 # ===========================================================================
 
+
 def test_autosave_imagemaid_returns_success(client, isolated_config_dir, qs_module, monkeypatch):
     monkeypatch.setattr(qs_module, "_resolve_request_config_name", lambda payload: "pytest_im")
     monkeypatch.setattr(qs_module, "_imagemaid_settings_to_form_payload", lambda payload: {})
@@ -269,6 +277,7 @@ def test_autosave_imagemaid_returns_validated_false_on_change(client, isolated_c
 # /validate-imagemaid
 # ===========================================================================
 
+
 def test_validate_imagemaid_returns_success_when_valid(client, isolated_config_dir, qs_module, monkeypatch):
     monkeypatch.setattr(qs_module, "_resolve_request_config_name", lambda payload: "pytest_im")
     monkeypatch.setattr(qs_module, "_imagemaid_settings_to_form_payload", lambda payload: {})
@@ -306,6 +315,7 @@ def test_validate_imagemaid_returns_400_when_invalid(client, isolated_config_dir
 # /lookup_template_string_value
 # ===========================================================================
 
+
 def test_lookup_template_string_value_requires_preset_and_value(client, isolated_config_dir):
     resp = client.post("/lookup_template_string_value", json={})
     assert resp.status_code == 400
@@ -328,11 +338,14 @@ def test_lookup_template_string_value_numeric_id_hit(client, isolated_config_dir
     )
     monkeypatch.setattr(qs_module, "_build_tmdb_library_type_warning", lambda *a, **kw: "")
 
-    resp = client.post("/lookup_template_string_value", json={
-        "preset": "numeric_id",
-        "value": "603",
-        "media_type": "movie",
-    })
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "numeric_id",
+            "value": "603",
+            "media_type": "movie",
+        },
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["valid"] is True
@@ -351,11 +364,14 @@ def test_lookup_template_string_value_numeric_id_type_mismatch_adds_warning(clie
         lambda msg, result_type, expected, value_label="ID": "Type mismatch: show vs movie library",
     )
 
-    resp = client.post("/lookup_template_string_value", json={
-        "preset": "numeric_id",
-        "value": "1396",
-        "media_type": "movie",
-    })
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "numeric_id",
+            "value": "1396",
+            "media_type": "movie",
+        },
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["valid"] is True
@@ -371,11 +387,14 @@ def test_lookup_template_string_value_imdb_id_tmdb_hit(client, isolated_config_d
     )
     monkeypatch.setattr(qs_module, "_build_tmdb_library_type_warning", lambda *a, **kw: "")
 
-    resp = client.post("/lookup_template_string_value", json={
-        "preset": "imdb_id_tmdb",
-        "value": "tt0133093",
-        "media_type": "movie",
-    })
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "imdb_id_tmdb",
+            "value": "tt0133093",
+            "media_type": "movie",
+        },
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["valid"] is True
@@ -391,11 +410,14 @@ def test_lookup_template_string_value_imdb_id_plex_requires_library_name(client,
     monkeypatch.setattr(qs_module, "_build_tmdb_library_type_warning", lambda *a, **kw: "")
 
     # No library_name provided for imdb_id_plex
-    resp = client.post("/lookup_template_string_value", json={
-        "preset": "imdb_id_plex",
-        "value": "tt0133093",
-        "media_type": "movie",
-    })
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "imdb_id_plex",
+            "value": "tt0133093",
+            "media_type": "movie",
+        },
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["valid"] is False
@@ -415,10 +437,13 @@ def test_lookup_template_string_value_tmdb_collection_id_hit(client, isolated_co
     monkeypatch.setattr(qs_module, "_get_active_tmdb_api_key", lambda: "fake-key")
 
     with patch.object(qs.requests, "get", return_value=ok_resp):
-        resp = client.post("/lookup_template_string_value", json={
-            "preset": "tmdb_collection_id",
-            "value": "131296",
-        })
+        resp = client.post(
+            "/lookup_template_string_value",
+            json={
+                "preset": "tmdb_collection_id",
+                "value": "131296",
+            },
+        )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["valid"] is True
@@ -428,10 +453,13 @@ def test_lookup_template_string_value_tmdb_collection_id_hit(client, isolated_co
 def test_lookup_template_string_value_tmdb_collection_id_no_key(client, isolated_config_dir, qs_module, monkeypatch):
     monkeypatch.setattr(qs_module, "_get_active_tmdb_api_key", lambda: "")
 
-    resp = client.post("/lookup_template_string_value", json={
-        "preset": "tmdb_collection_id",
-        "value": "131296",
-    })
+    resp = client.post(
+        "/lookup_template_string_value",
+        json={
+            "preset": "tmdb_collection_id",
+            "value": "131296",
+        },
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["valid"] is False
