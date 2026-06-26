@@ -288,7 +288,7 @@
         ],
         "template_variables": [
           {
-            "input_type": "text",
+            "input_type": "hidden",
             "key": "text",
             "label": "Text",
             "default": "S03E15"
@@ -2683,7 +2683,7 @@
         "extra_url": "https://trash-guides.info/",
         "template_variables": [
           {
-            "input_type": "text",
+            "input_type": "hidden",
             "key": "text",
             "label": "Text",
             "default": "1.78"
@@ -5723,7 +5723,7 @@
         "extra_url": "https://trash-guides.info/",
         "template_variables": [
           {
-            "input_type": "text",
+            "input_type": "hidden",
             "key": "text",
             "label": "Text",
             "default": "HDTV"

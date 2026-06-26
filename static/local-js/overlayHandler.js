@@ -520,8 +520,13 @@ const OverlayHandler = {
         }
         return el.value || fallback
       }
+      const mode = getOverlayTextPreviewMode(cfg)
+      const selectedPreview = ['toggle_text', 'episode_info'].includes(mode)
+        ? getOverlayTextPreviewSelectedValue(cfg)
+        : ''
+      if (selectedPreview) syncOverlayTextPreviewTextInput(cfg)
       return {
-        text: getVal('text', ''),
+        text: selectedPreview || getVal('text', ''),
         font: getVal('font', 'Inter-Medium.ttf'),
         font_size: getVal('font_size', 55),
         font_color: getVal('font_color', '#FFFFFFFF'),
@@ -564,7 +569,8 @@ const OverlayHandler = {
         return el.value || fallback
       }
 
-      const text = getVal('text_airing', 'AIRING')
+      const previewKey = getOverlayTextPreviewSelectedValue(cfg) || 'airing'
+      const text = getVal(`text_${previewKey}`, 'AIRING')
       return {
         text,
         font: getVal('font', 'Inter-Medium.ttf'),
@@ -646,6 +652,143 @@ const OverlayHandler = {
       const templateName = container?.dataset.overlayTemplate
       if (!container || !templateName) return null
       return container.querySelector(`[name="${templateName}[${key}]"]`)
+    }
+
+    const getOverlayTextPreviewMode = (cfg) => {
+      const overlayId = String(cfg?.id || '').trim()
+      if (overlayId === 'overlay_aspect' || overlayId === 'overlay_video_format') return 'toggle_text'
+      if (overlayId === 'overlay_episode_info') return 'episode_info'
+      if (overlayId === 'overlay_status') return 'status'
+      if (overlayId === 'overlay_runtimes') return 'runtime'
+      return ''
+    }
+
+    const getOverlayTextPreviewStateKey = (cfg) => {
+      const overlayId = String(cfg?.id || '').trim()
+      if (overlayId === 'overlay_aspect') return 'aspect_text'
+      if (overlayId === 'overlay_video_format') return 'video_format_text'
+      if (overlayId === 'overlay_episode_info') return 'episode_info_text'
+      if (overlayId === 'overlay_status') return 'status_text'
+      if (overlayId === 'overlay_runtimes') return 'runtime_minutes'
+      return ''
+    }
+
+    const getOverlayTextPreviewOptions = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      if (!mode || !cfg?.container) return []
+
+      if (mode === 'episode_info') {
+        return [
+          { value: 'S01E01', label: 'S01E01' },
+          { value: 'S03E15', label: 'S03E15' },
+          { value: 'S10E22', label: 'S10E22' },
+          { value: 'S00E01', label: 'Special (S00E01)' }
+        ]
+      }
+
+      if (mode === 'runtime') {
+        return [
+          { value: '24', label: '24 min' },
+          { value: '45', label: '45 min' },
+          { value: '93', label: '93 min (1h 33m)' },
+          { value: '130', label: '130 min (2h 10m)' }
+        ]
+      }
+
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return []
+
+      if (mode === 'toggle_text') {
+        const options = []
+        const seen = new Set()
+        const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+          .filter(input => String(input?.type || '').toLowerCase() === 'checkbox')
+        toggleInputs.forEach((input) => {
+          const keyMatch = /\[([^\]]+)\]$/.exec(String(input.name || ''))
+          const toggleKey = String(keyMatch?.[1] || '').trim()
+          if (!toggleKey.startsWith('use_')) return
+          const labelEl = input.closest('.form-check')?.querySelector('.form-check-label')
+          let label = String(labelEl?.textContent || toggleKey.slice(4)).replace(/\s+/g, ' ').trim()
+          if (label.toLowerCase().startsWith('use ')) {
+            label = label.slice(4).trim()
+          }
+          if (!label || seen.has(label)) return
+          seen.add(label)
+          options.push({
+            value: label,
+            label,
+            enabled: input.checked
+          })
+        })
+        return options
+      }
+
+      if (mode === 'status') {
+        const statusDefs = [
+          { key: 'airing', label: 'Airing' },
+          { key: 'returning', label: 'Returning' },
+          { key: 'canceled', label: 'Canceled' },
+          { key: 'ended', label: 'Ended' }
+        ]
+        return statusDefs.map((statusDef) => {
+          const toggle = cfg.container.querySelector(`[name="${templateName}[use_${statusDef.key}]"]`)
+          return {
+            value: statusDef.key,
+            label: statusDef.label,
+            enabled: Boolean(toggle?.checked)
+          }
+        })
+      }
+
+      return []
+    }
+
+    const pickDefaultOverlayTextPreviewValue = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      const options = getOverlayTextPreviewOptions(cfg)
+      if (mode === 'runtime') return options.find(option => option.value === '93')?.value || options[0]?.value || '93'
+      if (mode === 'episode_info') return options.find(option => option.value === 'S03E15')?.value || options[0]?.value || 'S03E15'
+      return options.find(option => option.enabled)?.value || options[0]?.value || ''
+    }
+
+    const getOverlayTextPreviewSelectedValue = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      if (!mode) return ''
+      const stateKey = getOverlayTextPreviewStateKey(cfg)
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getOverlayTextPreviewOptions(cfg)
+      const values = new Set(options.map(option => String(option.value || '').trim()))
+      const current = String(state[stateKey] || '').trim()
+      if (current && values.has(current)) return current
+
+      let fallback = ''
+      if (mode === 'toggle_text' || mode === 'episode_info') {
+        const textInput = getTemplateInput(cfg, 'text')
+        const currentText = String(textInput?.value || textInput?.dataset?.default || '').trim()
+        if (currentText && values.has(currentText)) {
+          fallback = currentText
+        }
+      }
+      if (!fallback) fallback = pickDefaultOverlayTextPreviewValue(cfg)
+      state[stateKey] = fallback
+      return fallback
+    }
+
+    const setOverlayTextPreviewSelectedValue = (cfg, value) => {
+      const stateKey = getOverlayTextPreviewStateKey(cfg)
+      if (!stateKey) return
+      const state = ensureResolutionPreviewState(cfg)
+      state[stateKey] = String(value || '').trim()
+    }
+
+    const syncOverlayTextPreviewTextInput = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      if (!['toggle_text', 'episode_info'].includes(mode)) return
+      const textInput = getTemplateInput(cfg, 'text')
+      if (!textInput) return
+      const selected = getOverlayTextPreviewSelectedValue(cfg)
+      textInput.value = selected
+      textInput.dataset.default = selected
     }
 
     const setTemplateNumber = (cfg, key, value, emit = true) => {
@@ -2203,6 +2346,171 @@ const OverlayHandler = {
         previewSelect.addEventListener('change', () => {
           setContentRatingPreviewSelectedKey(cfg, previewSelect.value)
           refreshContentRatingOverlayPreview(cfg)
+        })
+      }
+    }
+
+    const ensureOverlayTextPreviewControl = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      if (!mode || !cfg?.container) return
+
+      const anchorInput = getTemplateInput(cfg, 'font') || (mode === 'status' ? getTemplateInput(cfg, 'text_airing') : null)
+      const anchorRow = anchorInput?.closest('.font-row') ||
+        anchorInput?.closest('.rgba-group') ||
+        anchorInput?.closest('.input-group') ||
+        anchorInput?.closest('.mb-3') ||
+        anchorInput?.parentElement
+      if (!anchorRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-overlay-text-preview-wrap]')
+      let previewSelect = cfg.container.querySelector('[data-overlay-text-preview-select]')
+      if (!previewWrap) {
+        let label = 'Preview badge'
+        if (mode === 'runtime') label = 'Preview runtime'
+        else if (mode === 'status') label = 'Preview status'
+        else if (mode === 'episode_info') label = 'Preview text'
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3 w-100'
+        previewWrap.dataset.overlayTextPreviewWrap = 'true'
+        previewWrap.style.flexBasis = '100%'
+        previewWrap.style.width = '100%'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">${label}</label>
+          <select class="form-select form-select-sm" data-overlay-text-preview-select="true"></select>
+        `
+        previewSelect = previewWrap.querySelector('[data-overlay-text-preview-select]')
+      }
+
+      anchorRow.insertAdjacentElement('beforebegin', previewWrap)
+
+      if (previewSelect && previewSelect.dataset.listenerAdded !== 'true') {
+        previewSelect.dataset.listenerAdded = 'true'
+        previewSelect.addEventListener('change', () => {
+          setOverlayTextPreviewSelectedValue(cfg, previewSelect.value)
+          syncOverlayTextPreviewTextInput(cfg)
+          refreshOverlayTextPreview(cfg)
+        })
+      }
+    }
+
+    const syncOverlayTextPreviewControls = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      if (!mode || !cfg?.container) return
+      const select = cfg.container.querySelector('[data-overlay-text-preview-select="true"]')
+      if (!select) return
+
+      const options = getOverlayTextPreviewOptions(cfg)
+      const selected = getOverlayTextPreviewSelectedValue(cfg)
+      select.replaceChildren()
+      options.forEach((option) => {
+        const el = document.createElement('option')
+        el.value = option.value
+        el.textContent = option.label
+        select.appendChild(el)
+      })
+
+      if (selected && options.some(option => option.value === selected)) {
+        select.value = selected
+      } else if (options[0]?.value) {
+        setOverlayTextPreviewSelectedValue(cfg, options[0].value)
+        select.value = options[0].value
+      }
+      select.disabled = options.length === 0
+      syncOverlayTextPreviewTextInput(cfg)
+    }
+
+    const refreshOverlayTextPreview = (cfg) => {
+      if (!cfg?.layer) return
+      if (cfg.id === 'overlay_runtimes') {
+        const { font } = getRuntimeVars(cfg)
+        ensureRuntimeFontLoaded(font).then(family => {
+          const { family: norm } = normalizeFontFile(font)
+          const dataUrl = buildRuntimeDataUrl(cfg, family || norm)
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+              cfg.layer.src = backdropUrl
+            })
+            return
+          }
+          cfg.layer.src = dataUrl
+        })
+        return
+      }
+
+      if (cfg.id === 'overlay_status') {
+        const vars = getStatusTextVars(cfg)
+        ensureRuntimeFontLoaded(vars.font).then(family => {
+          const { family: norm } = normalizeFontFile(vars.font)
+          const dataUrl = buildSimpleTextDataUrl(cfg, vars, family || norm)
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+              cfg.layer.src = backdropUrl
+            })
+            return
+          }
+          cfg.layer.src = dataUrl
+        })
+        return
+      }
+
+      if (cfg.id === 'overlay_aspect' || cfg.id === 'overlay_video_format' || cfg.id === 'overlay_episode_info') {
+        const vars = getSimpleTextVars(cfg)
+        ensureRuntimeFontLoaded(vars.font).then(family => {
+          const { family: norm } = normalizeFontFile(vars.font)
+          const dataUrl = buildSimpleTextDataUrl(cfg, vars, family || norm)
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+              cfg.layer.src = backdropUrl
+            })
+            return
+          }
+          cfg.layer.src = dataUrl
+        })
+      }
+    }
+
+    const bindOverlayTextPreviewInputs = (cfg) => {
+      const mode = getOverlayTextPreviewMode(cfg)
+      if (!mode || !cfg?.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+
+      if (mode === 'toggle_text') {
+        const toggleInputs = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+          .filter(input => String(input?.type || '').toLowerCase() === 'checkbox')
+        toggleInputs.forEach((input) => {
+          if (input.dataset.overlayTextPreviewBound === 'true') return
+          input.dataset.overlayTextPreviewBound = 'true'
+          input.addEventListener('change', () => {
+            syncOverlayTextPreviewControls(cfg)
+            refreshOverlayTextPreview(cfg)
+          })
+        })
+      }
+
+      if (mode === 'status') {
+        const selectors = [
+          `[name="${templateName}[use_airing]"]`,
+          `[name="${templateName}[use_returning]"]`,
+          `[name="${templateName}[use_canceled]"]`,
+          `[name="${templateName}[use_ended]"]`,
+          `[name="${templateName}[text_airing]"]`,
+          `[name="${templateName}[text_returning]"]`,
+          `[name="${templateName}[text_canceled]"]`,
+          `[name="${templateName}[text_ended]"]`
+        ]
+        const inputs = cfg.container.querySelectorAll(selectors.join(', '))
+        inputs.forEach((input) => {
+          if (input.dataset.overlayTextPreviewBound === 'true') return
+          input.dataset.overlayTextPreviewBound = 'true'
+          input.addEventListener('input', () => {
+            syncOverlayTextPreviewControls(cfg)
+            refreshOverlayTextPreview(cfg)
+          })
+          input.addEventListener('change', () => {
+            syncOverlayTextPreviewControls(cfg)
+            refreshOverlayTextPreview(cfg)
+          })
         })
       }
     }
@@ -5766,7 +6074,7 @@ const OverlayHandler = {
     const buildRuntimeDataUrl = (cfg, loadedFamily = null) => {
       const { text, format, font, font_size: fontSize, font_color: fontColor, stroke_width: strokeWidth, stroke_color: strokeColor } = getRuntimeVars(cfg)
       const { family: normalizedFamily } = normalizeFontFile(font)
-      const runtimeMinutes = 93
+      const runtimeMinutes = Number(getOverlayTextPreviewSelectedValue(cfg) || 93) || 93
       const runtimeH = Math.floor(runtimeMinutes / 60)
       const runtimeM = runtimeMinutes % 60
       const rendered = format
@@ -7312,6 +7620,7 @@ const OverlayHandler = {
         }
         ensureResolutionToggleFamilyGroups(cfg)
         ensureContentRatingPreviewControl(cfg)
+        ensureOverlayTextPreviewControl(cfg)
         ensureSingleBadgeOverlayPreviewControl(cfg)
         ensureStreamingPreviewControl(cfg)
         ensureAudioCodecPreviewControl(cfg)
@@ -7320,12 +7629,14 @@ const OverlayHandler = {
         ensureOverlaySourceOverrideEditor(cfg)
         bindResolutionPreviewInputs(cfg)
         bindContentRatingPreviewInputs(cfg)
+        bindOverlayTextPreviewInputs(cfg)
         bindSingleBadgeOverlayPreviewInputs(cfg)
         bindStreamingPreviewInputs(cfg)
         bindAudioCodecPreviewInputs(cfg)
         bindRibbonPreviewInputs(cfg)
         bindLanguageCountPreviewInputs(cfg)
         syncContentRatingPreviewControls(cfg)
+        syncOverlayTextPreviewControls(cfg)
         syncSingleBadgeOverlayPreviewControls(cfg)
         syncStreamingPreviewControls(cfg)
         syncRibbonPreviewControls(cfg)
