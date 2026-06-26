@@ -870,6 +870,11 @@ def patterns_from_default_file(path: Path) -> set[str]:
 def key_matches_pattern(key: str, pattern: str) -> bool:
     if key == pattern:
         return True
+    # Generic shared-template placeholders like use_<<key>> create false positives
+    # for defaults that do not explicitly declare a concrete child toggle such as
+    # use_top_500. Only concrete use_* keys in the resolved YAML should count.
+    if key.startswith("use_") and pattern.startswith("use_") and PLACEHOLDER_RE.search(pattern):
+        return False
     literal_pattern = PLACEHOLDER_RE.sub("", pattern)
     if not re.search(r"[A-Za-z0-9_.-]", literal_pattern):
         return False
