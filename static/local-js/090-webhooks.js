@@ -141,7 +141,6 @@ $(document).ready(function () {
   })
 })
 
-/* eslint-disable no-unused-vars */
 function validateWebhook (webhookType) {
   const inputGroup = $('#webhooks_' + webhookType + '_custom').find('.input-group')
   const webhookUrl = inputGroup.find('input.custom-webhook-url').val()
@@ -190,4 +189,5 @@ function validateWebhook (webhookType) {
       updateValidationState()
     })
 }
-/* eslint-enable no-unused-vars */
+
+window.validateWebhook = validateWebhook

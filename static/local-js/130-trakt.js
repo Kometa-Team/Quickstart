@@ -69,7 +69,6 @@ document.getElementById('toggleClientSecretVisibility').addEventListener('click'
   setToggleButtonIcon(this, currentType === 'password')
 })
 
-/* eslint-disable no-unused-vars */
 function updateTraktURL () {
   const traktClientId = document.getElementById('trakt_client_id').value
   let myURL = ''
@@ -98,7 +97,10 @@ function checkPinField () {
   const pinButton = document.getElementById('validate_trakt_pin')
   pinButton.disabled = (pin === '')
 }
-/* eslint-enable no-unused-vars */
+
+window.updateTraktURL = updateTraktURL
+window.openTraktUrl = openTraktUrl
+window.checkPinField = checkPinField
 
 function checkURLStart () {
   const url = document.getElementById('trakt_url').value

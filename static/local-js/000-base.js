@@ -384,7 +384,6 @@ document.addEventListener('submit', function (event) {
   }, 0)
 })
 
-/* eslint-disable no-unused-vars */
 // Function to show the spinner on validate
 function showSpinner (webhookType) {
   document.getElementById(`spinner_${webhookType}`).style.display = 'inline-block'
@@ -394,6 +393,9 @@ function showSpinner (webhookType) {
 function hideSpinner (webhookType) {
   document.getElementById(`spinner_${webhookType}`).style.display = 'none'
 }
+
+window.showSpinner = showSpinner
+window.hideSpinner = hideSpinner
 
 // Function to handle jump to action
 function qsGetStepLabel (targetPage) {
@@ -546,8 +548,6 @@ let qsLastMaintenanceToastAt = 0
 let qsLastMaintenancePaused = false
 let qsLastQueuedStartedAt = null
 const QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS = 15000
-let qsLastLogscanReingestStatus = 'idle'
-let qsLastLogscanReingestJobId = null
 const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 15000
 const qsCurrentTemplate = String(window.QS_CURRENT_TEMPLATE || document.documentElement.dataset.qsTemplate || '').trim()
 const qsSkipMaintenancePoll = qsCurrentTemplate === '900-kometa'
@@ -1012,10 +1012,6 @@ function qsHandleImageMaidStatus (data) {
 window.QS_handleImageMaidStatus = qsHandleImageMaidStatus
 
 function qsHandleLogscanReingestStatus (data) {
-  const status = String((data && data.status) || 'idle').trim().toLowerCase()
-  const jobId = String((data && data.job_id) || '').trim() || null
-  qsLastLogscanReingestStatus = status
-  qsLastLogscanReingestJobId = jobId
   qsRenderActiveWorkCard()
 }
 
@@ -2016,7 +2012,7 @@ function qsFetchWorkspaceStatus (options = {}) {
       let data = null
       try {
         data = await response.json()
-      } catch (err) {
+      } catch {
         data = null
       }
       if (!response.ok || !data || data.success !== true) {
@@ -2179,7 +2175,7 @@ function qsRunBulkValidation (options = {}) {
       let data = null
       try {
         data = await res.json()
-      } catch (err) {
+      } catch {
         data = null
       }
 
@@ -2446,7 +2442,6 @@ function setupValidationCallouts () {
     applyDynamicValidationCalloutState(alert, isValidated)
     const heading = alert.querySelector('h6, h4')
     const title = alert.dataset.qsCalloutTitle || (heading ? heading.textContent.trim() : 'Setup guidance')
-    const accordionId = `qs-validation-accordion-${index}`
     const collapseId = `qs-validation-collapse-${index}`
     const headingId = `qs-validation-heading-${index}`
 
@@ -2624,7 +2619,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     if (window.localStorage && window.localStorage.getItem(noticeKey)) return
     if (window.localStorage) window.localStorage.setItem(noticeKey, '1')
-  } catch (err) {
+  } catch {
     // Ignore localStorage failures (private mode, etc.)
   }
 
@@ -2775,7 +2770,6 @@ async function runQuickstartUpdateCheck (options = {}) {
   return data.version_info
 }
 
-/* eslint-enable no-unused-vars */
 function bindQuickstartUpdateButtons (root = document) {
   const buttons = root.querySelectorAll ? root.querySelectorAll('#updateQuickstartBtn') : []
   buttons.forEach(updateBtn => {

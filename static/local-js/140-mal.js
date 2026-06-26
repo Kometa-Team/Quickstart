@@ -73,7 +73,6 @@ document.getElementById('mal_get_localhost_url').addEventListener('click', funct
   }
 })
 
-/* eslint-disable no-unused-vars */
 function updateMALTargetURL () {
   const malClientId = document.getElementById('mal_client_id').value
   const codeVerifier = document.getElementById('mal_code_verifier').value
@@ -102,7 +101,10 @@ function checkURLField () {
   const localURLButton = document.getElementById('validate_mal_url')
   localURLButton.disabled = (localURL === '')
 }
-/* eslint-enable no-unused-vars */
+
+window.updateMALTargetURL = updateMALTargetURL
+window.openMALUrl = openMALUrl
+window.checkURLField = checkURLField
 
 function enableLocalURLButton () {
   const url = document.getElementById('mal_url').value
