@@ -49,6 +49,7 @@ config/
 json-schema/
 build/
 dist/
+node_modules/
 favicon.ico
 
 # Local test artifacts and machine-specific test config

@@ -15,6 +15,14 @@ repos:
     rev: v17.1.2
     hooks:
       - id: standard
+-   repo: local
+    hooks:
+    -   id: eslint
+        name: eslint
+        entry: npm run lint:eslint --
+        language: system
+        pass_filenames: false
+        files: ^static/local-js/.*\.js$
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.18
     hooks:

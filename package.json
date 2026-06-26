@@ -1,0 +1,10 @@
+{
+  "name": "quickstart-js-tooling",
+  "private": true,
+  "scripts": {
+    "lint:eslint": "eslint static/local-js --ext .js"
+  },
+  "devDependencies": {
+    "eslint": "^9.30.0"
+  }
+}
