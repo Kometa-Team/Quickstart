@@ -400,7 +400,34 @@ def _collect_overlay_source_override_keys(overlay_meta: Any) -> set[str]:
         source_types = ["file", "url", "git", "repo"]
 
     allowed = set(source_types)
-    if str(config.get("key_mode") or "").strip().lower() != "from_use_toggles":
+    key_mode = str(config.get("key_mode") or "").strip().lower()
+    if key_mode == "from_select_options":
+        key_fields = {
+            str(item).strip()
+            for item in (config.get("key_fields") or [])
+            if str(item).strip()
+        }
+        template_variables = overlay_meta.get("template_variables")
+        if isinstance(template_variables, dict):
+            for field_key in key_fields:
+                field_meta = template_variables.get(field_key)
+                if not isinstance(field_meta, dict):
+                    continue
+                options = field_meta.get("options")
+                if not isinstance(options, list):
+                    continue
+                for option in options:
+                    if isinstance(option, dict):
+                        option_value = str(option.get("value") or "").strip()
+                    else:
+                        option_value = str(option).strip()
+                    if not option_value:
+                        continue
+                    for source_type in source_types:
+                        allowed.add(f"{source_type}_{option_value}")
+        return allowed
+
+    if key_mode != "from_use_toggles":
         return allowed
 
     excluded_toggle_keys = {str(item).strip() for item in (config.get("exclude_toggle_keys") or []) if str(item).strip()}

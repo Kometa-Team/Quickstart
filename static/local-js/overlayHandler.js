@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, toggleOverlayTemplateSection, FontFace, FileReader, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser */
+/* global EventHandler, ValidationHandler, toggleOverlayTemplateSection, FontFace, FileReader, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser, applyPosition */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -2299,6 +2299,9 @@ const OverlayHandler = {
           keyMode: String(parsed.key_mode || '').trim().toLowerCase(),
           fixedKey: String(parsed.fixed_key || '').trim(),
           keyPlaceholder: String(parsed.key_placeholder || '').trim(),
+          keyFields: Array.isArray(parsed.key_fields)
+            ? parsed.key_fields.map(item => String(item || '').trim()).filter(Boolean)
+            : [],
           sourceTypes,
           excludeToggleKeys: Array.isArray(parsed.exclude_toggle_keys)
             ? parsed.exclude_toggle_keys.map(item => String(item || '').trim()).filter(Boolean)
@@ -2339,6 +2342,23 @@ const OverlayHandler = {
       }
       if (config.keyMode === 'bundled_preview_keys') {
         return getBundledOverlayKeyOptions(cfg)
+      }
+      if (config.keyMode === 'from_select_options') {
+        const seen = new Set()
+        ;(config.keyFields || []).forEach((fieldKey) => {
+          const input = getTemplateInput(cfg, fieldKey)
+          if (!input || input.tagName !== 'SELECT') return
+          Array.from(input.options || []).forEach((option) => {
+            const value = String(option.value || '').trim()
+            if (!value || seen.has(value)) return
+            seen.add(value)
+            options.push({
+              value,
+              label: String(option.textContent || value).trim() || value
+            })
+          })
+        })
+        return options
       }
       if (config.keyMode !== 'from_use_toggles') return options
 
@@ -3180,6 +3200,15 @@ const OverlayHandler = {
       })
     }
 
+    const refreshRatingsOverlayPreview = (cfg) => {
+      if (cfg?.id !== 'overlay_ratings' || !cfg.layer) return
+      buildBackdropDataUrl(cfg).then(dataUrl => {
+        if (!dataUrl) return
+        cfg.layer.src = dataUrl
+        applyPosition(cfg)
+      })
+    }
+
     const refreshSingleBadgeOverlayPreview = (cfg) => {
       if (!cfg?.layer || !['overlay_network', 'overlay_studio'].includes(cfg.id)) return
       buildBackdropDataUrl(cfg).then(dataUrl => {
@@ -3445,6 +3474,8 @@ const OverlayHandler = {
           setLanguageCountPreviewSelectedKey(cfg, badgeKey)
           syncLanguageCountPreviewControls(cfg)
           refreshLanguageCountOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_ratings') {
+          refreshRatingsOverlayPreview(cfg)
         } else if (isRegionalContentRatingOverlay(cfg) && badgeKey) {
           setContentRatingPreviewSelectedKey(cfg, badgeKey)
           syncContentRatingPreviewControls(cfg)
@@ -3554,6 +3585,8 @@ const OverlayHandler = {
           setLanguageCountPreviewSelectedKey(cfg, badgeKey)
           syncLanguageCountPreviewControls(cfg)
           refreshLanguageCountOverlayPreview(cfg)
+        } else if (cfg.id === 'overlay_ratings') {
+          refreshRatingsOverlayPreview(cfg)
         } else if (isRegionalContentRatingOverlay(cfg) && badgeKey) {
           setContentRatingPreviewSelectedKey(cfg, badgeKey)
           syncContentRatingPreviewControls(cfg)
@@ -3598,7 +3631,8 @@ const OverlayHandler = {
       const requestedKey = String(entry.badgeKey || '').trim()
       const useBundledPreviewKeys = config.keyMode === 'bundled_preview_keys'
       const useFixedKey = config.keyMode === 'fixed_key'
-      const useFreeTextKey = config.keyMode !== 'from_use_toggles' && !useFixedKey
+      const useSelectKeys = config.keyMode === 'from_use_toggles' || config.keyMode === 'from_select_options'
+      const useFreeTextKey = !useSelectKeys && !useFixedKey && !useBundledPreviewKeys
       let keySelect
       if (useFixedKey) {
         keySelect = document.createElement('input')
@@ -3885,6 +3919,9 @@ const OverlayHandler = {
         if (didStateChange) {
           refreshLanguageCountOverlayPreview(cfg)
         }
+      }
+      if (cfg.id === 'overlay_ratings' && didStateChange) {
+        refreshRatingsOverlayPreview(cfg)
       }
       if (isRegionalContentRatingOverlay(cfg)) {
         syncContentRatingPreviewControls(cfg)
@@ -4977,6 +5014,22 @@ const OverlayHandler = {
       hydrateRatingMappingSamples(cfg, token)
     }
 
+    const getRatingsPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const getRatingsPreviewOverrideEntry = (cfg, imageValue, imageLabel = '') => {
+      const imageKey = normalizeRatingImageKey(imageValue, imageLabel)
+      if (!imageKey) return null
+      return getRatingsPreviewOverrideEntries(cfg).find(entry => {
+        return entry.badgeKey === imageKey && entry.sourceType && entry.value
+      }) || null
+    }
+
     const getTemplateValue = (cfg, key, fallback) => {
       const input = getTemplateInput(cfg, key)
       if (!input) return fallback
@@ -5041,18 +5094,33 @@ const OverlayHandler = {
       if (!imageVal) return null
       const imageKey = normalizeRatingImageKey(imageVal, labelVal)
       const sample = getRatingSampleValue(ratingType, imageVal, labelVal, sampleVariant)
-      const urls = getRatingSampleImageUrls(imageVal, labelVal, sample)
-      if (!urls.length) return null
       let img
       let useStarFallback = false
-      try {
-        img = await loadImageWithFallback(urls)
-      } catch (err) {
-        if (imageKey === 'star' || imageKey === 'plex_star') {
-          useStarFallback = true
-        } else {
-          console.warn('[OverlayBoards] Failed to load rating image', { value: imageVal, label: labelVal, err })
-          return null
+      const overrideEntry = getRatingsPreviewOverrideEntry(cfg, imageVal, labelVal)
+      if (overrideEntry) {
+        try {
+          img = await loadImage(buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value))
+        } catch (err) {
+          console.warn('[OverlayBoards] Failed to load rating override image', {
+            value: imageVal,
+            label: labelVal,
+            override: overrideEntry,
+            err
+          })
+        }
+      }
+      if (!img) {
+        const urls = getRatingSampleImageUrls(imageVal, labelVal, sample)
+        if (!urls.length) return null
+        try {
+          img = await loadImageWithFallback(urls)
+        } catch (err) {
+          if (imageKey === 'star' || imageKey === 'plex_star') {
+            useStarFallback = true
+          } else {
+            console.warn('[OverlayBoards] Failed to load rating image', { value: imageVal, label: labelVal, err })
+            return null
+          }
         }
       }
       const overrideFont = (fontOverride || '').toString().trim()
@@ -5480,10 +5548,26 @@ const OverlayHandler = {
         if (isEmpty(ratingVal) || isEmpty(imageVal)) continue
         const label = imageSelect?.selectedOptions?.[0]?.textContent?.trim()
         const sample = getRatingSampleValue(ratingVal, imageVal, label)
-        const urls = getRatingSampleImageUrls(imageVal, label, sample)
-        if (!urls.length) continue
         try {
-          const img = await loadImageWithFallback(urls)
+          const overrideEntry = getRatingsPreviewOverrideEntry(cfg, imageVal, label)
+          let img = null
+          if (overrideEntry) {
+            try {
+              img = await loadImage(buildOverlaySourcePreviewUrl(overrideEntry.sourceType, overrideEntry.value))
+            } catch (overrideError) {
+              console.warn('[OverlayBoards] Failed to load rating override image', {
+                value: imageVal,
+                label,
+                override: overrideEntry,
+                err: overrideError
+              })
+            }
+          }
+          if (!img) {
+            const urls = getRatingSampleImageUrls(imageVal, label, sample)
+            if (!urls.length) continue
+            img = await loadImageWithFallback(urls)
+          }
           const text = sample.text || 'NR'
           const hOffset = Number(getSlotValue(`${slot.ratingKey}_horizontal_offset`, 0))
           const vOffset = Number(getSlotValue(`${slot.ratingKey}_vertical_offset`, 0))
@@ -8090,10 +8174,7 @@ const OverlayHandler = {
             applyRatingFontDefaults(cfg)
             updateRatingSyncStatus(cfg)
             renderRatingMappingModal(cfg)
-            buildBackdropDataUrl(cfg).then(dataUrl => {
-              layer.src = dataUrl
-              applyPosition(cfg)
-            })
+            refreshRatingsOverlayPreview(cfg)
           }
           const scheduleRatingsUpdate = (event, forceSync = false, preserveExistingSources = false) => {
             if (!cfg.container) return

@@ -127,6 +127,42 @@ def test_prepare_import_payload_accepts_resolution_source_override_template_vari
     assert any("libraries.Movies.overlay_files[0].template_variables.repo_openmatte" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_ratings_source_override_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "ratings",
+                            "template_variables": {
+                                "file_rt_tomato": "config/overlays/ratings/rt_tomato.png",
+                                "url_imdb": "https://example.com/imdb.png",
+                                "git_tmdb": "defaults/overlays/images/ratings/tmdb.png",
+                                "repo_star": "overlays/ratings/star.png",
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_ratings"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_ratings[file_rt_tomato]"] == "config/overlays/ratings/rt_tomato.png"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_ratings[url_imdb]"] == "https://example.com/imdb.png"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_ratings[git_tmdb]"] == "defaults/overlays/images/ratings/tmdb.png"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_ratings[repo_star]"] == "overlays/ratings/star.png"
+    assert any("libraries.Movies.overlay_files[0].template_variables.file_rt_tomato" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.url_imdb" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.git_tmdb" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.repo_star" in line for line in report.lines)
+
+
 def test_prepare_import_payload_accepts_audio_codec_template_variables():
     payload, report = importer.prepare_import_payload(
         {

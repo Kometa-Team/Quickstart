@@ -603,6 +603,23 @@
         "label": "Ratings",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in rating image for a specific rating image key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_select_options",
+          "key_fields": [
+            "rating1_image",
+            "rating2_image",
+            "rating3_image"
+          ],
+          "key_placeholder": "Rating image key"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 0,
@@ -1059,6 +1076,22 @@
         "label": "Ratings",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in rating image for a specific rating image key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_select_options",
+          "key_fields": [
+            "rating1_image",
+            "rating2_image"
+          ],
+          "key_placeholder": "Rating image key"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 0,
