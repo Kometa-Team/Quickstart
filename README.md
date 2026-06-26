@@ -100,6 +100,8 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 ### Live Previews & Assets
 - **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
 - **Custom Artwork Uploads:** Drag-and-drop or fetch library images from a URL so you can see what the overlays look like on your favorite poster.
+- **Overlay Image Source Overrides:** Supported overlay families can override built-in badge images per key using `file`, `url`, `git`, or `repo` sources, validate those images before save, preview the result live on the canvas, and optionally convert remote sources into managed local files with `Make Local`.
+- **Managed Overlay Cleanup:** When a managed override image is replaced or removed, Quickstart cleans up the old managed file and can sweep unreferenced managed override images to avoid config bloat.
 
 ![Overlay Preview Canvas](static/images/readme/overlay-preview.png)
 
