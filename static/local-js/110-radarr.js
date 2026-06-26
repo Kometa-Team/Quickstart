@@ -1,17 +1,6 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('radarr_validated')
-  }
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('radarr_validated_at')
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
 
 function setStatusMessageLines (element, messages) {
   if (!element) return
@@ -63,14 +52,14 @@ $(document).ready(function () {
     document.getElementById('radarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('radarr_validated')
   })
 
   document.getElementById('radarr_url').addEventListener('input', function () {
     document.getElementById('radarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('radarr_validated')
   })
 
   // Attach event listeners for validation and toggle functionality
@@ -190,7 +179,7 @@ function validateRadarrApi () {
       if (data.valid) {
         document.getElementById('radarr_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('radarr_validated')
         statusMessage.textContent = 'Radarr API key is valid.'
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
@@ -201,7 +190,7 @@ function validateRadarrApi () {
       } else {
         document.getElementById('radarr_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('radarr_validated')
         console.log('Error validating Radarr', data.message)
         statusMessage.textContent = 'Failed to validate Radarr server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
@@ -216,7 +205,7 @@ function validateRadarrApi () {
       statusMessage.style.display = 'block'
       document.getElementById('radarr_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('radarr_validated')
     })
 }
 

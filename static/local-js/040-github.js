@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('github_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('github_validated_at')
 
@@ -37,7 +26,7 @@ $(document).ready(function () {
     document.getElementById('github_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('github_validated')
   })
 })
 
@@ -77,13 +66,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
         document.getElementById('validateButton').disabled = true
         document.getElementById('github_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('github_validated')
       } else {
         statusMessage.textContent = data.message
         statusMessage.style.color = '#ea868f'
         document.getElementById('github_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('github_validated')
       }
       statusMessage.style.display = 'block'
     })
@@ -95,7 +84,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.display = 'block'
       document.getElementById('github_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('github_validated')
     })
 })
 

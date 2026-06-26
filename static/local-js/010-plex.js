@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('plex_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 $(document).ready(function () {
   const validateButton = document.getElementById('validateButton')
@@ -44,14 +33,14 @@ $(document).ready(function () {
     validateButton.disabled = false
     document.getElementById('plex_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
-    refreshValidationCallout()
+    refreshValidationCallout('plex_validated')
   })
 
   plexUrlInput.addEventListener('input', function () {
     validateButton.disabled = false
     document.getElementById('plex_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
-    refreshValidationCallout()
+    refreshValidationCallout('plex_validated')
   })
 })
 
@@ -122,7 +111,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
 
         document.getElementById('plex_validated').value = 'true'
         if (validatedAtField) validatedAtField.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('plex_validated')
 
         statusMessage.textContent = 'Plex server validated successfully!'
         statusMessage.style.color = '#75b798'
@@ -145,7 +134,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
         validateButton.disabled = false
         document.getElementById('plex_validated').value = false
         if (validatedAtField) validatedAtField.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('plex_validated')
         statusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
       }
@@ -160,6 +149,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.display = 'block'
       const validatedAtInput = document.getElementById('plex_validated_at')
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('plex_validated')
     })
 })

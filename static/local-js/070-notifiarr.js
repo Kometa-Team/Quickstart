@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('notifiarr_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('notifiarr_validated_at')
 
@@ -38,7 +27,7 @@ $(document).ready(function () {
     document.getElementById('notifiarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('notifiarr_validated')
   })
 })
 
@@ -82,14 +71,14 @@ document.getElementById('validateButton').addEventListener('click', function () 
     if (isValid) {
       document.getElementById('notifiarr_validated').value = 'true'
       if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-      refreshValidationCallout()
+      refreshValidationCallout('notifiarr_validated')
       statusMessage.textContent = 'Notifiarr API key is valid.'
       statusMessage.style.color = '#75b798'
       validateButton.disabled = true
     } else {
       document.getElementById('notifiarr_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('notifiarr_validated')
       statusMessage.textContent = 'Notifiarr API key is invalid.'
       statusMessage.style.color = '#ea868f'
       validateButton.disabled = false

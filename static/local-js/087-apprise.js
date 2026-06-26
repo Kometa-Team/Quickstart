@@ -1,8 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('apprise_validated')
-  }
-}
+import { refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('apprise_validated_at')
 
@@ -17,7 +13,7 @@ $(document).ready(function () {
     document.getElementById('apprise_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('apprise_validated')
   })
 })
 
@@ -49,13 +45,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         document.getElementById('apprise_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('apprise_validated')
         statusMessage.textContent = 'Apprise location validated successfully!'
         statusMessage.style.color = '#75b798'
       } else {
         document.getElementById('apprise_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('apprise_validated')
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -67,7 +63,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       console.error('Error validating Apprise location:', error)
       document.getElementById('apprise_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('apprise_validated')
       statusMessage.textContent = 'An error occurred while validating the Apprise location.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'

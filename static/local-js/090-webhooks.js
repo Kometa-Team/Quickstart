@@ -1,8 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('webhooks_validated')
-  }
-}
+import { refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedWebhooks = {}
 const validatedAtInput = document.getElementById('webhooks_validated_at')
@@ -29,7 +25,7 @@ function hasConfiguredWebhooks () {
 
 function setWebhookValidated (state, webhookType = null) {
   document.getElementById('webhooks_validated').value = state ? 'true' : 'false'
-  refreshValidationCallout()
+  refreshValidationCallout('webhooks_validated')
 
   if (webhookType) {
     // Enable the validate button if the URL changes and validation is false

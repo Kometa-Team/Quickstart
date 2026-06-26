@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('ntfy_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('ntfy_validated_at')
 
@@ -40,21 +29,21 @@ $(document).ready(function () {
     document.getElementById('ntfy_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('ntfy_validated')
   })
 
   document.getElementById('ntfy_url').addEventListener('input', function () {
     document.getElementById('ntfy_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('ntfy_validated')
   })
 
   document.getElementById('ntfy_topic').addEventListener('input', function () {
     document.getElementById('ntfy_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('ntfy_validated')
   })
 })
 
@@ -99,14 +88,14 @@ document.getElementById('validateButton').addEventListener('click', function () 
         hideSpinner('validate')
         document.getElementById('ntfy_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('ntfy_validated')
         statusMessage.textContent = 'ntfy credentials validated successfully! Ensure you are subscribed to topic to see test message.'
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')
         document.getElementById('ntfy_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('ntfy_validated')
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -120,6 +109,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('ntfy_validated')
     })
 })

@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('trakt_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('trakt_validated_at')
 
@@ -54,7 +43,7 @@ $(document).ready(function () {
         if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
         if (checkTokenButton) checkTokenButton.disabled = true
-        refreshValidationCallout()
+        refreshValidationCallout('trakt_validated')
       })
     } else {
       console.warn(`Warning: Element with ID '${field}' not found.`)
@@ -76,7 +65,7 @@ function updateTraktURL () {
     document.getElementById('trakt_validated').value = 'false'
     const validatedAtField = document.getElementById('trakt_validated_at')
     if (validatedAtField) validatedAtField.value = ''
-    refreshValidationCallout()
+    refreshValidationCallout('trakt_validated')
     myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + traktClientId + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
   }
   console.log('updateTraktURL: ' + myURL)
@@ -148,7 +137,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('trakt_validated')
         statusMessage.textContent = 'Trakt credentials validated successfully!'
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.trakt_authorization_access_token
@@ -167,7 +156,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('trakt_validated')
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -180,7 +169,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('trakt_validated')
     })
 })
 
@@ -233,13 +222,13 @@ if (traktCheckButton) {
           }
           document.getElementById('trakt_validated').value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-          refreshValidationCallout()
+          refreshValidationCallout('trakt_validated')
           statusMessage.textContent = 'Trakt token is valid.'
           statusMessage.style.color = '#75b798'
         } else {
           document.getElementById('trakt_validated').value = 'false'
           if (validatedAtInput) validatedAtInput.value = ''
-          refreshValidationCallout()
+          refreshValidationCallout('trakt_validated')
           statusMessage.textContent = data.error || 'Trakt token is invalid.'
           statusMessage.style.color = '#ea868f'
         }
@@ -252,7 +241,7 @@ if (traktCheckButton) {
         statusMessage.style.color = '#ea868f'
         statusMessage.style.display = 'block'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('trakt_validated')
       })
   })
 }

@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('mdblist_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('mdblist_apikey')
@@ -37,7 +26,7 @@ $(document).ready(function () {
     document.getElementById('mdblist_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('mdblist_validated')
   })
 
   document.getElementById('validateButton').addEventListener('click', function () {
@@ -67,7 +56,7 @@ $(document).ready(function () {
           hideSpinner('validate')
           document.getElementById('mdblist_validated').value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-          refreshValidationCallout()
+          refreshValidationCallout('mdblist_validated')
           statusMessage.textContent = 'API key is valid!'
           statusMessage.style.color = '#75b798'
           validateButton.disabled = true
@@ -75,7 +64,7 @@ $(document).ready(function () {
           console.log('NOT valid')
           document.getElementById('mdblist_validated').value = 'false'
           if (validatedAtInput) validatedAtInput.value = ''
-          refreshValidationCallout()
+          refreshValidationCallout('mdblist_validated')
           statusMessage.textContent = 'Failed to validate MDBList server. Please check your API Key.'
           statusMessage.style.color = '#ea868f'
         }
@@ -87,7 +76,7 @@ $(document).ready(function () {
         statusMessage.style.color = '#ea868f'
         statusMessage.style.display = 'block'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('mdblist_validated')
       })
       .finally(() => {
         hideSpinner('validate')

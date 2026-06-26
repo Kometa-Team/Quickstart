@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('omdb_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('omdb_validated_at')
 
@@ -37,7 +26,7 @@ $(document).ready(function () {
     document.getElementById('omdb_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('omdb_validated')
   })
 })
 
@@ -74,7 +63,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
         hideSpinner('validate')
         document.getElementById('omdb_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('omdb_validated')
         statusMessage.textContent = 'OMDb API key is valid.'
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
@@ -84,7 +73,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
         if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = 'OMDb API key is invalid.'
         statusMessage.style.color = '#ea868f'
-        refreshValidationCallout()
+        refreshValidationCallout('omdb_validated')
       }
       statusMessage.style.display = 'block'
     })
@@ -96,7 +85,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.display = 'block'
       document.getElementById('omdb_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('omdb_validated')
     })
 })
 
