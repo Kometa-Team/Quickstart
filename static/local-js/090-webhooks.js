@@ -1,4 +1,4 @@
-/* global $ */
+/* global $, showSpinner, hideSpinner */
 
 function refreshValidationCallout () {
   if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
@@ -143,7 +143,7 @@ $(document).ready(function () {
   })
 })
 
-/* eslint-disable no-unused-vars, no-undef */
+/* eslint-disable no-unused-vars */
 function validateWebhook (webhookType) {
   const inputGroup = $('#webhooks_' + webhookType + '_custom').find('.input-group')
   const webhookUrl = inputGroup.find('input.custom-webhook-url').val()
@@ -192,4 +192,4 @@ function validateWebhook (webhookType) {
       updateValidationState()
     })
 }
-/* eslint-enable no-unused-vars, no-undef */
+/* eslint-enable no-unused-vars */

@@ -75,17 +75,17 @@ document.getElementById('mal_get_localhost_url').addEventListener('click', funct
   }
 })
 
-/* eslint-disable no-unused-vars, camelcase */
+/* eslint-disable no-unused-vars */
 function updateMALTargetURL () {
-  const mal_client_id = document.getElementById('mal_client_id').value
-  const code_verifier = document.getElementById('mal_code_verifier').value
+  const malClientId = document.getElementById('mal_client_id').value
+  const codeVerifier = document.getElementById('mal_code_verifier').value
   let myURL = ''
-  if (mal_client_id.length === 32) {
+  if (malClientId.length === 32) {
     document.getElementById('mal_validated').value = 'false'
-    const validatedAtInput = document.getElementById('mal_validated_at')
-    if (validatedAtInput) validatedAtInput.value = ''
+    const validatedAtField = document.getElementById('mal_validated_at')
+    if (validatedAtField) validatedAtField.value = ''
     refreshValidationCallout()
-    myURL = 'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=' + mal_client_id + '&code_challenge=' + code_verifier
+    myURL = 'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=' + malClientId + '&code_challenge=' + codeVerifier
   }
   console.log('updateMALTargetURL: ' + myURL)
   document.getElementById('mal_url').value = myURL
@@ -104,7 +104,7 @@ function checkURLField () {
   const localURLButton = document.getElementById('validate_mal_url')
   localURLButton.disabled = (localURL === '')
 }
-/* eslint-enable no-unused-vars, camelcase */
+/* eslint-enable no-unused-vars */
 
 function enableLocalURLButton () {
   const url = document.getElementById('mal_url').value
@@ -112,12 +112,11 @@ function enableLocalURLButton () {
   urlButton.disabled = url === ''
 }
 
-/* eslint-disable camelcase */
 window.onload = function () {
-  const mal_url_text = document.getElementById('mal_url')
+  const malUrlText = document.getElementById('mal_url')
   document.getElementById('validate_mal_url').disabled = true
   document.getElementById('validate_mal_url').disabled = true
-  enableLocalURLButton(mal_url_text)
+  enableLocalURLButton(malUrlText)
 }
 
 document.getElementById('validate_mal_url').addEventListener('click', function () {
@@ -185,7 +184,6 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
       refreshValidationCallout()
     })
 })
-/* eslint-enable camelcase */
 
 const malCheckButton = document.getElementById('mal_check_token')
 if (malCheckButton) {

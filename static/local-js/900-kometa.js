@@ -565,7 +565,7 @@ $(document).ready(function () {
           const pre = card ? card.querySelector('.header-style-card-preview') : null
           if (pre) pre.textContent = entry.preview || ''
         })
-      } catch (err) {
+      } catch {
         chunk.forEach(font => {
           const card = headerGrid.querySelector(`.header-style-card[data-font="${font}"]`)
           const pre = card ? card.querySelector('.header-style-card-preview') : null
@@ -1187,7 +1187,7 @@ $(document).ready(function () {
           ))
 
           $('#run-command-output').text('')
-          try { buildCommand() } catch (_) { }
+          try { buildCommand() } catch { }
 
           if (allValid) {
             KOMETA_VALIDATED = true
@@ -1429,7 +1429,7 @@ $(document).ready(function () {
       } else {
         $kometaBranchOverride.val('')
       }
-    } catch (_) {
+    } catch {
       $kometaBranchOverride.val('')
     }
   }
@@ -1439,7 +1439,7 @@ $(document).ready(function () {
       const value = getKometaBranchOverride()
       if (value) window.localStorage.setItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY, value)
       else window.localStorage.removeItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY)
-    } catch (_) {}
+    } catch {}
   }
 
   function syncKometaSourceStatus (options = {}) {
@@ -1874,7 +1874,7 @@ $(document).ready(function () {
       .then(data => {
         if (data.error) {
           clearActiveRunCommandState()
-          try { buildCommand() } catch (_) {}
+          try { buildCommand() } catch {}
           $('#run-output-log').text(`❌ ${data.error}`)
           $('#run-now').prop('disabled', false)
           $('#run-now-label').text('Run Now')
@@ -1908,7 +1908,7 @@ $(document).ready(function () {
       })
       .catch(() => {
         clearActiveRunCommandState()
-        try { buildCommand() } catch (_) {}
+        try { buildCommand() } catch {}
         $('#run-output-log').append('\n⚠️ Failed to start Kometa.')
         $('#run-now').prop('disabled', false)
         $('#run-now-label').text('Run Now')
@@ -1944,7 +1944,7 @@ $(document).ready(function () {
     clearRunCommandPlaceholderState()
     revealRunCommandSection()
     $('#run-now').html('<i class="bi bi-play-fill me-1"></i> Run Now')
-    try { buildCommand() } catch (_) {}
+    try { buildCommand() } catch {}
     updateRunNowState()
   }
   function startPollingIfNeeded () {
@@ -2150,7 +2150,7 @@ $(document).ready(function () {
 
         const durationCells = phasesToShow.map(phase => {
           if (phase.key === 'playlists') {
-            const total = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
+            const playlistTotal = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
             const running = Boolean(payload.playlist_running)
             const elapsed = typeof payload.playlist_elapsed_seconds === 'number' ? payload.playlist_elapsed_seconds : null
             const detected = Boolean(payload.playlists_detected)
@@ -2158,8 +2158,8 @@ $(document).ready(function () {
               const label = elapsed != null ? formatRunSeconds(elapsed) : 'Running'
               return `<td class="text-end"><span class="badge text-bg-primary">${label || 'Running'}</span></td>`
             }
-            if (total != null && (total > 0 || detected)) {
-              return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(total) || '0s'}</span></td>`
+            if (playlistTotal != null && (playlistTotal > 0 || detected)) {
+              return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(playlistTotal) || '0s'}</span></td>`
             }
             if (payload.run_finished) {
               return '<td class="text-end"><span class="badge text-bg-secondary">Not Configured</span></td>'
@@ -2656,7 +2656,7 @@ $(document).ready(function () {
         const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         re = new RegExp(escaped, 'i')
       }
-    } catch (e) {
+    } catch {
       return text
     }
 
@@ -3780,7 +3780,7 @@ $(document).ready(function () {
         stopProgressPolling()
         clearRunProgress(true)
         clearActiveRunCommandState()
-        try { buildCommand() } catch (_) {}
+        try { buildCommand() } catch {}
 
         $runNow.html('<i class="bi bi-play-fill me-1"></i> Run Now')
         $stopNow.addClass('d-none').prop('disabled', false)

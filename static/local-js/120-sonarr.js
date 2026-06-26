@@ -89,10 +89,9 @@ $(document).ready(function () {
   })
 })
 
-/* eslint-disable camelcase */
 function validateSonarrApi () {
-  const sonarr_url = document.getElementById('sonarr_url').value
-  const sonarr_token = document.getElementById('sonarr_token').value
+  const sonarrUrl = document.getElementById('sonarr_url').value
+  const sonarrToken = document.getElementById('sonarr_token').value
   const statusMessage = document.getElementById('statusMessage')
 
   showSpinner('validate')
@@ -102,7 +101,7 @@ function validateSonarrApi () {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ sonarr_url, sonarr_token })
+    body: JSON.stringify({ sonarr_url: sonarrUrl, sonarr_token: sonarrToken })
   })
     .then((response) => response.json())
     .then((data) => {
@@ -144,15 +143,15 @@ function validateSonarrApi () {
 
 function fetchDropdownData () {
   // Fetch the stored dropdown data and populate the dropdowns
-  const sonarr_url = document.getElementById('sonarr_url').value
-  const sonarr_token = document.getElementById('sonarr_token').value
+  const sonarrUrl = document.getElementById('sonarr_url').value
+  const sonarrToken = document.getElementById('sonarr_token').value
 
   fetch('/validate_sonarr', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ sonarr_url, sonarr_token })
+    body: JSON.stringify({ sonarr_url: sonarrUrl, sonarr_token: sonarrToken })
   })
     .then((response) => response.json())
     .then((data) => {
@@ -164,7 +163,6 @@ function fetchDropdownData () {
       console.error('Error fetching Sonarr dropdown data:', error)
     })
 }
-/* eslint-enable camelcase */
 function populateDropdown (elementId, data, valueField, textField, selectedValue = '') {
   const dropdown = document.getElementById(elementId)
   resetDropdown(dropdown, 'Select an option')

@@ -59,14 +59,13 @@ document.getElementById('toggleTokenVisibility').addEventListener('click', funct
   setToggleButtonIcon(this, currentType === 'password')
 })
 
-/* eslint-disable camelcase */
 // Event listener for the validate button
 document.getElementById('validateButton').addEventListener('click', function () {
-  const gotify_url = document.getElementById('gotify_url').value
-  const gotify_token = document.getElementById('gotify_token').value
+  const gotifyUrl = document.getElementById('gotify_url').value
+  const gotifyToken = document.getElementById('gotify_token').value
   const statusMessage = document.getElementById('statusMessage')
 
-  if (!gotify_url || !gotify_token) {
+  if (!gotifyUrl || !gotifyToken) {
     statusMessage.textContent = 'Please enter both Gotify URL and Token.'
     statusMessage.style.color = '#ea868f'
     statusMessage.style.display = 'block'
@@ -81,8 +80,8 @@ document.getElementById('validateButton').addEventListener('click', function () 
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      gotify_url,
-      gotify_token
+      gotify_url: gotifyUrl,
+      gotify_token: gotifyToken
     })
   })
     .then((response) => response.json())
@@ -115,4 +114,3 @@ document.getElementById('validateButton').addEventListener('click', function () 
       refreshValidationCallout()
     })
 })
-/* eslint-enable camelcase */

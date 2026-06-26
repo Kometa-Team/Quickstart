@@ -2334,12 +2334,12 @@ document.addEventListener('DOMContentLoaded', function () {
     elapsedTimer = null
   }
 
-  function storeJob (jobId, startedAt) {
+  function storeJob (jobId, startedAtMs) {
     try {
       localStorage.setItem(jobStorageKey, jobId)
-      const ts = Number.isFinite(startedAt) ? startedAt : Date.now()
+      const ts = Number.isFinite(startedAtMs) ? startedAtMs : Date.now()
       localStorage.setItem(jobStartedKey, String(ts))
-    } catch (e) {
+    } catch {
       // ignore storage errors
     }
   }
@@ -2350,7 +2350,7 @@ document.addEventListener('DOMContentLoaded', function () {
         jobId: localStorage.getItem(jobStorageKey),
         startedAt: Number(localStorage.getItem(jobStartedKey))
       }
-    } catch (e) {
+    } catch {
       return { jobId: null, startedAt: NaN }
     }
   }
@@ -2359,7 +2359,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       localStorage.removeItem(jobStorageKey)
       localStorage.removeItem(jobStartedKey)
-    } catch (e) {
+    } catch {
       // ignore storage errors
     }
   }
@@ -2735,8 +2735,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }).then(r => r.json())
         if (!startRes.success) throw new Error(startRes.message || 'Failed to start')
         jobId = startRes.job_id
-        const startedAt = Number(startRes.started_at)
-        storeJob(jobId, Number.isFinite(startedAt) ? startedAt * 1000 : undefined)
+        const jobStartedAt = Number(startRes.started_at)
+        storeJob(jobId, Number.isFinite(jobStartedAt) ? jobStartedAt * 1000 : undefined)
       } catch (err) {
         running = false
         stopElapsedTimer()

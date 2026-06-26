@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return parsed
           .map(normalizeMetadataFileEntry)
           .filter(Boolean)
-      } catch (_error) {
+      } catch {
         return []
       }
     }
@@ -937,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             syncMetadataFilesEditor(editor, false)
           }
-        } catch (_error) {
+        } catch {
           setMetadataFileStatus(row, 'error', 'Validation request failed.')
         } finally {
           if (row.dataset.metadataFileState !== 'success' && row.dataset.metadataFileDependency !== 'repo-missing') {
@@ -1034,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             syncCollectionFilesEditor(editor, false)
           }
-        } catch (_error) {
+        } catch {
           setCollectionFileStatus(row, 'error', 'Validation request failed.')
         } finally {
           if (row.dataset.collectionFileState !== 'success' && row.dataset.collectionFileDependency !== 'repo-missing') {
@@ -1475,7 +1475,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             syncOverlayFilesEditor(editor, false)
           }
-        } catch (_error) {
+        } catch {
           setOverlayFileStatus(row, 'error', 'Validation request failed.')
         } finally {
           if (row.dataset.overlayFileState !== 'success' && row.dataset.overlayFileDependency !== 'repo-missing') {
@@ -1726,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return true
               })
           }
-        } catch (_error) {
+        } catch {
           options = []
         }
 
@@ -1740,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', function () {
               weight: String(weight ?? '').trim()
             })).filter(row => row.key)
           }
-        } catch (_error) {
+        } catch {
           state = []
         }
 
@@ -2771,7 +2771,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!/^[\p{L}\p{N} .,&'’:+\-/()!]+$/u.test(normalized)) {
               return { valid: false, message: 'Use letters, numbers, spaces, or common punctuation only.' }
             }
-          } catch (_error) {
+          } catch {
             if (!/[A-Za-z0-9]/.test(normalized)) {
               return { valid: false, message: 'Enter a text value with letters or numbers.' }
             }
@@ -3020,7 +3020,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (Array.isArray(parsed)) {
               return parsed.map(item => String(item).trim()).filter(Boolean)
             }
-          } catch (e) {
+          } catch {
             // fall through to treat as single value
           }
           return [raw]
@@ -3357,7 +3357,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
               return parsed
             }
-          } catch (e) {
+          } catch {
             // fall through to empty mapping
           }
           return {}
@@ -3887,7 +3887,7 @@ document.addEventListener('DOMContentLoaded', function () {
       let persisted = null
       try {
         persisted = window.localStorage ? window.localStorage.getItem(advancedVisibilityStorageKey) : null
-      } catch (_error) {}
+      } catch {}
       const initialVisible = persisted === 'true' || (persisted !== 'false' && hasConfiguredAdvancedValues(card))
       setAdvancedVisibility(card, initialVisible)
 
@@ -3896,7 +3896,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setAdvancedVisibility(card, nextVisible)
         try {
           if (window.localStorage) window.localStorage.setItem(advancedVisibilityStorageKey, nextVisible ? 'true' : 'false')
-        } catch (_error) {}
+        } catch {}
       })
 
       card.dataset.advancedToggleBound = 'true'
@@ -4924,7 +4924,7 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         values = JSON.parse(hiddenInput.value || '[]')
         console.log('[DEBUG] Parsed hidden input from', hiddenInput.id, values)
-      } catch (e) {
+      } catch {
         console.warn('[WARN] Could not parse JSON from hidden input', hiddenInput.id, hiddenInput.value)
       }
 
@@ -5004,7 +5004,7 @@ document.addEventListener('DOMContentLoaded', function () {
           let current = []
           try {
             current = JSON.parse(hiddenInput.value || '[]')
-          } catch (e) {
+          } catch {
             console.warn('[WARN] Could not parse hidden input value:', hiddenInput.value)
           }
 
@@ -5094,17 +5094,17 @@ function setupCustomStringListHandlers (prefix, scope) {
         li.className = 'list-group-item d-flex justify-content-between align-items-center'
         const textSpan = document.createElement('span')
         textSpan.textContent = value
-        const button = document.createElement('button')
-        button.type = 'button'
-        button.className = 'btn btn-sm btn-danger'
-        button.setAttribute('aria-label', 'Remove')
+        const removeButton = document.createElement('button')
+        removeButton.type = 'button'
+        removeButton.className = 'btn btn-sm btn-danger'
+        removeButton.setAttribute('aria-label', 'Remove')
         const icon = document.createElement('i')
         icon.className = 'bi bi-x-lg'
-        button.appendChild(icon)
-        li.append(textSpan, button)
+        removeButton.appendChild(icon)
+        li.append(textSpan, removeButton)
         list.appendChild(li)
 
-        button.addEventListener('click', function () {
+        removeButton.addEventListener('click', function () {
           const updated = values.filter(item => item !== value)
           hidden.value = JSON.stringify(updated)
           renderCustomList(updated) // 🔁 Rerender the new list and update the array
@@ -5116,26 +5116,26 @@ function setupCustomStringListHandlers (prefix, scope) {
     let current = []
     try {
       current = JSON.parse(hidden.value || '[]')
-    } catch (e) {
+    } catch {
       console.warn('[WARN] Could not parse hidden input for', prefix, hidden.value)
     }
     renderCustomList(current)
 
     // Add button logic
     button.addEventListener('click', function () {
-      let current = []
+      let currentValues = []
       try {
-        current = JSON.parse(hidden.value || '[]')
-      } catch (e) {
+        currentValues = JSON.parse(hidden.value || '[]')
+      } catch {
         console.warn('[WARN] Could not parse hidden input for', prefix, hidden.value)
       }
 
       const value = input.value.trim()
-      if (!value || current.includes(value)) return
+      if (!value || currentValues.includes(value)) return
 
-      current.push(value)
-      hidden.value = JSON.stringify(current)
-      renderCustomList(current)
+      currentValues.push(value)
+      hidden.value = JSON.stringify(currentValues)
+      renderCustomList(currentValues)
       input.value = ''
     })
 
@@ -5184,7 +5184,7 @@ function setupMappingListHandlers (prefix, scope) {
     let current = {}
     try {
       current = JSON.parse(hidden.value || '{}') || {}
-    } catch (e) {
+    } catch {
       console.warn('[WARN] Could not parse hidden input for', prefix, hidden.value)
       current = {}
     }

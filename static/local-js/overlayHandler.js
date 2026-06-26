@@ -418,7 +418,7 @@ const OverlayHandler = {
               urlObj.pathname = parts.join('/')
               return urlObj.toString()
             }
-          } catch (e) {
+          } catch {
             // Fallback simple replace
             return cfg.image.replace(/c(\.[^.]+)$/i, '$1')
           }
@@ -1766,11 +1766,11 @@ const OverlayHandler = {
         const parts = String(url.pathname || '').split('/')
         const rawName = parts[parts.length - 1] || ''
         return decodeURIComponent(rawName.replace(/\.[^.]+$/, '')).trim()
-      } catch (error) {
+      } catch {
         const rawName = imageUrl.split('/').pop() || ''
         try {
           return decodeURIComponent(rawName.replace(/\.[^.]+$/, '')).trim()
-        } catch (decodeError) {
+        } catch {
           return rawName.replace(/\.[^.]+$/, '').trim()
         }
       }
@@ -1814,7 +1814,7 @@ const OverlayHandler = {
             try {
               const payload = await response.json()
               message = payload?.message || payload?.error || message
-            } catch (err) {
+            } catch {
             }
             throw new Error(message)
           }
@@ -3606,7 +3606,7 @@ const OverlayHandler = {
             sweep: true
           })
         }
-      } catch (error) {
+      } catch {
         row._overlaySourceValidationPayload = null
         setOverlaySourceOverrideRowState(row, 'invalid', 'Failed to save overlay image locally.')
         syncOverlaySourceOverrideRows(cfg, config, section)
@@ -4305,9 +4305,9 @@ const OverlayHandler = {
       return names.map(name => `${RATINGS_IMAGE_BASE}${encodeURIComponent(`${name}.png`)}`)
     }
 
-    const enhanceRatingImageSelects = (scope) => {
-      const root = scope || document
-      root.querySelectorAll('select[data-rating-image-select="true"]').forEach(select => {
+    const enhanceRatingImageSelects = (ratingScope) => {
+      const ratingRoot = ratingScope || document
+      ratingRoot.querySelectorAll('select[data-rating-image-select="true"]').forEach(select => {
         if (select.dataset.ratingImageEnhanced) return
         select.dataset.ratingImageEnhanced = 'true'
 
@@ -4808,7 +4808,7 @@ const OverlayHandler = {
           const pickedLabels = new Set(
             typeMappings
               .map(entry => entry.toggleLabel)
-              .filter(label => label && label !== '—' && label !== 'Pick a source')
+              .filter(toggleLabel => toggleLabel && toggleLabel !== '—' && toggleLabel !== 'Pick a source')
               .map(normalizeLabel)
           )
           const pillJumpMap = {
@@ -5995,7 +5995,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
             // ignore JSON parse failure and keep HTTP message
           }
           throw new Error(message)
@@ -6025,7 +6025,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
             // ignore JSON parse failure and keep HTTP message
           }
           throw new Error(message)
@@ -6060,7 +6060,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
             // ignore JSON parse failure and keep HTTP message
           }
           throw new Error(message)
@@ -6095,7 +6095,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
           }
           throw new Error(message)
         }
@@ -6129,7 +6129,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
           }
           throw new Error(message)
         }
@@ -6163,7 +6163,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
           }
           throw new Error(message)
         }
@@ -6197,7 +6197,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
           }
           throw new Error(message)
         }
@@ -6232,7 +6232,7 @@ const OverlayHandler = {
           try {
             const errorPayload = await response.json()
             message = errorPayload?.message || errorPayload?.error || message
-          } catch (err) {
+          } catch {
           }
           throw new Error(message)
         }
@@ -6820,8 +6820,8 @@ const OverlayHandler = {
           }
 
           const { scaleX, scaleY } = getScale()
-          const layers = Array.from(canvas.querySelectorAll('.overlay-board-layer'))
-          for (const layer of layers) {
+          const layerNodes = Array.from(canvas.querySelectorAll('.overlay-board-layer'))
+          for (const layer of layerNodes) {
             const style = window.getComputedStyle(layer)
             if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') continue
             const src = layer.currentSrc || layer.src
@@ -8043,25 +8043,25 @@ const OverlayHandler = {
             })
           }
 
-          const templateName = cfg.container.dataset.overlayTemplate
+          const overlayTemplateName = cfg.container.dataset.overlayTemplate
           const textSelectors = [
-            `[name="${templateName}[text]"]`,
-            `[name="${templateName}[font]"]`,
-            `[name="${templateName}[font_size]"]`,
-            `[name="${templateName}[font_color]"]`,
-            `[name="${templateName}[stroke_width]"]`,
-            `[name="${templateName}[stroke_color]"]`
+            `[name="${overlayTemplateName}[text]"]`,
+            `[name="${overlayTemplateName}[font]"]`,
+            `[name="${overlayTemplateName}[font_size]"]`,
+            `[name="${overlayTemplateName}[font_color]"]`,
+            `[name="${overlayTemplateName}[stroke_width]"]`,
+            `[name="${overlayTemplateName}[stroke_color]"]`
           ]
           if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
             textSelectors.push(
-              `[name="${templateName}[back_align]"]`,
-              `[name="${templateName}[back_color]"]`,
-              `[name="${templateName}[back_height]"]`,
-              `[name="${templateName}[back_width]"]`,
-              `[name="${templateName}[back_line_color]"]`,
-              `[name="${templateName}[back_line_width]"]`,
-              `[name="${templateName}[back_padding]"]`,
-              `[name="${templateName}[back_radius]"]`
+              `[name="${overlayTemplateName}[back_align]"]`,
+              `[name="${overlayTemplateName}[back_color]"]`,
+              `[name="${overlayTemplateName}[back_height]"]`,
+              `[name="${overlayTemplateName}[back_width]"]`,
+              `[name="${overlayTemplateName}[back_line_color]"]`,
+              `[name="${overlayTemplateName}[back_line_width]"]`,
+              `[name="${overlayTemplateName}[back_padding]"]`,
+              `[name="${overlayTemplateName}[back_radius]"]`
             )
           }
           const inputs = cfg.container.querySelectorAll(textSelectors.join(', '))
@@ -8090,28 +8090,28 @@ const OverlayHandler = {
             })
           }
 
-          const templateName = cfg.container.dataset.overlayTemplate
+          const overlayTemplateName = cfg.container.dataset.overlayTemplate
           const statusSelectors = [
-            `[name="${templateName}[text_airing]"]`,
-            `[name="${templateName}[text_returning]"]`,
-            `[name="${templateName}[text_canceled]"]`,
-            `[name="${templateName}[text_ended]"]`,
-            `[name="${templateName}[font]"]`,
-            `[name="${templateName}[font_size]"]`,
-            `[name="${templateName}[font_color]"]`,
-            `[name="${templateName}[stroke_width]"]`,
-            `[name="${templateName}[stroke_color]"]`
+            `[name="${overlayTemplateName}[text_airing]"]`,
+            `[name="${overlayTemplateName}[text_returning]"]`,
+            `[name="${overlayTemplateName}[text_canceled]"]`,
+            `[name="${overlayTemplateName}[text_ended]"]`,
+            `[name="${overlayTemplateName}[font]"]`,
+            `[name="${overlayTemplateName}[font_size]"]`,
+            `[name="${overlayTemplateName}[font_color]"]`,
+            `[name="${overlayTemplateName}[stroke_width]"]`,
+            `[name="${overlayTemplateName}[stroke_color]"]`
           ]
           if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
             statusSelectors.push(
-              `[name="${templateName}[back_align]"]`,
-              `[name="${templateName}[back_color]"]`,
-              `[name="${templateName}[back_height]"]`,
-              `[name="${templateName}[back_width]"]`,
-              `[name="${templateName}[back_line_color]"]`,
-              `[name="${templateName}[back_line_width]"]`,
-              `[name="${templateName}[back_padding]"]`,
-              `[name="${templateName}[back_radius]"]`
+              `[name="${overlayTemplateName}[back_align]"]`,
+              `[name="${overlayTemplateName}[back_color]"]`,
+              `[name="${overlayTemplateName}[back_height]"]`,
+              `[name="${overlayTemplateName}[back_width]"]`,
+              `[name="${overlayTemplateName}[back_line_color]"]`,
+              `[name="${overlayTemplateName}[back_line_width]"]`,
+              `[name="${overlayTemplateName}[back_padding]"]`,
+              `[name="${overlayTemplateName}[back_radius]"]`
             )
           }
           const inputs = cfg.container.querySelectorAll(statusSelectors.join(', '))
@@ -8197,7 +8197,7 @@ const OverlayHandler = {
               runRatingsUpdate(null, doForce, doPreserve)
             })
           }
-          const templateName = cfg.container.dataset.overlayTemplate
+          const overlayTemplateName = cfg.container.dataset.overlayTemplate
           const ratingFontInputs = [
             getTemplateInput(cfg, 'rating1_font'),
             getTemplateInput(cfg, 'rating2_font'),
@@ -8214,35 +8214,35 @@ const OverlayHandler = {
             input.dataset.ratingFontWatch = 'true'
           })
           const ratingSelectors = [
-            `[name="${templateName}[rating1]"]`,
-            `[name="${templateName}[rating1_image]"]`,
-            `[name="${templateName}[rating1_font]"]`,
-            `[name="${templateName}[rating1_font_size]"]`,
-            `[name="${templateName}[rating1_font_color]"]`,
-            `[name="${templateName}[rating1_stroke_width]"]`,
-            `[name="${templateName}[rating1_stroke_color]"]`,
-            `[name="${templateName}[rating2]"]`,
-            `[name="${templateName}[rating2_image]"]`,
-            `[name="${templateName}[rating2_font]"]`,
-            `[name="${templateName}[rating2_font_size]"]`,
-            `[name="${templateName}[rating2_font_color]"]`,
-            `[name="${templateName}[rating2_stroke_width]"]`,
-            `[name="${templateName}[rating2_stroke_color]"]`,
-            `[name="${templateName}[rating3]"]`,
-            `[name="${templateName}[rating3_image]"]`,
-            `[name="${templateName}[rating3_font]"]`,
-            `[name="${templateName}[rating3_font_size]"]`,
-            `[name="${templateName}[rating3_font_color]"]`,
-            `[name="${templateName}[rating3_stroke_width]"]`,
-            `[name="${templateName}[rating3_stroke_color]"]`,
-            `[name="${templateName}[horizontal_position]"]`,
-            `[name="${templateName}[vertical_position]"]`,
-            `[name="${templateName}[rating_alignment]"]`,
-            `[name="${templateName}[back_width]"]`,
-            `[name="${templateName}[back_height]"]`,
-            `[name="${templateName}[back_padding]"]`,
-            `[name="${templateName}[addon_position]"]`,
-            `[name="${templateName}[addon_offset]"]`
+            `[name="${overlayTemplateName}[rating1]"]`,
+            `[name="${overlayTemplateName}[rating1_image]"]`,
+            `[name="${overlayTemplateName}[rating1_font]"]`,
+            `[name="${overlayTemplateName}[rating1_font_size]"]`,
+            `[name="${overlayTemplateName}[rating1_font_color]"]`,
+            `[name="${overlayTemplateName}[rating1_stroke_width]"]`,
+            `[name="${overlayTemplateName}[rating1_stroke_color]"]`,
+            `[name="${overlayTemplateName}[rating2]"]`,
+            `[name="${overlayTemplateName}[rating2_image]"]`,
+            `[name="${overlayTemplateName}[rating2_font]"]`,
+            `[name="${overlayTemplateName}[rating2_font_size]"]`,
+            `[name="${overlayTemplateName}[rating2_font_color]"]`,
+            `[name="${overlayTemplateName}[rating2_stroke_width]"]`,
+            `[name="${overlayTemplateName}[rating2_stroke_color]"]`,
+            `[name="${overlayTemplateName}[rating3]"]`,
+            `[name="${overlayTemplateName}[rating3_image]"]`,
+            `[name="${overlayTemplateName}[rating3_font]"]`,
+            `[name="${overlayTemplateName}[rating3_font_size]"]`,
+            `[name="${overlayTemplateName}[rating3_font_color]"]`,
+            `[name="${overlayTemplateName}[rating3_stroke_width]"]`,
+            `[name="${overlayTemplateName}[rating3_stroke_color]"]`,
+            `[name="${overlayTemplateName}[horizontal_position]"]`,
+            `[name="${overlayTemplateName}[vertical_position]"]`,
+            `[name="${overlayTemplateName}[rating_alignment]"]`,
+            `[name="${overlayTemplateName}[back_width]"]`,
+            `[name="${overlayTemplateName}[back_height]"]`,
+            `[name="${overlayTemplateName}[back_padding]"]`,
+            `[name="${overlayTemplateName}[addon_position]"]`,
+            `[name="${overlayTemplateName}[addon_offset]"]`
           ]
           const inputs = cfg.container.querySelectorAll(ratingSelectors.join(', '))
           inputs.forEach(input => {
@@ -8265,33 +8265,33 @@ const OverlayHandler = {
         }
 
         if (isFlagsOverlay(cfg) && layer && cfg.container) {
-          const templateName = cfg.container.dataset.overlayTemplate
+          const overlayTemplateName = cfg.container.dataset.overlayTemplate
           const refreshFlags = () => updateFlagsLayer(cfg, layer)
           const flagSelectors = [
-            `[name="${templateName}[style]"]`,
-            `[name="${templateName}[hide_text]"]`,
-            `[name="${templateName}[use_lowercase]"]`,
-            `[name="${templateName}[group_alignment]"]`,
-            `[name="${templateName}[offset]"]`,
-            `[name="${templateName}[font]"]`,
-            `[name="${templateName}[font_size]"]`,
-            `[name="${templateName}[font_color]"]`,
-            `[name="${templateName}[stroke_width]"]`,
-            `[name="${templateName}[stroke_color]"]`,
-            `[name="${templateName}[back_color]"]`,
-            `[name="${templateName}[back_height]"]`,
-            `[name="${templateName}[back_width]"]`,
-            `[name="${templateName}[back_line_color]"]`,
-            `[name="${templateName}[back_line_width]"]`,
-            `[name="${templateName}[back_padding]"]`,
-            `[name="${templateName}[back_radius]"]`
+            `[name="${overlayTemplateName}[style]"]`,
+            `[name="${overlayTemplateName}[hide_text]"]`,
+            `[name="${overlayTemplateName}[use_lowercase]"]`,
+            `[name="${overlayTemplateName}[group_alignment]"]`,
+            `[name="${overlayTemplateName}[offset]"]`,
+            `[name="${overlayTemplateName}[font]"]`,
+            `[name="${overlayTemplateName}[font_size]"]`,
+            `[name="${overlayTemplateName}[font_color]"]`,
+            `[name="${overlayTemplateName}[stroke_width]"]`,
+            `[name="${overlayTemplateName}[stroke_color]"]`,
+            `[name="${overlayTemplateName}[back_color]"]`,
+            `[name="${overlayTemplateName}[back_height]"]`,
+            `[name="${overlayTemplateName}[back_width]"]`,
+            `[name="${overlayTemplateName}[back_line_color]"]`,
+            `[name="${overlayTemplateName}[back_line_width]"]`,
+            `[name="${overlayTemplateName}[back_padding]"]`,
+            `[name="${overlayTemplateName}[back_radius]"]`
           ]
           const inputs = cfg.container.querySelectorAll(flagSelectors.join(', '))
           inputs.forEach(input => {
             input.addEventListener('input', refreshFlags)
             input.addEventListener('change', refreshFlags)
           })
-          const sizeInput = cfg.container.querySelector(`[name="${templateName}[size]"]`)
+          const sizeInput = cfg.container.querySelector(`[name="${overlayTemplateName}[size]"]`)
           if (sizeInput) {
             const handleSizeChange = () => {
               syncFlagSizeDefaults(cfg, true)
@@ -8310,9 +8310,9 @@ const OverlayHandler = {
               applyPosition(cfg)
             })
           }
-          const templateName = cfg.container.dataset.overlayTemplate
+          const overlayTemplateName = cfg.container.dataset.overlayTemplate
           const inputs = cfg.container.querySelectorAll(
-            `[name="${templateName}[back_align]"], [name="${templateName}[back_color]"], [name="${templateName}[back_height]"], [name="${templateName}[back_width]"], [name="${templateName}[back_line_color]"], [name="${templateName}[back_line_width]"], [name="${templateName}[back_padding]"], [name="${templateName}[back_radius]"]`
+            `[name="${overlayTemplateName}[back_align]"], [name="${overlayTemplateName}[back_color]"], [name="${overlayTemplateName}[back_height]"], [name="${overlayTemplateName}[back_width]"], [name="${overlayTemplateName}[back_line_color]"], [name="${overlayTemplateName}[back_line_width]"], [name="${overlayTemplateName}[back_padding]"], [name="${overlayTemplateName}[back_radius]"]`
           )
           inputs.forEach(input => {
             input.addEventListener('input', refreshBackdrop)
@@ -8326,9 +8326,9 @@ const OverlayHandler = {
             refreshContentRatingOverlayPreview(cfg)
             applyPosition(cfg)
           }
-          const templateName = cfg.container.dataset.overlayTemplate
+          const overlayTemplateName = cfg.container.dataset.overlayTemplate
           const inputs = cfg.container.querySelectorAll(
-            `[name="${templateName}[text]"], [name="${templateName}[post_text]"], [name="${templateName}[addon_offset]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"], [name="${templateName}[stroke_width]"], [name="${templateName}[stroke_color]"], [name="${templateName}[back_align]"], [name="${templateName}[back_color]"], [name="${templateName}[back_height]"], [name="${templateName}[back_width]"], [name="${templateName}[back_line_color]"], [name="${templateName}[back_line_width]"], [name="${templateName}[back_padding]"], [name="${templateName}[back_radius]"]`
+            `[name="${overlayTemplateName}[text]"], [name="${overlayTemplateName}[post_text]"], [name="${overlayTemplateName}[addon_offset]"], [name="${overlayTemplateName}[font]"], [name="${overlayTemplateName}[font_size]"], [name="${overlayTemplateName}[font_color]"], [name="${overlayTemplateName}[stroke_width]"], [name="${overlayTemplateName}[stroke_color]"], [name="${overlayTemplateName}[back_align]"], [name="${overlayTemplateName}[back_color]"], [name="${overlayTemplateName}[back_height]"], [name="${overlayTemplateName}[back_width]"], [name="${overlayTemplateName}[back_line_color]"], [name="${overlayTemplateName}[back_line_width]"], [name="${overlayTemplateName}[back_padding]"], [name="${overlayTemplateName}[back_radius]"]`
           )
           inputs.forEach(input => {
             input.addEventListener('input', refreshCommonsense)
@@ -8378,9 +8378,9 @@ const OverlayHandler = {
           if (!board.classList.contains('overlay-board--modal')) return
           const baseW = Number(board.dataset.baseWidth) || defaultDims.default.width
           const baseH = Number(board.dataset.baseHeight) || defaultDims.default.height
-          const ratio = baseW / baseH
+          const boardRatio = baseW / baseH
           const toolbarWidth = toolbar?.offsetWidth || 0
-          const maxWidthByHeight = (window.innerHeight - 200) * ratio
+          const maxWidthByHeight = (window.innerHeight - 200) * boardRatio
           const maxWidthByWindow = Math.max(0, window.innerWidth - 64 - toolbarWidth)
           const maxWidth = Math.min(maxWidthByWindow || maxWidthByHeight, maxWidthByHeight)
           board.style.maxWidth = `${Math.max(280, Math.floor(maxWidth))}px`
@@ -8400,7 +8400,7 @@ const OverlayHandler = {
             if (fallback && typeof fallback.focus === 'function') {
               try {
                 fallback.focus({ preventScroll: true })
-              } catch (err) {
+              } catch {
                 fallback.focus()
               }
             }
@@ -8585,7 +8585,6 @@ if (document.readyState === 'loading') {
   bootstrapOverlayHandler()
 }
 
-// eslint-disable-next-line no-unused-vars
 function setupParentChildToggleSync () {
   let syncing = false
 

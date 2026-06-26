@@ -148,9 +148,10 @@ const ImageHandler = {
       const overlaySuffix = overlayIdMatch[1]
       const overlayId = `overlay_${overlaySuffix}`
 
+      const templateVariables = {}
       const overlayObj = {
         id: overlayId,
-        template_variables: {}
+        template_variables: templateVariables
       }
 
       const container = input.closest('.template-toggle-group')
@@ -175,25 +176,25 @@ const ImageHandler = {
           return
         }
         if (el.type === 'checkbox') {
-          overlayObj.template_variables[varName] = el.checked ? (el.value || 'true') : 'false'
+          templateVariables[varName] = el.checked ? (el.value || 'true') : 'false'
         } else if (el.type === 'number') {
           const num = Number(el.value)
-          overlayObj.template_variables[varName] = Number.isFinite(num) ? num : el.value
+          templateVariables[varName] = Number.isFinite(num) ? num : el.value
         } else if (el.type === 'color') {
-          overlayObj.template_variables[varName] = el.value
+          templateVariables[varName] = el.value
         } else {
-          overlayObj.template_variables[varName] = el.value
+          templateVariables[varName] = el.value
         }
       })
 
       // Ensure text is not emitted for overlays that only use it for preview
       if (['video_format', 'aspect'].includes(overlaySuffix)) {
-        delete overlayObj.template_variables.text
+        delete templateVariables.text
       } else if (['content_rating_commonsense', 'overlay_content_rating_commonsense'].includes(overlaySuffix)) {
-        delete overlayObj.template_variables.text
-        delete overlayObj.template_variables.font
-        delete overlayObj.template_variables.font_size
-        delete overlayObj.template_variables.font_color
+        delete templateVariables.text
+        delete templateVariables.font
+        delete templateVariables.font_size
+        delete templateVariables.font_color
       }
 
       overlays.push(overlayObj)
@@ -208,23 +209,20 @@ const ImageHandler = {
       const overlaySuffix = `content_rating_${value}`
       const overlayId = `overlay_${overlaySuffix}`
 
-      // eslint-disable-next-line camelcase
-      const template_variables = {}
+      const templateVariables = {}
 
       const colorInput = document.querySelector(
         `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] select[name="${libraryId}-${type}-template_overlay_${overlaySuffix}[color]"]`
       )
       if (colorInput) {
-        // eslint-disable-next-line camelcase
-        template_variables.color = colorInput.value.toString()
+        templateVariables.color = colorInput.value.toString()
       }
 
       // Capture offsets for all content ratings (including commonsense)
       const setNum = (key, el) => {
         if (!el) return
         const n = Number(el.value)
-        // eslint-disable-next-line camelcase
-        template_variables[key] = Number.isFinite(n) ? n : el.value
+        templateVariables[key] = Number.isFinite(n) ? n : el.value
       }
       const hInput = document.querySelector(
         `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] input[name="${libraryId}-${type}-template_overlay_${overlaySuffix}[horizontal_offset]"]`
@@ -253,15 +251,16 @@ const ImageHandler = {
           }
           const maybeSet = (key) => {
             const val = grab(key)
-            // eslint-disable-next-line camelcase
-            if (val !== null && val !== undefined) template_variables[key] = val
+            if (val !== null && val !== undefined) templateVariables[key] = val
           }
           ;['post_text', 'addon_offset', 'horizontal_offset', 'vertical_offset'].forEach(maybeSet)
         }
       }
 
-      // eslint-disable-next-line camelcase
-      overlays.push({ id: overlayId, template_variables })
+      overlays.push({
+        id: overlayId,
+        template_variables: templateVariables
+      })
     }
 
     console.debug('[DEBUG] Overlays found for', libraryId, 'type:', type, overlays)

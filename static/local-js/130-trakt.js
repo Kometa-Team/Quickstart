@@ -71,22 +71,21 @@ document.getElementById('toggleClientSecretVisibility').addEventListener('click'
   setToggleButtonIcon(this, currentType === 'password')
 })
 
-/* eslint-disable no-unused-vars, camelcase */
+/* eslint-disable no-unused-vars */
 function updateTraktURL () {
-  const trakt_client_id = document.getElementById('trakt_client_id').value
+  const traktClientId = document.getElementById('trakt_client_id').value
   let myURL = ''
-  if (trakt_client_id.length === 64) {
+  if (traktClientId.length === 64) {
     document.getElementById('trakt_validated').value = 'false'
-    const validatedAtInput = document.getElementById('trakt_validated_at')
-    if (validatedAtInput) validatedAtInput.value = ''
+    const validatedAtField = document.getElementById('trakt_validated_at')
+    if (validatedAtField) validatedAtField.value = ''
     refreshValidationCallout()
-    myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + trakt_client_id + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
+    myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + traktClientId + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
   }
   console.log('updateTraktURL: ' + myURL)
   document.getElementById('trakt_url').value = myURL
   checkURLStart()
 }
-/* eslint-enable camelcase */
 
 function openTraktUrl () {
   const url = document.getElementById('trakt_url').value
@@ -109,14 +108,12 @@ function checkURLStart () {
   urlButton.disabled = url === ''
 }
 
-/* eslint-disable camelcase */
 window.onload = function () {
-  const trakt_url_text = document.getElementById('trakt_url')
+  const traktUrlText = document.getElementById('trakt_url')
   document.getElementById('trakt_open_url').disabled = true
   document.getElementById('validate_trakt_pin').disabled = true
-  checkURLStart(trakt_url_text)
+  checkURLStart(traktUrlText)
 }
-/* eslint-enable camelcase */
 
 // Plex validation script
 document.getElementById('validate_trakt_pin').addEventListener('click', function () {

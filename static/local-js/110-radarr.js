@@ -87,18 +87,17 @@ $(document).ready(function () {
   })
 })
 
-/* eslint-disable camelcase */
 function fetchDropdownData () {
   // Fetch the stored dropdown data and populate the dropdowns
-  const radarr_url = document.getElementById('radarr_url').value
-  const radarr_token = document.getElementById('radarr_token').value
+  const radarrUrl = document.getElementById('radarr_url').value
+  const radarrToken = document.getElementById('radarr_token').value
 
   fetch('/validate_radarr', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ radarr_url, radarr_token })
+    body: JSON.stringify({ radarr_url: radarrUrl, radarr_token: radarrToken })
   })
     .then((response) => response.json())
     .then((data) => {
@@ -173,8 +172,8 @@ function validateRadarrPage () {
 }
 
 function validateRadarrApi () {
-  const radarr_url = document.getElementById('radarr_url').value
-  const radarr_token = document.getElementById('radarr_token').value
+  const radarrUrl = document.getElementById('radarr_url').value
+  const radarrToken = document.getElementById('radarr_token').value
   const statusMessage = document.getElementById('statusMessage')
 
   showSpinner('validate')
@@ -184,7 +183,7 @@ function validateRadarrApi () {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ radarr_url, radarr_token })
+    body: JSON.stringify({ radarr_url: radarrUrl, radarr_token: radarrToken })
   })
     .then((response) => response.json())
     .then((data) => {

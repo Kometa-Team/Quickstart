@@ -102,9 +102,9 @@ const EventHandler = {
               // Trigger preview update if template variable
               if (select.classList.contains('template-variable-select')) {
                 const nameParts = select.name.split('-')
-                const libraryId = nameParts.slice(0, 2).join('-') // e.g., mov-library_movies
+                const previewLibraryId = nameParts.slice(0, 2).join('-') // e.g., mov-library_movies
                 const type = nameParts[2] // e.g., movie
-                ImageHandler.generateSinglePreview(libraryId, type)
+                ImageHandler.generateSinglePreview(previewLibraryId, type)
               }
             })
             select.dataset.listenerAdded = 'true'

@@ -80,8 +80,8 @@ document.getElementById('validateButton').addEventListener('click', function () 
   }
 
   document.getElementById('plex_validated').value = ''
-  const validatedAtInput = document.getElementById('plex_validated_at')
-  if (validatedAtInput) validatedAtInput.value = ''
+  const validatedAtField = document.getElementById('plex_validated_at')
+  if (validatedAtField) validatedAtField.value = ''
   showSpinner('validate')
   validateButton.disabled = true
 
@@ -123,7 +123,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
         plexDbCache.style.color = '#75b798'
 
         document.getElementById('plex_validated').value = 'true'
-        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        if (validatedAtField) validatedAtField.value = new Date().toISOString()
         refreshValidationCallout()
 
         statusMessage.textContent = 'Plex server validated successfully!'
@@ -146,7 +146,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
         hideSpinner('validate')
         validateButton.disabled = false
         document.getElementById('plex_validated').value = false
-        if (validatedAtInput) validatedAtInput.value = ''
+        if (validatedAtField) validatedAtField.value = ''
         refreshValidationCallout()
         statusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'

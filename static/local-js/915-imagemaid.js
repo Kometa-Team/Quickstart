@@ -807,7 +807,7 @@ $(document).ready(function () {
       try {
         const regex = new RegExp(filterText, 'i')
         textMatcher = line => regex.test(line)
-      } catch (_) {
+      } catch {
         const lowered = filterText.toLowerCase()
         textMatcher = line => String(line || '').toLowerCase().includes(lowered)
       }

@@ -68,15 +68,14 @@ document.getElementById('toggleTokenVisibility').addEventListener('click', funct
   setToggleButtonIcon(this, currentType === 'password')
 })
 
-/* eslint-disable camelcase */
 // Event listener for the validate button
 document.getElementById('validateButton').addEventListener('click', function () {
-  const ntfy_url = document.getElementById('ntfy_url').value
-  const ntfy_token = document.getElementById('ntfy_token').value
-  const ntfy_topic = document.getElementById('ntfy_topic').value
+  const ntfyUrl = document.getElementById('ntfy_url').value
+  const ntfyToken = document.getElementById('ntfy_token').value
+  const ntfyTopic = document.getElementById('ntfy_topic').value
   const statusMessage = document.getElementById('statusMessage')
 
-  if (!ntfy_url || !ntfy_token || !ntfy_topic) {
+  if (!ntfyUrl || !ntfyToken || !ntfyTopic) {
     statusMessage.textContent = 'Please enter ntfy URL, Token and Topic.'
     statusMessage.style.color = '#ea868f'
     statusMessage.style.display = 'block'
@@ -91,9 +90,9 @@ document.getElementById('validateButton').addEventListener('click', function () 
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      ntfy_url,
-      ntfy_token,
-      ntfy_topic
+      ntfy_url: ntfyUrl,
+      ntfy_token: ntfyToken,
+      ntfy_topic: ntfyTopic
     })
   })
     .then((response) => response.json())
@@ -126,4 +125,3 @@ document.getElementById('validateButton').addEventListener('click', function () 
       refreshValidationCallout()
     })
 })
-/* eslint-enable camelcase */

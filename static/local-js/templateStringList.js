@@ -23,7 +23,7 @@
           if (!/^[\p{L}\p{N} .,&'’:+\-/()!]+$/u.test(normalized)) {
             return { valid: false, message: 'Use letters, numbers, spaces, or common punctuation only.' }
           }
-        } catch (_error) {
+        } catch {
           if (!/[A-Za-z0-9]/.test(normalized)) {
             return { valid: false, message: 'Enter a text value with letters or numbers.' }
           }
@@ -277,7 +277,7 @@
           if (Array.isArray(parsed)) {
             return parsed.map(item => String(item).trim()).filter(Boolean)
           }
-        } catch (_error) {
+        } catch {
           // Fall through to support legacy storage.
         }
         if (raw.toLowerCase() === 'none') return []

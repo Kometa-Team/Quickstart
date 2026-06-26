@@ -3025,7 +3025,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.hide()
         try {
           showToast('success', `Switched to config "${nextName}".`)
-        } catch (toastErr) {
+        } catch {
           // Navigation should not depend on toast rendering.
         }
         const nextConfig = encodeURIComponent(nextName)
@@ -3835,7 +3835,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return true
       }
       if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
-    } catch (err) {
+    } catch {
       if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
     } finally {
       document.body.removeChild(textarea)
@@ -3852,7 +3852,7 @@ document.addEventListener('DOMContentLoaded', () => {
       selection.removeAllRanges()
       selection.addRange(range)
       if (typeof output.focus === 'function') output.focus()
-    } catch (err) {
+    } catch {
       // No-op: selection best-effort only.
     }
   }
@@ -3870,7 +3870,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await navigator.clipboard.writeText(text)
         showToast('success', 'Support info copied to clipboard.')
         return
-      } catch (err) {
+      } catch {
         // Fall back to execCommand below.
       }
     }
