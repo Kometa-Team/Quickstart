@@ -3250,6 +3250,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in flag image for a specific language key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 223,
@@ -3911,6 +3923,18 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png",
+        "source_overrides": {
+          "title": "Image Source Overrides",
+          "description": "Advanced: override the built-in flag image for a specific language key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "source_types": [
+            "file",
+            "url",
+            "git",
+            "repo"
+          ],
+          "key_mode": "from_use_toggles",
+          "add_label": "Add override"
+        },
         "default_offsets": {
           "horizontal": 15,
           "vertical": 223,

@@ -809,6 +809,81 @@ const OverlayHandler = {
       setTemplateNumber(cfg, 'back_height', height, emit)
     }
 
+    const FLAG_PREVIEW_SLOT_COUNT = 3
+    const FLAG_PREVIEW_DEFAULT_KEYS = ['en', 'de', 'fr']
+    const FLAG_PREVIEW_METADATA = {
+      en: { previewKey: 'us', text: 'EN' },
+      de: { previewKey: 'de', text: 'DE' },
+      fr: { previewKey: 'fr', text: 'FR' },
+      es: { previewKey: 'es', text: 'ES' },
+      pt: { previewKey: 'pt', text: 'PT' },
+      ja: { previewKey: 'jp', text: 'JA' },
+      ko: { previewKey: 'kr', text: 'KO' },
+      zh: { previewKey: 'cn', text: 'ZH' },
+      da: { previewKey: 'dk', text: 'DA' },
+      ru: { previewKey: 'ru', text: 'RU' },
+      it: { previewKey: 'it', text: 'IT' },
+      hi: { previewKey: 'in', text: 'HI' },
+      te: { previewKey: 'in', text: 'TE' },
+      fa: { previewKey: 'ir', text: 'FA' },
+      th: { previewKey: 'th', text: 'TH' },
+      nl: { previewKey: 'nl', text: 'NL' },
+      no: { previewKey: 'no', text: 'NO' },
+      is: { previewKey: 'is', text: 'IS' },
+      sv: { previewKey: 'se', text: 'SV' },
+      tr: { previewKey: 'tr', text: 'TR' },
+      pl: { previewKey: 'pl', text: 'PL' },
+      cs: { previewKey: 'cz', text: 'CS' },
+      uk: { previewKey: 'ua', text: 'UK' },
+      hu: { previewKey: 'hu', text: 'HU' },
+      ar: { previewKey: 'eg', text: 'AR' },
+      bg: { previewKey: 'bg', text: 'BG' },
+      bn: { previewKey: 'bd', text: 'BN' },
+      bs: { previewKey: 'ba', text: 'BS' },
+      ca: { previewKey: 'ad', text: 'CA' },
+      cy: { previewKey: 'uk', text: 'CY' },
+      el: { previewKey: 'gr', text: 'EL' },
+      et: { previewKey: 'ee', text: 'ET' },
+      eu: { previewKey: 'es', text: 'EU' },
+      fi: { previewKey: 'fi', text: 'FI' },
+      tl: { previewKey: 'ph', text: 'FL' },
+      fil: { previewKey: 'ph', text: 'FIL' },
+      gl: { previewKey: 'es', text: 'GL' },
+      he: { previewKey: 'il', text: 'HE' },
+      hr: { previewKey: 'hr', text: 'HR' },
+      id: { previewKey: 'id', text: 'ID' },
+      ka: { previewKey: 'ge', text: 'KA' },
+      kk: { previewKey: 'kz', text: 'KK' },
+      kn: { previewKey: 'in', text: 'KN' },
+      la: { previewKey: 'it', text: 'LA' },
+      lt: { previewKey: 'lt', text: 'LT' },
+      lv: { previewKey: 'lv', text: 'LV' },
+      mk: { previewKey: 'mk', text: 'MK' },
+      ml: { previewKey: 'in', text: 'ML' },
+      mr: { previewKey: 'in', text: 'MR' },
+      ms: { previewKey: 'my', text: 'MS' },
+      nb: { previewKey: 'no', text: 'NB' },
+      nn: { previewKey: 'no', text: 'NN' },
+      pa: { previewKey: 'in', text: 'PA' },
+      ro: { previewKey: 'ro', text: 'RO' },
+      sk: { previewKey: 'sk', text: 'SK' },
+      sl: { previewKey: 'si', text: 'SL' },
+      sq: { previewKey: 'al', text: 'SQ' },
+      sr: { previewKey: 'rs', text: 'SR' },
+      sw: { previewKey: 'tz', text: 'SW' },
+      so: { previewKey: 'so', text: 'SO' },
+      ta: { previewKey: 'in', text: 'TA' },
+      ur: { previewKey: 'pk', text: 'UR' },
+      vi: { previewKey: 'vn', text: 'VI' },
+      wo: { previewKey: 'sn', text: 'WO' },
+      myn: { previewKey: 'mx', text: 'MYN' },
+      iu: { previewKey: 'ca', text: 'IK' },
+      rom: { previewKey: 'ro', text: 'ROM' },
+      am: { previewKey: 'et', text: 'AM' },
+      su: { previewKey: 'id', text: 'SU' },
+      zu: { previewKey: 'za', text: 'ZU' }
+    }
+
     const RESOLUTION_CHILD_TOGGLE_KEYS = [
       'use_4k',
       'use_1080p',
@@ -1140,6 +1215,10 @@ const OverlayHandler = {
       const filename = getOverlayPreviewFilename(badgeKey, family)
       if (!family || !filename) return ''
       const normalizedVariant = String(variant || '').trim().toLowerCase()
+      if (family === 'flag') {
+        const style = normalizedVariant === 'square' ? 'square' : 'round'
+        return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
+      }
       if (family === 'audio_codec') {
         const style = normalizedVariant === 'standard' ? 'standard' : 'compact'
         return `${BUNDLED_OVERLAY_PREVIEW_ROOT}/${family}/${style}/${filename}`
@@ -1661,6 +1740,24 @@ const OverlayHandler = {
       }
     }
 
+    const getFlagsPreviewOverrideEntries = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      const section = cfg?.container?.querySelector('[data-overlay-source-editor="true"]')
+      const hiddenHost = section?.querySelector('[data-overlay-source-hidden]')
+      if (!config || !hiddenHost) return []
+      return readOverlaySourceOverrideState(cfg, config, hiddenHost)
+    }
+
+    const resolveFlagPreviewImage = (cfg, previewItem, useSquareFlags) => {
+      const overrideEntries = getFlagsPreviewOverrideEntries(cfg)
+      const badgeKey = String(previewItem?.badgeKey || '').trim()
+      const override = overrideEntries.find(entry => entry.badgeKey === badgeKey && entry.sourceType && entry.value)
+      if (override) {
+        return buildOverlaySourcePreviewUrl(override.sourceType, override.value)
+      }
+      return useSquareFlags ? previewItem?.square : previewItem?.round
+    }
+
     const getSingleBadgeOverlayPreviewDefaultKey = (cfg) => {
       const imageUrl = String(cfg?.image || '').trim()
       if (!imageUrl) return ''
@@ -1865,6 +1962,94 @@ const OverlayHandler = {
     const setResolutionPreviewSelectedKey = (cfg, family, badgeKey) => {
       const state = ensureResolutionPreviewState(cfg)
       state[family] = String(badgeKey || '').trim()
+    }
+
+    const getFlagPreviewStateKey = (slotIndex) => `flags_${slotIndex + 1}`
+
+    const getFlagPreviewOptions = (cfg) => {
+      const config = getOverlaySourceOverrideConfig(cfg)
+      if (!config) return []
+      return getOverlaySourceOverrideKeyOptions(cfg, config)
+        .filter(option => Boolean(FLAG_PREVIEW_METADATA[String(option.value || '').trim()]))
+        .map(option => {
+          const key = String(option.value || '').trim()
+          const meta = FLAG_PREVIEW_METADATA[key] || {}
+          return {
+            value: key,
+            label: meta.text || option.label || key.toUpperCase(),
+            enabled: Boolean(option.enabled),
+            previewKey: meta.previewKey || key,
+            text: meta.text || key.toUpperCase()
+          }
+        })
+    }
+
+    const pickDefaultFlagPreviewKeys = (cfg) => {
+      const options = getFlagPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const ordered = []
+
+      FLAG_PREVIEW_DEFAULT_KEYS.forEach((key) => {
+        if (values.has(key) && !ordered.includes(key)) ordered.push(key)
+      })
+
+      options.forEach((option) => {
+        if (option.enabled && !ordered.includes(option.value)) ordered.push(option.value)
+      })
+
+      options.forEach((option) => {
+        if (!ordered.includes(option.value)) ordered.push(option.value)
+      })
+
+      return ordered.slice(0, FLAG_PREVIEW_SLOT_COUNT)
+    }
+
+    const getFlagPreviewSelectedKeys = (cfg) => {
+      const state = ensureResolutionPreviewState(cfg)
+      const options = getFlagPreviewOptions(cfg)
+      const values = new Set(options.map(option => option.value))
+      const selected = []
+
+      for (let i = 0; i < FLAG_PREVIEW_SLOT_COUNT; i += 1) {
+        const current = String(state[getFlagPreviewStateKey(i)] || '').trim()
+        if (current && values.has(current) && !selected.includes(current)) {
+          selected.push(current)
+        }
+      }
+
+      pickDefaultFlagPreviewKeys(cfg).forEach((key) => {
+        if (!selected.includes(key)) selected.push(key)
+      })
+
+      const normalized = selected.slice(0, FLAG_PREVIEW_SLOT_COUNT)
+      normalized.forEach((key, idx) => {
+        state[getFlagPreviewStateKey(idx)] = key
+      })
+      return normalized
+    }
+
+    const setFlagPreviewSelectedKey = (cfg, slotIndex, badgeKey) => {
+      const state = ensureResolutionPreviewState(cfg)
+      state[getFlagPreviewStateKey(slotIndex)] = String(badgeKey || '').trim()
+    }
+
+    const buildFlagPreviewItems = (cfg) => {
+      const optionMap = new Map(getFlagPreviewOptions(cfg).map(option => [option.value, option]))
+      return getFlagPreviewSelectedKeys(cfg)
+        .map((key) => {
+          const option = optionMap.get(key)
+          if (!option) return null
+          const previewKey = option.previewKey || key
+          const text = option.text || option.label || key.toUpperCase()
+          return {
+            badgeKey: key,
+            previewKey,
+            text,
+            round: buildBundledOverlayPreviewUrl('flag', previewKey, 'round'),
+            square: buildBundledOverlayPreviewUrl('flag', previewKey, 'square')
+          }
+        })
+        .filter(Boolean)
     }
 
     const getResolutionPreviewOverrideEntries = (cfg) => {
@@ -2316,6 +2501,98 @@ const OverlayHandler = {
       buildBackdropDataUrl(cfg, baseOverride).then(dataUrl => {
         if (!dataUrl) return
         cfg.layer.src = dataUrl
+      })
+    }
+
+    const ensureFlagsPreviewControl = (cfg) => {
+      if (!isFlagsOverlay(cfg) || !cfg?.container) return
+      const anchorInput = getTemplateInput(cfg, 'font')
+      const anchorRow = anchorInput?.closest('.font-row') ||
+        anchorInput?.closest('.rgba-group') ||
+        anchorInput?.closest('.input-group') ||
+        anchorInput?.closest('.mb-3') ||
+        anchorInput?.parentElement
+      if (!anchorRow) return
+
+      let previewWrap = cfg.container.querySelector('[data-flag-preview-wrap]')
+      if (!previewWrap) {
+        previewWrap = document.createElement('div')
+        previewWrap.className = 'mb-3 w-100'
+        previewWrap.dataset.flagPreviewWrap = 'true'
+        previewWrap.style.flexBasis = '100%'
+        previewWrap.style.width = '100%'
+        previewWrap.innerHTML = `
+          <label class="form-label small fw-semibold mb-1">Preview flags</label>
+          <div class="row g-2" data-flag-preview-row="true">
+            <div class="col-12 col-md-4">
+              <select class="form-select form-select-sm" data-flag-preview-select="0"></select>
+            </div>
+            <div class="col-12 col-md-4">
+              <select class="form-select form-select-sm" data-flag-preview-select="1"></select>
+            </div>
+            <div class="col-12 col-md-4">
+              <select class="form-select form-select-sm" data-flag-preview-select="2"></select>
+            </div>
+          </div>
+        `
+      }
+
+      anchorRow.insertAdjacentElement('beforebegin', previewWrap)
+
+      previewWrap.querySelectorAll('[data-flag-preview-select]').forEach((select) => {
+        if (select.dataset.listenerAdded === 'true') return
+        select.dataset.listenerAdded = 'true'
+        select.addEventListener('change', () => {
+          const slotIndex = Number(select.dataset.flagPreviewSelect)
+          setFlagPreviewSelectedKey(cfg, slotIndex, select.value)
+          syncFlagsPreviewControls(cfg)
+          refreshFlagsOverlayPreview(cfg)
+        })
+      })
+    }
+
+    const syncFlagsPreviewControls = (cfg) => {
+      if (!isFlagsOverlay(cfg) || !cfg?.container) return
+      const options = getFlagPreviewOptions(cfg)
+      const selectedKeys = getFlagPreviewSelectedKeys(cfg)
+      const selects = cfg.container.querySelectorAll('[data-flag-preview-select]')
+      selects.forEach((select, index) => {
+        select.replaceChildren()
+        options.forEach((option) => {
+          const el = document.createElement('option')
+          el.value = option.value
+          el.textContent = option.label
+          select.appendChild(el)
+        })
+        const selected = selectedKeys[index] || options[0]?.value || ''
+        if (selected) {
+          select.value = selected
+          setFlagPreviewSelectedKey(cfg, index, selected)
+        }
+        select.disabled = options.length === 0
+      })
+    }
+
+    const refreshFlagsOverlayPreview = (cfg) => {
+      if (!cfg?.layer) return
+      buildFlagsCompositeDataUrl(cfg).then(dataUrl => {
+        cfg.layer.src = dataUrl
+      })
+    }
+
+    const bindFlagsPreviewInputs = (cfg) => {
+      if (!isFlagsOverlay(cfg) || !cfg?.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const selectors = Array.from(cfg.container.querySelectorAll(`[name^="${templateName}[use_"]`))
+        .filter(input => String(input?.type || '').toLowerCase() === 'checkbox')
+      selectors.forEach((input) => {
+        if (input.dataset.flagPreviewBound === 'true') return
+        input.dataset.flagPreviewBound = 'true'
+        input.addEventListener('change', () => {
+          syncFlagsPreviewControls(cfg)
+          refreshFlagsOverlayPreview(cfg)
+        })
       })
     }
 
@@ -3970,24 +4247,6 @@ const OverlayHandler = {
       omdb: 'OMDb',
       plex: 'Plex'
     }
-    const FLAG_PREVIEW_ITEMS = [
-      {
-        text: 'EN',
-        round: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png',
-        square: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/square/us.png'
-      },
-      {
-        text: 'DE',
-        round: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/de.png',
-        square: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/square/de.png'
-      },
-      {
-        text: 'FR',
-        round: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/fr.png',
-        square: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/square/fr.png'
-      }
-    ]
-
     const buildRatingFilenameCandidates = (value, label) => {
       const valueKey = (value || '').toString().trim().toLowerCase()
       const labelKey = (label || '').toString().trim().toLowerCase()
@@ -5521,11 +5780,12 @@ const OverlayHandler = {
       const fill = parseHexColor(backdrop.back_color, { r: 0, g: 0, b: 0, a: 0 })
       const stroke = parseHexColor(backdrop.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
 
-      const items = FLAG_PREVIEW_ITEMS
+      const items = buildFlagPreviewItems(cfg)
+      if (!items.length) return resolveOverlayImage(cfg)
       let images = []
       try {
         images = await Promise.all(
-          items.map(item => loadImage(useSquareFlags ? item.square : item.round))
+          items.map(item => loadImage(resolveFlagPreviewImage(cfg, item, useSquareFlags)))
         )
       } catch (err) {
         console.warn('[OverlayBoards] Failed to load flag images', err)
@@ -7620,6 +7880,7 @@ const OverlayHandler = {
         }
         ensureResolutionToggleFamilyGroups(cfg)
         ensureContentRatingPreviewControl(cfg)
+        ensureFlagsPreviewControl(cfg)
         ensureOverlayTextPreviewControl(cfg)
         ensureSingleBadgeOverlayPreviewControl(cfg)
         ensureStreamingPreviewControl(cfg)
@@ -7629,6 +7890,7 @@ const OverlayHandler = {
         ensureOverlaySourceOverrideEditor(cfg)
         bindResolutionPreviewInputs(cfg)
         bindContentRatingPreviewInputs(cfg)
+        bindFlagsPreviewInputs(cfg)
         bindOverlayTextPreviewInputs(cfg)
         bindSingleBadgeOverlayPreviewInputs(cfg)
         bindStreamingPreviewInputs(cfg)
@@ -7636,6 +7898,7 @@ const OverlayHandler = {
         bindRibbonPreviewInputs(cfg)
         bindLanguageCountPreviewInputs(cfg)
         syncContentRatingPreviewControls(cfg)
+        syncFlagsPreviewControls(cfg)
         syncOverlayTextPreviewControls(cfg)
         syncSingleBadgeOverlayPreviewControls(cfg)
         syncStreamingPreviewControls(cfg)
