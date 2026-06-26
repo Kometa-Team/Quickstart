@@ -15,4 +15,3 @@ jobs:
       branch: develop
       branch_name: develop
       tag_name: develop
-
