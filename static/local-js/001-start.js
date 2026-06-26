@@ -1,5 +1,3 @@
-/* global showToast, bootstrap, localStorage, $, PathValidation */
-
 /* ============================== */
 /* Helpers for the config UI      */
 /* ============================== */

@@ -1,5 +1,3 @@
-/* global CustomEvent */
-
 (function () {
   const templateStringListPresetConfigs = {
     generic_text: {

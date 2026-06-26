@@ -1,5 +1,3 @@
-/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, PathValidation, URLValidation */
-
 (function () {
   const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
 

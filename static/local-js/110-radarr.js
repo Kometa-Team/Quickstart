@@ -1,5 +1,3 @@
-/* global $, initialRadarrRootFolderPath, initialRadarrQualityProfile, showSpinner, hideSpinner, PathValidation */
-
 function refreshValidationCallout () {
   if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
     window.QSValidationCallouts.refresh('radarr_validated')

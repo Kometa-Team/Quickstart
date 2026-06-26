@@ -1,5 +1,3 @@
-/* global $, PathValidation, URLValidation */
-
 const librariesValidatedAtInput = document.getElementById('libraries_validated_at')
 let librariesTouched = false
 

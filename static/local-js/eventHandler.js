@@ -1,5 +1,3 @@
-/* global MutationObserver, ImageHandler, OverlayHandler, ValidationHandler */
-
 const EventHandler = {
   attachLibraryListeners: function () {
     document.querySelectorAll('.library-checkbox').forEach((checkbox) => {

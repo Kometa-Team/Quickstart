@@ -1,5 +1,3 @@
-/* global $, showSpinner, hideSpinner */
-
 function refreshValidationCallout () {
   if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
     window.QSValidationCallouts.refresh('webhooks_validated')

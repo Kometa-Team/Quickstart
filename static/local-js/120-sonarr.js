@@ -1,5 +1,3 @@
-/* global $, initialSonarrRootFolderPath, initialSonarrQualityProfile, initialSonarrLanguageProfile, showSpinner, hideSpinner, PathValidation */
-
 function refreshValidationCallout () {
   if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
     window.QSValidationCallouts.refresh('sonarr_validated')

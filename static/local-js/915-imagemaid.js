@@ -1,5 +1,3 @@
-/* global $, bootstrap, PathValidation, showToast */
-
 $(document).ready(function () {
   const metaEl = document.getElementById('imagemaid-page-meta')
   const rootPath = metaEl ? String(metaEl.dataset.root || '').trim() : ''

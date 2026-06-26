@@ -1,5 +1,3 @@
-/* global $, bootstrap */
-
 $(document).ready(function () {
   const $tableBody = $('#logscan-trends-table tbody')
   const $tableSummary = $('#logscan-table-summary')

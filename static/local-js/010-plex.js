@@ -1,5 +1,3 @@
-/* global $, validateButton, showSpinner, hideSpinner */
-
 function refreshValidationCallout () {
   if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
     window.QSValidationCallouts.refresh('plex_validated')

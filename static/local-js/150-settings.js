@@ -1,5 +1,3 @@
-/* global PathValidation, bootstrap */
-
 document.addEventListener('DOMContentLoaded', function () {
   const validatedAtInput = document.getElementById('settings_validated_at')
   let settingsTouched = false

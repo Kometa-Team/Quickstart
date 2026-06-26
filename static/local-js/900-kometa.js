@@ -1,5 +1,3 @@
-/* global $, bootstrap, showToast, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
-
 // Global flag so other handlers know an update is in progress
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false

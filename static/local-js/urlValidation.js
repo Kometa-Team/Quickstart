@@ -1,5 +1,3 @@
-/* global */
-
 const URLValidation = (() => {
   const urlKeyPattern = /(^|[_-])url([_-]|$)/i
   const placeholderValues = new Set(['http://', 'https://'])

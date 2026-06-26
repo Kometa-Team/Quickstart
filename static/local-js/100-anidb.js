@@ -1,5 +1,3 @@
-/* global $ */
-
 $(document).ready(function () {
   const enableToggle = document.getElementById('anidb_enable')
   const fields = document.getElementById('anidb-fields')

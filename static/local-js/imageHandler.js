@@ -1,5 +1,3 @@
-/* global showToast , bootstrap, updateFormData */
-
 const ImageHandler = {
   BUILTIN_PREVIEW_IMAGES: new Set([
     'overlay_alignment_guide.png',

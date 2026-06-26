@@ -1,5 +1,3 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, URLValidation, DOMParser, MutationObserver, jumpTo, showNavigationLoadingOverlay, hideNavigationLoadingOverlay, requestAnimationFrame */
-
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
 

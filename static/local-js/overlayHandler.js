@@ -1,5 +1,3 @@
-/* global EventHandler, ValidationHandler, toggleOverlayTemplateSection, FontFace, FileReader, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser, applyPosition */
-
 const OverlayHandler = {
   baseDimensions: {
     default: { width: 1000, height: 1500 },

@@ -1,5 +1,3 @@
-/* global $ */
-
 const validatedAtInput = document.getElementById('playlist_files_validated_at')
 
 $(document).ready(function () {

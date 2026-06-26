@@ -1,5 +1,3 @@
-/* global */
-
 const PathValidation = (() => {
   let rules = []
   let meta = { platform: 'linux', is_docker: false }
