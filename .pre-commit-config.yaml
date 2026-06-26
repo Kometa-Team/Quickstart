@@ -28,3 +28,8 @@ repos:
     hooks:
       - id: ruff
         args: [ --fix ]
+-   repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      - id: black
+        args: [ -l, '180' ]

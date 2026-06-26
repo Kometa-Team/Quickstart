@@ -122,7 +122,7 @@ jobs:
         id: format-code
         run: |
             pip install -r requirements.txt
-            pip install black
+            pip install -r requirements-dev.txt
             black . -l 180
 
       - name: Update PART File and Commit
