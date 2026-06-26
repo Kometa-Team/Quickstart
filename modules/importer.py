@@ -402,11 +402,7 @@ def _collect_overlay_source_override_keys(overlay_meta: Any) -> set[str]:
     allowed = set(source_types)
     key_mode = str(config.get("key_mode") or "").strip().lower()
     if key_mode == "from_select_options":
-        key_fields = {
-            str(item).strip()
-            for item in (config.get("key_fields") or [])
-            if str(item).strip()
-        }
+        key_fields = {str(item).strip() for item in (config.get("key_fields") or []) if str(item).strip()}
         template_variables = overlay_meta.get("template_variables")
         if isinstance(template_variables, dict):
             for field_key in key_fields:
