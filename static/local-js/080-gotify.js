@@ -1,15 +1,4 @@
-function refreshValidationCallout () {
-  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-    window.QSValidationCallouts.refresh('gotify_validated')
-  }
-}
-
-function setToggleButtonIcon (button, showPlainText) {
-  if (!button) return
-  const icon = document.createElement('i')
-  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
-  button.replaceChildren(icon)
-}
+import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('gotify_validated_at')
 
@@ -38,14 +27,14 @@ $(document).ready(function () {
     document.getElementById('gotify_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('gotify_validated')
   })
 
   document.getElementById('gotify_url').addEventListener('input', function () {
     document.getElementById('gotify_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
-    refreshValidationCallout()
+    refreshValidationCallout('gotify_validated')
   })
 })
 
@@ -88,14 +77,14 @@ document.getElementById('validateButton').addEventListener('click', function () 
         hideSpinner('validate')
         document.getElementById('gotify_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout()
+        refreshValidationCallout('gotify_validated')
         statusMessage.textContent = 'Gotify credentials validated successfully!'
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')
         document.getElementById('gotify_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout()
+        refreshValidationCallout('gotify_validated')
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -109,6 +98,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout()
+      refreshValidationCallout('gotify_validated')
     })
 })

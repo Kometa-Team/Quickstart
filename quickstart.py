@@ -403,6 +403,15 @@ LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
 
 VALIDATION_DOC_BASE = "/step/"
 VALIDATION_DOC_FALLBACK = "/step/900-kometa"
+# Page scripts that have been migrated to ES modules (roadmap step 2,
+# issue #1346). The template renders <script type="module"> for these and
+# stays on classic <script defer> for everything else. Add a template name
+# here when its JS file becomes a module.
+MODULE_PAGE_SCRIPTS = frozenset(
+    {
+        "080-gotify",
+    }
+)
 VALIDATION_DOCS = {
     "settings": f"{VALIDATION_DOC_BASE}150-settings",
     "libraries": f"{VALIDATION_DOC_BASE}025-libraries",
@@ -1887,6 +1896,7 @@ def step(name):
     page_info["header_style"] = header_style
     page_info["save_error"] = save_error
     page_info["template_name"] = name
+    page_info["template_uses_module"] = name in MODULE_PAGE_SCRIPTS
     page_info.update(_build_kometa_install_context(selected_config))
     settings_payload = persistence.retrieve_settings("150-settings") or {}
     settings_section = settings_payload.get("settings", {}) if isinstance(settings_payload, dict) else {}

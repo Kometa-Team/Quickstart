@@ -56,6 +56,19 @@ const quickstartGlobals = {
   initialSonarrLanguageProfile: 'readonly'
 }
 
+// Files that have been migrated to ES modules as part of roadmap step 2
+// (issue #1346). Keep this list in sync with MODULE_PAGE_SCRIPTS in
+// quickstart.py for page scripts. The modules/ subdirectory is always
+// module-scoped by virtue of the glob.
+const moduleFiles = [
+  'static/local-js/modules/**/*.js',
+  'static/local-js/000-base.js',
+  'static/local-js/pathValidation.js',
+  'static/local-js/urlValidation.js',
+  'static/local-js/templateStringList.js',
+  'static/local-js/080-gotify.js'
+]
+
 module.exports = [
   {
     files: ['static/local-js/**/*.js'],
@@ -74,6 +87,12 @@ module.exports = [
       'no-shadow': 'error',
       'no-global-assign': 'error',
       'no-implied-eval': 'error'
+    }
+  },
+  {
+    files: moduleFiles,
+    languageOptions: {
+      sourceType: 'module'
     }
   }
 ]

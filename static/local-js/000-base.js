@@ -4241,3 +4241,18 @@ style.textContent = `
   }
 `
 document.head.appendChild(style)
+
+// Module compatibility shims.
+// Now that this file loads as type="module", its top-level declarations are
+// no longer visible to unconverted classic <script> pages. Re-publish the
+// names that other files reference until those files are themselves modules.
+// Remove each entry as its consumers are converted.
+window.escapeHtml = escapeHtml
+window.hideNavigationLoadingOverlay = hideNavigationLoadingOverlay
+window.hideSpinner = hideSpinner
+window.jumpTo = jumpTo
+window.loading = loading
+window.setButtonIconAndText = setButtonIconAndText
+window.showNavigationLoadingOverlay = showNavigationLoadingOverlay
+window.showSpinner = showSpinner
+window.showToast = showToast
