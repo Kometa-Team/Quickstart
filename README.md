@@ -520,6 +520,24 @@ Notes for Playwright on Windows:
 - Playwright requires named pipes. If you see `Access is denied`, re-run PowerShell as Administrator or adjust security policy to allow Playwright browser processes.
 - E2E tests load Bootstrap and jQuery from CDNs (`cdn.jsdelivr.net`, `code.jquery.com`). If you’re behind a strict firewall, allowlist those hosts or the tests may fail to render the UI correctly.
 
+## Frontend Tooling
+
+Quickstart serves its JavaScript directly from `static/local-js/` via Flask in production and is gradually being migrated to ES modules (see roadmap issue #1334). [Vite](https://vitejs.dev/) is now wired up as the future build pipeline for the modular files.
+
+**Today, the Vite tooling is dormant** — nothing in production references its output. Flask still loads JS from `static/local-js/` exactly as before. The scaffolding is in place so that future PRs (Vitest, validation widget consolidation, Alpine, etc.) can plug into it.
+
+Use cases for developers:
+
+```
+npm install            # one-time, installs dev tooling
+npm run dev            # Vite dev server on http://localhost:5173 (HMR for ESM files)
+npm run build          # emits production bundles into static/dist/ (gitignored)
+npm run preview        # serves the built bundles for a quick smoke test
+npm run lint:eslint    # existing ESLint job (unchanged)
+```
+
+Which files Vite knows about: every file in `static/local-js/*.js` that already starts with an `import` or `export` statement is auto-discovered as a Vite entry point. This stays in sync with `MODULE_PAGE_SCRIPTS` in `quickstart.py` without manual updates.
+
 ## Appendix: Dependency Map
 
 This appendix documents the current rules that promote optional setup pages into the menu TODO table. A dependency card appears only when the related page exists in the active template list and at least one active library triggers one of the rules below.

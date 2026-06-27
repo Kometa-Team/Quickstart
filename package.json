@@ -58,9 +58,13 @@
     ]
   },
   "scripts": {
-    "lint:eslint": "eslint static/local-js --ext .js"
+    "lint:eslint": "eslint static/local-js --ext .js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "eslint": "^9.30.0"
+    "eslint": "^9.30.0",
+    "vite": "8.1.0"
   }
 }
