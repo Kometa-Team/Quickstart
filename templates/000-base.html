@@ -48,17 +48,13 @@
 
 <body>
   <script>
-    window.QS_DEBUG = "{{ 'true' if config['QS_DEBUG'] else 'false' }}";
-    window.QS_THEME = "{{ config.get('QS_THEME', 'kometa') }}";
-    window.QS_OPTIMIZE_DEFAULTS = "{{ 'true' if config.get('QS_OPTIMIZE_DEFAULTS', True) else 'false' }}";
-    window.QS_CONFIG_HISTORY = "{{ config.get('QS_CONFIG_HISTORY', 0) }}";
-    window.QS_KOMETA_LOG_KEEP = "{{ config.get('QS_KOMETA_LOG_KEEP', 0) }}";
-    window.QS_IMAGEMAID_LOG_KEEP = "{{ config.get('QS_IMAGEMAID_LOG_KEEP', 0) }}";
-    window.QS_TEST_LIBS_PATH = {{ config.get('QS_TEST_LIBS_PATH', '') | tojson }};
-    window.QS_TEST_LIBS_TMP = {{ config.get('QS_TEST_LIBS_TMP', '') | tojson }};
-    window.QS_SESSION_LIFETIME_DAYS = "{{ config.get('QS_SESSION_LIFETIME_DAYS', 30) }}";
-    window.QS_FLASK_SESSION_DIR = {{ config.get('QS_FLASK_SESSION_DIR', '') | tojson }};
-    window.QS_RESTART_NOTICE = {{ config.get('QS_RESTART_NOTICE') | tojson }};
+    // Roadmap #1334 Step 5 (Phase B): the 11 app-level config values
+    // formerly emitted as individual ``window.QS_FOO`` globals are now
+    // exposed as a single ``window.QS_AppConfig`` object that mirrors
+    // ``GET /api/app-config`` exactly. JS readers access it via the
+    // ``getAppConfig`` / ``setAppConfig`` helpers in
+    // ``static/local-js/modules/appConfig.js``.
+    window.QS_AppConfig = {{ qs_app_config | tojson }};
     window.QS_CURRENT_TEMPLATE = {{ (page_info.get('template_name', '') if page_info else '') | tojson }};
     window.QS_SETTINGS_CUSTOM_REPO = {{ (page_info.get('settings_custom_repo', '') if page_info else '') | tojson }};
     window.QS_SETTINGS_CUSTOM_REPO_BASE = {{ (page_info.get('settings_custom_repo_base', '') if page_info else '') | tojson }};

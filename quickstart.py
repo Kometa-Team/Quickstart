@@ -180,6 +180,7 @@ from blueprints.imagemaid_updates import bp as imagemaid_updates_bp
 from blueprints.config_routes import bp as config_routes_bp
 from blueprints.download_routes import bp as download_routes_bp
 from blueprints.test_libraries_routes import bp as test_libraries_routes_bp
+from blueprints import app_config_routes
 from blueprints.app_config_routes import bp as app_config_routes_bp
 from blueprints.library_routes import (
     bp as library_routes_bp,
@@ -1006,6 +1007,13 @@ def inject_version_info():
     return {
         "version_info": app.config.get("VERSION_CHECK") or {},
         "overlay_fonts": list_overlay_fonts(),
+        # Roadmap #1334 Step 5 (Phase B): expose the app-level config
+        # dict to every template so 000-base.html can emit a single
+        # ``window.QS_AppConfig = {...}`` line instead of 11 individual
+        # ``window.QS_FOO = ...`` lines. The dict shape is identical to
+        # what GET /api/app-config returns, so the front-end has one
+        # contract to consume.
+        "qs_app_config": app_config_routes.collect_app_config(),
     }
 
 

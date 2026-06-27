@@ -1,5 +1,7 @@
+import { getAppConfig, setAppConfig } from './modules/appConfig.js'
+
 (function () {
-  const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
+  const isDebug = String(getAppConfig('QS_DEBUG', false)).toLowerCase() === 'true'
 
   function getLocalTimestamp () {
     const now = new Date()
@@ -2612,7 +2614,7 @@ document.addEventListener('qs:bulk-validation-complete', () => {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
-  const notice = window.QS_RESTART_NOTICE
+  const notice = getAppConfig('QS_RESTART_NOTICE')
   if (!notice || notice.reason !== 'update') return
 
   const noticeKey = `qs_restart_notice_${notice.reason}_${notice.created_at || ''}`
@@ -3079,26 +3081,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getCurrentDebug () {
-    const raw = (triggerBtn && triggerBtn.dataset.currentDebug) ? triggerBtn.dataset.currentDebug : window.QS_DEBUG
+    const raw = (triggerBtn && triggerBtn.dataset.currentDebug) ? triggerBtn.dataset.currentDebug : getAppConfig('QS_DEBUG', false)
     return String(raw).toLowerCase() === 'true'
   }
 
   function getCurrentTheme () {
     if (triggerBtn && triggerBtn.dataset.currentTheme) return triggerBtn.dataset.currentTheme
-    return window.QS_THEME || 'kometa'
+    return getAppConfig('QS_THEME', 'kometa') || 'kometa'
   }
 
   function getCurrentOptimizeDefaults () {
     const raw = (triggerBtn && triggerBtn.dataset.currentOptimizeDefaults)
       ? triggerBtn.dataset.currentOptimizeDefaults
-      : window.QS_OPTIMIZE_DEFAULTS
+      : getAppConfig('QS_OPTIMIZE_DEFAULTS', true)
     return String(raw).toLowerCase() === 'true'
   }
 
   function getCurrentConfigHistory () {
     const raw = (triggerBtn && triggerBtn.dataset.currentConfigHistory)
       ? triggerBtn.dataset.currentConfigHistory
-      : window.QS_CONFIG_HISTORY
+      : getAppConfig('QS_CONFIG_HISTORY', 0)
     const parsed = Number.parseInt(raw, 10)
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
@@ -3106,7 +3108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getCurrentLogKeep () {
     const raw = (triggerBtn && triggerBtn.dataset.currentLogKeep)
       ? triggerBtn.dataset.currentLogKeep
-      : window.QS_KOMETA_LOG_KEEP
+      : getAppConfig('QS_KOMETA_LOG_KEEP', 0)
     const parsed = Number.parseInt(raw, 10)
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
@@ -3114,32 +3116,32 @@ document.addEventListener('DOMContentLoaded', () => {
   function getCurrentImageMaidLogKeep () {
     const raw = (triggerBtn && triggerBtn.dataset.currentImagemaidLogKeep)
       ? triggerBtn.dataset.currentImagemaidLogKeep
-      : window.QS_IMAGEMAID_LOG_KEEP
+      : getAppConfig('QS_IMAGEMAID_LOG_KEEP', 0)
     const parsed = Number.parseInt(raw, 10)
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
 
   function getCurrentTestLibsTmp () {
     if (triggerBtn && triggerBtn.dataset.currentTestLibsTmp) return triggerBtn.dataset.currentTestLibsTmp
-    return window.QS_TEST_LIBS_TMP || ''
+    return getAppConfig('QS_TEST_LIBS_TMP', '') || ''
   }
 
   function getCurrentTestLibsPath () {
     if (triggerBtn && triggerBtn.dataset.currentTestLibsPath) return triggerBtn.dataset.currentTestLibsPath
-    return window.QS_TEST_LIBS_PATH || ''
+    return getAppConfig('QS_TEST_LIBS_PATH', '') || ''
   }
 
   function getCurrentSessionLifetimeDays () {
     const raw = (triggerBtn && triggerBtn.dataset.currentSessionLifetime)
       ? triggerBtn.dataset.currentSessionLifetime
-      : window.QS_SESSION_LIFETIME_DAYS
+      : getAppConfig('QS_SESSION_LIFETIME_DAYS', 30)
     const parsed = Number.parseInt(raw, 10)
     return Number.isFinite(parsed) && parsed >= 1 ? parsed : 30
   }
 
   function getCurrentSessionDir () {
     if (triggerBtn && triggerBtn.dataset.currentSessionDir) return triggerBtn.dataset.currentSessionDir
-    return window.QS_FLASK_SESSION_DIR || ''
+    return getAppConfig('QS_FLASK_SESSION_DIR', '') || ''
   }
 
   function getQuickstartRoot () {
@@ -3237,8 +3239,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.final_path) triggerBtn.dataset.currentTestLibsPath = data.final_path
       if (data.temp_path) triggerBtn.dataset.currentTestLibsTmp = data.temp_path
     }
-    if (typeof data.final_path === 'string') window.QS_TEST_LIBS_PATH = data.final_path
-    if (typeof data.temp_path === 'string') window.QS_TEST_LIBS_TMP = data.temp_path
+    if (typeof data.final_path === 'string') setAppConfig({ QS_TEST_LIBS_PATH: data.final_path })
+    if (typeof data.temp_path === 'string') setAppConfig({ QS_TEST_LIBS_TMP: data.temp_path })
     if (testLibsTmpInput && data.temp_path) testLibsTmpInput.value = data.temp_path
     if (testLibsPathInput && data.final_path) testLibsPathInput.value = data.final_path
     return data
@@ -3404,47 +3406,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!data.restart) {
           if (data.theme) {
             document.documentElement.setAttribute('data-theme', data.theme)
-            window.QS_THEME = data.theme
+            setAppConfig({ QS_THEME: data.theme })
             if (triggerBtn) triggerBtn.dataset.currentTheme = data.theme
             updateThemeUi(data.theme)
           }
           if (typeof payload.debug !== 'undefined') {
             const debugFlag = Boolean(payload.debug)
-            window.QS_DEBUG = debugFlag
+            setAppConfig({ QS_DEBUG: debugFlag })
             if (triggerBtn) triggerBtn.dataset.currentDebug = debugFlag ? 'true' : 'false'
           }
           if (typeof payload.optimize_defaults !== 'undefined') {
             const optimizeFlag = Boolean(payload.optimize_defaults)
-            window.QS_OPTIMIZE_DEFAULTS = optimizeFlag
+            setAppConfig({ QS_OPTIMIZE_DEFAULTS: optimizeFlag })
             if (triggerBtn) triggerBtn.dataset.currentOptimizeDefaults = optimizeFlag ? 'true' : 'false'
           }
           if (typeof payload.config_history !== 'undefined') {
             const historyFlag = Number(payload.config_history)
-            window.QS_CONFIG_HISTORY = historyFlag
+            setAppConfig({ QS_CONFIG_HISTORY: historyFlag })
             if (triggerBtn) triggerBtn.dataset.currentConfigHistory = String(historyFlag)
           }
           if (typeof payload.kometa_log_keep !== 'undefined') {
             const logKeepFlag = Number(payload.kometa_log_keep)
-            window.QS_KOMETA_LOG_KEEP = logKeepFlag
+            setAppConfig({ QS_KOMETA_LOG_KEEP: logKeepFlag })
             if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
           }
           if (typeof payload.imagemaid_log_keep !== 'undefined') {
             const imagemaidLogKeepFlag = Number(payload.imagemaid_log_keep)
-            window.QS_IMAGEMAID_LOG_KEEP = imagemaidLogKeepFlag
+            setAppConfig({ QS_IMAGEMAID_LOG_KEEP: imagemaidLogKeepFlag })
             if (triggerBtn) triggerBtn.dataset.currentImagemaidLogKeep = String(imagemaidLogKeepFlag)
           }
           if (typeof data.session_lifetime_days !== 'undefined' || typeof payload.session_lifetime_days !== 'undefined') {
             const lifetimeFlag = Number(
               (typeof data.session_lifetime_days !== 'undefined') ? data.session_lifetime_days : payload.session_lifetime_days
             )
-            window.QS_SESSION_LIFETIME_DAYS = lifetimeFlag
+            setAppConfig({ QS_SESSION_LIFETIME_DAYS: lifetimeFlag })
             if (triggerBtn) triggerBtn.dataset.currentSessionLifetime = String(lifetimeFlag)
           }
           if (typeof data.session_dir !== 'undefined' || typeof payload.session_dir !== 'undefined') {
             const sessionDirFlag = String(
               (typeof data.session_dir !== 'undefined') ? data.session_dir : (payload.session_dir || '')
             )
-            window.QS_FLASK_SESSION_DIR = sessionDirFlag
+            setAppConfig({ QS_FLASK_SESSION_DIR: sessionDirFlag })
             if (triggerBtn) triggerBtn.dataset.currentSessionDir = sessionDirFlag
           }
           if (hasPortChange && triggerBtn) {
@@ -3479,37 +3481,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.theme) {
           document.documentElement.setAttribute('data-theme', data.theme)
-          window.QS_THEME = data.theme
+          setAppConfig({ QS_THEME: data.theme })
           if (triggerBtn) triggerBtn.dataset.currentTheme = data.theme
           updateThemeUi(data.theme)
         }
         if (typeof payload.config_history !== 'undefined') {
           const historyFlag = Number(payload.config_history)
-          window.QS_CONFIG_HISTORY = historyFlag
+          setAppConfig({ QS_CONFIG_HISTORY: historyFlag })
           if (triggerBtn) triggerBtn.dataset.currentConfigHistory = String(historyFlag)
         }
         if (typeof payload.kometa_log_keep !== 'undefined') {
           const logKeepFlag = Number(payload.kometa_log_keep)
-          window.QS_KOMETA_LOG_KEEP = logKeepFlag
+          setAppConfig({ QS_KOMETA_LOG_KEEP: logKeepFlag })
           if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
         }
         if (typeof payload.imagemaid_log_keep !== 'undefined') {
           const imagemaidLogKeepFlag = Number(payload.imagemaid_log_keep)
-          window.QS_IMAGEMAID_LOG_KEEP = imagemaidLogKeepFlag
+          setAppConfig({ QS_IMAGEMAID_LOG_KEEP: imagemaidLogKeepFlag })
           if (triggerBtn) triggerBtn.dataset.currentImagemaidLogKeep = String(imagemaidLogKeepFlag)
         }
         if (typeof data.session_lifetime_days !== 'undefined' || typeof payload.session_lifetime_days !== 'undefined') {
           const lifetimeFlag = Number(
             (typeof data.session_lifetime_days !== 'undefined') ? data.session_lifetime_days : payload.session_lifetime_days
           )
-          window.QS_SESSION_LIFETIME_DAYS = lifetimeFlag
+          setAppConfig({ QS_SESSION_LIFETIME_DAYS: lifetimeFlag })
           if (triggerBtn) triggerBtn.dataset.currentSessionLifetime = String(lifetimeFlag)
         }
         if (typeof data.session_dir !== 'undefined' || typeof payload.session_dir !== 'undefined') {
           const sessionDirFlag = String(
             (typeof data.session_dir !== 'undefined') ? data.session_dir : (payload.session_dir || '')
           )
-          window.QS_FLASK_SESSION_DIR = sessionDirFlag
+          setAppConfig({ QS_FLASK_SESSION_DIR: sessionDirFlag })
           if (triggerBtn) triggerBtn.dataset.currentSessionDir = sessionDirFlag
         }
         const rawPort = data.new_port ?? portNum ?? getCurrentPort()
