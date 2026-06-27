@@ -14,10 +14,12 @@ else's
 Emby
 exe
 executables
+Frontend
 https
 ImageMaid
 Jellyfin
 jQuery
+JS
 kometa
 KStatusNotifierItem
 localhost
@@ -33,6 +35,7 @@ Plex
 PowerShell
 Precompiled
 prefill
+PRs
 py
 PyQt
 pytest
@@ -41,6 +44,7 @@ Radarr
 reingests
 Reingest
 repo
+roadmap
 scm
 Seerr
 Sonarr
@@ -55,6 +59,8 @@ txt
 ui
 unreferenced
 venv
+Vite
+Vitest
 walkthrough
 walkthroughs
 Wayland
