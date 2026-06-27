@@ -55,3 +55,7 @@ favicon.ico
 # Local test artifacts and machine-specific test config
 artifacts/
 scripts/run-tests.config.json
+
+# pyspelling generates this binary dictionary cache in the repo root
+# when run locally (e.g. via `pyspelling -c .spellcheck.yml`)
+dictionary.dic

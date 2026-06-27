@@ -50,3 +50,23 @@ jobs:
 
       - name: Run Pre-commit
         run: pre-commit run --all-files --show-diff-on-failure --color=always
+
+  vitest:
+    name: Vitest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v6
+
+      - name: Set Up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Run Vitest
+        run: npm test

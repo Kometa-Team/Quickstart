@@ -61,10 +61,14 @@
     "lint:eslint": "eslint static/local-js --ext .js",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "eslint": "^9.30.0",
-    "vite": "8.1.0"
+    "jsdom": "29.1.1",
+    "vite": "8.1.0",
+    "vitest": "4.1.9"
   }
 }

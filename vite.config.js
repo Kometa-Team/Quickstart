@@ -11,11 +11,11 @@
 //   - npm run dev      starts the Vite dev server on http://localhost:5173
 //   - npm run build    emits production bundles into static/dist/
 //   - npm run preview  serves the built bundles for a quick smoke test
+//   - npm test         runs the Vitest suite under tests/js/
 //
 // What this config explicitly does NOT do:
 //   - touch templates/000-base.html
 //   - change Dockerfile or quickstart.spec
-//   - run in CI
 //   - replace the existing ESLint or pre-commit pipelines
 //
 // Multi-entry strategy: every file in static/local-js/*.js that is already
@@ -92,5 +92,23 @@ export default defineConfig({
     // Surface stack traces in the terminal in dev so refactor-time errors
     // are loud.
     hmr: true
+  },
+  test: {
+    // Vitest configuration (PR for #1334 Step 8).
+    //
+    // jsdom gives our tests a DOM. Every shared module under
+    // static/local-js/modules/ either manipulates the DOM directly (e.g.
+    // setToggleButtonIcon does replaceChildren) or delegates to a global
+    // attached to window — both need a browser-shaped environment.
+    environment: 'jsdom',
+    // Tests live under tests/js/ to keep them out of static/ (which is
+    // shipped to PyInstaller releases) and to mirror the existing tests/
+    // convention for Python tests.
+    include: ['tests/js/**/*.test.js'],
+    // Print a summary even when everything passes. Quiet CI logs hide
+    // useful information.
+    reporters: 'default',
+    // Don't watch in CI; rely on caller using --watch when wanted locally.
+    watch: false
   }
 })

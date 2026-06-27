@@ -10,6 +10,7 @@ config
 configs
 Deduped
 deduplicated
+DOM
 else's
 Emby
 exe
@@ -20,6 +21,7 @@ ImageMaid
 Jellyfin
 jQuery
 JS
+jsdom
 kometa
 KStatusNotifierItem
 localhost
