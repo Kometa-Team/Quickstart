@@ -180,6 +180,7 @@ from blueprints.imagemaid_updates import bp as imagemaid_updates_bp
 from blueprints.config_routes import bp as config_routes_bp
 from blueprints.download_routes import bp as download_routes_bp
 from blueprints.test_libraries_routes import bp as test_libraries_routes_bp
+from blueprints.app_config_routes import bp as app_config_routes_bp
 from blueprints.library_routes import (
     bp as library_routes_bp,
     _build_library_lists,  # noqa: F401 (used by tests as qs_module._build_library_lists)
@@ -972,6 +973,7 @@ app.register_blueprint(test_libraries_routes_bp)
 app.register_blueprint(library_routes_bp)
 app.register_blueprint(import_config_routes_bp)
 app.register_blueprint(imagemaid_routes_bp)
+app.register_blueprint(app_config_routes_bp)
 
 # Run version check at startup
 app.config["VERSION_CHECK"] = helpers.check_for_update()
