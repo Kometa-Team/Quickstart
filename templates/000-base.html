@@ -141,8 +141,8 @@
     </div>
   </div>
 
-  <script type="text/javascript"
-    src="{{ url_for('static', filename='local-js/001-start.js') }}" defer></script>
+  <script type="module"
+    src="{{ url_for('static', filename='local-js/001-start.js') }}"></script>
   {% if page_info['template_name'] != '001-start' %}
   {% if page_info.get('template_uses_module') %}
   <script type="module"

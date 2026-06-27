@@ -66,8 +66,10 @@ const moduleFiles = [
   'static/local-js/pathValidation.js',
   'static/local-js/urlValidation.js',
   'static/local-js/templateStringList.js',
+  'static/local-js/001-start.js',
   'static/local-js/010-plex.js',
   'static/local-js/020-tmdb.js',
+  'static/local-js/027-playlist_files.js',
   'static/local-js/030-tautulli.js',
   'static/local-js/040-github.js',
   'static/local-js/050-omdb.js',
@@ -77,10 +79,12 @@ const moduleFiles = [
   'static/local-js/085-ntfy.js',
   'static/local-js/087-apprise.js',
   'static/local-js/090-webhooks.js',
+  'static/local-js/100-anidb.js',
   'static/local-js/110-radarr.js',
   'static/local-js/120-sonarr.js',
   'static/local-js/130-trakt.js',
-  'static/local-js/140-mal.js'
+  'static/local-js/140-mal.js',
+  'static/local-js/150-settings.js'
 ]
 
 module.exports = [
