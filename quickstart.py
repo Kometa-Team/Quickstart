@@ -409,8 +409,10 @@ VALIDATION_DOC_FALLBACK = "/step/900-kometa"
 # here when its JS file becomes a module.
 MODULE_PAGE_SCRIPTS = frozenset(
     {
+        "001-start",
         "010-plex",
         "020-tmdb",
+        "027-playlist_files",
         "030-tautulli",
         "040-github",
         "050-omdb",
@@ -420,10 +422,12 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "085-ntfy",
         "087-apprise",
         "090-webhooks",
+        "100-anidb",
         "110-radarr",
         "120-sonarr",
         "130-trakt",
         "140-mal",
+        "150-settings",
     }
 )
 VALIDATION_DOCS = {

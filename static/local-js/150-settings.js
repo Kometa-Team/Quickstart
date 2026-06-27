@@ -1,3 +1,5 @@
+import { refreshValidationCallout } from './modules/validationPageBase.js'
+
 document.addEventListener('DOMContentLoaded', function () {
   const validatedAtInput = document.getElementById('settings_validated_at')
   let settingsTouched = false
@@ -167,9 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
         validatedAtInput.value = ''
       }
     }
-    if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-      window.QSValidationCallouts.refresh('settings_validated')
-    }
+    refreshValidationCallout('settings_validated')
   }
 
   function showAccordionForField (field) {

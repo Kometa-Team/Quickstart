@@ -1,3 +1,5 @@
+import { refreshValidationCallout } from './modules/validationPageBase.js'
+
 const validatedAtInput = document.getElementById('playlist_files_validated_at')
 
 $(document).ready(function () {
@@ -40,9 +42,7 @@ $(document).ready(function () {
     if (validatedAtInput) {
       validatedAtInput.value = isValid ? new Date().toISOString() : ''
     }
-    if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-      window.QSValidationCallouts.refresh('playlist_files_validated')
-    }
+    refreshValidationCallout('playlist_files_validated')
     console.log('Validation State Updated:', isValid)
   }
 
