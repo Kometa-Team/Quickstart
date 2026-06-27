@@ -1,6 +1,8 @@
 param(
   [switch]$E2E,
   [switch]$Unit,
+  [switch]$Lint,
+  [switch]$RepoChecks,
   [switch]$RatingsMatrix,
   [switch]$RatingsArtifacts,
   [switch]$NoCapture,
@@ -39,6 +41,7 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $venvPython = Join-Path $repoRoot "venv\\Scripts\\python.exe"
 $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
+$venvPreCommit = Join-Path $repoRoot "venv\\Scripts\\pre-commit.exe"
 
 function Invoke-PytestDirect {
   param(
@@ -54,12 +57,26 @@ function Invoke-PytestDirect {
   }
 }
 
+function Invoke-PreCommitAllFiles {
+  Push-Location $repoRoot
+  try {
+    if (Test-Path $venvPreCommit) {
+      & $venvPreCommit run --all-files --show-diff-on-failure --color=always
+    } else {
+      & $python -m pre_commit run --all-files --show-diff-on-failure --color=always
+    }
+    $script:LastPreCommitExitCode = $LASTEXITCODE
+  } finally {
+    Pop-Location
+  }
+}
+
 if ($Setup) {
   & (Join-Path $PSScriptRoot "setup-dev.ps1")
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
-  if (-not ($E2E -or $Unit -or $RatingsMatrix -or $RatingsArtifacts -or $All)) {
+  if (-not ($E2E -or $Unit -or $Lint -or $RepoChecks -or $RatingsMatrix -or $RatingsArtifacts -or $All)) {
     exit 0
   }
   $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
@@ -210,9 +227,25 @@ if ($null -ne $resolvedRatingsRandomSeed -and "$resolvedRatingsRandomSeed".Trim(
   $env:RATINGS_MATRIX_RANDOM_SEED = [string]$resolvedRatingsRandomSeed
 }
 
-if (@($E2E, $Unit, $RatingsMatrix, $RatingsArtifacts).Where({ $_ }).Count -gt 1) {
-  Write-Host "Choose only one: -E2E, -Unit, -RatingsMatrix, or -RatingsArtifacts (or use -All)." -ForegroundColor Yellow
+if (@($E2E, $Unit, $Lint, $RepoChecks, $RatingsMatrix, $RatingsArtifacts).Where({ $_ }).Count -gt 1) {
+  Write-Host "Choose only one: -E2E, -Unit, -Lint, -RepoChecks, -RatingsMatrix, or -RatingsArtifacts (or use -All)." -ForegroundColor Yellow
   exit 2
+}
+
+if ($Lint) {
+  Invoke-PreCommitAllFiles
+  $exitCode = $script:LastPreCommitExitCode
+  exit $exitCode
+}
+
+if ($RepoChecks) {
+  Write-Host "RepoChecks: running pre-commit first, then full pytest flow." -ForegroundColor Cyan
+  Invoke-PreCommitAllFiles
+  $preCommitExit = $script:LastPreCommitExitCode
+  if ($preCommitExit -ne 0) {
+    exit $preCommitExit
+  }
+  $All = $true
 }
 
 if ($E2E) {
