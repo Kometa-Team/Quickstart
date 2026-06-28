@@ -2,57 +2,54 @@ import { setToggleButtonIcon, refreshValidationCallout } from './modules/validat
 
 const validatedAtInput = document.getElementById('trakt_validated_at')
 
-$(document).ready(function () {
-  const traktClientSecretInput = document.getElementById('trakt_client_secret')
-  const toggleButton = document.getElementById('toggleClientSecretVisibility')
-  const validateButton = document.getElementById('validate_trakt_pin')
-  const checkTokenButton = document.getElementById('trakt_check_token')
-  const isValidatedElement = document.getElementById('trakt_validated')
-  const isValidated = isValidatedElement.value.toLowerCase()
-  console.log('Validated:', isValidated)
-  const isBlankTokenValue = (value) => {
-    if (!value) return true
-    const trimmed = value.trim()
-    if (!trimmed) return true
-    return trimmed.toLowerCase() === 'none' || trimmed.toLowerCase() === 'null'
-  }
+const traktClientSecretInput = document.getElementById('trakt_client_secret')
+const toggleButton = document.getElementById('toggleClientSecretVisibility')
+const validateButton = document.getElementById('validate_trakt_pin')
+const checkTokenButton = document.getElementById('trakt_check_token')
+const isValidatedElement = document.getElementById('trakt_validated')
+const isValidated = isValidatedElement.value.toLowerCase()
+console.log('Validated:', isValidated)
+const isBlankTokenValue = (value) => {
+  if (!value) return true
+  const trimmed = value.trim()
+  if (!trimmed) return true
+  return trimmed.toLowerCase() === 'none' || trimmed.toLowerCase() === 'null'
+}
 
-  // Set initial visibility based on Client Secret value
-  if (traktClientSecretInput.value.trim() === '') {
-    traktClientSecretInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
+// Set initial visibility based on Client Secret value
+if (traktClientSecretInput.value.trim() === '') {
+  traktClientSecretInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  traktClientSecretInput.setAttribute('type', 'password') // Hide actual secret
+  setToggleButtonIcon(toggleButton, false)
+}
+
+// Disable validate button if already validated
+validateButton.disabled = isValidated === 'true'
+if (checkTokenButton) {
+  const accessToken = document.getElementById('access_token')?.value || ''
+  checkTokenButton.disabled = isBlankTokenValue(accessToken)
+}
+
+// Reset validation status when user types
+const inputFields = ['trakt_client_id', 'trakt_client_secret', 'trakt_pin']
+inputFields.forEach(field => {
+  const inputElement = document.getElementById(field)
+  if (inputElement) {
+    inputElement.addEventListener('input', function () {
+      isValidatedElement.value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
+      validateButton.disabled = false
+      if (checkTokenButton) checkTokenButton.disabled = true
+      refreshValidationCallout('trakt_validated')
+    })
   } else {
-    traktClientSecretInput.setAttribute('type', 'password') // Hide actual secret
-    setToggleButtonIcon(toggleButton, false)
+    console.warn(`Warning: Element with ID '${field}' not found.`)
   }
-
-  // Disable validate button if already validated
-  validateButton.disabled = isValidated === 'true'
-  if (checkTokenButton) {
-    const accessToken = document.getElementById('access_token')?.value || ''
-    checkTokenButton.disabled = isBlankTokenValue(accessToken)
-  }
-
-  // Reset validation status when user types
-  const inputFields = ['trakt_client_id', 'trakt_client_secret', 'trakt_pin']
-  inputFields.forEach(field => {
-    const inputElement = document.getElementById(field)
-    if (inputElement) {
-      inputElement.addEventListener('input', function () {
-        isValidatedElement.value = 'false'
-        if (validatedAtInput) validatedAtInput.value = ''
-        validateButton.disabled = false
-        if (checkTokenButton) checkTokenButton.disabled = true
-        refreshValidationCallout('trakt_validated')
-      })
-    } else {
-      console.warn(`Warning: Element with ID '${field}' not found.`)
-    }
-  })
 })
 
 document.getElementById('toggleClientSecretVisibility').addEventListener('click', function () {
-  const traktClientSecretInput = document.getElementById('trakt_client_secret')
   const currentType = traktClientSecretInput.getAttribute('type')
   traktClientSecretInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
   setToggleButtonIcon(this, currentType === 'password')

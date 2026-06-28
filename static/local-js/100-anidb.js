@@ -1,9 +1,7 @@
-$(document).ready(function () {
-  const enableToggle = document.getElementById('anidb_enable')
-  const fields = document.getElementById('anidb-fields')
+const enableToggle = document.getElementById('anidb_enable')
+const fields = document.getElementById('anidb-fields')
 
-  if (!enableToggle || !fields) return
-
+if (enableToggle && fields) {
   const updateVisibility = () => {
     const enabled = enableToggle.checked
     fields.classList.toggle('d-none', !enabled)
@@ -19,4 +17,4 @@ $(document).ready(function () {
 
   updateVisibility()
   enableToggle.addEventListener('change', updateVisibility)
-})
+}

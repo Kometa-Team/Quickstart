@@ -2,32 +2,30 @@ import { setToggleButtonIcon, refreshValidationCallout } from './modules/validat
 
 const validatedAtInput = document.getElementById('github_validated_at')
 
-$(document).ready(function () {
-  const apiKeyInput = document.getElementById('github_token')
-  const validateButton = document.getElementById('validateButton')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
-  const isValidated = document.getElementById('github_validated').value.toLowerCase() === 'true'
-  console.log('Validated: ' + isValidated)
+const apiKeyInput = document.getElementById('github_token')
+const validateButton = document.getElementById('validateButton')
+const toggleButton = document.getElementById('toggleApikeyVisibility')
+const isValidated = document.getElementById('github_validated').value.toLowerCase() === 'true'
+console.log('Validated: ' + isValidated)
 
-  // Set initial visibility based on API key value
-  if (apiKeyInput.value.trim() === '') {
-    apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
-  }
+// Set initial visibility based on API key value
+if (apiKeyInput.value.trim() === '') {
+  apiKeyInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  apiKeyInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
 
-  // Disable validate button if already validated
-  validateButton.disabled = isValidated
+// Disable validate button if already validated
+validateButton.disabled = isValidated
 
-  // Reset validation status when user types
-  apiKeyInput.addEventListener('input', function () {
-    document.getElementById('github_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('github_validated')
-  })
+// Reset validation status when user types
+apiKeyInput.addEventListener('input', function () {
+  document.getElementById('github_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('github_validated')
 })
 
 document.getElementById('toggleApikeyVisibility').addEventListener('click', function () {
@@ -89,7 +87,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
 })
 
 document.getElementById('configForm').addEventListener('submit', function () {
-  const apiKeyInput = document.getElementById('github_token')
   if (!apiKeyInput.value) {
     apiKeyInput.value = ''
   }

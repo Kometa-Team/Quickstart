@@ -2,40 +2,38 @@ import { setToggleButtonIcon, refreshValidationCallout } from './modules/validat
 
 const validatedAtInput = document.getElementById('gotify_validated_at')
 
-$(document).ready(function () {
-  const gotifyTokenInput = document.getElementById('gotify_token')
-  const validateButton = document.getElementById('validateButton')
-  const toggleButton = document.getElementById('toggleTokenVisibility')
-  const isValidated = document.getElementById('gotify_validated').value.toLowerCase()
+const gotifyTokenInput = document.getElementById('gotify_token')
+const validateButton = document.getElementById('validateButton')
+const toggleButton = document.getElementById('toggleTokenVisibility')
+const isValidated = document.getElementById('gotify_validated').value.toLowerCase()
 
-  console.log('Validated: ' + isValidated)
+console.log('Validated: ' + isValidated)
 
-  // Set initial visibility based on API key value
-  if (gotifyTokenInput.value.trim() === '') {
-    gotifyTokenInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    gotifyTokenInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
-  }
+// Set initial visibility based on API key value
+if (gotifyTokenInput.value.trim() === '') {
+  gotifyTokenInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  gotifyTokenInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
 
-  // Disable validate button if already validated
-  validateButton.disabled = isValidated === 'true'
+// Disable validate button if already validated
+validateButton.disabled = isValidated === 'true'
 
-  // Reset validation status when user types
-  gotifyTokenInput.addEventListener('input', function () {
-    document.getElementById('gotify_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('gotify_validated')
-  })
+// Reset validation status when user types
+gotifyTokenInput.addEventListener('input', function () {
+  document.getElementById('gotify_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('gotify_validated')
+})
 
-  document.getElementById('gotify_url').addEventListener('input', function () {
-    document.getElementById('gotify_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('gotify_validated')
-  })
+document.getElementById('gotify_url').addEventListener('input', function () {
+  document.getElementById('gotify_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('gotify_validated')
 })
 
 // Function to toggle API key visibility

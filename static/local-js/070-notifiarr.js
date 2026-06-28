@@ -2,33 +2,31 @@ import { setToggleButtonIcon, refreshValidationCallout } from './modules/validat
 
 const validatedAtInput = document.getElementById('notifiarr_validated_at')
 
-$(document).ready(function () {
-  const apiKeyInput = document.getElementById('notifiarr_apikey')
-  const validateButton = document.getElementById('validateButton')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
-  const isValidated = document.getElementById('notifiarr_validated').value.toLowerCase()
+const apiKeyInput = document.getElementById('notifiarr_apikey')
+const validateButton = document.getElementById('validateButton')
+const toggleButton = document.getElementById('toggleApikeyVisibility')
+const isValidated = document.getElementById('notifiarr_validated').value.toLowerCase()
 
-  console.log('Validated: ' + isValidated)
+console.log('Validated: ' + isValidated)
 
-  // Set initial visibility based on API key value
-  if (apiKeyInput.value.trim() === '') {
-    apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
-  }
+// Set initial visibility based on API key value
+if (apiKeyInput.value.trim() === '') {
+  apiKeyInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  apiKeyInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
 
-  // Disable validate button if already validated
-  validateButton.disabled = isValidated === 'true'
+// Disable validate button if already validated
+validateButton.disabled = isValidated === 'true'
 
-  // Reset validation status when user types
-  apiKeyInput.addEventListener('input', function () {
-    document.getElementById('notifiarr_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('notifiarr_validated')
-  })
+// Reset validation status when user types
+apiKeyInput.addEventListener('input', function () {
+  document.getElementById('notifiarr_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('notifiarr_validated')
 })
 
 async function validateNotifiarrApikey (apikey) {
@@ -95,7 +93,6 @@ document.getElementById('toggleApikeyVisibility').addEventListener('click', func
 })
 
 document.getElementById('configForm').addEventListener('submit', function (event) {
-  const apiKeyInput = document.getElementById('notifiarr_apikey')
   if (!apiKeyInput.value) {
     apiKeyInput.value = ''
   }

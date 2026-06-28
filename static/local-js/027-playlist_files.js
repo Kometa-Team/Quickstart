@@ -1,58 +1,71 @@
 import { refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('playlist_files_validated_at')
+const plexValidEl = document.getElementById('plex_valid')
+const plexValid = !!plexValidEl && plexValidEl.dataset.plexValid === 'True'
+console.log('Plex Valid:', plexValid)
 
-$(document).ready(function () {
-  const plexValid = $('#plex_valid').length > 0 && $('#plex_valid').data('plex-valid') === 'True'
-  console.log('Plex Valid:', plexValid)
+const librariesContainer = document.getElementById('libraries-container')
+const validationMessages = document.getElementById('validation-messages')
 
-  if (!plexValid) {
-    $('#libraries-container').hide()
-    $('#validation-messages').html(
+if (!plexValid) {
+  if (librariesContainer) librariesContainer.style.display = 'none'
+  if (validationMessages) {
+    validationMessages.innerHTML =
       'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" onclick="jumpTo(\'010-plex\');">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>'
-    ).show()
-  } else {
-    $('#libraries-container').show()
-    $('#validation-messages').hide()
+    validationMessages.style.display = ''
   }
+} else {
+  if (librariesContainer) librariesContainer.style.display = ''
+  if (validationMessages) validationMessages.style.display = 'none'
+}
 
-  // Initialize checkboxes based on preselected libraries
-  const selectedLibraries = $('#libraries').val().split(',').map(item => item.trim())
-  console.log('Preselected Libraries:', selectedLibraries)
-  $('.library-checkbox').each(function () {
-    if (selectedLibraries.includes($(this).val())) {
-      $(this).prop('checked', true)
-    }
-  })
+const librariesInput = document.getElementById('libraries')
+const validatedField = document.getElementById('playlist_files_validated')
 
-  // Update hidden input field when checkboxes are changed
-  $('.library-checkbox').change(function () {
-    const updatedLibraries = []
-    $('.library-checkbox:checked').each(function () {
-      updatedLibraries.push($(this).val())
-    })
-    $('#libraries').val(updatedLibraries.join(', '))
+// Initialize checkboxes based on preselected libraries
+const initialLibrariesRaw = librariesInput && librariesInput.value ? librariesInput.value : ''
+const selectedLibraries = initialLibrariesRaw.split(',').map(item => item.trim())
+console.log('Preselected Libraries:', selectedLibraries)
+
+const libraryCheckboxes = document.querySelectorAll('.library-checkbox')
+libraryCheckboxes.forEach(checkbox => {
+  if (selectedLibraries.includes(checkbox.value)) {
+    checkbox.checked = true
+  }
+})
+
+// Update validation state
+function updateValidationState (isValid) {
+  if (validatedField) validatedField.value = isValid ? 'true' : 'false'
+  if (validatedAtInput) {
+    validatedAtInput.value = isValid ? new Date().toISOString() : ''
+  }
+  refreshValidationCallout('playlist_files_validated')
+  console.log('Validation State Updated:', isValid)
+}
+
+// Update hidden input field when checkboxes are changed
+libraryCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', function () {
+    const updatedLibraries = Array.from(document.querySelectorAll('.library-checkbox:checked'))
+      .map(box => box.value)
+    if (librariesInput) librariesInput.value = updatedLibraries.join(', ')
     updateValidationState(updatedLibraries.length > 0)
     console.log('Updated Libraries:', updatedLibraries)
   })
-
-  // Update validation state
-  function updateValidationState (isValid) {
-    $('#playlist_files_validated').val(isValid ? 'true' : 'false')
-    if (validatedAtInput) {
-      validatedAtInput.value = isValid ? new Date().toISOString() : ''
-    }
-    refreshValidationCallout('playlist_files_validated')
-    console.log('Validation State Updated:', isValid)
-  }
-
-  // Preserve data on form submission for backend processing
-  $('#configForm').on('submit', function () {
-    // Log the data being submitted for debugging
-    console.log('Form Submitted:')
-    console.log('Default:', $('#default').val())
-    console.log('Libraries:', $('#libraries').val())
-    console.log('Validated:', $('#playlist_files_validated').val())
-    console.log('Template Variables:', $('#template_variables').val())
-  })
 })
+
+// Preserve data on form submission for backend processing
+const configForm = document.getElementById('configForm')
+if (configForm) {
+  configForm.addEventListener('submit', function () {
+    const defaultEl = document.getElementById('default')
+    const templateVariables = document.getElementById('template_variables')
+    console.log('Form Submitted:')
+    console.log('Default:', defaultEl ? defaultEl.value : '')
+    console.log('Libraries:', librariesInput ? librariesInput.value : '')
+    console.log('Validated:', validatedField ? validatedField.value : '')
+    console.log('Template Variables:', templateVariables ? templateVariables.value : '')
+  })
+}

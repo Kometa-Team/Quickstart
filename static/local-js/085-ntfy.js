@@ -2,54 +2,51 @@ import { setToggleButtonIcon, refreshValidationCallout } from './modules/validat
 
 const validatedAtInput = document.getElementById('ntfy_validated_at')
 
-$(document).ready(function () {
-  const tokenInput = document.getElementById('ntfy_token')
-  const toggleButton = document.getElementById('toggleTokenVisibility')
-  const isValidated = document.getElementById('ntfy_validated').value.toLowerCase()
-  const validateButton = document.getElementById('validateButton')
+const tokenInput = document.getElementById('ntfy_token')
+const toggleButton = document.getElementById('toggleTokenVisibility')
+const isValidated = document.getElementById('ntfy_validated').value.toLowerCase()
+const validateButton = document.getElementById('validateButton')
 
-  console.log('Validated: ' + isValidated)
+console.log('Validated: ' + isValidated)
 
-  // Set initial visibility based on API key value
-  if (tokenInput.value.trim() === '') {
-    tokenInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    tokenInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
-  }
+// Set initial visibility based on API key value
+if (tokenInput.value.trim() === '') {
+  tokenInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  tokenInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
 
-  if (isValidated === 'true') {
-    validateButton.disabled = true
-  } else {
-    validateButton.disabled = false
-  }
+if (isValidated === 'true') {
+  validateButton.disabled = true
+} else {
+  validateButton.disabled = false
+}
 
-  tokenInput.addEventListener('input', function () {
-    document.getElementById('ntfy_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('ntfy_validated')
-  })
+tokenInput.addEventListener('input', function () {
+  document.getElementById('ntfy_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('ntfy_validated')
+})
 
-  document.getElementById('ntfy_url').addEventListener('input', function () {
-    document.getElementById('ntfy_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('ntfy_validated')
-  })
+document.getElementById('ntfy_url').addEventListener('input', function () {
+  document.getElementById('ntfy_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('ntfy_validated')
+})
 
-  document.getElementById('ntfy_topic').addEventListener('input', function () {
-    document.getElementById('ntfy_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('ntfy_validated')
-  })
+document.getElementById('ntfy_topic').addEventListener('input', function () {
+  document.getElementById('ntfy_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('ntfy_validated')
 })
 
 // Function to toggle API key visibility
 document.getElementById('toggleTokenVisibility').addEventListener('click', function () {
-  const tokenInput = document.getElementById('ntfy_token')
   const currentType = tokenInput.getAttribute('type')
   tokenInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
   setToggleButtonIcon(this, currentType === 'password')

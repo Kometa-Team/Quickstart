@@ -19,61 +19,59 @@ function resetDropdown (dropdown, placeholderText) {
   dropdown.replaceChildren(option)
 }
 
-$(document).ready(function () {
-  const apiKeyInput = document.getElementById('sonarr_token')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
-  const validateButton = document.getElementById('validateButton')
-  const isValidatedElement = document.getElementById('sonarr_validated')
-  const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
+const apiKeyInput = document.getElementById('sonarr_token')
+const toggleButton = document.getElementById('toggleApikeyVisibility')
+const validateButton = document.getElementById('validateButton')
+const isValidatedElement = document.getElementById('sonarr_validated')
+const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
 
-  console.log('Validated:', isValidated)
+console.log('Validated:', isValidated)
 
-  // Set initial visibility based on API key value
-  if (apiKeyInput.value.trim() === '') {
-    apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
+// Set initial visibility based on API key value
+if (apiKeyInput.value.trim() === '') {
+  apiKeyInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  apiKeyInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
+
+// Disable validate button if already validated
+if (isValidatedElement) {
+  validateButton.disabled = isValidated === 'true'
+}
+
+if (isValidated === 'true') {
+  document.getElementById('validateButton').disabled = true
+  fetchDropdownData() // Populate dropdowns if already validated
+} else {
+  document.getElementById('validateButton').disabled = false
+}
+
+// Attach event listeners for input changes
+document.getElementById('sonarr_token').addEventListener('input', function () {
+  document.getElementById('sonarr_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  document.getElementById('validateButton').disabled = false
+  refreshValidationCallout('sonarr_validated')
+})
+
+document.getElementById('sonarr_url').addEventListener('input', function () {
+  document.getElementById('sonarr_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  document.getElementById('validateButton').disabled = false
+  refreshValidationCallout('sonarr_validated')
+})
+
+// Attach event listeners for validation and toggle functionality
+document.getElementById('validateButton').addEventListener('click', validateSonarrApi)
+document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility)
+
+// Add an event listener for form submission
+document.getElementById('configForm').addEventListener('submit', function (event) {
+  if (!validateSonarrPage()) {
+    event.preventDefault() // Prevent form submission if validation fails
   }
-
-  // Disable validate button if already validated
-  if (isValidatedElement) {
-    validateButton.disabled = isValidated === 'true'
-  }
-
-  if (isValidated === 'true') {
-    document.getElementById('validateButton').disabled = true
-    fetchDropdownData() // Populate dropdowns if already validated
-  } else {
-    document.getElementById('validateButton').disabled = false
-  }
-
-  // Attach event listeners for input changes
-  document.getElementById('sonarr_token').addEventListener('input', function () {
-    document.getElementById('sonarr_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    document.getElementById('validateButton').disabled = false
-    refreshValidationCallout('sonarr_validated')
-  })
-
-  document.getElementById('sonarr_url').addEventListener('input', function () {
-    document.getElementById('sonarr_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    document.getElementById('validateButton').disabled = false
-    refreshValidationCallout('sonarr_validated')
-  })
-
-  // Attach event listeners for validation and toggle functionality
-  document.getElementById('validateButton').addEventListener('click', validateSonarrApi)
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility)
-
-  // Add an event listener for form submission
-  document.getElementById('configForm').addEventListener('submit', function (event) {
-    if (!validateSonarrPage()) {
-      event.preventDefault() // Prevent form submission if validation fails
-    }
-  })
 })
 
 function validateSonarrApi () {
@@ -177,9 +175,9 @@ function validateSonarrPage () {
     ? PathValidation.validateAll()
     : true
 
-  const isValidated = document.getElementById('sonarr_validated').value.toLowerCase() === 'true'
+  const isValidatedNow = document.getElementById('sonarr_validated').value.toLowerCase() === 'true'
 
-  if (isValidated) {
+  if (isValidatedNow) {
     if (!rootFolderPath) {
       validationMessages.push('Please select a valid Root Folder Path.')
       isValid = false
@@ -213,8 +211,6 @@ function validateSonarrPage () {
 }
 
 function toggleApiKeyVisibility () {
-  const apiKeyInput = document.getElementById('sonarr_token')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
   if (apiKeyInput && toggleButton) {
     if (apiKeyInput.type === 'password') {
       apiKeyInput.type = 'text'

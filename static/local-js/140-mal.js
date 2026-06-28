@@ -2,53 +2,50 @@ import { setToggleButtonIcon, refreshValidationCallout } from './modules/validat
 
 const validatedAtInput = document.getElementById('mal_validated_at')
 
-$(document).ready(function () {
-  const clientSecretInput = document.getElementById('mal_client_secret')
-  const toggleButton = document.getElementById('toggleClientSecretVisibility')
-  const validateButton = document.getElementById('validate_mal_url')
-  const checkTokenButton = document.getElementById('mal_check_token')
-  const isValidatedElement = document.getElementById('mal_validated')
-  const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
-  console.log('Validated:', isValidated)
+const clientSecretInput = document.getElementById('mal_client_secret')
+const toggleButton = document.getElementById('toggleClientSecretVisibility')
+const validateButton = document.getElementById('validate_mal_url')
+const checkTokenButton = document.getElementById('mal_check_token')
+const isValidatedElement = document.getElementById('mal_validated')
+const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
+console.log('Validated:', isValidated)
 
-  // Ensure initial visibility based on input value
-  if (clientSecretInput.value.trim() === '') {
-    clientSecretInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
+// Ensure initial visibility based on input value
+if (clientSecretInput.value.trim() === '') {
+  clientSecretInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  clientSecretInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
+
+// Disable validate button if already validated
+if (isValidated === 'true') {
+  validateButton.disabled = true
+}
+if (checkTokenButton) {
+  const accessToken = document.getElementById('access_token')?.value || ''
+  checkTokenButton.disabled = !accessToken.trim()
+}
+
+// Reset validation status when user types
+const inputFields = ['mal_client_id', 'mal_client_secret', 'mal_code_verifier', 'mal_localhost_url']
+inputFields.forEach(field => {
+  const inputElement = document.getElementById(field)
+  if (inputElement) {
+    inputElement.addEventListener('input', function () {
+      isValidatedElement.value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
+      validateButton.disabled = false
+      if (checkTokenButton) checkTokenButton.disabled = true
+      refreshValidationCallout('mal_validated')
+    })
   } else {
-    clientSecretInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
+    console.warn(`Warning: Element with ID '${field}' not found.`)
   }
-
-  // Disable validate button if already validated
-  if (isValidated === 'true') {
-    validateButton.disabled = true
-  }
-  if (checkTokenButton) {
-    const accessToken = document.getElementById('access_token')?.value || ''
-    checkTokenButton.disabled = !accessToken.trim()
-  }
-
-  // Reset validation status when user types
-  const inputFields = ['mal_client_id', 'mal_client_secret', 'mal_code_verifier', 'mal_localhost_url']
-  inputFields.forEach(field => {
-    const inputElement = document.getElementById(field)
-    if (inputElement) {
-      inputElement.addEventListener('input', function () {
-        isValidatedElement.value = 'false'
-        if (validatedAtInput) validatedAtInput.value = ''
-        validateButton.disabled = false
-        if (checkTokenButton) checkTokenButton.disabled = true
-        refreshValidationCallout('mal_validated')
-      })
-    } else {
-      console.warn(`Warning: Element with ID '${field}' not found.`)
-    }
-  })
 })
 
 document.getElementById('toggleClientSecretVisibility').addEventListener('click', function () {
-  const clientSecretInput = document.getElementById('mal_client_secret')
   const currentType = clientSecretInput.getAttribute('type')
   clientSecretInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
   setToggleButtonIcon(this, currentType === 'password')

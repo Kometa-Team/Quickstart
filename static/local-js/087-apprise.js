@@ -2,19 +2,17 @@ import { refreshValidationCallout } from './modules/validationPageBase.js'
 
 const validatedAtInput = document.getElementById('apprise_validated_at')
 
-$(document).ready(function () {
-  const locationInput = document.getElementById('apprise_location')
-  const validateButton = document.getElementById('validateButton')
-  const isValidated = document.getElementById('apprise_validated').value.toLowerCase()
+const locationInput = document.getElementById('apprise_location')
+const validateButton = document.getElementById('validateButton')
+const isValidated = document.getElementById('apprise_validated').value.toLowerCase()
 
-  validateButton.disabled = isValidated === 'true'
+validateButton.disabled = isValidated === 'true'
 
-  locationInput.addEventListener('input', function () {
-    document.getElementById('apprise_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    validateButton.disabled = false
-    refreshValidationCallout('apprise_validated')
-  })
+locationInput.addEventListener('input', function () {
+  document.getElementById('apprise_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  validateButton.disabled = false
+  refreshValidationCallout('apprise_validated')
 })
 
 document.getElementById('validateButton').addEventListener('click', function () {

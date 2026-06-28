@@ -19,59 +19,57 @@ function resetDropdown (dropdown, placeholderText) {
   dropdown.replaceChildren(option)
 }
 
-$(document).ready(function () {
-  const apiKeyInput = document.getElementById('radarr_token')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
-  const validateButton = document.getElementById('validateButton')
-  const isValidated = document.getElementById('radarr_validated').value.toLowerCase()
+const apiKeyInput = document.getElementById('radarr_token')
+const toggleButton = document.getElementById('toggleApikeyVisibility')
+const validateButton = document.getElementById('validateButton')
+const isValidated = document.getElementById('radarr_validated').value.toLowerCase()
 
-  console.log('Validated: ' + isValidated)
+console.log('Validated: ' + isValidated)
 
-  // Set initial visibility based on API key value
-  if (apiKeyInput.value.trim() === '') {
-    apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
+// Set initial visibility based on API key value
+if (apiKeyInput.value.trim() === '') {
+  apiKeyInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  apiKeyInput.setAttribute('type', 'password') // Hide actual key
+  setToggleButtonIcon(toggleButton, false)
+}
+
+// Disable validate button if already validated
+validateButton.disabled = isValidated === 'true'
+
+if (isValidated === 'true') {
+  document.getElementById('validateButton').disabled = true
+  // Populate the dropdowns with the stored data if they are available
+  fetchDropdownData()
+} else {
+  document.getElementById('validateButton').disabled = false
+}
+
+// Attach event listeners for input changes
+document.getElementById('radarr_token').addEventListener('input', function () {
+  document.getElementById('radarr_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  document.getElementById('validateButton').disabled = false
+  refreshValidationCallout('radarr_validated')
+})
+
+document.getElementById('radarr_url').addEventListener('input', function () {
+  document.getElementById('radarr_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  document.getElementById('validateButton').disabled = false
+  refreshValidationCallout('radarr_validated')
+})
+
+// Attach event listeners for validation and toggle functionality
+document.getElementById('validateButton').addEventListener('click', validateRadarrApi)
+document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility)
+
+// Add an event listener for form submission
+document.getElementById('configForm').addEventListener('submit', function (event) {
+  if (!validateRadarrPage()) {
+    event.preventDefault() // Prevent form submission if validation fails
   }
-
-  // Disable validate button if already validated
-  validateButton.disabled = isValidated === 'true'
-
-  if (isValidated === 'true') {
-    document.getElementById('validateButton').disabled = true
-    // Populate the dropdowns with the stored data if they are available
-    fetchDropdownData()
-  } else {
-    document.getElementById('validateButton').disabled = false
-  }
-
-  // Attach event listeners for input changes
-  document.getElementById('radarr_token').addEventListener('input', function () {
-    document.getElementById('radarr_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    document.getElementById('validateButton').disabled = false
-    refreshValidationCallout('radarr_validated')
-  })
-
-  document.getElementById('radarr_url').addEventListener('input', function () {
-    document.getElementById('radarr_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    document.getElementById('validateButton').disabled = false
-    refreshValidationCallout('radarr_validated')
-  })
-
-  // Attach event listeners for validation and toggle functionality
-  document.getElementById('validateButton').addEventListener('click', validateRadarrApi)
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility)
-
-  // Add an event listener for form submission
-  document.getElementById('configForm').addEventListener('submit', function (event) {
-    if (!validateRadarrPage()) {
-      event.preventDefault() // Prevent form submission if validation fails
-    }
-  })
 })
 
 function fetchDropdownData () {
@@ -114,7 +112,7 @@ function populateDropdown (elementId, data, valueField, textField, selectedValue
 
 // Validate Radarr page fields
 function validateRadarrPage () {
-  const isValidated = document.getElementById('radarr_validated').value.toLowerCase()
+  const currentValidatedValue = document.getElementById('radarr_validated').value.toLowerCase()
   const rootFolderPath = document.getElementById('radarr_root_folder_path').value
   const qualityProfile = document.getElementById('radarr_quality_profile').value
   const statusMessage = document.getElementById('statusMessage')
@@ -125,7 +123,7 @@ function validateRadarrPage () {
     : true
 
   // Skip validation if Radarr is not validated
-  if (isValidated !== 'true') {
+  if (currentValidatedValue !== 'true') {
     return true // Allow navigation
   }
 
@@ -210,8 +208,6 @@ function validateRadarrApi () {
 }
 
 function toggleApiKeyVisibility () {
-  const apiKeyInput = document.getElementById('radarr_token')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
   if (apiKeyInput && toggleButton) {
     if (apiKeyInput.type === 'password') {
       apiKeyInput.type = 'text'

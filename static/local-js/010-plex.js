@@ -1,47 +1,45 @@
 import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
 
-$(document).ready(function () {
-  const validateButton = document.getElementById('validateButton')
-  const isValidated = document.getElementById('plex_validated').value.toLowerCase()
-  const validatedAtInput = document.getElementById('plex_validated_at')
-  const hiddenSection = document.getElementById('hidden')
-  const plexDbCache = document.getElementById('plexDbCache')
-  const plexTokenInput = document.getElementById('plex_token')
-  const plexUrlInput = document.getElementById('plex_url')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
+const validateButton = document.getElementById('validateButton')
+const isValidated = document.getElementById('plex_validated').value.toLowerCase()
+const validatedAtInput = document.getElementById('plex_validated_at')
+const hiddenSection = document.getElementById('hidden')
+const plexDbCache = document.getElementById('plexDbCache')
+const plexTokenInput = document.getElementById('plex_token')
+const plexUrlInput = document.getElementById('plex_url')
+const toggleButton = document.getElementById('toggleApikeyVisibility')
 
-  validateButton.disabled = (isValidated === 'true')
+validateButton.disabled = (isValidated === 'true')
 
-  console.log('Validated: ' + isValidated)
+console.log('Validated: ' + isValidated)
 
-  if (isValidated === 'true') {
-    hiddenSection.style.display = 'block'
-    plexDbCache.style.display = 'block'
-  }
+if (isValidated === 'true') {
+  hiddenSection.style.display = 'block'
+  plexDbCache.style.display = 'block'
+}
 
-  // Set initial visibility based on token value
-  if (plexTokenInput.value.trim() === '') {
-    plexTokenInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    plexTokenInput.setAttribute('type', 'password') // Hide actual token
-    setToggleButtonIcon(toggleButton, false)
-  }
+// Set initial visibility based on token value
+if (plexTokenInput.value.trim() === '') {
+  plexTokenInput.setAttribute('type', 'text') // Show placeholder text
+  setToggleButtonIcon(toggleButton, true)
+} else {
+  plexTokenInput.setAttribute('type', 'password') // Hide actual token
+  setToggleButtonIcon(toggleButton, false)
+}
 
-  // Enable validate button and reset validation when token or URL changes
-  plexTokenInput.addEventListener('input', function () {
-    validateButton.disabled = false
-    document.getElementById('plex_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    refreshValidationCallout('plex_validated')
-  })
+// Enable validate button and reset validation when token or URL changes
+plexTokenInput.addEventListener('input', function () {
+  validateButton.disabled = false
+  document.getElementById('plex_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  refreshValidationCallout('plex_validated')
+})
 
-  plexUrlInput.addEventListener('input', function () {
-    validateButton.disabled = false
-    document.getElementById('plex_validated').value = 'false'
-    if (validatedAtInput) validatedAtInput.value = ''
-    refreshValidationCallout('plex_validated')
-  })
+plexUrlInput.addEventListener('input', function () {
+  validateButton.disabled = false
+  document.getElementById('plex_validated').value = 'false'
+  if (validatedAtInput) validatedAtInput.value = ''
+  refreshValidationCallout('plex_validated')
 })
 
 // Toggle password visibility
@@ -57,7 +55,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
   const plexUrl = document.getElementById('plex_url').value
   const plexToken = document.getElementById('plex_token').value
   const statusMessage = document.getElementById('statusMessage')
-  const plexDbCache = document.getElementById('plexDbCache')
   const currentDbCache = document.getElementById('plex_db_cache').value
 
   if (!plexUrl || !plexToken) {
@@ -115,7 +112,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
 
         statusMessage.textContent = 'Plex server validated successfully!'
         statusMessage.style.color = '#75b798'
-        const hiddenSection = document.getElementById('hidden')
         hiddenSection.style.display = 'block'
 
         if (Number(currentDbCache) !== serverDbCache) {
@@ -147,7 +143,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.textContent = 'Error occurred during validation.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
-      const validatedAtInput = document.getElementById('plex_validated_at')
       if (validatedAtInput) validatedAtInput.value = ''
       refreshValidationCallout('plex_validated')
     })
