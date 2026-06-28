@@ -150,3 +150,27 @@ def test_running_pill_visible(page, live_server):
     badge = page.locator("#qs-running-badge")
     expect(badge).not_to_have_class(re.compile(r"\bd-none\b"))
     expect(badge).to_contain_text("Kometa running")
+
+
+@pytest.mark.e2e
+def test_mdblist_validate_button_uses_factory(page, live_server):
+    """Smoke test for the createApiKeyValidator factory on a real page.
+
+    060-mdblist.js was migrated to the shared factory under #1334 Step 6
+    PR 1. The Vitest suite for the factory locks in the contract in
+    isolation, but only an actual rendered page proves that the
+    factory's IDs (validateButton, statusMessage, toggleApikeyVisibility)
+    line up with the wizard template.
+    """
+
+    def handle_validate(route):
+        route.fulfill(status=200, json={"valid": True})
+
+    page.route("**/validate_mdblist", handle_validate)
+    page.goto(f"{live_server}/step/060-mdblist", wait_until="domcontentloaded")
+
+    page.locator("#mdblist_apikey").fill("some-key")
+    page.locator("#validateButton").click()
+    expect(page.locator("#statusMessage")).to_contain_text("API key is valid!")
+    expect(page.locator("#mdblist_validated")).to_have_value("true")
+    expect(page.locator("#validateButton")).to_be_disabled()
