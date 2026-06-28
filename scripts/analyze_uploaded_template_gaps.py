@@ -147,6 +147,11 @@ LIBRARY_OVERLAY_ONLY_KEYS = {
     "back_color",
     "back_line_color",
 }
+INTERNAL_OVERLAY_TEMPLATE_KEYS = {
+    "final_horizontal_offset",
+    "final_vertical_offset",
+    "final_name",
+}
 
 
 def json_default(value: Any) -> Any:
@@ -961,6 +966,55 @@ def key_is_valid_for_default(key: str, default_files: list[Path]) -> tuple[bool,
                 matched.append(path)
                 break
     return bool(matched), matched
+
+
+@lru_cache(maxsize=None)
+def default_file_uses_dynamic_collections(path: Path) -> bool:
+    try:
+        parsed, _encoding = load_yaml(path)
+    except Exception:
+        return False
+    return isinstance(parsed, dict) and isinstance(parsed.get("dynamic_collections"), dict)
+
+
+def resolve_matched_default_file_paths(row: dict[str, Any]) -> list[Path]:
+    matched_paths = row.get("matched_default_files")
+    if not isinstance(matched_paths, (list, set, tuple)):
+        return []
+    defaults_root = ROOT / "config" / "kometa" / "defaults"
+    resolved: list[Path] = []
+    for raw_path in matched_paths:
+        if not raw_path:
+            continue
+        path = defaults_root / str(raw_path)
+        if path.is_file():
+            resolved.append(path)
+    return resolved
+
+
+def is_dynamic_collection_child_instance_key(row: dict[str, Any]) -> bool:
+    key = str(row.get("key") or "")
+    if not key:
+        return False
+    for path in resolve_matched_default_file_paths(row):
+        if not default_file_uses_dynamic_collections(path):
+            continue
+        for pattern in patterns_from_default_file(path):
+            if key == pattern or not PLACEHOLDER_RE.search(pattern):
+                continue
+            if key_matches_pattern(key, pattern):
+                return True
+    return False
+
+
+def get_structural_finding_exclusion(row: dict[str, Any]) -> str | None:
+    kind = str(row.get("kind") or "")
+    key = str(row.get("key") or "")
+    if kind == "overlay" and key in INTERNAL_OVERLAY_TEMPLATE_KEYS:
+        return "internal_overlay_finalizer_key_not_user_facing"
+    if is_dynamic_collection_child_instance_key(row):
+        return "dynamic_collection_child_instance_key_not_ranked"
+    return None
 
 
 def classify_validation_level(
@@ -2239,6 +2293,9 @@ QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
 
 
 def get_quickstart_recommendation_exclusion(row: dict[str, Any]) -> str | None:
+    structural_reason = get_structural_finding_exclusion(row)
+    if structural_reason:
+        return structural_reason
     kind = str(row.get("kind") or "")
     key = str(row.get("key") or "")
     if kind == "library" and key in LIBRARY_OVERLAY_ONLY_KEYS:
@@ -2254,6 +2311,9 @@ MERGED_FIX_QUEUE_EXCLUSIONS: dict[tuple[str, str], str] = {
 
 
 def get_merged_fix_queue_exclusion(row: dict[str, Any]) -> str | None:
+    structural_reason = get_structural_finding_exclusion(row)
+    if structural_reason:
+        return structural_reason
     kind = str(row.get("kind") or "")
     key = str(row.get("key") or "")
     return MERGED_FIX_QUEUE_EXCLUSIONS.get((kind, key))
@@ -2397,7 +2457,7 @@ def build_merged_fix_queue(
                 "needs_schema_support": False,
                 "needs_quickstart_support": False,
                 "needs_importer_support": False,
-                "quickstart_exclusion_reason": get_quickstart_recommendation_exclusion({"kind": kind, "key": key}),
+                "quickstart_exclusion_reason": None,
             },
         )
 
@@ -2410,6 +2470,8 @@ def build_merged_fix_queue(
         bucket["verified_files"].update(str(path) for path in item.get("files", []) if path)
         bucket["libraries"].update(str(lib) for lib in item.get("libraries", []) if lib)
         bucket["matched_default_files"].update(str(path) for path in item.get("matched_default_files", []) if path)
+        if not bucket["quickstart_exclusion_reason"]:
+            bucket["quickstart_exclusion_reason"] = get_quickstart_recommendation_exclusion(item)
         if item.get("validation_level"):
             bucket["validation_levels"].add(str(item.get("validation_level")))
         if item.get("kometa_declared") and not item.get("schema_declared"):

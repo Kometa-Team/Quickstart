@@ -1113,6 +1113,187 @@ def test_build_merged_fix_queue_excludes_overlay_style_keys_misclassified_as_lib
     assert ranked == []
 
 
+def test_quickstart_recommendation_summary_excludes_internal_overlay_finalizer_keys():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "kind": "overlay",
+            "default": "resolution",
+            "key": "final_horizontal_offset",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["overlays/resolution.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "number",
+        }
+    ]
+
+    summary = module.build_quickstart_recommendation_summary(rows)
+    excluded = module.build_quickstart_recommendation_exclusion_summary(rows)
+
+    assert summary == {}
+    assert excluded[("overlay", "resolution", "final_horizontal_offset")]["reason"] == "internal_overlay_finalizer_key_not_user_facing"
+
+
+def test_quickstart_recommendation_summary_excludes_dynamic_collection_child_instance_keys_but_keeps_real_family_keys():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "kind": "collection",
+            "default": "seasonal",
+            "key": "trakt_list_christmas",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["movie/seasonal.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+        {
+            "kind": "collection",
+            "default": "franchise",
+            "key": "movie_645",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["movie/franchise.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "dynamic",
+        },
+        {
+            "kind": "collection",
+            "default": "franchise",
+            "key": "title_override",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["movie/franchise.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "dynamic",
+        },
+    ]
+
+    summary = module.build_quickstart_recommendation_summary(rows)
+    ranked = module.serialize_ranked_summary(summary)
+    excluded = module.build_quickstart_recommendation_exclusion_summary(rows)
+
+    assert [item["key"] for item in ranked] == ["title_override"]
+    assert excluded[("collection", "seasonal", "trakt_list_christmas")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
+    assert excluded[("collection", "franchise", "movie_645")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
+
+
+def test_build_merged_fix_queue_excludes_internal_and_dynamic_instance_false_positives():
+    module = _load_gap_analyzer_module()
+
+    verified_rows = [
+        {
+            "kind": "overlay",
+            "default": "resolution",
+            "key": "final_vertical_offset",
+            "occurrences": 8,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "matched_default_files": ["overlays/resolution.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+        },
+        {
+            "kind": "collection",
+            "default": "seasonal",
+            "key": "trakt_list_halloween",
+            "occurrences": 5,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "matched_default_files": ["movie/seasonal.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+        },
+        {
+            "kind": "collection",
+            "default": "franchise",
+            "key": "build_collection",
+            "occurrences": 4,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "matched_default_files": ["movie/franchise.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": False,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+        },
+    ]
+    importer_rows = [
+        {
+            "kind": "overlay",
+            "default": "resolution",
+            "key": "final_vertical_offset",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 8,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        },
+        {
+            "kind": "collection",
+            "default": "seasonal",
+            "key": "trakt_list_halloween",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 5,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        },
+        {
+            "kind": "collection",
+            "default": "franchise",
+            "key": "build_collection",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 4,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        },
+    ]
+
+    ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
+
+    assert [item["key"] for item in ranked] == ["build_collection"]
+    assert ranked[0]["action_targets"] == ["schema", "quickstart", "importer"]
+
+
 def test_build_merged_fix_queue_excludes_internal_library_type_metadata():
     module = _load_gap_analyzer_module()
 
