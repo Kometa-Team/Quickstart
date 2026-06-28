@@ -129,6 +129,27 @@ def test_build_qs_overlay_map_includes_runtime_offset_and_alignment_keys_for_rep
     assert "vertical_offset" in overlay_map["status"]
 
 
+def test_build_qs_overlay_map_includes_source_override_types_for_repo_file():
+    module = _load_gap_analyzer_module()
+    qs_overlays = Path(__file__).resolve().parents[1] / "static" / "json" / "quickstart_overlays.json"
+
+    overlay_map = module.build_qs_overlay_map(qs_overlays)
+
+    assert {"file", "url", "git", "repo"} <= overlay_map["resolution"]
+    assert {"file", "url", "git", "repo"} <= overlay_map["audio_codec"]
+    assert {"file", "url", "git", "repo"} <= overlay_map["network"]
+
+
+def test_build_qs_overlay_map_exposes_fixed_key_overlay_aliases_for_repo_file():
+    module = _load_gap_analyzer_module()
+    qs_overlays = Path(__file__).resolve().parents[1] / "static" / "json" / "quickstart_overlays.json"
+
+    overlay_map = module.build_qs_overlay_map(qs_overlays)
+
+    assert "commonsense" in overlay_map
+    assert {"horizontal_align", "vertical_align", "horizontal_offset", "vertical_offset", "back_width", "back_color"} <= overlay_map["commonsense"]
+
+
 def test_build_qs_overlay_map_can_skip_runtime_support_enrichment(tmp_path):
     module = _load_gap_analyzer_module()
     qs_overlays = tmp_path / "quickstart_overlays.json"
@@ -182,6 +203,19 @@ def test_overlay_key_supported_in_quickstart_uses_direct_alias_match_when_availa
 
     assert module.overlay_key_supported_in_quickstart("ratings", "rating3", qs_overlays) is True
     assert module.overlay_key_supported_in_quickstart("ratings", "rating3_image", qs_overlays) is True
+
+
+def test_overlay_key_supported_in_quickstart_accepts_prefixed_source_override_keys():
+    module = _load_gap_analyzer_module()
+
+    qs_overlays = {
+        "resolution": {"file", "url", "git", "repo"},
+    }
+
+    assert module.overlay_key_supported_in_quickstart("resolution", "file_4k", qs_overlays) is True
+    assert module.overlay_key_supported_in_quickstart("resolution", "url_4k", qs_overlays) is True
+    assert module.overlay_key_supported_in_quickstart("resolution", "git_4k", qs_overlays) is True
+    assert module.overlay_key_supported_in_quickstart("resolution", "repo_4k", qs_overlays) is True
 
 
 def test_quickstart_recommendation_summary_skips_runtime_supported_overlay_keys():
@@ -448,6 +482,17 @@ def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_fi
     assert "data_limit" not in collection_map["network"]
 
 
+def test_build_qs_library_template_keys_includes_separator_placeholder_keys_for_repo_file():
+    module = _load_gap_analyzer_module()
+    qs_attributes = Path(__file__).resolve().parents[1] / "static" / "json" / "quickstart_attributes.json"
+
+    keys = module.build_qs_library_template_keys(qs_attributes)
+
+    assert "placeholder_imdb_id" in keys
+    assert "placeholder_tmdb_movie" in keys
+    assert "placeholder_tvdb_show" in keys
+
+
 def test_key_is_valid_for_default_understands_dynamic_data_limit_from_repo_defaults():
     module = _load_gap_analyzer_module()
     kometa_defaults = _kometa_defaults_root()
@@ -561,6 +606,31 @@ settings:
     assert candidates == [config_file]
     assert skipped == []
     assert stats["artifact_skips"] == 0
+
+
+def test_prefilter_yaml_files_skips_quickstart_schema_sample_configs_when_focus_is_config(tmp_path):
+    module = _load_gap_analyzer_module()
+    sample_file = tmp_path / "json-schema" / "prototype_comprehensive.yml"
+    sample_file.parent.mkdir(parents=True, exist_ok=True)
+    sample_file.write_text(
+        """
+libraries:
+  Movies:
+    collection_files:
+      - pmm: basic
+settings:
+  cache: true
+""".strip(),
+        encoding="utf-8",
+    )
+
+    candidates, skipped, stats = module.prefilter_yaml_files([sample_file], yaml_type_focus="config")
+
+    assert candidates == []
+    assert len(skipped) == 1
+    assert skipped[0]["error_type"] == "IgnoredSampleConfig"
+    assert skipped[0]["noise_reason"] == "quickstart_sample_config"
+    assert stats["artifact_skips"] == 1
 
 
 def test_scan_uploaded_configs_excludes_external_yaml_when_focus_is_config(tmp_path):
@@ -956,6 +1026,91 @@ def test_build_merged_fix_queue_suppresses_excluded_quickstart_only_keys():
     assert len(ranked) == 1
     assert ranked[0]["key"] == "horizontal_align"
     assert ranked[0]["action_targets"] == ["importer"]
+
+
+def test_quickstart_recommendation_summary_excludes_overlay_style_keys_misclassified_as_library_scope():
+    module = _load_gap_analyzer_module()
+
+    rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "horizontal_align",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": [],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "back_width",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": [],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "number",
+        },
+    ]
+
+    summary = module.build_quickstart_recommendation_summary(rows)
+    ranked = module.serialize_ranked_summary(summary)
+    excluded = module.build_quickstart_recommendation_exclusion_summary(rows)
+
+    assert ranked == []
+    assert excluded[("library", "", "horizontal_align")]["reason"] == "overlay_rendering_key_misclassified_at_library_scope"
+    assert excluded[("library", "", "back_width")]["reason"] == "overlay_rendering_key_misclassified_at_library_scope"
+
+
+def test_build_merged_fix_queue_excludes_overlay_style_keys_misclassified_as_library_scope():
+    module = _load_gap_analyzer_module()
+
+    verified_rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "horizontal_align",
+            "occurrences": 10,
+            "files": ["config.yml"],
+            "libraries": ["Shows"],
+            "matched_default_files": [],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+        }
+    ]
+    importer_rows = [
+        {
+            "kind": "library",
+            "default": None,
+            "key": "horizontal_align",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 10,
+            "files": ["config.yml"],
+            "libraries": ["Shows"],
+            "reasons": ["Template variable not available in Quickstart."],
+        }
+    ]
+
+    ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
+
+    assert ranked == []
 
 
 def test_build_merged_fix_queue_excludes_internal_library_type_metadata():
