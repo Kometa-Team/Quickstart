@@ -153,24 +153,106 @@ def test_running_pill_visible(page, live_server):
 
 
 @pytest.mark.e2e
-def test_mdblist_validate_button_uses_factory(page, live_server):
-    """Smoke test for the createApiKeyValidator factory on a real page.
+@pytest.mark.parametrize(
+    "stem, endpoint, field_id, validated_id, success_text",
+    [
+        (
+            "060-mdblist",
+            "validate_mdblist",
+            "mdblist_apikey",
+            "mdblist_validated",
+            "API key is valid!",
+        ),
+        (
+            "050-omdb",
+            "validate_omdb",
+            "omdb_apikey",
+            "omdb_validated",
+            "OMDb API key is valid.",
+        ),
+        (
+            "070-notifiarr",
+            "validate_notifiarr",
+            "notifiarr_apikey",
+            "notifiarr_validated",
+            "Notifiarr API key is valid.",
+        ),
+        (
+            "087-apprise",
+            "validate_apprise",
+            "apprise_location",
+            "apprise_validated",
+            "Apprise location validated successfully!",
+        ),
+    ],
+)
+def test_simple_validator_wizard_success_flow(page, live_server, stem, endpoint, field_id, validated_id, success_text):
+    """End-to-end smoke for every wizard migrated to createApiKeyValidator.
 
-    060-mdblist.js was migrated to the shared factory under #1334 Step 6
-    PR 1. The Vitest suite for the factory locks in the contract in
-    isolation, but only an actual rendered page proves that the
-    factory's IDs (validateButton, statusMessage, toggleApikeyVisibility)
-    line up with the wizard template.
+    Vitest covers the factory contract in isolation. This test proves
+    each wizard's config IDs actually line up with its rendered template
+    -- a typo in fieldId / endpoint / messages would only surface here.
+
+    Server response includes a `message` field so the github-style
+    function-valued success message also gets exercised (040-github has
+    its own subtest below because the server response shape is different).
     """
 
     def handle_validate(route):
         route.fulfill(status=200, json={"valid": True})
 
-    page.route("**/validate_mdblist", handle_validate)
-    page.goto(f"{live_server}/step/060-mdblist", wait_until="domcontentloaded")
+    page.route(f"**/{endpoint}", handle_validate)
+    page.goto(f"{live_server}/step/{stem}", wait_until="domcontentloaded")
 
-    page.locator("#mdblist_apikey").fill("some-key")
+    page.locator(f"#{field_id}").fill("some-credential")
     page.locator("#validateButton").click()
-    expect(page.locator("#statusMessage")).to_contain_text("API key is valid!")
-    expect(page.locator("#mdblist_validated")).to_have_value("true")
+    expect(page.locator("#statusMessage")).to_contain_text(success_text)
+    expect(page.locator(f"#{validated_id}")).to_have_value("true")
     expect(page.locator("#validateButton")).to_be_disabled()
+
+
+@pytest.mark.e2e
+def test_github_validator_uses_server_message(page, live_server):
+    """040-github uses function-valued messages that pull data.message
+    from the server response. Verify that a custom server message
+    appears in the UI verbatim.
+    """
+
+    def handle_validate(route):
+        route.fulfill(
+            status=200,
+            json={"valid": True, "message": "Token belongs to: testuser"},
+        )
+
+    page.route("**/validate_github", handle_validate)
+    page.goto(f"{live_server}/step/040-github", wait_until="domcontentloaded")
+
+    page.locator("#github_token").fill("ghp_FakeButLooksReal")
+    page.locator("#validateButton").click()
+    expect(page.locator("#statusMessage")).to_contain_text("Token belongs to: testuser")
+    expect(page.locator("#github_validated")).to_have_value("true")
+
+
+@pytest.mark.e2e
+def test_apprise_validator_uses_server_error_on_failure(page, live_server):
+    """087-apprise uses a function-valued failure message that pulls
+    data.error from the server response. Verify that a custom server
+    error appears in the UI verbatim.
+    """
+
+    def handle_validate(route):
+        route.fulfill(
+            status=200,
+            json={
+                "valid": False,
+                "error": "Apprise YAML at /missing.yml could not be read.",
+            },
+        )
+
+    page.route("**/validate_apprise", handle_validate)
+    page.goto(f"{live_server}/step/087-apprise", wait_until="domcontentloaded")
+
+    page.locator("#apprise_location").fill("/missing.yml")
+    page.locator("#validateButton").click()
+    expect(page.locator("#statusMessage")).to_contain_text("Apprise YAML at /missing.yml could not be read.")
+    expect(page.locator("#apprise_validated")).to_have_value("false")

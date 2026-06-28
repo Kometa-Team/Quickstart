@@ -57,6 +57,10 @@ const DEFAULT_MESSAGES = {
  *                                                                    on Gotify). The main fieldId is always
  *                                                                    reset; this is for additional ones.
  * @param {object} [config.messages]             Override individual status strings (empty/success/failure/networkError).
+ *                                               Each value may be a literal string OR a (data) => string function
+ *                                               (data is the server response, or `{}` for empty/networkError).
+ *                                               Functions let wizards forward server-provided text verbatim
+ *                                               (e.g. data.error from apprise, data.message from github).
  * @param {string} [config.spinnerKey='validate'] Argument passed to show/hideSpinner.
  */
 export function createApiKeyValidator (config) {
@@ -131,11 +135,21 @@ export function createApiKeyValidator (config) {
     statusMessage.style.display = 'block'
   }
 
+  // Message values can be either a literal string or a (data) => string
+  // function. Functions let the wizard show server-provided text
+  // verbatim (e.g. apprise returns data.error, github returns
+  // data.message) without forcing the factory to know which fields
+  // matter for each service.
+  function resolveMessage (messageValue, data) {
+    if (typeof messageValue === 'function') return messageValue(data || {})
+    return messageValue
+  }
+
   // ── validate click handler ──────────────────────────────────────────
   validateButton.addEventListener('click', function () {
     const apiKey = apiKeyInput.value
     if (!apiKey) {
-      showStatus(messages.empty, STATUS_COLOR_ERROR)
+      showStatus(resolveMessage(messages.empty, {}), STATUS_COLOR_ERROR)
       return
     }
 
@@ -154,19 +168,19 @@ export function createApiKeyValidator (config) {
           validatedField.value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
           refreshValidationCallout(validatedFieldId)
-          showStatus(messages.success, STATUS_COLOR_SUCCESS)
+          showStatus(resolveMessage(messages.success, data), STATUS_COLOR_SUCCESS)
           validateButton.disabled = true
         } else {
           validatedField.value = 'false'
           if (validatedAtInput) validatedAtInput.value = ''
           refreshValidationCallout(validatedFieldId)
-          showStatus(messages.failure, STATUS_COLOR_ERROR)
+          showStatus(resolveMessage(messages.failure, data), STATUS_COLOR_ERROR)
         }
       })
       .catch(() => {
         if (validatedAtInput) validatedAtInput.value = ''
         refreshValidationCallout(validatedFieldId)
-        showStatus(messages.networkError, STATUS_COLOR_ERROR)
+        showStatus(resolveMessage(messages.networkError, {}), STATUS_COLOR_ERROR)
       })
       .finally(() => {
         if (typeof hideSpinner === 'function') hideSpinner(spinnerKey)

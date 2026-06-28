@@ -419,6 +419,86 @@ describe('createApiKeyValidator validate click — server says invalid', () => {
   })
 })
 
+describe('createApiKeyValidator function-valued messages', () => {
+  // Messages can be either a literal string OR a function that takes
+  // the parsed server response and returns a string. Lets wizards
+  // forward server-provided text verbatim (apprise uses data.error,
+  // github uses data.message on both success and failure).
+
+  it('uses a function-valued success message with response data', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true, message: 'Server says: hello!' })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      messages: { success: (data) => data.message }
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(document.getElementById('statusMessage').textContent).toBe('Server says: hello!')
+  })
+
+  it('uses a function-valued failure message with response data', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false, error: 'Apprise YAML at /missing.yml not found.' })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      messages: { failure: (data) => data.error }
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(document.getElementById('statusMessage').textContent).toBe('Apprise YAML at /missing.yml not found.')
+  })
+
+  it('function-valued messages receive {} for empty-credential case', () => {
+    let received = null
+    document.body.innerHTML = buildBaseHTML({ keyValue: '' })
+    createApiKeyValidator(defaultConfig({
+      messages: { empty: (data) => { received = data; return 'go away' } }
+    }))
+    document.getElementById('validateButton').click()
+
+    expect(received).toEqual({})
+    expect(document.getElementById('statusMessage').textContent).toBe('go away')
+  })
+
+  it('function-valued messages receive {} for network error case', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))
+    let received = null
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      messages: { networkError: (data) => { received = data; return 'network sad' } }
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(received).toEqual({})
+    expect(document.getElementById('statusMessage').textContent).toBe('network sad')
+  })
+
+  it('string and function-valued messages can be mixed in the same wizard', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true, message: 'all good' })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      messages: {
+        empty: 'literal empty',
+        success: (data) => data.message,
+        failure: 'literal failure',
+        networkError: 'literal network'
+      }
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(document.getElementById('statusMessage').textContent).toBe('all good')
+  })
+})
+
 describe('createApiKeyValidator validate click — network error', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))
