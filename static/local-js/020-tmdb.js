@@ -1,149 +1,114 @@
-import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
+import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
 
-document.addEventListener('DOMContentLoaded', function () {
-  const validateButton = document.getElementById('validateButton')
-  const apiKeyInput = document.getElementById('tmdb_apikey')
-  const toggleButton = document.getElementById('toggleApikeyVisibility')
-  const tmdbValidatedInput = document.getElementById('tmdb_validated')
-  const tmdbValidatedAtInput = document.getElementById('tmdb_validated_at')
-  const statusMessage = document.getElementById('statusMessage')
-  const languageDropdown = document.getElementById('tmdb_language')
-  const languageStatusMessage = document.getElementById('languageStatusMessage')
-  const regionDropdown = document.getElementById('tmdb_region')
-  const regionStatusMessage = document.getElementById('regionStatusMessage')
-  const nextButton = document.querySelector('button[onclick*="next"]')
-  const jumpToButton = document.querySelector('.dropdown-toggle')
+// TMDB is the credential-validation factory plus one wizard-specific
+// concern: the Next + JumpTo buttons are gated LIVE by the combination
+// of (api key validated) AND (language dropdown chosen) AND (region
+// dropdown chosen). Changes to any of the three update the buttons
+// immediately, not on form submit.
+//
+// The dropdown gating concern is N=1 across the whole wizard suite
+// (Radarr/Sonarr use a different "block on form submit" pattern; Plex
+// has no such gating). Keeping it in this file rather than promoting
+// to the factory.
 
-  console.log('Validated: ' + tmdbValidatedInput.value)
+const apiKeyInput = document.getElementById('tmdb_apikey')
+const validatedField = document.getElementById('tmdb_validated')
+const statusMessage = document.getElementById('statusMessage')
+const languageDropdown = document.getElementById('tmdb_language')
+const languageStatusMessage = document.getElementById('languageStatusMessage')
+const regionDropdown = document.getElementById('tmdb_region')
+const regionStatusMessage = document.getElementById('regionStatusMessage')
+const nextButton = document.querySelector('button[onclick*="next"]')
+const jumpToButton = document.querySelector('.dropdown-toggle')
 
-  // Set initial visibility based on API key value
-  if (apiKeyInput.value.trim() === '') {
-    apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    setToggleButtonIcon(toggleButton, true)
-  } else {
-    apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    setToggleButtonIcon(toggleButton, false)
-  }
+const STATUS_COLOR_ERROR = '#ea868f'
+const STATUS_COLOR_SUCCESS = '#75b798'
 
-  // Disable validate button if already validated
-  validateButton.disabled = tmdbValidatedInput.value.toLowerCase() === 'true'
+function isApiKeyValidated () {
+  return validatedField && validatedField.value.toLowerCase() === 'true'
+}
 
-  // Check if API key is validated
-  const isApiKeyValidated = () => tmdbValidatedInput.value.toLowerCase() === 'true'
+// Updates the per-dropdown status callout and the Next/JumpTo button
+// disabled state. Reads the latest validatedField + dropdown values
+// each time -- safe to call from input handlers, validation callbacks,
+// or page-load init code.
+function updateNavigationState () {
+  const isLanguageValid = !!languageDropdown.value
+  const isRegionValid = !!regionDropdown.value
+  const isFormValid = isApiKeyValidated() && isLanguageValid && isRegionValid
 
-  // Update API key validation message
-  function updateApiKeyStatusMessage () {
-    if (isApiKeyValidated()) {
-      statusMessage.textContent = 'API key is valid!'
-      statusMessage.style.color = '#75b798' // Green
-    } else {
-      statusMessage.textContent = 'API key is invalid or not validated.'
-      statusMessage.style.color = '#ea868f' // Red
-    }
-    statusMessage.style.display = 'block'
-  }
+  if (nextButton) nextButton.disabled = !isFormValid
+  if (jumpToButton) jumpToButton.disabled = !isFormValid
 
-  // Update navigation buttons (Next and JumpTo)
-  function updateNavigationState () {
-    const isLanguageValid = !!languageDropdown.value
-    const isRegionValid = !!regionDropdown.value
-    const isFormValid = isApiKeyValidated() && isLanguageValid && isRegionValid
-
-    nextButton.disabled = !isFormValid
-    jumpToButton.disabled = !isFormValid
-
-    // Update status messages for language and region
+  if (languageStatusMessage) {
     languageStatusMessage.textContent = isLanguageValid
       ? 'Language is valid.'
       : 'Please select a valid language.'
-    languageStatusMessage.style.color = isLanguageValid ? '#75b798' : '#ea868f'
+    languageStatusMessage.style.color = isLanguageValid ? STATUS_COLOR_SUCCESS : STATUS_COLOR_ERROR
     languageStatusMessage.style.display = 'block'
+  }
 
+  if (regionStatusMessage) {
     regionStatusMessage.textContent = isRegionValid
       ? 'Region is valid.'
       : 'Please select a valid region.'
-    regionStatusMessage.style.color = isRegionValid ? '#75b798' : '#ea868f'
+    regionStatusMessage.style.color = isRegionValid ? STATUS_COLOR_SUCCESS : STATUS_COLOR_ERROR
     regionStatusMessage.style.display = 'block'
   }
+}
 
-  // Validate TMDb API key
-  function validateApiKey () {
-    const apiKey = apiKeyInput.value.trim()
-
-    if (!apiKey) {
-      statusMessage.textContent = 'API key cannot be empty.'
-      statusMessage.style.color = '#ea868f'
-      statusMessage.style.display = 'block'
-      return
-    }
-
-    // Show spinner and disable the validate button
-    showSpinner('validate')
-    validateButton.disabled = true
-
-    fetch('/validate_tmdb', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tmdb_apikey: apiKey })
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.valid) {
-          tmdbValidatedInput.value = 'true'
-          if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = new Date().toISOString()
-          refreshValidationCallout('tmdb_validated')
-          statusMessage.textContent = 'API key is valid!'
-          statusMessage.style.color = '#75b798' // Green
-        } else {
-          tmdbValidatedInput.value = 'false'
-          if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
-          refreshValidationCallout('tmdb_validated')
-          statusMessage.textContent = 'Failed to validate TMDb. Please check your API Key.'
-          statusMessage.style.color = '#ea868f' // Red
-        }
-        updateNavigationState()
-      })
-      .catch((error) => {
-        console.error('Error validating TMDb API:', error)
-        statusMessage.textContent = 'An error occurred. Please try again.'
-        statusMessage.style.color = '#ea868f' // Red
-        if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
-        refreshValidationCallout('tmdb_validated')
-      })
-      .finally(() => {
-        hideSpinner('validate')
-        statusMessage.style.display = 'block'
-      })
-  }
-
-  // Toggle visibility of the API key input
-  toggleButton.addEventListener('click', function () {
-    const currentType = apiKeyInput.getAttribute('type')
-    apiKeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
-    setToggleButtonIcon(this, currentType === 'password')
-  })
-
-  // Event listener for API key input changes
-  apiKeyInput.addEventListener('input', function () {
-    tmdbValidatedInput.value = 'false' // Mark API key as invalid
-    if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
-    refreshValidationCallout('tmdb_validated')
-    validateButton.disabled = false // Re-enable the validate button
-    statusMessage.style.display = 'none' // Hide validation message
-    updateNavigationState() // Disable Next and JumpTo
-  })
-
-  // Event listeners for dropdown changes
-  languageDropdown.addEventListener('change', updateNavigationState)
-  regionDropdown.addEventListener('change', updateNavigationState)
-
-  // Initialize navigation state on page load
+// Initial API-key status message reflects the persisted validatedField.
+// Unlike the post-validate flow (which uses the factory's success/failure
+// messages), this is just the "what state did this page load in" message.
+function showInitialApiKeyStatusMessage () {
+  if (!statusMessage) return
   if (isApiKeyValidated()) {
-    validateButton.disabled = true // Disable validate button if already validated
+    statusMessage.textContent = 'API key is valid!'
+    statusMessage.style.color = STATUS_COLOR_SUCCESS
+  } else {
+    statusMessage.textContent = 'API key is invalid or not validated.'
+    statusMessage.style.color = STATUS_COLOR_ERROR
   }
-  updateApiKeyStatusMessage()
-  updateNavigationState()
+  statusMessage.style.display = 'block'
+}
 
-  // Attach validation function to the validate button
-  validateButton.addEventListener('click', validateApiKey)
+createApiKeyValidator({
+  fieldId: 'tmdb_apikey',
+  validatedFieldId: 'tmdb_validated',
+  validatedAtFieldId: 'tmdb_validated_at',
+  endpoint: '/validate_tmdb',
+  buildPayload: (apiKey) => ({ tmdb_apikey: apiKey }),
+  messages: {
+    empty: 'API key cannot be empty.',
+    success: 'API key is valid!',
+    failure: 'Failed to validate TMDb. Please check your API Key.',
+    networkError: 'An error occurred. Please try again.'
+  },
+  // After every validate response (success or failure) the dropdown-
+  // gating state needs to be re-evaluated because validatedField just
+  // changed.
+  onValidationSuccess: updateNavigationState,
+  onValidationFailure: updateNavigationState
 })
+
+// Wizard-specific extras layered on top of the factory:
+//
+// 1. Extra input listener on apiKey -- the factory's internal listener
+//    already resets validatedField + button + callout. This second
+//    listener hides the statusMessage (so the stale "API key is valid"
+//    callout doesn't linger while the user retypes) and re-runs the
+//    Next-button gating.
+if (apiKeyInput) {
+  apiKeyInput.addEventListener('input', function () {
+    if (statusMessage) statusMessage.style.display = 'none'
+    updateNavigationState()
+  })
+}
+
+// 2. Dropdown change listeners -- gate the Next button live.
+if (languageDropdown) languageDropdown.addEventListener('change', updateNavigationState)
+if (regionDropdown) regionDropdown.addEventListener('change', updateNavigationState)
+
+// 3. Initial page state.
+showInitialApiKeyStatusMessage()
+updateNavigationState()

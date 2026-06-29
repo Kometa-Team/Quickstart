@@ -746,6 +746,108 @@ describe('createApiKeyValidator onValidationSuccess callback', () => {
   })
 })
 
+describe('createApiKeyValidator onValidationFailure callback', () => {
+  // Symmetric sibling of onValidationSuccess. Fires after a failed
+  // validate response (isValid returned false), AFTER the factory has
+  // set validatedField='false' and shown the failure message. Used by
+  // wizards that maintain additional UI state derived from
+  // validatedField (e.g. TMDB re-runs Next-button gating after every
+  // validation attempt).
+
+  it('fires onValidationFailure with the response data on a failed validate', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false, error: 'bad key' })
+    })))
+    const onFailure = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'badkey' })
+    createApiKeyValidator(defaultConfig({ onValidationFailure: onFailure }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onFailure).toHaveBeenCalledTimes(1)
+    expect(onFailure).toHaveBeenCalledWith({ valid: false, error: 'bad key' })
+  })
+
+  it('does NOT fire onValidationFailure when validation succeeds', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    const onFailure = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({ onValidationFailure: onFailure }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onFailure).not.toHaveBeenCalled()
+  })
+
+  it('does NOT fire onValidationFailure on network error', async () => {
+    // Network errors don't change validatedField, so onValidationFailure
+    // would have nothing meaningful to do. The networkError message
+    // path is the right channel for those.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))
+    const onFailure = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({ onValidationFailure: onFailure }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onFailure).not.toHaveBeenCalled()
+  })
+
+  it('fires onValidationFailure AFTER validatedField is set to false', async () => {
+    // Mirror of the onValidationSuccess ordering test: by the time the
+    // wizard's callback runs, the factory has already done its bookkeeping.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false })
+    })))
+    let validatedValueAtCallback = null
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'badkey', validated: 'true' })
+    createApiKeyValidator(defaultConfig({
+      onValidationFailure: () => {
+        validatedValueAtCallback = document.getElementById('test_validated').value
+      }
+    }))
+    // The factory disables the button when loading a validated=true
+    // page, so re-enable it to trigger the click path. (A real user
+    // would do this by editing the credential field, which calls the
+    // factory's reset handler.)
+    document.getElementById('validateButton').disabled = false
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(validatedValueAtCallback).toBe('false')
+  })
+
+  it('is optional -- wizards that do not need it can omit it', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    expect(() => createApiKeyValidator(defaultConfig())).not.toThrow()
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+  })
+
+  it('respects the custom isValid predicate -- fires only when predicate returns false', async () => {
+    // Plex-style asymmetric response: predicate says false even though
+    // data.valid is undefined. onValidationFailure should still fire.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ validated: false, error: 'token expired' })
+    })))
+    const onFailure = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      isValid: (data) => data.validated === true,
+      onValidationFailure: onFailure
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onFailure).toHaveBeenCalledWith({ validated: false, error: 'token expired' })
+  })
+})
+
 describe('createApiKeyValidator onPreSubmit callback', () => {
   // onPreSubmit lets the wizard veto a form submit. Returns false to
   // block via event.preventDefault(). Empty-value normalisation still
