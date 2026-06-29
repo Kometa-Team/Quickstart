@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function () {
     '/static/local-js/imageHandler.js',
     '/static/local-js/overlayHandler.js',
     '/static/local-js/validationHandler.js',
-    '/static/local-js/eventHandler.js'
+    '/static/local-js/eventHandler.js',
+    '/static/local-js/rgbaPicker.js'
   ]
 
   function loadScriptsSequentially (scripts, callback) {
