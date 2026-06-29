@@ -88,6 +88,7 @@ const moduleFiles = [
   'static/local-js/validationHandler.js',
   'static/local-js/imageHandler.js',
   'static/local-js/eventHandler.js',
+  'static/local-js/025-libraries.js',
   'static/local-js/001-start.js',
   'static/local-js/010-plex.js',
   'static/local-js/020-tmdb.js',

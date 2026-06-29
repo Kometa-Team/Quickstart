@@ -1,4 +1,4 @@
-exclude: '^.*bootstrap.bundle.js$|^tests/fixtures/|^PART$'
+exclude: '^.*bootstrap.bundle.js$|^tests/fixtures/|^PART$|static/local-js/025-libraries.js$'
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
