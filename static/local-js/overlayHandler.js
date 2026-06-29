@@ -17,7 +17,7 @@ const OverlayHandler = {
         OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
         OverlayHandler.toggleSeparatorPlaceholder(libraryId, selectedStyle)
         OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-        EventHandler.updateAccordionHighlights()
+        window.EventHandler.updateAccordionHighlights()
       })
 
       separatorDropdown.dataset.listenerAdded = true
@@ -28,7 +28,7 @@ const OverlayHandler = {
       OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
       OverlayHandler.toggleSeparatorPlaceholder(libraryId, initialSelected)
       OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-      EventHandler.updateAccordionHighlights()
+      window.EventHandler.updateAccordionHighlights()
     }
 
     const placeholderWrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
@@ -37,7 +37,7 @@ const OverlayHandler = {
       sourceSelect.addEventListener('change', () => {
         const separatorsEnabled = separatorDropdown ? separatorDropdown.value !== 'none' : true
         OverlayHandler.syncSeparatorPlaceholderFields(placeholderWrapper, { show: separatorsEnabled })
-        EventHandler.updateAccordionHighlights()
+        window.EventHandler.updateAccordionHighlights()
       })
       sourceSelect.dataset.listenerAdded = 'true'
     }
@@ -3886,8 +3886,8 @@ const OverlayHandler = {
         emptyState.classList.toggle('d-none', rows.length > 0)
       }
 
-      if (typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
-        EventHandler.updateAccordionHighlights()
+      if (typeof window.EventHandler !== 'undefined' && window.EventHandler.updateAccordionHighlights === 'function') {
+        window.EventHandler.updateAccordionHighlights()
       }
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
         ValidationHandler.updateValidationState()
@@ -8549,6 +8549,8 @@ const OverlayHandler = {
   }
 }
 
+window.OverlayHandler = OverlayHandler
+
 function bootstrapOverlayHandler () {
   const separatorPlaceholders = document.querySelectorAll('[data-separator-placeholder-wrapper="true"]')
 
@@ -8722,3 +8724,5 @@ function setupParentChildToggleSync () {
     })
   })
 }
+
+window.setupParentChildToggleSync = setupParentChildToggleSync
