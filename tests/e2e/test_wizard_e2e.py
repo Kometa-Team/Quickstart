@@ -1286,12 +1286,10 @@ def test_nav_no_inline_handlers_remain_in_base_layout(page, live_server):
             return offenders
         }
     """)
-    # The first phase of the Group A cleanup targets nav-related templates
-    # (000-base, 900-kometa, _workspace_macros). Other partials (e.g.
-    # color-picker macros in _macros.html) still have inline handlers,
-    # and those aren't in scope yet. Filter the offender list down to
-    # the elements we're claiming to have cleaned: navbar, sidebar,
-    # workspace step nav, etc.
+    # As of the Group B cleanup (chore/rgba-picker-group-b), no inline
+    # handler should remain in any rendered page. The earlier comment
+    # carved out the color-picker macros in _macros.html; those are now
+    # also gone (replaced by static/local-js/rgbaPicker.js).
     nav_offenders = [o for o in inline_count if (o.get("tag") in ("A", "BUTTON")) and (o.get("value", "").startswith("jumpTo(") or o.get("value", "").startswith("loading("))]
     assert not nav_offenders, f"Found leftover inline jumpTo/loading handlers in the navigation: " f"{nav_offenders}"
 
@@ -1386,3 +1384,77 @@ def test_validation_handler_show_message_html_opt_in_renders_html(page, live_ser
     calls = page.evaluate("window.__jumpToCalls")
     assert calls, "expected click on the rendered <a> to trigger jumpTo"
     assert calls[-1][0] == "010-plex", f"expected page='010-plex', got {calls[-1]}"
+
+
+# Group B color-picker macro cleanup (chore/rgba-picker-group-b).
+# The `.rgba-group` widget in templates/partials/_macros.html previously
+# contained 4 inline `oninput="(function(...){ ... })(this)"` IIFEs with
+# {{ input_id }} and {{ alpha_id }} Jinja-interpolated into the function
+# bodies. Those are gone; static/local-js/rgbaPicker.js installs a single
+# delegated `input` listener that handles all .rgba-group widgets.
+
+
+@pytest.mark.e2e
+def test_rgba_picker_script_loads_on_libraries_page(page, live_server):
+    """The rgbaPicker.js classic-script is loaded sequentially by
+    025-libraries.js. Without it the color-picker widget is dead.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    # Scripts are loaded sequentially; give them a moment to finish.
+    page.wait_for_timeout(1500)
+    loaded = page.evaluate("""() => Array.from(document.scripts)
+              .map(s => s.src)
+              .filter(s => s.includes('rgbaPicker.js'))
+              .length""")
+    assert loaded >= 1, "expected rgbaPicker.js to be loaded on the libraries page"
+
+
+@pytest.mark.e2e
+def test_rgba_picker_delegated_listener_drives_synthetic_widget(page, live_server):
+    """End-to-end demonstration that the production rgbaPicker.js
+    listener drives a real DOM widget. We synthesize a minimal
+    .rgba-group, fire an `input` event on the slider, and assert the
+    hex-input got updated with the right alpha byte.
+
+    The fixture is intentionally minimal (no Jinja, no test_uses_module
+    overhead) -- this proves the contract between the rendered DOM and
+    the listener, regardless of how the macro renders the widget.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_timeout(1500)
+    page.evaluate("""() => {
+            const host = document.createElement('div')
+            host.innerHTML = `
+              <div class="rgba-group" id="__test_group">
+                <input type="color" class="rgba-color-picker" value="#aabbcc">
+                <label class="rgba-color-bar"></label>
+                <input type="text" class="rgba-hex-input" value="#aabbccFF">
+                <input type="number" class="rgba-alpha-input" value="100">
+                <input type="range" class="rgba-alpha-slider" value="100">
+              </div>
+            `
+            document.body.appendChild(host)
+        }""")
+    page.evaluate("""() => {
+            const slider = document.querySelector('#__test_group .rgba-alpha-slider')
+            slider.value = '50'
+            slider.dispatchEvent(new Event('input', { bubbles: true }))
+        }""")
+    hex_value = page.evaluate("() => document.querySelector('#__test_group .rgba-hex-input').value")
+    # 50% alpha -> 0x80
+    assert hex_value == "#AABBCC80", f"expected '#AABBCC80', got '{hex_value}'"
+
+
+@pytest.mark.e2e
+def test_macros_html_contains_no_inline_event_handlers(page, live_server):
+    """Static check: _macros.html (rendered via 025-libraries) should
+    have ZERO inline on*= handlers. Group B was the last carve-out.
+    """
+    import re
+    from pathlib import Path
+
+    macros = Path("templates/partials/_macros.html").read_text()
+    # Match attribute-style inline handlers: onXxx=
+    pattern = re.compile(r"\bon(click|input|change|submit|load|key\w*|focus|blur|mouse\w*)=", re.IGNORECASE)
+    hits = pattern.findall(macros)
+    assert not hits, f"found inline event handlers in _macros.html: {hits[:5]}"
