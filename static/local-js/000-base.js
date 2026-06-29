@@ -4336,13 +4336,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // names that other files reference until those files are themselves modules.
 // Remove each entry as its consumers are converted.
 //
-// jumpTo + loading are NO LONGER shimmed -- the delegated nav listener
-// above no longer routes through window.* (uses CustomEvent as the test
-// seam instead) and 001-start.js imports `loading` directly. See PR
-// #1383 (chore/retire-jumpto-loading-shims) for the migration.
+// jumpTo: restored in PR #1384 after PR #1382 missed a remaining classic-
+// script consumer. static/local-js/025-libraries.js (a 4600-line classic
+// script) has a `qs:before-step-navigation` listener that calls
+// `jumpTo(detail.targetPage, detail.targetLabel)` after autosaving. That
+// call relied on the shim; without it, navigating away from a library
+// throws ReferenceError. The shim stays until 025-libraries.js is
+// converted to an ES module (separate roadmap item).
+//
+// loading: NOT shimmed. PR #1382 successfully migrated the only external
+// caller (001-start.js) to a direct `import { loading }`. Don't republish
+// it here -- that's the regression-prevention regression test in
+// tests/e2e/test_wizard_e2e.py (test_window_loading_shim_is_retired).
 window.escapeHtml = escapeHtml
 window.hideNavigationLoadingOverlay = hideNavigationLoadingOverlay
 window.hideSpinner = hideSpinner
+window.jumpTo = jumpTo
 window.setButtonIconAndText = setButtonIconAndText
 window.showNavigationLoadingOverlay = showNavigationLoadingOverlay
 window.showSpinner = showSpinner
