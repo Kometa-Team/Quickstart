@@ -1698,3 +1698,68 @@ def test_imagemaid_module_runs_without_console_errors(page, live_server):
     # console-error messages that mention our file or strict-mode issues.
     relevant = [e for e in errors if any(kw in e.lower() for kw in ("imagemaid.js", "strict mode", "redeclar", "is not defined"))]
     assert not relevant, f"module conversion introduced JS errors: {relevant}"
+
+
+# ES module conversion of 900-kometa.js (chore/convert-900-kometa-to-module).
+# This file had a different shape than 915-imagemaid / 905-analytics: the
+# first 54 lines were top-level declarations (let/const/function) OUTSIDE
+# the IIFE, followed by $(document).ready(function () { ... }). The
+# conversion preserved the top-level declarations as module-scoped and
+# unwrapped the rest. Lines 1-54 are already module-scoped in the new
+# form; lines 55+ were the IIFE body, now dedented.
+
+
+@pytest.mark.e2e
+def test_kometa_page_loads_as_module(page, live_server):
+    """The Kometa page must render and its script must be loaded as type='module'."""
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    state = page.evaluate("""() => {
+            const scripts = Array.from(document.scripts)
+            const kometaScript = scripts.find(s => (s.src || '').endsWith('/900-kometa.js'))
+            return {
+                pageMeta: !!document.querySelector('#stop-kometa-modal'),
+                scriptFound: !!kometaScript,
+                scriptType: kometaScript ? kometaScript.type : null
+            }
+        }""")
+    assert state["pageMeta"], "expected the Kometa page to render (precondition)"
+    assert state["scriptFound"], "expected /900-kometa.js to be referenced from the page"
+    assert state["scriptType"] == "module", f"expected the Kometa script to load as type='module' after conversion; got type={state['scriptType']!r}"
+
+
+@pytest.mark.e2e
+def test_kometa_module_does_not_leak_state_to_window(page, live_server):
+    """Module scope contract: top-level declarations must not be visible on window.
+    Pre-conversion the IIFE kept them private; post-conversion the module scope does.
+    """
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    leaked = page.evaluate("""() => {
+            const candidates = [
+                'KOMETA_UPDATING',
+                'KOMETA_VALIDATED',
+                'kometaInterval',
+                'kometaStatusInterval',
+                'autoScrollEnabled',
+                'tailSize',
+                'KOMETA_STATUS',
+                'logPollingPaused',
+                'logFilter',
+                'logscanPollCounter'
+            ]
+            return candidates.filter(name => typeof window[name] !== 'undefined')
+        }""")
+    assert not leaked, f"these kometa-internal names leaked to window: {leaked}"
+
+
+@pytest.mark.e2e
+def test_kometa_module_runs_without_console_errors(page, live_server):
+    """No JS console errors from the module conversion."""
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.on("console", lambda msg: errors.append(f"{msg.type}: {msg.text}") if msg.type == "error" else None)
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    page.wait_for_timeout(1000)
+    relevant = [e for e in errors if any(kw in e.lower() for kw in ("kometa.js", "900-kometa", "strict mode", "redeclar", "is not defined"))]
+    assert not relevant, f"module conversion introduced JS errors: {relevant}"

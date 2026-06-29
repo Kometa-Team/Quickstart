@@ -430,6 +430,7 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "130-trakt",
         "140-mal",
         "150-settings",
+        "900-kometa",
         "915-imagemaid",
     }
 )
