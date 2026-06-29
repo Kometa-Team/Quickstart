@@ -1614,3 +1614,87 @@ def test_qs_nav_loading_event_is_cancelable_and_carries_detail(page, live_server
     assert captured["cancelable"] is True, "qs:nav:loading must be cancelable"
     assert captured["action"] == "next"
     assert captured["target"], "qs:nav:loading must carry a non-empty target"
+
+
+# ES module conversion of 915-imagemaid.js (chore/convert-915-imagemaid-to-module).
+# Before this conversion the file was a classic <script> wrapped in
+# $(document).ready(...). After: type="module" with the IIFE wrapper
+# removed (modules are deferred so the ready guard is redundant).
+#
+# These tests pin both:
+#   - the page is reachable and the module actually executes
+#   - the page no longer leaks ImageMaid-internal state to window.*
+#     (which classic-script top-level lets/consts didn't do, but it's
+#     a useful contract check now that the IIFE is gone and someone
+#     might be tempted to "export" via window)
+
+
+@pytest.mark.e2e
+def test_imagemaid_page_loads_as_module(page, live_server):
+    """The ImageMaid page must render and its script must be loaded as
+    type='module'. After conversion the page sources its JS via the
+    same template path but with type='module' instead of type='text/javascript'.
+    """
+    page.goto(f"{live_server}/step/915-imagemaid", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    state = page.evaluate("""() => {
+            const scripts = Array.from(document.scripts)
+            const imagemaidScript = scripts.find(s => (s.src || '').endsWith('/915-imagemaid.js'))
+            return {
+                pageMeta: !!document.getElementById('imagemaid-page-meta'),
+                scriptFound: !!imagemaidScript,
+                scriptType: imagemaidScript ? imagemaidScript.type : null
+            }
+        }""")
+    assert state["pageMeta"], "expected the ImageMaid page to render (precondition)"
+    assert state["scriptFound"], "expected /915-imagemaid.js to be referenced from the page"
+    assert state["scriptType"] == "module", f"expected the ImageMaid script to load as type='module' after conversion; got type={state['scriptType']!r}"
+
+
+@pytest.mark.e2e
+def test_imagemaid_module_does_not_leak_state_to_window(page, live_server):
+    """As a classic <script>, the IIFE wrapper prevented the file's top-
+    level `let`/`const` declarations from polluting window. The module
+    conversion preserves that property -- modules have their own
+    top-level scope. This test pins it so a future refactor can't
+    re-introduce `window.imagemaidXyz = ...` shims by accident.
+    """
+    page.goto(f"{live_server}/step/915-imagemaid", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    leaked = page.evaluate("""() => {
+            // Names that exist at top level inside 915-imagemaid.js. If
+            // any of these leak to window, the module scope is broken.
+            const candidates = [
+                'imagemaidSupportsNoVerifySsl',
+                'imagemaidSupportsOverlaysOnly',
+                'imagemaidValidated',
+                'imagemaidInstalled',
+                'imagemaidVenvReady',
+                'imagemaidRunning',
+                'imagemaidStarting',
+                'updateStatus',
+                'loadLog',
+                'imagemaidSparkState'
+            ]
+            return candidates.filter(name => typeof window[name] !== 'undefined')
+        }""")
+    assert not leaked, f"these ImageMaid-internal names leaked to window: {leaked}"
+
+
+@pytest.mark.e2e
+def test_imagemaid_module_runs_without_console_errors(page, live_server):
+    """No JS console errors during page load (catches strict-mode
+    surprises from the IIFE->module conversion: implicit globals,
+    re-declarations, etc).
+    """
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.on("console", lambda msg: errors.append(f"{msg.type}: {msg.text}") if msg.type == "error" else None)
+    page.goto(f"{live_server}/step/915-imagemaid", wait_until="domcontentloaded")
+    page.wait_for_timeout(1000)
+    # Filter out errors that are NOT from our JS conversion -- e.g.
+    # backend fetch failures because there's no real ImageMaid install
+    # in the test environment. We only care about pageerrors and
+    # console-error messages that mention our file or strict-mode issues.
+    relevant = [e for e in errors if any(kw in e.lower() for kw in ("imagemaid.js", "strict mode", "redeclar", "is not defined"))]
+    assert not relevant, f"module conversion introduced JS errors: {relevant}"
