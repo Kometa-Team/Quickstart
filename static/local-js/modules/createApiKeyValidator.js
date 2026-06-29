@@ -94,6 +94,14 @@ const DEFAULT_MESSAGES = {
  *                                               wizards that need to consume extra fields from the response
  *                                               (e.g. Radarr/Sonarr populate dropdowns from data.root_folders,
  *                                               Plex copies db_cache + library lists into hidden form inputs).
+ * @param {(data: object) => void} [config.onValidationFailure]
+ *                                               Called after a failed validate response, with the parsed
+ *                                               response data. Runs AFTER the factory has set validatedField
+ *                                               to 'false' and shown the failure message. Symmetric sibling
+ *                                               of onValidationSuccess. Used by wizards that maintain
+ *                                               additional UI state derived from validatedField (e.g. TMDB
+ *                                               re-runs its Next-button gating after every validation
+ *                                               attempt to reflect the new validatedField value).
  * @param {() => boolean} [config.onPreSubmit]   Called on form submit BEFORE the normal empty-value
  *                                               normalisation. Return false to call event.preventDefault()
  *                                               and block the submit. Used by wizards that gate navigation
@@ -127,6 +135,7 @@ export function createApiKeyValidator (config) {
     buildPayload,
     messages: messageOverrides = {},
     onValidationSuccess,
+    onValidationFailure,
     onPreSubmit,
     revalidateOnLoad = false,
     isValid = (data) => !!data.valid,
@@ -250,6 +259,7 @@ export function createApiKeyValidator (config) {
           if (validatedAtInput) validatedAtInput.value = ''
           refreshValidationCallout(validatedFieldId)
           showStatus(resolveMessage(messages.failure, data), STATUS_COLOR_ERROR)
+          if (typeof onValidationFailure === 'function') onValidationFailure(data)
         }
       })
       .catch(() => {

@@ -643,3 +643,90 @@ def test_plex_db_cache_mismatch_warning(page, live_server):
     expect(page.locator("#plexDbCache")).to_contain_text("Warning: The value in the input box (999 MB) does not match the value retrieved from the server (2048 MB).")
     # And the input value should now be overwritten with the server's value.
     expect(page.locator("#plex_db_cache")).to_have_value("2048")
+
+
+@pytest.mark.e2e
+def test_tmdb_validator_success_enables_navigation_when_dropdowns_chosen(page, live_server):
+    """TMDB gates the Next/JumpTo buttons LIVE on (api key validated)
+    AND (language chosen) AND (region chosen). After validate succeeds,
+    pick both dropdowns and verify navigation is enabled.
+    (#1334 Step 6 PR 4c)
+    """
+
+    def handle_validate(route):
+        route.fulfill(status=200, json={"valid": True})
+
+    page.route("**/validate_tmdb", handle_validate)
+    page.goto(f"{live_server}/step/020-tmdb", wait_until="domcontentloaded")
+
+    page.locator("#tmdb_apikey").fill("some-api-key")
+    page.locator("#validateButton").click()
+    expect(page.locator("#tmdb_validated")).to_have_value("true")
+    expect(page.locator("#statusMessage")).to_contain_text("API key is valid!")
+
+    # Pick both dropdowns. The languages/regions are server-rendered
+    # from data['iso_639_1_languages'] / data['iso_3166_1_regions'];
+    # any non-empty value will do.
+    language_options = page.locator("#tmdb_language option").evaluate_all("els => els.map(el => el.value).filter(v => v)")
+    region_options = page.locator("#tmdb_region option").evaluate_all("els => els.map(el => el.value).filter(v => v)")
+    assert language_options, "tmdb_language dropdown should have non-empty options from server render"
+    assert region_options, "tmdb_region dropdown should have non-empty options from server render"
+
+    page.locator("#tmdb_language").select_option(language_options[0])
+    page.locator("#tmdb_region").select_option(region_options[0])
+
+    # Both dropdown status callouts should now read "is valid."
+    expect(page.locator("#languageStatusMessage")).to_contain_text("Language is valid.")
+    expect(page.locator("#regionStatusMessage")).to_contain_text("Region is valid.")
+
+    # Navigation buttons should be enabled.
+    expect(page.locator('button[onclick*="next"]')).to_be_enabled()
+    expect(page.locator(".dropdown-toggle").first).to_be_enabled()
+
+
+@pytest.mark.e2e
+def test_tmdb_validator_failure_keeps_navigation_disabled(page, live_server):
+    """After a failed TMDB validate, even if both dropdowns are picked,
+    navigation should stay disabled because (api key validated) is false.
+    This is the load-bearing proof that onValidationFailure correctly
+    re-runs updateNavigationState. (#1334 Step 6 PR 4c)
+    """
+
+    def handle_validate(route):
+        route.fulfill(status=200, json={"valid": False})
+
+    page.route("**/validate_tmdb", handle_validate)
+    page.goto(f"{live_server}/step/020-tmdb", wait_until="domcontentloaded")
+
+    # Pick the dropdowns FIRST so they're not the gating factor.
+    language_options = page.locator("#tmdb_language option").evaluate_all("els => els.map(el => el.value).filter(v => v)")
+    region_options = page.locator("#tmdb_region option").evaluate_all("els => els.map(el => el.value).filter(v => v)")
+    page.locator("#tmdb_language").select_option(language_options[0])
+    page.locator("#tmdb_region").select_option(region_options[0])
+
+    # Now run a failed validate.
+    page.locator("#tmdb_apikey").fill("bad-key")
+    page.locator("#validateButton").click()
+    expect(page.locator("#tmdb_validated")).to_have_value("false")
+
+    # Navigation should remain disabled.
+    expect(page.locator('button[onclick*="next"]')).to_be_disabled()
+
+
+@pytest.mark.e2e
+def test_tmdb_dropdown_change_alone_does_not_enable_navigation(page, live_server):
+    """Picking the dropdowns without ever validating the api key should
+    NOT enable navigation. Tests the wizard-specific dropdown listeners
+    correctly check isApiKeyValidated() as part of their gating logic.
+    """
+
+    page.goto(f"{live_server}/step/020-tmdb", wait_until="domcontentloaded")
+
+    language_options = page.locator("#tmdb_language option").evaluate_all("els => els.map(el => el.value).filter(v => v)")
+    region_options = page.locator("#tmdb_region option").evaluate_all("els => els.map(el => el.value).filter(v => v)")
+    page.locator("#tmdb_language").select_option(language_options[0])
+    page.locator("#tmdb_region").select_option(region_options[0])
+
+    # Even though both dropdowns now have valid values, the api key was
+    # never validated, so navigation must stay disabled.
+    expect(page.locator('button[onclick*="next"]')).to_be_disabled()
