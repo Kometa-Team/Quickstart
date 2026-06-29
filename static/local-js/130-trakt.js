@@ -10,30 +10,27 @@ import {
 } from './modules/oauthValidationHelpers.js'
 
 // Trakt OAuth-PIN flow. Layered on top of oauthValidationHelpers.
-// Wizard-specific glue (kept here, not in the helper module):
-//
-//   - Authorization URL construction (Trakt-specific URL shape, gated
-//     on client_id length === 64).
-//   - Six access-token field bookkeeping on validation success.
-//   - Pin field + URL button live-gating (inline oninput attributes
-//     in the template require these as window-exposed functions).
-//   - The Check Token re-validation path, which talks to a different
-//     endpoint and consumes a different response shape.
+// All DOM event wiring uses addEventListener -- no inline oninput /
+// onclick attributes in the template, no window-exposed functions.
+// Module-local everything, the way it should be.
 
 const VALIDATED_FIELD_ID = 'trakt_validated'
 
 const validatedAtInput = document.getElementById('trakt_validated_at')
-const traktClientSecretInput = document.getElementById('trakt_client_secret')
+const clientIdInput = document.getElementById('trakt_client_id')
+const clientSecretInput = document.getElementById('trakt_client_secret')
+const pinInput = document.getElementById('trakt_pin')
+const urlField = document.getElementById('trakt_url')
 const toggleButton = document.getElementById('toggleClientSecretVisibility')
+const openUrlButton = document.getElementById('trakt_open_url')
 const validateButton = document.getElementById('validate_trakt_pin')
 const checkTokenButton = document.getElementById('trakt_check_token')
 const isValidatedElement = document.getElementById('trakt_validated')
 
-wireSecretToggle(traktClientSecretInput, toggleButton)
+wireSecretToggle(clientSecretInput, toggleButton)
 
 // Initial button enable/disable from persisted state.
-const isValidated = isValidatedElement.value.toLowerCase()
-validateButton.disabled = isValidated === 'true'
+validateButton.disabled = isValidatedElement.value.toLowerCase() === 'true'
 if (checkTokenButton) {
   const accessToken = document.getElementById('access_token')?.value || ''
   checkTokenButton.disabled = isBlankTokenValue(accessToken)
@@ -48,8 +45,13 @@ wireCredentialResetListeners({
   validatedFieldId: VALIDATED_FIELD_ID
 })
 
+// Build the authorization URL when the client_id reaches the expected
+// 64-char length. Editing the credential also invalidates the saved
+// validated state (wireCredentialResetListeners already handles the
+// reset; this also clears the validatedAt and refreshes the callout
+// for symmetry with the legacy behavior).
 function updateTraktURL () {
-  const traktClientId = document.getElementById('trakt_client_id').value
+  const traktClientId = clientIdInput.value
   let myURL = ''
   if (traktClientId.length === 64) {
     isValidatedElement.value = 'false'
@@ -57,41 +59,34 @@ function updateTraktURL () {
     refreshValidationCallout(VALIDATED_FIELD_ID)
     myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + traktClientId + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
   }
-  document.getElementById('trakt_url').value = myURL
-  checkURLStart()
+  urlField.value = myURL
+  // The URL is built from credentials, so re-check the open-URL gate
+  // here directly. Listening on the hidden urlField for 'input' events
+  // wouldn't work -- programmatic .value assignment doesn't fire them.
+  openUrlButton.disabled = urlField.value === ''
 }
 
-function openTraktUrl () {
-  const url = document.getElementById('trakt_url').value
+// Wire updateTraktURL to the Client ID only. The legacy template wired
+// it to Client Secret too, but updateTraktURL doesn't read the secret,
+// so the second wiring was a no-op.
+clientIdInput.addEventListener('input', updateTraktURL)
+
+openUrlButton.addEventListener('click', function () {
+  const url = urlField.value
   if (url) {
     showSpinner('retrieve')
     window.open(url, '_blank').focus()
   }
-}
+})
 
-function checkPinField () {
-  const pin = document.getElementById('trakt_pin').value
-  document.getElementById('validate_trakt_pin').disabled = pin === ''
-}
+pinInput.addEventListener('input', function () {
+  validateButton.disabled = pinInput.value === ''
+})
 
-function checkURLStart () {
-  const url = document.getElementById('trakt_url').value
-  document.getElementById('trakt_open_url').disabled = url === ''
-}
-
-// Templates wire these as inline oninput / onclick handlers, so they
-// must be on window. (Eliminating inline handlers is HTML cleanup
-// work, out of scope for Step 6.)
-window.updateTraktURL = updateTraktURL
-window.openTraktUrl = openTraktUrl
-window.checkPinField = checkPinField
-window.checkURLStart = checkURLStart
-
-window.onload = function () {
-  document.getElementById('trakt_open_url').disabled = true
-  document.getElementById('validate_trakt_pin').disabled = true
-  checkURLStart()
-}
+// Initial gating after the page has rendered. Replaces the previous
+// `window.onload = ...` block.
+openUrlButton.disabled = true
+validateButton.disabled = true
 
 // Trakt-specific success bookkeeping: copy 6 authorization fields into
 // hidden form inputs, clear the PIN + URL, disable PIN-flow buttons,
@@ -106,19 +101,19 @@ function applyTraktPinSuccess (data) {
   document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token
   document.getElementById('scope').value = data.trakt_authorization_scope
   document.getElementById('created_at').value = data.trakt_authorization_created_at
-  document.getElementById('trakt_pin').value = ''
-  document.getElementById('trakt_url').value = ''
-  document.getElementById('trakt_open_url').disabled = true
-  document.getElementById('validate_trakt_pin').disabled = true
+  pinInput.value = ''
+  urlField.value = ''
+  openUrlButton.disabled = true
+  validateButton.disabled = true
   if (checkTokenButton) checkTokenButton.disabled = false
 }
 
 // PIN flow: POST /validate_trakt with id/secret/pin -> access tokens.
 validateButton.addEventListener('click', function () {
   const statusMessage = document.getElementById('statusMessage')
-  const traktClient = document.getElementById('trakt_client_id').value
-  const traktSecret = document.getElementById('trakt_client_secret').value
-  const traktPin = document.getElementById('trakt_pin').value
+  const traktClient = clientIdInput.value
+  const traktSecret = clientSecretInput.value
+  const traktPin = pinInput.value
 
   if (!traktClient || !traktSecret || !traktPin) {
     showStatusMessage(statusMessage, 'ID, secret, and PIN are all required.', STATUS_COLOR_ERROR)
@@ -155,14 +150,14 @@ if (checkTokenButton) {
   checkTokenButton.addEventListener('click', function () {
     const statusMessage = document.getElementById('statusMessage')
     const accessToken = document.getElementById('access_token')?.value || ''
-    const clientId = document.getElementById('trakt_client_id')?.value || ''
+    const clientId = clientIdInput?.value || ''
 
     if (isBlankTokenValue(accessToken) || isBlankTokenValue(clientId)) {
       showStatusMessage(statusMessage, 'Missing access token or client ID.', STATUS_COLOR_ERROR)
       return
     }
 
-    const clientSecret = document.getElementById('trakt_client_secret')?.value || ''
+    const clientSecret = clientSecretInput?.value || ''
     const refreshToken = document.getElementById('refresh_token')?.value || ''
 
     performValidationRequest({
