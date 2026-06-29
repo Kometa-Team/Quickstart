@@ -982,3 +982,125 @@ def test_mal_validate_button_enables_when_user_types_in_localhost_url(page, live
 
     page.locator("#mal_localhost_url").fill("")
     expect(page.locator("#validate_mal_url")).to_be_disabled()
+
+
+# Webhooks page (#090) inline-handler cleanup. The previous inline
+# onchange="showCustomInput(this)" was BROKEN on this page because
+# 090-webhooks.js loads as a module, which means showCustomInput was
+# module-scoped and not on window. The inline call silently no-op'd,
+# leaving the custom-URL panel hidden when users picked 'Custom'.
+# These tests pin the corrected addEventListener-based behaviour.
+
+
+@pytest.mark.e2e
+def test_webhooks_changing_to_custom_reveals_custom_url_input(page, live_server):
+    """Picking 'Custom' from the dropdown should reveal the custom-URL
+    input panel for that webhook. (Was BROKEN in production before this
+    PR -- the inline onchange handler couldn't find the module-scoped
+    showCustomInput function.)
+    """
+    page.goto(f"{live_server}/step/090-webhooks", wait_until="domcontentloaded")
+
+    custom_panel = page.locator("#webhooks_error_custom")
+    expect(custom_panel).to_be_hidden()
+
+    page.locator("#webhooks_error").select_option("custom")
+    expect(custom_panel).to_be_visible()
+
+    # Switching back to 'None' should hide the panel again.
+    page.locator("#webhooks_error").select_option("")
+    expect(custom_panel).to_be_hidden()
+
+
+@pytest.mark.e2e
+def test_webhooks_validate_button_click_dispatches_to_validate_endpoint(page, live_server):
+    """The .validate-button click handler should POST to /validate_webhook.
+    Proves the click handler is wired correctly to the new addEventListener
+    (was previously inline onclick='validateWebhook(...)' calling a
+    window-exposed function).
+    """
+    captured = {"url": None, "body": None}
+
+    def handle_validate(route, request):
+        captured["url"] = request.url
+        captured["body"] = request.post_data_json
+        route.fulfill(status=200, json={"success": "Webhook OK"})
+
+    page.route("**/validate_webhook", handle_validate)
+    page.goto(f"{live_server}/step/090-webhooks", wait_until="domcontentloaded")
+
+    page.locator("#webhooks_error").select_option("custom")
+    page.locator("#webhooks_error_custom input.custom-webhook-url").fill("https://example.com/webhook")
+    page.locator("#webhooks_error_custom .validate-button").click()
+
+    expect(page.locator("#validation_message_error")).to_contain_text("Webhook OK")
+    assert captured["url"] is not None and "validate_webhook" in captured["url"]
+    assert captured["body"]["webhook_url"] == "https://example.com/webhook"
+    assert "Error" in captured["body"]["message"]  # message includes formatted webhook type
+
+
+@pytest.mark.e2e
+def test_webhooks_typing_in_custom_url_re_enables_validate_button(page, live_server):
+    """After a successful validation, the validate button is disabled.
+    Editing the URL again should re-enable it so the user can re-validate.
+    Replaces the previous inline oninput='setWebhookValidated(false, ...)'
+    handler -- the inline handler called setWebhookValidated(false, key)
+    which also sets `validateButton.disabled = false`. Verifying THIS
+    side effect (rather than the brittle webhooks_validated value, which
+    races with markTouched -> updateValidationState in both legacy and
+    new code).
+    """
+    page.route("**/validate_webhook", lambda route: route.fulfill(status=200, json={"success": "OK"}))
+    page.goto(f"{live_server}/step/090-webhooks", wait_until="domcontentloaded")
+
+    page.locator("#webhooks_error").select_option("custom")
+    url_input = page.locator("#webhooks_error_custom input.custom-webhook-url")
+    validate_btn = page.locator("#webhooks_error_custom .validate-button")
+
+    url_input.fill("https://example.com/webhook")
+    validate_btn.click()
+    # After success the button gets disabled.
+    expect(validate_btn).to_be_disabled()
+
+    # Editing the URL should re-enable the button via the new input listener.
+    url_input.fill("https://different.example.com/webhook")
+    expect(validate_btn).to_be_enabled()
+
+
+# Config workspace modal (#_config_workspace_modal). The previous
+# onchange="toggleConfigInput(this)" relied on a window-exposed
+# function in 001-start.js. Now wired via addEventListener inside the
+# existing configSelector change handler.
+
+
+@pytest.mark.e2e
+def test_config_workspace_modal_changing_selector_shows_new_config_input(page, live_server):
+    """Opening the modal and selecting 'Add Config' from the dropdown
+    should reveal the New Config Name input box (#newConfigInput).
+    Selecting an existing config should hide it.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+
+    # The modal is in the DOM but starts hidden behind a Bootstrap
+    # modal toggle. Show it directly so we can interact with the select.
+    page.evaluate("""
+        const modalEl = document.getElementById('configSwitchModal')
+        if (modalEl) {
+            modalEl.classList.add('show')
+            modalEl.style.display = 'block'
+            modalEl.removeAttribute('aria-hidden')
+        }
+    """)
+
+    selector = page.locator("#configSelector")
+    selector.select_option("add_config")
+    # The new-config input box loses the d-none class.
+    classes_after_add = page.locator("#newConfigInput").get_attribute("class") or ""
+    assert "d-none" not in classes_after_add, f"expected d-none REMOVED after picking 'add_config'; got class='{classes_after_add}'"
+
+    # If there's another option available, picking it should re-add d-none.
+    other_options = selector.evaluate("el => Array.from(el.options).map(o => o.value).filter(v => v !== 'add_config')")
+    if other_options:
+        selector.select_option(other_options[0])
+        classes_after_other = page.locator("#newConfigInput").get_attribute("class") or ""
+        assert "d-none" in classes_after_other, f"expected d-none ADDED after switching away from add_config; got class='{classes_after_other}'"

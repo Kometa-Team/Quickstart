@@ -13,7 +13,7 @@
       </span>
     </span>
     <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}"
-      onchange="showCustomInput(this)" aria-describedby="webhooks_{{ webhook }}_text">
+      aria-describedby="webhooks_{{ webhook }}_text">
       <option value="">None</option>
       <option value="notifiarr" {% if page_info['notifiarr_available'] %}enabled{% else %}disabled{% endif %} {% if
         data.webhooks[webhook]=='notifiarr' %}selected{% endif %} data-bs-toggle="tooltip" data-bs-placement="right"
@@ -56,9 +56,10 @@
         </span>
       </span>
       <input type="text" class="form-control custom-webhook-url"
+        data-webhook-key="{{ webhook }}"
         value="{% if data and data.webhooks[webhook] and (data.webhooks[webhook]|string)[:4] == 'http' %}{{ data.webhooks[webhook] }}{% endif %}"
-        oninput="setWebhookValidated(false, '{{ webhook }}')" aria-describedby="webhooks_{{ webhook }}_text">
-      <button class="btn btn-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
+        aria-describedby="webhooks_{{ webhook }}_text">
+      <button class="btn btn-success validate-button" data-webhook-key="{{ webhook }}" type="button">
         Validate <i id="spinner_{{ webhook }}" class="spinner-border spinner-border-sm" role="status"
           style="display:none;"></i>
       </button>

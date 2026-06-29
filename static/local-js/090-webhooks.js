@@ -99,6 +99,33 @@ initialConfigured = hasConfiguredWebhooks()
 
 document.querySelectorAll('.validate-button').forEach(button => {
   button.disabled = isValidated === true
+  button.addEventListener('click', () => {
+    const webhookKey = button.dataset.webhookKey
+    if (webhookKey) validateWebhook(webhookKey)
+  })
+})
+
+// The select dropdown handles three concerns when it changes:
+//   1. showCustomInput reveals/hides the custom-URL input panel
+//      depending on whether 'custom' is selected.
+//   2. markTouched updates the validation state callout.
+// Both fire on every 'change' event. (Previously #1 was wired via the
+// inline onchange="showCustomInput(this)" attribute, which was broken
+// for module-scoped scripts -- the function wasn't on window so the
+// inline call silently no-op'd, leaving the custom-URL panel hidden
+// when the user picked 'Custom' from the dropdown.)
+document.querySelectorAll('select.form-select').forEach((selectElement) => {
+  selectElement.addEventListener('change', () => showCustomInput(selectElement, false))
+})
+
+// The custom-URL input fires setWebhookValidated(false, ...) on every
+// keystroke -- typing a new URL invalidates whatever previous
+// validation succeeded. (Previously wired via inline oninput=.)
+document.querySelectorAll('input.custom-webhook-url').forEach((input) => {
+  input.addEventListener('input', () => {
+    const webhookKey = input.dataset.webhookKey
+    if (webhookKey) setWebhookValidated(false, webhookKey)
+  })
 })
 
 document.querySelectorAll('select.form-select, input.custom-webhook-url').forEach((element) => {
@@ -193,6 +220,3 @@ function validateWebhook (webhookType) {
       updateValidationState()
     })
 }
-
-window.validateWebhook = validateWebhook
-window.setWebhookValidated = setWebhookValidated

@@ -45,7 +45,7 @@
           </div>
 
           <div class="form-floating mb-2">
-            <select id="configSelector" name="configSelector" form="qs-config-workspace-form" class="form-select" onchange="toggleConfigInput(this)">
+            <select id="configSelector" name="configSelector" form="qs-config-workspace-form" class="form-select">
               <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
                 Add Config
               </option>

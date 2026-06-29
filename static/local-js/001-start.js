@@ -15,9 +15,6 @@ function toggleConfigInput (selectElement) {
   }
 }
 
-// expose for inline HTML usage: onchange="toggleConfigInput(this)"
-window.toggleConfigInput = toggleConfigInput
-
 function applyValidationStyles (inputElement, type, message) {
   removeValidationMessages(inputElement)
   let iconHTML = ''
@@ -541,6 +538,7 @@ document.addEventListener('DOMContentLoaded', function () {
   updateButtonState()
   if (configSelector) {
     configSelector.addEventListener('change', () => {
+      toggleConfigInput(configSelector)
       updateButtonState()
     })
   }
