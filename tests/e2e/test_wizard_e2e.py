@@ -730,3 +730,213 @@ def test_tmdb_dropdown_change_alone_does_not_enable_navigation(page, live_server
     # Even though both dropdowns now have valid values, the api key was
     # never validated, so navigation must stay disabled.
     expect(page.locator('button[onclick*="next"]')).to_be_disabled()
+
+
+# Trakt OAuth-PIN tests (#1334 Step 6 PR 4d). A real Trakt validate
+# requires `trakt_client_id` to be exactly 64 chars for the
+# updateTraktURL() function to generate a non-empty authorization URL.
+TRAKT_CLIENT_ID_64 = "a" * 64
+
+
+@pytest.mark.e2e
+def test_trakt_pin_validator_success_populates_six_token_fields(page, live_server):
+    """After a successful Trakt PIN validate, the six hidden
+    authorization fields must contain the values from the response,
+    the PIN+URL fields are cleared, the PIN-flow buttons disabled,
+    and the Check Token button enabled.
+    """
+
+    def handle_validate(route):
+        route.fulfill(
+            status=200,
+            json={
+                "valid": True,
+                "trakt_authorization_access_token": "AT-123",
+                "trakt_authorization_token_type": "Bearer",
+                "trakt_authorization_expires_in": 7200,
+                "trakt_authorization_refresh_token": "RT-456",
+                "trakt_authorization_scope": "public",
+                "trakt_authorization_created_at": 1700000000,
+            },
+        )
+
+    page.route("**/validate_trakt", handle_validate)
+    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+
+    page.locator("#trakt_client_id").fill(TRAKT_CLIENT_ID_64)
+    page.locator("#trakt_client_secret").fill("my-secret")
+    page.locator("#trakt_pin").fill("12345678")
+    page.locator("#validate_trakt_pin").click()
+
+    # All six access-token fields populated.
+    expect(page.locator("#access_token")).to_have_value("AT-123")
+    expect(page.locator("#token_type")).to_have_value("Bearer")
+    expect(page.locator("#expires_in")).to_have_value("7200")
+    expect(page.locator("#refresh_token")).to_have_value("RT-456")
+    expect(page.locator("#scope")).to_have_value("public")
+    expect(page.locator("#created_at")).to_have_value("1700000000")
+    # PIN + URL cleared.
+    expect(page.locator("#trakt_pin")).to_have_value("")
+    expect(page.locator("#trakt_url")).to_have_value("")
+    # PIN-flow buttons disabled, Check Token enabled.
+    expect(page.locator("#trakt_open_url")).to_be_disabled()
+    expect(page.locator("#validate_trakt_pin")).to_be_disabled()
+    expect(page.locator("#trakt_check_token")).to_be_enabled()
+    # Validated state flipped to true.
+    expect(page.locator("#trakt_validated")).to_have_value("true")
+    expect(page.locator("#statusMessage")).to_contain_text("Trakt credentials validated successfully!")
+
+
+@pytest.mark.e2e
+def test_trakt_pin_validator_missing_fields_shows_required_message(page, live_server):
+    """With one of id/secret/pin missing, the client-side guard short-
+    circuits before the network call and shows the static required-
+    fields message.
+    """
+    requests_made = {"n": 0}
+
+    def handle_validate(route):
+        requests_made["n"] += 1
+        route.fulfill(status=200, json={"valid": True})
+
+    page.route("**/validate_trakt", handle_validate)
+    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+
+    page.locator("#trakt_client_id").fill(TRAKT_CLIENT_ID_64)
+    page.locator("#trakt_client_secret").fill("my-secret")
+    # PIN is intentionally empty. The pin field's checkPinField() will
+    # have left the validate button disabled, so we force-enable it.
+    page.evaluate("document.getElementById('validate_trakt_pin').disabled = false")
+    page.locator("#validate_trakt_pin").click()
+
+    expect(page.locator("#statusMessage")).to_contain_text("ID, secret, and PIN are all required.")
+    assert requests_made["n"] == 0, "no network call should fire when fields are missing"
+
+
+@pytest.mark.e2e
+def test_trakt_url_button_enabled_when_client_id_is_exactly_64_chars(page, live_server):
+    """Verifies the updateTraktURL() inline handler builds the
+    authorization URL only when client_id.length === 64, and the
+    Retrieve PIN button enables itself when the URL is non-empty.
+    """
+    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+
+    # Initially disabled (page just loaded).
+    expect(page.locator("#trakt_open_url")).to_be_disabled()
+
+    # Wrong length: still disabled.
+    page.locator("#trakt_client_id").fill("a" * 32)
+    expect(page.locator("#trakt_url")).to_have_value("")
+    expect(page.locator("#trakt_open_url")).to_be_disabled()
+
+    # Right length: URL constructed, button enabled.
+    page.locator("#trakt_client_id").fill(TRAKT_CLIENT_ID_64)
+    expect(page.locator("#trakt_url")).to_contain_text("")  # readonly so use to_have_value
+    trakt_url_value = page.locator("#trakt_url").input_value()
+    assert "trakt.tv/oauth/authorize" in trakt_url_value
+    assert TRAKT_CLIENT_ID_64 in trakt_url_value
+    expect(page.locator("#trakt_open_url")).to_be_enabled()
+
+
+@pytest.mark.e2e
+def test_trakt_check_token_button_initially_disabled_when_no_access_token(page, live_server):
+    """isBlankTokenValue treats blank/None/Null as blank. On a fresh
+    page where access_token is empty (or the literal string 'None' from
+    the persisted state), the Check Token button must start disabled.
+    """
+    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+    expect(page.locator("#trakt_check_token")).to_be_disabled()
+
+
+# MAL OAuth tests. MAL's client_id must be exactly 32 chars for the
+# updateMALTargetURL() function to generate a non-empty URL.
+MAL_CLIENT_ID_32 = "a" * 32
+
+
+@pytest.mark.e2e
+def test_mal_validator_success_populates_four_token_fields(page, live_server):
+    """After a successful MAL validate, the four hidden authorization
+    fields are populated, both auth-flow buttons disabled, and the
+    Check Token button enabled. MAL has 4 fields vs Trakt's 6.
+    """
+
+    def handle_validate(route):
+        route.fulfill(
+            status=200,
+            json={
+                "valid": True,
+                "mal_authorization_access_token": "MAL-AT",
+                "mal_authorization_token_type": "Bearer",
+                "mal_authorization_expires_in": 2592000,
+                "mal_authorization_refresh_token": "MAL-RT",
+            },
+        )
+
+    page.route("**/validate_mal", handle_validate)
+    page.goto(f"{live_server}/step/140-mal", wait_until="domcontentloaded")
+
+    page.locator("#mal_client_id").fill(MAL_CLIENT_ID_32)
+    page.locator("#mal_client_secret").fill("mal-secret")
+    # mal_code_verifier is a hidden field populated by the server. The
+    # template renders {{ data['code_verifier'] }}, which may be empty
+    # in test data. Force a value so the validate-payload guard passes.
+    page.evaluate("document.getElementById('mal_code_verifier').value = 'V' + 'a'.repeat(42)")
+    page.locator("#mal_localhost_url").fill("http://localhost/callback?code=xyz")
+    page.locator("#validate_mal_url").click()
+
+    # Four authorization fields populated.
+    expect(page.locator("#access_token")).to_have_value("MAL-AT")
+    expect(page.locator("#token_type")).to_have_value("Bearer")
+    expect(page.locator("#expires_in")).to_have_value("2592000")
+    expect(page.locator("#refresh_token")).to_have_value("MAL-RT")
+    # Auth-flow buttons disabled, Check Token enabled.
+    expect(page.locator("#mal_get_localhost_url")).to_be_disabled()
+    expect(page.locator("#validate_mal_url")).to_be_disabled()
+    expect(page.locator("#mal_check_token")).to_be_enabled()
+    expect(page.locator("#mal_validated")).to_have_value("true")
+    expect(page.locator("#statusMessage")).to_contain_text("MyAnimeList credentials validated successfully!")
+
+
+@pytest.mark.e2e
+def test_mal_validator_missing_fields_shows_required_message(page, live_server):
+    """Mirror of the Trakt missing-fields test: client-side guard fires
+    before any network call.
+    """
+    requests_made = {"n": 0}
+
+    def handle_validate(route):
+        requests_made["n"] += 1
+        route.fulfill(status=200, json={"valid": True})
+
+    page.route("**/validate_mal", handle_validate)
+    page.goto(f"{live_server}/step/140-mal", wait_until="domcontentloaded")
+
+    page.locator("#mal_client_id").fill(MAL_CLIENT_ID_32)
+    page.locator("#mal_client_secret").fill("mal-secret")
+    # mal_localhost_url is intentionally empty.
+    page.evaluate("document.getElementById('validate_mal_url').disabled = false")
+    page.locator("#validate_mal_url").click()
+
+    expect(page.locator("#statusMessage")).to_contain_text("ID, secret, and localhost URL are all required.")
+    assert requests_made["n"] == 0
+
+
+@pytest.mark.e2e
+def test_mal_authorize_button_enabled_when_client_id_is_exactly_32_chars(page, live_server):
+    """Mirror of the Trakt URL-button test, with MAL's 32-char gate."""
+    page.goto(f"{live_server}/step/140-mal", wait_until="domcontentloaded")
+
+    # Initially disabled (URL is empty).
+    expect(page.locator("#mal_get_localhost_url")).to_be_disabled()
+
+    # Wrong length: still disabled.
+    page.locator("#mal_client_id").fill("a" * 16)
+    expect(page.locator("#mal_url")).to_have_value("")
+    expect(page.locator("#mal_get_localhost_url")).to_be_disabled()
+
+    # Right length: URL constructed, Authorize button enabled.
+    page.locator("#mal_client_id").fill(MAL_CLIENT_ID_32)
+    mal_url_value = page.locator("#mal_url").input_value()
+    assert "myanimelist.net/v1/oauth2/authorize" in mal_url_value
+    assert MAL_CLIENT_ID_32 in mal_url_value
+    expect(page.locator("#mal_get_localhost_url")).to_be_enabled()

@@ -1,71 +1,62 @@
-import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
+import { refreshValidationCallout } from './modules/validationPageBase.js'
+import {
+  STATUS_COLOR_SUCCESS,
+  STATUS_COLOR_ERROR,
+  isBlankTokenValue,
+  wireSecretToggle,
+  wireCredentialResetListeners,
+  showStatusMessage,
+  performValidationRequest
+} from './modules/oauthValidationHelpers.js'
+
+// Trakt OAuth-PIN flow. Layered on top of oauthValidationHelpers.
+// Wizard-specific glue (kept here, not in the helper module):
+//
+//   - Authorization URL construction (Trakt-specific URL shape, gated
+//     on client_id length === 64).
+//   - Six access-token field bookkeeping on validation success.
+//   - Pin field + URL button live-gating (inline oninput attributes
+//     in the template require these as window-exposed functions).
+//   - The Check Token re-validation path, which talks to a different
+//     endpoint and consumes a different response shape.
+
+const VALIDATED_FIELD_ID = 'trakt_validated'
 
 const validatedAtInput = document.getElementById('trakt_validated_at')
-
 const traktClientSecretInput = document.getElementById('trakt_client_secret')
 const toggleButton = document.getElementById('toggleClientSecretVisibility')
 const validateButton = document.getElementById('validate_trakt_pin')
 const checkTokenButton = document.getElementById('trakt_check_token')
 const isValidatedElement = document.getElementById('trakt_validated')
+
+wireSecretToggle(traktClientSecretInput, toggleButton)
+
+// Initial button enable/disable from persisted state.
 const isValidated = isValidatedElement.value.toLowerCase()
-console.log('Validated:', isValidated)
-const isBlankTokenValue = (value) => {
-  if (!value) return true
-  const trimmed = value.trim()
-  if (!trimmed) return true
-  return trimmed.toLowerCase() === 'none' || trimmed.toLowerCase() === 'null'
-}
-
-// Set initial visibility based on Client Secret value
-if (traktClientSecretInput.value.trim() === '') {
-  traktClientSecretInput.setAttribute('type', 'text') // Show placeholder text
-  setToggleButtonIcon(toggleButton, true)
-} else {
-  traktClientSecretInput.setAttribute('type', 'password') // Hide actual secret
-  setToggleButtonIcon(toggleButton, false)
-}
-
-// Disable validate button if already validated
 validateButton.disabled = isValidated === 'true'
 if (checkTokenButton) {
   const accessToken = document.getElementById('access_token')?.value || ''
   checkTokenButton.disabled = isBlankTokenValue(accessToken)
 }
 
-// Reset validation status when user types
-const inputFields = ['trakt_client_id', 'trakt_client_secret', 'trakt_pin']
-inputFields.forEach(field => {
-  const inputElement = document.getElementById(field)
-  if (inputElement) {
-    inputElement.addEventListener('input', function () {
-      isValidatedElement.value = 'false'
-      if (validatedAtInput) validatedAtInput.value = ''
-      validateButton.disabled = false
-      if (checkTokenButton) checkTokenButton.disabled = true
-      refreshValidationCallout('trakt_validated')
-    })
-  } else {
-    console.warn(`Warning: Element with ID '${field}' not found.`)
-  }
-})
-
-document.getElementById('toggleClientSecretVisibility').addEventListener('click', function () {
-  const currentType = traktClientSecretInput.getAttribute('type')
-  traktClientSecretInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
-  setToggleButtonIcon(this, currentType === 'password')
+wireCredentialResetListeners({
+  fieldIds: ['trakt_client_id', 'trakt_client_secret', 'trakt_pin'],
+  validatedField: isValidatedElement,
+  validatedAtField: validatedAtInput,
+  validateButton,
+  checkTokenButton,
+  validatedFieldId: VALIDATED_FIELD_ID
 })
 
 function updateTraktURL () {
   const traktClientId = document.getElementById('trakt_client_id').value
   let myURL = ''
   if (traktClientId.length === 64) {
-    document.getElementById('trakt_validated').value = 'false'
-    const validatedAtField = document.getElementById('trakt_validated_at')
-    if (validatedAtField) validatedAtField.value = ''
-    refreshValidationCallout('trakt_validated')
+    isValidatedElement.value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
+    refreshValidationCallout(VALIDATED_FIELD_ID)
     myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + traktClientId + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
   }
-  console.log('updateTraktURL: ' + myURL)
   document.getElementById('trakt_url').value = myURL
   checkURLStart()
 }
@@ -80,165 +71,136 @@ function openTraktUrl () {
 
 function checkPinField () {
   const pin = document.getElementById('trakt_pin').value
-  const pinButton = document.getElementById('validate_trakt_pin')
-  pinButton.disabled = (pin === '')
+  document.getElementById('validate_trakt_pin').disabled = pin === ''
 }
-
-window.updateTraktURL = updateTraktURL
-window.openTraktUrl = openTraktUrl
-window.checkPinField = checkPinField
 
 function checkURLStart () {
   const url = document.getElementById('trakt_url').value
-  const urlButton = document.getElementById('trakt_open_url')
-  urlButton.disabled = url === ''
+  document.getElementById('trakt_open_url').disabled = url === ''
 }
+
+// Templates wire these as inline oninput / onclick handlers, so they
+// must be on window. (Eliminating inline handlers is HTML cleanup
+// work, out of scope for Step 6.)
+window.updateTraktURL = updateTraktURL
+window.openTraktUrl = openTraktUrl
+window.checkPinField = checkPinField
+window.checkURLStart = checkURLStart
 
 window.onload = function () {
-  const traktUrlText = document.getElementById('trakt_url')
   document.getElementById('trakt_open_url').disabled = true
   document.getElementById('validate_trakt_pin').disabled = true
-  checkURLStart(traktUrlText)
+  checkURLStart()
 }
 
-// Plex validation script
-document.getElementById('validate_trakt_pin').addEventListener('click', function () {
+// Trakt-specific success bookkeeping: copy 6 authorization fields into
+// hidden form inputs, clear the PIN + URL, disable PIN-flow buttons,
+// enable the Check Token button.
+function applyTraktPinSuccess (data) {
+  isValidatedElement.value = 'true'
+  if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+  refreshValidationCallout(VALIDATED_FIELD_ID)
+  document.getElementById('access_token').value = data.trakt_authorization_access_token
+  document.getElementById('token_type').value = data.trakt_authorization_token_type
+  document.getElementById('expires_in').value = data.trakt_authorization_expires_in
+  document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token
+  document.getElementById('scope').value = data.trakt_authorization_scope
+  document.getElementById('created_at').value = data.trakt_authorization_created_at
+  document.getElementById('trakt_pin').value = ''
+  document.getElementById('trakt_url').value = ''
+  document.getElementById('trakt_open_url').disabled = true
+  document.getElementById('validate_trakt_pin').disabled = true
+  if (checkTokenButton) checkTokenButton.disabled = false
+}
+
+// PIN flow: POST /validate_trakt with id/secret/pin -> access tokens.
+validateButton.addEventListener('click', function () {
+  const statusMessage = document.getElementById('statusMessage')
   const traktClient = document.getElementById('trakt_client_id').value
   const traktSecret = document.getElementById('trakt_client_secret').value
   const traktPin = document.getElementById('trakt_pin').value
-  const statusMessage = document.getElementById('statusMessage')
 
   if (!traktClient || !traktSecret || !traktPin) {
-    statusMessage.textContent = 'ID, secret, and PIN are all required.'
-    statusMessage.style.display = 'block'
+    showStatusMessage(statusMessage, 'ID, secret, and PIN are all required.', STATUS_COLOR_ERROR)
     return
   }
 
-  showSpinner('validate')
   hideSpinner('retrieve')
-
-  fetch('/validate_trakt', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+  performValidationRequest({
+    endpoint: '/validate_trakt',
+    payload: { trakt_client_id: traktClient, trakt_client_secret: traktSecret, trakt_pin: traktPin },
+    spinnerKey: 'validate',
+    statusElement: statusMessage,
+    onSuccess: (data) => {
+      applyTraktPinSuccess(data)
+      showStatusMessage(statusMessage, 'Trakt credentials validated successfully!', STATUS_COLOR_SUCCESS)
     },
-    body: JSON.stringify({
-      trakt_client_id: traktClient,
-      trakt_client_secret: traktSecret,
-      trakt_pin: traktPin
-    })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.valid) {
-        hideSpinner('validate')
-        document.getElementById('trakt_validated').value = 'true'
-        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout('trakt_validated')
-        statusMessage.textContent = 'Trakt credentials validated successfully!'
-        statusMessage.style.color = '#75b798'
-        document.getElementById('access_token').value = data.trakt_authorization_access_token
-        document.getElementById('token_type').value = data.trakt_authorization_token_type
-        document.getElementById('expires_in').value = data.trakt_authorization_expires_in
-        document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token
-        document.getElementById('scope').value = data.trakt_authorization_scope
-        document.getElementById('created_at').value = data.trakt_authorization_created_at
-        document.getElementById('trakt_pin').value = ''
-        document.getElementById('trakt_url').value = ''
-        document.getElementById('trakt_open_url').disabled = true
-        document.getElementById('validate_trakt_pin').disabled = true
-        const tokenButton = document.getElementById('trakt_check_token')
-        if (tokenButton) tokenButton.disabled = false
-      } else {
-        hideSpinner('validate')
-        document.getElementById('trakt_validated').value = 'false'
-        if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout('trakt_validated')
-        statusMessage.textContent = data.error
-        statusMessage.style.color = '#ea868f'
-      }
-      statusMessage.style.display = 'block'
-    })
-    .catch(error => {
-      hideSpinner('validate')
-      console.error('Error validating Trakt credentials:', error)
-      statusMessage.textContent = 'An error occurred while validating Trakt credentials.'
-      statusMessage.style.color = '#ea868f'
-      statusMessage.style.display = 'block'
+    onFailure: () => {
+      isValidatedElement.value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout('trakt_validated')
-    })
+      refreshValidationCallout(VALIDATED_FIELD_ID)
+    },
+    onError: () => {
+      showStatusMessage(statusMessage, 'An error occurred while validating Trakt credentials.', STATUS_COLOR_ERROR)
+      if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout(VALIDATED_FIELD_ID)
+    }
+  })
 })
 
-const traktCheckButton = document.getElementById('trakt_check_token')
-if (traktCheckButton) {
-  traktCheckButton.addEventListener('click', function () {
+// Check Token re-validation: POST /validate_trakt_token using the
+// already-saved access_token. On success, may rotate the token set
+// (server returns an `authorization` block when a refresh happened).
+if (checkTokenButton) {
+  checkTokenButton.addEventListener('click', function () {
+    const statusMessage = document.getElementById('statusMessage')
     const accessToken = document.getElementById('access_token')?.value || ''
     const clientId = document.getElementById('trakt_client_id')?.value || ''
-    const statusMessage = document.getElementById('statusMessage')
 
-    const isBlankValue = (value) => {
-      if (!value) return true
-      const trimmed = value.trim()
-      if (!trimmed) return true
-      return trimmed.toLowerCase() === 'none' || trimmed.toLowerCase() === 'null'
-    }
-
-    if (isBlankValue(accessToken) || isBlankValue(clientId)) {
-      statusMessage.textContent = 'Missing access token or client ID.'
-      statusMessage.style.color = '#ea868f'
-      statusMessage.style.display = 'block'
+    if (isBlankTokenValue(accessToken) || isBlankTokenValue(clientId)) {
+      showStatusMessage(statusMessage, 'Missing access token or client ID.', STATUS_COLOR_ERROR)
       return
     }
 
     const clientSecret = document.getElementById('trakt_client_secret')?.value || ''
     const refreshToken = document.getElementById('refresh_token')?.value || ''
-    showSpinner('check_trakt')
-    fetch('/validate_trakt_token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+
+    performValidationRequest({
+      endpoint: '/validate_trakt_token',
+      payload: {
         access_token: accessToken,
         client_id: clientId,
         client_secret: clientSecret,
         refresh_token: refreshToken,
         debug: true
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        hideSpinner('check_trakt')
-        if (data.valid) {
-          if (data.authorization) {
-            if (data.authorization.access_token) document.getElementById('access_token').value = data.authorization.access_token
-            if (data.authorization.token_type) document.getElementById('token_type').value = data.authorization.token_type
-            if (data.authorization.expires_in) document.getElementById('expires_in').value = data.authorization.expires_in
-            if (data.authorization.refresh_token) document.getElementById('refresh_token').value = data.authorization.refresh_token
-            if (data.authorization.scope) document.getElementById('scope').value = data.authorization.scope
-            if (data.authorization.created_at) document.getElementById('created_at').value = data.authorization.created_at
-          }
-          document.getElementById('trakt_validated').value = 'true'
-          if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-          refreshValidationCallout('trakt_validated')
-          statusMessage.textContent = 'Trakt token is valid.'
-          statusMessage.style.color = '#75b798'
-        } else {
-          document.getElementById('trakt_validated').value = 'false'
-          if (validatedAtInput) validatedAtInput.value = ''
-          refreshValidationCallout('trakt_validated')
-          statusMessage.textContent = data.error || 'Trakt token is invalid.'
-          statusMessage.style.color = '#ea868f'
+      },
+      spinnerKey: 'check_trakt',
+      statusElement: statusMessage,
+      onSuccess: (data) => {
+        if (data.authorization) {
+          const auth = data.authorization
+          if (auth.access_token) document.getElementById('access_token').value = auth.access_token
+          if (auth.token_type) document.getElementById('token_type').value = auth.token_type
+          if (auth.expires_in) document.getElementById('expires_in').value = auth.expires_in
+          if (auth.refresh_token) document.getElementById('refresh_token').value = auth.refresh_token
+          if (auth.scope) document.getElementById('scope').value = auth.scope
+          if (auth.created_at) document.getElementById('created_at').value = auth.created_at
         }
-        statusMessage.style.display = 'block'
-      })
-      .catch(error => {
-        hideSpinner('check_trakt')
-        console.error('Error validating Trakt token:', error)
-        statusMessage.textContent = 'An error occurred while validating Trakt token.'
-        statusMessage.style.color = '#ea868f'
-        statusMessage.style.display = 'block'
+        isValidatedElement.value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout(VALIDATED_FIELD_ID)
+        showStatusMessage(statusMessage, 'Trakt token is valid.', STATUS_COLOR_SUCCESS)
+      },
+      onFailure: () => {
+        isValidatedElement.value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout('trakt_validated')
-      })
+        refreshValidationCallout(VALIDATED_FIELD_ID)
+      },
+      onError: () => {
+        showStatusMessage(statusMessage, 'An error occurred while validating Trakt token.', STATUS_COLOR_ERROR)
+        if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout(VALIDATED_FIELD_ID)
+      }
+    })
   })
 }
