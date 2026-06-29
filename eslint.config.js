@@ -102,7 +102,8 @@ const moduleFiles = [
   'static/local-js/120-sonarr.js',
   'static/local-js/130-trakt.js',
   'static/local-js/140-mal.js',
-  'static/local-js/150-settings.js'
+  'static/local-js/150-settings.js',
+  'static/local-js/915-imagemaid.js'
 ]
 
 // Selectors for `no-restricted-syntax`. Defined here so the rules block
