@@ -606,6 +606,36 @@ def test_prepare_import_payload_accepts_streaming_use_key_template_variables():
     assert any("libraries.Movies.overlay_files[0].template_variables.use_filmin" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_streaming_region_originals_and_discover_overrides():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "streaming",
+                            "template_variables": {
+                                "region": "CA",
+                                "originals_only": True,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_streaming"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_streaming[region]"] == "CA"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_streaming[originals_only]"] is True
+    assert any("libraries.Movies.overlay_files[0].template_variables.region" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.originals_only" in line for line in report.lines)
+
+
 def test_prepare_import_payload_accepts_ribbon_use_key_template_variables():
     payload, report = importer.prepare_import_payload(
         {

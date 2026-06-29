@@ -4939,6 +4939,42 @@ def test_build_libraries_section_emits_subtitle_languages_overlay_alignment_temp
     assert subtitle_entry["template_variables"]["back_align"] == "right"
 
 
+def test_build_libraries_section_emits_streaming_overlay_region_originals_and_discover_overrides(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_streaming": True,
+                    "mov-library_movies-movie-template_overlay_streaming[region]": "CA",
+                    "mov-library_movies-movie-template_overlay_streaming[originals_only]": True,
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    streaming_entry = next((entry for entry in overlay_entries if entry.get("default") == "streaming"), None)
+    assert streaming_entry is not None
+    assert streaming_entry["template_variables"]["region"] == "CA"
+    assert streaming_entry["template_variables"]["originals_only"] is True
+
+
 def test_build_libraries_section_emits_only_non_default_language_weight_overrides(app):
     from modules import output
 
