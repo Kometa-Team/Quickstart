@@ -940,3 +940,45 @@ def test_mal_authorize_button_enabled_when_client_id_is_exactly_32_chars(page, l
     assert "myanimelist.net/v1/oauth2/authorize" in mal_url_value
     assert MAL_CLIENT_ID_32 in mal_url_value
     expect(page.locator("#mal_get_localhost_url")).to_be_enabled()
+
+
+# These tests cover behaviors that USED to be wired via inline
+# oninput="checkPinField" / oninput="checkURLField" attributes in
+# the templates and are now driven by addEventListener('input', ...)
+# in the JS modules. (Inline-handler-cleanup follow-up to Step 6 PR 4d.)
+
+
+@pytest.mark.e2e
+def test_trakt_validate_button_enables_when_user_types_in_pin_field(page, live_server):
+    """Typing into the PIN field should enable the Validate PIN button;
+    clearing it should disable it again. Previously wired via inline
+    oninput="checkPinField(this)", now via addEventListener.
+    """
+    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+
+    # Initially disabled (the page just loaded with no PIN entered).
+    expect(page.locator("#validate_trakt_pin")).to_be_disabled()
+
+    page.locator("#trakt_pin").fill("12345678")
+    expect(page.locator("#validate_trakt_pin")).to_be_enabled()
+
+    page.locator("#trakt_pin").fill("")
+    expect(page.locator("#validate_trakt_pin")).to_be_disabled()
+
+
+@pytest.mark.e2e
+def test_mal_validate_button_enables_when_user_types_in_localhost_url(page, live_server):
+    """Typing into the Localhost URL field should enable the Complete
+    Authentication button. Previously wired via inline
+    oninput="checkURLField(this)", now via addEventListener.
+    """
+    page.goto(f"{live_server}/step/140-mal", wait_until="domcontentloaded")
+
+    # Initially disabled (no URL filled in).
+    expect(page.locator("#validate_mal_url")).to_be_disabled()
+
+    page.locator("#mal_localhost_url").fill("http://localhost/callback?code=xyz")
+    expect(page.locator("#validate_mal_url")).to_be_enabled()
+
+    page.locator("#mal_localhost_url").fill("")
+    expect(page.locator("#validate_mal_url")).to_be_disabled()

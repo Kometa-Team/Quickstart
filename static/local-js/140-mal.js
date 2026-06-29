@@ -9,6 +9,9 @@ import {
 } from './modules/oauthValidationHelpers.js'
 
 // MyAnimeList OAuth flow. Layered on top of oauthValidationHelpers.
+// All DOM event wiring uses addEventListener -- no inline oninput /
+// onclick attributes in the template, no window-exposed functions.
+//
 // Shape mirrors Trakt (#130) but with three notable differences:
 //   - URL build is gated on client_id.length === 32 (Trakt is 64) and
 //     incorporates a code_verifier PKCE challenge.
@@ -19,8 +22,13 @@ import {
 const VALIDATED_FIELD_ID = 'mal_validated'
 
 const validatedAtInput = document.getElementById('mal_validated_at')
+const clientIdInput = document.getElementById('mal_client_id')
 const clientSecretInput = document.getElementById('mal_client_secret')
+const codeVerifierInput = document.getElementById('mal_code_verifier')
+const urlField = document.getElementById('mal_url')
+const localhostUrlInput = document.getElementById('mal_localhost_url')
 const toggleButton = document.getElementById('toggleClientSecretVisibility')
+const authorizeButton = document.getElementById('mal_get_localhost_url')
 const validateButton = document.getElementById('validate_mal_url')
 const checkTokenButton = document.getElementById('mal_check_token')
 const isValidatedElement = document.getElementById('mal_validated')
@@ -44,20 +52,12 @@ wireCredentialResetListeners({
   validatedFieldId: VALIDATED_FIELD_ID
 })
 
-// The "Authorize" button opens the constructed authorization URL in
-// a new tab. The legacy code wired this directly rather than via
-// window-exposed function, so keep the same shape.
-document.getElementById('mal_get_localhost_url').addEventListener('click', function () {
-  const url = document.getElementById('mal_url').value
-  if (url) {
-    showSpinner('retrieve')
-    window.open(url, '_blank').focus()
-  }
-})
-
+// Build the authorization URL when the client_id reaches the expected
+// 32-char length. MAL needs the PKCE code_verifier to be present in
+// the URL as the code_challenge query param.
 function updateMALTargetURL () {
-  const malClientId = document.getElementById('mal_client_id').value
-  const codeVerifier = document.getElementById('mal_code_verifier').value
+  const malClientId = clientIdInput.value
+  const codeVerifier = codeVerifierInput.value
   let myURL = ''
   if (malClientId.length === 32) {
     isValidatedElement.value = 'false'
@@ -65,36 +65,36 @@ function updateMALTargetURL () {
     refreshValidationCallout(VALIDATED_FIELD_ID)
     myURL = 'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=' + malClientId + '&code_challenge=' + codeVerifier
   }
-  document.getElementById('mal_url').value = myURL
-  enableLocalURLButton()
+  urlField.value = myURL
+  // Listening on the hidden urlField for 'input' events wouldn't work --
+  // programmatic .value assignment doesn't fire them. Re-check the
+  // Authorize button gate here directly.
+  authorizeButton.disabled = urlField.value === ''
 }
 
-function openMALUrl () {
-  const url = document.getElementById('mal_url').value
-  if (url) window.open(url, '_blank').focus()
-}
+// Wire updateMALTargetURL to the Client ID only. The legacy template
+// wired it to Client Secret too, but updateMALTargetURL doesn't read
+// the secret, so the second wiring was a no-op.
+clientIdInput.addEventListener('input', updateMALTargetURL)
 
-function checkURLField () {
-  const localURL = document.getElementById('mal_localhost_url').value
-  document.getElementById('validate_mal_url').disabled = localURL === ''
-}
+// The "Authorize" button opens the constructed authorization URL in
+// a new tab.
+authorizeButton.addEventListener('click', function () {
+  const url = urlField.value
+  if (url) {
+    showSpinner('retrieve')
+    window.open(url, '_blank').focus()
+  }
+})
 
-function enableLocalURLButton () {
-  const url = document.getElementById('mal_url').value
-  document.getElementById('mal_get_localhost_url').disabled = url === ''
-}
+localhostUrlInput.addEventListener('input', function () {
+  validateButton.disabled = localhostUrlInput.value === ''
+})
 
-// Templates wire these as inline oninput handlers, so they must be on
-// window. (Eliminating inline handlers is HTML cleanup, out of scope.)
-window.updateMALTargetURL = updateMALTargetURL
-window.openMALUrl = openMALUrl
-window.checkURLField = checkURLField
-window.enableLocalURLButton = enableLocalURLButton
-
-window.onload = function () {
-  document.getElementById('validate_mal_url').disabled = true
-  enableLocalURLButton()
-}
+// Initial gating after the page has rendered. Replaces the previous
+// `window.onload = ...` block.
+validateButton.disabled = true
+authorizeButton.disabled = urlField.value === ''
 
 // MAL-specific success bookkeeping: copy 4 authorization fields into
 // hidden form inputs and disable both auth-flow buttons.
@@ -106,8 +106,8 @@ function applyMALAuthSuccess (data) {
   document.getElementById('token_type').value = data.mal_authorization_token_type
   document.getElementById('expires_in').value = data.mal_authorization_expires_in
   document.getElementById('refresh_token').value = data.mal_authorization_refresh_token
-  document.getElementById('mal_get_localhost_url').disabled = true
-  document.getElementById('validate_mal_url').disabled = true
+  authorizeButton.disabled = true
+  validateButton.disabled = true
   if (checkTokenButton) checkTokenButton.disabled = false
 }
 
@@ -115,10 +115,10 @@ function applyMALAuthSuccess (data) {
 // access tokens.
 validateButton.addEventListener('click', function () {
   const statusMessage = document.getElementById('statusMessage')
-  const malClient = document.getElementById('mal_client_id').value
-  const malSecret = document.getElementById('mal_client_secret').value
-  const malVerifier = document.getElementById('mal_code_verifier').value
-  const malLocalhostURL = document.getElementById('mal_localhost_url').value
+  const malClient = clientIdInput.value
+  const malSecret = clientSecretInput.value
+  const malVerifier = codeVerifierInput.value
+  const malLocalhostURL = localhostUrlInput.value
 
   if (!malClient || !malSecret || !malVerifier || !malLocalhostURL) {
     showStatusMessage(statusMessage, 'ID, secret, and localhost URL are all required.', STATUS_COLOR_ERROR)
