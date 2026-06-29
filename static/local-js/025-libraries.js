@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
+    '/static/local-js/eventHandler.js',
     '/static/local-js/overlayHandler.js',
     '/static/local-js/validationHandler.js',
     '/static/local-js/imageHandler.js',
