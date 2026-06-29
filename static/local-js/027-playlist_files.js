@@ -11,8 +11,13 @@ const validationMessages = document.getElementById('validation-messages')
 if (!plexValid) {
   if (librariesContainer) librariesContainer.style.display = 'none'
   if (validationMessages) {
+    // The <a data-jumpto-page="010-plex"> link is picked up by the
+    // delegated click listener in 000-base.js. Same message text is
+    // duplicated in static/local-js/validationHandler.js (line ~60);
+    // they can't share a module-level constant yet because
+    // validationHandler.js is loaded as a classic script (no imports).
     validationMessages.innerHTML =
-      'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" onclick="jumpTo(\'010-plex\');">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>'
+      'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" data-jumpto-page="010-plex">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>'
     validationMessages.style.display = ''
   }
 } else {

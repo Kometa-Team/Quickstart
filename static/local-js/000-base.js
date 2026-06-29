@@ -4253,13 +4253,19 @@ document.head.appendChild(style)
 //     rating-mapping pills)
 //   - templates/partials/_workspace_macros.html (step dropdown items,
 //     step rail buttons, prev/next form-submit buttons, sidebar donate)
+// AND the runtime-injected HTML strings in:
+//   - static/local-js/validationHandler.js (Plex-not-validated message)
+//   - static/local-js/027-playlist_files.js (same; copy-paste)
+//   - static/local-js/overlayHandler.js (rating-mapping service pills)
 //
 // Two patterns:
 //   - [data-jumpto-page]  -> jumpTo(page, label?)
 //     Read `data-jumpto-page` and optional `data-jumpto-label`. Calls
 //     jumpTo() inside the click handler. The element is typically an
 //     <a href="javascript:void(0);"> or a <button type="button">, so no
-//     default action needs preventing.
+//     default action needs preventing for buttons; for anchors we call
+//     preventDefault to keep the browser from chasing the `javascript:`
+//     href.
 //   - [data-nav-action]   -> loading(action, target)
 //     Read `data-nav-action` ('prev' | 'next') and `data-nav-target`
 //     (the human-readable page label). Used on <button type="submit">
@@ -4267,44 +4273,43 @@ document.head.appendChild(style)
 //     the spinner starts before navigation. We MUST NOT preventDefault
 //     here or the form won't submit.
 //
+// EVENT DELEGATION (vs per-element binding): the listeners attach ONCE
+// to document.body and use event.target.closest() to find the matching
+// element. This means elements added AFTER DOMContentLoaded (e.g. the
+// overlay handler's runtime-generated rating-mapping pills) are picked
+// up automatically -- no re-binding needed.
+//
 // NOTE: jumpTo and loading remain exposed on window because they have
 // cross-module callers (e.g. 001-start.js does
-// `window.loading('jump', ...)`). When all consumers are converted to
-// ES module imports the window shims can be removed.
+// `window.loading('jump', ...)`) AND because the test suite stubs them
+// to observe behaviour. When all consumers are converted to ES module
+// imports the window shims can be removed.
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-jumpto-page]').forEach((el) => {
-    if (el.dataset.qsJumpBound === '1') return
-    el.dataset.qsJumpBound = '1'
-    el.addEventListener('click', (event) => {
-      // For <a href="javascript:void(0);"> the default action is harmless,
-      // but call preventDefault to match the inline-handler semantics
-      // (the inline handler never returned anything, so the void(0) href
-      // was what stopped navigation; explicit preventDefault is clearer).
-      const tag = (el.tagName || '').toLowerCase()
+  document.body.addEventListener('click', (event) => {
+    const jumpEl = event.target.closest('[data-jumpto-page]')
+    if (jumpEl) {
+      const tag = (jumpEl.tagName || '').toLowerCase()
       if (tag === 'a') event.preventDefault()
-      const page = el.dataset.jumptoPage
-      const label = el.dataset.jumptoLabel
-      if (!page) return
-      // Route through window so cross-module callers and tests can
-      // observe / intercept the call. This mirrors how 001-start.js
-      // calls window.loading('jump', ...) from outside this module.
-      const fn = (typeof window !== 'undefined' && window.jumpTo) || jumpTo
-      fn(page, label)
-    })
-  })
+      const page = jumpEl.dataset.jumptoPage
+      const label = jumpEl.dataset.jumptoLabel
+      if (page) {
+        const fn = (typeof window !== 'undefined' && window.jumpTo) || jumpTo
+        fn(page, label)
+      }
+      return
+    }
 
-  document.querySelectorAll('[data-nav-action]').forEach((el) => {
-    if (el.dataset.qsNavBound === '1') return
-    el.dataset.qsNavBound = '1'
-    el.addEventListener('click', () => {
+    const navEl = event.target.closest('[data-nav-action]')
+    if (navEl) {
       // Do NOT preventDefault -- this button is type="submit" and the form
       // submission carries the navigation. We just kick off the spinner.
-      const action = el.dataset.navAction
-      const target = el.dataset.navTarget
-      if (!action) return
-      const fn = (typeof window !== 'undefined' && window.loading) || loading
-      fn(action, target)
-    })
+      const action = navEl.dataset.navAction
+      const target = navEl.dataset.navTarget
+      if (action) {
+        const fn = (typeof window !== 'undefined' && window.loading) || loading
+        fn(action, target)
+      }
+    }
   })
 })
 

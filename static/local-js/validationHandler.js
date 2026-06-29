@@ -44,7 +44,8 @@ const ValidationHandler = {
       console.log('[DEBUG] Validation Failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
         'Please review your selections: ensure you have picked at least one library, selected an item inside each chosen library, and if using Separators, selected a valid <strong>Placeholder IMDb ID</strong>. Items needing attention are highlighted in red below.',
-        'danger'
+        'danger',
+        { html: true }
       )
       ValidationHandler.disableNavigation(false)
     }
@@ -57,8 +58,9 @@ const ValidationHandler = {
     if (!plexValid) {
       console.log('[DEBUG] Plex validation failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" onclick="jumpTo(\'010-plex\');">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>',
-        'danger'
+        'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" data-jumpto-page="010-plex">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>',
+        'danger',
+        { html: true }
       )
       ValidationHandler.disableNavigation()
       return false
@@ -297,13 +299,21 @@ const ValidationHandler = {
     })
   },
 
-  showValidationMessage: function (message, type) {
+  showValidationMessage: function (message, type, options) {
     const validationBox = document.getElementById('validation-messages')
     if (!validationBox) return
 
     console.log(`[DEBUG] Showing validation message: "${message}" (${type})`)
 
-    validationBox.textContent = message
+    // Default to textContent (safe against XSS). Callers that need to
+    // render HTML (e.g. embedded links or <strong>) must pass
+    // { html: true } explicitly so the choice is auditable.
+    const useHtml = !!(options && options.html)
+    if (useHtml) {
+      validationBox.innerHTML = message
+    } else {
+      validationBox.textContent = message
+    }
     validationBox.classList.remove('alert-danger', 'alert-success')
     validationBox.classList.add(`alert-${type}`)
     validationBox.style.display = 'block'

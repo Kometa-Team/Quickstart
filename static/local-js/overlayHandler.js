@@ -4870,7 +4870,7 @@ const OverlayHandler = {
               }
               const viaHtml = serviceTag
                 ? (jumpTarget && serviceTag !== 'N/A'
-                    ? ` <a class="rating-mapping-option-via rating-mapping-option-link rating-mapping-option-via--${validationStatus}" href="javascript:void(0);" onclick="jumpTo('${jumpTarget}')">${escapeHtml(serviceTag)}</a>`
+                    ? ` <a class="rating-mapping-option-via rating-mapping-option-link rating-mapping-option-via--${validationStatus}" href="javascript:void(0);" data-jumpto-page="${escapeHtml(jumpTarget)}">${escapeHtml(serviceTag)}</a>`
                     : ` <span class="rating-mapping-option-via rating-mapping-option-via--${validationStatus}">${escapeHtml(serviceTag)}</span>`)
                 : ''
               return `<div class="rating-mapping-option${isPicked ? ' is-picked' : ''}"><span class="rating-mapping-option-label">${escapeHtml(labelText)}</span>${pickedHtml}${arrowHtml}${viaHtml}</div>`

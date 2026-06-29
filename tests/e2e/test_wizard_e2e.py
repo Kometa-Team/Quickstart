@@ -1150,10 +1150,11 @@ def test_nav_jumpto_data_attr_dispatches_to_jumpto_function(page, live_server):
 @pytest.mark.e2e
 def test_nav_jumpto_data_attr_includes_label_when_present(page, live_server):
     """If the element carries both data-jumpto-page and data-jumpto-label,
-    both values should be forwarded to jumpTo().
+    both values should be forwarded to jumpTo(). Verified by injecting
+    a synthetic element AFTER DOMContentLoaded -- this exercises the
+    event-delegation behaviour (delegated listener picks up elements
+    added at runtime, not just those present at page load).
     """
-    # Inject a synthetic test element so we don't depend on whether the
-    # current page renders any specific [data-jumpto-label] producer.
     page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
     page.evaluate("""
         window.__jumpToCalls = []
@@ -1164,17 +1165,14 @@ def test_nav_jumpto_data_attr_includes_label_when_present(page, live_server):
         el.dataset.jumptoPage = '020-tmdb'
         el.dataset.jumptoLabel = 'TMDb Custom Label'
         document.body.appendChild(el)
-        // Bind the click listener the same way the production code does.
-        // We can't re-trigger DOMContentLoaded for the new element, so
-        // dispatch the binding explicitly via a synthetic event.
-        el.addEventListener('click', (event) => {
-            event.preventDefault()
-            window.jumpTo(el.dataset.jumptoPage, el.dataset.jumptoLabel)
-        })
     """)
     page.evaluate("document.getElementById('__synthetic_jumpto').click()")
     calls = page.evaluate("window.__jumpToCalls")
-    assert calls == [["020-tmdb", "TMDb Custom Label"]], f"expected jumpTo('020-tmdb', 'TMDb Custom Label'), got {calls}"
+    # The runtime-added element must be picked up by the delegated
+    # listener installed at DOMContentLoaded -- proves we're NOT using
+    # per-element binding (which would miss this).
+    assert calls, "expected jumpTo() to be called for a runtime-added [data-jumpto-page] element"
+    assert calls[-1] == ["020-tmdb", "TMDb Custom Label"], f"expected jumpTo('020-tmdb', 'TMDb Custom Label'), got {calls[-1]}"
 
 
 @pytest.mark.e2e
@@ -1296,3 +1294,95 @@ def test_nav_no_inline_handlers_remain_in_base_layout(page, live_server):
     # workspace step nav, etc.
     nav_offenders = [o for o in inline_count if (o.get("tag") in ("A", "BUTTON")) and (o.get("value", "").startswith("jumpTo(") or o.get("value", "").startswith("loading("))]
     assert not nav_offenders, f"Found leftover inline jumpTo/loading handlers in the navigation: " f"{nav_offenders}"
+
+
+# Runtime-injected inline-handler cleanup (chore/runtime-html-inline-handlers).
+# Three files previously composed HTML strings containing onclick="jumpTo(...)"
+# and inserted them via innerHTML:
+#   - static/local-js/validationHandler.js (Plex-not-validated message)
+#   - static/local-js/027-playlist_files.js (same; copy-paste)
+#   - static/local-js/overlayHandler.js (rating-mapping service pills)
+# These now use data-jumpto-page instead. The delegated click listener in
+# 000-base.js (now using event delegation on document.body) picks them up
+# even when the element is added to the DOM AFTER DOMContentLoaded.
+
+
+@pytest.mark.e2e
+def test_runtime_added_jumpto_element_triggers_jumpto_via_delegation(page, live_server):
+    """Belt-and-braces version of the synthetic-element test specific to
+    the runtime-HTML-injection use case: simulate the overlayHandler /
+    027-playlist_files / validationHandler pattern by setting innerHTML
+    on a container, then assert the resulting [data-jumpto-page] anchor
+    triggers jumpTo via the delegated listener.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+    page.evaluate("""
+        window.__jumpToCalls = []
+        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        const host = document.createElement('div')
+        host.id = '__runtime_host'
+        document.body.appendChild(host)
+        // Mirror the production pattern: assign innerHTML with a string
+        // containing <a data-jumpto-page="..."> -- the link is parsed
+        // from the string at innerHTML-assignment time, the delegated
+        // listener doesn't need re-binding.
+        host.innerHTML =
+          'Please <a href="javascript:void(0);" data-jumpto-page="010-plex" id="__runtime_link">return to the Plex page</a>.'
+    """)
+    page.evaluate("document.getElementById('__runtime_link').click()")
+    calls = page.evaluate("window.__jumpToCalls")
+    assert calls, "expected jumpTo() to be called for the runtime-innerHTML-added link"
+    assert calls[-1][0] == "010-plex", f"expected page='010-plex', got {calls[-1]}"
+
+
+@pytest.mark.e2e
+def test_validation_handler_show_message_textcontent_by_default(page, live_server):
+    """validationHandler.showValidationMessage defaults to textContent --
+    HTML in the message string should render as plain text. This is the
+    safe-against-XSS default.
+    """
+    # Pick a page that includes #validation-messages in its template.
+    # 900-kometa has it (templates/900-kometa.html:272).
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    page.add_script_tag(path="static/local-js/validationHandler.js")
+    # Need jQuery for the existing $('#plex_valid') call -- 900-kometa
+    # already loads it as part of the base layout.
+    page.evaluate("""
+        ValidationHandler.showValidationMessage(
+            'Plain <strong>text</strong> message', 'danger'
+        )
+    """)
+    box = page.locator("#validation-messages")
+    expect(box).to_have_text("Plain <strong>text</strong> message")
+    # innerHTML should contain the literal &lt; (escaped); no <strong> tag.
+    inner = box.evaluate("el => el.innerHTML")
+    assert "<strong>" not in inner, f"expected escaped HTML, got: {inner[:200]}"
+    assert "&lt;strong&gt;" in inner or "&lt;/strong&gt;" in inner, f"expected HTML-escaped <strong>, got: {inner[:200]}"
+
+
+@pytest.mark.e2e
+def test_validation_handler_show_message_html_opt_in_renders_html(page, live_server):
+    """When called with {html: true}, showValidationMessage uses innerHTML.
+    A link inside the message becomes a real anchor.
+    """
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    page.add_script_tag(path="static/local-js/validationHandler.js")
+    page.evaluate("""
+        ValidationHandler.showValidationMessage(
+            'Please <a href=\"javascript:void(0);\" data-jumpto-page=\"010-plex\">click here</a>.',
+            'danger',
+            { html: true }
+        )
+    """)
+    box = page.locator("#validation-messages")
+    # The <a> element should exist as a real DOM node, not plain text.
+    expect(box.locator('a[data-jumpto-page="010-plex"]')).to_be_attached()
+    # And clicking it should trigger the delegated jumpTo handler.
+    page.evaluate("""
+        window.__jumpToCalls = []
+        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        document.querySelector('#validation-messages a[data-jumpto-page=\"010-plex\"]').click()
+    """)
+    calls = page.evaluate("window.__jumpToCalls")
+    assert calls, "expected click on the rendered <a> to trigger jumpTo"
+    assert calls[-1][0] == "010-plex", f"expected page='010-plex', got {calls[-1]}"
