@@ -1421,17 +1421,36 @@ def test_validation_handler_show_message_html_opt_in_renders_html(page, live_ser
 
 @pytest.mark.e2e
 def test_rgba_picker_script_loads_on_libraries_page(page, live_server):
-    """The rgbaPicker.js classic-script is loaded sequentially by
-    025-libraries.js. Without it the color-picker widget is dead.
+    """The rgbaPicker.js module is loaded via dynamic import() by
+    025-libraries.js (PR #1388). Since import() does NOT create a
+    <script> element in the DOM, we verify the module loaded by
+    checking the rgba picker's delegated listener is active.
     """
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     # Scripts are loaded sequentially; give them a moment to finish.
     page.wait_for_timeout(1500)
-    loaded = page.evaluate("""() => Array.from(document.scripts)
-              .map(s => s.src)
-              .filter(s => s.includes('rgbaPicker.js'))
-              .length""")
-    assert loaded >= 1, "expected rgbaPicker.js to be loaded on the libraries page"
+    # Synthesize a minimal .rgba-group, fire an input on the slider,
+    # and assert the hex-input gets updated — proving the listener
+    # registered by rgbaPicker.js is active, even though no <script>
+    # tag appears in the DOM.
+    updated = page.evaluate("""() => {
+            const host = document.createElement('div')
+            host.innerHTML = `<div class="rgba-group">
+                <input class="rgba-color-picker" type="color" value="#ff00ff">
+                <input class="rgba-hex-input" type="text" value="#FF00FF64">
+                <input class="rgba-alpha-input" type="number" value="39">
+                <input class="rgba-alpha-slider" type="range" min="0" max="100" value="39">
+                <label class="rgba-color-bar"></label>
+            </div>`
+            document.body.appendChild(host)
+            const slider = host.querySelector('.rgba-alpha-slider')
+            slider.value = '75'
+            slider.dispatchEvent(new Event('input', { bubbles: true }))
+            const result = host.querySelector('.rgba-hex-input').value
+            host.remove()
+            return result === '#FF00FFBF'
+        }""")
+    assert updated, "expected rgbaPicker delegated listener to be active after import() load"
 
 
 @pytest.mark.e2e
@@ -1793,3 +1812,27 @@ def test_analytics_module_runs_without_console_errors(page, live_server):
     page.wait_for_timeout(1000)
     relevant = [e for e in errors if any(kw in e.lower() for kw in ("analytics.js", "strict mode", "redeclar", "is not defined"))]
     assert not relevant, f"module conversion introduced JS errors: {relevant}"
+
+
+# ES module conversion of rgbaPicker.js (chore/convert-rgbapicker-to-module).
+# rgbaPicker.js is NOT a page script -- it's loaded by 025-libraries.js's
+# dynamic script loader. The loader was updated to use `import()` for
+# module scripts (detected via the moduleScripts set). These tests verify:
+#   - The libraries page loads without module-related JS errors
+#   - The import()-based loading mechanism works correctly
+
+
+@pytest.mark.e2e
+def test_rgbapicker_module_loads_without_errors(page, live_server):
+    """The rgbaPicker module is loaded via dynamic import() by
+    025-libraries.js. Verify no console errors from the module load
+    path (strict-mode issues, import failures, etc.).
+    """
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.on("console", lambda msg: errors.append(f"{msg.type}: {msg.text}") if msg.type == "error" else None)
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    # Wait for the sequential loader to finish
+    page.wait_for_timeout(2000)
+    relevant = [e for e in errors if any(kw in e.lower() for kw in ("rgba", "import", "module", "strict mode", "redeclar", "is not defined"))]
+    assert not relevant, f"module import introduced JS errors: {relevant}"

@@ -22,150 +22,148 @@
 // Behaviour preserved byte-for-byte from the previous IIFEs -- see
 // templates/partials/_macros.html history for the originals.
 
-(function () {
-  function findGroup (el) {
-    return el.closest('.rgba-group')
+function findGroup (el) {
+  return el.closest('.rgba-group')
+}
+
+function getParts (group) {
+  return {
+    picker: group.querySelector('.rgba-color-picker'),
+    bar: group.querySelector('.rgba-color-bar'),
+    hexInput: group.querySelector('.rgba-hex-input'),
+    alphaInput: group.querySelector('.rgba-alpha-input'),
+    slider: group.querySelector('.rgba-alpha-slider')
   }
+}
 
-  function getParts (group) {
-    return {
-      picker: group.querySelector('.rgba-color-picker'),
-      bar: group.querySelector('.rgba-color-bar'),
-      hexInput: group.querySelector('.rgba-hex-input'),
-      alphaInput: group.querySelector('.rgba-alpha-input'),
-      slider: group.querySelector('.rgba-alpha-slider')
-    }
+function hexRgb (hex) {
+  // hex like '#FFAABB' or '#FFAABBCC' -- returns r, g, b
+  return {
+    r: parseInt(hex.substr(1, 2), 16),
+    g: parseInt(hex.substr(3, 2), 16),
+    b: parseInt(hex.substr(5, 2), 16)
   }
+}
 
-  function hexRgb (hex) {
-    // hex like '#FFAABB' or '#FFAABBCC' -- returns r, g, b
-    return {
-      r: parseInt(hex.substr(1, 2), 16),
-      g: parseInt(hex.substr(3, 2), 16),
-      b: parseInt(hex.substr(5, 2), 16)
-    }
+function setBarBg (bar, r, g, b, a) {
+  if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${a})`
+}
+
+function dispatchInputAndChange (el) {
+  el.dispatchEvent(new Event('input', { bubbles: true }))
+  el.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+function pctToHexAlpha (pct) {
+  const a = pct / 100
+  const aa = Math.round(a * 255)
+  return aa.toString(16).padStart(2, '0').toUpperCase()
+}
+
+function buildFullHex (pickerHex, pct) {
+  // pickerHex like '#FFAABB' -> '#FFAABBCC'
+  return `#${pickerHex.substr(1).toUpperCase()}${pctToHexAlpha(pct)}`
+}
+
+// --- Handlers, one per input element class ---
+
+function onPickerInput (picker, parts) {
+  // Mirrors the original picker IIFE: derives alpha from the slider,
+  // recomputes the full hex, writes the hex input, dispatches
+  // input/change so downstream listeners see the update, and repaints
+  // the bar. The redundant `alphaInput.value = Math.round(pct)` write
+  // matches the original behaviour (alphaInput already equals pct
+  // since pct was derived from slider.value which mirrors alphaInput,
+  // but we keep it for byte-equivalence with the prior IIFE).
+  const { hexInput, slider, alphaInput, bar } = parts
+  if (!hexInput) return
+  const pct = slider ? Number(slider.value) : 100
+  const pickerHex = (picker.value || '#ffffff').toUpperCase()
+  const { r, g, b } = hexRgb(pickerHex)
+  hexInput.value = buildFullHex(pickerHex, pct)
+  dispatchInputAndChange(hexInput)
+  setBarBg(bar, r, g, b, pct / 100)
+  if (alphaInput) alphaInput.value = Math.round(pct)
+}
+
+function onHexInput (field, parts) {
+  // The hex field is the source of truth, so user-typed changes
+  // cascade to all related controls. We only act on a fully-formed
+  // hex (#RRGGBB or #RRGGBBAA); shorter / invalid strings are left
+  // alone so the user can still be mid-typing.
+  const { picker, slider, alphaInput, bar } = parts
+  const val = field.value.trim()
+  if (!val.startsWith('#')) return
+  if (val.length !== 7 && val.length !== 9) return
+  const hex = val.length === 9 ? val : val + 'FF'
+  field.value = `#${hex.substr(1).toUpperCase()}`
+  const { r, g, b } = hexRgb(hex)
+  const a = parseInt(hex.substr(7, 2), 16)
+  const pct = Math.round((a / 255) * 100)
+  if (picker) picker.value = `#${hex.substr(1, 6)}`.toUpperCase()
+  if (slider) {
+    slider.value = pct
+    slider.title = `Opacity: ${pct}%`
   }
+  if (alphaInput) alphaInput.value = pct
+  setBarBg(bar, r, g, b, pct / 100)
+}
 
-  function setBarBg (bar, r, g, b, a) {
-    if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${a})`
+function onAlphaNumberInput (field, parts) {
+  // Number input: clamp to 0-100, mirror to slider, recompute hex.
+  const { picker, slider, hexInput, bar } = parts
+  let pct = Number(field.value)
+  if (Number.isNaN(pct)) return
+  if (pct < 0) pct = 0
+  if (pct > 100) pct = 100
+  field.value = pct
+  if (slider) {
+    slider.value = pct
+    slider.title = `Opacity: ${pct}%`
   }
-
-  function dispatchInputAndChange (el) {
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-    el.dispatchEvent(new Event('change', { bubbles: true }))
-  }
-
-  function pctToHexAlpha (pct) {
-    const a = pct / 100
-    const aa = Math.round(a * 255)
-    return aa.toString(16).padStart(2, '0').toUpperCase()
-  }
-
-  function buildFullHex (pickerHex, pct) {
-    // pickerHex like '#FFAABB' -> '#FFAABBCC'
-    return `#${pickerHex.substr(1).toUpperCase()}${pctToHexAlpha(pct)}`
-  }
-
-  // --- Handlers, one per input element class ---
-
-  function onPickerInput (picker, parts) {
-    // Mirrors the original picker IIFE: derives alpha from the slider,
-    // recomputes the full hex, writes the hex input, dispatches
-    // input/change so downstream listeners see the update, and repaints
-    // the bar. The redundant `alphaInput.value = Math.round(pct)` write
-    // matches the original behaviour (alphaInput already equals pct
-    // since pct was derived from slider.value which mirrors alphaInput,
-    // but we keep it for byte-equivalence with the prior IIFE).
-    const { hexInput, slider, alphaInput, bar } = parts
-    if (!hexInput) return
-    const pct = slider ? Number(slider.value) : 100
-    const pickerHex = (picker.value || '#ffffff').toUpperCase()
-    const { r, g, b } = hexRgb(pickerHex)
+  const pickerHex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'
+  const { r, g, b } = hexRgb(pickerHex)
+  if (hexInput) {
     hexInput.value = buildFullHex(pickerHex, pct)
     dispatchInputAndChange(hexInput)
-    setBarBg(bar, r, g, b, pct / 100)
-    if (alphaInput) alphaInput.value = Math.round(pct)
   }
+  setBarBg(bar, r, g, b, pct / 100)
+}
 
-  function onHexInput (field, parts) {
-    // The hex field is the source of truth, so user-typed changes
-    // cascade to all related controls. We only act on a fully-formed
-    // hex (#RRGGBB or #RRGGBBAA); shorter / invalid strings are left
-    // alone so the user can still be mid-typing.
-    const { picker, slider, alphaInput, bar } = parts
-    const val = field.value.trim()
-    if (!val.startsWith('#')) return
-    if (val.length !== 7 && val.length !== 9) return
-    const hex = val.length === 9 ? val : val + 'FF'
-    field.value = `#${hex.substr(1).toUpperCase()}`
-    const { r, g, b } = hexRgb(hex)
-    const a = parseInt(hex.substr(7, 2), 16)
-    const pct = Math.round((a / 255) * 100)
-    if (picker) picker.value = `#${hex.substr(1, 6)}`.toUpperCase()
-    if (slider) {
-      slider.value = pct
-      slider.title = `Opacity: ${pct}%`
-    }
-    if (alphaInput) alphaInput.value = pct
-    setBarBg(bar, r, g, b, pct / 100)
+function onSliderInput (slider, parts) {
+  // Slider input: mirror to number, recompute hex.
+  const { picker, alphaInput, hexInput, bar } = parts
+  const pct = Number(slider.value)
+  const pickerHex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'
+  const { r, g, b } = hexRgb(pickerHex)
+  if (hexInput) {
+    hexInput.value = buildFullHex(pickerHex, pct)
+    dispatchInputAndChange(hexInput)
   }
+  setBarBg(bar, r, g, b, pct / 100)
+  if (alphaInput) alphaInput.value = slider.value
+  slider.title = `Opacity: ${slider.value}%`
+}
 
-  function onAlphaNumberInput (field, parts) {
-    // Number input: clamp to 0-100, mirror to slider, recompute hex.
-    const { picker, slider, hexInput, bar } = parts
-    let pct = Number(field.value)
-    if (Number.isNaN(pct)) return
-    if (pct < 0) pct = 0
-    if (pct > 100) pct = 100
-    field.value = pct
-    if (slider) {
-      slider.value = pct
-      slider.title = `Opacity: ${pct}%`
-    }
-    const pickerHex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'
-    const { r, g, b } = hexRgb(pickerHex)
-    if (hexInput) {
-      hexInput.value = buildFullHex(pickerHex, pct)
-      dispatchInputAndChange(hexInput)
-    }
-    setBarBg(bar, r, g, b, pct / 100)
+// --- Delegation ---
+//
+// One document-level listener serves all .rgba-group widgets, present
+// or future. Works for groups added to the DOM after page load (e.g.
+// when a library/group section is expanded for the first time).
+
+document.addEventListener('input', function (event) {
+  const target = event.target
+  if (!target || typeof target.matches !== 'function') return
+  const group = findGroup(target)
+  if (!group) return
+  const parts = getParts(group)
+  if (target.matches('.rgba-color-picker')) {
+    onPickerInput(target, parts)
+  } else if (target.matches('.rgba-hex-input')) {
+    onHexInput(target, parts)
+  } else if (target.matches('.rgba-alpha-input')) {
+    onAlphaNumberInput(target, parts)
+  } else if (target.matches('.rgba-alpha-slider')) {
+    onSliderInput(target, parts)
   }
-
-  function onSliderInput (slider, parts) {
-    // Slider input: mirror to number, recompute hex.
-    const { picker, alphaInput, hexInput, bar } = parts
-    const pct = Number(slider.value)
-    const pickerHex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'
-    const { r, g, b } = hexRgb(pickerHex)
-    if (hexInput) {
-      hexInput.value = buildFullHex(pickerHex, pct)
-      dispatchInputAndChange(hexInput)
-    }
-    setBarBg(bar, r, g, b, pct / 100)
-    if (alphaInput) alphaInput.value = slider.value
-    slider.title = `Opacity: ${slider.value}%`
-  }
-
-  // --- Delegation ---
-  //
-  // One document-level listener serves all .rgba-group widgets, present
-  // or future. Works for groups added to the DOM after page load (e.g.
-  // when a library/group section is expanded for the first time).
-
-  document.addEventListener('input', function (event) {
-    const target = event.target
-    if (!target || typeof target.matches !== 'function') return
-    const group = findGroup(target)
-    if (!group) return
-    const parts = getParts(group)
-    if (target.matches('.rgba-color-picker')) {
-      onPickerInput(target, parts)
-    } else if (target.matches('.rgba-hex-input')) {
-      onHexInput(target, parts)
-    } else if (target.matches('.rgba-alpha-input')) {
-      onAlphaNumberInput(target, parts)
-    } else if (target.matches('.rgba-alpha-slider')) {
-      onSliderInput(target, parts)
-    }
-  })
-})()
+})

@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
     '/static/local-js/rgbaPicker.js'
   ]
 
+  // Scripts that have been converted to ES modules. These are loaded via
+  // dynamic import() instead of <script> tag creation. Add entries here
+  // as each helper is converted (rgbaPicker.js was the first, PR #1388).
+  const moduleScripts = new Set(['/static/local-js/rgbaPicker.js'])
+
   function loadScriptsSequentially (scripts, callback) {
     let index = 0
 
@@ -19,19 +24,32 @@ document.addEventListener('DOMContentLoaded', function () {
         return
       }
 
-      const script = document.createElement('script')
-      script.src = scripts[index]
-      script.type = 'text/javascript'
-      script.onload = function () {
-        console.log(`[DEBUG] Loaded script: ${scripts[index]}`)
-        index++
-        loadNext()
-      }
-      script.onerror = function () {
-        console.error(`[ERROR] Failed to load script: ${scripts[index]}`)
-      }
+      const src = scripts[index]
+      if (moduleScripts.has(src)) {
+        import(src)
+          .then(function () {
+            console.log(`[DEBUG] Loaded module script: ${src}`)
+            index++
+            loadNext()
+          })
+          .catch(function (err) {
+            console.error(`[ERROR] Failed to load module script: ${src}`, err)
+          })
+      } else {
+        const script = document.createElement('script')
+        script.src = src
+        script.type = 'text/javascript'
+        script.onload = function () {
+          console.log(`[DEBUG] Loaded script: ${src}`)
+          index++
+          loadNext()
+        }
+        script.onerror = function () {
+          console.error(`[ERROR] Failed to load script: ${src}`)
+        }
 
-      document.head.appendChild(script)
+        document.head.appendChild(script)
+      }
     }
 
     loadNext()
