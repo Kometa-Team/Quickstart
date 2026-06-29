@@ -3893,6 +3893,27 @@
               }
             ]
           },
+          "flag_alignment": {
+            "default": "left",
+            "label": "Flag Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "back_align": {
+            "default": "left",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
           "back_color": {
             "input_type": "text",
             "default": "#00000099",
@@ -4568,6 +4589,27 @@
                 "label": "Apply to Episode",
                 "value": "episode"
               }
+            ]
+          },
+          "flag_alignment": {
+            "default": "right",
+            "label": "Flag Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "back_align": {
+            "default": "right",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
             ]
           },
           "back_color": {

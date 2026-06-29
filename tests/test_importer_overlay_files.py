@@ -409,6 +409,67 @@ def test_prepare_import_payload_accepts_languages_subtitles_use_key_template_var
     assert any("libraries.Movies.overlay_files[0].template_variables.use_myn" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_languages_alignment_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "languages",
+                            "template_variables": {
+                                "flag_alignment": "right",
+                                "back_align": "center",
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_languages"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages[flag_alignment]"] == "right"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages[back_align]"] == "center"
+    assert any("libraries.Movies.overlay_files[0].template_variables.flag_alignment" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.back_align" in line for line in report.lines)
+
+
+def test_prepare_import_payload_accepts_languages_subtitles_alignment_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "overlay_files": [
+                        {
+                            "default": "languages",
+                            "template_variables": {
+                                "use_subtitles": True,
+                                "flag_alignment": "left",
+                                "back_align": "right",
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-movie-overlay_languages_subtitles"] is True
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[flag_alignment]"] == "left"
+    assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[back_align]"] == "right"
+    assert any("libraries.Movies.overlay_files[0].template_variables.flag_alignment" in line for line in report.lines)
+    assert any("libraries.Movies.overlay_files[0].template_variables.back_align" in line for line in report.lines)
+
+
 def test_prepare_import_payload_accepts_status_use_key_template_variables():
     payload, report = importer.prepare_import_payload(
         {

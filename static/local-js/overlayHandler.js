@@ -635,6 +635,10 @@ const OverlayHandler = {
         size: String(getVal('size', 'small') || 'small').toLowerCase(),
         hide_text: normalizeBool(getVal('hide_text', false), false),
         use_lowercase: normalizeBool(getVal('use_lowercase', false), false),
+        flag_alignment: String(
+          getVal('flag_alignment', cfg.id === 'overlay_languages_subtitles' ? 'right' : 'left') ||
+          (cfg.id === 'overlay_languages_subtitles' ? 'right' : 'left')
+        ).toLowerCase(),
         group_alignment: String(getVal('group_alignment', 'vertical') || 'vertical').toLowerCase(),
         offset: Number(getVal('offset', 10)) || 10,
         font: String(getVal('font', 'Inter-Bold.ttf') || 'Inter-Bold.ttf'),
@@ -5847,7 +5851,12 @@ const OverlayHandler = {
       const fontSize = size === 'big' ? 70 : 50
       const fontFile = vars.font || 'Inter-Bold.ttf'
       const fontFamily = (await ensureRuntimeFontLoaded(fontFile)) || normalizeFontFile(fontFile).family || 'Inter-Bold'
-      const align = cfg.id === 'overlay_languages_subtitles' ? 'right' : 'left'
+      const defaultFlagAlign = cfg.id === 'overlay_languages_subtitles' ? 'right' : 'left'
+      const align = vars.flag_alignment === 'right'
+        ? 'right'
+        : vars.flag_alignment === 'left'
+          ? 'left'
+          : (backdrop.back_align === 'right' ? 'right' : backdrop.back_align === 'left' ? 'left' : defaultFlagAlign)
       const hideText = vars.hide_text
       const textCase = vars.use_lowercase
       const useSquareFlags = vars.style === 'square' || vars.style === 'half'
@@ -8269,6 +8278,7 @@ const OverlayHandler = {
             `[name="${overlayTemplateName}[style]"]`,
             `[name="${overlayTemplateName}[hide_text]"]`,
             `[name="${overlayTemplateName}[use_lowercase]"]`,
+            `[name="${overlayTemplateName}[flag_alignment]"]`,
             `[name="${overlayTemplateName}[group_alignment]"]`,
             `[name="${overlayTemplateName}[offset]"]`,
             `[name="${overlayTemplateName}[font]"]`,
@@ -8276,6 +8286,7 @@ const OverlayHandler = {
             `[name="${overlayTemplateName}[font_color]"]`,
             `[name="${overlayTemplateName}[stroke_width]"]`,
             `[name="${overlayTemplateName}[stroke_color]"]`,
+            `[name="${overlayTemplateName}[back_align]"]`,
             `[name="${overlayTemplateName}[back_color]"]`,
             `[name="${overlayTemplateName}[back_height]"]`,
             `[name="${overlayTemplateName}[back_width]"]`,

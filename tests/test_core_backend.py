@@ -4863,6 +4863,82 @@ def test_build_libraries_section_emits_subtitle_languages_overlay_language_list(
     assert subtitle_entry["template_variables"]["style"] == "square"
 
 
+def test_build_libraries_section_emits_languages_overlay_alignment_template_variables(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_languages": True,
+                    "mov-library_movies-movie-template_overlay_languages[flag_alignment]": "right",
+                    "mov-library_movies-movie-template_overlay_languages[back_align]": "center",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    languages_entry = next((entry for entry in overlay_entries if entry.get("default") == "languages"), None)
+    assert languages_entry is not None
+    assert languages_entry["template_variables"]["flag_alignment"] == "right"
+    assert languages_entry["template_variables"]["back_align"] == "center"
+    assert "use_subtitles" not in languages_entry["template_variables"]
+
+
+def test_build_libraries_section_emits_subtitle_languages_overlay_alignment_template_variables(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            {"mov-library_movies-library": "Movies"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {
+                "movies": {
+                    "mov-library_movies-movie-overlay_languages_subtitles": True,
+                    "mov-library_movies-movie-template_overlay_languages_subtitles[flag_alignment]": "left",
+                    "mov-library_movies-movie-template_overlay_languages_subtitles[back_align]": "right",
+                }
+            },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
+
+    overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
+    subtitle_entry = next(
+        (entry for entry in overlay_entries if entry.get("default") == "languages" and entry.get("template_variables", {}).get("use_subtitles") is True),
+        None,
+    )
+    assert subtitle_entry is not None
+    assert subtitle_entry["template_variables"]["flag_alignment"] == "left"
+    assert subtitle_entry["template_variables"]["back_align"] == "right"
+
+
 def test_build_libraries_section_emits_only_non_default_language_weight_overrides(app):
     from modules import output
 
