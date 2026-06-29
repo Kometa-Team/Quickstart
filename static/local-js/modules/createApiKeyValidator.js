@@ -8,11 +8,18 @@
 // 060-mdblist, 070-notifiarr, 087-apprise.
 //
 // Multi-field wizards (credential plus url/topic/etc): 030-tautulli,
-// 080-gotify, 085-ntfy. These pass additionalFieldIds and a 2-arg
-// buildPayload.
+// 080-gotify, 085-ntfy.
 //
-// Wizards with more complex needs (dropdown-driven Next button gating,
-// OAuth flows, Plex auth) live outside this factory; see Step 6 PR 4.
+// Multi-field + post-validation hooks: 110-radarr, 120-sonarr use the
+// onValidationSuccess callback to populate dropdowns from the response,
+// the onPreSubmit callback to gate form submission on dropdown values,
+// and revalidateOnLoad to refresh those dropdowns when an already-
+// validated user returns to the page.
+//
+// Wizards with OAuth-PIN flows (010-plex, 130-trakt, 140-mal) are NOT
+// migrated to this factory; their multi-step flow is fundamentally
+// different from the "credential -> validate -> done" shape and they
+// belong in a separate helper (Step 6 PR 4 later slices).
 //
 // DESIGN
 //
@@ -80,6 +87,24 @@ const DEFAULT_MESSAGES = {
  *                                               (data is the server response, or `{}` for empty/networkError).
  *                                               Functions let wizards forward server-provided text verbatim
  *                                               (e.g. data.error from apprise, data.message from github).
+ * @param {(data: object) => void} [config.onValidationSuccess]
+ *                                               Called after a successful validate response, with the parsed
+ *                                               response data. Runs AFTER the factory has set validatedField,
+ *                                               shown the success message, and disabled the button. Used by
+ *                                               wizards that need to consume extra fields from the response
+ *                                               (e.g. Radarr/Sonarr populate dropdowns from data.root_folders,
+ *                                               Plex copies db_cache + library lists into hidden form inputs).
+ * @param {() => boolean} [config.onPreSubmit]   Called on form submit BEFORE the normal empty-value
+ *                                               normalisation. Return false to call event.preventDefault()
+ *                                               and block the submit. Used by wizards that gate navigation
+ *                                               on additional state beyond "credential validated" (e.g.
+ *                                               Radarr/Sonarr require the populated dropdowns to be filled).
+ * @param {boolean} [config.revalidateOnLoad=false]  If true AND validatedField is already 'true' on page
+ *                                               load, the factory issues a silent re-POST to the endpoint
+ *                                               and invokes onValidationSuccess with the result. Used to
+ *                                               repopulate post-validation state (dropdowns etc.) when an
+ *                                               already-validated user returns to the page. No user-facing
+ *                                               status message is shown for this silent call.
  * @param {string} [config.spinnerKey='validate'] Argument passed to show/hideSpinner.
  */
 export function createApiKeyValidator (config) {
@@ -95,6 +120,9 @@ export function createApiKeyValidator (config) {
     endpoint,
     buildPayload,
     messages: messageOverrides = {},
+    onValidationSuccess,
+    onPreSubmit,
+    revalidateOnLoad = false,
     spinnerKey = 'validate'
   } = config
 
@@ -209,6 +237,7 @@ export function createApiKeyValidator (config) {
           refreshValidationCallout(validatedFieldId)
           showStatus(resolveMessage(messages.success, data), STATUS_COLOR_SUCCESS)
           validateButton.disabled = true
+          if (typeof onValidationSuccess === 'function') onValidationSuccess(data)
         } else {
           validatedField.value = 'false'
           if (validatedAtInput) validatedAtInput.value = ''
@@ -226,6 +255,41 @@ export function createApiKeyValidator (config) {
       })
   })
 
+  // ── silent re-validate on page load (optional) ──────────────────
+  // When a user returns to a previously-validated page, the persisted
+  // validatedField is 'true' but any post-validation server state
+  // (Radarr/Sonarr dropdown choices, etc.) was never re-fetched. If
+  // the wizard opts in with revalidateOnLoad, hit the endpoint silently
+  // and invoke onValidationSuccess so the wizard can repopulate.
+  //
+  // "Silent" means: no spinner, no status message, no button state
+  // changes. Pure side-channel to refresh data. Failures are swallowed
+  // -- if the server can't be reached on page load the dropdowns stay
+  // empty until the user re-clicks Validate, which is the correct
+  // degraded behaviour (rather than spuriously flipping validatedField
+  // to false based on a transient network issue).
+  if (revalidateOnLoad &&
+      validatedField.value.toLowerCase() === 'true' &&
+      typeof onValidationSuccess === 'function') {
+    const credentialValue = apiKeyInput.value
+    const additionalValues = collectAdditionalValues()
+    const additionalAllPresent = additionalElements.every(
+      ({ id }) => additionalValues[id]
+    )
+    if (credentialValue && additionalAllPresent) {
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPayload(credentialValue, additionalValues))
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.valid) onValidationSuccess(data)
+        })
+        .catch(() => { /* swallowed; see comment above */ })
+    }
+  }
+
   // ── show/hide toggle for the credential field ───────────────────────
   if (toggleButton) {
     toggleButton.addEventListener('click', function () {
@@ -240,11 +304,19 @@ export function createApiKeyValidator (config) {
   // entirely empty the form should still post an empty string, not
   // omit the field entirely. Applies to the primary credential AND
   // every additional field.
+  //
+  // If onPreSubmit is provided and returns false, the submit is
+  // blocked via event.preventDefault(). The empty-value normalisation
+  // still runs regardless, so the guard sees the same form state the
+  // server would have.
   if (form) {
-    form.addEventListener('submit', function () {
+    form.addEventListener('submit', function (event) {
       if (!apiKeyInput.value) apiKeyInput.value = ''
       for (const { el } of additionalElements) {
         if (!el.value) el.value = ''
+      }
+      if (typeof onPreSubmit === 'function' && onPreSubmit() === false) {
+        event.preventDefault()
       }
     })
   }

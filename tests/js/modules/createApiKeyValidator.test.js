@@ -663,6 +663,300 @@ describe('createApiKeyValidator multi-field wizards (additionalFieldIds)', () =>
   })
 })
 
+describe('createApiKeyValidator onValidationSuccess callback', () => {
+  // onValidationSuccess fires after a successful validate response,
+  // receiving the parsed response data. Lets wizards consume extra
+  // fields from the response (Radarr/Sonarr populate dropdowns from
+  // data.root_folders, Plex copies db_cache + library lists, etc.).
+  // Runs AFTER the factory has set validatedField='true', shown the
+  // success message, and disabled the validate button.
+
+  it('fires onValidationSuccess with the response data on a successful validate', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({
+        valid: true,
+        root_folders: [{ path: '/movies' }, { path: '/tv' }],
+        quality_profiles: [{ name: 'HD-1080p' }]
+      })
+    })))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({ onValidationSuccess: onSuccess }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+    expect(onSuccess).toHaveBeenCalledWith({
+      valid: true,
+      root_folders: [{ path: '/movies' }, { path: '/tv' }],
+      quality_profiles: [{ name: 'HD-1080p' }]
+    })
+  })
+
+  it('does NOT fire onValidationSuccess when validation fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false })
+    })))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'badkey' })
+    createApiKeyValidator(defaultConfig({ onValidationSuccess: onSuccess }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('does NOT fire onValidationSuccess on network error', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({ onValidationSuccess: onSuccess }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('fires onValidationSuccess AFTER validatedField is set to true', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    let validatedValueAtCallback = null
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      onValidationSuccess: () => {
+        validatedValueAtCallback = document.getElementById('test_validated').value
+      }
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(validatedValueAtCallback).toBe('true')
+  })
+
+  it('is optional -- wizards that do not need it can omit it', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    expect(() => createApiKeyValidator(defaultConfig())).not.toThrow()
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    // No assertion needed -- the test passes if no error was thrown.
+  })
+})
+
+describe('createApiKeyValidator onPreSubmit callback', () => {
+  // onPreSubmit lets the wizard veto a form submit. Returns false to
+  // block via event.preventDefault(). Empty-value normalisation still
+  // runs first. Used by Radarr/Sonarr to require populated dropdown
+  // selections before allowing navigation to the next page.
+
+  it('does not block submit when onPreSubmit returns true', () => {
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    const onPreSubmit = vi.fn(() => true)
+    createApiKeyValidator(defaultConfig({ onPreSubmit }))
+
+    const form = document.getElementById('configForm')
+    const submitEvent = new Event('submit', { cancelable: true })
+    form.dispatchEvent(submitEvent)
+
+    expect(onPreSubmit).toHaveBeenCalledTimes(1)
+    expect(submitEvent.defaultPrevented).toBe(false)
+  })
+
+  it('blocks submit when onPreSubmit returns false', () => {
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    const onPreSubmit = vi.fn(() => false)
+    createApiKeyValidator(defaultConfig({ onPreSubmit }))
+
+    const form = document.getElementById('configForm')
+    const submitEvent = new Event('submit', { cancelable: true })
+    form.dispatchEvent(submitEvent)
+
+    expect(onPreSubmit).toHaveBeenCalledTimes(1)
+    expect(submitEvent.defaultPrevented).toBe(true)
+  })
+
+  it('runs empty-value normalisation BEFORE onPreSubmit (guard sees normalised state)', () => {
+    document.body.innerHTML = buildBaseHTML({ keyValue: '' })
+    let valueAtGuard = null
+    createApiKeyValidator(defaultConfig({
+      onPreSubmit: () => {
+        valueAtGuard = document.getElementById('test_apikey').value
+        return true
+      }
+    }))
+
+    const form = document.getElementById('configForm')
+    form.dispatchEvent(new Event('submit', { cancelable: true }))
+
+    // Even though the input started empty, the guard sees it as a
+    // normalised empty string (not undefined / null).
+    expect(valueAtGuard).toBe('')
+  })
+
+  it('is optional -- form submit works normally without onPreSubmit', () => {
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig())
+
+    const form = document.getElementById('configForm')
+    const submitEvent = new Event('submit', { cancelable: true })
+    expect(() => form.dispatchEvent(submitEvent)).not.toThrow()
+    expect(submitEvent.defaultPrevented).toBe(false)
+  })
+
+  it('treats truthy return as "allow submit" (truthy != true)', () => {
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    // Only literal false blocks. Anything else allows.
+    for (const returnValue of [undefined, null, 0, '', 1, 'yes', {}, true]) {
+      const onPreSubmit = vi.fn(() => returnValue)
+      createApiKeyValidator(defaultConfig({ onPreSubmit }))
+      const form = document.getElementById('configForm')
+      const submitEvent = new Event('submit', { cancelable: true })
+      form.dispatchEvent(submitEvent)
+      const shouldBlock = returnValue === false
+      expect(submitEvent.defaultPrevented).toBe(shouldBlock)
+      // re-setup for next iteration; addEventListener accumulates,
+      // but our assertion is on the LAST event so this is fine.
+    }
+  })
+})
+
+describe('createApiKeyValidator revalidateOnLoad', () => {
+  // When enabled AND validatedField is already 'true', the factory
+  // issues a silent re-POST on construction and invokes
+  // onValidationSuccess with the response. No spinner, no status
+  // message, no button state changes. Used by Radarr/Sonarr to
+  // repopulate dropdowns when an already-validated user returns.
+
+  function buildRevalidateHTML ({ keyValue = 'mykey', validated = 'true' } = {}) {
+    return buildBaseHTML({ keyValue, validated })
+  }
+
+  it('issues a silent fetch on load when validated and revalidateOnLoad=true', async () => {
+    const fetchSpy = vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true, extra: 'data' })
+    }))
+    vi.stubGlobal('fetch', fetchSpy)
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildRevalidateHTML()
+
+    createApiKeyValidator(defaultConfig({
+      revalidateOnLoad: true,
+      onValidationSuccess: onSuccess
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(onSuccess).toHaveBeenCalledWith({ valid: true, extra: 'data' })
+  })
+
+  it('does NOT fetch on load when validatedField is false', async () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    document.body.innerHTML = buildRevalidateHTML({ validated: 'false' })
+
+    createApiKeyValidator(defaultConfig({
+      revalidateOnLoad: true,
+      onValidationSuccess: vi.fn()
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('does NOT fetch on load when revalidateOnLoad is false (default)', async () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    document.body.innerHTML = buildRevalidateHTML()
+
+    createApiKeyValidator(defaultConfig({
+      onValidationSuccess: vi.fn()
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('does NOT fetch on load when onValidationSuccess is not provided', async () => {
+    // No point firing a silent fetch if no one will consume the result.
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    document.body.innerHTML = buildRevalidateHTML()
+
+    createApiKeyValidator(defaultConfig({ revalidateOnLoad: true }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('does NOT fetch on load when credential field is empty', async () => {
+    // Edge case: validatedField says "true" but the credential is
+    // somehow empty. Don't waste a server call -- the user will need
+    // to refill and re-validate anyway.
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    document.body.innerHTML = buildRevalidateHTML({ keyValue: '' })
+
+    createApiKeyValidator(defaultConfig({
+      revalidateOnLoad: true,
+      onValidationSuccess: vi.fn()
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('does NOT invoke onValidationSuccess if silent fetch returns valid=false', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false })
+    })))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildRevalidateHTML()
+
+    createApiKeyValidator(defaultConfig({
+      revalidateOnLoad: true,
+      onValidationSuccess: onSuccess
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('swallows network errors from the silent fetch (no thrown rejection)', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildRevalidateHTML()
+
+    expect(() => createApiKeyValidator(defaultConfig({
+      revalidateOnLoad: true,
+      onValidationSuccess: onSuccess
+    }))).not.toThrow()
+    // Let the microtask queue drain to surface any unhandled rejection.
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('does not show a status message during silent revalidate', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    document.body.innerHTML = buildRevalidateHTML()
+
+    createApiKeyValidator(defaultConfig({
+      revalidateOnLoad: true,
+      onValidationSuccess: vi.fn()
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    // Status message should remain hidden (display: none from initial HTML)
+    const status = document.getElementById('statusMessage')
+    expect(status.style.display).toBe('none')
+  })
+})
+
 describe('createApiKeyValidator validate click — network error', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))

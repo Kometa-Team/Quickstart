@@ -1,223 +1,74 @@
-import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
+import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
+import { populateDropdown, setStatusMessageLines } from './modules/dropdownHelpers.js'
 
-const validatedAtInput = document.getElementById('sonarr_validated_at')
-
-function setStatusMessageLines (element, messages) {
-  if (!element) return
-  element.textContent = ''
-  messages.forEach((message, index) => {
-    if (index > 0) element.appendChild(document.createElement('br'))
-    element.appendChild(document.createTextNode(message))
-  })
+// Per-wizard helpers: populate the three dropdowns from a validate response.
+// initialSonarrRootFolderPath/QualityProfile/LanguageProfile are window
+// globals injected by the rendered template (current selections from the
+// saved config), used to pre-select after dropdown population.
+function populateSonarrDropdowns (data) {
+  populateDropdown(
+    'sonarr_root_folder_path', data.root_folders, 'path', 'path',
+    typeof initialSonarrRootFolderPath !== 'undefined' ? initialSonarrRootFolderPath : ''
+  )
+  populateDropdown(
+    'sonarr_quality_profile', data.quality_profiles, 'name', 'name',
+    typeof initialSonarrQualityProfile !== 'undefined' ? initialSonarrQualityProfile : ''
+  )
+  populateDropdown(
+    'sonarr_language_profile', data.language_profiles, 'name', 'name',
+    typeof initialSonarrLanguageProfile !== 'undefined' ? initialSonarrLanguageProfile : ''
+  )
 }
 
-function resetDropdown (dropdown, placeholderText) {
-  if (!dropdown) return
-  const option = document.createElement('option')
-  option.value = ''
-  option.textContent = placeholderText
-  dropdown.replaceChildren(option)
-}
-
-const apiKeyInput = document.getElementById('sonarr_token')
-const toggleButton = document.getElementById('toggleApikeyVisibility')
-const validateButton = document.getElementById('validateButton')
-const isValidatedElement = document.getElementById('sonarr_validated')
-const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
-
-console.log('Validated:', isValidated)
-
-// Set initial visibility based on API key value
-if (apiKeyInput.value.trim() === '') {
-  apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-  setToggleButtonIcon(toggleButton, true)
-} else {
-  apiKeyInput.setAttribute('type', 'password') // Hide actual key
-  setToggleButtonIcon(toggleButton, false)
-}
-
-// Disable validate button if already validated
-if (isValidatedElement) {
-  validateButton.disabled = isValidated === 'true'
-}
-
-if (isValidated === 'true') {
-  document.getElementById('validateButton').disabled = true
-  fetchDropdownData() // Populate dropdowns if already validated
-} else {
-  document.getElementById('validateButton').disabled = false
-}
-
-// Attach event listeners for input changes
-document.getElementById('sonarr_token').addEventListener('input', function () {
-  document.getElementById('sonarr_validated').value = 'false'
-  if (validatedAtInput) validatedAtInput.value = ''
-  document.getElementById('validateButton').disabled = false
-  refreshValidationCallout('sonarr_validated')
-})
-
-document.getElementById('sonarr_url').addEventListener('input', function () {
-  document.getElementById('sonarr_validated').value = 'false'
-  if (validatedAtInput) validatedAtInput.value = ''
-  document.getElementById('validateButton').disabled = false
-  refreshValidationCallout('sonarr_validated')
-})
-
-// Attach event listeners for validation and toggle functionality
-document.getElementById('validateButton').addEventListener('click', validateSonarrApi)
-document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility)
-
-// Add an event listener for form submission
-document.getElementById('configForm').addEventListener('submit', function (event) {
-  if (!validateSonarrPage()) {
-    event.preventDefault() // Prevent form submission if validation fails
-  }
-})
-
-function validateSonarrApi () {
-  const sonarrUrl = document.getElementById('sonarr_url').value
-  const sonarrToken = document.getElementById('sonarr_token').value
-  const statusMessage = document.getElementById('statusMessage')
-
-  showSpinner('validate')
-
-  fetch('/validate_sonarr', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ sonarr_url: sonarrUrl, sonarr_token: sonarrToken })
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.valid) {
-        hideSpinner('validate')
-        document.getElementById('sonarr_validated').value = 'true'
-        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout('sonarr_validated')
-        statusMessage.textContent = 'Sonarr API key is valid.'
-        statusMessage.style.color = '#75b798'
-        statusMessage.style.display = 'block'
-        document.getElementById('validateButton').disabled = true
-
-        populateDropdown('sonarr_root_folder_path', data.root_folders, 'path', 'path', initialSonarrRootFolderPath)
-        populateDropdown('sonarr_quality_profile', data.quality_profiles, 'name', 'name', initialSonarrQualityProfile)
-        populateDropdown('sonarr_language_profile', data.language_profiles, 'name', 'name', initialSonarrLanguageProfile)
-      } else {
-        hideSpinner('validate')
-        document.getElementById('sonarr_validated').value = 'false'
-        if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout('sonarr_validated')
-        console.error('Error validating Sonarr', data.message)
-        statusMessage.textContent = 'Failed to validate Sonarr server. Please check your URL and Token.'
-        statusMessage.style.color = '#ea868f'
-        statusMessage.style.display = 'block'
-      }
-    })
-    .catch(error => {
-      hideSpinner('validate')
-      console.error('Error validating Sonarr:', error)
-      statusMessage.textContent = 'Error validating Sonarr.'
-      statusMessage.style.color = '#ea868f'
-      statusMessage.style.display = 'block'
-      document.getElementById('sonarr_validated').value = 'false'
-      if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout('sonarr_validated')
-    })
-}
-
-function fetchDropdownData () {
-  // Fetch the stored dropdown data and populate the dropdowns
-  const sonarrUrl = document.getElementById('sonarr_url').value
-  const sonarrToken = document.getElementById('sonarr_token').value
-
-  fetch('/validate_sonarr', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ sonarr_url: sonarrUrl, sonarr_token: sonarrToken })
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      populateDropdown('sonarr_root_folder_path', data.root_folders, 'path', 'path', initialSonarrRootFolderPath)
-      populateDropdown('sonarr_quality_profile', data.quality_profiles, 'name', 'name', initialSonarrQualityProfile)
-      populateDropdown('sonarr_language_profile', data.language_profiles, 'name', 'name', initialSonarrLanguageProfile)
-    })
-    .catch(error => {
-      console.error('Error fetching Sonarr dropdown data:', error)
-    })
-}
-function populateDropdown (elementId, data, valueField, textField, selectedValue = '') {
-  const dropdown = document.getElementById(elementId)
-  resetDropdown(dropdown, 'Select an option')
-
-  data.forEach(item => {
-    const option = document.createElement('option')
-    option.value = item[valueField]
-    option.textContent = item[textField]
-    dropdown.appendChild(option)
-  })
-
-  if (selectedValue) {
-    dropdown.value = selectedValue
-  }
-}
-
+// Pre-submit guard: navigation is allowed only if the user has either
+// (a) never validated Sonarr or (b) validated AND selected all three
+// dropdowns. Path validation from PathValidation (set up elsewhere)
+// also blocks if any path field is invalid.
 function validateSonarrPage () {
+  const validated = document.getElementById('sonarr_validated').value.toLowerCase() === 'true'
   const rootFolderPath = document.getElementById('sonarr_root_folder_path').value
   const qualityProfile = document.getElementById('sonarr_quality_profile').value
   const languageProfile = document.getElementById('sonarr_language_profile').value
-  const statusMessage = document.getElementById('statusMessage')
-  let isValid = true
-  const validationMessages = []
   const pathsValid = (typeof PathValidation !== 'undefined' && PathValidation.validateAll)
     ? PathValidation.validateAll()
     : true
 
-  const isValidatedNow = document.getElementById('sonarr_validated').value.toLowerCase() === 'true'
-
-  if (isValidatedNow) {
-    if (!rootFolderPath) {
-      validationMessages.push('Please select a valid Root Folder Path.')
-      isValid = false
-    }
-
-    if (!qualityProfile) {
-      validationMessages.push('Please select a valid Quality Profile.')
-      isValid = false
-    }
-
-    if (!languageProfile) {
-      validationMessages.push('Please select a valid Language Profile.')
-      isValid = false
-    }
+  const errors = []
+  if (validated) {
+    if (!rootFolderPath) errors.push('Please select a valid Root Folder Path.')
+    if (!qualityProfile) errors.push('Please select a valid Quality Profile.')
+    if (!languageProfile) errors.push('Please select a valid Language Profile.')
   }
+  if (!pathsValid) errors.push('Please fix invalid path fields before continuing.')
 
-  if (!pathsValid) {
-    validationMessages.push('Please fix invalid path fields before continuing.')
-    isValid = false
-  }
-
-  if (!isValid) {
-    setStatusMessageLines(statusMessage, validationMessages)
+  const statusMessage = document.getElementById('statusMessage')
+  if (errors.length) {
+    setStatusMessageLines(statusMessage, errors)
     statusMessage.style.color = '#ea868f'
     statusMessage.style.display = 'block'
-  } else {
-    statusMessage.style.display = 'none'
+    return false
   }
-
-  return isValid
+  statusMessage.style.display = 'none'
+  return true
 }
 
-function toggleApiKeyVisibility () {
-  if (apiKeyInput && toggleButton) {
-    if (apiKeyInput.type === 'password') {
-      apiKeyInput.type = 'text'
-      setToggleButtonIcon(toggleButton, true)
-    } else {
-      apiKeyInput.type = 'password'
-      setToggleButtonIcon(toggleButton, false)
-    }
-  }
-}
+createApiKeyValidator({
+  fieldId: 'sonarr_token',
+  additionalFieldIds: ['sonarr_url'],
+  validatedFieldId: 'sonarr_validated',
+  validatedAtFieldId: 'sonarr_validated_at',
+  endpoint: '/validate_sonarr',
+  buildPayload: (token, extras) => ({
+    sonarr_url: extras.sonarr_url,
+    sonarr_token: token
+  }),
+  messages: {
+    empty: 'Please enter both Sonarr URL and Token.',
+    success: 'Sonarr API key is valid.',
+    failure: 'Failed to validate Sonarr server. Please check your URL and Token.',
+    networkError: 'Error validating Sonarr.'
+  },
+  onValidationSuccess: populateSonarrDropdowns,
+  onPreSubmit: validateSonarrPage,
+  revalidateOnLoad: true
+})

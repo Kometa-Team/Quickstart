@@ -329,3 +329,192 @@ def test_multi_field_wizard_empty_check_across_fields(page, live_server):
     expect(page.locator("#statusMessage")).to_contain_text("Please enter both Gotify URL and Token.")
     expect(page.locator("#gotify_validated")).to_have_value("false")
     assert fetch_calls == [], f"expected no fetch but got {fetch_calls}"
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize(
+    "stem, endpoint, field_inputs, validated_id, success_text, response_data, expected_options",
+    [
+        (
+            "110-radarr",
+            "validate_radarr",
+            {"radarr_url": "http://radarr.local", "radarr_token": "k"},
+            "radarr_validated",
+            "Radarr API key is valid.",
+            {
+                "valid": True,
+                "root_folders": [{"path": "/movies"}, {"path": "/four-k"}],
+                "quality_profiles": [{"name": "HD-1080p"}, {"name": "4K"}],
+            },
+            {
+                "radarr_root_folder_path": ["/movies", "/four-k"],
+                "radarr_quality_profile": ["HD-1080p", "4K"],
+            },
+        ),
+        (
+            "120-sonarr",
+            "validate_sonarr",
+            {"sonarr_url": "http://sonarr.local", "sonarr_token": "k"},
+            "sonarr_validated",
+            "Sonarr API key is valid.",
+            {
+                "valid": True,
+                "root_folders": [{"path": "/tv"}, {"path": "/anime"}],
+                "quality_profiles": [{"name": "HD-720p"}, {"name": "HD-1080p"}],
+                "language_profiles": [{"name": "English"}, {"name": "Japanese"}],
+            },
+            {
+                "sonarr_root_folder_path": ["/tv", "/anime"],
+                "sonarr_quality_profile": ["HD-720p", "HD-1080p"],
+                "sonarr_language_profile": ["English", "Japanese"],
+            },
+        ),
+    ],
+)
+def test_dropdown_populating_wizard_success_flow(
+    page,
+    live_server,
+    stem,
+    endpoint,
+    field_inputs,
+    validated_id,
+    success_text,
+    response_data,
+    expected_options,
+):
+    """Radarr + Sonarr populate dropdowns from the validate response
+    via onValidationSuccess (#1334 Step 6 PR 4a). Verify each dropdown
+    receives the expected options after clicking Validate.
+    """
+
+    def handle_validate(route):
+        route.fulfill(status=200, json=response_data)
+
+    page.route(f"**/{endpoint}", handle_validate)
+    page.goto(f"{live_server}/step/{stem}", wait_until="domcontentloaded")
+
+    for input_id, value in field_inputs.items():
+        page.locator(f"#{input_id}").fill(value)
+    page.locator("#validateButton").click()
+
+    expect(page.locator("#statusMessage")).to_contain_text(success_text)
+    expect(page.locator(f"#{validated_id}")).to_have_value("true")
+
+    # Each populated dropdown should contain the expected option values.
+    for dropdown_id, expected_values in expected_options.items():
+        dropdown = page.locator(f"#{dropdown_id}")
+        actual_values = dropdown.evaluate("el => Array.from(el.options).map(o => o.value)")
+        for expected in expected_values:
+            assert expected in actual_values, f"{dropdown_id} missing option {expected!r}; got {actual_values}"
+
+
+@pytest.mark.e2e
+def test_radarr_pre_submit_blocks_navigation_when_dropdowns_unset(page, live_server):
+    """Radarr's onPreSubmit guard should preventDefault on the form
+    when validated=true but the root-folder/quality-profile dropdowns
+    haven't been chosen. This is the load-bearing replacement for the
+    legacy validateRadarrPage() function (#1334 Step 6 PR 4a).
+
+    NOTE: the rendered template injects `initialRadarrQualityProfile`
+    and `initialRadarrRootFolderPath` from the saved config. If the
+    mock response contains options whose values match those initials,
+    populateDropdown will auto-select them and the dropdowns won't be
+    "unset" any more. To make the test deterministic regardless of
+    saved config, the mock provides option values that won't match
+    any plausible saved config ("NO_MATCH_*" prefixes).
+    """
+
+    def handle_validate(route):
+        route.fulfill(
+            status=200,
+            json={
+                "valid": True,
+                "root_folders": [{"path": "NO_MATCH_ROOT_FOLDER"}],
+                "quality_profiles": [{"name": "NO_MATCH_QUALITY_PROFILE"}],
+            },
+        )
+
+    page.route("**/validate_radarr", handle_validate)
+    page.goto(f"{live_server}/step/110-radarr", wait_until="domcontentloaded")
+
+    # Validate succeeds, populating the dropdowns but leaving them on placeholder.
+    page.locator("#radarr_url").fill("http://radarr.local")
+    page.locator("#radarr_token").fill("k")
+    page.locator("#validateButton").click()
+    expect(page.locator("#radarr_validated")).to_have_value("true")
+
+    # Sanity check: both dropdowns should be on their placeholder ("")
+    # since the mock's option values don't match any saved initials.
+    expect(page.locator("#radarr_root_folder_path")).to_have_value("")
+    expect(page.locator("#radarr_quality_profile")).to_have_value("")
+
+    # Trigger a form submit without selecting dropdowns. Use evaluate to
+    # dispatch a real submit event and capture whether it was blocked.
+    blocked = page.evaluate("""
+        () => {
+            const form = document.getElementById('configForm');
+            const evt = new Event('submit', { cancelable: true });
+            form.dispatchEvent(evt);
+            return evt.defaultPrevented;
+        }
+    """)
+    assert blocked is True, "expected form submit to be blocked by onPreSubmit"
+    expect(page.locator("#statusMessage")).to_contain_text("Please select a valid Root Folder Path.")
+    expect(page.locator("#statusMessage")).to_contain_text("Please select a valid Quality Profile.")
+
+
+@pytest.mark.e2e
+def test_radarr_revalidate_on_load_repopulates_dropdowns(page, live_server):
+    """When the user returns to an already-validated Radarr page, the
+    factory's revalidateOnLoad option should issue a silent POST and
+    repopulate the dropdowns. This proves the silent fetch path.
+
+    Instead of round-tripping through saved state (fragile in the e2e
+    harness), this test directly mutates the in-memory wizard state to
+    simulate "already validated", then triggers a manual reload of the
+    factory module. The unit-level Vitest suite for revalidateOnLoad
+    (8 tests) covers the option semantics in isolation; this test
+    proves the option is correctly threaded through to the rendered
+    wizard config.
+    """
+
+    fetch_count = {"n": 0}
+
+    def handle_validate(route):
+        fetch_count["n"] += 1
+        route.fulfill(
+            status=200,
+            json={
+                "valid": True,
+                "root_folders": [{"path": "NO_MATCH_REVAL_FOLDER"}],
+                "quality_profiles": [{"name": "NO_MATCH_REVAL_QUALITY"}],
+            },
+        )
+
+    page.route("**/validate_radarr", handle_validate)
+    page.goto(f"{live_server}/step/110-radarr", wait_until="domcontentloaded")
+
+    # Simulate the "returning to a validated page" state by:
+    # 1. Pre-filling the credential fields (revalidateOnLoad needs them)
+    # 2. Setting radarr_validated='true' (the precondition for the silent fetch)
+    # 3. Re-importing the wizard module to trigger the factory's init code
+    #    with that state, the same way it would run on a fresh page load.
+    page.evaluate("""
+        () => {
+            document.getElementById('radarr_url').value = 'http://radarr.local';
+            document.getElementById('radarr_token').value = 'some-token';
+            document.getElementById('radarr_validated').value = 'true';
+        }
+    """)
+    # Re-import the wizard module with a cache buster so the factory's
+    # top-level code runs again against the mutated DOM.
+    page.evaluate("""
+        () => import(`/static/local-js/110-radarr.js?revalidate-test=${Date.now()}`)
+    """)
+    # Give the silent fetch a moment to resolve.
+    page.wait_for_timeout(500)
+
+    # The dropdown should now contain the option from the mock response.
+    dropdown_values = page.locator("#radarr_root_folder_path").evaluate("el => Array.from(el.options).map(o => o.value)")
+    assert "NO_MATCH_REVAL_FOLDER" in dropdown_values, f"expected revalidateOnLoad to repopulate dropdown; got {dropdown_values}"
+    assert fetch_count["n"] >= 1, f"expected at least one silent fetch; got count={fetch_count['n']}"

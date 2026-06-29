@@ -1,220 +1,69 @@
-import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
+import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
+import { populateDropdown, setStatusMessageLines } from './modules/dropdownHelpers.js'
 
-const validatedAtInput = document.getElementById('radarr_validated_at')
-
-function setStatusMessageLines (element, messages) {
-  if (!element) return
-  element.textContent = ''
-  messages.forEach((message, index) => {
-    if (index > 0) element.appendChild(document.createElement('br'))
-    element.appendChild(document.createTextNode(message))
-  })
+// Per-wizard helpers: populate the two dropdowns from a validate response.
+// initialRadarrRootFolderPath and initialRadarrQualityProfile are window
+// globals injected by the rendered template (current selections from the
+// saved config), used to pre-select after dropdown population.
+function populateRadarrDropdowns (data) {
+  populateDropdown(
+    'radarr_root_folder_path', data.root_folders, 'path', 'path',
+    typeof initialRadarrRootFolderPath !== 'undefined' ? initialRadarrRootFolderPath : ''
+  )
+  populateDropdown(
+    'radarr_quality_profile', data.quality_profiles, 'name', 'name',
+    typeof initialRadarrQualityProfile !== 'undefined' ? initialRadarrQualityProfile : ''
+  )
 }
 
-function resetDropdown (dropdown, placeholderText) {
-  if (!dropdown) return
-  const option = document.createElement('option')
-  option.value = ''
-  option.textContent = placeholderText
-  dropdown.replaceChildren(option)
-}
-
-const apiKeyInput = document.getElementById('radarr_token')
-const toggleButton = document.getElementById('toggleApikeyVisibility')
-const validateButton = document.getElementById('validateButton')
-const isValidated = document.getElementById('radarr_validated').value.toLowerCase()
-
-console.log('Validated: ' + isValidated)
-
-// Set initial visibility based on API key value
-if (apiKeyInput.value.trim() === '') {
-  apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-  setToggleButtonIcon(toggleButton, true)
-} else {
-  apiKeyInput.setAttribute('type', 'password') // Hide actual key
-  setToggleButtonIcon(toggleButton, false)
-}
-
-// Disable validate button if already validated
-validateButton.disabled = isValidated === 'true'
-
-if (isValidated === 'true') {
-  document.getElementById('validateButton').disabled = true
-  // Populate the dropdowns with the stored data if they are available
-  fetchDropdownData()
-} else {
-  document.getElementById('validateButton').disabled = false
-}
-
-// Attach event listeners for input changes
-document.getElementById('radarr_token').addEventListener('input', function () {
-  document.getElementById('radarr_validated').value = 'false'
-  if (validatedAtInput) validatedAtInput.value = ''
-  document.getElementById('validateButton').disabled = false
-  refreshValidationCallout('radarr_validated')
-})
-
-document.getElementById('radarr_url').addEventListener('input', function () {
-  document.getElementById('radarr_validated').value = 'false'
-  if (validatedAtInput) validatedAtInput.value = ''
-  document.getElementById('validateButton').disabled = false
-  refreshValidationCallout('radarr_validated')
-})
-
-// Attach event listeners for validation and toggle functionality
-document.getElementById('validateButton').addEventListener('click', validateRadarrApi)
-document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility)
-
-// Add an event listener for form submission
-document.getElementById('configForm').addEventListener('submit', function (event) {
-  if (!validateRadarrPage()) {
-    event.preventDefault() // Prevent form submission if validation fails
-  }
-})
-
-function fetchDropdownData () {
-  // Fetch the stored dropdown data and populate the dropdowns
-  const radarrUrl = document.getElementById('radarr_url').value
-  const radarrToken = document.getElementById('radarr_token').value
-
-  fetch('/validate_radarr', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ radarr_url: radarrUrl, radarr_token: radarrToken })
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      populateDropdown('radarr_root_folder_path', data.root_folders, 'path', 'path', initialRadarrRootFolderPath)
-      populateDropdown('radarr_quality_profile', data.quality_profiles, 'name', 'name', initialRadarrQualityProfile)
-    })
-    .catch((error) => {
-      console.error('Error fetching Radarr dropdown data:', error)
-    })
-}
-
-function populateDropdown (elementId, data, valueField, textField, selectedValue = '') {
-  const dropdown = document.getElementById(elementId)
-  resetDropdown(dropdown, 'Select an option')
-
-  data.forEach((item) => {
-    const option = document.createElement('option')
-    option.value = item[valueField]
-    option.textContent = item[textField]
-    dropdown.appendChild(option)
-  })
-
-  if (selectedValue) {
-    dropdown.value = selectedValue
-  }
-}
-
-// Validate Radarr page fields
+// Pre-submit guard: navigation is allowed only if the user has either
+// (a) never validated Radarr (page is being skipped) or (b) validated
+// AND selected a root folder + quality profile. Path validation from
+// PathValidation (set up elsewhere) also blocks if any path field is
+// invalid.
 function validateRadarrPage () {
-  const currentValidatedValue = document.getElementById('radarr_validated').value.toLowerCase()
+  const validated = document.getElementById('radarr_validated').value.toLowerCase() === 'true'
+  if (!validated) return true // unvalidated user can skip the page
+
   const rootFolderPath = document.getElementById('radarr_root_folder_path').value
   const qualityProfile = document.getElementById('radarr_quality_profile').value
-  const statusMessage = document.getElementById('statusMessage')
-  let isValid = true
-  const validationMessages = []
   const pathsValid = (typeof PathValidation !== 'undefined' && PathValidation.validateAll)
     ? PathValidation.validateAll()
     : true
 
-  // Skip validation if Radarr is not validated
-  if (currentValidatedValue !== 'true') {
-    return true // Allow navigation
-  }
+  const errors = []
+  if (!rootFolderPath) errors.push('Please select a valid Root Folder Path.')
+  if (!qualityProfile) errors.push('Please select a valid Quality Profile.')
+  if (!pathsValid) errors.push('Please fix invalid path fields before continuing.')
 
-  // Validate Root Folder Path
-  if (!rootFolderPath) {
-    validationMessages.push('Please select a valid Root Folder Path.')
-    isValid = false
-  }
-
-  // Validate Quality Profile
-  if (!qualityProfile) {
-    validationMessages.push('Please select a valid Quality Profile.')
-    isValid = false
-  }
-
-  if (!pathsValid) {
-    validationMessages.push('Please fix invalid path fields before continuing.')
-    isValid = false
-  }
-
-  // Display validation messages
-  if (!isValid) {
-    setStatusMessageLines(statusMessage, validationMessages)
-    statusMessage.style.color = '#ea868f' // Warning color
-    statusMessage.style.display = 'block'
-  } else {
-    statusMessage.style.display = 'none'
-  }
-
-  return isValid
-}
-
-function validateRadarrApi () {
-  const radarrUrl = document.getElementById('radarr_url').value
-  const radarrToken = document.getElementById('radarr_token').value
   const statusMessage = document.getElementById('statusMessage')
-
-  showSpinner('validate')
-
-  fetch('/validate_radarr', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ radarr_url: radarrUrl, radarr_token: radarrToken })
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      hideSpinner('validate')
-
-      if (data.valid) {
-        document.getElementById('radarr_validated').value = 'true'
-        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout('radarr_validated')
-        statusMessage.textContent = 'Radarr API key is valid.'
-        statusMessage.style.color = '#75b798'
-        statusMessage.style.display = 'block'
-        document.getElementById('validateButton').disabled = true
-
-        populateDropdown('radarr_root_folder_path', data.root_folders, 'path', 'path', initialRadarrRootFolderPath)
-        populateDropdown('radarr_quality_profile', data.quality_profiles, 'name', 'name', initialRadarrQualityProfile)
-      } else {
-        document.getElementById('radarr_validated').value = 'false'
-        if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout('radarr_validated')
-        console.log('Error validating Radarr', data.message)
-        statusMessage.textContent = 'Failed to validate Radarr server. Please check your URL and Token.'
-        statusMessage.style.color = '#ea868f'
-        statusMessage.style.display = 'block'
-      }
-    })
-    .catch((error) => {
-      hideSpinner('validate')
-      console.error('Error validating Radarr:', error)
-      statusMessage.textContent = 'Error validating Radarr'
-      statusMessage.style.color = '#ea868f'
-      statusMessage.style.display = 'block'
-      document.getElementById('radarr_validated').value = 'false'
-      if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout('radarr_validated')
-    })
-}
-
-function toggleApiKeyVisibility () {
-  if (apiKeyInput && toggleButton) {
-    if (apiKeyInput.type === 'password') {
-      apiKeyInput.type = 'text'
-      setToggleButtonIcon(toggleButton, true)
-    } else {
-      apiKeyInput.type = 'password'
-      setToggleButtonIcon(toggleButton, false)
-    }
+  if (errors.length) {
+    setStatusMessageLines(statusMessage, errors)
+    statusMessage.style.color = '#ea868f'
+    statusMessage.style.display = 'block'
+    return false
   }
+  statusMessage.style.display = 'none'
+  return true
 }
+
+createApiKeyValidator({
+  fieldId: 'radarr_token',
+  additionalFieldIds: ['radarr_url'],
+  validatedFieldId: 'radarr_validated',
+  validatedAtFieldId: 'radarr_validated_at',
+  endpoint: '/validate_radarr',
+  buildPayload: (token, extras) => ({
+    radarr_url: extras.radarr_url,
+    radarr_token: token
+  }),
+  messages: {
+    empty: 'Please enter both Radarr URL and Token.',
+    success: 'Radarr API key is valid.',
+    failure: 'Failed to validate Radarr server. Please check your URL and Token.',
+    networkError: 'Error validating Radarr'
+  },
+  onValidationSuccess: populateRadarrDropdowns,
+  onPreSubmit: validateRadarrPage,
+  revalidateOnLoad: true
+})
