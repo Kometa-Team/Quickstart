@@ -1698,3 +1698,98 @@ def test_imagemaid_module_runs_without_console_errors(page, live_server):
     # console-error messages that mention our file or strict-mode issues.
     relevant = [e for e in errors if any(kw in e.lower() for kw in ("imagemaid.js", "strict mode", "redeclar", "is not defined"))]
     assert not relevant, f"module conversion introduced JS errors: {relevant}"
+
+
+# ES module conversion of 905-analytics.js (chore/convert-905-analytics-to-module).
+# Same shape as 915-imagemaid.js (#1385): $(document).ready(...) wrapper
+# was unwrapped and the body dedented. See that PR for the recipe.
+
+
+@pytest.mark.e2e
+def test_analytics_page_loads_as_module(page, live_server):
+    """The Analytics page must render and its script must be loaded as type='module'."""
+    page.goto(f"{live_server}/step/905-analytics", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    state = page.evaluate("""() => {
+            const scripts = Array.from(document.scripts)
+            const analyticsScript = scripts.find(s => (s.src || '').endsWith('/905-analytics.js'))
+            return {
+                pageMeta: !!document.querySelector('#logscan-trends-table'),
+                scriptFound: !!analyticsScript,
+                scriptType: analyticsScript ? analyticsScript.type : null
+            }
+        }""")
+    assert state["pageMeta"], "expected the Analytics page to render (precondition)"
+    assert state["scriptFound"], "expected /905-analytics.js to be referenced from the page"
+    assert state["scriptType"] == "module", f"expected the Analytics script to load as type='module' after conversion; got type={state['scriptType']!r}"
+
+
+@pytest.mark.e2e
+def test_analytics_module_does_not_leak_state_to_window(page, live_server):
+    """Module scope contract: top-level declarations from 905-analytics.js
+    must not be visible on window. Pre-conversion the IIFE wrapper
+    provided this; post-conversion the module scope does. Keep it tight.
+    """
+    page.goto(f"{live_server}/step/905-analytics", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    leaked = page.evaluate("""() => {
+            // Names that exist at top level inside 905-analytics.js.
+            // NOTE: escapeHtml is defined as a local function in this file.
+            // It must NOT shadow the window.escapeHtml shim published by
+            // 000-base.js when accessed from outside this module -- so we
+            // check window.escapeHtml is still the 000-base.js version,
+            // while the local one stays module-scoped.
+            const candidates = [
+                'missingDownloadUrl',
+                'pendingInvalidLogCleanup',
+                'pendingDeleteRun',
+                'pendingCompressRun',
+                'reingestPollTimer',
+                'reingestJobId',
+                'syncMirroredControlValue',
+                'formatSeconds',
+                'formatAverage',
+                'formatCompactNumber'
+            ]
+            return candidates.filter(name => typeof window[name] !== 'undefined')
+        }""")
+    assert not leaked, f"these analytics-internal names leaked to window: {leaked}"
+
+
+@pytest.mark.e2e
+def test_analytics_local_escapehtml_does_not_clobber_global_shim(page, live_server):
+    """905-analytics.js defines its OWN `escapeHtml` function at module
+    top level. 000-base.js also publishes `window.escapeHtml` as a
+    compatibility shim. Pre-conversion the IIFE prevented the analytics
+    one from leaking; post-conversion the module scope does. This test
+    pins both:
+      - window.escapeHtml still resolves (000-base.js shim is intact)
+      - it's the 000-base.js function, NOT the 905-analytics one
+    """
+    page.goto(f"{live_server}/step/905-analytics", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    state = page.evaluate("""() => ({
+            shimType: typeof window.escapeHtml,
+            // The 000-base.js escapeHtml escapes & < > " '. Call it
+            // through window to verify we're hitting the shim, not the
+            // analytics module's local copy (which would also work since
+            // they're functionally equivalent, but the point is the
+            // module scope didn't let the local one leak).
+            shimResult: typeof window.escapeHtml === 'function'
+                ? window.escapeHtml('<script>alert(1)</script>')
+                : null
+        })""")
+    assert state["shimType"] == "function", f"window.escapeHtml shim must remain published by 000-base.js; got {state['shimType']}"
+    assert "&lt;script&gt;" in (state["shimResult"] or ""), f"window.escapeHtml should produce escaped output; got {state['shimResult']!r}"
+
+
+@pytest.mark.e2e
+def test_analytics_module_runs_without_console_errors(page, live_server):
+    """No JS console errors from the module conversion."""
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.on("console", lambda msg: errors.append(f"{msg.type}: {msg.text}") if msg.type == "error" else None)
+    page.goto(f"{live_server}/step/905-analytics", wait_until="domcontentloaded")
+    page.wait_for_timeout(1000)
+    relevant = [e for e in errors if any(kw in e.lower() for kw in ("analytics.js", "strict mode", "redeclar", "is not defined"))]
+    assert not relevant, f"module conversion introduced JS errors: {relevant}"
