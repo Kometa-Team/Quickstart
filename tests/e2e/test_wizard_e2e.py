@@ -256,3 +256,76 @@ def test_apprise_validator_uses_server_error_on_failure(page, live_server):
     page.locator("#validateButton").click()
     expect(page.locator("#statusMessage")).to_contain_text("Apprise YAML at /missing.yml could not be read.")
     expect(page.locator("#apprise_validated")).to_have_value("false")
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize(
+    "stem, endpoint, field_inputs, validated_id, success_text",
+    [
+        (
+            "030-tautulli",
+            "validate_tautulli",
+            {"tautulli_url": "http://tautulli.local:8181", "tautulli_apikey": "k"},
+            "tautulli_validated",
+            "Tautulli server validated successfully!",
+        ),
+        (
+            "080-gotify",
+            "validate_gotify",
+            {"gotify_url": "http://gotify.local", "gotify_token": "tok"},
+            "gotify_validated",
+            "Gotify credentials validated successfully!",
+        ),
+        (
+            "085-ntfy",
+            "validate_ntfy",
+            {"ntfy_url": "http://ntfy.local", "ntfy_token": "tok", "ntfy_topic": "alerts"},
+            "ntfy_validated",
+            "ntfy credentials validated successfully!",
+        ),
+    ],
+)
+def test_multi_field_validator_wizard_success_flow(page, live_server, stem, endpoint, field_inputs, validated_id, success_text):
+    """Multi-field wizards use the createApiKeyValidator factory's
+    additionalFieldIds + 2-arg buildPayload (#1334 Step 6 PR 3). Each
+    needs every field filled before validation can succeed.
+    """
+
+    def handle_validate(route):
+        route.fulfill(status=200, json={"valid": True})
+
+    page.route(f"**/{endpoint}", handle_validate)
+    page.goto(f"{live_server}/step/{stem}", wait_until="domcontentloaded")
+
+    for input_id, value in field_inputs.items():
+        page.locator(f"#{input_id}").fill(value)
+    page.locator("#validateButton").click()
+
+    expect(page.locator("#statusMessage")).to_contain_text(success_text)
+    expect(page.locator(f"#{validated_id}")).to_have_value("true")
+    expect(page.locator("#validateButton")).to_be_disabled()
+
+
+@pytest.mark.e2e
+def test_multi_field_wizard_empty_check_across_fields(page, live_server):
+    """Verify the multi-field empty-check on the rendered page: filling
+    only the credential without the url should NOT trigger the fetch
+    and should show the configured empty message.
+    """
+
+    fetch_calls = []
+
+    def handle_validate(route):
+        fetch_calls.append(route.request.url)
+        route.fulfill(status=200, json={"valid": True})
+
+    page.route("**/validate_gotify", handle_validate)
+    page.goto(f"{live_server}/step/080-gotify", wait_until="domcontentloaded")
+
+    page.locator("#gotify_token").fill("some-token")
+    # gotify_url deliberately left empty
+    page.locator("#validateButton").click()
+
+    expect(page.locator("#statusMessage")).to_contain_text("Please enter both Gotify URL and Token.")
+    expect(page.locator("#gotify_validated")).to_have_value("false")
+    assert fetch_calls == [], f"expected no fetch but got {fetch_calls}"

@@ -1,101 +1,21 @@
-import { setToggleButtonIcon, refreshValidationCallout } from './modules/validationPageBase.js'
+import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
 
-const validatedAtInput = document.getElementById('gotify_validated_at')
-
-const gotifyTokenInput = document.getElementById('gotify_token')
-const validateButton = document.getElementById('validateButton')
-const toggleButton = document.getElementById('toggleTokenVisibility')
-const isValidated = document.getElementById('gotify_validated').value.toLowerCase()
-
-console.log('Validated: ' + isValidated)
-
-// Set initial visibility based on API key value
-if (gotifyTokenInput.value.trim() === '') {
-  gotifyTokenInput.setAttribute('type', 'text') // Show placeholder text
-  setToggleButtonIcon(toggleButton, true)
-} else {
-  gotifyTokenInput.setAttribute('type', 'password') // Hide actual key
-  setToggleButtonIcon(toggleButton, false)
-}
-
-// Disable validate button if already validated
-validateButton.disabled = isValidated === 'true'
-
-// Reset validation status when user types
-gotifyTokenInput.addEventListener('input', function () {
-  document.getElementById('gotify_validated').value = 'false'
-  if (validatedAtInput) validatedAtInput.value = ''
-  validateButton.disabled = false
-  refreshValidationCallout('gotify_validated')
-})
-
-document.getElementById('gotify_url').addEventListener('input', function () {
-  document.getElementById('gotify_validated').value = 'false'
-  if (validatedAtInput) validatedAtInput.value = ''
-  validateButton.disabled = false
-  refreshValidationCallout('gotify_validated')
-})
-
-// Function to toggle API key visibility
-document.getElementById('toggleTokenVisibility').addEventListener('click', function () {
-  const tokenInput = document.getElementById('gotify_token')
-  const currentType = tokenInput.getAttribute('type')
-  tokenInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
-  setToggleButtonIcon(this, currentType === 'password')
-})
-
-// Event listener for the validate button
-document.getElementById('validateButton').addEventListener('click', function () {
-  const gotifyUrl = document.getElementById('gotify_url').value
-  const gotifyToken = document.getElementById('gotify_token').value
-  const statusMessage = document.getElementById('statusMessage')
-
-  if (!gotifyUrl || !gotifyToken) {
-    statusMessage.textContent = 'Please enter both Gotify URL and Token.'
-    statusMessage.style.color = '#ea868f'
-    statusMessage.style.display = 'block'
-    return
+createApiKeyValidator({
+  fieldId: 'gotify_token',
+  additionalFieldIds: ['gotify_url'],
+  validatedFieldId: 'gotify_validated',
+  validatedAtFieldId: 'gotify_validated_at',
+  toggleButtonId: 'toggleTokenVisibility',
+  endpoint: '/validate_gotify',
+  buildPayload: (token, extras) => ({
+    gotify_url: extras.gotify_url,
+    gotify_token: token
+  }),
+  messages: {
+    empty: 'Please enter both Gotify URL and Token.',
+    success: 'Gotify credentials validated successfully!',
+    // Gotify server returns the actual failure reason in data.error
+    failure: (data) => data.error,
+    networkError: 'An error occurred while validating Gotify credentials.'
   }
-
-  showSpinner('validate')
-
-  fetch('/validate_gotify', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      gotify_url: gotifyUrl,
-      gotify_token: gotifyToken
-    })
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.valid) {
-        hideSpinner('validate')
-        document.getElementById('gotify_validated').value = 'true'
-        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
-        refreshValidationCallout('gotify_validated')
-        statusMessage.textContent = 'Gotify credentials validated successfully!'
-        statusMessage.style.color = '#75b798'
-      } else {
-        hideSpinner('validate')
-        document.getElementById('gotify_validated').value = 'false'
-        if (validatedAtInput) validatedAtInput.value = ''
-        refreshValidationCallout('gotify_validated')
-        statusMessage.textContent = data.error
-        statusMessage.style.color = '#ea868f'
-      }
-      document.getElementById('validateButton').disabled = data.valid
-      statusMessage.style.display = 'block'
-    })
-    .catch((error) => {
-      hideSpinner('validate')
-      console.error('Error validating Gotify credentials:', error)
-      statusMessage.textContent = 'An error occurred while validating Gotify credentials.'
-      statusMessage.style.color = '#ea868f'
-      statusMessage.style.display = 'block'
-      if (validatedAtInput) validatedAtInput.value = ''
-      refreshValidationCallout('gotify_validated')
-    })
 })

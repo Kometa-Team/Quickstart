@@ -199,14 +199,14 @@ describe('createApiKeyValidator reset-on-input', () => {
     expect(document.getElementById('test_validated_at').value).toBe('')
   })
 
-  it('also resets on input for extra fields in resetOnInputFieldIds', () => {
+  it('also resets on input for extra fields in additionalFieldIds', () => {
     document.body.innerHTML = buildBaseHTML({
       keyValue: 'old',
       validated: 'true',
-      extraInputs: '<input id="test_url" type="text">'
+      extraInputs: '<input id="test_url" type="text" value="http://x">'
     })
     createApiKeyValidator(defaultConfig({
-      resetOnInputFieldIds: ['test_url']
+      additionalFieldIds: ['test_url']
     }))
 
     document.getElementById('test_url').dispatchEvent(new Event('input'))
@@ -217,7 +217,7 @@ describe('createApiKeyValidator reset-on-input', () => {
   it('ignores missing extra field ids without throwing', () => {
     document.body.innerHTML = buildBaseHTML({ validated: 'true' })
     expect(() => createApiKeyValidator(defaultConfig({
-      resetOnInputFieldIds: ['nonexistent_field']
+      additionalFieldIds: ['nonexistent_field']
     }))).not.toThrow()
   })
 
@@ -496,6 +496,170 @@ describe('createApiKeyValidator function-valued messages', () => {
     await new Promise(resolve => setTimeout(resolve, 0))
 
     expect(document.getElementById('statusMessage').textContent).toBe('all good')
+  })
+})
+
+describe('createApiKeyValidator multi-field wizards (additionalFieldIds)', () => {
+  // These tests cover the multi-field shape used by tautulli (url +
+  // apikey), gotify (url + token), ntfy (url + token + topic). Only
+  // the primary `fieldId` gets the show/hide toggle; the others are
+  // plain inputs that contribute to required-field validation, the
+  // reset-on-input listener wiring, and the payload builder.
+
+  function buildMultiFieldHTML ({
+    primaryValue = '',
+    urlValue = '',
+    topicValue = '',
+    validated = 'false'
+  } = {}) {
+    return `
+      <form id="configForm">
+        <input id="test_url" type="text" value="${urlValue}">
+        <input id="test_apikey" type="password" value="${primaryValue}">
+        <input id="test_topic" type="text" value="${topicValue}">
+        <input id="test_validated" type="hidden" value="${validated}">
+        <input id="test_validated_at" type="hidden" value="">
+        <button id="toggleApikeyVisibility" type="button"><i class="bi"></i></button>
+        <button id="validateButton" type="button">Validate</button>
+        <div id="statusMessage" style="display:none"></div>
+      </form>
+    `
+  }
+
+  it('passes additional field values as the second arg to buildPayload', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    document.body.innerHTML = buildMultiFieldHTML({
+      primaryValue: 'mykey',
+      urlValue: 'http://server',
+      topicValue: 'alerts'
+    })
+    const buildPayload = vi.fn((credential, extras) => ({
+      key: credential,
+      url: extras.test_url,
+      topic: extras.test_topic
+    }))
+    createApiKeyValidator(defaultConfig({
+      additionalFieldIds: ['test_url', 'test_topic'],
+      buildPayload
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(buildPayload).toHaveBeenCalledWith('mykey', {
+      test_url: 'http://server',
+      test_topic: 'alerts'
+    })
+    expect(fetch).toHaveBeenCalledWith('/validate_test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'mykey', url: 'http://server', topic: 'alerts' })
+    })
+  })
+
+  it('passes an empty object as the second arg when no additionalFieldIds', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    const buildPayload = vi.fn((credential, extras) => ({ key: credential }))
+    createApiKeyValidator(defaultConfig({ buildPayload }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(buildPayload).toHaveBeenCalledWith('mykey', {})
+  })
+
+  it('shows the empty message when the credential is filled but an additional field is empty', () => {
+    document.body.innerHTML = buildMultiFieldHTML({
+      primaryValue: 'mykey',
+      urlValue: '', // url missing
+      topicValue: 'alerts'
+    })
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+
+    createApiKeyValidator(defaultConfig({
+      additionalFieldIds: ['test_url', 'test_topic'],
+      messages: { empty: 'Please enter all fields.' }
+    }))
+    document.getElementById('validateButton').click()
+
+    expect(document.getElementById('statusMessage').textContent).toBe('Please enter all fields.')
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('shows the empty message when an additional field is filled but the credential is empty', () => {
+    document.body.innerHTML = buildMultiFieldHTML({
+      primaryValue: '', // credential missing
+      urlValue: 'http://server',
+      topicValue: 'alerts'
+    })
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+
+    createApiKeyValidator(defaultConfig({
+      additionalFieldIds: ['test_url', 'test_topic']
+    }))
+    document.getElementById('validateButton').click()
+
+    expect(document.getElementById('statusMessage').textContent).toBe('Please enter an API key.')
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('resets validation when ANY additional field receives an input event', () => {
+    document.body.innerHTML = buildMultiFieldHTML({
+      primaryValue: 'mykey',
+      urlValue: 'http://server',
+      topicValue: 'alerts',
+      validated: 'true'
+    })
+    createApiKeyValidator(defaultConfig({
+      additionalFieldIds: ['test_url', 'test_topic']
+    }))
+    expect(document.getElementById('validateButton').disabled).toBe(true)
+
+    // Typing in the topic field should reset validation
+    document.getElementById('test_topic').dispatchEvent(new Event('input'))
+    expect(document.getElementById('test_validated').value).toBe('false')
+    expect(document.getElementById('validateButton').disabled).toBe(false)
+  })
+
+  it('normalises absent additional field values on form submit', () => {
+    document.body.innerHTML = buildMultiFieldHTML({
+      primaryValue: 'mykey',
+      urlValue: '',
+      topicValue: ''
+    })
+    createApiKeyValidator(defaultConfig({
+      additionalFieldIds: ['test_url', 'test_topic']
+    }))
+
+    const form = document.getElementById('configForm')
+    form.dispatchEvent(new Event('submit'))
+
+    expect(document.getElementById('test_url').value).toBe('')
+    expect(document.getElementById('test_topic').value).toBe('')
+  })
+
+  it('treats a missing additional field as absent (does not block validation)', async () => {
+    // additionalFieldIds includes one id that does not exist on the page.
+    // The factory should silently drop it from the empty check and the
+    // payload rather than crash. (Protects against template/JS drift.)
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    const buildPayload = vi.fn((credential, extras) => ({ key: credential, ...extras }))
+    createApiKeyValidator(defaultConfig({
+      additionalFieldIds: ['nonexistent_topic'],
+      buildPayload
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(buildPayload).toHaveBeenCalledWith('mykey', {})
   })
 })
 
