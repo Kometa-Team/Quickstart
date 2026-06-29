@@ -430,7 +430,9 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "130-trakt",
         "140-mal",
         "150-settings",
+        "150-settings",
         "900-kometa",
+        "905-analytics",
         "915-imagemaid",
     }
 )
@@ -5430,6 +5432,7 @@ def logscan_trends_page():
     page_info = {
         "title": "Analytics",
         "template_name": "905-analytics",
+        "template_uses_module": "905-analytics" in MODULE_PAGE_SCRIPTS,
         "config_name": session.get("config_name"),
         "running_port": running_port,
         "qs_debug": app.config["QS_DEBUG"],
