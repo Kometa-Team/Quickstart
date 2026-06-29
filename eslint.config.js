@@ -86,6 +86,7 @@ const moduleFiles = [
   'static/local-js/templateStringList.js',
   'static/local-js/rgbaPicker.js',
   'static/local-js/validationHandler.js',
+  'static/local-js/imageHandler.js',
   'static/local-js/001-start.js',
   'static/local-js/010-plex.js',
   'static/local-js/020-tmdb.js',

@@ -563,29 +563,29 @@ const ImageHandler = {
   }
 }
 
+window.ImageHandler = ImageHandler
+
 // Global listener to refresh image preview only if toggle is in preview overlay section
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.form-check-input').forEach((input) => {
-    input.addEventListener('change', (event) => {
-      const target = event.target
+document.querySelectorAll('.form-check-input').forEach((input) => {
+  input.addEventListener('change', (event) => {
+    const target = event.target
 
-      // Always update the form model
-      updateFormData(target)
+    // Always update the form model
+    updateFormData(target)
 
-      // Look for the overlay section specifically (e.g., mov-library_movies-overlays)
-      const isInOverlayAccordion = target.closest('[id$="-overlays"]')
-      if (isInOverlayAccordion) {
-        const container = target.closest('.library-settings-card')
-        const libraryId = container?.id?.replace('-card-container', '')
-        if (!libraryId) return
+    // Look for the overlay section specifically (e.g., mov-library_movies-overlays)
+    const isInOverlayAccordion = target.closest('[id$="-overlays"]')
+    if (isInOverlayAccordion) {
+      const container = target.closest('.library-settings-card')
+      const libraryId = container?.id?.replace('-card-container', '')
+      if (!libraryId) return
 
-        const isMovie = libraryId.startsWith('mov-library_')
-        const types = isMovie ? ['movie'] : ['show', 'season', 'episode']
+      const isMovie = libraryId.startsWith('mov-library_')
+      const types = isMovie ? ['movie'] : ['show', 'season', 'episode']
 
-        types.forEach(type => {
-          ImageHandler.generateSinglePreview(libraryId, type)
-        })
-      }
-    })
+      types.forEach(type => {
+        ImageHandler.generateSinglePreview(libraryId, type)
+      })
+    }
   })
 })

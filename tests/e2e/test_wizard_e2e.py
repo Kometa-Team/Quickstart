@@ -1930,3 +1930,27 @@ def test_kometa_module_runs_without_console_errors(page, live_server):
     page.wait_for_timeout(1000)
     relevant = [e for e in errors if any(kw in e.lower() for kw in ("kometa.js", "900-kometa", "strict mode", "redeclar", "is not defined"))]
     assert not relevant, f"module conversion introduced JS errors: {relevant}"
+
+
+# ES module conversion of imageHandler.js (chore/convert-imagehandler-to-module).
+# Loaded by 025-libraries.js via dynamic import(). Publishes
+# window.ImageHandler for backward compat (same pattern as validationHandler).
+
+
+@pytest.mark.e2e
+def test_imagehandler_module_loads_via_import(page, live_server):
+    """imageHandler.js is now loaded via import() by 025-libraries.js.
+    Verify window.ImageHandler is available with expected methods.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_timeout(2000)
+    state = page.evaluate("""() => ({
+            hasImageHandler: typeof window.ImageHandler !== 'undefined',
+            isPreview: typeof window.ImageHandler === 'object'
+                && typeof window.ImageHandler.isBuiltinPreviewImage === 'function',
+            genPreview: typeof window.ImageHandler === 'object'
+                && typeof window.ImageHandler.generateSinglePreview === 'function'
+        })""")
+    assert state["hasImageHandler"], "window.ImageHandler must exist after import()"
+    assert state["isPreview"], "ImageHandler.isBuiltinPreviewImage must be a function"
+    assert state["genPreview"], "ImageHandler.generateSinglePreview must be a function"
