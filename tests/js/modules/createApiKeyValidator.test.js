@@ -957,6 +957,108 @@ describe('createApiKeyValidator revalidateOnLoad', () => {
   })
 })
 
+describe('createApiKeyValidator isValid predicate', () => {
+  // The factory's success check is configurable via the `isValid`
+  // option. Default predicate is `(data) => !!data.valid`. Override
+  // when the wizard's server returns a different success marker --
+  // most notably Plex, whose successful response uses `data.validated`
+  // (boolean) but whose failure response uses `data.valid: false`
+  // (asymmetric naming preserved from the legacy API).
+
+  it('uses the default predicate when isValid is not provided', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: true })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig())
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(document.getElementById('test_validated').value).toBe('true')
+  })
+
+  it('treats a custom predicate returning true as success', async () => {
+    // Mimics Plex: server returns { validated: true, ... } on success.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ validated: true, db_cache: 1024 })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      isValid: (data) => data.validated === true
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(document.getElementById('test_validated').value).toBe('true')
+  })
+
+  it('treats a custom predicate returning false as failure', async () => {
+    // Mimics Plex: server returns { valid: false, error: '...' } on failure.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false, error: 'bad token' })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      isValid: (data) => data.validated === true
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(document.getElementById('test_validated').value).toBe('false')
+  })
+
+  it('isValid is consulted by the silent revalidateOnLoad fetch too', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ validated: true, db_cache: 1024 })
+    })))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey', validated: 'true' })
+    createApiKeyValidator(defaultConfig({
+      isValid: (data) => data.validated === true,
+      revalidateOnLoad: true,
+      onValidationSuccess: onSuccess
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).toHaveBeenCalledWith({ validated: true, db_cache: 1024 })
+  })
+
+  it('silent revalidateOnLoad does NOT invoke callback when isValid rejects', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ valid: false, error: 'token expired' })
+    })))
+    const onSuccess = vi.fn()
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey', validated: 'true' })
+    createApiKeyValidator(defaultConfig({
+      isValid: (data) => data.validated === true,
+      revalidateOnLoad: true,
+      onValidationSuccess: onSuccess
+    }))
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('predicate receives the full server response object', async () => {
+    let receivedData = null
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      json: () => Promise.resolve({ status: 'ok', some_field: 'whatever', nested: { x: 1 } })
+    })))
+    document.body.innerHTML = buildBaseHTML({ keyValue: 'mykey' })
+    createApiKeyValidator(defaultConfig({
+      isValid: (data) => {
+        receivedData = data
+        return data.status === 'ok'
+      }
+    }))
+    document.getElementById('validateButton').click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(receivedData).toEqual({ status: 'ok', some_field: 'whatever', nested: { x: 1 } })
+    expect(document.getElementById('test_validated').value).toBe('true')
+  })
+})
+
 describe('createApiKeyValidator validate click — network error', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))

@@ -518,3 +518,128 @@ def test_radarr_revalidate_on_load_repopulates_dropdowns(page, live_server):
     dropdown_values = page.locator("#radarr_root_folder_path").evaluate("el => Array.from(el.options).map(o => o.value)")
     assert "NO_MATCH_REVAL_FOLDER" in dropdown_values, f"expected revalidateOnLoad to repopulate dropdown; got {dropdown_values}"
     assert fetch_count["n"] >= 1, f"expected at least one silent fetch; got count={fetch_count['n']}"
+
+
+@pytest.mark.e2e
+def test_plex_validator_success_populates_extra_state(page, live_server):
+    """Plex's onValidationSuccess hook copies db_cache + 4 library lists
+    into hidden form inputs and reveals the "hidden" section. Verify
+    each piece of state lands where it should (#1334 Step 6 PR 4b).
+
+    Plex's response shape is asymmetric: success returns
+    `{validated: true, ...}` while failure returns `{valid: false, ...}`.
+    The factory's `isValid` option lets the wizard configure
+    `(data) => data.validated === true` for the success check.
+    """
+
+    def handle_validate(route):
+        route.fulfill(
+            status=200,
+            json={
+                "validated": True,
+                "db_cache": 1024,
+                "user_list": ["alice", "bob"],
+                "music_libraries": ["Music"],
+                "movie_libraries": ["Movies", "4K Movies"],
+                "show_libraries": ["TV", "Anime"],
+                "has_plex_pass": True,
+            },
+        )
+
+    page.route("**/validate_plex", handle_validate)
+    page.goto(f"{live_server}/step/010-plex", wait_until="domcontentloaded")
+
+    page.locator("#plex_url").fill("http://plex.local:32400")
+    page.locator("#plex_token").fill("some-token")
+    page.locator("#validateButton").click()
+
+    # Success status + validatedField flip + button disable.
+    expect(page.locator("#statusMessage")).to_contain_text("Plex server validated successfully!")
+    expect(page.locator("#plex_validated")).to_have_value("true")
+    expect(page.locator("#validateButton")).to_be_disabled()
+
+    # Hidden inputs populated by onValidationSuccess.
+    # The legacy code copies arrays-as-strings (.value = arrayLiteral)
+    # so the JS forms "alice,bob" etc. We just check that each value
+    # contains the expected entries (substring match is the contract).
+    user_list = page.locator("#tmp_user_list").evaluate("el => el.value")
+    assert "alice" in user_list and "bob" in user_list, f"unexpected user_list: {user_list!r}"
+    movie_libs = page.locator("#tmp_movie_libraries").evaluate("el => el.value")
+    assert "Movies" in movie_libs and "4K Movies" in movie_libs, f"unexpected movies: {movie_libs!r}"
+    show_libs = page.locator("#tmp_show_libraries").evaluate("el => el.value")
+    assert "TV" in show_libs and "Anime" in show_libs, f"unexpected shows: {show_libs!r}"
+    music_libs = page.locator("#tmp_music_libraries").evaluate("el => el.value")
+    assert "Music" in music_libs, f"unexpected music: {music_libs!r}"
+
+    # DB cache value pushed into the input.
+    expect(page.locator("#plex_db_cache")).to_have_value("1024")
+
+    # Plex Pass success banner visible, warning banner hidden.
+    expect(page.locator("#plex-pass-status-success")).to_be_visible()
+    expect(page.locator("#plex-pass-status-warning")).to_be_hidden()
+
+    # Hidden section revealed for further config.
+    expect(page.locator("#hidden")).to_be_visible()
+
+
+@pytest.mark.e2e
+def test_plex_validator_failure_uses_legacy_failure_message(page, live_server):
+    """Plex's failure path: server returns `{valid: false, error: '...'}`.
+    The factory's `isValid: (data) => data.validated === true` predicate
+    correctly treats this as a failure. The configured static failure
+    message is shown (not data.error -- the legacy plex wizard didn't
+    forward that field either).
+    """
+
+    def handle_validate(route):
+        route.fulfill(status=200, json={"valid": False, "error": "bad token"})
+
+    page.route("**/validate_plex", handle_validate)
+    page.goto(f"{live_server}/step/010-plex", wait_until="domcontentloaded")
+
+    page.locator("#plex_url").fill("http://plex.local")
+    page.locator("#plex_token").fill("badtoken")
+    page.locator("#validateButton").click()
+
+    expect(page.locator("#statusMessage")).to_contain_text("Failed to validate Plex server. Please check your URL and Token.")
+    expect(page.locator("#plex_validated")).to_have_value("false")
+
+
+@pytest.mark.e2e
+def test_plex_db_cache_mismatch_warning(page, live_server):
+    """When the user's db_cache input doesn't match what Plex reports,
+    the plexDbCache element shows a warning in error color appended to
+    the standard "value retrieved" message. Verifies the bespoke
+    mismatch-detection logic survives the migration.
+    """
+
+    def handle_validate(route):
+        # Server returns db_cache=2048 while the page's default input
+        # is something different (1024 from the dummy data).
+        route.fulfill(
+            status=200,
+            json={
+                "validated": True,
+                "db_cache": 2048,
+                "user_list": [],
+                "music_libraries": [],
+                "movie_libraries": [],
+                "show_libraries": [],
+                "has_plex_pass": False,
+            },
+        )
+
+    page.route("**/validate_plex", handle_validate)
+    page.goto(f"{live_server}/step/010-plex", wait_until="domcontentloaded")
+
+    # Force a mismatch: set the input to something other than 2048.
+    page.evaluate("document.getElementById('plex_db_cache').value = '999'")
+    page.locator("#plex_url").fill("http://plex.local")
+    page.locator("#plex_token").fill("sometoken")
+    page.locator("#validateButton").click()
+
+    # The plexDbCache element should now contain the mismatch warning.
+    expect(page.locator("#plexDbCache")).to_contain_text("Database cache value retrieved from server is: 2048 MB")
+    expect(page.locator("#plexDbCache")).to_contain_text("Warning: The value in the input box (999 MB) does not match the value retrieved from the server (2048 MB).")
+    # And the input value should now be overwritten with the server's value.
+    expect(page.locator("#plex_db_cache")).to_have_value("2048")
