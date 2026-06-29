@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // Scripts that have been converted to ES modules. These are loaded via
   // dynamic import() instead of <script> tag creation. Add entries here
   // as each helper is converted (rgbaPicker.js was the first, PR #1388).
-  const moduleScripts = new Set(['/static/local-js/rgbaPicker.js'])
+  const moduleScripts = new Set([
+    '/static/local-js/rgbaPicker.js',
+    '/static/local-js/validationHandler.js'
+  ])
 
   function loadScriptsSequentially (scripts, callback) {
     let index = 0

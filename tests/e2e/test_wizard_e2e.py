@@ -1838,6 +1838,35 @@ def test_rgbapicker_module_loads_without_errors(page, live_server):
     assert not relevant, f"module import introduced JS errors: {relevant}"
 
 
+# ES module conversion of validationHandler.js
+# (chore/convert-validationhandler-to-module).
+# Loaded by 025-libraries.js via dynamic import(). Publishes
+# window.ValidationHandler for backward compat (same pattern as
+# pathValidation.js and urlValidation.js).
+
+
+@pytest.mark.e2e
+def test_validationhandler_module_loads_via_import(page, live_server):
+    """validationHandler.js is now loaded via import() by 025-libraries.js.
+    The module publishes window.ValidationHandler for backward compat with
+    the classic-script typeof checks in 025-libraries.js. Verify the
+    import() path works by asserting the symbol is available and has
+    the expected methods.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_timeout(2000)
+    state = page.evaluate("""() => ({
+            hasValidationHandler: typeof window.ValidationHandler !== 'undefined',
+            hasUpdateMethod: typeof window.ValidationHandler === 'object'
+                && typeof window.ValidationHandler.updateValidationState === 'function',
+            hasInitMethod: typeof window.ValidationHandler === 'object'
+                && typeof window.ValidationHandler.enableNavigation === 'function'
+        })""")
+    assert state["hasValidationHandler"], "window.ValidationHandler must exist after import()"
+    assert state["hasUpdateMethod"], "ValidationHandler.updateValidationState must be a function"
+    assert state["hasInitMethod"], "ValidationHandler.enableNavigation must be a function"
+
+
 # ES module conversion of 900-kometa.js (chore/convert-900-kometa-to-module).
 # This file had a different shape than 915-imagemaid / 905-analytics: the
 # first 54 lines were top-level declarations (let/const/function) OUTSIDE

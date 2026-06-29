@@ -345,31 +345,31 @@ const ValidationHandler = {
   }
 }
 
+window.ValidationHandler = ValidationHandler
+
 // Restore previously selected libraries
 ValidationHandler.restoreSelectedLibraries()
 
 // Attach validation update on input change
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
+console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
 
-  const onLibraryChange = (event) => {
-    if (!event || !event.target || !event.target.closest) return
-    if (event.target.id === 'libraryPicker') {
-      librariesTouched = true
-      console.log('[DEBUG] Change detected on libraryPicker')
-      ValidationHandler.updateValidationState()
-      return
-    }
-    if (!event.target.closest('#library-form-container')) return
+const onLibraryChange = (event) => {
+  if (!event || !event.target || !event.target.closest) return
+  if (event.target.id === 'libraryPicker') {
     librariesTouched = true
-    console.log(`[DEBUG] Change detected on: ${event.target.id || '(unknown input)'}`)
+    console.log('[DEBUG] Change detected on libraryPicker')
     ValidationHandler.updateValidationState()
+    return
   }
-
-  document.addEventListener('change', onLibraryChange)
-  document.addEventListener('input', onLibraryChange)
-
-  // Initial validation check on page load
-  console.log('[DEBUG] Running initial validation check on page load.')
+  if (!event.target.closest('#library-form-container')) return
+  librariesTouched = true
+  console.log(`[DEBUG] Change detected on: ${event.target.id || '(unknown input)'}`)
   ValidationHandler.updateValidationState()
-})
+}
+
+document.addEventListener('change', onLibraryChange)
+document.addEventListener('input', onLibraryChange)
+
+// Initial validation check on page load
+console.log('[DEBUG] Running initial validation check on page load.')
+ValidationHandler.updateValidationState()
