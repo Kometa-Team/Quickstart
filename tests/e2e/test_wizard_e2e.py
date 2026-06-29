@@ -1499,17 +1499,42 @@ def test_macros_html_contains_no_inline_event_handlers(page, live_server):
 
 
 @pytest.mark.e2e
-def test_window_jumpto_and_loading_shims_are_retired(page, live_server):
-    """window.jumpTo and window.loading must NOT be set by 000-base.js."""
+def test_window_loading_shim_is_retired(page, live_server):
+    """window.loading must NOT be set by 000-base.js. The only external
+    caller (001-start.js) was migrated to a direct ES module import in
+    PR #1382. window.jumpTo is INTENTIONALLY still shimmed because
+    static/local-js/025-libraries.js (a 4600-line classic script) still
+    relies on it. See PR #1384 (fix/restore-jumpto-shim-for-classic-scripts)
+    for the regression that motivated the restoration.
+    """
     page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
     # Give the module a beat to finish executing.
     page.wait_for_timeout(200)
+    state = page.evaluate("() => typeof window.loading")
+    assert state == "undefined", f"window.loading should be undefined (retired shim), got {state}"
+
+
+@pytest.mark.e2e
+def test_window_jumpto_shim_is_present_on_libraries_page(page, live_server):
+    """Regression guard for the bug introduced by PR #1382 and fixed in
+    PR #1384: static/local-js/025-libraries.js calls `jumpTo(...)` as a
+    bare reference inside its `qs:before-step-navigation` listener. That
+    classic script depends on the `window.jumpTo` shim being published
+    by 000-base.js. Without the shim, autosave-then-navigate from a
+    library throws ReferenceError.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    # Sequential script loader is async; wait for it to finish.
+    page.wait_for_timeout(2000)
     state = page.evaluate("""() => ({
-            jumpTo: typeof window.jumpTo,
-            loading: typeof window.loading
-        })""")
-    assert state["jumpTo"] == "undefined", f"window.jumpTo should be undefined (retired shim), got {state['jumpTo']}"
-    assert state["loading"] == "undefined", f"window.loading should be undefined (retired shim), got {state['loading']}"
+        jumpToType: typeof window.jumpTo,
+        bareJumpToType: typeof jumpTo,
+        librariesLoaded: !!document.querySelector('#libraryPicker')
+    })""")
+    assert state["librariesLoaded"], "expected the libraries page to actually render (precondition for the test)"
+    assert state["jumpToType"] == "function", f"window.jumpTo MUST be a function on the libraries page so 025-libraries.js can call it; got {state['jumpToType']}"
+    # Bare `jumpTo` resolves via window in non-strict classic scripts.
+    assert state["bareJumpToType"] == "function", f"bare jumpTo MUST resolve (via window) on the libraries page; got {state['bareJumpToType']}"
 
 
 @pytest.mark.e2e
