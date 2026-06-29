@@ -1117,16 +1117,23 @@ def test_config_workspace_modal_changing_selector_shows_new_config_input(page, l
 def test_nav_jumpto_data_attr_dispatches_to_jumpto_function(page, live_server):
     """Clicking an element with data-jumpto-page should call jumpTo()
     with the page and (if present) the label. We capture this by
-    stubbing window.jumpTo on the client side and observing the args.
+    listening to the 'qs:nav:jump' CustomEvent and preventing default
+    so the real navigation never fires (the test seam introduced in
+    PR #1383 chore/retire-jumpto-loading-shims, replacing the previous
+    window.jumpTo spy).
     """
     page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
 
-    # Replace window.jumpTo with a spy that records each call's args.
+    # Install the test seam: cancel every 'qs:nav:jump' event and
+    # record its detail. The listener in 000-base.js checks the return
+    # value of dispatchEvent() and skips the real jumpTo() call when
+    # the event is cancelled, so no navigation happens.
     page.evaluate("""
         window.__jumpToCalls = []
-        window.jumpTo = function (page, label) {
-            window.__jumpToCalls.push([page, label])
-        }
+        document.addEventListener('qs:nav:jump', (e) => {
+            e.preventDefault()
+            window.__jumpToCalls.push([e.detail.page, e.detail.label])
+        })
     """)
 
     # The 'Donate' sponsor button in the sidebar footer carries
@@ -1142,7 +1149,7 @@ def test_nav_jumpto_data_attr_dispatches_to_jumpto_function(page, live_server):
         el.click()
     """)
     calls = page.evaluate("window.__jumpToCalls")
-    assert calls, "expected jumpTo() to be called when [data-jumpto-page] was clicked"
+    assert calls, "expected qs:nav:jump to fire when [data-jumpto-page] was clicked"
     # No data-jumpto-label on the sponsor link, so the label arg should be undefined/None.
     assert calls[-1][0] == "910-sponsor", f"expected page='910-sponsor', got {calls[-1]}"
 
@@ -1150,15 +1157,18 @@ def test_nav_jumpto_data_attr_dispatches_to_jumpto_function(page, live_server):
 @pytest.mark.e2e
 def test_nav_jumpto_data_attr_includes_label_when_present(page, live_server):
     """If the element carries both data-jumpto-page and data-jumpto-label,
-    both values should be forwarded to jumpTo(). Verified by injecting
-    a synthetic element AFTER DOMContentLoaded -- this exercises the
-    event-delegation behaviour (delegated listener picks up elements
+    both values should be forwarded to the qs:nav:jump event. Verified by
+    injecting a synthetic element AFTER DOMContentLoaded -- this exercises
+    the event-delegation behaviour (delegated listener picks up elements
     added at runtime, not just those present at page load).
     """
     page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
     page.evaluate("""
         window.__jumpToCalls = []
-        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        document.addEventListener('qs:nav:jump', (e) => {
+            e.preventDefault()
+            window.__jumpToCalls.push([e.detail.page, e.detail.label])
+        })
         const el = document.createElement('a')
         el.id = '__synthetic_jumpto'
         el.href = 'javascript:void(0);'
@@ -1171,22 +1181,28 @@ def test_nav_jumpto_data_attr_includes_label_when_present(page, live_server):
     # The runtime-added element must be picked up by the delegated
     # listener installed at DOMContentLoaded -- proves we're NOT using
     # per-element binding (which would miss this).
-    assert calls, "expected jumpTo() to be called for a runtime-added [data-jumpto-page] element"
-    assert calls[-1] == ["020-tmdb", "TMDb Custom Label"], f"expected jumpTo('020-tmdb', 'TMDb Custom Label'), got {calls[-1]}"
+    assert calls, "expected qs:nav:jump to fire for a runtime-added [data-jumpto-page] element"
+    assert calls[-1] == ["020-tmdb", "TMDb Custom Label"], f"expected page='020-tmdb', label='TMDb Custom Label', got {calls[-1]}"
 
 
 @pytest.mark.e2e
 def test_nav_next_button_data_attr_fires_loading_before_submit(page, live_server):
-    """The Next button is a form-submit. Clicking it should call
-    loading('next', target) BEFORE the form submits. The click listener
-    MUST NOT preventDefault or the form won't navigate.
+    """The Next button is a form-submit. Clicking it should fire
+    qs:nav:loading with action='next' BEFORE the form submits. The click
+    listener MUST NOT preventDefault or the form won't navigate.
     """
     page.goto(f"{live_server}/step/010-plex", wait_until="domcontentloaded")
 
-    # Stub window.loading to capture its args.
+    # Install the qs:nav:loading test seam. Cancel the event so the
+    # real loading() call (which would start spinners + DOM mutation)
+    # never fires; we just observe what action/target would have been
+    # passed.
     page.evaluate("""
         window.__loadingCalls = []
-        window.loading = (action, target) => { window.__loadingCalls.push([action, target]) }
+        document.addEventListener('qs:nav:loading', (e) => {
+            e.preventDefault()
+            window.__loadingCalls.push([e.detail.action, e.detail.target])
+        })
     """)
 
     next_btn = page.locator('button[data-nav-action="next"]').first
@@ -1230,7 +1246,10 @@ def test_nav_step_rail_button_clicks_call_jumpto(page, live_server):
 
     page.evaluate("""
         window.__jumpToCalls = []
-        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        document.addEventListener('qs:nav:jump', (e) => {
+            e.preventDefault()
+            window.__jumpToCalls.push([e.detail.page, e.detail.label])
+        })
     """)
 
     # qs-step-link is the class on the per-step rail button. We look for
@@ -1316,7 +1335,10 @@ def test_runtime_added_jumpto_element_triggers_jumpto_via_delegation(page, live_
     page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
     page.evaluate("""
         window.__jumpToCalls = []
-        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        document.addEventListener('qs:nav:jump', (e) => {
+            e.preventDefault()
+            window.__jumpToCalls.push([e.detail.page, e.detail.label])
+        })
         const host = document.createElement('div')
         host.id = '__runtime_host'
         document.body.appendChild(host)
@@ -1378,11 +1400,14 @@ def test_validation_handler_show_message_html_opt_in_renders_html(page, live_ser
     # And clicking it should trigger the delegated jumpTo handler.
     page.evaluate("""
         window.__jumpToCalls = []
-        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        document.addEventListener('qs:nav:jump', (e) => {
+            e.preventDefault()
+            window.__jumpToCalls.push([e.detail.page, e.detail.label])
+        })
         document.querySelector('#validation-messages a[data-jumpto-page=\"010-plex\"]').click()
     """)
     calls = page.evaluate("window.__jumpToCalls")
-    assert calls, "expected click on the rendered <a> to trigger jumpTo"
+    assert calls, "expected click on the rendered <a> to trigger qs:nav:jump"
     assert calls[-1][0] == "010-plex", f"expected page='010-plex', got {calls[-1]}"
 
 
@@ -1458,3 +1483,109 @@ def test_macros_html_contains_no_inline_event_handlers(page, live_server):
     pattern = re.compile(r"\bon(click|input|change|submit|load|key\w*|focus|blur|mouse\w*)=", re.IGNORECASE)
     hits = pattern.findall(macros)
     assert not hits, f"found inline event handlers in _macros.html: {hits[:5]}"
+
+
+# window.jumpTo / window.loading shim retirement
+# (chore/retire-jumpto-loading-shims).
+# Previously 000-base.js published `window.jumpTo` and `window.loading`
+# as compatibility shims so that:
+#   - 001-start.js could call window.loading('jump', label)
+#   - the e2e test suite could spy on calls by overwriting them
+# Both consumers have been migrated:
+#   - 001-start.js now does `import { loading } from './000-base.js'`
+#   - the delegated nav listener dispatches cancelable CustomEvents
+#     ('qs:nav:jump' and 'qs:nav:loading') that tests subscribe to.
+# These tests pin the new contract so the shims can't sneak back in.
+
+
+@pytest.mark.e2e
+def test_window_jumpto_and_loading_shims_are_retired(page, live_server):
+    """window.jumpTo and window.loading must NOT be set by 000-base.js."""
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+    # Give the module a beat to finish executing.
+    page.wait_for_timeout(200)
+    state = page.evaluate("""() => ({
+            jumpTo: typeof window.jumpTo,
+            loading: typeof window.loading
+        })""")
+    assert state["jumpTo"] == "undefined", f"window.jumpTo should be undefined (retired shim), got {state['jumpTo']}"
+    assert state["loading"] == "undefined", f"window.loading should be undefined (retired shim), got {state['loading']}"
+
+
+@pytest.mark.e2e
+def test_qs_nav_jump_event_is_cancelable_and_carries_detail(page, live_server):
+    """The CustomEvent test seam contract: 'qs:nav:jump' must be a
+    cancelable event with { page, label } in detail. Cancelling it
+    must skip the underlying jumpTo() call.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+    page.evaluate("""() => {
+            window.__capturedEvent = null
+            window.__jumpToFiredAfterCancel = false
+            // Wrap jumpTo to detect if it ran AFTER cancel. We can't
+            // import the module function from inside evaluate(), but we
+            // can observe the form-submission side-effect: jumpTo()
+            // mutates form.action and submits. Stub the form's submit
+            // to detect that.
+            const form = document.getElementById('configForm')
+            if (form) {
+                form.addEventListener('submit', () => {
+                    window.__jumpToFiredAfterCancel = true
+                }, { capture: true })
+            }
+            document.addEventListener('qs:nav:jump', (e) => {
+                window.__capturedEvent = {
+                    type: e.type,
+                    cancelable: e.cancelable,
+                    page: e.detail.page,
+                    label: e.detail.label
+                }
+                e.preventDefault()
+            })
+            // Synthesize a link to click.
+            const el = document.createElement('a')
+            el.id = '__seam_link'
+            el.href = 'javascript:void(0);'
+            el.dataset.jumptoPage = '030-tautulli'
+            el.dataset.jumptoLabel = 'Tautulli Test'
+            document.body.appendChild(el)
+            el.click()
+        }""")
+    captured = page.evaluate("window.__capturedEvent")
+    fired = page.evaluate("window.__jumpToFiredAfterCancel")
+    assert captured is not None, "qs:nav:jump event did not fire"
+    assert captured["type"] == "qs:nav:jump"
+    assert captured["cancelable"] is True, "qs:nav:jump must be cancelable"
+    assert captured["page"] == "030-tautulli"
+    assert captured["label"] == "Tautulli Test"
+    assert fired is False, "jumpTo() should NOT have run after preventDefault()"
+
+
+@pytest.mark.e2e
+def test_qs_nav_loading_event_is_cancelable_and_carries_detail(page, live_server):
+    """Same contract for the loading event."""
+    page.goto(f"{live_server}/step/010-plex", wait_until="domcontentloaded")
+    page.evaluate("""() => {
+            window.__capturedEvent = null
+            document.addEventListener('qs:nav:loading', (e) => {
+                window.__capturedEvent = {
+                    type: e.type,
+                    cancelable: e.cancelable,
+                    action: e.detail.action,
+                    target: e.detail.target
+                }
+                e.preventDefault()
+            })
+            // Intercept form submit so the page doesn't actually navigate.
+            document.getElementById('configForm').addEventListener('submit',
+                (e) => { e.preventDefault() })
+            const btn = document.querySelector('button[data-nav-action="next"]')
+            if (!btn) throw new Error('No button[data-nav-action=next] on the page')
+            btn.click()
+        }""")
+    captured = page.evaluate("window.__capturedEvent")
+    assert captured is not None, "qs:nav:loading event did not fire"
+    assert captured["type"] == "qs:nav:loading"
+    assert captured["cancelable"] is True, "qs:nav:loading must be cancelable"
+    assert captured["action"] == "next"
+    assert captured["target"], "qs:nav:loading must carry a non-empty target"
