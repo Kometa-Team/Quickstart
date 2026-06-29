@@ -540,13 +540,13 @@ def collect_overlay_runtime_aliases(overlay: dict[str, Any]) -> set[str]:
 
     oid = overlay.get("id")
     if oid:
-        aliases.add(str(oid).replace("overlay_", "", 1))
+        aliases.add(str(oid).replace("overlay_", "", 1).strip().lower())
 
     source_overrides = overlay.get("source_overrides")
     if isinstance(source_overrides, dict):
         fixed_key = source_overrides.get("fixed_key")
         if isinstance(fixed_key, str) and fixed_key.strip():
-            aliases.add(fixed_key.strip())
+            aliases.add(fixed_key.strip().lower())
 
     return aliases
 
@@ -663,7 +663,7 @@ def build_qs_overlay_map(qs_overlays_path: Path, *, enrich_runtime_support: bool
 
 
 def overlay_key_supported_in_quickstart(alias: str | None, key: str, qs_overlays: dict[str, set[str]]) -> bool:
-    alias_text = str(alias or "")
+    alias_text = str(alias or "").strip().lower()
     if key in qs_overlays.get(alias_text, set()):
         return True
 
@@ -748,6 +748,14 @@ def resolve_default_paths(alias: str, kind: str, kometa_defaults: Path) -> list[
         path = kometa_defaults / "overlays" / f"{alias}.yml"
         if path.exists():
             support_files.append(path)
+        else:
+            alias_lower = str(alias or "").strip().lower()
+            overlays_dir = kometa_defaults / "overlays"
+            if alias_lower and overlays_dir.is_dir():
+                for candidate in overlays_dir.glob("*.yml"):
+                    if candidate.stem.strip().lower() == alias_lower:
+                        support_files.append(candidate)
+                        break
         return support_files
     if kind == "playlist":
         path = kometa_defaults / "playlist.yml"
@@ -2494,7 +2502,8 @@ def build_merged_fix_queue(
         for reason in item.get("reasons", []):
             if reason:
                 bucket["importer_reasons"].add(str(reason))
-        if item.get("import_status") != "mapped" and not bucket["quickstart_exclusion_reason"]:
+        has_verified_support_signal = bucket["verified_occurrences"] > 0 or bool(bucket["matched_default_files"])
+        if item.get("import_status") != "mapped" and has_verified_support_signal and not bucket["quickstart_exclusion_reason"]:
             bucket["needs_importer_support"] = True
 
     ranked: list[dict[str, Any]] = []

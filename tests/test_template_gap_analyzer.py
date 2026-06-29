@@ -205,6 +205,17 @@ def test_overlay_key_supported_in_quickstart_uses_direct_alias_match_when_availa
     assert module.overlay_key_supported_in_quickstart("ratings", "rating3_image", qs_overlays) is True
 
 
+def test_overlay_key_supported_in_quickstart_is_case_insensitive_for_overlay_aliases():
+    module = _load_gap_analyzer_module()
+
+    qs_overlays = {
+        "status": {"horizontal_align", "vertical_align", "horizontal_offset", "vertical_offset"},
+    }
+
+    assert module.overlay_key_supported_in_quickstart("Status", "horizontal_align", qs_overlays) is True
+    assert module.overlay_key_supported_in_quickstart("STATUS", "vertical_offset", qs_overlays) is True
+
+
 def test_overlay_key_supported_in_quickstart_accepts_prefixed_source_override_keys():
     module = _load_gap_analyzer_module()
 
@@ -550,6 +561,15 @@ def test_resolve_default_paths_for_collection_does_not_cross_into_overlay_defaul
     assert any(path.parts[-2:] == ("show", "network.yml") for path in network_defaults)
     assert module.key_is_valid_for_default("horizontal_align", network_defaults)[0] is False
     assert module.key_is_valid_for_default("vertical_align", network_defaults)[0] is False
+
+
+def test_resolve_default_paths_for_overlays_is_case_insensitive():
+    module = _load_gap_analyzer_module()
+    kometa_defaults = _kometa_defaults_root()
+
+    status_defaults = module.resolve_default_paths("Status", "overlay", kometa_defaults)
+
+    assert any(path.name.lower() == "status.yml" for path in status_defaults)
 
 
 def test_classify_yaml_document_type_distinguishes_config_and_external_yaml():
@@ -1026,6 +1046,29 @@ def test_build_merged_fix_queue_suppresses_excluded_quickstart_only_keys():
     assert len(ranked) == 1
     assert ranked[0]["key"] == "horizontal_align"
     assert ranked[0]["action_targets"] == ["importer"]
+
+
+def test_build_merged_fix_queue_suppresses_importer_only_rows_without_verified_default_support():
+    module = _load_gap_analyzer_module()
+
+    verified_rows = []
+    importer_rows = [
+        {
+            "kind": "overlay",
+            "default": "ratings",
+            "key": "horizontal_align",
+            "import_status": "unmapped",
+            "reason_class": "missing_template_variable_support",
+            "occurrences": 3,
+            "files": ["config.yml"],
+            "libraries": ["Movies"],
+            "reasons": ["Template variable not available in Quickstart."],
+        }
+    ]
+
+    ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
+
+    assert ranked == []
 
 
 def test_quickstart_recommendation_summary_excludes_overlay_style_keys_misclassified_as_library_scope():
