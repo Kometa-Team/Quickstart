@@ -4279,11 +4279,20 @@ document.head.appendChild(style)
 // overlay handler's runtime-generated rating-mapping pills) are picked
 // up automatically -- no re-binding needed.
 //
-// NOTE: jumpTo and loading remain exposed on window because they have
-// cross-module callers (e.g. 001-start.js does
-// `window.loading('jump', ...)`) AND because the test suite stubs them
-// to observe behaviour. When all consumers are converted to ES module
-// imports the window shims can be removed.
+// TEST SEAM via CANCELABLE CustomEvent (NOT window.* shim):
+// Before calling jumpTo() / loading(), the listener dispatches a
+// cancelable custom event ('qs:nav:jump' or 'qs:nav:loading') on
+// document with { page, label } or { action, target } in event.detail.
+// Tests subscribe to the event and call event.preventDefault() to
+// observe the call args WITHOUT triggering real navigation / spinner.
+// Production code that doesn't listen has zero overhead beyond the
+// CustomEvent allocation.
+//
+// This replaces the previous `(typeof window !== 'undefined' &&
+// window.jumpTo) || jumpTo` indirection that existed solely so the
+// e2e test suite could spy on calls by overwriting window.jumpTo.
+// CustomEvent is a documented test seam (not a leaked implementation
+// detail) and doesn't require polluting the global namespace.
 document.addEventListener('DOMContentLoaded', () => {
   document.body.addEventListener('click', (event) => {
     const jumpEl = event.target.closest('[data-jumpto-page]')
@@ -4293,8 +4302,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const page = jumpEl.dataset.jumptoPage
       const label = jumpEl.dataset.jumptoLabel
       if (page) {
-        const fn = (typeof window !== 'undefined' && window.jumpTo) || jumpTo
-        fn(page, label)
+        const navEvent = new CustomEvent('qs:nav:jump', {
+          cancelable: true,
+          detail: { page, label }
+        })
+        const allowed = document.dispatchEvent(navEvent)
+        if (allowed) jumpTo(page, label)
       }
       return
     }
@@ -4306,8 +4319,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const action = navEl.dataset.navAction
       const target = navEl.dataset.navTarget
       if (action) {
-        const fn = (typeof window !== 'undefined' && window.loading) || loading
-        fn(action, target)
+        const navEvent = new CustomEvent('qs:nav:loading', {
+          cancelable: true,
+          detail: { action, target }
+        })
+        const allowed = document.dispatchEvent(navEvent)
+        if (allowed) loading(action, target)
       }
     }
   })
@@ -4318,12 +4335,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // no longer visible to unconverted classic <script> pages. Re-publish the
 // names that other files reference until those files are themselves modules.
 // Remove each entry as its consumers are converted.
+//
+// jumpTo + loading are NO LONGER shimmed -- the delegated nav listener
+// above no longer routes through window.* (uses CustomEvent as the test
+// seam instead) and 001-start.js imports `loading` directly. See PR
+// #1383 (chore/retire-jumpto-loading-shims) for the migration.
 window.escapeHtml = escapeHtml
 window.hideNavigationLoadingOverlay = hideNavigationLoadingOverlay
 window.hideSpinner = hideSpinner
-window.jumpTo = jumpTo
-window.loading = loading
 window.setButtonIconAndText = setButtonIconAndText
 window.showNavigationLoadingOverlay = showNavigationLoadingOverlay
 window.showSpinner = showSpinner
 window.showToast = showToast
+
+// ES module exports for other modules. Currently consumed by
+// static/local-js/001-start.js (which is also loaded as type="module").
+export { loading, jumpTo }
