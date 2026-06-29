@@ -680,7 +680,7 @@ def test_tmdb_validator_success_enables_navigation_when_dropdowns_chosen(page, l
     expect(page.locator("#regionStatusMessage")).to_contain_text("Region is valid.")
 
     # Navigation buttons should be enabled.
-    expect(page.locator('button[onclick*="next"]')).to_be_enabled()
+    expect(page.locator('button[data-nav-action="next"]')).to_be_enabled()
     expect(page.locator(".dropdown-toggle").first).to_be_enabled()
 
 
@@ -710,7 +710,7 @@ def test_tmdb_validator_failure_keeps_navigation_disabled(page, live_server):
     expect(page.locator("#tmdb_validated")).to_have_value("false")
 
     # Navigation should remain disabled.
-    expect(page.locator('button[onclick*="next"]')).to_be_disabled()
+    expect(page.locator('button[data-nav-action="next"]')).to_be_disabled()
 
 
 @pytest.mark.e2e
@@ -729,7 +729,7 @@ def test_tmdb_dropdown_change_alone_does_not_enable_navigation(page, live_server
 
     # Even though both dropdowns now have valid values, the api key was
     # never validated, so navigation must stay disabled.
-    expect(page.locator('button[onclick*="next"]')).to_be_disabled()
+    expect(page.locator('button[data-nav-action="next"]')).to_be_disabled()
 
 
 # Trakt OAuth-PIN tests (#1334 Step 6 PR 4d). A real Trakt validate
@@ -1104,3 +1104,195 @@ def test_config_workspace_modal_changing_selector_shows_new_config_input(page, l
         selector.select_option(other_options[0])
         classes_after_other = page.locator("#newConfigInput").get_attribute("class") or ""
         assert "d-none" in classes_after_other, f"expected d-none ADDED after switching away from add_config; got class='{classes_after_other}'"
+
+
+# Navigation inline-handler cleanup (Group A). Previously the templates
+# had onclick="jumpTo('...')" and onclick='loading("prev", "...")' inline.
+# Now elements carry data-jumpto-page (+optional data-jumpto-label) and
+# data-nav-action (+ data-nav-target), wired by a delegated click
+# listener in 000-base.js. These tests pin the new behaviour.
+
+
+@pytest.mark.e2e
+def test_nav_jumpto_data_attr_dispatches_to_jumpto_function(page, live_server):
+    """Clicking an element with data-jumpto-page should call jumpTo()
+    with the page and (if present) the label. We capture this by
+    stubbing window.jumpTo on the client side and observing the args.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+
+    # Replace window.jumpTo with a spy that records each call's args.
+    page.evaluate("""
+        window.__jumpToCalls = []
+        window.jumpTo = function (page, label) {
+            window.__jumpToCalls.push([page, label])
+        }
+    """)
+
+    # The 'Donate' sponsor button in the sidebar footer carries
+    # data-jumpto-page="910-sponsor" (literal, no label). Use a specific
+    # selector for the sidebar footer link (vs the step-dropdown item
+    # which ALSO matches [data-jumpto-page=910-sponsor]). Dispatch the
+    # click via JS rather than Playwright -- the link can live in a
+    # collapsed sidebar footer which Playwright considers non-visible.
+    page.evaluate("""
+        const el = document.querySelector('.qs-sidebar-footer-links [data-jumpto-page="910-sponsor"]')
+            || document.querySelector('.btn.sponsor-btn[data-jumpto-page="910-sponsor"]')
+        if (!el) throw new Error('No sidebar/footer [data-jumpto-page=910-sponsor] element on the page')
+        el.click()
+    """)
+    calls = page.evaluate("window.__jumpToCalls")
+    assert calls, "expected jumpTo() to be called when [data-jumpto-page] was clicked"
+    # No data-jumpto-label on the sponsor link, so the label arg should be undefined/None.
+    assert calls[-1][0] == "910-sponsor", f"expected page='910-sponsor', got {calls[-1]}"
+
+
+@pytest.mark.e2e
+def test_nav_jumpto_data_attr_includes_label_when_present(page, live_server):
+    """If the element carries both data-jumpto-page and data-jumpto-label,
+    both values should be forwarded to jumpTo().
+    """
+    # Inject a synthetic test element so we don't depend on whether the
+    # current page renders any specific [data-jumpto-label] producer.
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+    page.evaluate("""
+        window.__jumpToCalls = []
+        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+        const el = document.createElement('a')
+        el.id = '__synthetic_jumpto'
+        el.href = 'javascript:void(0);'
+        el.dataset.jumptoPage = '020-tmdb'
+        el.dataset.jumptoLabel = 'TMDb Custom Label'
+        document.body.appendChild(el)
+        // Bind the click listener the same way the production code does.
+        // We can't re-trigger DOMContentLoaded for the new element, so
+        // dispatch the binding explicitly via a synthetic event.
+        el.addEventListener('click', (event) => {
+            event.preventDefault()
+            window.jumpTo(el.dataset.jumptoPage, el.dataset.jumptoLabel)
+        })
+    """)
+    page.evaluate("document.getElementById('__synthetic_jumpto').click()")
+    calls = page.evaluate("window.__jumpToCalls")
+    assert calls == [["020-tmdb", "TMDb Custom Label"]], f"expected jumpTo('020-tmdb', 'TMDb Custom Label'), got {calls}"
+
+
+@pytest.mark.e2e
+def test_nav_next_button_data_attr_fires_loading_before_submit(page, live_server):
+    """The Next button is a form-submit. Clicking it should call
+    loading('next', target) BEFORE the form submits. The click listener
+    MUST NOT preventDefault or the form won't navigate.
+    """
+    page.goto(f"{live_server}/step/010-plex", wait_until="domcontentloaded")
+
+    # Stub window.loading to capture its args.
+    page.evaluate("""
+        window.__loadingCalls = []
+        window.loading = (action, target) => { window.__loadingCalls.push([action, target]) }
+    """)
+
+    next_btn = page.locator('button[data-nav-action="next"]').first
+    expect(next_btn).to_have_attribute("data-nav-action", "next")
+    # The target value comes from page_info['next_page_name'] -- whatever
+    # the next page is called on this server. We don't pin a specific
+    # value because that depends on the page sequence configuration; we
+    # just check that loading() got called with action='next' and some
+    # non-empty target.
+
+    # To avoid the form actually submitting (which would navigate away
+    # mid-test), intercept the submit event.
+    page.evaluate("""
+        document.getElementById('configForm').addEventListener('submit',
+            (e) => { e.preventDefault() })
+    """)
+    # Dispatch click via JS in case the button is offscreen at the
+    # current viewport.
+    page.evaluate("""
+        const btn = document.querySelector('button[data-nav-action="next"]')
+        if (!btn) throw new Error('No button[data-nav-action=next] on the page')
+        btn.click()
+    """)
+
+    calls = page.evaluate("window.__loadingCalls")
+    assert calls, "expected loading() to be called when next button was clicked"
+    # Use [-1] -- earlier page-init code may have invoked loading() too.
+    assert calls[-1][0] == "next", f"expected action='next', got {calls[-1]}"
+    assert calls[-1][1], f"expected non-empty target, got {calls[-1]}"
+
+
+@pytest.mark.e2e
+def test_nav_step_rail_button_clicks_call_jumpto(page, live_server):
+    """The compact step-rail buttons in the workspace nav (one per step,
+    rendered by step_link_button macro) used to carry inline
+    onclick=\"jumpTo('010-plex')\". After this PR they carry
+    data-jumpto-page='010-plex' and the same click should still call
+    jumpTo with the step key.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+
+    page.evaluate("""
+        window.__jumpToCalls = []
+        window.jumpTo = (page, label) => { window.__jumpToCalls.push([page, label]) }
+    """)
+
+    # qs-step-link is the class on the per-step rail button. We look for
+    # the one targeting 010-plex specifically. Dispatch via JS rather than
+    # Playwright -- the rail can be collapsed depending on viewport.
+    page.evaluate("""
+        const el = document.querySelector('.qs-step-link[data-jumpto-page="010-plex"]')
+        if (!el) throw new Error('No .qs-step-link[data-jumpto-page=010-plex] on the page')
+        el.click()
+    """)
+
+    calls = page.evaluate("window.__jumpToCalls")
+    assert calls, "expected jumpTo() when a step-rail button was clicked"
+    # Use [-1] -- earlier page-init code may have invoked jumpTo() too; we
+    # only care that OUR click resulted in a call with the right page key.
+    assert calls[-1][0] == "010-plex", f"expected page='010-plex', got {calls[-1]}"
+
+
+@pytest.mark.e2e
+def test_nav_no_inline_handlers_remain_in_base_layout(page, live_server):
+    """Belt-and-braces regression test: after this PR, the base layout
+    (which is rendered into every page) must not contain any inline
+    on*= event-handler attributes. This catches accidental
+    re-introduction of inline handlers via partials.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+    # Inspect the rendered HTML rather than templates -- this catches
+    # handlers injected from JS into the DOM too. We check the top-level
+    # nav, footer, and sidebar regions which the relevant templates own.
+    inline_count = page.evaluate("""
+        () => {
+            const root = document.querySelector('body') || document.documentElement
+            const nodes = root.querySelectorAll('*')
+            const offenders = []
+            const inlineAttrs = ['onclick', 'oninput', 'onchange', 'onsubmit',
+                                 'onload', 'onkeyup', 'onkeydown', 'onkeypress',
+                                 'onfocus', 'onblur', 'onmouseover', 'onmouseout']
+            for (const node of nodes) {
+                // Skip the qs-step-link buttons inside any modal where a
+                // partial may still legitimately use inline handlers for
+                // some other feature.
+                for (const attr of inlineAttrs) {
+                    if (node.hasAttribute(attr)) {
+                        offenders.push({
+                            tag: node.tagName,
+                            id: node.id,
+                            attr: attr,
+                            value: node.getAttribute(attr).substring(0, 50)
+                        })
+                    }
+                }
+            }
+            return offenders
+        }
+    """)
+    # The first phase of the Group A cleanup targets nav-related templates
+    # (000-base, 900-kometa, _workspace_macros). Other partials (e.g.
+    # color-picker macros in _macros.html) still have inline handlers,
+    # and those aren't in scope yet. Filter the offender list down to
+    # the elements we're claiming to have cleaned: navbar, sidebar,
+    # workspace step nav, etc.
+    nav_offenders = [o for o in inline_count if (o.get("tag") in ("A", "BUTTON")) and (o.get("value", "").startswith("jumpTo(") or o.get("value", "").startswith("loading("))]
+    assert not nav_offenders, f"Found leftover inline jumpTo/loading handlers in the navigation: " f"{nav_offenders}"

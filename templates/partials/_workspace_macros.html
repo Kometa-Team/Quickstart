@@ -86,7 +86,8 @@ Sponsor
   <li>
     <a class="dropdown-item {% if template_key == page_info['template_name'] %}active{% endif %}"
       data-step-key="{{ template_key }}"
-      href="javascript:void(0);" onclick="jumpTo('{{ template_key }}')">
+      data-jumpto-page="{{ template_key }}"
+      href="javascript:void(0);">
       {{ status_icon(step_state, 'qs-step-dropdown-state') }}
       {{ label }}
     </a>
@@ -103,7 +104,8 @@ Sponsor
 {% set label = nav_label(template_key, name) | trim %}
 <button type="button" class="qs-step-link {% if template_key == page_info['template_name'] %}is-active{% endif %}"
   data-step-key="{{ template_key }}"
-  onclick="jumpTo('{{ template_key }}')" title="{{ label }}">
+  data-jumpto-page="{{ template_key }}"
+  title="{{ label }}">
   <span class="qs-step-link-short">{{ step_nav_icon(template_key, label, True) }}</span>
   <span class="qs-step-link-label">
     <span class="qs-step-link-label-wrap">
@@ -200,7 +202,8 @@ Sponsor
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark page-nav {% if sidebar_mode %}qs-sidebar-step-actions{% endif %}">
   <div class="container-fluid {% if sidebar_mode %}qs-sidebar-step-actions-row{% else %}d-flex justify-content-between align-items-center{% endif %}">
     {% if not hide_step_nav and page_info['template_name'] != '001-start' %}
-    <button type="submit" class="btn nav-button {% if not sidebar_mode %}d-none d-lg-inline-flex{% endif %}" onclick='loading("prev", {{ page_info["prev_page_name"]|tojson }})'
+    <button type="submit" class="btn nav-button {% if not sidebar_mode %}d-none d-lg-inline-flex{% endif %}"
+      data-nav-action="prev" data-nav-target="{{ page_info['prev_page_name'] }}"
       title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
       <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
     </button>
@@ -242,7 +245,8 @@ Sponsor
     {% endif %}
 
     {% if not hide_step_nav and page_info['template_name'] != '910-sponsor' %}
-    <button type="submit" class="btn nav-button {% if not sidebar_mode %}d-none d-lg-inline-flex{% endif %}" onclick='loading("next", {{ page_info["next_page_name"]|tojson }})'
+    <button type="submit" class="btn nav-button {% if not sidebar_mode %}d-none d-lg-inline-flex{% endif %}"
+      data-nav-action="next" data-nav-target="{{ page_info['next_page_name'] }}"
       title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
       Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
     </button>
@@ -257,7 +261,7 @@ Sponsor
 {% set running_on = version_info.running_on if version_info and version_info.running_on else 'Unknown' %}
 <div class="qs-sidebar-footer">
   <div class="qs-sidebar-footer-links">
-    <a href="javascript:void(0);" onclick="jumpTo('910-sponsor');" class="btn nav-button btn-sm" title="Donate">
+    <a href="javascript:void(0);" data-jumpto-page="910-sponsor" class="btn nav-button btn-sm" title="Donate">
       <i class="fa fa-heart"></i><span class="qs-sidebar-text">Donate</span>
     </a>
     <a href="https://kometa.wiki/en/latest/discord/" class="btn nav-button btn-sm" target="_blank" title="Discord">

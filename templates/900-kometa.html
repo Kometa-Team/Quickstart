@@ -76,7 +76,7 @@
     {% for card in final_gate.dependency_cards %}
     <button type="button"
       class="qs-dependency-hint qs-final-todo-card {{ card.css_class }}"
-      onclick="jumpTo('{{ card.key }}', '{{ card.label }}')">
+      data-jumpto-page="{{ card.key }}" data-jumpto-label="{{ card.label }}">
       <div class="qs-dependency-hint-title">{{ card.title }}</div>
       <div class="qs-dependency-hint-lines">
         {% for reason in card.reasons %}
@@ -90,7 +90,7 @@
   {% if final_gate.setup_blockers %}
   <div class="d-flex flex-wrap gap-2 mt-3">
     {% for blocker in final_gate.setup_blockers %}
-    <button type="button" class="btn btn-outline-warning btn-sm" onclick="jumpTo('{{ blocker.key }}', '{{ blocker.label }}')">
+    <button type="button" class="btn btn-outline-warning btn-sm" data-jumpto-page="{{ blocker.key }}" data-jumpto-label="{{ blocker.label }}">
       {{ blocker.label }}
     </button>
     {% endfor %}
@@ -195,12 +195,12 @@
                   <div class="d-flex flex-column gap-1">
                     {% if entry.has_validation %}
                     <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--{{ 'validated' if entry.validated else 'unvalidated' }}"
-                      href="javascript:void(0);" onclick="jumpTo('{{ entry.page }}')">
+                      href="javascript:void(0);" data-jumpto-page="{{ entry.page }}">
                       {{ entry.label }}
                     </a>
                     {% else %}
                     <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--neutral"
-                      href="javascript:void(0);" onclick="jumpTo('{{ entry.page }}')">
+                      href="javascript:void(0);" data-jumpto-page="{{ entry.page }}">
                       {{ entry.label }}
                     </a>
                     {% endif %}

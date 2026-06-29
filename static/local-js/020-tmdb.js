@@ -18,7 +18,7 @@ const languageDropdown = document.getElementById('tmdb_language')
 const languageStatusMessage = document.getElementById('languageStatusMessage')
 const regionDropdown = document.getElementById('tmdb_region')
 const regionStatusMessage = document.getElementById('regionStatusMessage')
-const nextButton = document.querySelector('button[onclick*="next"]')
+const nextButton = document.querySelector('button[data-nav-action="next"]')
 const jumpToButton = document.querySelector('.dropdown-toggle')
 
 const STATUS_COLOR_ERROR = '#ea868f'

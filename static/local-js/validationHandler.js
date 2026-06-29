@@ -311,12 +311,12 @@ const ValidationHandler = {
 
   disableNavigation: function (lockAccordions = true) {
     console.log('[DEBUG] Disabling navigation.')
-    document.querySelectorAll("#configForm .dropdown-toggle, #configForm button[onclick*='next']").forEach(button => {
+    document.querySelectorAll("#configForm .dropdown-toggle, #configForm button[data-nav-action='next']").forEach(button => {
       button.disabled = true
     })
 
     // Keep the Previous button enabled
-    document.querySelector("#configForm button[onclick*='prev']").disabled = false
+    document.querySelector("#configForm button[data-nav-action='prev']").disabled = false
 
     // Handle accordions based on the lockAccordions flag
     if (!lockAccordions) {

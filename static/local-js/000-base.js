@@ -4244,6 +4244,70 @@ style.textContent = `
 `
 document.head.appendChild(style)
 
+// Delegated click handlers for navigation data-attributes.
+//
+// Replaces the inline onclick="jumpTo(...)" / onclick='loading(...)' that
+// previously lived in:
+//   - templates/000-base.html (Donate sponsor link)
+//   - templates/900-kometa.html (final-gate cards, setup blockers,
+//     rating-mapping pills)
+//   - templates/partials/_workspace_macros.html (step dropdown items,
+//     step rail buttons, prev/next form-submit buttons, sidebar donate)
+//
+// Two patterns:
+//   - [data-jumpto-page]  -> jumpTo(page, label?)
+//     Read `data-jumpto-page` and optional `data-jumpto-label`. Calls
+//     jumpTo() inside the click handler. The element is typically an
+//     <a href="javascript:void(0);"> or a <button type="button">, so no
+//     default action needs preventing.
+//   - [data-nav-action]   -> loading(action, target)
+//     Read `data-nav-action` ('prev' | 'next') and `data-nav-target`
+//     (the human-readable page label). Used on <button type="submit">
+//     inside #configForm -- the click fires BEFORE the form submit, so
+//     the spinner starts before navigation. We MUST NOT preventDefault
+//     here or the form won't submit.
+//
+// NOTE: jumpTo and loading remain exposed on window because they have
+// cross-module callers (e.g. 001-start.js does
+// `window.loading('jump', ...)`). When all consumers are converted to
+// ES module imports the window shims can be removed.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-jumpto-page]').forEach((el) => {
+    if (el.dataset.qsJumpBound === '1') return
+    el.dataset.qsJumpBound = '1'
+    el.addEventListener('click', (event) => {
+      // For <a href="javascript:void(0);"> the default action is harmless,
+      // but call preventDefault to match the inline-handler semantics
+      // (the inline handler never returned anything, so the void(0) href
+      // was what stopped navigation; explicit preventDefault is clearer).
+      const tag = (el.tagName || '').toLowerCase()
+      if (tag === 'a') event.preventDefault()
+      const page = el.dataset.jumptoPage
+      const label = el.dataset.jumptoLabel
+      if (!page) return
+      // Route through window so cross-module callers and tests can
+      // observe / intercept the call. This mirrors how 001-start.js
+      // calls window.loading('jump', ...) from outside this module.
+      const fn = (typeof window !== 'undefined' && window.jumpTo) || jumpTo
+      fn(page, label)
+    })
+  })
+
+  document.querySelectorAll('[data-nav-action]').forEach((el) => {
+    if (el.dataset.qsNavBound === '1') return
+    el.dataset.qsNavBound = '1'
+    el.addEventListener('click', () => {
+      // Do NOT preventDefault -- this button is type="submit" and the form
+      // submission carries the navigation. We just kick off the spinner.
+      const action = el.dataset.navAction
+      const target = el.dataset.navTarget
+      if (!action) return
+      const fn = (typeof window !== 'undefined' && window.loading) || loading
+      fn(action, target)
+    })
+  })
+})
+
 // Module compatibility shims.
 // Now that this file loads as type="module", its top-level declarations are
 // no longer visible to unconverted classic <script> pages. Re-publish the
