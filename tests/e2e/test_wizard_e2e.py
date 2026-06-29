@@ -1954,3 +1954,27 @@ def test_imagehandler_module_loads_via_import(page, live_server):
     assert state["hasImageHandler"], "window.ImageHandler must exist after import()"
     assert state["isPreview"], "ImageHandler.isBuiltinPreviewImage must be a function"
     assert state["genPreview"], "ImageHandler.generateSinglePreview must be a function"
+
+
+# ES module conversion of eventHandler.js (chore/convert-eventhandler-to-module).
+# Loaded by 025-libraries.js via dynamic import(). Publishes
+# window.EventHandler for backward compat.
+
+
+@pytest.mark.e2e
+def test_eventhandler_module_loads_via_import(page, live_server):
+    """eventHandler.js is now loaded via import() by 025-libraries.js.
+    Verify window.EventHandler is available with expected methods.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_timeout(2000)
+    state = page.evaluate("""() => ({
+            hasEventHandler: typeof window.EventHandler !== 'undefined',
+            hasAttach: typeof window.EventHandler === 'object'
+                && typeof window.EventHandler.attachLibraryListeners === 'function',
+            hasHighlights: typeof window.EventHandler === 'object'
+                && typeof window.EventHandler.updateAccordionHighlights === 'function'
+        })""")
+    assert state["hasEventHandler"], "window.EventHandler must exist after import()"
+    assert state["hasAttach"], "EventHandler.attachLibraryListeners must be a function"
+    assert state["hasHighlights"], "EventHandler.updateAccordionHighlights must be a function"

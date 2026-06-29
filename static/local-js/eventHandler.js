@@ -9,7 +9,7 @@ const EventHandler = {
         // Attach event listener to each checkbox
         checkbox.addEventListener('change', () => {
           EventHandler.toggleLibraryVisibility(libraryId, checkbox.checked)
-          ValidationHandler.updateValidationState()
+          window.ValidationHandler.updateValidationState()
         })
         checkbox.dataset.listenerAdded = 'true'
       }
@@ -95,7 +95,7 @@ const EventHandler = {
             select.addEventListener('change', () => {
               console.log(`[DEBUG] Dropdown changed: ${select.id} -> ${select.value}`)
               EventHandler.updateAccordionHighlights()
-              ValidationHandler.updateValidationState()
+              window.ValidationHandler.updateValidationState()
 
               // Trigger preview update if template variable
               if (select.classList.contains('template-variable-select')) {
@@ -117,7 +117,7 @@ const EventHandler = {
             // Exclude preview overlay accordions from highlight updates
             if (!input.closest('.preview-accordion')) {
               EventHandler.updateAccordionHighlights()
-              ValidationHandler.updateValidationState()
+              window.ValidationHandler.updateValidationState()
             }
           })
           input.dataset.listenerAdded = true
@@ -134,7 +134,7 @@ const EventHandler = {
 
             // Ensure Highlights Update Properly
             EventHandler.updateAccordionHighlights()
-            ValidationHandler.updateValidationState()
+            window.ValidationHandler.updateValidationState()
           })
 
           dropdown.dataset.listenerAdded = 'true'
@@ -303,8 +303,8 @@ const EventHandler = {
         if (typeof EventHandler.updateAccordionHighlights === 'function') {
           EventHandler.updateAccordionHighlights()
         }
-        if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
-          ValidationHandler.updateValidationState()
+        if (typeof window.ValidationHandler !== 'undefined' && window.ValidationHandler.updateValidationState) {
+          window.ValidationHandler.updateValidationState()
         }
       }
       library.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
@@ -574,6 +574,8 @@ const EventHandler = {
   }
 }
 
+window.EventHandler = EventHandler
+
 // MutationObserver for dynamically added elements
 const shouldReattachForNode = (node) => {
   if (!node || node.nodeType !== 1) return false
@@ -612,16 +614,13 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(document.body, { childList: true, subtree: true })
 
 // Initial call on page load
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('[DEBUG] Initializing EventHandler...')
+console.log('[DEBUG] Initializing EventHandler...')
 
-  // Run once on page load
-  EventHandler.attachLibraryListeners()
-  ValidationHandler.restoreSelectedLibraries()
-  ValidationHandler.updateValidationState()
-
-  installRatingSubmitGuard()
-})
+// Run once on page load
+EventHandler.attachLibraryListeners()
+window.ValidationHandler.restoreSelectedLibraries()
+window.ValidationHandler.updateValidationState()
+installRatingSubmitGuard()
 
 document.querySelectorAll('select.template-variable-select').forEach(select => {
   const selectedValue = select.dataset.selected
