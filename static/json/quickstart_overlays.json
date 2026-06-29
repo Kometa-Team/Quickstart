@@ -3893,6 +3893,27 @@
               }
             ]
           },
+          "flag_alignment": {
+            "default": "left",
+            "label": "Flag Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "back_align": {
+            "default": "left",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
           "back_color": {
             "input_type": "text",
             "default": "#00000099",
@@ -4568,6 +4589,27 @@
                 "label": "Apply to Episode",
                 "value": "episode"
               }
+            ]
+          },
+          "flag_alignment": {
+            "default": "right",
+            "label": "Flag Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "back_align": {
+            "default": "right",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
             ]
           },
           "back_color": {
@@ -6036,6 +6078,23 @@
               "color",
               "white"
             ]
+          },
+          "originals_only": {
+            "label": "Originals Only",
+            "input_type": "toggle",
+            "default": false,
+            "tooltip": "Switches supported services from \"currently streaming on this service\" to that service's original productions. This cannot be combined with Region and only works for select services such as Amazon, Apple TV, Disney, Max, Hulu, Netflix, Paramount, Peacock.",
+            "mutually_exclusive_with": "region"
+          },
+          "region": {
+            "label": "Region",
+            "input_type": "select",
+            "default": "",
+            "tooltip": "Optional ISO 3166-1 country code used for streaming availability, such as US, CA, GB, or ES. Leave blank to use the default provider region. Do not combine this with Originals Only.",
+            "options_source": "iso_3166_1_regions",
+            "include_blank_option": true,
+            "blank_option_label": "Default Region (Kometa default: US)",
+            "mutually_exclusive_with": "originals_only"
           },
           "use_netflix": {
             "label": "Use Netflix",

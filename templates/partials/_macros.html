@@ -1985,10 +1985,25 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
                                                             data-selected="{{ selected_value|string|lower }}"
                                                             data-default="{{ var_details.default }}"
+                                                            {% if var_details.mutually_exclusive_with %}data-mutually-exclusive-with="{{ var_details.mutually_exclusive_with }}"{% endif %}
+                                                            {% if var_details.validation_preset %}data-validation-preset="{{ var_details.validation_preset }}"{% endif %}
                                                             {% if var_name in ['rating1_image', 'rating2_image', 'rating3_image'] %}data-rating-image-select="true"{% endif %}
-                                                            {% if
-                                                            selected_value !=var_details.default %}data-user-modified="true"
-                                                            {% endif %}>
+                                                            {% if selected_value != var_details.default %}data-user-modified="true"{% endif %}>
+                                                            {% if var_details.include_blank_option %}
+                                                            <option value="" {% if not selected_value %}selected{% endif %}>
+                                                                {{ var_details.blank_option_label | default('Default') }}
+                                                            </option>
+                                                            {% endif %}
+                                                            {% if var_details.options_source == 'iso_3166_1_regions' %}
+                                                            <option value="US" {% if selected_value == 'US' %}selected{% endif %}>United States</option>
+                                                            {% for code, region in data['iso_3166_1_regions'] | sort(attribute='1') %}
+                                                            {% if code != "US" %}
+                                                            <option value="{{ code }}" {% if selected_value == code %}selected{% endif %}>
+                                                                {{ region }}
+                                                            </option>
+                                                            {% endif %}
+                                                            {% endfor %}
+                                                            {% else %}
                                                             {% for option in var_details.options %}
                                                             {% if option is string %}
                                                             {% set opt_value = option %}
@@ -1997,12 +2012,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             {% set opt_value = option.value %}
                                                             {% set opt_label = option.label %}
                                                             {% endif %}
-                                                            <option value="{{ opt_value }}" {% if selected_value==opt_value
-                                                                %}selected{% endif %}>
+                                                            <option value="{{ opt_value }}" {% if selected_value == opt_value %}selected{% endif %}>
                                                                 {{ opt_label }}
                                                             </option>
-                                                        {% endfor %}
-                                                    </select>
+                                                            {% endfor %}
+                                                            {% endif %}
+                                                        </select>
                                                         {% if var_name in ['rating1_image', 'rating2_image', 'rating3_image'] %}
                                                         <span class="input-group-text rating-sync-status text-secondary"
                                                             data-rating-slot="{{ var_name | replace('_image', '') }}"
