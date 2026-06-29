@@ -105,6 +105,12 @@ const DEFAULT_MESSAGES = {
  *                                               repopulate post-validation state (dropdowns etc.) when an
  *                                               already-validated user returns to the page. No user-facing
  *                                               status message is shown for this silent call.
+ * @param {(data: object) => boolean} [config.isValid]  Predicate that decides whether the server response
+ *                                               counts as a successful validation. Defaults to
+ *                                               `(data) => !!data.valid`. Override when the wizard's server
+ *                                               returns a different success marker (e.g. Plex returns
+ *                                               `data.validated` for success but `data.valid: false` on
+ *                                               failure -- asymmetric naming preserved from the legacy API).
  * @param {string} [config.spinnerKey='validate'] Argument passed to show/hideSpinner.
  */
 export function createApiKeyValidator (config) {
@@ -123,6 +129,7 @@ export function createApiKeyValidator (config) {
     onValidationSuccess,
     onPreSubmit,
     revalidateOnLoad = false,
+    isValid = (data) => !!data.valid,
     spinnerKey = 'validate'
   } = config
 
@@ -231,7 +238,7 @@ export function createApiKeyValidator (config) {
     })
       .then(response => response.json())
       .then(data => {
-        if (data.valid) {
+        if (isValid(data)) {
           validatedField.value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
           refreshValidationCallout(validatedFieldId)
@@ -284,7 +291,7 @@ export function createApiKeyValidator (config) {
       })
         .then(response => response.json())
         .then(data => {
-          if (data.valid) onValidationSuccess(data)
+          if (isValid(data)) onValidationSuccess(data)
         })
         .catch(() => { /* swallowed; see comment above */ })
     }
