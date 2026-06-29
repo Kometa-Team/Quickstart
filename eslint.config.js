@@ -103,6 +103,8 @@ const moduleFiles = [
   'static/local-js/130-trakt.js',
   'static/local-js/140-mal.js',
   'static/local-js/150-settings.js',
+  'static/local-js/150-settings.js',
+  'static/local-js/900-kometa.js',
   'static/local-js/905-analytics.js',
   'static/local-js/915-imagemaid.js'
 ]
