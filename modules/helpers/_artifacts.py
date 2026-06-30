@@ -8,7 +8,6 @@ from pathlib import Path
 
 from modules.helpers._legacy import CONFIG_DIR
 
-
 MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
 MANAGED_OVERLAY_IMAGE_DIR = "overlay_images"
 MANAGED_SYNC_ARTIFACT_DIRS = MANAGED_LIBRARY_FILE_DIRS + (MANAGED_OVERLAY_IMAGE_DIR,)
@@ -130,7 +129,11 @@ def sync_managed_library_artifacts_to_kometa(
     kometa_root: str | Path | None = None,
     kometa_config_dir: str | Path | None = None,
 ) -> dict:
-    from modules.helpers._legacy import _directory_tree_signature, get_kometa_config_dir, handle_remove_readonly
+    from modules.helpers._legacy import (
+        _directory_tree_signature,
+        get_kometa_config_dir,
+        handle_remove_readonly,
+    )
 
     normalized = require_config_name_for_storage(config_name, context="Managed library artifact sync")
     source_root = get_managed_config_artifact_root(normalized)
@@ -162,9 +165,7 @@ def sync_managed_library_artifacts_to_kometa(
                 pass
 
             try:
-                if destination_dir.exists() and _directory_tree_signature(source_dir) == _directory_tree_signature(
-                    destination_dir
-                ):
+                if destination_dir.exists() and _directory_tree_signature(source_dir) == _directory_tree_signature(destination_dir):
                     synced.append(str(destination_dir))
                     continue
                 destination_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -297,7 +298,10 @@ def list_orphaned_config_artifacts(
 
             active_config_names = database.get_unique_config_names() or []
         except Exception as exc:
-            return {"orphans": [], "errors": [f"Failed to load active config names: {exc}"]}
+            return {
+                "orphans": [],
+                "errors": [f"Failed to load active config names: {exc}"],
+            }
 
     active_names = {normalize_config_name_for_storage(name) for name in active_config_names if str(name or "").strip()}
     bundles: dict[str, dict] = {}
@@ -330,10 +334,7 @@ def list_orphaned_config_artifacts(
     for path in config_dir.iterdir():
         if not path.is_dir():
             continue
-        if any(
-            (path / folder_name).exists() and (path / folder_name).is_dir()
-            for folder_name in MANAGED_CONFIG_ARTIFACT_DIRS
-        ):
+        if any((path / folder_name).exists() and (path / folder_name).is_dir() for folder_name in MANAGED_CONFIG_ARTIFACT_DIRS):
             bundle = ensure_bundle(path.name)
             path_text = str(path)
             if path_text not in bundle["paths"]:
@@ -444,11 +445,7 @@ def list_orphaned_config_versions(config_name: str | None) -> dict:
                 "kind": kind,
                 "filename": path.name,
                 "mtime": stats.st_mtime,
-                "modified_at": datetime.datetime.fromtimestamp(
-                    stats.st_mtime, datetime.UTC
-                )
-                .isoformat()
-                .replace("+00:00", "Z"),
+                "modified_at": datetime.datetime.fromtimestamp(stats.st_mtime, datetime.UTC).isoformat().replace("+00:00", "Z"),
                 "size": stats.st_size,
             }
         )
@@ -463,12 +460,18 @@ def list_orphaned_config_versions(config_name: str | None) -> dict:
                 add_version(path, "archive")
 
     versions.sort(
-        key=lambda item: (item.get("mtime") or 0, 1 if item.get("kind") == "current" else 0), reverse=True
+        key=lambda item: (
+            item.get("mtime") or 0,
+            1 if item.get("kind") == "current" else 0,
+        ),
+        reverse=True,
     )
     return {"name": normalized, "versions": versions}
 
 
-def prune_orphaned_config_archives(active_config_names: list[str] | None = None) -> dict:
+def prune_orphaned_config_archives(
+    active_config_names: list[str] | None = None,
+) -> dict:
     archive_root = Path(CONFIG_DIR) / "archives"
     removed: list[str] = []
     errors: list[str] = []
@@ -479,7 +482,10 @@ def prune_orphaned_config_archives(active_config_names: list[str] | None = None)
 
             active_config_names = database.get_unique_config_names() or []
         except Exception as exc:
-            return {"removed": [], "errors": [f"Failed to load active config names: {exc}"]}
+            return {
+                "removed": [],
+                "errors": [f"Failed to load active config names: {exc}"],
+            }
 
     active_names = {normalize_config_name_for_storage(name) for name in active_config_names if str(name or "").strip()}
     if not archive_root.exists():
