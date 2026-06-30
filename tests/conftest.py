@@ -42,21 +42,31 @@ def _load_app(config_dir, kometa_root):
         sys.path.insert(0, repo_root)
 
     import modules.helpers as helpers
-    from modules.helpers import _legacy as helpers_legacy
 
     _seed_schema_files(config_dir)
-    # NOTE: After helpers.py was decomposed into a package, ``CONFIG_DIR`` (and
-    # related path constants) live as module-level globals inside ``_legacy.py``.
-    # ``from ._legacy import *`` copies them into the package namespace, but the
-    # two bindings then drift independently. Functions defined inside ``_legacy``
-    # resolve ``CONFIG_DIR`` from ``_legacy``'s own namespace at call time, so we
-    # must patch BOTH or test isolation breaks (the function will keep using the
-    # real repo's config dir).
-    for mod in (helpers, helpers_legacy):
-        mod.CONFIG_DIR = str(config_dir)
-        mod.JSON_SCHEMA_DIR = os.path.join(str(config_dir), ".schema")
-        mod.HASH_FILE = os.path.join(str(config_dir), ".schema", "file_hashes.txt")
-        mod.RESTART_NOTICE_FILE = os.path.join(str(config_dir), "restart_needed.flag")
+    # NOTE: After helpers.py was decomposed into a package, path constants
+    # like ``CONFIG_DIR`` live as module-level globals inside ``_legacy.py``.
+    # Extracted submodules (``_fonts`` etc.) import these at load time, so
+    # their bindings drift independently from the package. Patch every loaded
+    # submodule that carries the constant.
+    config_dir = str(config_dir)
+    schema_dir = os.path.join(config_dir, ".schema")
+    hash_file = os.path.join(schema_dir, "file_hashes.txt")
+    restart_notice = os.path.join(config_dir, "restart_needed.flag")
+    mods = {helpers}
+    for attr_name in dir(helpers):
+        obj = getattr(helpers, attr_name)
+        if isinstance(obj, type(helpers)) and hasattr(obj, "CONFIG_DIR"):
+            mods.add(obj)
+    for mod in mods:
+        if hasattr(mod, "CONFIG_DIR"):
+            mod.CONFIG_DIR = config_dir
+        if hasattr(mod, "JSON_SCHEMA_DIR"):
+            mod.JSON_SCHEMA_DIR = schema_dir
+        if hasattr(mod, "HASH_FILE"):
+            mod.HASH_FILE = hash_file
+        if hasattr(mod, "RESTART_NOTICE_FILE"):
+            mod.RESTART_NOTICE_FILE = restart_notice
     helpers.check_for_update = lambda: {
         "local_version": "0.0.0",
         "remote_version": "0.0.0",
@@ -159,25 +169,36 @@ def client(app):
 def _patch_helpers_paths(monkeypatch, config_dir):
     """Re-bind CONFIG_DIR + friends across all helpers namespaces.
 
-    After ``modules/helpers.py`` was split into ``modules/helpers/__init__.py``
-    plus submodules, path constants like ``CONFIG_DIR`` exist in BOTH the
-    package namespace and the ``_legacy`` submodule namespace -- and functions
-    inside ``_legacy`` resolve ``CONFIG_DIR`` from their own module globals at
-    call time. Patching only the package namespace silently leaves the legacy
-    functions using the real repo's config dir. So patch both.
+    After ``modules/helpers.py`` was split into a package, path constants
+    like ``CONFIG_DIR`` are imported at module load time by extracted
+    submodules (``_fonts``, ``_paths``, etc.) from ``_legacy``.  Those
+    import-time bindings then drift independently from the package-level
+    ``helpers.CONFIG_DIR``.  Functions inside any submodule resolve the
+    constant from *their own* module globals, so we must patch every
+    submodule that uses these constants.
     """
     import modules.helpers as helpers
-    from modules.helpers import _legacy as helpers_legacy
 
     config_dir = str(config_dir)
     schema_dir = os.path.join(config_dir, ".schema")
     hash_file = os.path.join(schema_dir, "file_hashes.txt")
     restart_notice = os.path.join(config_dir, "restart_needed.flag")
-    for mod in (helpers, helpers_legacy):
-        monkeypatch.setattr(mod, "CONFIG_DIR", config_dir)
-        monkeypatch.setattr(mod, "JSON_SCHEMA_DIR", schema_dir)
-        monkeypatch.setattr(mod, "HASH_FILE", hash_file)
-        monkeypatch.setattr(mod, "RESTART_NOTICE_FILE", restart_notice)
+
+    # Patch the package and every loaded submodule that carries path constants.
+    mods = {helpers}
+    for attr_name in dir(helpers):
+        obj = getattr(helpers, attr_name)
+        if isinstance(obj, type(helpers)) and hasattr(obj, "CONFIG_DIR"):
+            mods.add(obj)
+    for mod in mods:
+        if hasattr(mod, "CONFIG_DIR"):
+            monkeypatch.setattr(mod, "CONFIG_DIR", config_dir)
+        if hasattr(mod, "JSON_SCHEMA_DIR"):
+            monkeypatch.setattr(mod, "JSON_SCHEMA_DIR", schema_dir)
+        if hasattr(mod, "HASH_FILE"):
+            monkeypatch.setattr(mod, "HASH_FILE", hash_file)
+        if hasattr(mod, "RESTART_NOTICE_FILE"):
+            monkeypatch.setattr(mod, "RESTART_NOTICE_FILE", restart_notice)
 
 
 @pytest.fixture()
