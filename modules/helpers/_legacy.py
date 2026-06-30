@@ -1286,7 +1286,9 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
     config_dir = Path(CONFIG_DIR)
     kometa_root = get_kometa_root_path()
     kometa_config_dir = get_kometa_config_dir()
-    name = require_config_name_for_storage(config_name, context="Saving a named config")
+    from modules import helpers as _h_artifacts
+
+    name = _h_artifacts.require_config_name_for_storage(config_name, context="Saving a named config")
     latest_filename = f"{name}_config.yml"
     latest_path = config_dir / latest_filename
     kometa_path = kometa_config_dir / latest_filename
@@ -1367,8 +1369,10 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
             ts_log(f"Failed to sync fonts to Kometa: {exc}", level="WARNING")
 
     if kometa_write_ok:
+        from modules import helpers as _h_artifacts
+
         try:
-            artifact_result = sync_managed_library_artifacts_to_kometa(name, kometa_root=kometa_root, kometa_config_dir=kometa_config_dir)
+            artifact_result = _h_artifacts.sync_managed_library_artifacts_to_kometa(name, kometa_root=kometa_root, kometa_config_dir=kometa_config_dir)
             synced = artifact_result.get("synced", [])
             removed = artifact_result.get("removed", [])
             errors = artifact_result.get("errors", [])
@@ -2588,70 +2592,3 @@ def is_imagemaid_running():
         except Exception:
             pass
         return False
-
-
-
-    """Move legacy *_config*.yml into config/archives/<name>/ and optionally prune."""
-    config_dir = Path(CONFIG_DIR)
-    archive_root = config_dir / "archives"
-    archive_pattern = re.compile(r"^(?P<name>.+)_config_(?P<suffix>\d+)\.yml$", re.IGNORECASE)
-    current_pattern = re.compile(r"^(?P<name>.+)_config\.yml$", re.IGNORECASE)
-
-    moved = 0
-    errors: list[str] = []
-
-    if history_limit is None:
-        history_limit = 0
-    try:
-        history_limit = int(str(history_limit).strip())
-    except (TypeError, ValueError):
-        history_limit = 0
-    if history_limit < 0:
-        history_limit = 0
-
-    def move_config(path: Path, name: str) -> None:
-        nonlocal moved
-        dest_dir = archive_root / name
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        dest_path = dest_dir / path.name
-        counter = 1
-        while dest_path.exists():
-            dest_path = dest_dir / f"{path.stem}_moved{counter}{path.suffix}"
-            counter += 1
-        try:
-            shutil.move(str(path), str(dest_path))
-            moved += 1
-        except Exception as exc:
-            errors.append(f"Failed to move {path} -> {dest_path}: {exc}")
-
-    for path in config_dir.glob("*_config_*.yml"):
-        if not path.is_file():
-            continue
-        match = archive_pattern.match(path.name)
-        if not match:
-            continue
-        move_config(path, match.group("name"))
-
-    for path in config_dir.glob("*_config.yml"):
-        if not path.is_file():
-            continue
-        match = current_pattern.match(path.name)
-        if not match:
-            continue
-        move_config(path, match.group("name"))
-
-    if history_limit > 0 and archive_root.exists():
-        for dest_dir in archive_root.iterdir():
-            if not dest_dir.is_dir():
-                continue
-            archives = sorted(dest_dir.glob("*.yml"), key=lambda p: p.stat().st_mtime)
-            if len(archives) > history_limit:
-                for old_path in archives[: len(archives) - history_limit]:
-                    try:
-                        old_path.unlink()
-                    except Exception as exc:
-                        errors.append(f"Failed to prune {old_path}: {exc}")
-
-    return {"moved": moved, "errors": errors, "history_limit": history_limit}
-
-
