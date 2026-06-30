@@ -6004,6 +6004,25 @@ function wireRatingsOffsetSync (scope) {
       if (hasExplicitSlotOffsets('vertical')) syncSharedFromSlots('vertical')
     }
 
+    const resetRatingsPlacement = (refreshAlignmentDefaults = false) => {
+      if (group.dataset.resetting === 'true') return
+      group.dataset.ratingsBulkUpdate = 'true'
+      try {
+        if (refreshAlignmentDefaults) {
+          applyAlignmentDefaults(true)
+        }
+        applyPlacementDefaults(true)
+        applyComputedOffsets(true)
+        Object.values(sharedInputs).forEach(input => {
+          if (!input) return
+          input.dataset.prevValue = String(input.value ?? '')
+        })
+      } finally {
+        delete group.dataset.ratingsBulkUpdate
+      }
+      updateAdjustedIndicators()
+    }
+
     applyAlignmentDefaults()
     applyPlacementDefaults()
     applyComputedOffsets()
@@ -6019,12 +6038,7 @@ function wireRatingsOffsetSync (scope) {
     if (alignmentInput && alignmentInput.dataset.ratingsAlignmentBound !== 'true') {
       const handleAlignmentChange = () => {
         if (group.dataset.resetting === 'true') return
-        group.dataset.ratingsBulkUpdate = 'true'
-        applyAlignmentDefaults(true)
-        applyPlacementDefaults(true)
-        applyComputedOffsets(true)
-        delete group.dataset.ratingsBulkUpdate
-        refreshDerivedOffsets()
+        resetRatingsPlacement(true)
       }
       alignmentInput.addEventListener('input', handleAlignmentChange)
       alignmentInput.addEventListener('change', handleAlignmentChange)
@@ -6034,12 +6048,7 @@ function wireRatingsOffsetSync (scope) {
     if (positionInput && positionInput.dataset.ratingsPositionBound !== 'true') {
       const refreshFromPosition = () => {
         if (group.dataset.resetting === 'true') return
-        group.dataset.ratingsBulkUpdate = 'true'
-        applyPlacementDefaults(true)
-        applyComputedOffsets(true)
-        delete group.dataset.ratingsBulkUpdate
-        refreshDerivedOffsets()
-        updateAdjustedIndicators()
+        resetRatingsPlacement(false)
       }
       positionInput.addEventListener('change', refreshFromPosition)
       positionInput.dataset.ratingsPositionBound = 'true'
@@ -6048,12 +6057,7 @@ function wireRatingsOffsetSync (scope) {
     if (verticalPositionInput && verticalPositionInput.dataset.ratingsPositionBound !== 'true') {
       const refreshFromVertical = () => {
         if (group.dataset.resetting === 'true') return
-        group.dataset.ratingsBulkUpdate = 'true'
-        applyPlacementDefaults(true)
-        applyComputedOffsets(true)
-        delete group.dataset.ratingsBulkUpdate
-        refreshDerivedOffsets()
-        updateAdjustedIndicators()
+        resetRatingsPlacement(false)
       }
       verticalPositionInput.addEventListener('change', refreshFromVertical)
       verticalPositionInput.dataset.ratingsPositionBound = 'true'
