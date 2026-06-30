@@ -58,11 +58,27 @@ def is_logscan_gzip_path(path):
 
 
 def read_logscan_text(path, encoding="utf-8", errors="replace"):
-    """Read text from a logscan file, handling gzip transparently."""
+    """Read text from a logscan file, handling gzip and maintenance sidecars."""
     import gzip
 
+    path = Path(path)
     if is_logscan_gzip_path(path):
-        with gzip.open(path, "rt", encoding=encoding, errors=errors) as f:
-            return f.read()
-    with open(path, "r", encoding=encoding, errors=errors) as f:
-        return f.read()
+        with gzip.open(path, "rt", encoding=encoding, errors=errors) as handle:
+            return handle.read()
+    content = path.read_text(encoding=encoding, errors=errors)
+    try:
+        if path.name.lower() == "meta.log":
+            sidecar_path = path.parent / "meta.quickstart-maintenance.log"
+            if sidecar_path.exists() and sidecar_path.is_file():
+                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
+                if sidecar_content:
+                    content = f"{content.rstrip()}\n{sidecar_content}\n"
+        elif path.suffix.lower() == ".log":
+            sidecar_path = path.parent / "imagemaid.quickstart-maintenance.log"
+            if sidecar_path.exists() and sidecar_path.is_file():
+                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
+                if sidecar_content:
+                    content = f"{content.rstrip()}\n{sidecar_content}\n"
+    except Exception:
+        pass
+    return content

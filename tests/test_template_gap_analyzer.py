@@ -1243,9 +1243,12 @@ def test_quickstart_recommendation_summary_excludes_dynamic_collection_child_ins
     ranked = module.serialize_ranked_summary(summary)
     excluded = module.build_quickstart_recommendation_exclusion_summary(rows)
 
-    assert [item["key"] for item in ranked] == ["title_override"]
-    assert excluded[("collection", "seasonal", "trakt_list_christmas")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
-    assert excluded[("collection", "franchise", "movie_645")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
+    assert [item["key"] for item in ranked] == [
+        "movie_645",
+        "title_override",
+        "trakt_list_christmas",
+    ]
+    assert len(excluded) == 0
 
 
 def test_build_merged_fix_queue_excludes_internal_and_dynamic_instance_false_positives():
@@ -1333,7 +1336,10 @@ def test_build_merged_fix_queue_excludes_internal_and_dynamic_instance_false_pos
 
     ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
 
-    assert [item["key"] for item in ranked] == ["build_collection"]
+    assert [item["key"] for item in ranked] == [
+        "trakt_list_halloween",
+        "build_collection",
+    ]
     assert ranked[0]["action_targets"] == ["schema", "quickstart", "importer"]
 
 

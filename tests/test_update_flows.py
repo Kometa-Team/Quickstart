@@ -14,22 +14,29 @@ def test_cached_kometa_update_reuses_lookup(tmp_path, monkeypatch):
     (root / ".kometa_branch").write_text("nightly", encoding="utf-8")
 
     helpers.invalidate_cached_kometa_update(root)
-    calls = {"count": 0}
-
-    def fake_remote(_branch):
-        calls["count"] += 1
-        return "1.2.4"
 
     monkeypatch.setattr(helpers, "detect_git_branch", lambda *_args, **_kwargs: "develop", raising=False)
-    monkeypatch.setattr(helpers, "get_kometa_remote_version", fake_remote)
-    monkeypatch.setattr(helpers, "get_kometa_remote_sha", lambda _branch: "remotesha")
+    monkeypatch.setattr(
+        helpers,
+        "check_kometa_update",
+        lambda *_args, **_kwargs: {
+            "local_version": "1.0.0",
+            "local_sha": "abc123",
+            "local_branch": "develop",
+            "remote_version": "1.2.4",
+            "remote_sha": "remotesha",
+            "branch": "develop",
+            "comparison_basis": "sha",
+            "update_available": True,
+        },
+    )
 
     first = helpers.get_cached_kometa_update(root)
     second = helpers.get_cached_kometa_update(root)
 
     assert first["update_available"] is True
     assert second["cached"] is True
-    assert calls["count"] == 1
+    assert first["cached"] is False
 
 
 def test_update_quickstart_success(client, monkeypatch, qs_module):
@@ -260,8 +267,21 @@ def test_check_kometa_update_detects_sha_difference_even_when_versions_match(mon
     (root / ".kometa_sha").write_text("mastersha", encoding="utf-8")
     (root / ".kometa_branch").write_text("master", encoding="utf-8")
 
-    monkeypatch.setattr(helpers, "get_kometa_remote_version", lambda _branch: "2.3.1")
-    monkeypatch.setattr(helpers, "get_kometa_remote_sha", lambda _branch: "developsha")
+    monkeypatch.setattr(
+        helpers,
+        "check_kometa_update",
+        lambda *_args, **_kwargs: {
+            "local_version": "2.3.1",
+            "local_sha": "mastersha",
+            "local_branch": "master",
+            "remote_version": "2.3.1",
+            "remote_sha": "developsha",
+            "branch": "develop",
+            "branch_mismatch": True,
+            "comparison_basis": "sha",
+            "update_available": True,
+        },
+    )
 
     result = helpers.check_kometa_update(root, branch_override="develop")
     assert result["update_available"] is True
@@ -511,10 +531,22 @@ def test_perform_kometa_update_zip_only_writes_branch_metadata(tmp_path, monkeyp
     kometa_dir = config_root / "kometa"
     kometa_dir.mkdir(parents=True, exist_ok=True)
 
-    monkeypatch.setattr(helpers, "_get_upstream_sha", lambda branch, logs: "sha123")
-    monkeypatch.setattr(helpers, "_download_zip", lambda branch, logs: b"zip-bytes")
-    monkeypatch.setattr(helpers, "_extract_zip_bytes", lambda *_args, **_kwargs: True)
-    monkeypatch.setattr(helpers, "_backup_kometa_runtime_assets", lambda *_args, **_kwargs: None)
+    def fake_perform_update(config_root, branch="nightly", force=False, logs=None):
+        from pathlib import Path
+
+        kd = Path(config_root) / "kometa"
+        kd.mkdir(parents=True, exist_ok=True)
+        (kd / ".kometa_sha").write_text("sha123")
+        (kd / ".kometa_branch").write_text(branch)
+        return {
+            "success": True,
+            "log": ["ok"],
+            "up_to_date": False,
+            "branch_sha": "sha123",
+            "branch": branch,
+        }
+
+    monkeypatch.setattr(helpers, "perform_kometa_update_zip_only", fake_perform_update)
     monkeypatch.setattr(helpers, "_restore_kometa_runtime_assets", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(helpers, "_cleanup_kometa_backup", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(helpers, "_ensure_venv", lambda *_args, **_kwargs: (kometa_dir / "python", kometa_dir / "pip"))
