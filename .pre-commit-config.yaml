@@ -1,4 +1,4 @@
-exclude: '^.*bootstrap.bundle.js$|^tests/fixtures/|^PART$|static/local-js/025-libraries.js$'
+exclude: '^.*bootstrap.bundle.js$|^tests/fixtures/|^PART$'
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -11,10 +11,6 @@ repos:
     -   id: check-merge-conflict
     -   id: no-commit-to-branch
     -   id: requirements-txt-fixer
--   repo: https://github.com/standard/standard
-    rev: v17.1.2
-    hooks:
-      - id: standard
 -   repo: local
     hooks:
     -   id: eslint
