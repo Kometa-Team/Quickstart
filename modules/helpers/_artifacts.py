@@ -129,8 +129,8 @@ def sync_managed_library_artifacts_to_kometa(
     kometa_root: str | Path | None = None,
     kometa_config_dir: str | Path | None = None,
 ) -> dict:
+    from modules.helpers._file_utils import _directory_tree_signature
     from modules.helpers._legacy import (
-        _directory_tree_signature,
         get_kometa_config_dir,
         handle_remove_readonly,
     )
