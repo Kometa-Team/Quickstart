@@ -23,6 +23,9 @@ from ._legacy import (  # noqa: F401
     _pip_install,
 )
 
+# Private helpers from other submodules (not re-exported via `*` due to underscore prefix).
+from ._file_utils import _directory_tree_signature  # noqa: F401
+
 # Then import from smaller, focused submodules.  Any names they export
 # will override legacy definitions (in case of a future rename).
 from ._cli import *  # noqa: F403
@@ -33,4 +36,6 @@ from ._artifacts import *  # noqa: F403
 from ._plex_cache import *  # noqa: F403
 from ._misc import *  # noqa: F403
 from ._restart import *  # noqa: F403
+from ._redact import *  # noqa: F403
+from ._file_utils import *  # noqa: F403
 from ._paths import *  # noqa: F403

@@ -698,27 +698,6 @@ def get_quickstart_settings_summary():
     return lines
 
 
-def redact_sensitive_data(yaml_content):
-    import re
-
-    # Split the YAML content into lines for line-by-line processing
-    lines = yaml_content.splitlines()
-
-    # Process each line to redact sensitive data
-    redacted_lines = [
-        re.sub(
-            r"(token|client.*|url|api_*key|secret|error|delete|run_start|run_end|version|changes|username|password): .+",
-            r"\1: (redacted)",
-            line.strip("\r\n"),
-        )
-        for line in lines
-    ]
-
-    # Join the lines back together to form the redacted YAML content
-    redacted_content = "\n".join(redacted_lines)
-    return redacted_content
-
-
 def get_top_imdb_items(library_id, media_type, placeholder_id=None):
     ts_log("Fetching Plex credentials for '010-plex'", level="DEBUG")
     plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
@@ -1093,35 +1072,6 @@ def get_library_metadata(plex=None, sections=None, plex_url=None, plex_token=Non
         return {"error": str(e)}
 
 
-def contains_non_latin(text):
-    return bool(re.search(r"[^\x00-\x7F]", text))
-
-
-def _read_text_if_exists(path: Path) -> str | None:
-    try:
-        return path.read_text(encoding="utf-8")
-    except Exception:
-        return None
-
-
-def _directory_tree_signature(root: Path) -> list[tuple[str, int, int]]:
-    if not root.exists() or not root.is_dir():
-        return []
-
-    entries: list[tuple[str, int, int]] = []
-    for path in sorted(root.rglob("*")):
-        relative = path.relative_to(root).as_posix()
-        if path.is_dir():
-            entries.append((f"{relative}/", 0, 0))
-            continue
-        try:
-            stats = path.stat()
-            entries.append((relative, int(stats.st_size), int(stats.st_mtime_ns)))
-        except Exception:
-            entries.append((relative, -1, -1))
-    return entries
-
-
 def save_to_named_config(yaml_text, config_name, font_refs=None):
     config_dir = Path(CONFIG_DIR)
     kometa_root = get_kometa_root_path()
@@ -1139,6 +1089,8 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
         history_limit = 0
     if history_limit < 0:
         history_limit = 0
+
+    from modules.helpers._file_utils import _read_text_if_exists
 
     existing_local_yaml = _read_text_if_exists(latest_path)
     local_needs_write = existing_local_yaml != yaml_text
