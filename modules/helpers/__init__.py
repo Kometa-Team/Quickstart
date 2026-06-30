@@ -11,6 +11,18 @@ from __future__ import annotations
 # Import everything from the legacy module first (backward compat).
 from ._legacy import *  # noqa: F403
 
+# Private helpers used by tests and other modules.
+from ._legacy import (  # noqa: F401
+    _get_upstream_sha,
+    _download_zip,
+    _extract_zip_bytes,
+    _backup_kometa_runtime_assets,
+    _restore_kometa_runtime_assets,
+    _cleanup_kometa_backup,
+    _ensure_venv,
+    _pip_install,
+)
+
 # Then import from smaller, focused submodules.  Any names they export
 # will override legacy definitions (in case of a future rename).
 from ._paths import *  # noqa: F403
