@@ -2,7 +2,6 @@ import datetime
 import hashlib
 import io
 import platform
-import json
 import os
 import psutil
 import re
@@ -718,59 +717,6 @@ def redact_sensitive_data(yaml_content):
     # Join the lines back together to form the redacted YAML content
     redacted_content = "\n".join(redacted_lines)
     return redacted_content
-
-
-def update_env_variable(key, value):
-    env_path = os.path.join(CONFIG_DIR, ".env")
-
-    env_lines = []
-    if os.path.exists(env_path):
-        with open(env_path, "r") as file:
-            env_lines = file.readlines()
-
-    with open(env_path, "w") as file:
-        key_found = False
-        for line in env_lines:
-            if line.startswith(f"{key}="):
-                file.write(f"{key}={value}\n")
-                key_found = True
-            else:
-                file.write(line)
-        if not key_found:
-            file.write(f"{key}={value}\n")
-
-
-def set_restart_notice(reason, message=None):
-    if not isinstance(reason, str) or not reason.strip():
-        return False
-    payload = {
-        "reason": reason.strip(),
-        "message": message.strip() if isinstance(message, str) and message.strip() else None,
-        "created_at": datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z"),
-    }
-    try:
-        with open(RESTART_NOTICE_FILE, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle)
-        return True
-    except Exception as exc:
-        ts_log(f"Failed to write restart notice: {exc}", level="WARNING")
-        return False
-
-
-def consume_restart_notice():
-    if not os.path.exists(RESTART_NOTICE_FILE):
-        return None
-    try:
-        with open(RESTART_NOTICE_FILE, "r", encoding="utf-8") as handle:
-            payload = json.load(handle)
-    except Exception as exc:
-        ts_log(f"Failed to read restart notice: {exc}", level="WARNING")
-        payload = None
-    try:
-        os.remove(RESTART_NOTICE_FILE)
-    except Exception as exc:
-        ts_log(f"Failed to remove restart notice: {exc}", level="WARNING")
-    return payload
 
 
 def get_top_imdb_items(library_id, media_type, placeholder_id=None):
