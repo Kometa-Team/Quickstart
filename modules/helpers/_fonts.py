@@ -39,9 +39,9 @@ def get_legacy_custom_fonts_dir() -> Path:
 
 def get_custom_fonts_dir(config_name: str | None = None) -> Path:
     if config_name:
-        from modules.helpers._legacy import get_managed_config_artifact_root
+        from modules import helpers as _helpers_fonts
 
-        return get_managed_config_artifact_root(config_name) / "fonts"
+        return _helpers_fonts.get_managed_config_artifact_root(config_name) / "fonts"
     return get_legacy_custom_fonts_dir()
 
 
@@ -116,10 +116,10 @@ def migrate_legacy_custom_fonts_to_config(
     config_name: str | None,
     font_names: list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> dict:
-    from modules.helpers._legacy import require_config_name_for_storage
+    from modules import helpers as _helpers_fonts
 
     try:
-        normalized = require_config_name_for_storage(config_name, context="Config-scoped font migration")
+        normalized = _helpers_fonts.require_config_name_for_storage(config_name, context="Config-scoped font migration")
     except ValueError as exc:
         return {"copied": [], "skipped": [], "errors": [str(exc)]}
 

@@ -29,4 +29,5 @@ from ._cli import *  # noqa: F403
 from ._templates import *  # noqa: F403
 from ._fonts import *  # noqa: F403
 from ._overlays import *  # noqa: F403
+from ._artifacts import *  # noqa: F403
 from ._paths import *  # noqa: F403
