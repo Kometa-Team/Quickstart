@@ -1,5 +1,4 @@
 import datetime
-import gzip
 import hashlib
 import io
 import platform
@@ -41,7 +40,7 @@ IMAGEMAID_GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/ImageMaid/zi
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 FONT_EXTENSIONS = {".ttf", ".otf"}
 
-BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
 
@@ -106,103 +105,6 @@ JSON_SCHEMA_SYNC_FILES = (
     ("builders/tvdb.yml", "json-schema/builders/tvdb.yml"),
     ("config.yml.template", "config/config.yml.template"),
 )
-
-
-def utc_now_iso():
-    return datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
-
-
-def safe_rel_path(raw_path: str | None, allow_subdirs: bool = False) -> str | None:
-    if not isinstance(raw_path, str):
-        return None
-    raw_path = raw_path.strip()
-    if not raw_path:
-        return None
-    if "\x00" in raw_path:
-        return None
-
-    drive, _ = os.path.splitdrive(raw_path)
-    if drive:
-        return None
-    if os.path.isabs(raw_path):
-        return None
-
-    normalized = os.path.normpath(raw_path)
-    if normalized in (".", ""):
-        return None
-    if normalized.startswith("..") or normalized.startswith("../") or normalized.startswith("..\\"):
-        return None
-    if not allow_subdirs and ("/" in normalized or "\\" in normalized):
-        return None
-
-    return normalized
-
-
-def safe_join(base_dir: str | Path, raw_path: str | None, allow_subdirs: bool = False) -> Path | None:
-    rel = safe_rel_path(raw_path, allow_subdirs=allow_subdirs)
-    if not rel:
-        return None
-    try:
-        base = Path(base_dir).resolve()
-        candidate = (base / rel).resolve()
-        candidate.relative_to(base)
-        return candidate
-    except Exception:
-        return None
-
-
-def resolve_user_dir(raw_path: str | None) -> Path | None:
-    if not isinstance(raw_path, str):
-        return None
-    raw_path = raw_path.strip()
-    if not raw_path:
-        return None
-    if "\x00" in raw_path:
-        return None
-    try:
-        path = Path(raw_path)
-    except Exception:
-        return None
-    if not path.is_absolute():
-        return None
-    if any(part == ".." for part in path.parts):
-        return None
-    try:
-        return path.resolve()
-    except Exception:
-        return None
-
-
-def is_logscan_gzip_path(path):
-    try:
-        suffixes = [suffix.lower() for suffix in Path(path).suffixes]
-    except Exception:
-        return False
-    return bool(suffixes and suffixes[-1] == ".gz")
-
-
-def read_logscan_text(path, encoding="utf-8", errors="replace"):
-    path = Path(path)
-    if is_logscan_gzip_path(path):
-        with gzip.open(path, "rt", encoding=encoding, errors=errors) as handle:
-            return handle.read()
-    content = path.read_text(encoding=encoding, errors=errors)
-    try:
-        if path.name.lower() == "meta.log":
-            sidecar_path = path.parent / "meta.quickstart-maintenance.log"
-            if sidecar_path.exists() and sidecar_path.is_file():
-                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
-                if sidecar_content:
-                    content = f"{content.rstrip()}\n{sidecar_content}\n"
-        elif path.suffix.lower() == ".log":
-            sidecar_path = path.parent / "imagemaid.quickstart-maintenance.log"
-            if sidecar_path.exists() and sidecar_path.is_file():
-                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
-                if sidecar_content:
-                    content = f"{content.rstrip()}\n{sidecar_content}\n"
-    except Exception:
-        pass
-    return content
 
 
 def detect_git_branch(repo_root=None, default="develop"):
