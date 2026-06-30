@@ -478,44 +478,87 @@ Quickstart uses pytest for unit/integration tests and Playwright for E2E tests.
 
 ### Developer Testing
 
-Set up or refresh the local test environment, including runtime requirements, developer requirements, and Playwright browsers:
+The Python test runner is cross-platform:
 
-```
+- `scripts/run_tests.py` is the source-of-truth runner for Windows, macOS, and Linux.
+- `scripts/run-tests.ps1` is only a Windows PowerShell wrapper around `scripts/run_tests.py`.
+- `scripts/run_tests.py --setup` installs Python requirements, Node dependencies, and Playwright browsers.
+
+#### Windows (PowerShell)
+
+First-time setup:
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 python scripts/run_tests.py --setup
-python scripts/run_tests.py --setup --all
 ```
 
-Run tests (cross-platform):
+Normal test and lint flow:
 
-```
-python scripts/run_tests.py             # Unit/integration (non-E2E)
-python scripts/run_tests.py --e2e       # End-to-end tests (Playwright)
-python scripts/run_tests.py --all       # Everything
+```powershell
+python scripts/run_tests.py --lint
 python scripts/run_tests.py --repochecks
+python scripts/run_tests.py
+python scripts/run_tests.py --e2e
+python scripts/run_tests.py --all
 ```
 
-PowerShell users can keep using the wrapper:
+If you prefer the Windows wrapper:
 
-```
+```powershell
+.\scripts\run-tests.ps1 -Lint
+.\scripts\run-tests.ps1 -RepoChecks
 .\scripts\run-tests.ps1
 .\scripts\run-tests.ps1 -E2E
 .\scripts\run-tests.ps1 -All
 ```
 
+#### macOS and Linux
+
+These steps are identical on macOS and Linux:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+python scripts/run_tests.py --setup
+```
+
+Normal test and lint flow:
+
+```bash
+python scripts/run_tests.py --lint
+python scripts/run_tests.py --repochecks
+python scripts/run_tests.py
+python scripts/run_tests.py --e2e
+python scripts/run_tests.py --all
+```
+
+#### Direct commands
+
+Use these when you want to run individual layers yourself instead of the wrapper:
+
+```bash
+npm run lint:eslint
+python -m pre_commit run --all-files
+python -m pytest -p pytest_progress_plugin tests -m "not e2e and not ratings_matrix" -vv -o console_output_style=count
+python -m pytest -p pytest_progress_plugin tests -m e2e -vv -o console_output_style=count
+```
+
 Fast focused paths:
 
-```
+```powershell
 .\venv\Scripts\python.exe -m pytest tests\test_importer_edge_cases.py
 .\venv\Scripts\python.exe -m pytest tests\test_workspace_dependency_logic.py
 .\venv\Scripts\python.exe -m pytest tests\test_core_backend.py -k final
-python scripts/run_tests.py --e2e
 ```
 
-If you prefer raw commands:
+Unix/macOS equivalents:
 
-```
-python -m pytest -m "not e2e" -vv
-python -m pytest -m e2e -vv
+```bash
+venv/bin/python -m pytest tests/test_importer_edge_cases.py
+venv/bin/python -m pytest tests/test_workspace_dependency_logic.py
+venv/bin/python -m pytest tests/test_core_backend.py -k final
 ```
 
 Notes for Playwright on Windows:
