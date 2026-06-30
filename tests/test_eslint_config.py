@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -26,13 +27,37 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ESLINT_CONFIG = REPO_ROOT / "eslint.config.js"
 
 
+def _resolve_eslint_executable() -> str | None:
+    """Return the repo-local ESLint executable path when available.
+
+    On Windows the installed shim is typically `eslint.cmd`; on Unix-like
+    platforms it is usually `eslint`. Fall back to PATH so the tests still
+    work in environments that install the toolchain globally.
+    """
+    local_bin_dir = REPO_ROOT / "node_modules" / ".bin"
+    if os.name == "nt":
+        local_candidates = [local_bin_dir / "eslint.cmd", local_bin_dir / "eslint"]
+        path_candidates = ("eslint.cmd", "eslint")
+    else:
+        local_candidates = [local_bin_dir / "eslint", local_bin_dir / "eslint.cmd"]
+        path_candidates = ("eslint", "eslint.cmd")
+    for candidate in local_candidates:
+        if candidate.exists():
+            return str(candidate)
+    for candidate in path_candidates:
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+    return None
+
+
 def _eslint_available() -> bool:
-    """ESLint is only available where node_modules/.bin/eslint exists.
+    """ESLint is only available where a runnable executable can be resolved.
 
     Skip these tests in environments that don't have the JS toolchain
     installed (e.g. some CI matrix entries that only run Python tests).
     """
-    return (REPO_ROOT / "node_modules" / ".bin" / "eslint").exists()
+    return _resolve_eslint_executable() is not None
 
 
 pytestmark = pytest.mark.skipif(
@@ -54,12 +79,13 @@ def _run_eslint(snippet: str, filename: str = "snippet.js") -> list[dict]:
     # default. That's what matters for the inline-handler / shim tests.
     target = target_dir / f"__eslint_test_{filename}"
     target.write_text(snippet, encoding="utf-8")
+    eslint_executable = _resolve_eslint_executable()
+    if not eslint_executable:
+        raise AssertionError("ESLint executable could not be resolved for tests.")
     try:
         result = subprocess.run(
             [
-                "npx",
-                "--no-install",
-                "eslint",
+                eslint_executable,
                 "--format=json",
                 "--config",
                 str(ESLINT_CONFIG),
