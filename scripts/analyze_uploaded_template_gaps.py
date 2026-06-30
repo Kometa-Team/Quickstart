@@ -985,11 +985,28 @@ def default_file_uses_dynamic_collections(path: Path) -> bool:
     return isinstance(parsed, dict) and isinstance(parsed.get("dynamic_collections"), dict)
 
 
+def _get_defaults_root() -> Path:
+    """Return the Kometa defaults directory, falling back to test fixtures.
+
+    ``config/kometa/defaults`` is a gitignored local cache populated by a real
+    Kometa install. On a fresh checkout it won't exist, so fall back to the
+    checked-in fixtures in ``tests/fixtures/kometa/defaults`` to keep tests
+    reproducible offline.
+    """
+    production = ROOT / "config" / "kometa" / "defaults"
+    if production.is_dir():
+        return production
+    fixture = ROOT / "tests" / "fixtures" / "kometa" / "defaults"
+    if fixture.is_dir():
+        return fixture
+    return production
+
+
 def resolve_matched_default_file_paths(row: dict[str, Any]) -> list[Path]:
     matched_paths = row.get("matched_default_files")
     if not isinstance(matched_paths, (list, set, tuple)):
         return []
-    defaults_root = ROOT / "config" / "kometa" / "defaults"
+    defaults_root = _get_defaults_root()
     resolved: list[Path] = []
     for raw_path in matched_paths:
         if not raw_path:
