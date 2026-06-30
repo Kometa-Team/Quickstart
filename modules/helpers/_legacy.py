@@ -61,7 +61,6 @@ LOG_FILE = os.path.join(LOG_DIR, "quickstart.log")
 MAX_LOG_BACKUPS = 10
 RESTART_NOTICE_FILE = os.path.join(CONFIG_DIR, ".restart_notice.json")
 PLEX_DISCOVERY_CACHE_TTL_SECONDS = int(os.environ.get("QS_PLEX_DISCOVERY_CACHE_TTL_SECONDS", "300"))
-_PLEX_DISCOVERY_CACHE = {}
 JSON_SCHEMA_REFRESH_TTL_SECONDS = int(os.environ.get("QS_JSON_SCHEMA_REFRESH_TTL_SECONDS", "1800"))
 _JSON_SCHEMA_LAST_REFRESH_AT = 0.0
 QS_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_UPDATE_CACHE_TTL_SECONDS", "600"))
@@ -136,62 +135,6 @@ def detect_git_branch(repo_root=None, default="develop"):
             pass
 
     return default
-
-
-def _plex_discovery_cache_key(kind, plex_url, plex_token):
-    normalized_url = str(plex_url or "").strip().rstrip("/").lower()
-    token_digest = hashlib.sha256(str(plex_token or "").encode("utf-8")).hexdigest()
-    return kind, normalized_url, token_digest
-
-
-def _get_plex_discovery_cache(kind, plex_url, plex_token):
-    key = _plex_discovery_cache_key(kind, plex_url, plex_token)
-    entry = _PLEX_DISCOVERY_CACHE.get(key)
-    if not entry:
-        return None
-    age = time.monotonic() - entry.get("created_at", 0)
-    if age > PLEX_DISCOVERY_CACHE_TTL_SECONDS:
-        _PLEX_DISCOVERY_CACHE.pop(key, None)
-        return None
-    return copy.deepcopy(entry.get("payload"))
-
-
-def _set_plex_discovery_cache(kind, plex_url, plex_token, payload):
-    if not plex_url or not plex_token or not isinstance(payload, dict):
-        return
-    key = _plex_discovery_cache_key(kind, plex_url, plex_token)
-    _PLEX_DISCOVERY_CACHE[key] = {
-        "created_at": time.monotonic(),
-        "payload": copy.deepcopy(payload),
-    }
-
-
-def get_cached_plex_validation(plex_url, plex_token):
-    return _get_plex_discovery_cache("validation", plex_url, plex_token)
-
-
-def set_cached_plex_validation(plex_url, plex_token, payload):
-    _set_plex_discovery_cache("validation", plex_url, plex_token, payload)
-
-
-def get_cached_plex_metadata(plex_url, plex_token):
-    return _get_plex_discovery_cache("metadata", plex_url, plex_token)
-
-
-def set_cached_plex_metadata(plex_url, plex_token, payload):
-    _set_plex_discovery_cache("metadata", plex_url, plex_token, payload)
-
-
-def get_cached_plex_refresh(plex_url, plex_token):
-    return _get_plex_discovery_cache("refresh", plex_url, plex_token)
-
-
-def set_cached_plex_refresh(plex_url, plex_token, payload):
-    _set_plex_discovery_cache("refresh", plex_url, plex_token, payload)
-
-
-def clear_plex_discovery_cache():
-    _PLEX_DISCOVERY_CACHE.clear()
 
 
 def _kometa_update_cache_key(kometa_root, branch, local_version, local_sha=None, local_branch=None):
@@ -1122,7 +1065,9 @@ def get_plex_metadata(plex_url=None, plex_token=None):
         if not plex_url or not plex_token:
             plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
 
-        cached = get_cached_plex_metadata(plex_url, plex_token)
+        from modules import helpers as _h_plex_cache
+
+        cached = _h_plex_cache.get_cached_plex_metadata(plex_url, plex_token)
         if cached:
             ts_log("Using cached Plex metadata payload.", level="DEBUG")
             return cached
@@ -1177,7 +1122,9 @@ def get_plex_metadata(plex_url=None, plex_token=None):
             "maintenance_window": maintenance_window,
             "libraries": library_metadata,
         }
-        set_cached_plex_metadata(plex_url, plex_token, metadata)
+        from modules import helpers as _h_plex_cache
+
+        _h_plex_cache.set_cached_plex_metadata(plex_url, plex_token, metadata)
         return metadata
 
     except Exception as e:
