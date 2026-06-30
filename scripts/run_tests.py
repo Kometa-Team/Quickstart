@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -80,6 +81,16 @@ def detect_precommit_command(python_cmd: str) -> list[str]:
     if unix_precommit.exists():
         return [str(unix_precommit)]
     return [python_cmd, "-m", "pre_commit"]
+
+
+def detect_npm_command() -> list[str] | None:
+    npm_cmd = shutil.which("npm.cmd")
+    if npm_cmd:
+        return [npm_cmd]
+    npm_cmd = shutil.which("npm")
+    if npm_cmd:
+        return [npm_cmd]
+    return None
 
 
 def run_command(command: list[str], *, env: dict[str, str] | None = None) -> int:
@@ -192,6 +203,19 @@ def run_setup(python_cmd: str, *, skip_playwright: bool) -> int:
     )
     if exit_code != 0:
         return exit_code
+
+    if (REPO_ROOT / "package.json").exists():
+        npm_command = detect_npm_command()
+        if npm_command is None:
+            print(
+                "Node tooling is configured for this repo, but npm was not found on PATH. " "Install Node.js/npm, then rerun setup.",
+                file=sys.stderr,
+            )
+            return 1
+        print("Installing Node dependencies...")
+        exit_code = run_command([*npm_command, "install"])
+        if exit_code != 0:
+            return exit_code
 
     if not skip_playwright:
         print("Installing Playwright browsers...")
