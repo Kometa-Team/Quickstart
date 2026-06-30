@@ -105,37 +105,6 @@ JSON_SCHEMA_SYNC_FILES = (
 )
 
 
-def detect_git_branch(repo_root=None, default="develop"):
-    root = Path(repo_root or get_app_root()).resolve()
-
-    if Repo is not None:
-        try:
-            repo = Repo(root, search_parent_directories=True)
-            branch_name = str(repo.active_branch.name or "").strip()
-            if branch_name:
-                return branch_name
-        except Exception:
-            pass
-
-    git_bin = shutil.which("git")
-    if git_bin:
-        try:
-            result = subprocess.run(
-                [git_bin, "rev-parse", "--abbrev-ref", "HEAD"],
-                cwd=str(root),
-                capture_output=True,
-                text=True,
-                shell=False,
-            )
-            branch_name = (result.stdout or "").strip()
-            if result.returncode == 0 and branch_name:
-                return branch_name
-        except Exception:
-            pass
-
-    return default
-
-
 def _kometa_update_cache_key(kometa_root, branch, local_version, local_sha=None, local_branch=None):
     try:
         root = str(Path(kometa_root).resolve())
@@ -258,6 +227,8 @@ def resolve_imagemaid_update_branch(branch_override=None):
     branch = normalize_imagemaid_branch_override(branch_override)
     if branch:
         return branch
+    from modules.helpers._git import detect_git_branch
+
     qs_branch = detect_git_branch(get_app_root())
     return "master" if qs_branch == "master" else "develop"
 
