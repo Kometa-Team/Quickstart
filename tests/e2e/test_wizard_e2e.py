@@ -1978,3 +1978,29 @@ def test_eventhandler_module_loads_via_import(page, live_server):
     assert state["hasEventHandler"], "window.EventHandler must exist after import()"
     assert state["hasAttach"], "EventHandler.attachLibraryListeners must be a function"
     assert state["hasHighlights"], "EventHandler.updateAccordionHighlights must be a function"
+
+
+# ES module conversion of overlayHandler.js (chore/convert-overlayhandler-to-module).
+# Last helper-script conversion. Publishes window.OverlayHandler and
+# window.setupParentChildToggleSync for backward compat.
+
+
+@pytest.mark.e2e
+def test_overlayhandler_module_loads_via_import(page, live_server):
+    """overlayHandler.js is now loaded via import() by 025-libraries.js.
+    Verify window.OverlayHandler is available with expected methods.
+    """
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_timeout(2000)
+    state = page.evaluate("""() => ({
+            hasOverlayHandler: typeof window.OverlayHandler !== 'undefined',
+            hasBoards: typeof window.OverlayHandler === 'object'
+                && typeof window.OverlayHandler.initializeOverlayBoards === 'function',
+            hasJumpBtns: typeof window.OverlayHandler === 'object'
+                && typeof window.OverlayHandler.initializeJumpButtons === 'function',
+            hasToggleSync: typeof window.setupParentChildToggleSync === 'function'
+        })""")
+    assert state["hasOverlayHandler"], "window.OverlayHandler must exist after import()"
+    assert state["hasBoards"], "OverlayHandler.initializeOverlayBoards must be a function"
+    assert state["hasJumpBtns"], "OverlayHandler.initializeJumpButtons must be a function"
+    assert state["hasToggleSync"], "window.setupParentChildToggleSync must be a function"

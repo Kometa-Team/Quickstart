@@ -1,11 +1,11 @@
 // Load all helper modules in parallel. These publish their symbols
 // via window.* shims (same pattern as pathValidation.js).
 await Promise.all([
-  import('../../../../../../../static/local-js/imageHandler.js'),
-  import('../../../../../../../static/local-js/overlayHandler.js'),
-  import('../../../../../../../static/local-js/validationHandler.js'),
-  import('../../../../../../../static/local-js/eventHandler.js'),
-  import('../../../../../../../static/local-js/rgbaPicker.js')
+  import('/static/local-js/imageHandler.js'),
+  import('/static/local-js/overlayHandler.js'),
+  import('/static/local-js/validationHandler.js'),
+  import('/static/local-js/eventHandler.js'),
+  import('/static/local-js/rgbaPicker.js')
 ])
 
 if (typeof PathValidation !== 'undefined' && PathValidation.init) {
