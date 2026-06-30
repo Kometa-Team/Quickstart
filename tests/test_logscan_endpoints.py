@@ -2029,6 +2029,7 @@ def test_logscan_startup_migration_runs_when_level_pending(isolated_config_dir, 
     log_dir = kometa_root / "config" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     (log_dir / "meta-1.log").write_text("placeholder", encoding="utf-8")
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
     monkeypatch.setenv(qs_module.LOGSCAN_STARTUP_MIGRATIONS_ENV, "1")
     monkeypatch.setenv(qs_module.LOGSCAN_MIGRATION_LEVEL_DONE_ENV, "1")
