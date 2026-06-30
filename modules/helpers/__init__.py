@@ -40,4 +40,5 @@ from ._redact import *  # noqa: F403
 from ._file_utils import *  # noqa: F403
 from ._settings import *  # noqa: F403
 from ._git import *  # noqa: F403
+from ._forms import *  # noqa: F403
 from ._paths import *  # noqa: F403
