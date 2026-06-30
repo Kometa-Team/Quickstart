@@ -38,4 +38,5 @@ from ._misc import *  # noqa: F403
 from ._restart import *  # noqa: F403
 from ._redact import *  # noqa: F403
 from ._file_utils import *  # noqa: F403
+from ._settings import *  # noqa: F403
 from ._paths import *  # noqa: F403
