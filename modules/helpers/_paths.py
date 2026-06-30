@@ -1,0 +1,68 @@
+"""Path and filesystem safety utilities extracted from helpers.py."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+
+def utc_now_iso():
+    """Return current UTC time as ISO 8601 string."""
+    import datetime
+
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def safe_rel_path(raw_path: str | None, allow_subdirs: bool = False) -> str | None:
+    """Sanitize a user-supplied relative path. Returns None if path is unsafe."""
+    if not raw_path or not isinstance(raw_path, str):
+        return None
+    stripped = raw_path.strip()
+    if not stripped or stripped.startswith(("/", "\\")):
+        return None
+    if ".." in stripped.split(os.sep) or ".." in stripped.split("/"):
+        return None
+    if not allow_subdirs and ("/" in stripped or "\\" in stripped):
+        return None
+    return stripped
+
+
+def safe_join(base_dir: str | Path, raw_path: str | None, allow_subdirs: bool = False) -> Path | None:
+    """Join a sanitized path to base_dir safely. Returns None if unsafe."""
+    if raw_path is None:
+        return None
+    safe = safe_rel_path(raw_path, allow_subdirs=allow_subdirs)
+    if safe is None:
+        return None
+    resolved = (Path(base_dir) / safe).resolve()
+    base_resolved = Path(base_dir).resolve()
+    if not str(resolved).startswith(str(base_resolved)):
+        return None
+    return resolved
+
+
+def resolve_user_dir(raw_path: str | None) -> Path | None:
+    """Resolve a user-supplied path, expanding ~ and env vars."""
+    if not raw_path or not raw_path.strip():
+        return None
+    expanded = os.path.expandvars(os.path.expanduser(raw_path.strip()))
+    p = Path(expanded).resolve()
+    if not p.exists():
+        return None
+    return p
+
+
+def is_logscan_gzip_path(path):
+    """Check if a logscan path is a gzip file."""
+    return bool(path and str(path).endswith(".gz"))
+
+
+def read_logscan_text(path, encoding="utf-8", errors="replace"):
+    """Read text from a logscan file, handling gzip transparently."""
+    import gzip
+
+    if is_logscan_gzip_path(path):
+        with gzip.open(path, "rt", encoding=encoding, errors=errors) as f:
+            return f.read()
+    with open(path, "r", encoding=encoding, errors=errors) as f:
+        return f.read()
