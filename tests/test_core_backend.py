@@ -5328,7 +5328,7 @@ def test_validate_kometa_root_existing_mode_does_not_create_missing_root(client,
     assert resp.status_code == 400
     payload = resp.get_json()
     assert payload["success"] is False
-    assert "Invalid path provided." in payload["error"]
+    assert "does not exist in this Quickstart environment" in payload["error"]
     assert not missing_root.exists()
 
 

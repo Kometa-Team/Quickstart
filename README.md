@@ -481,22 +481,25 @@ Quickstart uses pytest for unit/integration tests and Playwright for E2E tests.
 Set up or refresh the local test environment, including runtime requirements, developer requirements, and Playwright browsers:
 
 ```
-.\scripts\setup-dev.ps1
+python scripts/run_tests.py --setup
+python scripts/run_tests.py --setup --all
 ```
 
-You can also run setup through the test runner:
+Run tests (cross-platform):
 
 ```
-.\scripts\run-tests.ps1 -Setup
-.\scripts\run-tests.ps1 -Setup -All
+python scripts/run_tests.py             # Unit/integration (non-E2E)
+python scripts/run_tests.py --e2e       # End-to-end tests (Playwright)
+python scripts/run_tests.py --all       # Everything
+python scripts/run_tests.py --repochecks
 ```
 
-Run tests (PowerShell):
+PowerShell users can keep using the wrapper:
 
 ```
-.\scripts\run-tests.ps1          # Unit/integration (non-E2E)
-.\scripts\run-tests.ps1 -E2E     # End-to-end tests (Playwright)
-.\scripts\run-tests.ps1 -All     # Everything
+.\scripts\run-tests.ps1
+.\scripts\run-tests.ps1 -E2E
+.\scripts\run-tests.ps1 -All
 ```
 
 Fast focused paths:
@@ -505,7 +508,7 @@ Fast focused paths:
 .\venv\Scripts\python.exe -m pytest tests\test_importer_edge_cases.py
 .\venv\Scripts\python.exe -m pytest tests\test_workspace_dependency_logic.py
 .\venv\Scripts\python.exe -m pytest tests\test_core_backend.py -k final
-.\scripts\run-tests.ps1 -E2E
+python scripts/run_tests.py --e2e
 ```
 
 If you prefer raw commands:
