@@ -434,6 +434,7 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "900-kometa",
         "905-analytics",
         "915-imagemaid",
+        "025-libraries",
     }
 )
 VALIDATION_DOCS = {
