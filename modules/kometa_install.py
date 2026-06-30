@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -338,10 +339,28 @@ def resolve_kometa_request_target(payload, logs=None, require_existing_root=Fals
             logs.append("❌ Existing Kometa mode requires a path.")
         return {"error": "Existing Kometa mode requires a path."}
 
+    # NOTE: ``helpers.resolve_user_dir`` returns ``None`` for BOTH syntactically
+    # invalid paths AND syntactically-valid paths that don't exist on disk. The
+    # existing-mode flow needs to distinguish them so the UI can tell the user
+    # "path missing" vs "path malformed". Pre-resolve the candidate ourselves to
+    # emit a precise error when ``require_existing_root`` is set.
+    if require_existing_root:
+        try:
+            stripped = candidate.strip()
+            expanded = os.path.expandvars(os.path.expanduser(stripped)) if stripped else ""
+            candidate_path = Path(expanded).resolve() if expanded else None
+        except Exception:
+            candidate_path = None
+        if candidate_path is not None and not candidate_path.exists():
+            missing_message = "The selected existing Kometa path does not exist in this Quickstart environment."
+            if logs is not None:
+                logs.append(chr(0x274C) + " " + missing_message)
+            return {"error": missing_message}
+
     resolved_existing = helpers.resolve_user_dir(candidate)
     if not resolved_existing:
         if logs is not None:
-            logs.append("❌ Invalid path provided.")
+            logs.append(chr(0x274C) + " Invalid path provided.")
         return {"error": "Invalid path provided."}
 
     if require_existing_root and not resolved_existing.exists():
