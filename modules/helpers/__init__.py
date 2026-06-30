@@ -25,4 +25,5 @@ from ._legacy import (  # noqa: F401
 
 # Then import from smaller, focused submodules.  Any names they export
 # will override legacy definitions (in case of a future rename).
+from ._cli import *  # noqa: F403
 from ._paths import *  # noqa: F403
