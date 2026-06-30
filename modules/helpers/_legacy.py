@@ -1354,6 +1354,7 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
 
     if font_refs and kometa_write_ok:
         from modules import helpers as _helpers
+
         try:
             font_result = _helpers.copy_fonts_to_kometa(font_refs, kometa_root=kometa_root, kometa_config_dir=kometa_config_dir, config_name=name)
             missing = font_result.get("missing", [])
