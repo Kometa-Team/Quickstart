@@ -1059,6 +1059,16 @@ if cleanup_flag not in {"1", "true", "yes"}:
         helpers.update_env_variable("QS_CONFIG_CLEANUP_DONE", "1")
         os.environ["QS_CONFIG_CLEANUP_DONE"] = "1"
 
+orphan_prune_result = helpers.prune_unrecoverable_orphaned_config_artifacts(kometa_root=app.config.get("KOMETA_ROOT", "."))
+if orphan_prune_result.get("removed"):
+    helpers.ts_log(
+        f"Config cleanup removed {len(orphan_prune_result['removed'])} unrecoverable orphaned config bundle(s).",
+        level="INFO",
+    )
+if orphan_prune_result.get("errors"):
+    for msg in orphan_prune_result["errors"]:
+        helpers.ts_log(msg, level="WARNING")
+
 
 def _load_or_create_secret_key():
     env_key = os.getenv("QS_SECRET_KEY", "").strip()

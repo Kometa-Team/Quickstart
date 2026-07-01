@@ -3664,6 +3664,24 @@ def test_download_bundle_places_fonts_under_config_name(client, isolated_config_
         assert f"{config_name}/fonts/Poster.ttf" in names
 
 
+def test_list_overlay_fonts_does_not_create_config_scoped_font_dir_when_listing(client, isolated_config_dir, app):
+    from flask import session
+    from modules.assets import clear_font_cache, list_overlay_fonts
+
+    config_name = "random_session_name"
+    legacy_font_dir = isolated_config_dir / "fonts"
+    legacy_font_dir.mkdir(parents=True, exist_ok=True)
+    (legacy_font_dir / "Poster.ttf").write_bytes(b"legacy-font")
+
+    with app.test_request_context("/"):
+        session["config_name"] = config_name
+        clear_font_cache()
+        fonts = list_overlay_fonts()
+
+    assert "Poster.ttf" in fonts
+    assert not (isolated_config_dir / config_name).exists()
+
+
 def test_import_config_preview_rejects_zip_with_unsupported_entries(client):
     import io
     import zipfile
@@ -4100,6 +4118,36 @@ def test_delete_orphaned_config_artifacts_route_removes_font_only_default_bundle
     assert payload["success"] is True
     assert payload["deleted"] == ["default"]
     assert not (isolated_config_dir / "default").exists()
+
+
+def test_prune_unrecoverable_orphaned_config_artifacts_removes_font_only_bundle_but_keeps_yaml_backed_bundle(isolated_config_dir, app):
+    from pathlib import Path
+    from modules import helpers
+
+    font_only_name = "font_only_orphan"
+    recoverable_name = "recoverable_orphan"
+
+    font_only_dir = isolated_config_dir / font_only_name / "fonts"
+    font_only_dir.mkdir(parents=True, exist_ok=True)
+    (font_only_dir / "Poster.ttf").write_bytes(b"font-only")
+
+    archive_dir = isolated_config_dir / "archives" / recoverable_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    (archive_dir / f"{recoverable_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
+    (isolated_config_dir / f"{recoverable_name}_config.yml").write_text("current: true\n", encoding="utf-8")
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+    (kometa_path / f"{recoverable_name}_config.yml").write_text("kometa: true\n", encoding="utf-8")
+
+    result = helpers.prune_unrecoverable_orphaned_config_artifacts(active_config_names=[], kometa_root=app.config.get("KOMETA_ROOT", "."))
+
+    assert result["errors"] == []
+    assert result["removed"] == [font_only_name]
+    assert recoverable_name in result["skipped"]
+    assert not (isolated_config_dir / font_only_name).exists()
+    assert (isolated_config_dir / f"{recoverable_name}_config.yml").exists()
+    assert (isolated_config_dir / "archives" / recoverable_name).exists()
+    assert (kometa_path / f"{recoverable_name}_config.yml").exists()
 
 
 def test_delete_orphaned_config_artifacts_route_removes_copy_named_yaml(client, isolated_config_dir):

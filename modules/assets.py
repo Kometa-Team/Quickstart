@@ -51,10 +51,6 @@ def clear_font_cache():
 def list_overlay_fonts() -> list[str]:
     """Font discovery (TTF/OTF) across common static dirs."""
     config_name = session.get("config_name") if has_request_context() else None
-    if config_name:
-        migration = helpers.migrate_legacy_custom_fonts_to_config(config_name)
-        if migration.get("copied"):
-            clear_font_cache()
     cache_key = helpers.normalize_config_name_for_storage(config_name) if config_name else "__default__"
     cached = _FONT_CACHE.get(cache_key)
     if cached:
