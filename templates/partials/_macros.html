@@ -1418,7 +1418,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% endif %}
                         {% set label_width = item.label_width if item.label_width is defined else (320 if item.label|length > 24 else 170) %}
                         <div class="mb-2" data-template-mapping-list data-hidden-input="{{ input_name }}"
+                            data-library-name="{{ library.name }}"
+                            data-media-type="{{ library.type }}"
                             data-validation-preset="{{ item.validation_preset | default('') }}"
+                            data-key-validation-preset="{{ item.key_validation_preset | default('') }}"
+                            data-lookup-display-mode="{{ item.lookup_display_mode | default('stacked') }}"
+                            data-value-display-label="{{ item.value_display_label | default('') }}"
                             data-mapping-value-kind="{{ item.dynamic_child_value_kind | default('string_list') }}">
                             <div class="input-group">
                                 <span class="input-group-text qs-template-variable-label" id="{{ input_name }}_text"

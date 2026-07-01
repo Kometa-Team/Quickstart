@@ -373,6 +373,26 @@ def _parse_string_list_mapping(value):
     return normalized
 
 
+def _parse_string_mapping(value):
+    parsed = _parse_template_mapping_dict(value)
+    if not parsed:
+        return {}
+
+    normalized = {}
+    for raw_key, raw_value in parsed.items():
+        key_text = str(raw_key or "").strip()
+        if not key_text:
+            continue
+        if isinstance(raw_value, (list, tuple, set)):
+            parts = _coerce_string_list(raw_value)
+            value_text = ", ".join(parts)
+        else:
+            value_text = str(raw_value or "").strip()
+        if value_text:
+            normalized[key_text] = value_text
+    return normalized
+
+
 def _parse_tmdb_person_window(value):
     if value is None:
         return None
@@ -451,6 +471,9 @@ def _normalize_collection_template_var_value(key, value):
         return list_values if list_values else None
     if key in {"addons", "append_addons"}:
         mapping_values = _parse_string_list_mapping(value)
+        return mapping_values if mapping_values else None
+    if key == "title_override":
+        mapping_values = _parse_string_mapping(value)
         return mapping_values if mapping_values else None
     if key in {"tmdb_birthday", "tmdb_deathday"}:
         return _parse_tmdb_person_window(value)

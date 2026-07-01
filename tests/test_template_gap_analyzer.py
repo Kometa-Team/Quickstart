@@ -491,6 +491,8 @@ def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_fi
     assert "data_limit" in collection_map["writer"]
     assert "data_limit" not in collection_map["studio"]
     assert "data_limit" not in collection_map["network"]
+    assert "build_collection" in collection_map["franchise"]
+    assert "title_override" in collection_map["franchise"]
 
 
 def test_build_qs_library_template_keys_includes_separator_placeholder_keys_for_repo_file():
@@ -1228,11 +1230,11 @@ def test_quickstart_recommendation_summary_excludes_dynamic_collection_child_ins
             "file": "config.yml",
             "library": "Movies",
             "matched_default_files": ["movie/franchise.yml"],
-            "supported_in_quickstart": False,
-            "quickstart_declared": False,
+            "supported_in_quickstart": True,
+            "quickstart_declared": True,
             "schema_declared": False,
             "kometa_declared": True,
-            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "validation_level": "supported_in_quickstart",
             "name_verified": True,
             "value_shape_verified": True,
             "value_shape_rule": "dynamic",
@@ -1243,7 +1245,7 @@ def test_quickstart_recommendation_summary_excludes_dynamic_collection_child_ins
     ranked = module.serialize_ranked_summary(summary)
     excluded = module.build_quickstart_recommendation_exclusion_summary(rows)
 
-    assert [item["key"] for item in ranked] == ["title_override"]
+    assert ranked == []
     assert excluded[("collection", "franchise", "movie_645")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
     assert excluded[("collection", "seasonal", "trakt_list_christmas")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
 
@@ -1288,11 +1290,11 @@ def test_build_merged_fix_queue_excludes_internal_and_dynamic_instance_false_pos
             "files": ["config.yml"],
             "libraries": ["Movies"],
             "matched_default_files": ["movie/franchise.yml"],
-            "supported_in_quickstart": False,
-            "quickstart_declared": False,
+            "supported_in_quickstart": True,
+            "quickstart_declared": True,
             "schema_declared": False,
             "kometa_declared": True,
-            "validation_level": "works_in_kometa_missing_from_quickstart_and_schema",
+            "validation_level": "supported_in_quickstart",
         },
     ]
     importer_rows = [
@@ -1322,19 +1324,18 @@ def test_build_merged_fix_queue_excludes_internal_and_dynamic_instance_false_pos
             "kind": "collection",
             "default": "franchise",
             "key": "build_collection",
-            "import_status": "unmapped",
-            "reason_class": "missing_template_variable_support",
+            "import_status": "mapped",
             "occurrences": 4,
             "files": ["config.yml"],
             "libraries": ["Movies"],
-            "reasons": ["Template variable not available in Quickstart."],
+            "reasons": [],
         },
     ]
 
     ranked = module.build_merged_fix_queue(verified_rows, importer_rows)
 
     assert [item["key"] for item in ranked] == ["build_collection"]
-    assert ranked[0]["action_targets"] == ["schema", "quickstart", "importer"]
+    assert ranked[0]["action_targets"] == ["schema"]
 
 
 def test_build_merged_fix_queue_excludes_internal_library_type_metadata():
