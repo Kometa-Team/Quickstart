@@ -2,12 +2,17 @@
 
 import os
 
-from git import Repo
+try:
+    from git import Repo
+except ImportError:
+    Repo = None  # Prevents errors if GitPython is missing
+
+
+import requests
 
 
 def get_remote_version(branch):
     """Fetch the latest VERSION file from the correct GitHub branch."""
-    import requests
 
     try:
         response = requests.get(
