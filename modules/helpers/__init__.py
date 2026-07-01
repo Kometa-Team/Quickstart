@@ -45,4 +45,5 @@ from ._os import *  # noqa: F403
 from ._schema import *  # noqa: F403
 from ._version import *  # noqa: F403
 from ._qs_update import *  # noqa: F403
+from ._update_cache import *  # noqa: F403
 from ._paths import *  # noqa: F403
