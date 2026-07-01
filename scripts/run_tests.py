@@ -45,6 +45,7 @@ NUMERIC_SETTINGS = {
 }
 
 DIRECT_ENV_SETTINGS = {
+    "ratings_kometa_root": "RATINGS_MATRIX_KOMETA_ROOT",
     "ratings_movie_library": "RATINGS_MATRIX_MOVIE_LIBRARY",
     "ratings_show_library": "RATINGS_MATRIX_SHOW_LIBRARY",
     "ratings_artifact_dir": "RATINGS_MATRIX_ARTIFACT_DIR",
@@ -158,6 +159,34 @@ def build_runner_env(args: argparse.Namespace, config: dict[str, Any]) -> dict[s
     return env
 
 
+def resolve_ratings_kometa_root(env: dict[str, str]) -> Path:
+    override = str(env.get("RATINGS_MATRIX_KOMETA_ROOT", "") or "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+    return REPO_ROOT / "config" / "kometa"
+
+
+def has_usable_ratings_kometa_root(path: Path) -> bool:
+    return (path / "kometa.py").exists() and (path / "modules" / "overlay.py").exists()
+
+
+def maybe_disable_missing_ratings_kometa(env: dict[str, str]) -> None:
+    requested = str(env.get("RATINGS_MATRIX_WITH_KOMETA", "") or "").strip().lower()
+    if requested in {"", "0", "false", "no"}:
+        return
+
+    kometa_root = resolve_ratings_kometa_root(env)
+    if has_usable_ratings_kometa_root(kometa_root):
+        return
+
+    print(
+        "RatingsArtifacts: disabling Kometa render because no usable Kometa checkout "
+        f"was found at {kometa_root}. Set RATINGS_MATRIX_KOMETA_ROOT or -RatingsKometaRoot "
+        "to a valid checkout to re-enable it."
+    )
+    env["RATINGS_MATRIX_WITH_KOMETA"] = "0"
+
+
 def run_precommit(python_cmd: str, env: dict[str, str]) -> int:
     command = detect_precommit_command(python_cmd) + ["run", "--all-files", "--show-diff-on-failure", "--color=always"]
     return run_command(command, env=env)
@@ -228,12 +257,14 @@ def run_setup(python_cmd: str, *, skip_playwright: bool) -> int:
 
 
 def print_ratings_artifact_config(env: dict[str, str]) -> None:
+    kometa_root = resolve_ratings_kometa_root(env)
     print("RatingsArtifacts effective config:")
     print(f"  profile_order={env.get('RATINGS_MATRIX_PROFILE_ORDER', '')}")
     print("  execution_mode=" f"{env.get('RATINGS_MATRIX_EXECUTION_MODE', '')} chunk_size={env.get('RATINGS_MATRIX_CHUNK_SIZE', '')}")
     print(f"  random_count={env.get('RATINGS_MATRIX_RANDOM_COUNT', '')} random_seed={env.get('RATINGS_MATRIX_RANDOM_SEED', '')}")
     print(f"  case_offset={env.get('RATINGS_MATRIX_CASE_OFFSET', '')} case_limit={env.get('RATINGS_MATRIX_CASE_LIMIT', '')}")
     print(f"  case_ids={env.get('RATINGS_MATRIX_CASE_IDS', '')} case_ids_file={env.get('RATINGS_MATRIX_CASE_IDS_FILE', '')}")
+    print(f"  kometa_root={kometa_root}")
     print(
         "  with_kometa="
         f"{env.get('RATINGS_MATRIX_WITH_KOMETA', '')} fail_on_diff={env.get('RATINGS_MATRIX_FAIL_ON_DIFF', '')} "
@@ -338,6 +369,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_string_arg(parser, "RatingsNudgeApplyTo")
     add_string_arg(parser, "RatingsDiffUseSlotThresholds")
     add_string_arg(parser, "RatingsRandomSeed")
+    add_string_arg(parser, "RatingsKometaRoot")
     add_string_arg(parser, "RatingsMovieLibrary")
     add_string_arg(parser, "RatingsShowLibrary")
     add_string_arg(parser, "RatingsArtifactDir")
@@ -399,6 +431,7 @@ def main() -> int:
 
     config = load_local_config()
     env = build_runner_env(args, config)
+    maybe_disable_missing_ratings_kometa(env)
 
     if args.lint:
         return run_precommit(python_cmd, env)

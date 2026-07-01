@@ -67,7 +67,6 @@ PROGRESS_WRITE_INTERVAL = max(1, int(os.environ.get("RATINGS_PROGRESS_WRITE_INTE
 RANDOM_SEED_RAW = (os.environ.get("RATINGS_MATRIX_RANDOM_SEED", "") or "").strip()
 EXECUTION_MODE = (os.environ.get("RATINGS_MATRIX_EXECUTION_MODE", "batch") or "batch").strip().lower()
 CHUNK_SIZE = max(1, int(os.environ.get("RATINGS_MATRIX_CHUNK_SIZE", "12")))
-WITH_KOMETA_RENDER = str(os.environ.get("RATINGS_MATRIX_WITH_KOMETA", "1")).strip().lower() not in {"0", "false", "no"}
 FAIL_ON_DIFF = str(os.environ.get("RATINGS_MATRIX_FAIL_ON_DIFF", "0")).strip().lower() in {"1", "true", "yes"}
 DIFF_THRESHOLD_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT", "0.0")))
 DIFF_IGNORE_ALPHA = str(os.environ.get("RATINGS_MATRIX_DIFF_IGNORE_ALPHA", "1")).strip().lower() in {"1", "true", "yes"}
@@ -87,6 +86,23 @@ INCLUDE_NUDGES = str(os.environ.get("RATINGS_MATRIX_INCLUDE_NUDGES", "0")).strip
 NUDGE_PROFILES_RAW = (os.environ.get("RATINGS_MATRIX_NUDGE_PROFILES", "none") or "none").strip()
 NUDGE_APPLY_TO = (os.environ.get("RATINGS_MATRIX_NUDGE_APPLY_TO", "enabled_slots") or "enabled_slots").strip().lower()
 FAILED_PROFILE = object()
+
+
+def _requested_kometa_render_root():
+    override = (os.environ.get("RATINGS_MATRIX_KOMETA_ROOT", "") or "").strip()
+    candidate = Path(override).expanduser() if override else (Path.cwd() / "config" / "kometa")
+    return candidate.resolve()
+
+
+def _has_usable_kometa_render_root(path):
+    return (path / "kometa.py").exists() and (path / "modules" / "overlay.py").exists()
+
+
+WITH_KOMETA_RENDER_REQUESTED = str(os.environ.get("RATINGS_MATRIX_WITH_KOMETA", "1")).strip().lower() not in {"0", "false", "no"}
+KOMETA_RENDER_ROOT = _requested_kometa_render_root()
+WITH_KOMETA_RENDER = WITH_KOMETA_RENDER_REQUESTED and _has_usable_kometa_render_root(KOMETA_RENDER_ROOT)
+if WITH_KOMETA_RENDER_REQUESTED and not WITH_KOMETA_RENDER:
+    print(f"[ratings-artifacts] Kometa render disabled: no usable checkout at {KOMETA_RENDER_ROOT}", flush=True)
 
 ALIGNMENTS = ("vertical", "horizontal")
 HORIZONTAL_POSITIONS = ("left", "center", "right")
@@ -1170,6 +1186,8 @@ def _run_kometa_render_batch(output_dir, jobs, kometa_dir):
         "--repo-root",
         str(Path.cwd()),
     ]
+    if KOMETA_RENDER_ROOT:
+        cmd.extend(["--kometa-root", str(KOMETA_RENDER_ROOT)])
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0 and not results_path.exists():
         stderr = (proc.stderr or "").strip()
