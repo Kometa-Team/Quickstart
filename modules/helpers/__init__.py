@@ -42,4 +42,5 @@ from ._settings import *  # noqa: F403
 from ._git import *  # noqa: F403
 from ._forms import *  # noqa: F403
 from ._os import *  # noqa: F403
+from ._schema import *  # noqa: F403
 from ._paths import *  # noqa: F403

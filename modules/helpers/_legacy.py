@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import io
 import os
 import psutil
@@ -283,37 +282,10 @@ def invalidate_cached_imagemaid_update(imagemaid_root=None):
             _IMAGEMAID_UPDATE_CACHE.pop(key, None)
 
 
-def calculate_hash(content):
-    """Compute the SHA256 hash of the given content."""
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()
-
-
-def _schema_files_present():
-    return all(os.path.exists(os.path.join(JSON_SCHEMA_DIR, filename)) for filename, _remote_path in JSON_SCHEMA_SYNC_FILES)
-
-
-def load_previous_hashes():
-    """Load the last known hashes of schema files."""
-    if not os.path.exists(HASH_FILE):
-        return {}
-
-    hashes = {}
-    with open(HASH_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            filename, file_hash = line.strip().split(":", 1)
-            hashes[filename] = file_hash
-    return hashes
-
-
-def save_hashes(hashes):
-    """Save updated hashes to the hash file."""
-    with open(HASH_FILE, "w", encoding="utf-8") as f:
-        for filename, file_hash in hashes.items():
-            f.write(f"{filename}:{file_hash}\n")
-
-
 def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
+    from modules.helpers._schema import _schema_files_present, calculate_hash, load_previous_hashes, save_hashes
+
     global _JSON_SCHEMA_LAST_REFRESH_AT
 
     # branch = get_kometa_branch()
@@ -600,10 +572,6 @@ def find_item_by_imdb_id(library_name, imdb_id, media_type, fallback_title=None)
                 return build_match(item, "plex-title")
 
     return None
-
-
-def allowed_extensions_string():
-    return ", ".join(sorted(ALLOWED_EXTENSIONS))
 
 
 def get_plex_summary():
