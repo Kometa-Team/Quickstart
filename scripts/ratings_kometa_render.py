@@ -513,15 +513,16 @@ def main():
     parser.add_argument("--out", required=True, help="Output directory for rendered images.")
     parser.add_argument("--results", required=True, help="Path to write JSON results.")
     parser.add_argument("--repo-root", required=True, help="Repository root path.")
+    parser.add_argument("--kometa-root", help="Optional path to a usable Kometa checkout.")
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).resolve()
     out_dir = Path(args.out).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    kometa_root = repo_root / "config" / "kometa"
-    if not kometa_root.exists():
-        raise FileNotFoundError(f"Missing Kometa root at {kometa_root}")
+    kometa_root = Path(args.kometa_root).resolve() if args.kometa_root else (repo_root / "config" / "kometa")
+    if not (kometa_root / "kometa.py").exists() or not (kometa_root / "modules" / "overlay.py").exists():
+        raise FileNotFoundError(f"Missing usable Kometa root at {kometa_root}")
 
     # Kometa util imports optional runtime deps that are not required for this renderer path.
     if "num2words" not in sys.modules:
