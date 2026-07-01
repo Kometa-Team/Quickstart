@@ -25527,6 +25527,13 @@
             "placeholder": "Custom sort title format"
           },
           {
+            "key": "build_collection",
+            "label": "Build Collection",
+            "type": "toggle",
+            "tooltip": "Build the franchise collections from this Defaults File. Turn this off if you only want the related collection actions without creating the Plex collections.",
+            "default": true
+          },
+          {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
@@ -25549,6 +25556,14 @@
             "tooltip": "Append additional franchises mappings to the default addons dictionary for this Defaults File.",
             "key_placeholder": "Base franchise (e.g. Star Wars)",
             "value_placeholder": "Add comma-separated franchises (e.g. The Clone Wars, Rebels)"
+          },
+          {
+            "key": "title_override",
+            "label": "Title Override",
+            "type": "mapping_list",
+            "tooltip": "Override the generated collection title for specific TMDb collection IDs in this Defaults File.",
+            "key_placeholder": "TMDb collection ID (e.g. 10)",
+            "value_placeholder": "Custom title (e.g. Star Wars: Skywalker Saga)"
           },
           {
             "key": "remove_suffix",
@@ -26199,6 +26214,13 @@
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom sort title format"
+          },
+          {
+            "key": "build_collection",
+            "label": "Build Collection",
+            "type": "toggle",
+            "tooltip": "Build the franchise collections from this Defaults File. Turn this off if you only want the related collection actions without creating the Plex collections.",
+            "default": true
           },
           {
             "key": "addons",

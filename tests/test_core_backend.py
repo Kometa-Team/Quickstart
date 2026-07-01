@@ -2214,14 +2214,17 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
             {
                 "movies": {
                     "mov-library_movies-collection_franchise": True,
+                    "mov-library_movies-template_collection_franchise_build_collection": False,
                     "mov-library_movies-template_collection_franchise_radarr_folder": r"C:\Media\Movies",
                     "mov-library_movies-template_collection_franchise_radarr_tag": '["4k", "favorite"]',
                     "mov-library_movies-template_collection_franchise_item_radarr_tag": '["collected", "franchise"]',
+                    "mov-library_movies-template_collection_franchise_title_override": '{"10": "Star Wars: Skywalker Saga"}',
                 }
             },
             {
                 "shows": {
                     "sho-library_shows-collection_franchise": True,
+                    "sho-library_shows-template_collection_franchise_build_collection": False,
                     "sho-library_shows-template_collection_franchise_sonarr_folder": r"C:\Media\Shows",
                     "sho-library_shows-template_collection_franchise_sonarr_monitor": "future",
                     "sho-library_shows-template_collection_franchise_sonarr_tag": '["ongoing", "priority"]',
@@ -2253,13 +2256,46 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
 
     assert movie_entry is not None
     assert show_entry is not None
+    assert movie_entry["template_variables"]["build_collection"] is False
     assert movie_entry["template_variables"]["radarr_folder"] == r"C:\Media\Movies"
     assert movie_entry["template_variables"]["radarr_tag"] == ["4k", "favorite"]
     assert movie_entry["template_variables"]["item_radarr_tag"] == ["collected", "franchise"]
+    assert movie_entry["template_variables"]["title_override"] == {"10": "Star Wars: Skywalker Saga"}
+    assert show_entry["template_variables"]["build_collection"] is False
     assert show_entry["template_variables"]["sonarr_folder"] == r"C:\Media\Shows"
     assert show_entry["template_variables"]["sonarr_monitor"] == "future"
     assert show_entry["template_variables"]["sonarr_tag"] == ["ongoing", "priority"]
     assert show_entry["template_variables"]["item_sonarr_tag"] == ["watched", "tracked"]
+
+
+def test_runtime_config_schema_accepts_franchise_build_collection_and_title_override(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "default": "franchise",
+                        "template_variables": {
+                            "build_collection": False,
+                            "title_override": {"10": "Star Wars: Skywalker Saga"},
+                        },
+                    }
+                ]
+            }
+        },
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
 
 
 def test_build_libraries_section_emits_collection_hub_priority(app):
@@ -2612,6 +2648,10 @@ def test_normalize_collection_template_var_value_handles_dynamic_family_controls
         '{"Top 250": ["IMDb Top 250"]}',
     ) == {"Top 250": ["IMDb Top 250"]}
     assert output._normalize_collection_template_var_value(
+        "title_override",
+        '{"10": "Star Wars: Skywalker Saga", "535313": "Godzilla (MonsterVerse)"}',
+    ) == {"10": "Star Wars: Skywalker Saga", "535313": "Godzilla (MonsterVerse)"}
+    assert output._normalize_collection_template_var_value(
         "tmdb_birthday",
         '{"this_month": true, "before": 7, "after": "2"}',
     ) == {"this_month": True, "before": 7, "after": 2}
@@ -2630,6 +2670,7 @@ def test_dynamic_family_template_var_normalization_matches_collection_export_sha
         "addons": '{"US": ["Canada", "Mexico"], "CA": "United States"}',
         "append_addons": '{"US": ["Brazil"]}',
         "remove_suffix": '["Collection"]',
+        "title_override": '{"10": "Star Wars: Skywalker Saga"}',
     }
 
     for list_key in ("include", "exclude", "exclude_prefix"):
@@ -2659,6 +2700,9 @@ def test_dynamic_family_template_var_normalization_matches_collection_export_sha
             "US": ["Brazil"],
         },
         "remove_suffix": "Collection",
+        "title_override": {
+            "10": "Star Wars: Skywalker Saga",
+        },
     }
 
 

@@ -212,6 +212,7 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
                         {
                             "default": "franchise",
                             "template_variables": {
+                                "build_collection": False,
                                 "name_10": "Skywalker Saga",
                                 "sync_mode_10": "append",
                                 "collection_order_10": "custom",
@@ -221,6 +222,7 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
                                 "radarr_tag_10": ["4k", "franchise"],
                                 "item_radarr_tag_10": ["collection", "tracked"],
                                 "radarr_monitor_10": False,
+                                "title_override": {"10": "Star Wars: Skywalker Saga"},
                             },
                         }
                     ]
@@ -230,6 +232,7 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
                         {
                             "default": "franchise",
                             "template_variables": {
+                                "build_collection": False,
                                 "summary_1399": "Dragons and dynasties",
                                 "sort_title_1399": "!350_Game of Thrones",
                                 "sonarr_add_missing_1399": True,
@@ -250,6 +253,8 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
     libraries_payload = payload["libraries"]["libraries"]
     assert libraries_payload["mov-library_movies-collection_franchise"] is True
     assert libraries_payload["sho-library_shows-collection_franchise"] is True
+    assert libraries_payload["mov-library_movies-template_collection_franchise_build_collection"] is False
+    assert libraries_payload["mov-library_movies-template_collection_franchise_title_override"] == {"10": "Star Wars: Skywalker Saga"}
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_name_overrides"] == '{"10": "Skywalker Saga"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_sync_mode_overrides"] == '{"10": "append"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_collection_order_overrides"] == '{"10": "custom"}'
@@ -266,5 +271,6 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_tag_overrides"] == '{"1399": "tracked,priority"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_item_sonarr_tag_overrides"] == '{"1399": "watched,tracked"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_monitor_overrides"] == '{"1399": "future"}'
+    assert libraries_payload["sho-library_shows-template_collection_franchise_build_collection"] is False
     assert any("libraries.Movies.collection_files[0].template_variables.name_10" in line for line in report.lines)
     assert any("libraries.Shows.collection_files[0].template_variables.sonarr_monitor_1399" in line for line in report.lines)
