@@ -2040,7 +2040,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                     {% set display_label = var_details.label or var_name.replace('_', ' ') %}
                                                     {% set display_value = selected_value %}
                                                     {% set is_hidden_rating_anchor = overlay.id == 'overlay_ratings' and var_name in ['horizontal_offset', 'vertical_offset'] %}
-                                                    {% if not is_hidden_rating_anchor %}
+                                                    {% if is_hidden_rating_anchor %}
+                                                    <input type="hidden"
+                                                        id="{{ template_name }}-{{ var_name }}"
+                                                        name="{{ template_name }}[{{ var_name }}]"
+                                                        value="{{ display_value if display_value is not none else var_details.default }}"
+                                                        data-default="{{ var_details.default }}">
+                                                    {% else %}
                                                     {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height'] %}
                                                         {% set min_value = 1 %}
                                                         {% set selected_num = (selected_value if selected_value is not none else var_details.default) | int %}
