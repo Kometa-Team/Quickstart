@@ -1062,12 +1062,19 @@ if cleanup_flag not in {"1", "true", "yes"}:
 orphan_prune_result = helpers.prune_unrecoverable_orphaned_config_artifacts(kometa_root=app.config.get("KOMETA_ROOT", "."))
 if orphan_prune_result.get("removed"):
     helpers.ts_log(
-        f"Config cleanup removed {len(orphan_prune_result['removed'])} unrecoverable orphaned config bundle(s).",
+        f"Config cleanup removed {len(orphan_prune_result['removed'])} orphaned config bundle(s).",
         level="INFO",
     )
 if orphan_prune_result.get("errors"):
     for msg in orphan_prune_result["errors"]:
         helpers.ts_log(msg, level="WARNING")
+
+invalid_section_rows_removed = database.prune_invalid_section_rows()
+if invalid_section_rows_removed:
+    helpers.ts_log(
+        f"Config cleanup removed {invalid_section_rows_removed} invalid SQLite config row(s).",
+        level="INFO",
+    )
 
 
 def _load_or_create_secret_key():

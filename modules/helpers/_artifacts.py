@@ -496,9 +496,6 @@ def prune_unrecoverable_orphaned_config_artifacts(
         name = normalize_config_name_for_storage(bundle.get("name"))
         if not name:
             continue
-        if bundle.get("has_current_file") or bundle.get("has_archive_dir") or bundle.get("has_kometa_copy"):
-            skipped.append(name)
-            continue
         result = delete_orphaned_artifact_bundle(bundle)
         if result.get("errors"):
             errors.extend(result["errors"])

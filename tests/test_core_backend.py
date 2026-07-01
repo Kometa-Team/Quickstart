@@ -4120,34 +4120,31 @@ def test_delete_orphaned_config_artifacts_route_removes_font_only_default_bundle
     assert not (isolated_config_dir / "default").exists()
 
 
-def test_prune_unrecoverable_orphaned_config_artifacts_removes_font_only_bundle_but_keeps_yaml_backed_bundle(isolated_config_dir, app):
+def test_prune_unrecoverable_orphaned_config_artifacts_removes_archive_backed_orphan_bundle(isolated_config_dir, app):
     from pathlib import Path
     from modules import helpers
 
     font_only_name = "font_only_orphan"
-    recoverable_name = "recoverable_orphan"
+    archive_only_name = "archive_only_orphan"
 
     font_only_dir = isolated_config_dir / font_only_name / "fonts"
     font_only_dir.mkdir(parents=True, exist_ok=True)
     (font_only_dir / "Poster.ttf").write_bytes(b"font-only")
 
-    archive_dir = isolated_config_dir / "archives" / recoverable_name
+    archive_dir = isolated_config_dir / "archives" / archive_only_name
     archive_dir.mkdir(parents=True, exist_ok=True)
-    (archive_dir / f"{recoverable_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
-    (isolated_config_dir / f"{recoverable_name}_config.yml").write_text("current: true\n", encoding="utf-8")
+    (archive_dir / f"{archive_only_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
     kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
     kometa_path.mkdir(parents=True, exist_ok=True)
-    (kometa_path / f"{recoverable_name}_config.yml").write_text("kometa: true\n", encoding="utf-8")
 
     result = helpers.prune_unrecoverable_orphaned_config_artifacts(active_config_names=[], kometa_root=app.config.get("KOMETA_ROOT", "."))
 
     assert result["errors"] == []
-    assert result["removed"] == [font_only_name]
-    assert recoverable_name in result["skipped"]
+    assert set(result["removed"]) == {font_only_name, archive_only_name}
+    assert result["skipped"] == []
     assert not (isolated_config_dir / font_only_name).exists()
-    assert (isolated_config_dir / f"{recoverable_name}_config.yml").exists()
-    assert (isolated_config_dir / "archives" / recoverable_name).exists()
-    assert (kometa_path / f"{recoverable_name}_config.yml").exists()
+    assert not (isolated_config_dir / archive_only_name).exists()
+    assert not (isolated_config_dir / "archives" / archive_only_name).exists()
 
 
 def test_delete_orphaned_config_artifacts_route_removes_copy_named_yaml(client, isolated_config_dir):
@@ -4265,6 +4262,24 @@ def test_rename_config_moves_managed_library_file_directories(client, isolated_c
 
     assert new_name in database.get_unique_config_names()
     assert old_name not in database.get_unique_config_names()
+
+
+def test_prune_invalid_section_rows_removes_blank_config_entries(isolated_config_dir):
+    import sqlite3
+    from modules import database
+
+    with sqlite3.connect(database.get_database_path()) as connection:
+        cursor = connection.cursor()
+        cursor.execute(database.persisted_section_table_create())
+        cursor.execute(
+            "INSERT OR REPLACE INTO section_data(name, section, validated, user_entered, data) VALUES (?, ?, ?, ?, ?)",
+            ("", "", False, False, None),
+        )
+
+    removed = database.prune_invalid_section_rows()
+
+    assert removed == 1
+    assert "" not in database.get_unique_config_names()
 
 
 def test_list_uploaded_images_includes_builtin_guides(client):
