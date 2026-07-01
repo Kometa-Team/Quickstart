@@ -3207,7 +3207,6 @@ const OverlayHandler = {
       buildBackdropDataUrl(cfg).then(dataUrl => {
         if (!dataUrl) return
         cfg.layer.src = dataUrl
-        applyPosition(cfg)
       })
     }
 
