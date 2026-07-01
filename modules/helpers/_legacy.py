@@ -1,7 +1,6 @@
 import datetime
 import hashlib
 import io
-import platform
 import os
 import psutil
 import re
@@ -448,6 +447,8 @@ def check_for_update():
     kometa_branch = "nightly"
 
     # Get OS name and correct extension
+    from modules.helpers._os import get_running_os
+
     os_name, os_ext = get_running_os()
 
     payload = {
@@ -464,38 +465,6 @@ def check_for_update():
         "payload": copy.deepcopy(payload),
     }
     return payload
-
-
-def get_running_os():
-    # Preserve build for backward compatibility, even if unused
-    build = os.getenv("BUILD_OS", "local").lower()  # noqa: F841
-
-    # 1. Docker check via env
-    if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
-        return "Docker", ""
-
-    # 2. Frozen build (e.g., PyInstaller)
-    if getattr(sys, "frozen", False):
-        system = platform.system()
-        if system == "Windows":
-            return "Frozen-Windows", ".exe"
-        elif system == "Darwin":
-            return "Frozen-macOS", ""
-        elif system == "Linux":
-            return "Frozen-Linux", ""
-        else:
-            return "Frozen-Unknown", ""
-
-    # 3. Local run
-    system = platform.system()
-    if system == "Windows":
-        return "Local-Windows", ".exe"
-    elif system == "Darwin":
-        return "Local-macOS", ""
-    elif system == "Linux":
-        return "Local-Linux", ""
-    else:
-        return "Local-Unknown", ""
 
 
 def get_top_imdb_items(library_id, media_type, placeholder_id=None):
