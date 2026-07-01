@@ -6097,6 +6097,8 @@ function wireRatingsOffsetSync (scope) {
   })
 }
 
+window.wireRatingsOffsetSync = wireRatingsOffsetSync
+
 function setupAddMissingDependencies (scope) {
   const root = scope || document
   const addMissingToggles = Array.from(root.querySelectorAll('input.template-child-toggle[id*="radarr_add_missing_"], input.template-child-toggle[id*="sonarr_add_missing_"]'))
