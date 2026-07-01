@@ -2922,14 +2922,15 @@ function setupTemplateStringListHandlers (scope) {
     return String(el?.value || '').trim().toLowerCase() === 'true'
   }
 
-  function setLookupState (target, state) {
-    if (!target) return
-    target.textContent = state?.message || ''
-    target.className = 'small mt-1'
-    if (!state?.message) {
-      target.classList.add('d-none')
-      return
-    }
+    function setLookupState (target, state) {
+      if (!target) return
+      target.textContent = state?.message || ''
+      const inlineLookup = target.dataset.lookupInline === 'true'
+      target.className = inlineLookup ? 'small ms-2' : 'small mt-1'
+      if (!state?.message) {
+        target.classList.add('d-none')
+        return
+      }
     target.classList.remove('d-none')
     if (state.level === 'warning') {
       target.classList.add('text-warning')
@@ -3200,8 +3201,13 @@ function setupTemplateStringListHandlers (scope) {
         textWrap.appendChild(titleRow)
 
         const lookupMeta = document.createElement('div')
-        lookupMeta.className = 'small mt-1 d-none'
-        textWrap.appendChild(lookupMeta)
+        if (presetConfig.lookupService) {
+          lookupMeta.dataset.lookupInline = 'true'
+          titleRow.appendChild(lookupMeta)
+        } else {
+          textWrap.appendChild(lookupMeta)
+        }
+        lookupMeta.className = presetConfig.lookupService ? 'small ms-2 d-none' : 'small mt-1 d-none'
 
         const button = document.createElement('button')
         button.type = 'button'
@@ -3611,7 +3617,7 @@ function setupTemplateMappingListHandlers (scope) {
           lookupMeta.dataset.lookupInline = 'true'
           titleRow.appendChild(lookupMeta)
         }
-        lookupMeta.className = 'small mt-1 d-none'
+        lookupMeta.className = lookupDisplayMode === 'inline' ? 'small ms-2 d-none' : 'small mt-1 d-none'
         if (lookupDisplayMode !== 'inline') {
           textWrap.appendChild(lookupMeta)
         }
