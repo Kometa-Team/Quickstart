@@ -2922,6 +2922,110 @@ function setupTemplateStringListHandlers (scope) {
     return String(el?.value || '').trim().toLowerCase() === 'true'
   }
 
+    function setLookupState (target, state) {
+      if (!target) return
+      target.textContent = state?.message || ''
+      const inlineLookup = target.dataset.lookupInline === 'true'
+      target.className = inlineLookup ? 'small ms-2' : 'small mt-1'
+      if (!state?.message) {
+        target.classList.add('d-none')
+        return
+      }
+    target.classList.remove('d-none')
+    if (state.level === 'warning') {
+      target.classList.add('text-warning')
+    } else if (state.valid && state.verified) {
+      target.classList.add('text-success')
+    } else if (state.verified) {
+      target.classList.add('text-danger')
+    } else {
+      target.classList.add('text-warning')
+    }
+  }
+
+  function applyLookupState (target, presetConfig, presetName, value, context = {}) {
+    if (!target || !presetConfig?.lookupService || !value) return
+
+    if (presetConfig.lookupService === 'tmdb') {
+      if (!getServiceValidationState('tmdb')) {
+        setLookupState(target, {
+          valid: false,
+          verified: false,
+          message: 'TMDb not validated, so the collection title could not be checked.'
+        })
+        return
+      }
+
+      setLookupState(target, {
+        valid: false,
+        verified: false,
+        message: 'Checking TMDb collection title...'
+      })
+      lookupTemplateStringValue(presetName, value, context).then(result => {
+        if (!target.isConnected) return
+        if (result.valid && result.verified && result.label) {
+          const successMessage = result.message || `TMDb: ${result.label}`
+          setLookupState(target, {
+            valid: true,
+            verified: true,
+            level: result.level,
+            message: successMessage
+          })
+          return
+        }
+        setLookupState(target, {
+          valid: Boolean(result.valid),
+          verified: Boolean(result.verified),
+          message: result.message || 'TMDb lookup failed.'
+        })
+      })
+      return
+    }
+
+    if (presetConfig.lookupService === 'plex') {
+      if (!getServiceValidationState('plex')) {
+        setLookupState(target, {
+          valid: false,
+          verified: false,
+          message: 'Plex not validated, so the IMDb ID could not be checked against the active library.'
+        })
+        return
+      }
+      if (!String(context.libraryName || '').trim()) {
+        setLookupState(target, {
+          valid: false,
+          verified: false,
+          message: 'Library context is unavailable for Plex lookup.'
+        })
+        return
+      }
+
+      setLookupState(target, {
+        valid: false,
+        verified: false,
+        message: 'Checking Plex library for this IMDb ID...'
+      })
+      lookupTemplateStringValue(presetName, value, context).then(result => {
+        if (!target.isConnected) return
+        if (result.valid && result.verified && result.label) {
+          const successMessage = result.message || `Plex: ${result.label}`
+          setLookupState(target, {
+            valid: true,
+            verified: true,
+            level: result.level,
+            message: successMessage
+          })
+          return
+        }
+        setLookupState(target, {
+          valid: Boolean(result.valid),
+          verified: Boolean(result.verified),
+          message: result.message || 'Plex lookup failed.'
+        })
+      })
+    }
+  }
+
   async function lookupTemplateStringValue (presetName, value, context = {}) {
     const libraryName = String(context.libraryName || '').trim()
     const mediaType = String(context.mediaType || '').trim()
@@ -3017,26 +3121,6 @@ function setupTemplateStringListHandlers (scope) {
       return parseStoredStringList(counterpartHidden?.value)
     }
 
-    function setLookupState (target, state) {
-      if (!target) return
-      target.textContent = state?.message || ''
-      target.className = 'small mt-1'
-      if (!state?.message) {
-        target.classList.add('d-none')
-        return
-      }
-      target.classList.remove('d-none')
-      if (state.level === 'warning') {
-        target.classList.add('text-warning')
-      } else if (state.valid && state.verified) {
-        target.classList.add('text-success')
-      } else if (state.verified) {
-        target.classList.add('text-danger')
-      } else {
-        target.classList.add('text-warning')
-      }
-    }
-
     function setFeedback (message, persistent = false, level = 'error') {
       const isError = Boolean(message) && level === 'error'
       if (feedback) {
@@ -3117,8 +3201,13 @@ function setupTemplateStringListHandlers (scope) {
         textWrap.appendChild(titleRow)
 
         const lookupMeta = document.createElement('div')
-        lookupMeta.className = 'small mt-1 d-none'
-        textWrap.appendChild(lookupMeta)
+        if (presetConfig.lookupService) {
+          lookupMeta.dataset.lookupInline = 'true'
+          titleRow.appendChild(lookupMeta)
+        } else {
+          textWrap.appendChild(lookupMeta)
+        }
+        lookupMeta.className = presetConfig.lookupService ? 'small ms-2 d-none' : 'small mt-1 d-none'
 
         const button = document.createElement('button')
         button.type = 'button'
@@ -3137,76 +3226,8 @@ function setupTemplateStringListHandlers (scope) {
           syncState(updated)
         })
 
-        if (item.valid && presetConfig.lookupService === 'tmdb') {
-          if (!getServiceValidationState('tmdb')) {
-            setLookupState(lookupMeta, {
-              valid: false,
-              verified: false,
-              message: 'TMDb not validated, so the collection title could not be checked.'
-            })
-          } else {
-            setLookupState(lookupMeta, {
-              valid: false,
-              verified: false,
-              message: 'Checking TMDb collection title...'
-            })
-            lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
-              if (!lookupMeta.isConnected) return
-              if (result.valid && result.verified && result.label) {
-                const successMessage = result.message || `TMDb: ${result.label}`
-                setLookupState(lookupMeta, {
-                  valid: true,
-                  verified: true,
-                  level: result.level,
-                  message: successMessage
-                })
-                return
-              }
-              setLookupState(lookupMeta, {
-                valid: Boolean(result.valid),
-                verified: Boolean(result.verified),
-                message: result.message || 'TMDb lookup failed.'
-              })
-            })
-          }
-        } else if (item.valid && presetConfig.lookupService === 'plex') {
-          if (!getServiceValidationState('plex')) {
-            setLookupState(lookupMeta, {
-              valid: false,
-              verified: false,
-              message: 'Plex not validated, so the IMDb ID could not be checked against the active library.'
-            })
-          } else if (!libraryName) {
-            setLookupState(lookupMeta, {
-              valid: false,
-              verified: false,
-              message: 'Library context is unavailable for Plex lookup.'
-            })
-          } else {
-            setLookupState(lookupMeta, {
-              valid: false,
-              verified: false,
-              message: 'Checking Plex library for this IMDb ID...'
-            })
-            lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
-              if (!lookupMeta.isConnected) return
-              if (result.valid && result.verified && result.label) {
-                const successMessage = result.message || `Plex: ${result.label}`
-                setLookupState(lookupMeta, {
-                  valid: true,
-                  verified: true,
-                  level: result.level,
-                  message: successMessage
-                })
-                return
-              }
-              setLookupState(lookupMeta, {
-                valid: Boolean(result.valid),
-                verified: Boolean(result.verified),
-                message: result.message || 'Plex lookup failed.'
-              })
-            })
-          }
+        if (item.valid && presetConfig.lookupService) {
+          applyLookupState(lookupMeta, presetConfig, presetName, item.value, { libraryName, mediaType })
         }
       })
     }
@@ -3285,6 +3306,8 @@ function setupTemplateStringListHandlers (scope) {
 }
 
 function setupTemplateMappingListHandlers (scope) {
+  const templateStringLookupCache = window.__qsTemplateStringLookupCache || new Map()
+  window.__qsTemplateStringLookupCache = templateStringLookupCache
   const root = scope || document
   root.querySelectorAll('[data-template-mapping-list]').forEach(wrapper => {
     if (wrapper.dataset.listenerAdded) return
@@ -3297,9 +3320,171 @@ function setupTemplateMappingListHandlers (scope) {
     const list = wrapper.querySelector('[data-template-mapping-items]')
     const feedback = wrapper.querySelector('[data-template-mapping-feedback]')
     const validationPreset = String(wrapper.dataset.validationPreset || '').trim().toLowerCase()
+    const keyValidationPreset = String(wrapper.dataset.keyValidationPreset || '').trim().toLowerCase()
+    const lookupDisplayMode = String(wrapper.dataset.lookupDisplayMode || 'stacked').trim().toLowerCase()
+    const valueDisplayLabel = String(wrapper.dataset.valueDisplayLabel || '').trim()
     const valueKind = String(wrapper.dataset.mappingValueKind || 'string_list').trim().toLowerCase()
+    const libraryName = String(wrapper.dataset.libraryName || '').trim()
+    const mediaType = String(wrapper.dataset.mediaType || '').trim()
+    const keyPresetConfig = keyValidationPreset && templateStringListPresetConfigs[keyValidationPreset]
+      ? templateStringListPresetConfigs[keyValidationPreset]
+      : null
 
     if (!hidden || !keyInput || !valueInput || !addBtn || !list) return
+
+    function getServiceValidationState (serviceName) {
+      const el = document.getElementById(`qs-validate-${serviceName}`)
+      return String(el?.value || '').trim().toLowerCase() === 'true'
+    }
+
+    function setLookupState (target, state) {
+      if (!target) return
+      target.textContent = state?.message || ''
+      const inlineLookup = target.dataset.lookupInline === 'true'
+      target.className = inlineLookup ? 'small ms-2' : 'small mt-1'
+      if (!state?.message) {
+        target.classList.add('d-none')
+        return
+      }
+      target.classList.remove('d-none')
+      if (state.level === 'warning') {
+        target.classList.add('text-warning')
+      } else if (state.valid && state.verified) {
+        target.classList.add('text-success')
+      } else if (state.verified) {
+        target.classList.add('text-danger')
+      } else {
+        target.classList.add('text-warning')
+      }
+    }
+
+    async function lookupTemplateStringValue (presetName, value, context = {}) {
+      const currentLibraryName = String(context.libraryName || '').trim()
+      const currentMediaType = String(context.mediaType || '').trim()
+      const cacheKey = `${presetName}:${currentLibraryName}:${currentMediaType}:${value}`
+      if (templateStringLookupCache.has(cacheKey)) {
+        return templateStringLookupCache.get(cacheKey)
+      }
+      const request = fetch('/lookup_template_string_value', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preset: presetName,
+          value,
+          library_name: currentLibraryName,
+          media_type: currentMediaType
+        })
+      })
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}))
+          if (!response.ok) {
+            return {
+              valid: false,
+              verified: false,
+              message: data.error || data.message || `Lookup failed (${response.status})`
+            }
+          }
+          return data
+        })
+        .catch(() => ({
+          valid: false,
+          verified: false,
+          message: 'Lookup unavailable right now.'
+        }))
+      templateStringLookupCache.set(cacheKey, request)
+      return request
+    }
+
+    function applyLookupState (target, presetConfig, presetName, value, context = {}) {
+      if (!target || !presetConfig?.lookupService || !value) return
+
+      if (presetConfig.lookupService === 'tmdb') {
+        if (!getServiceValidationState('tmdb')) {
+          setLookupState(target, {
+            valid: false,
+            verified: false,
+            message: 'TMDb not validated, so the collection title could not be checked.'
+          })
+          return
+        }
+
+        setLookupState(target, {
+          valid: false,
+          verified: false,
+          message: 'Checking TMDb collection title...'
+        })
+        lookupTemplateStringValue(presetName, value, context).then(result => {
+          if (!target.isConnected) return
+          if (result.valid && result.verified && result.label) {
+            const successMessage = result.message || `TMDb: ${result.label}`
+            setLookupState(target, {
+              valid: true,
+              verified: true,
+              level: result.level,
+              message: successMessage
+            })
+            return
+          }
+          setLookupState(target, {
+            valid: Boolean(result.valid),
+            verified: Boolean(result.verified),
+            message: result.message || 'TMDb lookup failed.'
+          })
+        })
+        return
+      }
+
+      if (presetConfig.lookupService === 'plex') {
+        if (!getServiceValidationState('plex')) {
+          setLookupState(target, {
+            valid: false,
+            verified: false,
+            message: 'Plex not validated, so the IMDb ID could not be checked against the active library.'
+          })
+          return
+        }
+        if (!String(context.libraryName || '').trim()) {
+          setLookupState(target, {
+            valid: false,
+            verified: false,
+            message: 'Library context is unavailable for Plex lookup.'
+          })
+          return
+        }
+
+        setLookupState(target, {
+          valid: false,
+          verified: false,
+          message: 'Checking Plex library for this IMDb ID...'
+        })
+        lookupTemplateStringValue(presetName, value, context).then(result => {
+          if (!target.isConnected) return
+          if (result.valid && result.verified && result.label) {
+            const successMessage = result.message || `Plex: ${result.label}`
+            setLookupState(target, {
+              valid: true,
+              verified: true,
+              level: result.level,
+              message: successMessage
+            })
+            return
+          }
+          setLookupState(target, {
+            valid: Boolean(result.valid),
+            verified: Boolean(result.verified),
+            message: result.message || 'Plex lookup failed.'
+          })
+        })
+      }
+    }
+
+    if (keyValidationPreset === 'tmdb_collection_id' || keyValidationPreset === 'numeric_id' || keyValidationPreset === 'year' || keyValidationPreset === 'decade') {
+      keyInput.setAttribute('inputmode', 'numeric')
+    }
+    if (keyValidationPreset.startsWith('imdb_id')) {
+      keyInput.setAttribute('autocapitalize', 'off')
+    }
 
     function parseValuesList (rawValue) {
       if (Array.isArray(rawValue)) {
@@ -3338,6 +3523,15 @@ function setupTemplateMappingListHandlers (scope) {
       feedback.classList.toggle('d-block', Boolean(message))
     }
 
+    function setKeyInputValidity (result) {
+      if (!keyInput) return
+      if (!result || result.valid) {
+        keyInput.classList.remove('is-invalid')
+        return
+      }
+      keyInput.classList.add('is-invalid')
+    }
+
     function setValueInputValidity (result) {
       if (!valueInput) return
       if (!result || result.valid) {
@@ -3345,6 +3539,28 @@ function setupTemplateMappingListHandlers (scope) {
         return
       }
       valueInput.classList.add('is-invalid')
+    }
+
+    function normalizeMappingKey (rawKey) {
+      const keyText = String(rawKey || '').trim()
+      if (!keyText) return ''
+      return keyPresetConfig?.normalize ? keyPresetConfig.normalize(keyText) : keyText
+    }
+
+    function validateKey (rawKey) {
+      const normalized = normalizeMappingKey(rawKey)
+      if (!normalized) {
+        return { value: '', valid: false, message: 'Enter a key before adding it.' }
+      }
+      if (!keyPresetConfig?.validate) {
+        return { value: normalized, valid: true, message: '' }
+      }
+      const result = keyPresetConfig.validate(normalized)
+      return {
+        value: normalized,
+        valid: Boolean(result.valid),
+        message: result.message || 'Enter a valid key.'
+      }
     }
 
     function normalizeMappingValue (rawValue) {
@@ -3359,7 +3575,7 @@ function setupTemplateMappingListHandlers (scope) {
     function normalizeMapping (mapping) {
       const normalized = {}
       Object.entries(mapping || {}).forEach(([rawKey, rawValues]) => {
-        const key = String(rawKey || '').trim()
+        const key = normalizeMappingKey(rawKey)
         if (!key) return
         const value = normalizeMappingValue(rawValues)
         if (value == null) return
@@ -3371,19 +3587,47 @@ function setupTemplateMappingListHandlers (scope) {
     function renderList (mapping) {
       list.replaceChildren()
       Object.entries(mapping).forEach(([key, value]) => {
+        const keyResult = validateKey(key)
         const li = document.createElement('li')
         li.className = 'list-group-item d-flex justify-content-between align-items-center'
+        if (!keyResult.valid) li.classList.add('list-group-item-danger')
 
         const textWrap = document.createElement('div')
         textWrap.className = 'd-flex flex-column'
 
+        const titleRow = document.createElement('div')
+        titleRow.className = 'd-flex align-items-center gap-2'
+
         const title = document.createElement('span')
         title.textContent = key
-        textWrap.appendChild(title)
+        titleRow.appendChild(title)
+
+        if (!keyResult.valid) {
+          const badge = document.createElement('span')
+          badge.className = 'badge text-bg-danger'
+          badge.textContent = 'Invalid'
+          badge.title = keyResult.message
+          titleRow.appendChild(badge)
+        }
+
+        textWrap.appendChild(titleRow)
+
+        const lookupMeta = document.createElement('div')
+        if (lookupDisplayMode === 'inline') {
+          lookupMeta.dataset.lookupInline = 'true'
+          titleRow.appendChild(lookupMeta)
+        }
+        lookupMeta.className = lookupDisplayMode === 'inline' ? 'small ms-2 d-none' : 'small mt-1 d-none'
+        if (lookupDisplayMode !== 'inline') {
+          textWrap.appendChild(lookupMeta)
+        }
 
         const details = document.createElement('div')
         details.className = 'small text-muted'
-        details.textContent = Array.isArray(value) ? value.join(', ') : String(value || '')
+        const rawDetails = Array.isArray(value) ? value.join(', ') : String(value || '')
+        details.textContent = valueDisplayLabel && !Array.isArray(value)
+          ? `${valueDisplayLabel}: ${rawDetails}`
+          : rawDetails
         textWrap.appendChild(details)
 
         const button = document.createElement('button')
@@ -3396,6 +3640,10 @@ function setupTemplateMappingListHandlers (scope) {
 
         li.append(textWrap, button)
         list.appendChild(li)
+
+        if (keyResult.valid && keyPresetConfig?.lookupService) {
+          applyLookupState(lookupMeta, keyPresetConfig, keyValidationPreset, keyResult.value, { libraryName, mediaType })
+        }
 
         button.addEventListener('click', () => {
           const current = normalizeMapping(parseStoredMapping(hidden.value))
@@ -3412,18 +3660,21 @@ function setupTemplateMappingListHandlers (scope) {
       hidden.value = JSON.stringify(normalized)
       renderList(normalized)
       setFeedback(message)
+      setKeyInputValidity({ valid: true })
       setValueInputValidity({ valid: true })
       return normalized
     }
 
     function addEntry () {
-      const key = String(keyInput.value || '').trim()
-      if (!key) {
-        setFeedback('Enter a key before adding it.')
+      const keyResult = validateKey(keyInput.value)
+      if (!keyResult.valid) {
+        setKeyInputValidity(keyResult)
+        setFeedback(keyResult.message || 'Enter a valid key before adding it.')
         return
       }
       const normalizedValue = normalizeMappingValue(valueInput.value)
       if (normalizedValue == null) {
+        setKeyInputValidity({ valid: true })
         setFeedback('Enter at least one value before adding it.')
         return
       }
@@ -3431,12 +3682,13 @@ function setupTemplateMappingListHandlers (scope) {
         const validationResult = URLValidation.validateValue(normalizedValue)
         if (!validationResult.valid) {
           setValueInputValidity(validationResult)
+          setKeyInputValidity({ valid: true })
           setFeedback(validationResult.message || 'Enter a valid URL before adding it.')
           return
         }
       }
       const current = normalizeMapping(parseStoredMapping(hidden.value))
-      current[key] = normalizedValue
+      current[keyResult.value] = normalizedValue
       syncState(current)
       keyInput.value = ''
       valueInput.value = ''
@@ -3450,6 +3702,7 @@ function setupTemplateMappingListHandlers (scope) {
     })
     keyInput.addEventListener('input', () => {
       setFeedback('')
+      setKeyInputValidity({ valid: true })
     })
     valueInput.addEventListener('input', () => {
       setFeedback('')

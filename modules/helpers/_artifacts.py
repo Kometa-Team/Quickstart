@@ -469,6 +469,42 @@ def list_orphaned_config_versions(config_name: str | None) -> dict:
     return {"name": normalized, "versions": versions}
 
 
+def prune_unrecoverable_orphaned_config_artifacts(
+    active_config_names: list[str] | None = None,
+    kometa_root: str | Path | None = None,
+    kometa_config_dir: str | Path | None = None,
+) -> dict:
+    inventory = list_orphaned_config_artifacts(
+        active_config_names=active_config_names,
+        kometa_root=kometa_root,
+        kometa_config_dir=kometa_config_dir,
+    )
+    if inventory.get("errors"):
+        return {
+            "removed": [],
+            "skipped": [],
+            "errors": list(inventory.get("errors", [])),
+        }
+
+    removed: list[str] = []
+    skipped: list[str] = []
+    errors: list[str] = []
+
+    for bundle in inventory.get("orphans", []):
+        if not isinstance(bundle, dict):
+            continue
+        name = normalize_config_name_for_storage(bundle.get("name"))
+        if not name:
+            continue
+        result = delete_orphaned_artifact_bundle(bundle)
+        if result.get("errors"):
+            errors.extend(result["errors"])
+            continue
+        removed.append(name)
+
+    return {"removed": removed, "skipped": skipped, "errors": errors}
+
+
 def prune_orphaned_config_archives(
     active_config_names: list[str] | None = None,
 ) -> dict:

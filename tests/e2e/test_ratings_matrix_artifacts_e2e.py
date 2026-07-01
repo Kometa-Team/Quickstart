@@ -578,6 +578,24 @@ def _apply_nudge_offsets(page, board_selector, library_id, board_type, template,
     if dx == 0 and dy == 0:
         return True, ""
 
+    selectable_timeout_ms = SHOW_LAYER_READY_TIMEOUT_MS if str(board_type or "").lower() == "show" else LAYER_READY_TIMEOUT_MS
+    try:
+        page.wait_for_function(
+            """([selector, templateName]) => {
+              const board = document.querySelector(selector);
+              if (!board) return false;
+              const canvas = board.querySelector('.overlay-board-canvas');
+              if (!canvas) return false;
+              const exactLayer = canvas.querySelector(`.overlay-board-layer[data-overlay-id="${templateName}"]`);
+              const genericLayer = canvas.querySelector('.overlay-board-layer[data-overlay-type="overlay_ratings"]');
+              return !!(exactLayer || genericLayer);
+            }""",
+            arg=[board_selector, template],
+            timeout=max(1500, selectable_timeout_ms * 2),
+        )
+    except Exception:
+        pass
+
     result = page.evaluate(
         """([selector, libId, type, templateName, dx, dy]) => {
           const board = document.querySelector(selector);
@@ -593,10 +611,41 @@ def _apply_nudge_offsets(page, board_selector, library_id, board_type, template,
               selected = false;
             }
           }
+          const canvas = board.querySelector('.overlay-board-canvas');
+          const exactLayer = canvas?.querySelector(`.overlay-board-layer[data-overlay-id="${templateName}"]`) || null;
+          const fallbackLayer = exactLayer || canvas?.querySelector('.overlay-board-layer[data-overlay-type="overlay_ratings"]') || null;
           if (!selected) {
-            const fallbackLayer = board.querySelector('.overlay-board-layer[data-overlay-type="overlay_ratings"]');
-            if (fallbackLayer) {
-              fallbackLayer.click();
+            const fallbackId = fallbackLayer?.dataset?.overlayId || '';
+            if (fallbackId && typeof board._overlaySelectById === 'function') {
+              try {
+                selected = !!board._overlaySelectById(fallbackId);
+              } catch (_err) {
+                selected = false;
+              }
+            }
+          }
+          if (!selected && fallbackLayer) {
+            const pointerEventInit = {
+              bubbles: true,
+              cancelable: true,
+              composed: true,
+              button: 0,
+              buttons: 1,
+              pointerId: 1,
+              pointerType: 'mouse',
+              isPrimary: true,
+              clientX: 0,
+              clientY: 0
+            };
+            try {
+              fallbackLayer.dispatchEvent(new PointerEvent('pointerdown', pointerEventInit));
+              fallbackLayer.dispatchEvent(new PointerEvent('pointerup', pointerEventInit));
+            } catch (_err) {
+              fallbackLayer.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, buttons: 1 }));
+              fallbackLayer.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0, buttons: 1 }));
+            }
+            selected = fallbackLayer.classList.contains('is-active') || fallbackLayer.classList.contains('is-selected');
+            if (!selected && board.querySelector('.overlay-board-layer.is-active') === fallbackLayer) {
               selected = true;
             }
           }

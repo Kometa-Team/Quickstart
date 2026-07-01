@@ -2214,14 +2214,17 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
             {
                 "movies": {
                     "mov-library_movies-collection_franchise": True,
+                    "mov-library_movies-template_collection_franchise_build_collection": False,
                     "mov-library_movies-template_collection_franchise_radarr_folder": r"C:\Media\Movies",
                     "mov-library_movies-template_collection_franchise_radarr_tag": '["4k", "favorite"]',
                     "mov-library_movies-template_collection_franchise_item_radarr_tag": '["collected", "franchise"]',
+                    "mov-library_movies-template_collection_franchise_title_override": '{"10": "Star Wars: Skywalker Saga"}',
                 }
             },
             {
                 "shows": {
                     "sho-library_shows-collection_franchise": True,
+                    "sho-library_shows-template_collection_franchise_build_collection": False,
                     "sho-library_shows-template_collection_franchise_sonarr_folder": r"C:\Media\Shows",
                     "sho-library_shows-template_collection_franchise_sonarr_monitor": "future",
                     "sho-library_shows-template_collection_franchise_sonarr_tag": '["ongoing", "priority"]',
@@ -2253,13 +2256,46 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
 
     assert movie_entry is not None
     assert show_entry is not None
+    assert movie_entry["template_variables"]["build_collection"] is False
     assert movie_entry["template_variables"]["radarr_folder"] == r"C:\Media\Movies"
     assert movie_entry["template_variables"]["radarr_tag"] == ["4k", "favorite"]
     assert movie_entry["template_variables"]["item_radarr_tag"] == ["collected", "franchise"]
+    assert movie_entry["template_variables"]["title_override"] == {"10": "Star Wars: Skywalker Saga"}
+    assert show_entry["template_variables"]["build_collection"] is False
     assert show_entry["template_variables"]["sonarr_folder"] == r"C:\Media\Shows"
     assert show_entry["template_variables"]["sonarr_monitor"] == "future"
     assert show_entry["template_variables"]["sonarr_tag"] == ["ongoing", "priority"]
     assert show_entry["template_variables"]["item_sonarr_tag"] == ["watched", "tracked"]
+
+
+def test_runtime_config_schema_accepts_franchise_build_collection_and_title_override(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "default": "franchise",
+                        "template_variables": {
+                            "build_collection": False,
+                            "title_override": {"10": "Star Wars: Skywalker Saga"},
+                        },
+                    }
+                ]
+            }
+        },
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
 
 
 def test_build_libraries_section_emits_collection_hub_priority(app):
@@ -2612,6 +2648,10 @@ def test_normalize_collection_template_var_value_handles_dynamic_family_controls
         '{"Top 250": ["IMDb Top 250"]}',
     ) == {"Top 250": ["IMDb Top 250"]}
     assert output._normalize_collection_template_var_value(
+        "title_override",
+        '{"10": "Star Wars: Skywalker Saga", "535313": "Godzilla (MonsterVerse)"}',
+    ) == {"10": "Star Wars: Skywalker Saga", "535313": "Godzilla (MonsterVerse)"}
+    assert output._normalize_collection_template_var_value(
         "tmdb_birthday",
         '{"this_month": true, "before": 7, "after": "2"}',
     ) == {"this_month": True, "before": 7, "after": 2}
@@ -2630,6 +2670,7 @@ def test_dynamic_family_template_var_normalization_matches_collection_export_sha
         "addons": '{"US": ["Canada", "Mexico"], "CA": "United States"}',
         "append_addons": '{"US": ["Brazil"]}',
         "remove_suffix": '["Collection"]',
+        "title_override": '{"10": "Star Wars: Skywalker Saga"}',
     }
 
     for list_key in ("include", "exclude", "exclude_prefix"):
@@ -2659,6 +2700,9 @@ def test_dynamic_family_template_var_normalization_matches_collection_export_sha
             "US": ["Brazil"],
         },
         "remove_suffix": "Collection",
+        "title_override": {
+            "10": "Star Wars: Skywalker Saga",
+        },
     }
 
 
@@ -3620,6 +3664,24 @@ def test_download_bundle_places_fonts_under_config_name(client, isolated_config_
         assert f"{config_name}/fonts/Poster.ttf" in names
 
 
+def test_list_overlay_fonts_does_not_create_config_scoped_font_dir_when_listing(client, isolated_config_dir, app):
+    from flask import session
+    from modules.assets import clear_font_cache, list_overlay_fonts
+
+    config_name = "random_session_name"
+    legacy_font_dir = isolated_config_dir / "fonts"
+    legacy_font_dir.mkdir(parents=True, exist_ok=True)
+    (legacy_font_dir / "Poster.ttf").write_bytes(b"legacy-font")
+
+    with app.test_request_context("/"):
+        session["config_name"] = config_name
+        clear_font_cache()
+        fonts = list_overlay_fonts()
+
+    assert "Poster.ttf" in fonts
+    assert not (isolated_config_dir / config_name).exists()
+
+
 def test_import_config_preview_rejects_zip_with_unsupported_entries(client):
     import io
     import zipfile
@@ -4058,6 +4120,33 @@ def test_delete_orphaned_config_artifacts_route_removes_font_only_default_bundle
     assert not (isolated_config_dir / "default").exists()
 
 
+def test_prune_unrecoverable_orphaned_config_artifacts_removes_archive_backed_orphan_bundle(isolated_config_dir, app):
+    from pathlib import Path
+    from modules import helpers
+
+    font_only_name = "font_only_orphan"
+    archive_only_name = "archive_only_orphan"
+
+    font_only_dir = isolated_config_dir / font_only_name / "fonts"
+    font_only_dir.mkdir(parents=True, exist_ok=True)
+    (font_only_dir / "Poster.ttf").write_bytes(b"font-only")
+
+    archive_dir = isolated_config_dir / "archives" / archive_only_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    (archive_dir / f"{archive_only_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+
+    result = helpers.prune_unrecoverable_orphaned_config_artifacts(active_config_names=[], kometa_root=app.config.get("KOMETA_ROOT", "."))
+
+    assert result["errors"] == []
+    assert set(result["removed"]) == {font_only_name, archive_only_name}
+    assert result["skipped"] == []
+    assert not (isolated_config_dir / font_only_name).exists()
+    assert not (isolated_config_dir / archive_only_name).exists()
+    assert not (isolated_config_dir / "archives" / archive_only_name).exists()
+
+
 def test_delete_orphaned_config_artifacts_route_removes_copy_named_yaml(client, isolated_config_dir):
     copied_path = isolated_config_dir / "qs_copy_cleanup_probe - Copy (10)_config.yml"
     copied_name = "qs_copy_cleanup_probe_-_copy_(10)"
@@ -4173,6 +4262,24 @@ def test_rename_config_moves_managed_library_file_directories(client, isolated_c
 
     assert new_name in database.get_unique_config_names()
     assert old_name not in database.get_unique_config_names()
+
+
+def test_prune_invalid_section_rows_removes_blank_config_entries(isolated_config_dir):
+    import sqlite3
+    from modules import database
+
+    with sqlite3.connect(database.get_database_path()) as connection:
+        cursor = connection.cursor()
+        cursor.execute(database.persisted_section_table_create())
+        cursor.execute(
+            "INSERT OR REPLACE INTO section_data(name, section, validated, user_entered, data) VALUES (?, ?, ?, ?, ?)",
+            ("", "", False, False, None),
+        )
+
+    removed = database.prune_invalid_section_rows()
+
+    assert removed == 1
+    assert "" not in database.get_unique_config_names()
 
 
 def test_list_uploaded_images_includes_builtin_guides(client):
