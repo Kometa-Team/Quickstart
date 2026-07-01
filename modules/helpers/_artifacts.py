@@ -12,6 +12,7 @@ MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_file
 MANAGED_OVERLAY_IMAGE_DIR = "overlay_images"
 MANAGED_SYNC_ARTIFACT_DIRS = MANAGED_LIBRARY_FILE_DIRS + (MANAGED_OVERLAY_IMAGE_DIR,)
 MANAGED_CONFIG_ARTIFACT_DIRS = ("fonts",) + MANAGED_SYNC_ARTIFACT_DIRS
+RESERVED_RUNTIME_BUNDLE_NAMES = frozenset({"kometa", "imagemaid"})
 
 
 def migrate_config_archives(history_limit: int | None = None) -> dict:
@@ -106,6 +107,10 @@ def require_config_name_for_storage(config_name: str | None, context: str = "Art
     if not normalized:
         raise ValueError(f"{context} requires an explicit config name.")
     return normalized
+
+
+def is_reserved_runtime_bundle_name(config_name: str | None) -> bool:
+    return normalize_config_name_for_storage(config_name) in RESERVED_RUNTIME_BUNDLE_NAMES
 
 
 def get_managed_config_artifact_root(config_name: str | None) -> Path:
@@ -204,6 +209,12 @@ def delete_config_artifacts(
     from modules.helpers._legacy import get_kometa_config_dir
 
     normalized = require_config_name_for_storage(config_name, context="Config artifact cleanup")
+    if is_reserved_runtime_bundle_name(normalized):
+        return {
+            "removed": [],
+            "errors": [f"Refusing to remove reserved runtime bundle: {normalized}"],
+            "config_name": normalized,
+        }
     config_dir = Path(CONFIG_DIR)
     archive_root = config_dir / "archives"
     removed: list[str] = []
@@ -242,6 +253,12 @@ def delete_config_artifacts(
 def delete_orphaned_artifact_bundle(bundle: dict | None) -> dict:
     bundle = bundle if isinstance(bundle, dict) else {}
     bundle_name = normalize_config_name_for_storage(bundle.get("name"))
+    if is_reserved_runtime_bundle_name(bundle_name):
+        return {
+            "removed": [],
+            "errors": [f"Refusing to remove reserved runtime bundle: {bundle_name}"],
+            "config_name": bundle_name,
+        }
     removed: list[str] = []
     errors: list[str] = []
     raw_paths = bundle.get("paths")
@@ -327,12 +344,16 @@ def list_orphaned_config_artifacts(
         match = current_pattern.match(path.name)
         if not match:
             continue
+        if is_reserved_runtime_bundle_name(match.group("name")):
+            continue
         bundle = ensure_bundle(match.group("name"))
         bundle["has_current_file"] = True
         bundle["paths"].append(str(path))
 
     for path in config_dir.iterdir():
         if not path.is_dir():
+            continue
+        if is_reserved_runtime_bundle_name(path.name):
             continue
         if any((path / folder_name).exists() and (path / folder_name).is_dir() for folder_name in MANAGED_CONFIG_ARTIFACT_DIRS):
             bundle = ensure_bundle(path.name)
@@ -347,6 +368,8 @@ def list_orphaned_config_artifacts(
         for path in managed_root.iterdir():
             if not path.is_dir():
                 continue
+            if is_reserved_runtime_bundle_name(path.name):
+                continue
             bundle = ensure_bundle(path.name)
             path_text = str(path)
             if path_text not in bundle["paths"]:
@@ -355,6 +378,8 @@ def list_orphaned_config_artifacts(
     if archive_root.exists():
         for path in archive_root.iterdir():
             if not path.is_dir():
+                continue
+            if is_reserved_runtime_bundle_name(path.name):
                 continue
             bundle = ensure_bundle(path.name)
             bundle["has_archive_dir"] = True
@@ -376,6 +401,8 @@ def list_orphaned_config_artifacts(
             match = current_pattern.match(path.name)
             if not match:
                 continue
+            if is_reserved_runtime_bundle_name(match.group("name")):
+                continue
             bundle = ensure_bundle(match.group("name"))
             bundle["has_kometa_copy"] = True
             bundle["paths"].append(str(path))
@@ -383,6 +410,8 @@ def list_orphaned_config_artifacts(
     for bundle in bundles.values():
         name = bundle.get("name")
         if not name:
+            continue
+        if is_reserved_runtime_bundle_name(name):
             continue
         current_file = config_dir / f"{name}_config.yml"
         if current_file.exists() and current_file.is_file():
@@ -423,7 +452,7 @@ def list_orphaned_config_artifacts(
                 if path_text not in bundle["paths"]:
                     bundle["paths"].append(path_text)
 
-    orphans = [bundle for name, bundle in sorted(bundles.items()) if name not in active_names]
+    orphans = [bundle for name, bundle in sorted(bundles.items()) if name not in active_names and not is_reserved_runtime_bundle_name(name)]
     return {"orphans": orphans, "errors": [], "active_names": sorted(active_names)}
 
 
