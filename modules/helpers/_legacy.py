@@ -338,44 +338,8 @@ def ensure_json_schema():
         _JSON_SCHEMA_LAST_REFRESH_AT = time.monotonic()
 
 
-def get_remote_version(branch):
-    """Fetch the latest VERSION file from the correct GitHub branch."""
-    try:
-        response = requests.get(
-            f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION",
-            timeout=5,
-        )
-        response.raise_for_status()
-        version = response.text.strip()
-    except requests.RequestException:
-        return None  # If request fails, return None
-    try:
-        response = requests.get(
-            f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/BUILDNUM",
-            timeout=5,
-        )
-        response.raise_for_status()
-        build_num = response.text.strip()
-    except requests.RequestException:
-        build_num = "0"
-    return version if branch == "master" else f"{version}-build{build_num}"
-
-
 def get_branch():
     """Determine the current branch with Docker support."""
-    # If running in Docker, use the environment variable
-    if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
-        return os.getenv("BRANCH_NAME", "master")  # Use environment variable
-
-    # Otherwise, try GitPython (if available)
-    if Repo:
-        try:
-            return Repo(path=".").head.ref.name  # noqa
-        except Exception:  # noqa
-            pass  # Ignore errors if GitPython fails
-
-    # Fallback: Use BRANCH_NAME from the environment (for non-Docker cases)
-    return os.getenv("BRANCH_NAME", "master")
 
 
 def get_kometa_branch():
@@ -400,6 +364,8 @@ def get_version(branch):
 
 
 def check_for_update():
+    from modules.helpers._version import get_branch, get_remote_version
+
     """Compare the local version with the remote version and determine Kometa branch."""
     branch = get_branch()
     local_version = get_version(branch)
