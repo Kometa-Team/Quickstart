@@ -1745,6 +1745,8 @@ def get_kometa_root_path() -> Path:
         3) persisted existing-install override for the active config
         4) managed default under <CONFIG_DIR>/kometa
     """
+    from modules.helpers._install_mode import _managed_kometa_root_default, get_kometa_install_mode, _get_persisted_kometa_runtime_section
+
     managed_default = str(_managed_kometa_root_default())
     base = None
     install_mode = get_kometa_install_mode()
@@ -1787,6 +1789,8 @@ def get_kometa_root_path() -> Path:
 
 
 def get_kometa_config_dir() -> Path:
+    from modules.helpers._install_mode import get_kometa_install_mode, _get_persisted_kometa_runtime_section
+
     install_mode = get_kometa_install_mode()
     if install_mode != "external":
         if has_request_context():
@@ -1815,6 +1819,8 @@ def get_kometa_config_dir() -> Path:
 
 
 def get_kometa_log_dir() -> Path:
+    from modules.helpers._install_mode import get_kometa_install_mode, _get_persisted_kometa_runtime_section
+
     install_mode = get_kometa_install_mode()
     if install_mode != "external":
         if has_request_context():
