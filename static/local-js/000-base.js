@@ -3024,13 +3024,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const nextConfig = encodeURIComponent(nextName)
         const nextUrl = `${window.location.pathname}?config_name=${nextConfig}`
-        if (window.history && typeof window.history.replaceState === 'function') {
-          window.history.replaceState(null, '', nextUrl)
-        }
         const navigate = () => window.location.replace(nextUrl)
-        // Yield one task so the updated config badge/state becomes observable
-        // before the page unload starts.
-        window.setTimeout(navigate, 0)
+        // Yield real paint frames so the updated config badge/state becomes
+        // observable before the page unload starts.
+        if (typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(navigate)
+          })
+        } else {
+          window.setTimeout(navigate, 16)
+        }
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
         confirmBtn.disabled = false
