@@ -102,42 +102,6 @@ JSON_SCHEMA_SYNC_FILES = (
 )
 
 
-def _managed_kometa_root_default() -> Path:
-    return Path(os.path.join(CONFIG_DIR, "kometa")).resolve()
-
-
-def _get_persisted_kometa_runtime_section() -> dict:
-    try:
-        settings = persistence.retrieve_settings("900-kometa") or {}
-    except Exception:
-        return {}
-    section = settings.get("kometa", {}) if isinstance(settings, dict) else {}
-    return section if isinstance(section, dict) else {}
-
-
-def get_kometa_install_mode() -> str:
-    mode = None
-    if has_app_context():
-        mode = app.config.get("KOMETA_INSTALL_MODE")
-    if not mode and has_request_context():
-        mode = session.get("kometa_install_mode")
-    if not mode and has_request_context():
-        mode = _get_persisted_kometa_runtime_section().get("install_mode")
-    normalized = str(mode or "").strip().lower()
-    if normalized in {"existing", "external"}:
-        return normalized
-    return "managed"
-
-
-def get_kometa_install_mode_label(mode=None) -> str:
-    normalized = str(mode or get_kometa_install_mode()).strip().lower()
-    if normalized == "existing":
-        return "Existing direct install"
-    if normalized == "external":
-        return "External/containerized config+logs"
-    return "Quickstart-managed install"
-
-
 def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
     from modules.helpers._schema import _schema_files_present, calculate_hash, load_previous_hashes, save_hashes
@@ -1745,6 +1709,8 @@ def get_kometa_root_path() -> Path:
         3) persisted existing-install override for the active config
         4) managed default under <CONFIG_DIR>/kometa
     """
+    from modules.helpers._install_mode import _managed_kometa_root_default, get_kometa_install_mode, _get_persisted_kometa_runtime_section
+
     managed_default = str(_managed_kometa_root_default())
     base = None
     install_mode = get_kometa_install_mode()
@@ -1787,6 +1753,8 @@ def get_kometa_root_path() -> Path:
 
 
 def get_kometa_config_dir() -> Path:
+    from modules.helpers._install_mode import get_kometa_install_mode, _get_persisted_kometa_runtime_section
+
     install_mode = get_kometa_install_mode()
     if install_mode != "external":
         if has_request_context():
@@ -1815,6 +1783,8 @@ def get_kometa_config_dir() -> Path:
 
 
 def get_kometa_log_dir() -> Path:
+    from modules.helpers._install_mode import get_kometa_install_mode, _get_persisted_kometa_runtime_section
+
     install_mode = get_kometa_install_mode()
     if install_mode != "external":
         if has_request_context():
