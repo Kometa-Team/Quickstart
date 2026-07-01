@@ -4080,6 +4080,23 @@ def test_orphaned_config_artifacts_route_lists_font_only_default_bundle(client, 
     assert any(path.endswith("\\default") or path.endswith("/default") for path in orphan["paths"])
 
 
+def test_orphaned_config_artifacts_route_skips_reserved_runtime_roots(client, isolated_config_dir):
+    kometa_runtime_dir = isolated_config_dir / "kometa" / "metadata_files" / "mov-library_movies"
+    imagemaid_runtime_dir = isolated_config_dir / "imagemaid" / "fonts"
+    kometa_runtime_dir.mkdir(parents=True, exist_ok=True)
+    imagemaid_runtime_dir.mkdir(parents=True, exist_ok=True)
+    (kometa_runtime_dir / "movies.yml").write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
+    (imagemaid_runtime_dir / "Poster.ttf").write_bytes(b"font")
+
+    resp = client.get("/orphaned-config-artifacts")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    orphan_names = {item["name"] for item in payload["orphans"]}
+    assert "kometa" not in orphan_names
+    assert "imagemaid" not in orphan_names
+
+
 def test_delete_orphaned_config_artifacts_route_removes_selected_bundle(client, isolated_config_dir, app):
     from pathlib import Path
 
@@ -4145,6 +4162,28 @@ def test_prune_unrecoverable_orphaned_config_artifacts_removes_archive_backed_or
     assert not (isolated_config_dir / font_only_name).exists()
     assert not (isolated_config_dir / archive_only_name).exists()
     assert not (isolated_config_dir / "archives" / archive_only_name).exists()
+
+
+def test_prune_unrecoverable_orphaned_config_artifacts_skips_reserved_runtime_roots(isolated_config_dir, app):
+    from modules import helpers
+
+    kometa_runtime_dir = isolated_config_dir / "kometa" / "metadata_files" / "mov-library_movies"
+    imagemaid_runtime_dir = isolated_config_dir / "imagemaid" / "fonts"
+    kometa_runtime_dir.mkdir(parents=True, exist_ok=True)
+    imagemaid_runtime_dir.mkdir(parents=True, exist_ok=True)
+    (kometa_runtime_dir / "movies.yml").write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
+    (imagemaid_runtime_dir / "Poster.ttf").write_bytes(b"font")
+
+    result = helpers.prune_unrecoverable_orphaned_config_artifacts(
+        active_config_names=[],
+        kometa_root=app.config.get("KOMETA_ROOT", "."),
+    )
+
+    assert result["errors"] == []
+    assert result["removed"] == []
+    assert result["skipped"] == []
+    assert (isolated_config_dir / "kometa").exists()
+    assert (isolated_config_dir / "imagemaid").exists()
 
 
 def test_delete_orphaned_config_artifacts_route_removes_copy_named_yaml(client, isolated_config_dir):
