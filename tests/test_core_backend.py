@@ -3664,6 +3664,24 @@ def test_download_bundle_places_fonts_under_config_name(client, isolated_config_
         assert f"{config_name}/fonts/Poster.ttf" in names
 
 
+def test_list_overlay_fonts_does_not_create_config_scoped_font_dir_when_listing(client, isolated_config_dir, app):
+    from flask import session
+    from modules.assets import clear_font_cache, list_overlay_fonts
+
+    config_name = "random_session_name"
+    legacy_font_dir = isolated_config_dir / "fonts"
+    legacy_font_dir.mkdir(parents=True, exist_ok=True)
+    (legacy_font_dir / "Poster.ttf").write_bytes(b"legacy-font")
+
+    with app.test_request_context("/"):
+        session["config_name"] = config_name
+        clear_font_cache()
+        fonts = list_overlay_fonts()
+
+    assert "Poster.ttf" in fonts
+    assert not (isolated_config_dir / config_name).exists()
+
+
 def test_import_config_preview_rejects_zip_with_unsupported_entries(client):
     import io
     import zipfile
@@ -4102,6 +4120,33 @@ def test_delete_orphaned_config_artifacts_route_removes_font_only_default_bundle
     assert not (isolated_config_dir / "default").exists()
 
 
+def test_prune_unrecoverable_orphaned_config_artifacts_removes_archive_backed_orphan_bundle(isolated_config_dir, app):
+    from pathlib import Path
+    from modules import helpers
+
+    font_only_name = "font_only_orphan"
+    archive_only_name = "archive_only_orphan"
+
+    font_only_dir = isolated_config_dir / font_only_name / "fonts"
+    font_only_dir.mkdir(parents=True, exist_ok=True)
+    (font_only_dir / "Poster.ttf").write_bytes(b"font-only")
+
+    archive_dir = isolated_config_dir / "archives" / archive_only_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    (archive_dir / f"{archive_only_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+
+    result = helpers.prune_unrecoverable_orphaned_config_artifacts(active_config_names=[], kometa_root=app.config.get("KOMETA_ROOT", "."))
+
+    assert result["errors"] == []
+    assert set(result["removed"]) == {font_only_name, archive_only_name}
+    assert result["skipped"] == []
+    assert not (isolated_config_dir / font_only_name).exists()
+    assert not (isolated_config_dir / archive_only_name).exists()
+    assert not (isolated_config_dir / "archives" / archive_only_name).exists()
+
+
 def test_delete_orphaned_config_artifacts_route_removes_copy_named_yaml(client, isolated_config_dir):
     copied_path = isolated_config_dir / "qs_copy_cleanup_probe - Copy (10)_config.yml"
     copied_name = "qs_copy_cleanup_probe_-_copy_(10)"
@@ -4217,6 +4262,24 @@ def test_rename_config_moves_managed_library_file_directories(client, isolated_c
 
     assert new_name in database.get_unique_config_names()
     assert old_name not in database.get_unique_config_names()
+
+
+def test_prune_invalid_section_rows_removes_blank_config_entries(isolated_config_dir):
+    import sqlite3
+    from modules import database
+
+    with sqlite3.connect(database.get_database_path()) as connection:
+        cursor = connection.cursor()
+        cursor.execute(database.persisted_section_table_create())
+        cursor.execute(
+            "INSERT OR REPLACE INTO section_data(name, section, validated, user_entered, data) VALUES (?, ?, ?, ?, ?)",
+            ("", "", False, False, None),
+        )
+
+    removed = database.prune_invalid_section_rows()
+
+    assert removed == 1
+    assert "" not in database.get_unique_config_names()
 
 
 def test_list_uploaded_images_includes_builtin_guides(client):

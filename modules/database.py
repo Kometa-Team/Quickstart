@@ -199,12 +199,23 @@ def reset_data(name, section=None):
                 cursor.execute(sql, (name,))
 
 
+def prune_invalid_section_rows():
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            cursor.execute("""DELETE FROM section_data
+                   WHERE TRIM(COALESCE(name, '')) == ''
+                      OR TRIM(COALESCE(section, '')) == ''""")
+            return cursor.rowcount
+
+
 def get_unique_config_names():
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
             cursor.execute(persisted_section_table_create())
-            cursor.execute("SELECT DISTINCT name FROM section_data ORDER BY name ASC")
+            cursor.execute("SELECT DISTINCT name FROM section_data WHERE TRIM(COALESCE(name, '')) != '' ORDER BY name ASC")
             return [row["name"] for row in cursor.fetchall()]
 
 
