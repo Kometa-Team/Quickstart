@@ -12,15 +12,16 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~1,200 lines, well above the 600-line soft-limit.  The four
+This file is ~1,400 lines, well above the 600-line soft-limit.  The four
 routes are tightly coupled through a shared session-cache flow
 (import_preview_token / import_preview_path / import_preview_*_url /
 import_preview_*_token) and a shared helper layer.  Splitting them into
 separate per-route modules would either duplicate the helpers or require
 a sub-package with relative imports -- both worse than keeping them
-together.  ``import_config_preview`` alone is 595 lines; that one mega-
-function is the real elephant and a candidate for internal decomposition
-in a future PR.
+together.  ``import_config_preview`` alone is ~510 lines (down from ~590
+after hoisting six nested credential parsers to module scope); that one
+mega-function is still the real elephant and a candidate for further
+internal decomposition (zip extraction, plex validation, tmdb validation).
 """
 
 import json
@@ -107,6 +108,82 @@ def _parse_base_plex_libraries(base_name: str):
         _parse_csv_or_list_to_set(plex_block.get("tmp_movie_libraries", "")),
         _parse_csv_or_list_to_set(plex_block.get("tmp_show_libraries", "")),
     )
+
+
+# --- credential parsers ---------------------------------------------------
+#
+# Six tiny pure functions that pull ``(url, token)`` / ``api_key`` out of the
+# three shapes credentials might arrive in during an import:
+#
+#   * ``_parse_*_from_config`` -- an already-loaded YAML/dict from the
+#     uploaded config file
+#   * ``_parse_*_from_base``   -- the persisted section data of a *different*
+#     saved config, when the caller is merging into it
+#   * ``_parse_*_from_form``   -- the raw form fields submitted alongside
+#     the upload
+#
+# Hoisted from nested closures inside ``import_config_preview`` where they
+# were 52 lines of setup that had zero closure state -- the elephant
+# function shed ~50 lines and these are now unit-testable in isolation.
+
+
+def _parse_plex_credentials_from_config(config_data):
+    plex_block = config_data.get("plex", {}) if isinstance(config_data, dict) else {}
+    if not isinstance(plex_block, dict):
+        return "", ""
+    url = plex_block.get("url") or plex_block.get("plex_url") or ""
+    token = plex_block.get("token") or plex_block.get("plex_token") or ""
+    return str(url).strip(), str(token).strip()
+
+
+def _parse_plex_credentials_from_base(base_name: str):
+    if not base_name:
+        return "", ""
+    try:
+        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
+    except Exception:
+        return "", ""
+    if not isinstance(stored, dict):
+        return "", ""
+    if "plex" in stored:
+        return _parse_plex_credentials_from_config(stored)
+    url = stored.get("url") or stored.get("plex_url") or ""
+    token = stored.get("token") or stored.get("plex_token") or ""
+    return str(url).strip(), str(token).strip()
+
+
+def _parse_plex_credentials_from_form(form_data):
+    url = form_data.get("plex_url", "") or ""
+    token = form_data.get("plex_token", "") or ""
+    return str(url).strip(), str(token).strip()
+
+
+def _parse_tmdb_credentials_from_config(config_data):
+    tmdb_block = config_data.get("tmdb", {}) if isinstance(config_data, dict) else {}
+    if not isinstance(tmdb_block, dict):
+        return ""
+    api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
+    return str(api_key).strip()
+
+
+def _parse_tmdb_credentials_from_base(base_name: str):
+    if not base_name:
+        return ""
+    try:
+        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "tmdb")
+    except Exception:
+        return ""
+    if not isinstance(stored, dict):
+        return ""
+    if "tmdb" in stored:
+        return _parse_tmdb_credentials_from_config(stored)
+    api_key = stored.get("apikey") or stored.get("api_key") or stored.get("tmdb_apikey") or stored.get("token") or ""
+    return str(api_key).strip()
+
+
+def _parse_tmdb_credentials_from_form(form_data):
+    api_key = form_data.get("tmdb_apikey", "") or ""
+    return str(api_key).strip()
 
 
 def count_annotated_lines(text: str) -> dict:
@@ -338,59 +415,6 @@ def import_config_preview():
         parsed = bundle_artifacts.rewrite_bundle_library_paths(parsed, extracted_dir)
         parsed = bundle_artifacts.rewrite_bundle_overlay_image_paths(parsed, extracted_dir)
 
-    def parse_plex_credentials(config_data):
-        plex_block = config_data.get("plex", {}) if isinstance(config_data, dict) else {}
-        if not isinstance(plex_block, dict):
-            return "", ""
-        url = plex_block.get("url") or plex_block.get("plex_url") or ""
-        token = plex_block.get("token") or plex_block.get("plex_token") or ""
-        return str(url).strip(), str(token).strip()
-
-    def parse_base_plex_credentials(base_name: str):
-        if not base_name:
-            return "", ""
-        try:
-            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
-        except Exception:
-            return "", ""
-        if not isinstance(stored, dict):
-            return "", ""
-        if "plex" in stored:
-            return parse_plex_credentials(stored)
-        url = stored.get("url") or stored.get("plex_url") or ""
-        token = stored.get("token") or stored.get("plex_token") or ""
-        return str(url).strip(), str(token).strip()
-
-    def parse_form_plex_credentials(form_data):
-        url = form_data.get("plex_url", "") or ""
-        token = form_data.get("plex_token", "") or ""
-        return str(url).strip(), str(token).strip()
-
-    def parse_tmdb_credentials(config_data):
-        tmdb_block = config_data.get("tmdb", {}) if isinstance(config_data, dict) else {}
-        if not isinstance(tmdb_block, dict):
-            return ""
-        api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
-        return str(api_key).strip()
-
-    def parse_base_tmdb_credentials(base_name: str):
-        if not base_name:
-            return ""
-        try:
-            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "tmdb")
-        except Exception:
-            return ""
-        if not isinstance(stored, dict):
-            return ""
-        if "tmdb" in stored:
-            return parse_tmdb_credentials(stored)
-        api_key = stored.get("apikey") or stored.get("api_key") or stored.get("tmdb_apikey") or stored.get("token") or ""
-        return str(api_key).strip()
-
-    def parse_form_tmdb_credentials(form_data):
-        api_key = form_data.get("tmdb_apikey", "") or ""
-        return str(api_key).strip()
-
     needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
     needs_tmdb = isinstance(parsed, dict) and bool(parsed.get("tmdb") or parsed.get("libraries") or parsed.get("collections") or parsed.get("overlays"))
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
@@ -409,9 +433,9 @@ def import_config_preview():
                 plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
                 skip_plex_validation = True
 
-        form_plex_url, form_plex_token = parse_form_plex_credentials(request.form or {})
-        imported_plex_url, imported_plex_token = parse_plex_credentials(parsed)
-        base_plex_url, base_plex_token = parse_base_plex_credentials(base_config) if merge_mode else ("", "")
+        form_plex_url, form_plex_token = _parse_plex_credentials_from_form(request.form or {})
+        imported_plex_url, imported_plex_token = _parse_plex_credentials_from_config(parsed)
+        base_plex_url, base_plex_token = _parse_plex_credentials_from_base(base_config) if merge_mode else ("", "")
         has_form = bool(form_plex_url and form_plex_token)
         has_imported = bool(imported_plex_url and imported_plex_token)
         has_base = bool(base_plex_url and base_plex_token)
@@ -524,9 +548,9 @@ def import_config_preview():
                 )
 
     if needs_tmdb:
-        form_tmdb_key = parse_form_tmdb_credentials(request.form or {})
-        imported_tmdb_key = parse_tmdb_credentials(parsed)
-        base_tmdb_key = parse_base_tmdb_credentials(base_config) if merge_mode else ""
+        form_tmdb_key = _parse_tmdb_credentials_from_form(request.form or {})
+        imported_tmdb_key = _parse_tmdb_credentials_from_config(parsed)
+        base_tmdb_key = _parse_tmdb_credentials_from_base(base_config) if merge_mode else ""
         has_form = bool(form_tmdb_key)
         has_imported = bool(imported_tmdb_key)
         has_base = bool(base_tmdb_key)
