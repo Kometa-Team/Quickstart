@@ -42,6 +42,10 @@ from modules.output_file_entries import (  # noqa: F401 -- re-exported so output
     _parse_metadata_file_entries,
     _parse_overlay_file_block_entries,
 )
+from modules.output_headers import (  # noqa: F401 -- re-exported so output.<name> and public callers keep working
+    add_border_to_ascii_art,
+    section_heading,
+)
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
     PLAYLIST_SHARED_TEMPLATE_VAR_SPECS,
@@ -113,27 +117,6 @@ LIBRARY_SONARR_FIELDS = {
     "sonarr_path": "string",
     "plex_path": "string",
 }
-
-
-def add_border_to_ascii_art(art):
-    lines = art.split("\n")
-    lines = lines[:-1]
-    width = max(len(line) for line in lines)
-    border_line = "#" * (width + 4)
-    bordered_art = [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
-    return "\n".join(bordered_art)
-
-
-def section_heading(title, font="standard"):
-    if font == "none":
-        return ""
-    elif font == "single line":
-        return f"#==================== {title} ====================#"
-    else:
-        try:
-            return add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font))
-        except pyfiglet.FontNotFound:
-            return f"#==================== {title} ====================#"
 
 
 def clean_section_data(section_data, config_attribute):
