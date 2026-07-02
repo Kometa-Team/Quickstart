@@ -52,3 +52,4 @@ from ._pid import *  # noqa: F403
 from ._paths import *  # noqa: F403
 from ._zip_update import *  # noqa: F403
 from ._logging import *  # noqa: F403
+from ._plex import *  # noqa: F403
