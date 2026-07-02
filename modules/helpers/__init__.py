@@ -48,4 +48,5 @@ from ._qs_update import *  # noqa: F403
 from ._update_cache import *  # noqa: F403
 from ._install_mode import *  # noqa: F403
 from ._kometa_version import *  # noqa: F403
+from ._pid import *  # noqa: F403
 from ._paths import *  # noqa: F403

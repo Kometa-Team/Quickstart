@@ -135,10 +135,8 @@ def sync_managed_library_artifacts_to_kometa(
     kometa_config_dir: str | Path | None = None,
 ) -> dict:
     from modules.helpers._file_utils import _directory_tree_signature
-    from modules.helpers._legacy import (
-        get_kometa_config_dir,
-        handle_remove_readonly,
-    )
+    from modules.helpers._legacy import get_kometa_config_dir
+    from modules.helpers._pid import handle_remove_readonly
 
     normalized = require_config_name_for_storage(config_name, context="Managed library artifact sync")
     source_root = get_managed_config_artifact_root(normalized)
