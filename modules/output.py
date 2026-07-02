@@ -48,7 +48,11 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
 )
 from modules.output_library_ops import (
     build_delete_collections_operation,
+    build_mapper_operations,
+    build_mass_background_update_operation,
     build_mass_genre_update_operation,
+    build_mass_poster_update_operation,
+    build_metadata_backup_operation,
 )
 from modules.output_optimize import optimize_template_variables
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
@@ -1289,69 +1293,20 @@ def build_libraries_section(
                 operations[op] = seq
 
         # genre_mapper and content_rating_mapper
-        for mapper_key in ["genre_mapper", "content_rating_mapper"]:
-            full_key = f"{library_type}-library_{lib_id}-attribute_{mapper_key}"
-            mapping_value = attr_group.get(full_key)
-            if mapping_value:
-                try:
-                    parsed_mapping = json.loads(mapping_value)
-                    if isinstance(parsed_mapping, dict) and parsed_mapping:
-                        operations[mapper_key] = parsed_mapping
-                except Exception as e:
-                    helpers.ts_log(f"Skipping invalid JSON for {mapper_key}: {mapping_value} — {e}", level="ERROR")
+        operations.update(build_mapper_operations(attr_group, library_type, lib_id))
 
         # metadata_backup
-        backup = {}
-        path_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_path"
-        exclude_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_exclude"
-        sync_key = f"{library_type}-library_{lib_id}-attribute_sync_tags"
-        blank_key = f"{library_type}-library_{lib_id}-attribute_add_blank_entries"
-
-        if attr_group.get(path_key):
-            backup["path"] = attr_group.get(path_key)
-
-        # Only add exclude if it is a non-empty list
-        if attr_group.get(exclude_key):
-            val = attr_group.get(exclude_key)
-            try:
-                parsed = json.loads(val) if isinstance(val, str) else val
-                if isinstance(parsed, list) and parsed:  # non-empty list only
-                    backup["exclude"] = parsed
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid exclude value: {val} — {e}", level="ERROR")
-
-        if attr_group.get(sync_key) is True:
-            backup["sync_tags"] = True
-        if attr_group.get(blank_key) is True:
-            backup["add_blank_entries"] = True
-
-        # Only add to operations if backup has any keys
+        backup = build_metadata_backup_operation(attr_group, library_type, lib_id)
         if backup:
             operations["metadata_backup"] = backup
 
         # mass_poster_update
-        poster = {}
-        for key in [
-            "seasons",
-            "episodes",
-            "ignore_locked",
-            "ignore_overlays",
-            "source",
-        ]:
-            full_key = f"{library_type}-library_{lib_id}-attribute_mass_poster_{key}"
-            val = attr_group.get(full_key)
-            if val not in [None, False, ""]:
-                poster[key] = val
+        poster = build_mass_poster_update_operation(attr_group, library_type, lib_id)
         if poster:
             operations["mass_poster_update"] = poster
 
         # mass_background_update
-        background = {}
-        for key in ["seasons", "episodes", "ignore_locked", "source"]:
-            full_key = f"{library_type}-library_{lib_id}-attribute_mass_background_{key}"
-            val = attr_group.get(full_key)
-            if val not in [None, False, ""]:
-                background[key] = val
+        background = build_mass_background_update_operation(attr_group, library_type, lib_id)
         if background:
             operations["mass_background_update"] = background
 
