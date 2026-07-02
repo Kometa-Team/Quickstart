@@ -19,9 +19,11 @@ from ruamel.yaml.comments import CommentedSeq
 from modules import helpers, persistence, database
 from modules.output_collections import (  # noqa: F401 -- re-exported so output.<name> keeps working
     FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS,
+    _collapse_collection_data_template_vars,
     _expand_franchise_dynamic_child_overrides,
     _normalize_collection_template_var_value,
     _normalize_dynamic_child_override_value,
+    _normalize_legacy_collection_template_vars,
     _normalize_settings_section_value,
     _parse_tmdb_person_window,
 )
@@ -634,101 +636,6 @@ def optimize_template_variables(config_data, library_types=None):
                 else:
                     entry.pop("template_variables", None)
 
-    return config_data
-
-
-def _collapse_collection_data_template_vars(config_data):
-    if not isinstance(config_data, dict):
-        return config_data
-    libraries_section = config_data.get("libraries", {})
-    libraries = None
-    if isinstance(libraries_section, dict):
-        nested = libraries_section.get("libraries")
-        if isinstance(nested, dict):
-            libraries = nested
-        else:
-            libraries = libraries_section
-    if not isinstance(libraries, dict):
-        return config_data
-    for library_data in libraries.values():
-        if not isinstance(library_data, dict):
-            continue
-        collection_files = library_data.get("collection_files")
-        if not isinstance(collection_files, list):
-            continue
-        for entry in collection_files:
-            if not isinstance(entry, dict):
-                continue
-            template_vars = entry.get("template_variables")
-            if not isinstance(template_vars, dict):
-                continue
-            data_block = {}
-            for key in list(template_vars.keys()):
-                if not isinstance(key, str) or not key.startswith("data_"):
-                    continue
-                subkey = key[5:]
-                if not subkey:
-                    continue
-                value = template_vars.pop(key)
-                if value is None:
-                    continue
-                if isinstance(value, str):
-                    cleaned = value.strip()
-                    if not cleaned:
-                        continue
-                    if cleaned.isdigit():
-                        value = int(cleaned)
-                data_block[subkey] = value
-            if not data_block:
-                continue
-            existing = template_vars.get("data")
-            if isinstance(existing, dict):
-                existing.update(data_block)
-                template_vars["data"] = existing
-            else:
-                template_vars["data"] = data_block
-    return config_data
-
-
-def _normalize_legacy_collection_template_vars(config_data):
-    if not isinstance(config_data, dict):
-        return config_data
-    libraries_section = config_data.get("libraries", {})
-    libraries = None
-    if isinstance(libraries_section, dict):
-        nested = libraries_section.get("libraries")
-        if isinstance(nested, dict):
-            libraries = nested
-        else:
-            libraries = libraries_section
-    if not isinstance(libraries, dict):
-        return config_data
-
-    letterboxd_key_map = {
-        "use_top_250": "use_top_500",
-        "radarr_add_missing_top_250": "radarr_add_missing_top_500",
-        "visible_home_top_250": "visible_home_top_500",
-        "visible_library_top_250": "visible_library_top_500",
-        "visible_shared_top_250": "visible_shared_top_500",
-        "limit_top_250": "limit_top_500",
-    }
-
-    for library_data in libraries.values():
-        if not isinstance(library_data, dict):
-            continue
-        collection_files = library_data.get("collection_files")
-        if not isinstance(collection_files, list):
-            continue
-        for entry in collection_files:
-            if not isinstance(entry, dict) or entry.get("default") != "letterboxd":
-                continue
-            template_vars = entry.get("template_variables")
-            if not isinstance(template_vars, dict):
-                continue
-            for old_key, new_key in letterboxd_key_map.items():
-                if old_key not in template_vars or new_key in template_vars:
-                    continue
-                template_vars[new_key] = template_vars.pop(old_key)
     return config_data
 
 

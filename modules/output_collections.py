@@ -221,3 +221,96 @@ def _normalize_settings_section_value(key, value):
         list_values = _parse_string_list(value)
         return ",".join(list_values) if list_values else None
     return value
+
+
+# --- whole-config-tree walks over collection template variables -----------
+
+
+def _iter_collection_file_template_vars(config_data):
+    """Yield every ``template_variables`` dict on every collection_file entry.
+
+    Handles both nested (``config["libraries"]["libraries"][name]``) and
+    flat (``config["libraries"][name]``) shapes that appear at different
+    stages of the build pipeline.  Yields nothing if the shape doesn't
+    match -- callers rely on that behaviour.
+    """
+    if not isinstance(config_data, dict):
+        return
+    libraries_section = config_data.get("libraries", {})
+    libraries = None
+    if isinstance(libraries_section, dict):
+        nested = libraries_section.get("libraries")
+        libraries = nested if isinstance(nested, dict) else libraries_section
+    if not isinstance(libraries, dict):
+        return
+    for library_data in libraries.values():
+        if not isinstance(library_data, dict):
+            continue
+        collection_files = library_data.get("collection_files")
+        if not isinstance(collection_files, list):
+            continue
+        for entry in collection_files:
+            if not isinstance(entry, dict):
+                continue
+            template_vars = entry.get("template_variables")
+            if isinstance(template_vars, dict):
+                yield entry, template_vars
+
+
+def _collapse_collection_data_template_vars(config_data):
+    """Fold flat ``data_<sub>`` keys into a nested ``data:`` mapping.
+
+    Kometa's collection defaults accept a ``data:`` mapping (e.g. actors,
+    genres) but the quickstart form emits flat ``data_actors``,
+    ``data_genres``, ... keys.  This walker collapses them.
+    """
+    for _entry, template_vars in _iter_collection_file_template_vars(config_data):
+        data_block = {}
+        for key in list(template_vars.keys()):
+            if not isinstance(key, str) or not key.startswith("data_"):
+                continue
+            subkey = key[5:]
+            if not subkey:
+                continue
+            value = template_vars.pop(key)
+            if value is None:
+                continue
+            if isinstance(value, str):
+                cleaned = value.strip()
+                if not cleaned:
+                    continue
+                if cleaned.isdigit():
+                    value = int(cleaned)
+            data_block[subkey] = value
+        if not data_block:
+            continue
+        existing = template_vars.get("data")
+        if isinstance(existing, dict):
+            existing.update(data_block)
+            template_vars["data"] = existing
+        else:
+            template_vars["data"] = data_block
+    return config_data
+
+
+# Historic letterboxd rename: the top_250 lists became top_500 upstream.
+_LETTERBOXD_LEGACY_KEY_MAP = {
+    "use_top_250": "use_top_500",
+    "radarr_add_missing_top_250": "radarr_add_missing_top_500",
+    "visible_home_top_250": "visible_home_top_500",
+    "visible_library_top_250": "visible_library_top_500",
+    "visible_shared_top_250": "visible_shared_top_500",
+    "limit_top_250": "limit_top_500",
+}
+
+
+def _normalize_legacy_collection_template_vars(config_data):
+    """Rename legacy letterboxd ``*_top_250`` keys to ``*_top_500``."""
+    for entry, template_vars in _iter_collection_file_template_vars(config_data):
+        if entry.get("default") != "letterboxd":
+            continue
+        for old_key, new_key in _LETTERBOXD_LEGACY_KEY_MAP.items():
+            if old_key not in template_vars or new_key in template_vars:
+                continue
+            template_vars[new_key] = template_vars.pop(old_key)
+    return config_data
