@@ -2,7 +2,11 @@
 
 import copy
 import os
+import subprocess
+import sys
 import time
+
+from pathlib import Path
 
 from modules.helpers._legacy import BUILDNUM_FILE, QS_UPDATE_CACHE_TTL_SECONDS, VERSION_FILE, _QS_UPDATE_CACHE
 
@@ -66,3 +70,116 @@ def check_for_update():
         "payload": copy.deepcopy(payload),
     }
     return payload
+
+
+def perform_quickstart_update(qs_root, branch="master"):
+    """
+    Deterministic Quickstart update (mirrors Kometa updater):
+        - Choose upstream remote: prefer 'kometa-team', else 'origin'
+        - git fetch <upstream> --prune
+        - git switch -C <branch> --track <upstream>/<branch>  (fallback to checkout)
+        - git reset --hard <upstream>/<branch>
+        - python -m pip install --upgrade pip
+        - python -m pip install --no-cache-dir --upgrade -r requirements.txt
+    Returns: {"success": bool, "log": [str, ...]}
+    """
+    logs, success = [], True
+    try:
+        qs_root = Path(qs_root).resolve()
+        is_windows = sys.platform.startswith("win")
+
+        # pick upstream remote (prefer official)
+        remotes_out = subprocess.run(
+            ["git", "remote"],
+            cwd=qs_root,
+            capture_output=True,
+            text=True,
+            shell=is_windows,
+        )
+        remotes = (remotes_out.stdout or "").split()
+        upstream = "kometa-team" if "kometa-team" in remotes else "origin"
+        logs.append(f"🔗 Using Quickstart remote: {upstream}")
+        logs.append(f"⚙️ Target Quickstart branch: {branch}")
+
+        def run(cmd, label=None):
+            if label:
+                logs.append(label)
+            p = subprocess.run(cmd, cwd=qs_root, capture_output=True, text=True, shell=is_windows)
+            out = (p.stdout or "").strip()
+            err = (p.stderr or "").strip()
+            if out:
+                logs.append(out)
+            if p.returncode != 0 and err:
+                logs.append(err)
+            return p
+
+        # 1) fetch (ensure upstream/<branch> exists)
+        p = run(["git", "fetch", upstream, "--prune"], f"📥 git fetch {upstream} --prune")
+        success &= p.returncode == 0
+
+        # 2) switch to branch (fallback to checkout)
+        if success:
+            p = run(
+                ["git", "switch", "-C", branch, "--track", f"{upstream}/{branch}"],
+                f"🔀 git switch -C {branch} --track {upstream}/{branch}",
+            )
+            if p.returncode != 0:
+                p = run(
+                    ["git", "checkout", "-B", branch, f"{upstream}/{branch}"],
+                    f"🔁 fallback: git checkout -B {branch} {upstream}/{branch}",
+                )
+                success &= p.returncode == 0
+
+        # 3) hard reset to upstream tip
+        if success:
+            p = run(
+                ["git", "reset", "--hard", f"{upstream}/{branch}"],
+                f"↩️ git reset --hard {upstream}/{branch}",
+            )
+            success &= p.returncode == 0
+
+        # 4) upgrade pip for this interpreter (QS uses its own Python)
+        if success:
+            logs.append("\n⬆️ Upgrading pip...")
+            p = subprocess.run(
+                [str(Path(sys.executable)), "-m", "pip", "install", "--upgrade", "pip"],
+                cwd=qs_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
+            )
+            logs.append((p.stdout or "").strip() or "(no output)")
+            if p.returncode != 0:
+                logs.append((p.stderr or "").strip())
+                success = False
+
+        # 5) install requirements
+        if success:
+            logs.append("\n📦 Installing requirements...")
+            p = subprocess.run(
+                [
+                    str(Path(sys.executable)),
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-cache-dir",
+                    "--upgrade",
+                    "-r",
+                    "requirements.txt",
+                ],
+                cwd=qs_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
+            )
+            logs.append((p.stdout or "").strip() or "(no output)")
+            if p.returncode != 0:
+                logs.append((p.stderr or "").strip())
+                success = False
+
+        logs.append("\n✅ Update completed." if success else "\n❌ Update failed.")
+        return {"success": success, "log": logs}
+
+    except Exception as e:
+        logs.append(f"❌ Exception: {e}")
+        return {"success": False, "log": logs}
