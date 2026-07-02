@@ -13,6 +13,8 @@ import requests
 from flask import current_app as app
 from flask import has_app_context, has_request_context, session
 
+from modules.helpers._logging import ts_log
+
 try:
     from git import Repo
 except ImportError:
@@ -42,9 +44,6 @@ HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 VERSION_FILE = os.path.join(MEIPASS_DIR, "VERSION")
 BUILDNUM_FILE = os.path.join(MEIPASS_DIR, "BUILDNUM")
 
-LOG_DIR = os.path.join("config", "logs")
-LOG_FILE = os.path.join(LOG_DIR, "quickstart.log")
-MAX_LOG_BACKUPS = 10
 RESTART_NOTICE_FILE = os.path.join(CONFIG_DIR, ".restart_notice.json")
 PLEX_DISCOVERY_CACHE_TTL_SECONDS = int(os.environ.get("QS_PLEX_DISCOVERY_CACHE_TTL_SECONDS", "300"))
 JSON_SCHEMA_REFRESH_TTL_SECONDS = int(os.environ.get("QS_JSON_SCHEMA_REFRESH_TTL_SECONDS", "1800"))
@@ -772,107 +771,6 @@ def perform_kometa_update(kometa_root, branch="master"):
     except Exception as e:
         logs.append(f"❌ Exception: {str(e)}")
         return {"success": False, "log": logs}
-
-
-def rotate_logs():
-    if not os.path.exists(LOG_FILE):
-        return
-
-    # Delete the oldest backup if it would exceed MAX_LOG_BACKUPS
-    oldest = os.path.join(LOG_DIR, f"quickstart-{MAX_LOG_BACKUPS:03}.log")
-    if os.path.exists(oldest):
-        os.remove(oldest)
-
-    # Rotate existing backups
-    for i in range(MAX_LOG_BACKUPS - 1, 0, -1):
-        src = os.path.join(LOG_DIR, f"quickstart-{i:03}.log")
-        dst = os.path.join(LOG_DIR, f"quickstart-{i+1:03}.log")
-        if os.path.exists(src):
-            if os.path.exists(dst):
-                os.remove(dst)
-            os.rename(src, dst)
-
-    # Rotate the current log to quickstart-001.log
-    dst = os.path.join(LOG_DIR, "quickstart-001.log")
-    if os.path.exists(dst):
-        os.remove(dst)
-    os.rename(LOG_FILE, dst)
-
-
-def initialize_logging():
-    os.makedirs(LOG_DIR, exist_ok=True)
-    rotate_logs()
-    with open(LOG_FILE, "w", encoding="utf-8"):
-        pass
-    ts_log(f"New log started at {datetime.datetime.now()}", level="INFO")
-
-
-def redact_string(text):
-    redacted = text
-    sensitive_keys = [
-        "token",
-        "access_token",
-        "refresh_token",
-        "authorization",
-        "api_key",
-        "apikey",
-        "auth",
-        "secret",
-        "client_id",
-        "client_secret",
-        "plex_token",
-        "password",
-        "pin",
-        "username",
-    ]
-
-    for key in sensitive_keys:
-        key_escaped = re.escape(key)
-
-        patterns = [
-            # JSON-style quoted
-            (rf'("{key_escaped}"\s*:\s*")[^"]*(")', r"\1(redacted)\2"),
-            (rf"('{key_escaped}'\s*:\s*')[^']*(')", r"\1(redacted)\2"),
-            # Dict-style key = value
-            (rf"({key_escaped}\s*=\s*)[^\s,}}]+", r"\1(redacted)"),
-            # YAML/Python-style key: value
-            (rf"({key_escaped}\s*:\s*)[^\s,}}]+", r"\1(redacted)"),
-            # JSON bare/null values
-            (rf"({key_escaped}['\"]?\s*:\s*)(None|null)", r"\1(redacted)"),
-        ]
-
-        for pattern, repl in patterns:
-            redacted = re.sub(pattern, repl, redacted, flags=re.IGNORECASE)
-
-    return redacted
-
-
-def ts_log(*args, level="INFO"):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
-    level_str = f"[{level}]"
-    padding = " " * (10 - len(level_str))  # Pad to align
-
-    # Grab session ID if in request context
-    user_tag = ""
-    if has_request_context() and "qs_session_id" in session:
-        user_tag = f"[{session['qs_session_id']}] "
-
-    message = " ".join(str(arg) for arg in args)
-
-    # Console (NOT redacted)
-    line_console = f"[{now}] {level_str}{padding}| {user_tag}{message}"
-    print(line_console)
-
-    # File (redacted)
-    redacted_msg = redact_string(message)
-    line_file = f"[{now}] {level_str}{padding}| {user_tag}{redacted_msg}"
-
-    try:
-        os.makedirs(LOG_DIR, exist_ok=True)
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(line_file + "\n")
-    except Exception:
-        pass
 
 
 def perform_quickstart_update(qs_root, branch="master"):
