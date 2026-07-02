@@ -46,6 +46,7 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
     render_section_header,
     section_heading,
 )
+from modules.output_library_ops import build_delete_collections_operation
 from modules.output_optimize import optimize_template_variables
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
@@ -374,40 +375,7 @@ def build_libraries_section(
                 service_overrides[field] = value
 
         # Handle nested delete_collections block
-        delete_collections = {}
-        configured_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_configured"
-        managed_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_managed"
-        ignore_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_ignore_empty_smart_collections"
-        less_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_less"
-
-        configured_value = _coerce_bool(attr_group.get(configured_key, None))
-        managed_value = _coerce_bool(attr_group.get(managed_key, None))
-        ignore_value = _coerce_bool(attr_group.get(ignore_key, None))
-        less_value = None
-        raw_less = attr_group.get(less_key, None)
-        if raw_less not in [None, "", "None", "none"]:
-            try:
-                less_value = int(raw_less)
-            except Exception:
-                helpers.ts_log(f"Skipping invalid delete_collections_less value: {raw_less}", level="DEBUG")
-
-        delete_collections_enabled = any(
-            [
-                configured_value is True,
-                managed_value is True,
-                ignore_value is True,
-                less_value is not None,
-            ]
-        )
-
-        if delete_collections_enabled:
-            delete_collections["configured"] = configured_value if configured_value is not None else False
-            delete_collections["managed"] = managed_value if managed_value is not None else False
-            if less_value is not None:
-                delete_collections["less"] = less_value
-            if ignore_value is True:
-                delete_collections["ignore_empty_smart_collections"] = True
-
+        delete_collections = build_delete_collections_operation(attr_group, library_type, lib_id)
         if delete_collections:
             operations["delete_collections"] = delete_collections
 
