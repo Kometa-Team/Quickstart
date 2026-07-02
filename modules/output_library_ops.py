@@ -17,6 +17,10 @@ package.
 
 from __future__ import annotations
 
+import json
+
+from ruamel.yaml.comments import CommentedSeq
+
 from modules import helpers
 from modules.output_values import _coerce_bool
 
@@ -29,12 +33,28 @@ _EMPTY_OVERRIDE_VALUES = frozenset({None, "", "None", "none"})
 def _attr_key(library_type, lib_id, suffix):
     """Compose the per-library attribute lookup key.
 
-    Consolidates the ``f\"{library_type}-library_{lib_id}-attribute_{...}\"``
+    Consolidates the ``f"{library_type}-library_{lib_id}-attribute_{...}"``
     string builder that appears literally dozens of times inside
     ``add_entry``.  Not exported for now -- callers stay within this
     module.
     """
     return f"{library_type}-library_{lib_id}-attribute_{suffix}"
+
+
+def _parse_json_list(raw_value, context_label):
+    """Best-effort ``json.loads`` returning a list, or ``None`` on failure.
+
+    ``context_label`` is used purely for the debug/error log message so
+    callers can distinguish which input misbehaved.
+    """
+    if not raw_value:
+        return None
+    try:
+        parsed = json.loads(raw_value)
+    except Exception as e:
+        helpers.ts_log(f"Skipping invalid JSON in {context_label}: {raw_value} - {e}", level="ERROR")
+        return None
+    return parsed if isinstance(parsed, list) else None
 
 
 def build_delete_collections_operation(attr_group, library_type, lib_id):
@@ -83,4 +103,50 @@ def build_delete_collections_operation(attr_group, library_type, lib_id):
         result["less"] = less_value
     if ignore_value is True:
         result["ignore_empty_smart_collections"] = True
+    return result
+
+
+def build_mass_genre_update_operation(attr_group, library_type, lib_id):
+    """Return the ``mass_genre_update`` operations value, or an empty list.
+
+    Two attribute inputs feed this operation:
+
+    * ``mass_genre_update_order``  -- JSON list of sortable source strings.
+      Each string becomes a top-level entry.  Items shaped like
+      ``"[foo]"`` are treated as malformed UI leftovers and skipped.
+      Nested-list items get flattened.
+    * ``mass_genre_update_custom`` -- JSON list of custom genre strings
+      (e.g. ``["Thriller", "Action"]``).  The whole list is appended as
+      a single nested flow-style sequence so the emitted YAML reads
+      ``- [Thriller, Action]``.
+
+    Returns the assembled list (order + optional nested-custom).  An
+    empty list means the operation is disabled and shouldn't be emitted.
+    """
+    result = []
+
+    order_items = _parse_json_list(
+        attr_group.get(_attr_key(library_type, lib_id, "mass_genre_update_order")),
+        "custom genre",
+    )
+    if order_items is not None:
+        for item in order_items:
+            if isinstance(item, str) and item.startswith("[") and item.endswith("]"):
+                # Probably malformed nested list -- skip
+                continue
+            if isinstance(item, str):
+                result.append(item)
+            elif isinstance(item, list):  # rare case: nested list, flatten
+                result.extend(item)
+
+    custom_items = _parse_json_list(
+        attr_group.get(_attr_key(library_type, lib_id, "mass_genre_update_custom")),
+        "custom genre strings",
+    )
+    if custom_items:  # non-empty list only
+        # Wrap in a flow-style CommentedSeq so YAML emits `[a, b]` inline.
+        custom_flow_list = CommentedSeq(custom_items)
+        custom_flow_list.fa.set_flow_style()
+        result.append(custom_flow_list)
+
     return result
