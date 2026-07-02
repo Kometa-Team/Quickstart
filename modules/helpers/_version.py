@@ -1,4 +1,4 @@
-"""Version/branch detection utilities extracted from _legacy.py."""
+"""Version/branch detection utilities extracted from the original helpers.py monolith."""
 
 import os
 

@@ -1,11 +1,11 @@
-"""Kometa and ImageMaid update caching utilities extracted from _legacy.py."""
+"""Kometa and ImageMaid update caching utilities extracted from the original helpers.py monolith."""
 
 import copy
 import time
 
 from pathlib import Path
 
-from modules.helpers._legacy import (
+from modules.helpers._constants import (
     IMAGEMAID_BRANCH_OVERRIDES,
     IMAGEMAID_UPDATE_CACHE_TTL_SECONDS,
     KOMETA_BRANCH_OVERRIDES,

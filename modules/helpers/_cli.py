@@ -1,4 +1,4 @@
-"""CLI argument normalization utilities extracted from _legacy.py."""
+"""CLI argument normalization utilities extracted from the original helpers.py monolith."""
 
 
 def _unwrap_doublewrap(s: str) -> str:

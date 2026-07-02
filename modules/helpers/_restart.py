@@ -1,10 +1,10 @@
-"""Restart notice and environment variable utilities extracted from _legacy.py."""
+"""Restart notice and environment variable utilities extracted from the original helpers.py monolith."""
 
 import datetime
 import json
 import os
 
-from modules.helpers._legacy import CONFIG_DIR, RESTART_NOTICE_FILE
+from modules.helpers._constants import CONFIG_DIR, RESTART_NOTICE_FILE
 from modules.helpers._logging import ts_log
 
 

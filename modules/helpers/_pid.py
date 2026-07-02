@@ -1,11 +1,11 @@
-"""Process ID and runtime state utilities extracted from _legacy.py."""
+"""Process ID and runtime state utilities extracted from the original helpers.py monolith."""
 
 import os
 import stat
 
 import psutil
 
-from modules.helpers._legacy import CONFIG_DIR
+from modules.helpers._constants import CONFIG_DIR
 
 
 def get_app_root():

@@ -1,4 +1,4 @@
-"""Kometa install mode utilities extracted from _legacy.py."""
+"""Kometa install mode utilities extracted from the original helpers.py monolith."""
 
 import os
 
@@ -8,7 +8,7 @@ from flask import current_app as app
 from flask import has_app_context, has_request_context, session
 
 from modules import persistence
-from modules.helpers._legacy import CONFIG_DIR
+from modules.helpers._constants import CONFIG_DIR
 
 
 def _managed_kometa_root_default() -> Path:

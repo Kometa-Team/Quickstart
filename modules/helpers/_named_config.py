@@ -1,6 +1,6 @@
 """Persist a generated YAML config under a named identity.
 
-Extracted from _legacy.py. Handles:
+Extracted from the original helpers.py monolith. Handles:
 
 - Archiving previous versions (with optional history-limit pruning)
 - Writing to both the Quickstart-owned config dir and the Kometa-owned one
@@ -15,7 +15,7 @@ from pathlib import Path
 from flask import current_app as app
 
 from modules.helpers._kometa_paths import get_kometa_config_dir, get_kometa_root_path
-from modules.helpers._legacy import CONFIG_DIR
+from modules.helpers._constants import CONFIG_DIR
 from modules.helpers._logging import ts_log
 
 

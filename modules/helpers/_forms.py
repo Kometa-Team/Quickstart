@@ -1,6 +1,6 @@
-"""Form-building utilities extracted from _legacy.py."""
+"""Form-building utilities extracted from the original helpers.py monolith."""
 
-from modules.helpers._legacy import STRING_FIELDS
+from modules.helpers._constants import STRING_FIELDS
 
 
 def enforce_string_fields(data, enforce=False):

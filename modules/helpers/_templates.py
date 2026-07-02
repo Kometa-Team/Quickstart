@@ -1,4 +1,4 @@
-"""Template file listing and menu utilities extracted from _legacy.py."""
+"""Template file listing and menu utilities extracted from the original helpers.py monolith."""
 
 import os
 import re

@@ -1,4 +1,4 @@
-"""Font management utilities extracted from _legacy.py."""
+"""Font management utilities extracted from the original helpers.py monolith."""
 
 import os
 import shutil
@@ -6,7 +6,7 @@ import sys
 
 from pathlib import Path
 
-from modules.helpers._legacy import CONFIG_DIR, FONT_EXTENSIONS, MEIPASS_DIR, BASE_DIR, WORKING_DIR
+from modules.helpers._constants import CONFIG_DIR, FONT_EXTENSIONS, MEIPASS_DIR, BASE_DIR, WORKING_DIR
 
 
 def get_pyfiglet_fonts():

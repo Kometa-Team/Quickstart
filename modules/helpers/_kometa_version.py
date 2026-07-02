@@ -1,4 +1,4 @@
-"""Kometa and ImageMaid version/update check utilities extracted from _legacy.py."""
+"""Kometa and ImageMaid version/update check utilities extracted from the original helpers.py monolith."""
 
 import os
 
@@ -7,7 +7,7 @@ from pathlib import Path
 from flask import current_app as app
 from flask import has_app_context, has_request_context, session
 
-from modules.helpers._legacy import CONFIG_DIR, IMAGEMAID_GITHUB_BASE_URL
+from modules.helpers._constants import CONFIG_DIR, IMAGEMAID_GITHUB_BASE_URL
 from modules.helpers._zip_update import IMAGEMAID_GITHUB_API_BRANCH
 
 

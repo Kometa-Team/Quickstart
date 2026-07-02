@@ -1,4 +1,4 @@
-"""Quickstart settings utilities extracted from _legacy.py."""
+"""Quickstart settings utilities extracted from the original helpers.py monolith."""
 
 import os
 

@@ -1,4 +1,4 @@
-"""Install-mode-aware Kometa path resolvers — extracted from _legacy.py.
+"""Install-mode-aware Kometa path resolvers — extracted from the original helpers.py monolith.
 
 Resolve Kometa's on-disk locations, honoring:
 
