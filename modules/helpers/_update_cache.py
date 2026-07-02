@@ -36,7 +36,7 @@ def resolve_kometa_update_branch(branch_override=None):
 
 
 def get_cached_kometa_update(kometa_root=None, force_refresh=False, branch_override=None):
-    from modules.helpers._legacy import check_kometa_update, get_kometa_local_branch, get_kometa_local_sha, get_kometa_local_version
+    from modules.helpers._kometa_version import check_kometa_update, get_kometa_local_branch, get_kometa_local_sha, get_kometa_local_version
 
     branch = resolve_kometa_update_branch(branch_override)
     local_version = get_kometa_local_version(kometa_root)
@@ -110,7 +110,7 @@ def resolve_imagemaid_update_branch(branch_override=None):
 
 
 def get_cached_imagemaid_update(imagemaid_root=None, force_refresh=False, branch_override=None):
-    from modules.helpers._legacy import check_imagemaid_update, get_imagemaid_local_branch, get_imagemaid_local_sha, get_imagemaid_local_version
+    from modules.helpers._kometa_version import check_imagemaid_update, get_imagemaid_local_branch, get_imagemaid_local_sha, get_imagemaid_local_version
 
     branch = resolve_imagemaid_update_branch(branch_override)
     local_version = get_imagemaid_local_version(imagemaid_root)
