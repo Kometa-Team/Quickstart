@@ -53,6 +53,7 @@ from modules.output_library_ops import (
     build_mass_genre_update_operation,
     build_mass_poster_update_operation,
     build_metadata_backup_operation,
+    build_top_level_fields,
 )
 from modules.output_optimize import optimize_template_variables
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
@@ -1310,44 +1311,12 @@ def build_libraries_section(
         if background:
             operations["mass_background_update"] = background
 
-        # Remove/Reset Overlays
+        # Remove/Reset Overlays + other top-level fields
         top_group = top_level.get(lib_id, {})
-
-        remove_key = f"{library_type}-library_{lib_id}-top_level_remove_overlays"
-        reset_key = f"{library_type}-library_{lib_id}-top_level_reset_overlays"
-        schedule_key = f"{library_type}-library_{lib_id}-top_level_schedule"
-        auto_sort_hubs_key = f"{library_type}-library_{lib_id}-top_level_auto_sort_hubs"
-        schedule_overlays_key = f"{library_type}-library_{lib_id}-top_level_schedule_overlays"
-        report_path_key = f"{library_type}-library_{lib_id}-top_level_report_path"
-
-        remove_overlays = top_group.get(remove_key)
-        reset_overlays = top_group.get(reset_key)
-        schedule = top_group.get(schedule_key)
-        auto_sort_hubs = top_group.get(auto_sort_hubs_key)
-        schedule_overlays = top_group.get(schedule_overlays_key)
-        report_path = top_group.get(report_path_key)
-
-        if report_path not in [None, ""]:
-            entry["report_path"] = report_path
-        if schedule not in [None, ""]:
-            entry["schedule"] = schedule
-        if auto_sort_hubs not in [None, ""]:
-            entry["auto_sort_hubs"] = auto_sort_hubs
-        if remove_overlays:
-            entry["remove_overlays"] = True
-        if reset_overlays not in [None, "None", ""]:
-            entry["reset_overlays"] = reset_overlays
-        if schedule_overlays not in [None, ""]:
-            entry["schedule_overlays"] = schedule_overlays
+        entry.update(build_top_level_fields(top_group, library_type, lib_id))
 
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Top Level for {lib_id}: {top_group}", level="DEBUG")
-            helpers.ts_log(f"{report_path_key} = {report_path}", level="DEBUG")
-            helpers.ts_log(f"{schedule_key} = {schedule}", level="DEBUG")
-            helpers.ts_log(f"{auto_sort_hubs_key} = {auto_sort_hubs}", level="DEBUG")
-            helpers.ts_log(f"{remove_key} = {remove_overlays}", level="DEBUG")
-            helpers.ts_log(f"{reset_key} = {reset_overlays}", level="DEBUG")
-            helpers.ts_log(f"{schedule_overlays_key} = {schedule_overlays}", level="DEBUG")
 
         if operations:
             entry["operations"] = operations
