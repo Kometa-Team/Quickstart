@@ -9,7 +9,6 @@ import platform
 import psutil
 
 import jsonschema
-import pyfiglet
 from flask import current_app as app, has_request_context, session
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import PlainScalarString
@@ -44,6 +43,7 @@ from modules.output_file_entries import (  # noqa: F401 -- re-exported so output
 )
 from modules.output_headers import (  # noqa: F401 -- re-exported so output.<name> and public callers keep working
     add_border_to_ascii_art,
+    render_section_header,
     section_heading,
 )
 from modules.output_optimize import optimize_template_variables
@@ -1519,14 +1519,7 @@ def build_config(header_style="standard", config_name=None):
     def header_for_section(section_key, display_name):
         if section_key in header_art:
             return header_art[section_key]
-        if header_style == "none":
-            return ""
-        if header_style == "single line" or helpers.contains_non_latin(display_name):
-            return "#==================== " + display_name + " ====================#"
-        try:
-            return add_border_to_ascii_art(pyfiglet.figlet_format(display_name, font=header_style))
-        except pyfiglet.FontNotFound:
-            return "#==================== " + display_name + " ====================#"
+        return render_section_header(display_name, header_style)
 
     # Process sections and generate header art
     for name in sections:
@@ -1535,18 +1528,7 @@ def build_config(header_style="standard", config_name=None):
         config_attribute = item["raw_name"]
 
         # Handle all header styles
-        if header_style == "none":
-            header_art[config_attribute] = ""  # No headers at all
-        elif header_style == "single line" or helpers.contains_non_latin(item["name"]):  # Standardizes "single line" as divider format
-            header_art[config_attribute] = "#==================== " + item["name"] + " ====================#"
-        else:
-            # Handle custom PyFiglet fonts dynamically (including "standard")
-            try:
-                figlet_text = pyfiglet.figlet_format(item["name"], font=header_style)
-                header_art[config_attribute] = add_border_to_ascii_art(figlet_text)
-            except pyfiglet.FontNotFound:
-                # Fallback to "single line" divider format instead of basic text
-                header_art[config_attribute] = "#==================== " + item["name"] + " ====================#"
+        header_art[config_attribute] = render_section_header(item["name"], header_style)
 
         # Retrieve settings for each section.
         # Deep-copy here so YAML normalization cannot mutate the in-memory
@@ -1926,14 +1908,6 @@ def build_config(header_style="standard", config_name=None):
     )
 
     def inject_section_headers(yaml_string, font):
-        def art(title):
-            if font in ["none", "single line"] or helpers.contains_non_latin(title):
-                return f"#==================== {title} ====================#"
-            try:
-                return add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font))
-            except pyfiglet.FontNotFound:
-                return f"#==================== {title} ====================#"
-
         lines = yaml_string.splitlines()
         output = []
         in_libraries_block = False
@@ -1954,14 +1928,14 @@ def build_config(header_style="standard", config_name=None):
             # Only inject header for lines like "  Movies:" or "  TV Shows:" inside the libraries block
             if in_libraries_block and line.startswith("  ") and not line.startswith("   ") and line.strip().endswith(":") and not line.strip().startswith("-"):
                 library_name = line.strip().rstrip(":")
-                output.append(art(library_name))
+                output.append(render_section_header(library_name, font))
 
             elif stripped.startswith("collection_files:"):
-                output.append(art("Collections"))
+                output.append(render_section_header("Collections", font))
             elif stripped.startswith("metadata_files:"):
-                output.append(art("Metadata Files"))
+                output.append(render_section_header("Metadata Files", font))
             elif stripped.startswith("overlay_files:"):
-                output.append(art("Overlays"))
+                output.append(render_section_header("Overlays", font))
 
             output.append(line)
 
