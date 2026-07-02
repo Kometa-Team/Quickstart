@@ -46,7 +46,10 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
     render_section_header,
     section_heading,
 )
-from modules.output_library_ops import build_delete_collections_operation
+from modules.output_library_ops import (
+    build_delete_collections_operation,
+    build_mass_genre_update_operation,
+)
 from modules.output_optimize import optimize_template_variables
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
@@ -194,42 +197,7 @@ def build_libraries_section(
         operations = {}
         attr_group = attributes.get(lib_id, {})
         # Begin: Mass Genre Update Section
-        mass_genre_update = []
-
-        # Grab the full reordered list from hidden input
-        custom_key = f"{library_type}-library_{lib_id}-attribute_mass_genre_update_order"
-        order_value = attr_group.get(custom_key)
-
-        if order_value:
-            try:
-                parsed = json.loads(order_value)
-                if isinstance(parsed, list):
-                    for item in parsed:
-                        if isinstance(item, str) and item.startswith("[") and item.endswith("]"):
-                            # Probably malformed nested list — skip
-                            continue
-                        elif isinstance(item, str):
-                            mass_genre_update.append(item)
-                        elif isinstance(item, list):  # rare case
-                            mass_genre_update.extend(item)
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid JSON in custom genre: {order_value} — {e}", level="ERROR")
-
-        # Also include custom genre strings (if any) from the other hidden input
-        custom_strings_key = f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom"
-        custom_strings_value = attr_group.get(custom_strings_key)
-
-        if custom_strings_value:
-            try:
-                parsed_custom = json.loads(custom_strings_value)
-                if isinstance(parsed_custom, list) and parsed_custom:
-                    # Wrap it in a CommentedSeq to enforce flow style
-                    custom_flow_list = CommentedSeq(parsed_custom)
-                    custom_flow_list.fa.set_flow_style()  # Force [ "Thriller", "Action" ] formatting
-                    mass_genre_update.append(custom_flow_list)
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid JSON in custom genre strings: {custom_strings_value} — {e}", level="ERROR")
-
+        mass_genre_update = build_mass_genre_update_operation(attr_group, library_type, lib_id)
         if mass_genre_update:
             operations["mass_genre_update"] = mass_genre_update
 
