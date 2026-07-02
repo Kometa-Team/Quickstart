@@ -5,6 +5,7 @@ import json
 import os
 
 from modules.helpers._legacy import CONFIG_DIR, RESTART_NOTICE_FILE
+from modules.helpers._logging import ts_log
 
 
 def update_env_variable(key, value):
@@ -35,7 +36,6 @@ def set_restart_notice(reason, message=None):
         "message": message.strip() if isinstance(message, str) and message.strip() else None,
         "created_at": datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z"),
     }
-    from modules.helpers._legacy import ts_log
 
     try:
         with open(RESTART_NOTICE_FILE, "w", encoding="utf-8") as handle:
@@ -49,7 +49,6 @@ def set_restart_notice(reason, message=None):
 def consume_restart_notice():
     if not os.path.exists(RESTART_NOTICE_FILE):
         return None
-    from modules.helpers._legacy import ts_log
 
     try:
         with open(RESTART_NOTICE_FILE, "r", encoding="utf-8") as handle:
