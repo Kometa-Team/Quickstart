@@ -1,9 +1,9 @@
 """Pure value-coercion and parsing primitives for config-YAML generation.
 
-Extracted from the original ``modules/output.py`` monolith.  All ten
-helpers here are small (< 30 lines) and dependency-free -- they take
-raw config values (strings, dicts, lists, ints, floats, ``None``) and
-return a normalized shape.  Nothing here touches Flask, the database,
+Extracted from the original ``modules/output.py`` monolith.  Each helper
+is small (< 40 lines) and dependency-free -- they take raw config
+values (strings, dicts, lists, ints, floats, ``None``) and return a
+normalized shape.  Nothing here touches Flask, the database,
 persistence, helpers, or any other repo state.
 
 Public surface (nothing here is a public API -- each name starts with
@@ -19,6 +19,8 @@ Groups:
   * ``_parse_string_list_mapping`` / ``_parse_string_mapping`` /
     ``_parse_template_mapping_dict`` -- dict-shaped normalizers
   * ``_playlist_scalar_or_list`` -- collapse 1-element lists to scalars
+  * ``_normalize_asset_directory_entry`` /
+    ``_normalize_asset_directory_values`` -- unescape Windows/UNC paths
 """
 
 from __future__ import annotations
@@ -201,3 +203,51 @@ def _playlist_scalar_or_list(values):
     if not values:
         return None
     return values[0] if len(values) == 1 else values
+
+
+# --- asset directory path normalization -----------------------------------
+#
+# Kometa's ``asset_directory:`` config accepts multi-line strings or lists.
+# On Windows, users often paste YAML-escaped paths like ``C:\\Users\\me``
+# where the double-backslashes are the YAML wire form of a single one.
+# UNC paths keep their leading ``\\`` prefix (that's the UNC marker).
+
+
+def _normalize_asset_directory_entry(value):
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    # Convert YAML-style escaped Windows paths back to plain paths while preserving UNC prefixes.
+    if re.match(r"^[A-Za-z]:\\\\", text):
+        while "\\\\" in text:
+            text = text.replace("\\\\", "\\")
+        return text
+
+    if text.startswith("\\\\"):
+        prefix = "\\\\"
+        remainder = text[2:]
+        while "\\\\" in remainder:
+            remainder = remainder.replace("\\\\", "\\")
+        return prefix + remainder
+
+    return text
+
+
+def _normalize_asset_directory_values(value):
+    normalized = []
+    if isinstance(value, str):
+        items = value.splitlines()
+    elif isinstance(value, list):
+        items = value
+    else:
+        items = []
+
+    for item in items:
+        cleaned = _normalize_asset_directory_entry(item)
+        if cleaned:
+            normalized.append(cleaned)
+    return normalized
