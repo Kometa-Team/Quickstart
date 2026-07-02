@@ -67,6 +67,7 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     _rewrite_custom_font_paths,
     clean_section_data,
 )
+from modules.output_reorder import reorder_library_section  # public API used by tests as output.reorder_library_section
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
     _coerce_string_list,
@@ -1500,118 +1501,6 @@ def build_libraries_section(
         helpers.ts_log(buf.getvalue().decode("utf-8"))
 
     return {"libraries": libraries_section}
-
-
-def reorder_library_section(library_data):
-    """
-    Reorders library data so that:
-    - `report_path` appears first.
-    - `schedule` comes next.
-    - `auto_sort_hubs` comes after `schedule`.
-    - `remove_overlays`, `reset_overlays`, and `schedule_overlays` come after that.
-    - `template_variables` next.
-    - `settings` appears before `radarr` / `sonarr` / `operations`.
-    - `metadata_files` appears after library settings and operations.
-    - `metadata_files` appears before `collection_files`.
-    - `collection_files` appears before `overlay_files`.
-    - Keys inside `operations` are ordered as per Kometa Wiki.
-    - Other keys retain their natural order.
-    """
-    reordered_data = {}
-
-    # 1. Place report_path first if it exists
-    if "report_path" in library_data:
-        reordered_data["report_path"] = library_data["report_path"]
-
-    # 2. Then library schedule
-    if "schedule" in library_data:
-        reordered_data["schedule"] = library_data["schedule"]
-
-    # 3. Then library-level hub sorting
-    if "auto_sort_hubs" in library_data:
-        reordered_data["auto_sort_hubs"] = library_data["auto_sort_hubs"]
-
-    # 4. Then remove/reset overlays
-    if "remove_overlays" in library_data:
-        reordered_data["remove_overlays"] = library_data["remove_overlays"]
-    if "reset_overlays" in library_data:
-        reordered_data["reset_overlays"] = library_data["reset_overlays"]
-    if "schedule_overlays" in library_data:
-        reordered_data["schedule_overlays"] = library_data["schedule_overlays"]
-
-    # 5. Then template_variables
-    if "template_variables" in library_data:
-        reordered_data["template_variables"] = library_data["template_variables"]
-
-    # 6. Then library settings
-    if "settings" in library_data:
-        reordered_data["settings"] = library_data["settings"]
-
-    # 7. Then per-library Arr overrides
-    if "radarr" in library_data:
-        reordered_data["radarr"] = library_data["radarr"]
-    if "sonarr" in library_data:
-        reordered_data["sonarr"] = library_data["sonarr"]
-
-    # 8. Reorder operations
-    operations_order = [
-        "assets_for_all",
-        "assets_for_all_collections",
-        "delete_collections",
-        "mass_genre_update",
-        "mass_content_rating_update",
-        "mass_original_title_update",
-        "mass_studio_update",
-        "mass_originally_available_update",
-        "mass_added_at_update",
-        "mass_audience_rating_update",
-        "mass_critic_rating_update",
-        "mass_user_rating_update",
-        "mass_episode_audience_rating_update",
-        "mass_episode_critic_rating_update",
-        "mass_episode_user_rating_update",
-        "mass_poster_update",
-        "mass_background_update",
-        "mass_imdb_parental_labels",
-        "mass_collection_mode",
-        "update_blank_track_titles",
-        "remove_title_parentheses",
-        "split_duplicates",
-        "radarr_add_all",
-        "radarr_remove_by_tag",
-        "sonarr_add_all",
-        "sonarr_remove_by_tag",
-        "genre_mapper",
-        "content_rating_mapper",
-        "metadata_backup",
-    ]
-
-    if "operations" in library_data:
-        ordered_ops = {}
-        ops = library_data["operations"]
-        for key in operations_order:
-            if key in ops:
-                ordered_ops[key] = ops[key]
-        # Include any unknown keys at the end
-        for k, v in ops.items():
-            if k not in ordered_ops:
-                ordered_ops[k] = v
-        reordered_data["operations"] = ordered_ops
-
-    # 8. Then library-level metadata/collections/overlays in explicit YAML order
-    if "metadata_files" in library_data:
-        reordered_data["metadata_files"] = library_data["metadata_files"]
-    if "collection_files" in library_data:
-        reordered_data["collection_files"] = library_data["collection_files"]
-    if "overlay_files" in library_data:
-        reordered_data["overlay_files"] = library_data["overlay_files"]
-
-    # 9. Finally add any other keys that weren't handled
-    for key, value in library_data.items():
-        if key not in reordered_data:
-            reordered_data[key] = value
-
-    return reordered_data
 
 
 def build_config(header_style="standard", config_name=None):
