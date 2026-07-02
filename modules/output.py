@@ -49,11 +49,14 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
 from modules.output_library_ops import (
     build_delete_collections_operation,
     build_grouped_mass_update_operations,
+    build_library_operations,
+    build_library_settings,
     build_mapper_operations,
     build_mass_background_update_operation,
     build_mass_genre_update_operation,
     build_mass_poster_update_operation,
     build_metadata_backup_operation,
+    build_service_overrides,
     build_template_variables,
     build_top_level_fields,
 )
@@ -95,45 +98,6 @@ from modules.output_values import (  # noqa: F401 -- re-exported for tests calli
 )
 
 _EMPTY_OUTPUT = object()
-
-LIBRARY_RADARR_FIELDS = {
-    "url": "string",
-    "token": "string",
-    "root_folder_path": "string",
-    "quality_profile": "string",
-    "availability": "string",
-    "tag": "string",
-    "monitor": "bool",
-    "search": "bool",
-    "add_missing": "bool",
-    "add_existing": "bool",
-    "upgrade_existing": "bool",
-    "monitor_existing": "bool",
-    "ignore_cache": "bool",
-    "radarr_path": "string",
-    "plex_path": "string",
-}
-
-LIBRARY_SONARR_FIELDS = {
-    "url": "string",
-    "token": "string",
-    "root_folder_path": "string",
-    "quality_profile": "string",
-    "language_profile": "string",
-    "series_type": "string",
-    "season_folder": "bool",
-    "monitor": "string",
-    "tag": "string",
-    "search": "bool",
-    "cutoff_search": "bool",
-    "add_missing": "bool",
-    "add_existing": "bool",
-    "upgrade_existing": "bool",
-    "monitor_existing": "bool",
-    "ignore_cache": "bool",
-    "sonarr_path": "string",
-    "plex_path": "string",
-}
 
 
 def build_libraries_section(
@@ -184,25 +148,12 @@ def build_libraries_section(
             helpers.ts_log(f"Processing Library: {library_key} -> {library_name}", level="DEBUG")
 
         # Process Library Settings and Operations Attributes
-        library_settings_fields = [
-            "asset_directory",
-            "prioritize_assets",
-        ]
-        operations_fields = [
-            "assets_for_all",
-            "assets_for_all_collections",
-            "mass_imdb_parental_labels",
-            "mass_collection_mode",
-            "update_blank_track_titles",
-            "remove_title_parentheses",
-            "split_duplicates",
-            "radarr_add_all",
-            "sonarr_add_all",
-        ]
-        library_settings = {}
-        service_overrides = {}
         operations = {}
         attr_group = attributes.get(lib_id, {})
+        library_settings = build_library_settings(attr_group, library_type, lib_id)
+        operations.update(build_library_operations(attr_group, library_type, lib_id))
+        service_name, service_overrides = build_service_overrides(attr_group, library_type, lib_id)
+
         # Begin: Mass Genre Update Section
         mass_genre_update = build_mass_genre_update_operation(attr_group, library_type, lib_id)
         if mass_genre_update:
@@ -304,50 +255,6 @@ def build_libraries_section(
             motu_list = CommentedSeq(mass_original_title_update)
             motu_list.fa.set_block_style()
             operations["mass_original_title_update"] = motu_list
-
-        for field in library_settings_fields:
-            attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
-            value = attr_group.get(attr_key, None)
-            if value in [None, ""] and field == "asset_directory":
-                legacy_attr_key = f"{library_type}-library_{lib_id}-{field}"
-                value = attr_group.get(legacy_attr_key, None)
-
-            if field == "asset_directory":
-                normalized = _normalize_asset_directory_values(value)
-
-                if normalized:
-                    asset_dirs = CommentedSeq(normalized)
-                    asset_dirs.fa.set_block_style()
-                    library_settings[field] = asset_dirs
-                continue
-
-            if field == "prioritize_assets":
-                bool_value = _coerce_bool(value)
-                if bool_value is not None:
-                    library_settings[field] = bool_value
-                continue
-
-            if value not in [None, "", False]:
-                library_settings[field] = value
-
-        for field in operations_fields:
-            attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
-            value = attr_group.get(attr_key, None)
-            if value not in [None, "", False]:
-                operations[field] = value
-
-        service_field_map = LIBRARY_RADARR_FIELDS if library_type == "mov" else LIBRARY_SONARR_FIELDS
-        service_name = "radarr" if library_type == "mov" else "sonarr"
-        for field, field_type in service_field_map.items():
-            attr_key = f"{library_type}-library_{lib_id}-attribute_{service_name}_{field}"
-            value = attr_group.get(attr_key, None)
-            if field_type == "bool":
-                bool_value = _coerce_bool(value)
-                if bool_value is not None:
-                    service_overrides[field] = bool_value
-                continue
-            if value not in [None, "", False]:
-                service_overrides[field] = value
 
         # Handle nested delete_collections block
         delete_collections = build_delete_collections_operation(attr_group, library_type, lib_id)

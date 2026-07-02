@@ -25,7 +25,7 @@ import json
 from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers
-from modules.output_values import _coerce_bool
+from modules.output_values import _coerce_bool, _normalize_asset_directory_values
 
 # Values that we treat as "no override provided" for the numeric-ish
 # knobs inside operation blocks.  Users can wipe a field by clearing
@@ -560,3 +560,150 @@ def build_grouped_mass_update_operations(attr_group, library_type, lib_id):
             result[op] = _format_grouped_op_sequence(values)
 
     return result
+
+
+# The two per-library-type Radarr/Sonarr field maps.  Values are
+# either "string" (pass-through if non-empty) or "bool" (coerce via
+# _coerce_bool, include only if the coercion yielded a real bool).
+_LIBRARY_RADARR_FIELDS = {
+    "url": "string",
+    "token": "string",
+    "root_folder_path": "string",
+    "quality_profile": "string",
+    "availability": "string",
+    "tag": "string",
+    "monitor": "bool",
+    "search": "bool",
+    "add_missing": "bool",
+    "add_existing": "bool",
+    "upgrade_existing": "bool",
+    "monitor_existing": "bool",
+    "ignore_cache": "bool",
+    "radarr_path": "string",
+    "plex_path": "string",
+}
+
+_LIBRARY_SONARR_FIELDS = {
+    "url": "string",
+    "token": "string",
+    "root_folder_path": "string",
+    "quality_profile": "string",
+    "language_profile": "string",
+    "series_type": "string",
+    "season_folder": "bool",
+    "monitor": "string",
+    "tag": "string",
+    "search": "bool",
+    "cutoff_search": "bool",
+    "add_missing": "bool",
+    "add_existing": "bool",
+    "upgrade_existing": "bool",
+    "monitor_existing": "bool",
+    "ignore_cache": "bool",
+    "sonarr_path": "string",
+    "plex_path": "string",
+}
+
+# Values treated as 'user did not set this' for the simple field
+# walkers.  Broader than _EMPTY_OVERRIDE_VALUES because ``False`` is
+# also considered empty here (boolean toggle turned off).
+_SETTINGS_EMPTY_VALUES = frozenset({None, "", False})
+
+# Simple pass-through operation fields on ``entry.operations``.
+_LIBRARY_OPERATIONS_FIELDS = (
+    "assets_for_all",
+    "assets_for_all_collections",
+    "mass_imdb_parental_labels",
+    "mass_collection_mode",
+    "update_blank_track_titles",
+    "remove_title_parentheses",
+    "split_duplicates",
+    "radarr_add_all",
+    "sonarr_add_all",
+)
+
+
+def build_library_settings(attr_group, library_type, lib_id):
+    """Return the ``entry.settings`` dict for a library.
+
+    Reads the two per-library settings fields:
+
+    * ``asset_directory`` -- normalized via
+      :func:`output_values._normalize_asset_directory_values` and
+      wrapped in a block-style ``CommentedSeq``.  Also falls back to
+      the legacy ``<type>-library_<id>-asset_directory`` key (without
+      the ``attribute_`` prefix) when the primary key is empty --
+      preserves compatibility with older form submissions.
+    * ``prioritize_assets`` -- coerced via :func:`_coerce_bool`.
+
+    Returns an empty dict when neither field is set.
+    """
+    result = {}
+
+    # asset_directory (with legacy-key fallback)
+    value = attr_group.get(_attr_key(library_type, lib_id, "asset_directory"))
+    if value in (None, ""):
+        legacy_key = f"{library_type}-library_{lib_id}-asset_directory"
+        value = attr_group.get(legacy_key)
+    normalized = _normalize_asset_directory_values(value)
+    if normalized:
+        asset_dirs = CommentedSeq(normalized)
+        asset_dirs.fa.set_block_style()
+        result["asset_directory"] = asset_dirs
+
+    # prioritize_assets (bool coerce)
+    prioritize_raw = attr_group.get(_attr_key(library_type, lib_id, "prioritize_assets"))
+    prioritize_bool = _coerce_bool(prioritize_raw)
+    if prioritize_bool is not None:
+        result["prioritize_assets"] = prioritize_bool
+
+    return result
+
+
+def build_library_operations(attr_group, library_type, lib_id):
+    """Return the pass-through library operations dict.
+
+    Reads each field in :data:`_LIBRARY_OPERATIONS_FIELDS` and
+    passes the raw value through when it's not in
+    :data:`_SETTINGS_EMPTY_VALUES`.  Callers merge into
+    ``operations`` via ``operations.update(result)``.
+    """
+    result = {}
+    for field in _LIBRARY_OPERATIONS_FIELDS:
+        value = attr_group.get(_attr_key(library_type, lib_id, field))
+        if value not in _SETTINGS_EMPTY_VALUES:
+            result[field] = value
+    return result
+
+
+def build_service_overrides(attr_group, library_type, lib_id):
+    """Return ``(service_name, overrides_dict)`` for the library type.
+
+    Movie libraries get Radarr overrides, show libraries get Sonarr.
+    Fields marked ``"bool"`` in the field-map are coerced via
+    :func:`_coerce_bool` (included only when the coercion yields a
+    real bool -- not for missing/blank inputs).  String fields are
+    passed through unless empty.
+
+    Returns ``(name, {})`` when the user set no overrides; callers
+    should treat the empty dict as "don't emit a service block".
+    """
+    if library_type == "mov":
+        field_map = _LIBRARY_RADARR_FIELDS
+        service_name = "radarr"
+    else:
+        field_map = _LIBRARY_SONARR_FIELDS
+        service_name = "sonarr"
+
+    overrides = {}
+    for field, field_type in field_map.items():
+        value = attr_group.get(_attr_key(library_type, lib_id, f"{service_name}_{field}"))
+        if field_type == "bool":
+            bool_value = _coerce_bool(value)
+            if bool_value is not None:
+                overrides[field] = bool_value
+            continue
+        if value not in _SETTINGS_EMPTY_VALUES:
+            overrides[field] = value
+
+    return service_name, overrides
