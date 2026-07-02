@@ -13,6 +13,15 @@ playlist-template_variables[{{ field_key }}]
 {% endif %}
 {%- endmacro %}
 
+{% macro playlist_csv_value(field_key) -%}
+{% set raw_value = data['libraries'].get(playlist_hidden_name(field_key), '') %}
+{% if raw_value is sequence and raw_value is not string %}
+{{ raw_value | join(', ') }}
+{% else %}
+{{ raw_value | default('', true) }}
+{% endif %}
+{%- endmacro %}
+
 {% macro playlist_mapping_value(field_key) -%}
 {% set raw_value = data['libraries'].get(playlist_hidden_name(field_key)) %}
 {% if raw_value is string %}
@@ -24,24 +33,8 @@ playlist-template_variables[{{ field_key }}]
 {% endif %}
 {%- endmacro %}
 
-{% macro playlist_text_input(field_key, label, placeholder, tooltip='', input_type='text', min_value=None, step_value=None) -%}
-{% set input_name = playlist_hidden_name(field_key) %}
-{% set input_id = library.id ~ '-playlist-' ~ field_key %}
-<div class="input-group mb-2" data-collection-field-wrapper="true">
-  <span class="input-group-text qs-template-variable-label" id="{{ input_id }}_text" style="width: 230px;">
-    {{ label }}
-    {% if tooltip %}
-    <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
-      <i class="bi bi-info-circle-fill"></i>
-    </span>
-    {% endif %}
-  </span>
-  <input type="{{ input_type }}" class="form-control" id="{{ input_id }}" name="{{ input_name }}"
-    aria-describedby="{{ input_id }}_text" value="{{ data['libraries'].get(input_name, '') | default('', true) }}"
-    placeholder="{{ placeholder }}"
-    {% if min_value is not none %}min="{{ min_value }}"{% endif %}
-    {% if step_value is not none %}step="{{ step_value }}"{% endif %}>
-</div>
+{% macro playlist_text_value(field_key) -%}
+{{ data['libraries'].get(playlist_hidden_name(field_key), '') | default('', true) }}
 {%- endmacro %}
 
 {% macro playlist_toggle_input(field_key, label, tooltip='') -%}
@@ -83,6 +76,25 @@ playlist-template_variables[{{ field_key }}]
 </div>
 {%- endmacro %}
 
+{% macro playlist_text_input(field_key, label, placeholder, tooltip='', validation_preset='') -%}
+{% set input_name = playlist_hidden_name(field_key) %}
+{% set input_id = library.id ~ '-playlist-' ~ field_key %}
+<div class="mb-2">
+  <div class="input-group">
+    <span class="input-group-text qs-template-variable-label" id="{{ input_id }}_text" style="width: 230px;">
+      {{ label }}
+      {% if tooltip %}
+      <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+        <i class="bi bi-info-circle-fill"></i>
+      </span>
+      {% endif %}
+    </span>
+    <input type="text" class="form-control" id="{{ input_id }}" name="{{ input_name }}" aria-describedby="{{ input_id }}_text"
+      value="{{ playlist_text_value(field_key) }}" placeholder="{{ placeholder }}" {% if validation_preset %}data-validation-preset="{{ validation_preset }}"{% endif %}>
+  </div>
+</div>
+{%- endmacro %}
+
 {% macro playlist_mapping_input(field_key, label, key_placeholder, value_placeholder, tooltip='', key_validation_preset='', value_display_label='', value_kind='string') -%}
 {% set input_name = playlist_hidden_name(field_key) %}
 {% set input_id = library.id ~ '-playlist-' ~ field_key|replace('_', '-') %}
@@ -114,26 +126,85 @@ playlist-template_variables[{{ field_key }}]
 </div>
 {%- endmacro %}
 
-{% macro playlist_select_input(field_key, label, tooltip, options) -%}
+{% macro playlist_use_toggle_group(field_key, label, entries, tooltip='') -%}
 {% set input_name = playlist_hidden_name(field_key) %}
-{% set input_id = library.id ~ '-playlist-' ~ field_key %}
-{% set current_value = data['libraries'].get(input_name, '') | default('', true) %}
-<div class="input-group mb-2" data-collection-field-wrapper="true">
-  <span class="input-group-text qs-template-variable-label" id="{{ input_id }}_text" style="width: 230px;">
-    {{ label }}
+{% set input_id = library.id ~ '-playlist-' ~ field_key|replace('_', '-') %}
+<div class="mb-3" data-playlist-key-toggle-group data-hidden-input="{{ input_id }}">
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <div class="text-uppercase text-muted small">{{ label }}</div>
     {% if tooltip %}
-    <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
       <i class="bi bi-info-circle-fill"></i>
     </span>
     {% endif %}
-  </span>
-  <select class="form-select" id="{{ input_id }}" name="{{ input_name }}" aria-describedby="{{ input_id }}_text">
-    {% for option in options %}
-    <option value="{{ option }}" {% if option == current_value %}selected{% endif %}>
-      {{ option if option else 'Default' }}
-    </option>
+  </div>
+  <div class="row g-2">
+    {% for entry in entries %}
+    <div class="col-12 col-lg-6">
+      <label class="form-check form-switch border rounded px-3 py-2 h-100 d-flex align-items-start gap-2">
+        <input class="form-check-input mt-1" type="checkbox" data-playlist-key-toggle data-playlist-key="{{ entry.key }}">
+        <span class="d-flex flex-column">
+          <span class="fw-semibold">{{ entry.label }}</span>
+          <span class="small text-muted">{{ entry.key }}</span>
+        </span>
+      </label>
+    </div>
     {% endfor %}
-  </select>
+  </div>
+  <div class="form-text mt-2">Unchecked entries export as <code>use_&lt;&lt;key&gt;&gt;: false</code>. Checked entries use the default enabled behavior.</div>
+  <input type="hidden" id="{{ input_id }}" name="{{ input_name }}" value='{{ playlist_mapping_value(field_key) }}' data-default='{}'>
+</div>
+{%- endmacro %}
+
+{% macro playlist_user_picker(field_key, label, modal_id, input_placeholder, tooltip='', allow_all=false) -%}
+{% set input_name = playlist_hidden_name(field_key) %}
+{% set input_id = library.id ~ '-playlist-' ~ field_key %}
+<div class="mb-2" data-playlist-user-picker data-modal-id="{{ modal_id }}" data-input-id="{{ input_id }}" data-allow-all="{{ 'true' if allow_all else 'false' }}">
+  <div class="input-group">
+    <span class="input-group-text qs-template-variable-label" id="{{ input_id }}_text" style="width: 230px;">
+      {{ label }}
+      {% if tooltip %}
+      <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+        <i class="bi bi-info-circle-fill"></i>
+      </span>
+      {% endif %}
+    </span>
+    <input type="text" class="form-control" id="{{ input_id }}" name="{{ input_name }}" aria-describedby="{{ input_id }}_text"
+      value="{{ playlist_csv_value(field_key) }}" placeholder="{{ input_placeholder }}" readonly data-playlist-user-input>
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#{{ modal_id }}"
+      {% if not user_list %}disabled{% endif %}>Select</button>
+  </div>
+  {% if not user_list %}
+  <div class="form-text text-warning">No Plex users detected yet. Validate Plex and refresh users on Settings first.</div>
+  {% endif %}
+
+  <div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ label }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% if allow_all %}
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" value="all" data-playlist-user-all-toggle {% if not user_list %}disabled{% endif %}>
+            <label class="form-check-label">All Users</label>
+          </div>
+          {% endif %}
+          {% for username in user_list %}
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" value="{{ username }}" data-playlist-user-toggle {% if not user_list %}disabled{% endif %}>
+            <label class="form-check-label">{{ username }}</label>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-playlist-user-apply {% if not user_list %}disabled{% endif %}>Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {%- endmacro %}
 
@@ -143,50 +214,46 @@ playlist-template_variables[{{ field_key }}]
 
 <div class="mb-3">
   <h6 class="text-uppercase text-muted small mb-2">Shared Playlist Defaults</h6>
-  {{ playlist_select_input('style', 'Poster Style', 'Image style used by defaults that support multiple poster styles.', ['', 'color', 'white', 'bw', 'diiivoy', 'diiivoycolor', 'rainier', 'signature', 'orig', 'transparent', 'default', 'standards']) }}
-  {{ playlist_string_list_input('sync_to_users', 'Sync To Users', 'Add Plex username (or all)', 'Sets the users to sync all playlists to.') }}
-  {{ playlist_string_list_input('exclude_users', 'Exclude Users', 'Add Plex username to exclude', 'Sets the users to exclude from sync for all playlists.') }}
-  {{ playlist_text_input('minimum_items', 'Minimum Items', 'Minimum items required', 'Minimum items required for any playlist to be created.', 'number', 1, 1) }}
-  {{ playlist_text_input('hub_priority', 'Hub Priority', 'Recommendation hub priority', 'Priority position for playlist hub rows. Lower numbers appear first.', 'number', 1, 1) }}
-  {{ playlist_text_input('url_poster', 'Poster URL', 'https://example.com/poster.jpg', 'Poster URL for all playlists in this defaults file.') }}
-  {{ playlist_text_input('file_poster', 'Poster File', 'config/posters/playlist.jpg', 'Poster filepath for all playlists in this defaults file.') }}
-  {{ playlist_text_input('schedule', 'Schedule', 'daily', 'Set the schedule for all playlists in this defaults file.') }}
-  {{ playlist_text_input('limit', 'Limit', 'Maximum items', 'Maximum number of items for all playlists in this defaults file.', 'number', 1, 1) }}
+  {{ playlist_user_picker('sync_to_users', 'Sync To Users', library.id ~ '-playlist-sync-users-modal', 'Select Plex usernames', 'Sets the users to sync all playlists to.', true) }}
+  {{ playlist_user_picker('exclude_users', 'Exclude Users', library.id ~ '-playlist-exclude-users-modal', 'Select Plex usernames to exclude', 'Sets the users to exclude from sync for all playlists.') }}
+  {{ playlist_toggle_input('delete_playlist', 'Delete Playlists', 'Delete all playlists for the users defined by sync_to_users.') }}
   {{ playlist_string_list_input('ignore_ids', 'Ignore IDs', 'Add TMDb or TVDb ID', 'Set TMDb or TVDb IDs to ignore in all playlists.', 'numeric_id') }}
   {{ playlist_string_list_input('ignore_imdb_ids', 'Ignore IMDb IDs', 'Add IMDb ID (e.g. tt1234567)', 'Set IMDb IDs to ignore in all playlists.', 'imdb_id_plex') }}
+  {{ playlist_toggle_input('radarr_add_missing', 'Radarr Add Missing', 'Override Radarr add_missing for all playlists in this defaults file.') }}
+  {{ playlist_text_input('radarr_folder', 'Radarr Folder', 'Set Radarr root folder path', 'Override Radarr root_folder_path for all playlists in this defaults file.') }}
+  {{ playlist_string_list_input('radarr_tag', 'Radarr Tags', 'Add Radarr tag', 'Override Radarr tags for all playlists in this defaults file.') }}
+  {{ playlist_toggle_input('sonarr_add_missing', 'Sonarr Add Missing', 'Override Sonarr add_missing for all playlists in this defaults file.') }}
+  {{ playlist_text_input('sonarr_folder', 'Sonarr Folder', 'Set Sonarr root folder path', 'Override Sonarr root_folder_path for all playlists in this defaults file.') }}
+  {{ playlist_string_list_input('sonarr_tag', 'Sonarr Tags', 'Add Sonarr tag', 'Override Sonarr tags for all playlists in this defaults file.') }}
   {{ playlist_string_list_input('item_radarr_tag', 'Item Radarr Tags', 'Add item Radarr tag', 'Append a Radarr tag to every movie found by all playlists in this defaults file.') }}
   {{ playlist_string_list_input('item_sonarr_tag', 'Item Sonarr Tags', 'Add item Sonarr tag', 'Append a Sonarr tag to every series found by all playlists in this defaults file.') }}
-  {{ playlist_toggle_input('radarr_add_missing', 'Add Missing Items To Radarr', 'Override Radarr add_missing for all playlists in this defaults file.') }}
-  {{ playlist_text_input('radarr_folder', 'Radarr Folder', 'Enter Radarr root folder path', 'Override Radarr root_folder_path for all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('radarr_tag', 'Radarr Tags', 'Add Radarr tag', 'Override Radarr tag for all playlists in this defaults file.') }}
-  {{ playlist_toggle_input('sonarr_add_missing', 'Add Missing Items To Sonarr', 'Override Sonarr add_missing for all playlists in this defaults file.') }}
-  {{ playlist_text_input('sonarr_folder', 'Sonarr Folder', 'Enter Sonarr root folder path', 'Override Sonarr root_folder_path for all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('sonarr_tag', 'Sonarr Tags', 'Add Sonarr tag', 'Override Sonarr tag for all playlists in this defaults file.') }}
-  {{ playlist_toggle_input('delete_not_scheduled', 'Delete When Not Scheduled', 'Delete playlists when they are skipped because they are not scheduled.') }}
-  {{ playlist_toggle_input('delete_playlist', 'Delete Playlists', 'Delete all playlists for the users defined by sync_to_users.') }}
+  {{ playlist_string_list_input('trakt_list', 'Default Trakt Lists', 'Add Trakt list URL', 'Default Trakt list URLs used when a playlist key does not provide its own builder list.') }}
+  {{ playlist_string_list_input('imdb_list', 'Default IMDb Lists', 'Add IMDb list URL', 'Default IMDb list URLs used when a playlist key does not provide its own builder list.') }}
+  {{ playlist_string_list_input('mdblist_list', 'Default MDBList Lists', 'Add MDBList URL', 'Default MDBList URLs used when a playlist key does not provide its own builder list.') }}
 </div>
 
 <div class="mb-2">
   <h6 class="text-uppercase text-muted small mb-2">Per-Playlist Overrides</h6>
+  {% if playlist_default_entries %}
+  {{ playlist_use_toggle_group('use_', 'Playlist Toggles', playlist_default_entries, 'Turn bundled default playlists on or off by key.') }}
+  {% else %}
   {{ playlist_mapping_input('use_', 'Use Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Turn an individual playlist on or off by key.', '', 'Use override', 'string') }}
+  {% endif %}
   {{ playlist_mapping_input('name_', 'Name Overrides', 'Playlist key (e.g. mcu)', 'Custom playlist name', 'Override the playlist name for a specific key.', '', 'Custom playlist name', 'string') }}
   {{ playlist_mapping_input('summary_', 'Summary Overrides', 'Playlist key (e.g. mcu)', 'Custom playlist summary', 'Override the playlist summary for a specific key.', '', 'Custom playlist summary', 'string') }}
-  {{ playlist_mapping_input('schedule_', 'Schedule Overrides', 'Playlist key (e.g. mcu)', 'Schedule expression', 'Override the schedule for a specific playlist key.', '', 'Schedule', 'string') }}
   {{ playlist_mapping_input('url_poster_', 'Poster URL Overrides', 'Playlist key (e.g. mcu)', 'https://example.com/poster.jpg', 'Override the poster URL for a specific playlist key.', '', 'Poster URL', 'string') }}
-  {{ playlist_mapping_input('file_poster_', 'Poster File Overrides', 'Playlist key (e.g. mcu)', 'config/posters/playlist.jpg', 'Override the poster filepath for a specific playlist key.', '', 'Poster file', 'string') }}
-  {{ playlist_mapping_input('limit_', 'Limit Overrides', 'Playlist key (e.g. mcu)', 'Maximum items', 'Override the builder limit for a specific playlist key.', '', 'Limit', 'string') }}
   {{ playlist_mapping_input('delete_playlist_', 'Delete Playlist Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Delete a specific playlist for the users defined by sync_to_users.', '', 'Delete playlist', 'string') }}
   {{ playlist_mapping_input('sync_to_users_', 'Sync To Users Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated usernames', 'Override synced users for a specific playlist key.', '', 'Users', 'string_list') }}
   {{ playlist_mapping_input('exclude_users_', 'Exclude Users Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated usernames', 'Override excluded users for a specific playlist key.', '', 'Excluded users', 'string_list') }}
+  {{ playlist_mapping_input('radarr_add_missing_', 'Radarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Radarr add_missing for a specific playlist key.', '', 'Radarr add missing', 'boolean') }}
+  {{ playlist_mapping_input('radarr_folder_', 'Radarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Radarr root folder path', 'Override Radarr root_folder_path for a specific playlist key.', '', 'Radarr folder', 'string') }}
+  {{ playlist_mapping_input('radarr_tag_', 'Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Radarr tags', 'Override Radarr tags for a specific playlist key.', '', 'Radarr tags', 'string_list') }}
+  {{ playlist_mapping_input('sonarr_add_missing_', 'Sonarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Sonarr add_missing for a specific playlist key.', '', 'Sonarr add missing', 'boolean') }}
+  {{ playlist_mapping_input('sonarr_folder_', 'Sonarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Sonarr root folder path', 'Override Sonarr root_folder_path for a specific playlist key.', '', 'Sonarr folder', 'string') }}
+  {{ playlist_mapping_input('sonarr_tag_', 'Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Sonarr tags', 'Override Sonarr tags for a specific playlist key.', '', 'Sonarr tags', 'string_list') }}
   {{ playlist_mapping_input('trakt_list_', 'Trakt List Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Trakt list URLs', 'Override the Trakt list URLs for a specific playlist key.', '', 'Trakt URLs', 'string_list') }}
   {{ playlist_mapping_input('imdb_list_', 'IMDb List Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated IMDb list URLs', 'Override the IMDb list URLs for a specific playlist key.', '', 'IMDb URLs', 'string_list') }}
   {{ playlist_mapping_input('mdblist_list_', 'MDBList Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated MDBList URLs', 'Override the MDBList URLs for a specific playlist key.', '', 'MDBList URLs', 'string_list') }}
   {{ playlist_mapping_input('item_radarr_tag_', 'Item Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated item Radarr tags', 'Override item Radarr tags for a specific playlist key.', '', 'Item Radarr tags', 'string_list') }}
   {{ playlist_mapping_input('item_sonarr_tag_', 'Item Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated item Sonarr tags', 'Override item Sonarr tags for a specific playlist key.', '', 'Item Sonarr tags', 'string_list') }}
-  {{ playlist_mapping_input('radarr_add_missing_', 'Radarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Radarr add_missing for a specific playlist key.', '', 'Radarr add_missing', 'string') }}
-  {{ playlist_mapping_input('radarr_folder_', 'Radarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Radarr root folder path', 'Override the Radarr root folder path for a specific playlist key.', '', 'Radarr folder', 'string') }}
-  {{ playlist_mapping_input('radarr_tag_', 'Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Radarr tags', 'Override Radarr tags for a specific playlist key.', '', 'Radarr tags', 'string_list') }}
-  {{ playlist_mapping_input('sonarr_add_missing_', 'Sonarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Sonarr add_missing for a specific playlist key.', '', 'Sonarr add_missing', 'string') }}
-  {{ playlist_mapping_input('sonarr_folder_', 'Sonarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Sonarr root folder path', 'Override the Sonarr root folder path for a specific playlist key.', '', 'Sonarr folder', 'string') }}
-  {{ playlist_mapping_input('sonarr_tag_', 'Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Sonarr tags', 'Override Sonarr tags for a specific playlist key.', '', 'Sonarr tags', 'string_list') }}
 </div>

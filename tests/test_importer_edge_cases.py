@@ -48,9 +48,22 @@ def test_prepare_import_payload_maps_playlist_template_variables_into_libraries_
                     "template_variables": {
                         "libraries": ["Movies"],
                         "sync_to_users": ["alice", "bob"],
+                        "delete_playlist": True,
                         "radarr_add_missing": True,
+                        "radarr_folder": "/data/media/movies",
+                        "radarr_tag": ["playlist-default"],
+                        "sonarr_add_missing": False,
+                        "sonarr_folder": "/data/media/shows",
+                        "sonarr_tag": ["playlist-show"],
+                        "trakt_list": ["https://trakt.tv/users/example/lists/default"],
                         "name_mcu": "Marvel Timeline",
                         "delete_playlist_mcu": True,
+                        "radarr_add_missing_mcu": True,
+                        "radarr_folder_mcu": "/data/media/movies/mcu",
+                        "radarr_tag_mcu": ["mcu", "timeline"],
+                        "sonarr_add_missing_mcu": False,
+                        "sonarr_folder_mcu": "/data/media/shows/mcu",
+                        "sonarr_tag_mcu": ["mcu-show"],
                         "trakt_list_mcu": ["https://trakt.tv/users/example/lists/mcu"],
                     },
                 }
@@ -63,12 +76,55 @@ def test_prepare_import_payload_maps_playlist_template_variables_into_libraries_
     libraries = payload["libraries"]["libraries"]
     assert libraries["mov-library_movies-library"] == "Movies"
     assert libraries["mov-library_movies-playlist"] == "true"
-    assert json.loads(libraries["playlist-template_variables[sync_to_users]"]) == ["alice", "bob"]
+    assert libraries["playlist-template_variables[sync_to_users]"] == "alice, bob"
+    assert libraries["playlist-template_variables[delete_playlist]"] is True
     assert libraries["playlist-template_variables[radarr_add_missing]"] is True
+    assert libraries["playlist-template_variables[radarr_folder]"] == "/data/media/movies"
+    assert json.loads(libraries["playlist-template_variables[radarr_tag]"]) == ["playlist-default"]
+    assert libraries["playlist-template_variables[sonarr_add_missing]"] is False
+    assert libraries["playlist-template_variables[sonarr_folder]"] == "/data/media/shows"
+    assert json.loads(libraries["playlist-template_variables[sonarr_tag]"]) == ["playlist-show"]
+    assert json.loads(libraries["playlist-template_variables[trakt_list]"]) == ["https://trakt.tv/users/example/lists/default"]
     assert json.loads(libraries["playlist-template_variables[name_]"]) == {"mcu": "Marvel Timeline"}
     assert json.loads(libraries["playlist-template_variables[delete_playlist_]"]) == {"mcu": "true"}
+    assert json.loads(libraries["playlist-template_variables[radarr_add_missing_]"]) == {"mcu": "true"}
+    assert json.loads(libraries["playlist-template_variables[radarr_folder_]"]) == {"mcu": "/data/media/movies/mcu"}
+    assert json.loads(libraries["playlist-template_variables[radarr_tag_]"]) == {"mcu": ["mcu", "timeline"]}
+    assert json.loads(libraries["playlist-template_variables[sonarr_add_missing_]"]) == {"mcu": "false"}
+    assert json.loads(libraries["playlist-template_variables[sonarr_folder_]"]) == {"mcu": "/data/media/shows/mcu"}
+    assert json.loads(libraries["playlist-template_variables[sonarr_tag_]"]) == {"mcu": ["mcu-show"]}
     assert json.loads(libraries["playlist-template_variables[trakt_list_]"]) == {"mcu": ["https://trakt.tv/users/example/lists/mcu"]}
     assert any("playlist_files[0].template_variables.name_mcu" in line for line in report.lines)
+
+
+def test_prepare_import_payload_maps_direct_playlist_file_entries_into_libraries_payload():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {"Movies": {}},
+            "playlist_files": [
+                {
+                    "default": "playlist",
+                    "template_variables": {"libraries": ["Movies"]},
+                },
+                {
+                    "file": "config/extra_playlists.yml",
+                },
+                {
+                    "repo": "bullmoose20/playlists.yml",
+                },
+            ],
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert json.loads(libraries["playlist_files_entries"]) == [
+        {"type": "file", "location": "config/extra_playlists.yml"},
+        {"type": "repo", "location": "bullmoose20/playlists.yml"},
+    ]
+    assert any("playlist_files[1].file" in line for line in report.lines)
+    assert any("playlist_files[2].repo" in line for line in report.lines)
 
 
 def test_annotate_yaml_with_report_unmapped_reason():

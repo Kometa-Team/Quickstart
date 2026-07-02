@@ -65,16 +65,8 @@ LIBRARY_SONARR_IMPORT_FIELDS = {
     "plex_path": "string",
 }
 PLAYLIST_SHARED_IMPORT_FIELDS = {
-    "style": "string",
     "sync_to_users": "string_list",
     "exclude_users": "string_list",
-    "minimum_items": "integer",
-    "hub_priority": "integer",
-    "url_poster": "string",
-    "file_poster": "string",
-    "schedule": "string",
-    "delete_not_scheduled": "boolean",
-    "limit": "integer",
     "delete_playlist": "boolean",
     "ignore_ids": "string_list",
     "ignore_imdb_ids": "string_list",
@@ -86,15 +78,15 @@ PLAYLIST_SHARED_IMPORT_FIELDS = {
     "sonarr_add_missing": "boolean",
     "sonarr_folder": "string",
     "sonarr_tag": "string_list",
+    "trakt_list": "string_list",
+    "imdb_list": "string_list",
+    "mdblist_list": "string_list",
 }
 PLAYLIST_KEYED_IMPORT_FIELDS = {
     "use_": "boolean",
     "name_": "string",
     "summary_": "string",
-    "schedule_": "string",
     "url_poster_": "string",
-    "file_poster_": "string",
-    "limit_": "integer",
     "delete_playlist_": "boolean",
     "exclude_users_": "string_list",
     "exclude_user_": "string_list",
@@ -1334,6 +1326,7 @@ def prepare_import_payload(
         return True, imported_any
 
     playlist_libraries: set[str] = set()
+    playlist_file_entries: list[dict[str, str]] = []
     playlist_template_field_values: dict[str, Any] = {}
     playlist_keyed_template_field_values: dict[str, dict[str, Any]] = {}
     playlist_payload = config_data.get("playlist_files")
@@ -1342,6 +1335,21 @@ def prepare_import_payload(
             for idx, entry in enumerate(playlist_payload):
                 if not isinstance(entry, dict):
                     report.add("unmapped", f"playlist_files[{idx}]", "Unsupported playlist entry format.")
+                    continue
+                raw_entry_type = None
+                raw_entry_location = None
+                for candidate in ("file", "url", "git", "repo"):
+                    location = entry.get(candidate)
+                    if location:
+                        raw_entry_type = candidate
+                        raw_entry_location = str(location).strip()
+                        break
+                if raw_entry_type and raw_entry_location:
+                    playlist_file_entries.append({"type": raw_entry_type, "location": raw_entry_location})
+                    report.add("imported", f"playlist_files[{idx}]")
+                    report.add("imported", f"playlist_files[{idx}].{raw_entry_type}")
+                    if entry.get("template_variables") not in (None, {}):
+                        report.add("unmapped", f"playlist_files[{idx}].template_variables", "Template variables for direct playlist file entries are not supported in Quickstart.")
                     continue
                 tv = entry.get("template_variables", {})
                 if not isinstance(tv, dict):
@@ -1412,7 +1420,7 @@ def prepare_import_payload(
                         continue
 
                     report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Playlist template variable not available in Quickstart.")
-            if playlist_libraries:
+            if playlist_libraries or playlist_file_entries:
                 report.add("imported", "playlist_files")
         else:
             report.add("unmapped", "playlist_files", "Unsupported playlist_files format.")
@@ -1982,7 +1990,9 @@ def prepare_import_payload(
 
         for key, value in playlist_template_field_values.items():
             hidden_name = f"playlist-template_variables[{key}]"
-            if key in {"sync_to_users", "exclude_users", "ignore_ids", "ignore_imdb_ids", "item_radarr_tag", "item_sonarr_tag", "radarr_tag", "sonarr_tag"}:
+            if key in {"sync_to_users", "exclude_users"}:
+                libraries_data[hidden_name] = ", ".join(str(item).strip() for item in value if str(item).strip())
+            elif PLAYLIST_SHARED_IMPORT_FIELDS.get(key) == "string_list":
                 libraries_data[hidden_name] = json.dumps(value, ensure_ascii=True)
             else:
                 libraries_data[hidden_name] = value
@@ -1990,6 +2000,8 @@ def prepare_import_payload(
             canonical_prefix = "exclude_users_" if prefix == "exclude_user_" else prefix
             if mapping:
                 libraries_data[f"playlist-template_variables[{canonical_prefix}]"] = json.dumps(mapping, ensure_ascii=True)
+        if playlist_file_entries:
+            libraries_data["playlist_files_entries"] = json.dumps(playlist_file_entries, ensure_ascii=True)
 
         if libraries_data:
             payload["libraries"] = {"libraries": libraries_data}

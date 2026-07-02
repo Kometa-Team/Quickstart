@@ -283,6 +283,10 @@ const ValidationHandler = {
 
   restoreSelectedLibraries: function () {
     const libraryInput = document.getElementById('libraries')
+    if (!libraryInput) {
+      console.log('[DEBUG] Libraries field not found. Skipping library restoration.')
+      return
+    }
     if (!libraryInput.value) {
       console.log('[DEBUG] Libraries field is empty. Initializing...')
       libraryInput.value = '' // Initialize if empty

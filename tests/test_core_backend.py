@@ -352,6 +352,19 @@ def test_validate_overlay_file_accepts_existing_local_file(client, tmp_path):
     assert payload["valid"] is True
 
 
+def test_validate_playlist_file_accepts_existing_local_file(client, tmp_path):
+    playlist_file = tmp_path / "playlists.yml"
+    playlist_file.write_text("playlists:\n  test:\n    trakt_list:\n      - https://trakt.tv/users/example/lists/test\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_playlist_file",
+        json={"playlist_file_type": "file", "playlist_file_location": str(playlist_file)},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+
+
 def test_validate_metadata_file_organizes_local_file_into_managed_store(client, isolated_config_dir, tmp_path):
     from pathlib import Path
 
@@ -1591,6 +1604,17 @@ def test_validate_collection_file_rejects_repo_without_custom_repo(client):
     payload = resp.get_json()
     assert payload["valid"] is False
     assert payload["error"] == "Collection file repo entries require Custom Repo to be configured and saved first within the Settings page."
+
+
+def test_validate_playlist_file_rejects_repo_without_custom_repo(client):
+    resp = client.post(
+        "/validate_playlist_file",
+        json={"playlist_file_type": "repo", "playlist_file_location": "bullmoose20/playlists.yml"},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert payload["error"] == "Playlist file repo entries require Custom Repo to be configured and saved first within the Settings page."
 
 
 def test_validate_metadata_file_rejects_repo_without_custom_repo(client):

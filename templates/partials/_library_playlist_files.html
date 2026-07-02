@@ -1,0 +1,18 @@
+<div class="d-flex flex-column gap-3 mb-4">
+    <div class="alert alert-info small mb-0" role="alert">
+        <div>Use one or more <code>file</code>, <code>url</code>, <code>git</code>, or <code>repo</code> entries to append extra top-level <code>playlist_files</code> sources alongside the generated defaults playlist entry.</div>
+        <div class="mt-1">Local <code>file</code> entries are copied into Quickstart-managed config storage after validation, so the saved path may normalize to <code>config/&lt;config_name&gt;/playlist_files/...</code>.</div>
+    </div>
+    <div class="playlist-files-editor" data-playlist-files-editor data-library-id="{{ library.id }}">
+        <div class="alert small mb-4" role="alert" data-playlist-custom-repo-status></div>
+        <input type="hidden" name="playlist_files_entries" id="{{ library.id }}-playlist_files_entries"
+            value="{{ data['libraries'].get('playlist_files_entries', '[]') }}">
+        <div class="playlist-files-list d-flex flex-column gap-3 mt-1" data-playlist-files-list></div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-add-playlist-file>
+                <i class="bi bi-plus-circle me-1"></i>Add Playlist File
+            </button>
+            <span class="text-muted small">Supports local files, raw URLs, Community-Configs git paths, and custom_repo-backed repo paths.</span>
+        </div>
+    </div>
+</div>

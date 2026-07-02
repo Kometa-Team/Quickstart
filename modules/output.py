@@ -58,16 +58,8 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_sonarr_monitor_overrides": ("sonarr_monitor_", "select"),
 }
 PLAYLIST_SHARED_TEMPLATE_VAR_SPECS = {
-    "style": "string",
     "sync_to_users": "string_list",
     "exclude_users": "string_list",
-    "minimum_items": "integer",
-    "hub_priority": "integer",
-    "url_poster": "string",
-    "file_poster": "string",
-    "schedule": "string",
-    "delete_not_scheduled": "boolean",
-    "limit": "integer",
     "delete_playlist": "boolean",
     "ignore_ids": "ignore_ids",
     "ignore_imdb_ids": "string_list",
@@ -79,15 +71,15 @@ PLAYLIST_SHARED_TEMPLATE_VAR_SPECS = {
     "sonarr_add_missing": "boolean",
     "sonarr_folder": "string",
     "sonarr_tag": "string_list",
+    "trakt_list": "string_list",
+    "imdb_list": "string_list",
+    "mdblist_list": "string_list",
 }
 PLAYLIST_KEYED_TEMPLATE_VAR_SPECS = {
     "use_": "boolean",
     "name_": "string",
     "summary_": "string",
-    "schedule_": "string",
     "url_poster_": "string",
-    "file_poster_": "string",
-    "limit_": "integer",
     "delete_playlist_": "boolean",
     "exclude_users_": "string_list",
     "exclude_user_": "string_list",
@@ -237,18 +229,69 @@ def _to_number(value):
 
 
 def _format_playlist_files(libraries_list, template_variables=None):
-    normalized_template_variables = {}
-    if isinstance(template_variables, dict):
-        normalized_template_variables.update(template_variables)
-    normalized_template_variables["libraries"] = libraries_list
-    return {
-        "playlist_files": [
+    return _format_playlist_file_entries(libraries_list=libraries_list, template_variables=template_variables)
+
+
+def _normalize_playlist_file_entry_for_output(entry):
+    if not isinstance(entry, dict):
+        return None
+    direct_entry = next(((key, value) for key, value in entry.items() if key in {"file", "url", "git", "repo"}), None)
+    if direct_entry:
+        entry_type, location = direct_entry
+        location = str(location or "").strip()
+        if location:
+            return {entry_type: location}
+        return None
+    entry_type = str(entry.get("type") or "").strip().lower()
+    location = str(entry.get("location") or "").strip()
+    if entry_type not in {"file", "url", "git", "repo"} or not location:
+        return None
+    return {entry_type: location}
+
+
+def _parse_playlist_file_entries_value(value):
+    if value in [None, "", "[]"]:
+        return []
+    parsed = value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except Exception:
+            try:
+                parsed = ast.literal_eval(value)
+            except Exception:
+                return []
+    if not isinstance(parsed, list):
+        return []
+    entries = []
+    for entry in parsed:
+        normalized = _normalize_playlist_file_entry_for_output(entry)
+        if normalized:
+            entries.append(normalized)
+    return entries
+
+
+def _format_playlist_file_entries(libraries_list=None, template_variables=None, extra_entries=None):
+    entries = []
+
+    if libraries_list:
+        normalized_template_variables = {}
+        if isinstance(template_variables, dict):
+            normalized_template_variables.update(template_variables)
+        normalized_template_variables["libraries"] = libraries_list
+        entries.append(
             {
                 "default": "playlist",
                 "template_variables": normalized_template_variables,
             }
-        ]
-    }
+        )
+
+    for entry in extra_entries or []:
+        normalized_entry = _normalize_playlist_file_entry_for_output(entry)
+        if normalized_entry:
+            entries.append(normalized_entry)
+
+    return {"playlist_files": entries}
 
 
 def _ordered_selected_libraries(selected_names, ordered_library_names):
@@ -461,14 +504,21 @@ def _normalize_playlist_template_var_value(key, value):
                 return int(number)
             return list_values[0]
         return ", ".join(list_values)
-    if key in {"sync_to_users", "exclude_users", "exclude_user", "ignore_imdb_ids", "item_radarr_tag", "item_sonarr_tag", "radarr_tag", "sonarr_tag"}:
+    if key in {
+        "sync_to_users",
+        "exclude_users",
+        "exclude_user",
+        "ignore_imdb_ids",
+        "item_radarr_tag",
+        "item_sonarr_tag",
+        "radarr_tag",
+        "sonarr_tag",
+        "trakt_list",
+        "imdb_list",
+        "mdblist_list",
+    }:
         return _playlist_scalar_or_list(_parse_comma_string_list(value))
-    if key in {"minimum_items", "hub_priority", "limit"}:
-        number = _to_number(value)
-        if isinstance(number, (int, float)) and float(number).is_integer():
-            return int(number)
-        return None
-    if key in {"delete_not_scheduled", "delete_playlist", "radarr_add_missing", "sonarr_add_missing"}:
+    if key in {"delete_playlist", "radarr_add_missing", "sonarr_add_missing"}:
         return _coerce_bool(value)
     if value is None:
         return None
@@ -538,6 +588,12 @@ def _collect_playlist_template_variables_from_libraries_data(nested_libraries_da
             template_vars[field_key] = normalized_value
 
     return template_vars
+
+
+def _collect_playlist_file_entries_from_libraries_data(nested_libraries_data):
+    if not isinstance(nested_libraries_data, dict):
+        return []
+    return _parse_playlist_file_entries_value(nested_libraries_data.get("playlist_files_entries"))
 
 
 def _parse_tmdb_person_window(value):
@@ -3110,7 +3166,7 @@ def build_config(header_style="standard", config_name=None):
         playlist_template_variables = {key: value for key, value in playlist_data.items() if key != "libraries" and value not in (None, "", [], {})}
 
         # Format playlist_files data
-        formatted_playlist_files = _format_playlist_files(libraries_list, playlist_template_variables)
+        formatted_playlist_files = _format_playlist_file_entries(libraries_list=libraries_list, template_variables=playlist_template_variables)
         if app.config["QS_DEBUG"]:
             helpers.ts_log("Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
 
@@ -3316,9 +3372,14 @@ def build_config(header_style="standard", config_name=None):
             ordered_library_names=ordered_library_names,
         )
         playlist_template_variables = _collect_playlist_template_variables_from_libraries_data(nested_libraries_data)
+        playlist_file_entries = _collect_playlist_file_entries_from_libraries_data(nested_libraries_data)
         if has_playlist_toggle:
-            if playlist_libraries:
-                config_data["playlist_files"] = _format_playlist_files(playlist_libraries, playlist_template_variables)
+            if playlist_libraries or playlist_file_entries:
+                config_data["playlist_files"] = _format_playlist_file_entries(
+                    libraries_list=playlist_libraries,
+                    template_variables=playlist_template_variables,
+                    extra_entries=playlist_file_entries,
+                )
             else:
                 config_data.pop("playlist_files", None)
         else:
@@ -3326,8 +3387,12 @@ def build_config(header_style="standard", config_name=None):
                 nested_libraries_data,
                 ordered_library_names=ordered_library_names,
             )
-            if legacy_playlist_libraries:
-                config_data["playlist_files"] = _format_playlist_files(legacy_playlist_libraries, playlist_template_variables)
+            if legacy_playlist_libraries or playlist_file_entries:
+                config_data["playlist_files"] = _format_playlist_file_entries(
+                    libraries_list=legacy_playlist_libraries,
+                    template_variables=playlist_template_variables,
+                    extra_entries=playlist_file_entries,
+                )
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 

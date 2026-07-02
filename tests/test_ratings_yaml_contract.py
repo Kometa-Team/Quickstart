@@ -243,12 +243,23 @@ def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs
             "sho-library_shows-library": "Shows",
             "sho-library_shows-playlist": "true",
             "sho-library_shows-collection_collectionless": True,
-            "playlist-template_variables[style]": "rainier",
             "playlist-template_variables[sync_to_users]": '["alice", "bob"]',
+            "playlist-template_variables[delete_playlist]": True,
             "playlist-template_variables[radarr_add_missing]": True,
-            "playlist-template_variables[sonarr_add_missing]": True,
+            "playlist-template_variables[radarr_folder]": "/data/media/movies",
+            "playlist-template_variables[radarr_tag]": '["playlist-default"]',
+            "playlist-template_variables[sonarr_add_missing]": False,
+            "playlist-template_variables[sonarr_folder]": "/data/media/shows",
+            "playlist-template_variables[sonarr_tag]": '["playlist-show"]',
+            "playlist-template_variables[trakt_list]": '["https://trakt.tv/users/example/lists/default"]',
             "playlist-template_variables[name_]": '{"mcu": "Marvel Timeline"}',
             "playlist-template_variables[delete_playlist_]": '{"mcu": "true"}',
+            "playlist-template_variables[radarr_add_missing_]": '{"mcu": "true"}',
+            "playlist-template_variables[radarr_folder_]": '{"mcu": "/data/media/movies/mcu"}',
+            "playlist-template_variables[radarr_tag_]": '{"mcu": ["mcu", "timeline"]}',
+            "playlist-template_variables[sonarr_add_missing_]": '{"mcu": "false"}',
+            "playlist-template_variables[sonarr_folder_]": '{"mcu": "/data/media/shows/mcu"}',
+            "playlist-template_variables[sonarr_tag_]": '{"mcu": ["mcu-show"]}',
             "playlist-template_variables[trakt_list_]": '{"mcu": ["https://trakt.tv/users/example/lists/mcu"]}',
             "playlist-template_variables[exclude_users_]": '{"mcu": ["guest"]}',
         },
@@ -258,11 +269,39 @@ def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs
     template_vars = parsed["playlist_files"][0]["template_variables"]
 
     assert template_vars["libraries"] == ["Movies", "Shows"]
-    assert template_vars["style"] == "rainier"
     assert template_vars["sync_to_users"] == ["alice", "bob"]
+    assert template_vars["delete_playlist"] is True
     assert template_vars["radarr_add_missing"] is True
-    assert template_vars["sonarr_add_missing"] is True
+    assert template_vars["radarr_folder"] == "/data/media/movies"
+    assert template_vars["radarr_tag"] == "playlist-default"
+    assert template_vars["sonarr_add_missing"] is False
+    assert template_vars["sonarr_folder"] == "/data/media/shows"
+    assert template_vars["sonarr_tag"] == "playlist-show"
+    assert template_vars["trakt_list"] == "https://trakt.tv/users/example/lists/default"
     assert template_vars["name_mcu"] == "Marvel Timeline"
     assert template_vars["delete_playlist_mcu"] is True
+    assert template_vars["radarr_add_missing_mcu"] is True
+    assert template_vars["radarr_folder_mcu"] == "/data/media/movies/mcu"
+    assert template_vars["radarr_tag_mcu"] == ["mcu", "timeline"]
+    assert template_vars["sonarr_add_missing_mcu"] is False
+    assert template_vars["sonarr_folder_mcu"] == "/data/media/shows/mcu"
+    assert template_vars["sonarr_tag_mcu"] == "mcu-show"
     assert template_vars["trakt_list_mcu"] == "https://trakt.tv/users/example/lists/mcu"
     assert template_vars["exclude_users_mcu"] == "guest"
+
+
+def test_playlist_files_emit_direct_file_and_repo_entries(monkeypatch, qs_module):
+    payload = {
+        "validated": True,
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-playlist": "true",
+            "mov-library_movies-collection_collectionless": True,
+            "playlist_files_entries": '[{"type":"file","location":"config/extra_playlists.yml"},{"type":"repo","location":"bullmoose20/playlists.yml"}]',
+        },
+    }
+
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+
+    assert parsed["playlist_files"][1] == {"file": "config/extra_playlists.yml"}
+    assert parsed["playlist_files"][2] == {"repo": "bullmoose20/playlists.yml"}
