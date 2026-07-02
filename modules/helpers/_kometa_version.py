@@ -7,7 +7,8 @@ from pathlib import Path
 from flask import current_app as app
 from flask import has_app_context, has_request_context, session
 
-from modules.helpers._legacy import CONFIG_DIR, IMAGEMAID_GITHUB_API_BRANCH, IMAGEMAID_GITHUB_BASE_URL
+from modules.helpers._legacy import CONFIG_DIR, IMAGEMAID_GITHUB_BASE_URL
+from modules.helpers._zip_update import IMAGEMAID_GITHUB_API_BRANCH
 
 
 def get_kometa_remote_version(branch="nightly"):
@@ -35,7 +36,7 @@ def get_kometa_local_version(kometa_root=None):
 
 
 def get_kometa_local_sha(kometa_root=None):
-    from modules.helpers._legacy import _read_text
+    from modules.helpers._zip_update import _read_text
 
     if kometa_root is None:
         kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
@@ -46,7 +47,7 @@ def get_kometa_local_sha(kometa_root=None):
 
 
 def get_kometa_local_branch(kometa_root=None):
-    from modules.helpers._legacy import _read_text
+    from modules.helpers._zip_update import _read_text
     from modules.helpers._update_cache import normalize_kometa_branch_override
 
     if kometa_root is None:
@@ -58,7 +59,7 @@ def get_kometa_local_branch(kometa_root=None):
 
 
 def get_kometa_remote_sha(branch="nightly"):
-    from modules.helpers._legacy import _get_upstream_sha
+    from modules.helpers._zip_update import _get_upstream_sha
 
     return _get_upstream_sha(branch, [])
 
@@ -75,7 +76,7 @@ def get_imagemaid_root_path() -> Path:
 
 
 def get_imagemaid_local_sha(imagemaid_root=None):
-    from modules.helpers._legacy import _read_text
+    from modules.helpers._zip_update import _read_text
 
     if imagemaid_root is None:
         imagemaid_root = get_imagemaid_root_path()
@@ -96,7 +97,7 @@ def get_imagemaid_local_version(imagemaid_root=None):
 
 
 def get_imagemaid_local_branch(imagemaid_root=None):
-    from modules.helpers._legacy import _read_text
+    from modules.helpers._zip_update import _read_text
     from modules.helpers._update_cache import normalize_imagemaid_branch_override
 
     if imagemaid_root is None:
@@ -107,7 +108,7 @@ def get_imagemaid_local_branch(imagemaid_root=None):
 
 
 def get_imagemaid_remote_sha(branch="develop"):
-    from modules.helpers._legacy import _get_upstream_sha
+    from modules.helpers._zip_update import _get_upstream_sha
 
     return _get_upstream_sha(branch, [], api_url_template=IMAGEMAID_GITHUB_API_BRANCH, label="ImageMaid")
 

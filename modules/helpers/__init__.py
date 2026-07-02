@@ -12,7 +12,7 @@ from __future__ import annotations
 from ._legacy import *  # noqa: F403
 
 # Private helpers used by tests and other modules.
-from ._legacy import (  # noqa: F401
+from ._zip_update import (  # noqa: F401
     _get_upstream_sha,
     _download_zip,
     _extract_zip_bytes,
@@ -50,3 +50,4 @@ from ._install_mode import *  # noqa: F403
 from ._kometa_version import *  # noqa: F403
 from ._pid import *  # noqa: F403
 from ._paths import *  # noqa: F403
+from ._zip_update import *  # noqa: F403
