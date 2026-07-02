@@ -2,7 +2,6 @@ import io
 import copy
 import os
 import json
-import re
 import shutil
 import subprocess
 from datetime import datetime, timezone
@@ -62,6 +61,8 @@ from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<n
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
     _coerce_string_list,
+    _normalize_asset_directory_entry,
+    _normalize_asset_directory_values,
     _normalize_template_value,
     _parse_comma_string_list,
     _parse_string_list,
@@ -191,46 +192,6 @@ def _rewrite_custom_font_paths(config_data):
 
     walk(config_data)
     return config_data
-
-
-def _normalize_asset_directory_entry(value):
-    if value is None:
-        return None
-
-    text = str(value).strip()
-    if not text:
-        return None
-
-    # Convert YAML-style escaped Windows paths back to plain paths while preserving UNC prefixes.
-    if re.match(r"^[A-Za-z]:\\\\", text):
-        while "\\\\" in text:
-            text = text.replace("\\\\", "\\")
-        return text
-
-    if text.startswith("\\\\"):
-        prefix = "\\\\"
-        remainder = text[2:]
-        while "\\\\" in remainder:
-            remainder = remainder.replace("\\\\", "\\")
-        return prefix + remainder
-
-    return text
-
-
-def _normalize_asset_directory_values(value):
-    normalized = []
-    if isinstance(value, str):
-        items = value.splitlines()
-    elif isinstance(value, list):
-        items = value
-    else:
-        items = []
-
-    for item in items:
-        cleaned = _normalize_asset_directory_entry(item)
-        if cleaned:
-            normalized.append(cleaned)
-    return normalized
 
 
 def optimize_template_variables(config_data, library_types=None):
