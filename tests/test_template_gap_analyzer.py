@@ -229,6 +229,76 @@ def test_overlay_key_supported_in_quickstart_accepts_prefixed_source_override_ke
     assert module.overlay_key_supported_in_quickstart("resolution", "repo_4k", qs_overlays) is True
 
 
+def test_build_qs_playlist_supported_keys_includes_shared_and_keyed_playlist_fields(tmp_path):
+    module = _load_gap_analyzer_module()
+    qs_attributes = tmp_path / "quickstart_attributes.json"
+    qs_attributes.write_text('{"sections": []}', encoding="utf-8")
+
+    playlist_keys = module.build_qs_playlist_supported_keys(qs_attributes)
+
+    assert "radarr_add_missing" in playlist_keys
+    assert "sonarr_add_missing" in playlist_keys
+    assert "trakt_list_" in playlist_keys
+    assert "use_" in playlist_keys
+
+
+def test_playlist_key_supported_in_quickstart_accepts_keyed_playlist_overrides():
+    module = _load_gap_analyzer_module()
+
+    playlist_keys = {
+        "radarr_add_missing",
+        "sonarr_add_missing",
+        "trakt_list_",
+        "use_",
+    }
+
+    assert module.playlist_key_supported_in_quickstart("radarr_add_missing", playlist_keys) is True
+    assert module.playlist_key_supported_in_quickstart("sonarr_add_missing", playlist_keys) is True
+    assert module.playlist_key_supported_in_quickstart("trakt_list_xmen", playlist_keys) is True
+    assert module.playlist_key_supported_in_quickstart("use_mcu", playlist_keys) is True
+    assert module.playlist_key_supported_in_quickstart("unknown_playlist_key", playlist_keys) is False
+
+
+def test_normalize_legacy_template_key_maps_letterboxd_top_250_keys_to_top_500():
+    module = _load_gap_analyzer_module()
+
+    assert module.normalize_legacy_template_key("collection", "letterboxd", "use_top_250") == "use_top_500"
+    assert module.normalize_legacy_template_key("collection", "letterboxd", "visible_library_top_250") == "visible_library_top_500"
+    assert module.normalize_legacy_template_key("collection", "letterboxd", "limit_top_250") == "limit_top_500"
+    assert module.normalize_legacy_template_key("collection", "imdb", "use_top_250") == "use_top_250"
+
+
+def test_schema_declares_key_matches_pattern_properties(tmp_path):
+    module = _load_gap_analyzer_module()
+    schema_path = tmp_path / "schema.json"
+    schema_path.write_text(
+        """
+{
+  "type": "object",
+  "properties": {
+    "sync_to_users": {
+      "type": "array"
+    }
+  },
+  "patternProperties": {
+    "^trakt_list_.+$": {},
+    "^radarr_add_missing_.+$": {
+      "type": "boolean"
+    }
+  }
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    schema_keys, schema_patterns = module.build_schema_key_index(schema_path)
+
+    assert module.schema_declares_key("sync_to_users", schema_keys, schema_patterns) is True
+    assert module.schema_declares_key("trakt_list_xmen", schema_keys, schema_patterns) is True
+    assert module.schema_declares_key("radarr_add_missing_mcu", schema_keys, schema_patterns) is True
+    assert module.schema_declares_key("not_declared_here", schema_keys, schema_patterns) is False
+
+
 def test_quickstart_recommendation_summary_skips_runtime_supported_overlay_keys():
     module = _load_gap_analyzer_module()
 

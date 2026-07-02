@@ -57,6 +57,14 @@ QS_SPECIAL_PLAYLIST_SUPPORTED_KEYS = {
     "playlist_sync_to_users",
     "sync_to_users",
 }
+LETTERBOXD_LEGACY_KEY_MAP = {
+    "use_top_250": "use_top_500",
+    "radarr_add_missing_top_250": "radarr_add_missing_top_500",
+    "visible_home_top_250": "visible_home_top_500",
+    "visible_library_top_250": "visible_library_top_500",
+    "visible_shared_top_250": "visible_shared_top_500",
+    "limit_top_250": "limit_top_500",
+}
 
 DEFAULT_EXCLUDED_DIR_NAMES = {
     ".git",
@@ -713,12 +721,32 @@ def build_qs_global_supported_keys(qs_attributes_path: Path) -> set[str]:
 def build_qs_playlist_supported_keys(qs_attributes_path: Path) -> set[str]:
     keys = set(QS_SPECIAL_PLAYLIST_SUPPORTED_KEYS)
     keys.update(build_qs_global_supported_keys(qs_attributes_path))
+    keys.update(str(key) for key in importer.PLAYLIST_SHARED_IMPORT_FIELDS.keys())
+    keys.update(str(key) for key in importer.PLAYLIST_KEYED_IMPORT_FIELDS.keys())
     return keys
 
 
-def build_schema_key_set(schema_path: Path) -> set[str]:
+def normalize_legacy_template_key(kind: str, alias: str | None, key: str) -> str:
+    if kind == "collection" and str(alias or "").strip().lower() == "letterboxd":
+        return LETTERBOXD_LEGACY_KEY_MAP.get(key, key)
+    return key
+
+
+def playlist_key_supported_in_quickstart(key: str, qs_playlist_keys: set[str]) -> bool:
+    if key in qs_playlist_keys:
+        return True
+
+    for prefix in importer.PLAYLIST_KEYED_IMPORT_FIELDS.keys():
+        if key.startswith(str(prefix)):
+            return True
+
+    return False
+
+
+def build_schema_key_index(schema_path: Path) -> tuple[set[str], list[re.Pattern[str]]]:
     data = load_json(schema_path)
     keys: set[str] = set()
+    patterns: list[re.Pattern[str]] = []
 
     def walk(node: Any) -> None:
         if isinstance(node, dict):
@@ -730,7 +758,10 @@ def build_schema_key_set(schema_path: Path) -> set[str]:
             pattern_properties = node.get("patternProperties")
             if isinstance(pattern_properties, dict):
                 for key, value in pattern_properties.items():
-                    keys.add(str(key))
+                    try:
+                        patterns.append(re.compile(str(key)))
+                    except re.error:
+                        pass
                     walk(value)
             for value in node.values():
                 walk(value)
@@ -739,7 +770,18 @@ def build_schema_key_set(schema_path: Path) -> set[str]:
                 walk(item)
 
     walk(data)
+    return keys, patterns
+
+
+def build_schema_key_set(schema_path: Path) -> set[str]:
+    keys, _patterns = build_schema_key_index(schema_path)
     return keys
+
+
+def schema_declares_key(key: str, schema_keys: set[str], schema_patterns: list[re.Pattern[str]]) -> bool:
+    if key in schema_keys:
+        return True
+    return any(pattern.fullmatch(key) for pattern in schema_patterns)
 
 
 def resolve_default_paths(alias: str, kind: str, kometa_defaults: Path) -> list[Path]:
@@ -3109,7 +3151,7 @@ def main() -> None:
         qs_library_keys = build_qs_library_template_keys(qs_attributes_path)
         qs_global_keys = build_qs_global_supported_keys(qs_attributes_path)
         qs_playlist_keys = build_qs_playlist_supported_keys(qs_attributes_path)
-        schema_keys = build_schema_key_set(kometa_schema_path)
+        schema_keys, schema_patterns = build_schema_key_index(kometa_schema_path)
         if progress_callback:
             print(
                 f"[progress][discovery] discovered {len(input_files)} YAML files across {len(inputs)} input root(s)",
@@ -3230,9 +3272,10 @@ def main() -> None:
         for idx, row in enumerate(uploaded[resumed_from_index:], start=resumed_from_index + 1):
             if verify_callback:
                 verify_callback("verifying findings", idx, len(uploaded))
-            key = row["key"]
             kind = row["kind"]
             alias = row["default"]
+            original_key = row["key"]
+            key = normalize_legacy_template_key(kind, alias, original_key)
             if kind == "collection":
                 supported = key in qs_collections.get(alias or "", set()) or key in qs_global_keys
                 quickstart_declared = supported
@@ -3244,7 +3287,7 @@ def main() -> None:
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
             elif kind == "playlist":
-                supported = key in qs_playlist_keys
+                supported = playlist_key_supported_in_quickstart(key, qs_playlist_keys)
                 quickstart_declared = supported
                 default_files = resolve_default_paths(alias or "", kind, kometa_defaults)
                 name_verified, matched_files = key_is_valid_for_default(key, default_files)
@@ -3255,7 +3298,7 @@ def main() -> None:
                 matched_files = []
 
             value_shape_verified, value_shape_rule = infer_value_shape(row["value"], key)
-            schema_declared = key in schema_keys
+            schema_declared = schema_declares_key(key, schema_keys, schema_patterns)
             validation_level = classify_validation_level(supported, schema_declared, name_verified)
             out = dict(row)
             out["supported_in_quickstart"] = supported
@@ -3268,6 +3311,9 @@ def main() -> None:
             out["value_shape_rule"] = value_shape_rule
             out["runtime_guaranteed"] = False
             out["valid_for_kometa"] = name_verified
+            if key != original_key:
+                out["legacy_key"] = original_key
+                out["key"] = key
             out["matched_default_files"] = [str(p.relative_to(kometa_defaults)) for p in matched_files]
             all_rows.append(out)
             verify_buffer.append(out)
