@@ -62,6 +62,10 @@ from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<n
     _parse_playlist_file_entries_value,
     _playlist_libraries_from_library_toggles,
 )
+from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.<name> keeps working
+    _rewrite_custom_font_paths,
+    clean_section_data,
+)
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
     _coerce_string_list,
@@ -117,64 +121,6 @@ LIBRARY_SONARR_FIELDS = {
     "sonarr_path": "string",
     "plex_path": "string",
 }
-
-
-def clean_section_data(section_data, config_attribute):
-    """
-    Cleans out temporary or irrelevant data before integrating it into the final config.yml
-    """
-    clean_data = {}
-
-    for key, value in section_data.items():
-        if key == config_attribute:
-            if isinstance(value, dict):
-                clean_sub_data = {}
-                for sub_key, sub_value in value.items():
-                    if not sub_key.startswith("tmp_"):
-                        clean_sub_data[sub_key] = copy.deepcopy(sub_value)
-                clean_data[key] = clean_sub_data
-            else:
-                clean_data[key] = copy.deepcopy(value)
-
-    return clean_data
-
-
-def _rewrite_custom_font_paths(config_data):
-    available_fonts = set(helpers.list_available_fonts(include_static=True, include_custom=True))
-    if not available_fonts:
-        return config_data
-
-    def normalize_font_value(value):
-        if isinstance(value, dict):
-            raw = value.get("value")
-            if isinstance(raw, str):
-                updated = normalize_font_value(raw)
-                if updated != raw:
-                    value["value"] = updated
-            return value
-        if not isinstance(value, str):
-            return value
-        stripped = value.strip()
-        if not stripped:
-            return value
-        base = os.path.basename(stripped)
-        if base in available_fonts:
-            return f"config/fonts/{base}"
-        return value
-
-    def walk(obj):
-        if isinstance(obj, dict):
-            for key, val in obj.items():
-                if isinstance(key, str) and (key == "font" or key.endswith("_font")):
-                    obj[key] = normalize_font_value(val)
-                else:
-                    walk(val)
-        elif isinstance(obj, list):
-            for item in obj:
-                walk(item)
-
-    walk(config_data)
-    return config_data
 
 
 def optimize_template_variables(config_data, library_types=None):
