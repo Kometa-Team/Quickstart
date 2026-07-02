@@ -29,6 +29,11 @@ from modules.output_defaults import (  # noqa: F401 -- re-exported so output.<na
     _prune_template_variables,
     _values_match,
 )
+from modules.output_file_entries import (  # noqa: F401 -- re-exported so output.<name> keeps working
+    _parse_collection_file_block_entries,
+    _parse_metadata_file_entries,
+    _parse_overlay_file_block_entries,
+)
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
     PLAYLIST_SHARED_TEMPLATE_VAR_SPECS,
@@ -873,99 +878,6 @@ def _normalize_legacy_collection_template_vars(config_data):
                     continue
                 template_vars[new_key] = template_vars.pop(old_key)
     return config_data
-
-
-def _parse_metadata_file_entries(raw_value):
-    if isinstance(raw_value, list):
-        entries = raw_value
-    elif isinstance(raw_value, str):
-        text = raw_value.strip()
-        if not text:
-            return []
-        try:
-            entries = json.loads(text)
-        except Exception:
-            return []
-    else:
-        return []
-
-    if not isinstance(entries, list):
-        return []
-
-    normalized = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        entry_type = str(entry.get("type") or "").strip().lower()
-        location = str(entry.get("location") or "").strip()
-        if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
-            continue
-        normalized.append({entry_type: location})
-
-    normalized.sort(key=lambda item: (next(iter(item.keys())), next(iter(item.values())).casefold()))
-    return normalized
-
-
-def _parse_collection_file_block_entries(raw_value):
-    if isinstance(raw_value, list):
-        entries = raw_value
-    elif isinstance(raw_value, str):
-        text = raw_value.strip()
-        if not text:
-            return []
-        try:
-            entries = json.loads(text)
-        except Exception:
-            return []
-    else:
-        return []
-
-    if not isinstance(entries, list):
-        return []
-
-    normalized = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        entry_type = str(entry.get("type") or "").strip().lower()
-        location = str(entry.get("location") or "").strip()
-        if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
-            continue
-        normalized.append({entry_type: location})
-
-    normalized.sort(key=lambda item: (next(iter(item.keys())), next(iter(item.values())).casefold()))
-    return normalized
-
-
-def _parse_overlay_file_block_entries(raw_value):
-    if isinstance(raw_value, list):
-        entries = raw_value
-    elif isinstance(raw_value, str):
-        text = raw_value.strip()
-        if not text:
-            return []
-        try:
-            entries = json.loads(text)
-        except Exception:
-            return []
-    else:
-        return []
-
-    if not isinstance(entries, list):
-        return []
-
-    normalized = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        entry_type = str(entry.get("type") or "").strip().lower()
-        location = str(entry.get("location") or "").strip()
-        if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
-            continue
-        normalized.append({entry_type: location})
-
-    normalized.sort(key=lambda item: (next(iter(item.keys())), next(iter(item.values())).casefold()))
-    return normalized
 
 
 def build_libraries_section(
