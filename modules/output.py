@@ -4,17 +4,16 @@ import os
 import json
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime
 import platform
 import psutil
 
 import jsonschema
 from flask import current_app as app, has_request_context, session
 from ruamel.yaml import YAML
-from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
 
-from modules import helpers, persistence, database
+from modules import helpers, persistence
 from modules.output_collections import (  # noqa: F401 -- re-exported so output.<name> keeps working
     FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS,
     _collapse_collection_data_template_vars,
@@ -36,6 +35,7 @@ from modules.output_defaults import (  # noqa: F401 -- re-exported so output.<na
     _prune_template_variables,
     _values_match,
 )
+from modules.output_dump import dump_section
 from modules.output_file_entries import (  # noqa: F401 -- re-exported so output.<name> keeps working
     _parse_collection_file_block_entries,
     _parse_metadata_file_entries,
@@ -1907,268 +1907,6 @@ def build_config(header_style="standard", config_name=None):
         f"\n\n"
     )
 
-    def inject_section_headers(yaml_string, font):
-        lines = yaml_string.splitlines()
-        output = []
-        in_libraries_block = False
-
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-
-            # Detect when we've entered the top-level libraries block
-            if stripped == "libraries:":
-                in_libraries_block = True
-                output.append(line)
-                continue
-
-            # Exit the block once indentation resets or we hit a new top-level key
-            if in_libraries_block and not line.startswith("  ") and not line.strip().startswith("#") and ":" in line:
-                in_libraries_block = False
-
-            # Only inject header for lines like "  Movies:" or "  TV Shows:" inside the libraries block
-            if in_libraries_block and line.startswith("  ") and not line.startswith("   ") and line.strip().endswith(":") and not line.strip().startswith("-"):
-                library_name = line.strip().rstrip(":")
-                output.append(render_section_header(library_name, font))
-
-            elif stripped.startswith("collection_files:"):
-                output.append(render_section_header("Collections", font))
-            elif stripped.startswith("metadata_files:"):
-                output.append(render_section_header("Metadata Files", font))
-            elif stripped.startswith("overlay_files:"):
-                output.append(render_section_header("Overlays", font))
-
-            output.append(line)
-
-        return "\n".join(output)
-
-    # Function to dump YAML sections
-    def dump_section(title, dump_name, data):
-
-        dump_yaml = YAML()
-        dump_yaml.default_flow_style = False
-        dump_yaml.sort_keys = False  # Preserve original key order
-        dump_yaml.width = 4096  # avoid folding long tokens/secrets
-
-        # Custom representation for `None` values
-        dump_yaml.representer.add_representer(
-            type(None),
-            lambda self, _: self.represent_scalar("tag:yaml.org,2002:null", ""),
-        )
-
-        def _prune_empty_output_values(obj):
-            if isinstance(obj, dict):
-                pruned = {}
-                for key, value in obj.items():
-                    if key == "valid":
-                        continue
-                    cleaned_value = _prune_empty_output_values(value)
-                    if cleaned_value is _EMPTY_OUTPUT:
-                        continue
-                    pruned[key] = cleaned_value
-                return pruned if pruned else _EMPTY_OUTPUT
-            if isinstance(obj, list):
-                cleaned_items = []
-                for value in obj:
-                    cleaned_value = _prune_empty_output_values(value)
-                    if cleaned_value is _EMPTY_OUTPUT:
-                        continue
-                    cleaned_items.append(cleaned_value)
-                return cleaned_items if cleaned_items else _EMPTY_OUTPUT
-            if obj is None:
-                return _EMPTY_OUTPUT
-            if isinstance(obj, str) and obj.strip() == "":
-                return _EMPTY_OUTPUT
-            return obj
-
-        def clean_data(obj):
-            if isinstance(obj, dict):
-                # Sort specific sections alphabetically
-                if dump_name in [
-                    "settings",
-                    "webhooks",
-                    "plex",
-                    "tmdb",
-                    "tautulli",
-                    "github",
-                    "omdb",
-                    "mdblist",
-                    "notifiarr",
-                    "gotify",
-                    "ntfy",
-                    "apprise",
-                    "anidb",
-                    "radarr",
-                    "sonarr",
-                    "trakt",
-                    "mal",
-                ]:
-                    obj = dict(sorted(obj.items()))  # Alphabetically sort keys in the section
-                cleaned_dict = {}
-                for k, v in obj.items():
-                    if k == "valid":
-                        continue
-                    cleaned_value = clean_data(v)
-                    if cleaned_value is _EMPTY_OUTPUT:
-                        continue
-                    cleaned_dict[k] = cleaned_value
-                return cleaned_dict if cleaned_dict else _EMPTY_OUTPUT
-            elif isinstance(obj, list):
-                cleaned_list = []
-                for v in obj:
-                    cleaned_value = clean_data(v)
-                    if cleaned_value is _EMPTY_OUTPUT:
-                        continue
-                    cleaned_list.append(cleaned_value)
-                return cleaned_list if cleaned_list else _EMPTY_OUTPUT
-            else:
-                return _prune_empty_output_values(obj)
-
-        # Clean the data
-        cleaned_data = clean_data(data)
-        if cleaned_data is _EMPTY_OUTPUT:
-            cleaned_data = {}
-        if dump_name == "libraries" and isinstance(cleaned_data, dict) and "libraries" not in cleaned_data:
-            cleaned_data = {"libraries": cleaned_data}
-        if dump_name == "anidb":
-            section = cleaned_data.get("anidb")
-            if isinstance(section, dict):
-                section.pop("enable", None)
-
-        # Force long/scalar strings to emit in plain style (avoid folded multi-line) for sensitive sections
-        plain_scalar_sections = {
-            "plex",
-            "tmdb",
-            "tautulli",
-            "github",
-            "omdb",
-            "mdblist",
-            "notifiarr",
-            "gotify",
-            "ntfy",
-            "apprise",
-            "anidb",
-            "radarr",
-            "sonarr",
-            "trakt",
-            "mal",
-        }
-
-        def plainify_strings(obj):
-            if isinstance(obj, dict):
-                return {k: plainify_strings(v) for k, v in obj.items()}
-            if isinstance(obj, list):
-                return [plainify_strings(v) for v in obj]
-            if isinstance(obj, str):
-                return PlainScalarString(obj)
-            return obj
-
-        if dump_name in plain_scalar_sections:
-            cleaned_data = plainify_strings(cleaned_data)
-
-        # Normalize MAL/TRAKT numeric fields
-        if dump_name in ("mal", "trakt"):
-            section = cleaned_data.get(dump_name, {})
-            auth = section.get("authorization", {})
-
-            if isinstance(auth, dict) and "expires_in" in auth:
-                try:
-                    auth["expires_in"] = int(auth["expires_in"])
-                except Exception:
-                    pass
-
-            if "cache_expiration" in section:
-                try:
-                    section["cache_expiration"] = int(section["cache_expiration"])
-                except Exception:
-                    pass
-
-        if dump_name == "trakt":
-            section = cleaned_data.get("trakt", {})
-            if isinstance(section, dict):
-                auth = section.get("authorization")
-                if isinstance(auth, dict) and "force_refresh" in auth and "force_refresh" not in section:
-                    section["force_refresh"] = auth.pop("force_refresh")
-
-                preferred_order = ["authorization", "client_id", "client_secret", "pin", "force_refresh"]
-                ordered_section = {}
-                for key in preferred_order:
-                    if key in section:
-                        ordered_section[key] = section[key]
-                for key, value in section.items():
-                    if key not in ordered_section:
-                        ordered_section[key] = value
-                cleaned_data["trakt"] = ordered_section
-
-        # Ensure settings multi-value inputs are normalized for YAML output.
-        if dump_name == "settings" and isinstance(cleaned_data.get("settings"), dict):
-            settings_block = cleaned_data["settings"]
-            for setting_key in list(settings_block.keys()):
-                normalized_value = _normalize_settings_section_value(setting_key, settings_block.get(setting_key))
-                if normalized_value is None:
-                    settings_block.pop(setting_key, None)
-                else:
-                    settings_block[setting_key] = normalized_value
-
-            if "asset_directory" in settings_block:
-                if isinstance(settings_block["asset_directory"], str):
-                    # Convert multi-line string into a list
-                    settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
-                elif isinstance(settings_block["asset_directory"], list):
-                    # Ensure all list items are strings
-                    settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
-
-        # Dump the cleaned data to YAML
-        with io.StringIO() as stream:
-            dump_yaml.dump(cleaned_data, stream)
-            section_output = stream.getvalue().strip()
-            if header_style != "none":
-                section_output = inject_section_headers(section_output, header_style)
-
-            validation_comment = build_validation_comment(dump_name)
-            blocks = []
-            if title:
-                blocks.append(title)
-            if validation_comment:
-                blocks.append(validation_comment)
-            blocks.append(section_output)
-            return "\n".join(blocks) + "\n\n"
-
-    def format_validation_timestamp(raw):
-        if not raw:
-            return ""
-        try:
-            normalized = raw.replace("Z", "+00:00")
-            parsed = datetime.fromisoformat(normalized)
-            if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
-            local = parsed.astimezone()
-            return local.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception:
-            return raw
-
-    def build_validation_comment(section_key):
-        if not config_name:
-            return ""
-        stored = database.retrieve_section_data(config_name, section_key)
-        if not stored or not isinstance(stored[2], dict):
-            return ""
-        stored_validated = helpers.booler(stored[0])
-        payload = stored[2]
-        status = payload.get("validation_status")
-        if not status:
-            if stored_validated:
-                status = "validated"
-            else:
-                fallback_timestamp = payload.get("validated_at")
-                status = "failed" if fallback_timestamp else ""
-        if not status:
-            return ""
-        updated_at = payload.get("validation_updated_at") or payload.get("validated_at")
-        last_validated = format_validation_timestamp(updated_at)
-        if last_validated:
-            return f"# validation: {status} (last_validated: {last_validated})"
-        return f"# validation: {status}"
-
     ordered_sections = [
         ("libraries", "025-libraries"),
         ("playlist_files", "027-playlist_files"),
@@ -2210,7 +1948,7 @@ def build_config(header_style="standard", config_name=None):
         if section_key in config_data:
             section_data = config_data[section_key]
             section_art = header_for_section(section_key, helpers.user_visible_name(section_key))
-            yaml_content += dump_section(section_art, section_key, section_data)
+            yaml_content += dump_section(section_art, section_key, section_data, header_style, config_name)
 
     validated = False
     validation_error = None
