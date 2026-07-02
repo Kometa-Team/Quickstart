@@ -1,7 +1,7 @@
-"""Playlist file-entry and library-selection helpers for output.py.
+"""Playlist file-entry, library-selection, and template-variable helpers for output.py.
 
-Extracted from the original ``modules/output.py`` monolith.  These nine
-helpers all deal with one of two closely-related concerns:
+Extracted from the original ``modules/output.py`` monolith.  These helpers
+all deal with one of three closely-related concerns:
 
 1. **Playlist file entries** -- the ``playlist_files:`` YAML block that
    Kometa consumes.  Entries come in as raw JSON/py-literal strings,
@@ -17,6 +17,15 @@ helpers all deal with one of two closely-related concerns:
    ``_library_names_in_output_order``, and the four
    ``_*_playlist_libraries_*`` helpers cover this.
 
+3. **Playlist template variable normalization** -- once per-library
+   playlist toggles are resolved, the raw ``playlist-template_variables[...]``
+   form values need to be coerced/parsed by kind (string_list, boolean,
+   integer, string, ignore_ids).  The ``PLAYLIST_*_TEMPLATE_VAR_SPECS``
+   dicts declare the expected kinds; ``_normalize_playlist_template_var_value``,
+   ``_normalize_playlist_keyed_template_var_value``,
+   ``_collect_playlist_template_variables_from_libraries_data``, and
+   ``_collect_playlist_file_entries_from_libraries_data`` do the work.
+
 None of these are public API.  ``modules/output.py`` re-exports them via
 an explicit ``from modules.output_playlists import ...`` block so the
 existing internal call sites keep working.
@@ -26,9 +35,58 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 
 from modules import persistence
-from modules.output_values import _coerce_bool
+from modules.output_values import (
+    _coerce_bool,
+    _parse_comma_string_list,
+    _parse_template_mapping_dict,
+    _playlist_scalar_or_list,
+    _to_number,
+)
+
+# --- template-var kind specs ---------------------------------------------
+
+PLAYLIST_SHARED_TEMPLATE_VAR_SPECS = {
+    "sync_to_users": "string_list",
+    "exclude_users": "string_list",
+    "delete_playlist": "boolean",
+    "ignore_ids": "ignore_ids",
+    "ignore_imdb_ids": "string_list",
+    "item_radarr_tag": "string_list",
+    "item_sonarr_tag": "string_list",
+    "radarr_add_missing": "boolean",
+    "radarr_folder": "string",
+    "radarr_tag": "string_list",
+    "sonarr_add_missing": "boolean",
+    "sonarr_folder": "string",
+    "sonarr_tag": "string_list",
+    "trakt_list": "string_list",
+    "imdb_list": "string_list",
+    "mdblist_list": "string_list",
+}
+PLAYLIST_KEYED_TEMPLATE_VAR_SPECS = {
+    "use_": "boolean",
+    "name_": "string",
+    "summary_": "string",
+    "url_poster_": "string",
+    "delete_playlist_": "boolean",
+    "exclude_users_": "string_list",
+    "exclude_user_": "string_list",
+    "imdb_list_": "string_list",
+    "item_radarr_tag_": "string_list",
+    "item_sonarr_tag_": "string_list",
+    "mdblist_list_": "string_list",
+    "radarr_add_missing_": "boolean",
+    "radarr_folder_": "string",
+    "radarr_tag_": "string_list",
+    "sonarr_add_missing_": "boolean",
+    "sonarr_folder_": "string",
+    "sonarr_tag_": "string_list",
+    "sync_to_users_": "string_list",
+    "trakt_list_": "string_list",
+}
 
 
 def _normalize_playlist_file_entry_for_output(entry):
@@ -170,3 +228,109 @@ def _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data, ord
             selected_libraries.append(library_name)
 
     return _ordered_selected_libraries(selected_libraries, ordered_library_names)
+
+
+# --- template variable normalization ------------------------------------
+
+
+def _normalize_playlist_template_var_value(key, value):
+    if key == "ignore_ids":
+        list_values = _parse_comma_string_list(value)
+        if not list_values:
+            return None
+        if len(list_values) == 1:
+            number = _to_number(list_values[0])
+            if isinstance(number, (int, float)) and float(number).is_integer():
+                return int(number)
+            return list_values[0]
+        return ", ".join(list_values)
+    if key in {
+        "sync_to_users",
+        "exclude_users",
+        "exclude_user",
+        "ignore_imdb_ids",
+        "item_radarr_tag",
+        "item_sonarr_tag",
+        "radarr_tag",
+        "sonarr_tag",
+        "trakt_list",
+        "imdb_list",
+        "mdblist_list",
+    }:
+        return _playlist_scalar_or_list(_parse_comma_string_list(value))
+    if key in {"delete_playlist", "radarr_add_missing", "sonarr_add_missing"}:
+        return _coerce_bool(value)
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalize_playlist_keyed_template_var_value(value_kind, raw_value):
+    if raw_value in (None, ""):
+        return None
+    kind = str(value_kind or "string").strip().lower()
+    if kind == "string_list":
+        return _playlist_scalar_or_list(_parse_comma_string_list(raw_value))
+    if kind == "boolean":
+        return _coerce_bool(raw_value)
+    if kind == "integer":
+        number = _to_number(raw_value)
+        if isinstance(number, (int, float)) and float(number).is_integer():
+            return int(number)
+        return None
+    text = str(raw_value).strip()
+    return text or None
+
+
+def _collect_playlist_template_variables_from_libraries_data(nested_libraries_data):
+    if not isinstance(nested_libraries_data, dict):
+        return {}
+
+    template_vars = {}
+
+    for raw_key, raw_value in nested_libraries_data.items():
+        if not isinstance(raw_key, str):
+            continue
+        match = re.fullmatch(r"playlist-template_variables\[(.+)\]", raw_key)
+        if not match:
+            continue
+
+        field_key = str(match.group(1) or "").strip()
+        if not field_key or field_key == "libraries":
+            continue
+
+        if field_key == "exclude_user":
+            field_key = "exclude_users"
+        if field_key == "exclude_user_":
+            field_key = "exclude_users_"
+
+        if field_key in PLAYLIST_KEYED_TEMPLATE_VAR_SPECS:
+            mapping = _parse_template_mapping_dict(raw_value)
+            if not mapping:
+                continue
+            value_kind = PLAYLIST_KEYED_TEMPLATE_VAR_SPECS[field_key]
+            for raw_suffix, mapping_value in mapping.items():
+                suffix = str(raw_suffix or "").strip()
+                if not suffix:
+                    continue
+                normalized_value = _normalize_playlist_keyed_template_var_value(value_kind, mapping_value)
+                if normalized_value is None:
+                    continue
+                template_vars[f"{field_key}{suffix}"] = normalized_value
+            continue
+
+        if field_key not in PLAYLIST_SHARED_TEMPLATE_VAR_SPECS:
+            continue
+
+        normalized_value = _normalize_playlist_template_var_value(field_key, raw_value)
+        if normalized_value is not None:
+            template_vars[field_key] = normalized_value
+
+    return template_vars
+
+
+def _collect_playlist_file_entries_from_libraries_data(nested_libraries_data):
+    if not isinstance(nested_libraries_data, dict):
+        return []
+    return _parse_playlist_file_entries_value(nested_libraries_data.get("playlist_files_entries"))
