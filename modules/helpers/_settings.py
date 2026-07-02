@@ -6,7 +6,7 @@ from flask import current_app as app
 
 
 def booler(thing):
-    from modules.helpers._legacy import ts_log
+    from modules.helpers._logging import ts_log
 
     if isinstance(thing, str):
         thing = thing.lower().strip()

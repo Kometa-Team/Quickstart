@@ -48,7 +48,7 @@ def get_custom_fonts_dir(config_name: str | None = None) -> Path:
 def get_kometa_fonts_dir(kometa_root: Path | None = None) -> Path:
     if kometa_root is not None:
         return Path(kometa_root) / "config" / "fonts"
-    from modules.helpers._legacy import get_kometa_config_dir
+    from modules.helpers._kometa_paths import get_kometa_config_dir
 
     return get_kometa_config_dir() / "fonts"
 
