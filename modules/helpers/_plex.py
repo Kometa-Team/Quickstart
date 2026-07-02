@@ -1,4 +1,4 @@
-"""Plex query and metadata helpers extracted from _legacy.py.
+"""Plex query and metadata helpers extracted from the original helpers.py monolith.
 
 Wraps plexapi for read-only operations against the user's Plex server:
 top-N IMDb picks, library summaries, per-library metadata, and item lookups

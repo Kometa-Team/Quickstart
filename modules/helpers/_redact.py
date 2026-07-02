@@ -1,4 +1,4 @@
-"""Data redaction utility extracted from _legacy.py."""
+"""Data redaction utility extracted from the original helpers.py monolith."""
 
 import re
 

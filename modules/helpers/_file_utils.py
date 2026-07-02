@@ -1,4 +1,4 @@
-"""File utility functions extracted from _legacy.py."""
+"""File utility functions extracted from the original helpers.py monolith."""
 
 import re
 

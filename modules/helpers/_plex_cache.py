@@ -1,10 +1,10 @@
-"""Plex discovery cache utilities extracted from _legacy.py."""
+"""Plex discovery cache utilities extracted from the original helpers.py monolith."""
 
 import copy
 import hashlib
 import time
 
-from modules.helpers._legacy import PLEX_DISCOVERY_CACHE_TTL_SECONDS
+from modules.helpers._constants import PLEX_DISCOVERY_CACHE_TTL_SECONDS
 
 _PLEX_DISCOVERY_CACHE: dict = {}
 

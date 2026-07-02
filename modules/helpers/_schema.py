@@ -1,4 +1,4 @@
-"""Schema/hash utilities and json-schema sync — extracted from _legacy.py.
+"""Schema/hash utilities and json-schema sync — extracted from the original helpers.py monolith.
 
 Owns the on-disk JSON-schema mirror under ``config/.schema/``:
 
@@ -18,7 +18,7 @@ from pathlib import Path
 
 import requests
 
-from modules.helpers._legacy import ALLOWED_EXTENSIONS, CONFIG_DIR, GITHUB_BASE_URL
+from modules.helpers._constants import ALLOWED_EXTENSIONS, CONFIG_DIR, GITHUB_BASE_URL
 from modules.helpers._logging import ts_log
 
 JSON_SCHEMA_DIR = os.path.join(CONFIG_DIR, ".schema")

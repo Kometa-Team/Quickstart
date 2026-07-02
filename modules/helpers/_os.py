@@ -1,4 +1,4 @@
-"""OS detection utility extracted from _legacy.py."""
+"""OS detection utility extracted from the original helpers.py monolith."""
 
 import os
 import platform

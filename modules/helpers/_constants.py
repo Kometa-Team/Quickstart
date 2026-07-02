@@ -1,3 +1,22 @@
+"""Foundational constants shared across the helpers package.
+
+Owns the small pieces of shared state that many submodules read at
+import time:
+
+- Filesystem layout: ``BASE_DIR``, ``WORKING_DIR``, ``MEIPASS_DIR``,
+  ``CONFIG_DIR``, ``JSON_SETTINGS``, ``VERSION_FILE``, ``BUILDNUM_FILE``,
+  ``RESTART_NOTICE_FILE``
+- Upstream URLs: ``GITHUB_BASE_URL``, ``IMAGEMAID_GITHUB_BASE_URL``
+- Redaction hint: ``STRING_FIELDS``
+- File type sets: ``ALLOWED_EXTENSIONS``, ``FONT_EXTENSIONS``
+- Update-cache TTLs and in-memory dicts for Quickstart, Kometa, and ImageMaid
+- Branch-override sets: ``KOMETA_BRANCH_OVERRIDES``, ``IMAGEMAID_BRANCH_OVERRIDES``
+
+Historically named ``_legacy.py`` — this module was the last surviving
+chunk of the original monolithic ``helpers.py``. All functions have been
+extracted into dedicated submodules; what remains here is pure constants.
+"""
+
 import os
 import sys
 

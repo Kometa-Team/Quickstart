@@ -45,7 +45,7 @@ def _load_app(config_dir, kometa_root):
 
     _seed_schema_files(config_dir)
     # NOTE: After helpers.py was decomposed into a package, path constants
-    # like ``CONFIG_DIR`` live as module-level globals inside ``_legacy.py``.
+    # like ``CONFIG_DIR`` live as module-level globals inside ``_constants.py``.
     # Extracted submodules (``_fonts`` etc.) import these at load time, so
     # their bindings drift independently from the package. Patch every loaded
     # submodule that carries the constant.
@@ -171,7 +171,7 @@ def _patch_helpers_paths(monkeypatch, config_dir):
 
     After ``modules/helpers.py`` was split into a package, path constants
     like ``CONFIG_DIR`` are imported at module load time by extracted
-    submodules (``_fonts``, ``_paths``, etc.) from ``_legacy``.  Those
+    submodules (``_fonts``, ``_paths``, etc.) from ``_constants``.  Those
     import-time bindings then drift independently from the package-level
     ``helpers.CONFIG_DIR``.  Functions inside any submodule resolve the
     constant from *their own* module globals, so we must patch every

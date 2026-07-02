@@ -1,4 +1,4 @@
-"""Log rotation, initialization, and timestamped logging extracted from _legacy.py.
+"""Log rotation, initialization, and timestamped logging extracted from the original helpers.py monolith.
 
 Contains the core write-to-file logging plumbing used by the entire Quickstart
 codebase via ``helpers.ts_log()``. The output includes stderr-safe console

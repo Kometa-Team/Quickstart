@@ -1,11 +1,11 @@
-"""Overlay configuration enrichment utilities extracted from _legacy.py."""
+"""Overlay configuration enrichment utilities extracted from the original helpers.py monolith."""
 
 import copy
 import json
 import os
 import re
 
-from modules.helpers._legacy import JSON_SETTINGS
+from modules.helpers._constants import JSON_SETTINGS
 
 
 def load_quickstart_config(filename: str):

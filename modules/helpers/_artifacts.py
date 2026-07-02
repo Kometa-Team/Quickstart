@@ -1,4 +1,4 @@
-"""Config artifact management utilities extracted from _legacy.py."""
+"""Config artifact management utilities extracted from the original helpers.py monolith."""
 
 import datetime
 import re
@@ -6,7 +6,7 @@ import shutil
 
 from pathlib import Path
 
-from modules.helpers._legacy import CONFIG_DIR
+from modules.helpers._constants import CONFIG_DIR
 
 MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
 MANAGED_OVERLAY_IMAGE_DIR = "overlay_images"

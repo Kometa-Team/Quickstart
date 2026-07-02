@@ -1,4 +1,4 @@
-"""Git branch detection utility extracted from _legacy.py."""
+"""Git branch detection utility extracted from the original helpers.py monolith."""
 
 import shutil
 import subprocess

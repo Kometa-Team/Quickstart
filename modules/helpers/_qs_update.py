@@ -1,4 +1,4 @@
-"""Quickstart version and update detection utilities extracted from _legacy.py."""
+"""Quickstart version and update detection utilities extracted from the original helpers.py monolith."""
 
 import copy
 import os
@@ -8,7 +8,7 @@ import time
 
 from pathlib import Path
 
-from modules.helpers._legacy import BUILDNUM_FILE, QS_UPDATE_CACHE_TTL_SECONDS, VERSION_FILE, _QS_UPDATE_CACHE
+from modules.helpers._constants import BUILDNUM_FILE, QS_UPDATE_CACHE_TTL_SECONDS, VERSION_FILE, _QS_UPDATE_CACHE
 
 
 def get_kometa_branch():

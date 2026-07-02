@@ -1,4 +1,4 @@
-"""Kometa/ImageMaid ZIP-based update primitives extracted from _legacy.py.
+"""Kometa/ImageMaid ZIP-based update primitives extracted from the original helpers.py monolith.
 
 Small, composable helpers used by the ``perform_kometa_update_zip_only``,
 ``perform_kometa_update_zip_only_at_root`` and ``perform_imagemaid_update_zip_only``
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import requests
 
-from modules.helpers._legacy import CONFIG_DIR
+from modules.helpers._constants import CONFIG_DIR
 
 GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/Kometa/branches/{branch}"
 GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"

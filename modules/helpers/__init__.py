@@ -8,8 +8,8 @@ via ``from modules import helpers``.  Submodules are loaded on demand;
 
 from __future__ import annotations
 
-# Import everything from the legacy module first (backward compat).
-from ._legacy import *  # noqa: F403
+# Foundational constants (paths, TTLs, cache dicts, extension sets).
+from ._constants import *  # noqa: F403
 
 # Private helpers used by tests and other modules.
 from ._zip_update import (  # noqa: F401
