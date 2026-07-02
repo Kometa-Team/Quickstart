@@ -352,6 +352,19 @@ def test_validate_overlay_file_accepts_existing_local_file(client, tmp_path):
     assert payload["valid"] is True
 
 
+def test_validate_playlist_file_accepts_existing_local_file(client, tmp_path):
+    playlist_file = tmp_path / "playlists.yml"
+    playlist_file.write_text("playlists:\n  test:\n    trakt_list:\n      - https://trakt.tv/users/example/lists/test\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_playlist_file",
+        json={"playlist_file_type": "file", "playlist_file_location": str(playlist_file)},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+
+
 def test_validate_metadata_file_organizes_local_file_into_managed_store(client, isolated_config_dir, tmp_path):
     from pathlib import Path
 
@@ -1593,6 +1606,17 @@ def test_validate_collection_file_rejects_repo_without_custom_repo(client):
     assert payload["error"] == "Collection file repo entries require Custom Repo to be configured and saved first within the Settings page."
 
 
+def test_validate_playlist_file_rejects_repo_without_custom_repo(client):
+    resp = client.post(
+        "/validate_playlist_file",
+        json={"playlist_file_type": "repo", "playlist_file_location": "bullmoose20/playlists.yml"},
+    )
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert payload["error"] == "Playlist file repo entries require Custom Repo to be configured and saved first within the Settings page."
+
+
 def test_validate_metadata_file_rejects_repo_without_custom_repo(client):
     resp = client.post(
         "/validate_metadata_file",
@@ -2291,6 +2315,32 @@ def test_runtime_config_schema_accepts_franchise_build_collection_and_title_over
                 ]
             }
         },
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
+
+
+def test_runtime_config_schema_accepts_playlist_exclude_users_keyed_override(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "playlist_files": [
+            {
+                "default": "playlist",
+                "template_variables": {
+                    "libraries": ["Movies"],
+                    "exclude_users_mcu": ["guest"],
+                },
+            }
+        ],
     }
 
     errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))

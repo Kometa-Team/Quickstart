@@ -1,3 +1,11 @@
+function callValidationHandler (methodName, ...args) {
+  const handler = window.ValidationHandler
+  if (!handler || typeof handler[methodName] !== 'function') {
+    return
+  }
+  return handler[methodName](...args)
+}
+
 const EventHandler = {
   attachLibraryListeners: function () {
     document.querySelectorAll('.library-checkbox').forEach((checkbox) => {
@@ -9,7 +17,7 @@ const EventHandler = {
         // Attach event listener to each checkbox
         checkbox.addEventListener('change', () => {
           EventHandler.toggleLibraryVisibility(libraryId, checkbox.checked)
-          window.ValidationHandler.updateValidationState()
+          callValidationHandler('updateValidationState')
         })
         checkbox.dataset.listenerAdded = 'true'
       }
@@ -95,7 +103,7 @@ const EventHandler = {
             select.addEventListener('change', () => {
               console.log(`[DEBUG] Dropdown changed: ${select.id} -> ${select.value}`)
               EventHandler.updateAccordionHighlights()
-              window.ValidationHandler.updateValidationState()
+              callValidationHandler('updateValidationState')
 
               // Trigger preview update if template variable
               if (select.classList.contains('template-variable-select')) {
@@ -117,7 +125,7 @@ const EventHandler = {
             // Exclude preview overlay accordions from highlight updates
             if (!input.closest('.preview-accordion')) {
               EventHandler.updateAccordionHighlights()
-              window.ValidationHandler.updateValidationState()
+              callValidationHandler('updateValidationState')
             }
           })
           input.dataset.listenerAdded = true
@@ -134,7 +142,7 @@ const EventHandler = {
 
             // Ensure Highlights Update Properly
             EventHandler.updateAccordionHighlights()
-            window.ValidationHandler.updateValidationState()
+            callValidationHandler('updateValidationState')
           })
 
           dropdown.dataset.listenerAdded = 'true'
@@ -303,9 +311,7 @@ const EventHandler = {
         if (typeof EventHandler.updateAccordionHighlights === 'function') {
           EventHandler.updateAccordionHighlights()
         }
-        if (typeof window.ValidationHandler !== 'undefined' && window.ValidationHandler.updateValidationState) {
-          window.ValidationHandler.updateValidationState()
-        }
+        callValidationHandler('updateValidationState')
       }
       library.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
         if (el.dataset.highlightListener === 'true') return
@@ -618,8 +624,8 @@ console.log('[DEBUG] Initializing EventHandler...')
 
 // Run once on page load
 EventHandler.attachLibraryListeners()
-window.ValidationHandler.restoreSelectedLibraries()
-window.ValidationHandler.updateValidationState()
+callValidationHandler('restoreSelectedLibraries')
+callValidationHandler('updateValidationState')
 installRatingSubmitGuard()
 
 document.querySelectorAll('select.template-variable-select').forEach(select => {

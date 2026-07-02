@@ -25,6 +25,7 @@ import requests
 from cachelib.file import FileSystemCache
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
+from ruamel.yaml import YAML
 from flask import (
     Flask,
     jsonify,
@@ -458,7 +459,7 @@ VALIDATION_DOCS = {
     "webhooks": f"{VALIDATION_DOC_BASE}090-webhooks",
     "collections": f"{VALIDATION_DOC_BASE}025-libraries",
     "overlays": f"{VALIDATION_DOC_BASE}025-libraries",
-    "playlist_files": f"{VALIDATION_DOC_BASE}027-playlist_files",
+    "playlist_files": f"{VALIDATION_DOC_BASE}025-libraries",
 }
 VALIDATION_REASON_LABELS = {
     "missing_credentials": "Missing credentials",
@@ -958,6 +959,90 @@ def _validate_and_organize_library_file_request(kind, data, type_key, location_k
     return jsonify(payload)
 
 
+def _parse_shared_playlist_file_entries(raw_value):
+    if raw_value in [None, "", "[]"]:
+        return []
+    if isinstance(raw_value, list):
+        parsed = raw_value
+    else:
+        try:
+            parsed = json.loads(str(raw_value))
+        except Exception:
+            return None
+    if not isinstance(parsed, list):
+        return None
+
+    entries = []
+    for entry in parsed:
+        if not isinstance(entry, dict):
+            continue
+        entry_type = str(entry.get("type") or "").strip().lower()
+        location = str(entry.get("location") or "").strip()
+        validated = helpers.booler(entry.get("validated"))
+        if not entry_type and not location:
+            continue
+        normalized = {"type": entry_type, "location": location}
+        if validated:
+            normalized["validated"] = True
+        entries.append(normalized)
+    return entries
+
+
+def _validate_shared_playlist_files(libraries_data):
+    if not isinstance(libraries_data, dict):
+        return []
+    entries = _parse_shared_playlist_file_entries(libraries_data.get("playlist_files_entries"))
+    if entries is None:
+        return ["playlist_files_entries must be a valid list."]
+
+    errors = []
+    for idx, entry in enumerate(entries, start=1):
+        valid, message, details = validations._normalize_metadata_validation_result(
+            validations.validate_playlist_file_payload(
+                {
+                    "playlist_file_type": str(entry.get("type") or "").strip().lower(),
+                    "playlist_file_location": str(entry.get("location") or "").strip(),
+                }
+            )
+        )
+        if not valid:
+            errors.append(_format_library_file_validation_error("playlist_files", "playlist_files", idx, message, entry, details))
+    return errors
+
+
+def _normalize_shared_playlist_file_entries_payload(libraries_data, config_name, validate_local=False):
+    if not isinstance(libraries_data, dict):
+        return {}, []
+    normalized = dict(libraries_data)
+    entries = _parse_shared_playlist_file_entries(normalized.get("playlist_files_entries"))
+    if entries is None:
+        return normalized, ["playlist_files_entries must be a valid list."]
+
+    if not entries:
+        normalized["playlist_files_entries"] = "[]"
+        return normalized, []
+
+    new_entries = []
+    errors = []
+    for idx, entry in enumerate(entries, start=1):
+        normalized_entry, _changed, entry_error = _normalize_library_external_entry(
+            "playlist_files",
+            entry,
+            config_name,
+            "shared_playlist_files",
+            validate_local=validate_local,
+            require_managed_context=True,
+        )
+        if entry_error:
+            errors.append(_format_library_file_validation_error("playlist_files", "playlist_files", idx, entry_error, entry))
+            continue
+        if normalized_entry:
+            new_entries.append(normalized_entry)
+
+    normalized["playlist_files_entries"] = json.dumps(new_entries, ensure_ascii=True)
+    return normalized, errors
+
+
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
 
@@ -1006,12 +1091,43 @@ def start_update_thread():
 threading.Thread(target=start_update_thread, daemon=True).start()
 
 
+_PLAYLIST_DEFAULT_ENTRIES_CACHE = None
+
+
+def _load_playlist_default_entries():
+    global _PLAYLIST_DEFAULT_ENTRIES_CACHE
+    if _PLAYLIST_DEFAULT_ENTRIES_CACHE is not None:
+        return [dict(entry) for entry in _PLAYLIST_DEFAULT_ENTRIES_CACHE]
+
+    playlist_defaults_path = Path(__file__).resolve().parent / "config" / "kometa" / "defaults" / "playlist.yml"
+    entries = []
+    try:
+        parser = YAML(typ="safe", pure=True)
+        loaded = parser.load(playlist_defaults_path.read_text(encoding="utf-8")) or {}
+        for playlist_name, playlist_data in (loaded.get("playlists") or {}).items():
+            if not isinstance(playlist_data, dict):
+                continue
+            variables = playlist_data.get("variables") or {}
+            if not isinstance(variables, dict):
+                continue
+            key = str(variables.get("key") or "").strip()
+            label = str(playlist_name or "").strip()
+            if key and label:
+                entries.append({"key": key, "label": label})
+    except Exception:
+        entries = []
+
+    _PLAYLIST_DEFAULT_ENTRIES_CACHE = entries
+    return [dict(entry) for entry in entries]
+
+
 @app.context_processor
 def inject_version_info():
     """Ensure latest version info is injected dynamically in templates"""
     return {
         "version_info": app.config.get("VERSION_CHECK") or {},
         "overlay_fonts": list_overlay_fonts(),
+        "playlist_default_entries": _load_playlist_default_entries(),
         # Roadmap #1334 Step 5 (Phase B): expose the app-level config
         # dict to every template so 000-base.html can emit a single
         # ``window.QS_AppConfig = {...}`` line instead of 11 individual
@@ -1823,6 +1939,7 @@ def step(name):
             validation_errors += _validate_library_collection_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_metadata_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_overlay_files(incoming_libraries, selected_library_ids)
+            validation_errors += _validate_shared_playlist_files(incoming_libraries)
             validation_errors += _validate_library_auto_sort_hubs(incoming_libraries, selected_library_ids)
             for lib_id in selected_library_ids:
                 override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
@@ -1836,6 +1953,14 @@ def step(name):
                 )
                 if normalization_errors:
                     validation_errors += normalization_errors
+                else:
+                    normalized_library_payload, playlist_file_errors = _normalize_shared_playlist_file_entries_payload(
+                        normalized_library_payload,
+                        session.get("config_name") or request.form.get("config_name") or request.form.get("configSelector"),
+                        validate_local=False,
+                    )
+                    if playlist_file_errors:
+                        validation_errors += playlist_file_errors
         elif save_source_name == "settings" and not _is_valid_auto_sort_hubs_value(request.form.get("auto_sort_hubs")):
             validation_errors.append("auto_sort_hubs must be one of: sort_title, sort_title.desc, alpha, alpha.desc, configured, configured.desc, random")
         if validation_errors:
@@ -6010,6 +6135,51 @@ def validate_overlay_file():
         "overlay_file_type",
         "overlay_file_location",
     )
+
+
+@app.route("/validate_playlist_file", methods=["POST"])
+def validate_playlist_file():
+    data = request.get_json(silent=True) or {}
+    valid, message, details = validations._normalize_metadata_validation_result(validations.validate_playlist_file_payload(data))
+    if not valid:
+        payload = {"valid": False, "error": message}
+        if details.get("message") or isinstance(details.get("files"), list):
+            payload["error_details"] = {
+                "text": details.get("message") or message,
+                "files": details.get("files") if isinstance(details.get("files"), list) else [],
+            }
+        if isinstance(details.get("files"), list):
+            payload["files"] = details["files"]
+        return jsonify(payload), 400
+
+    payload = {"valid": True}
+    if details.get("message"):
+        payload["message"] = details["message"]
+    if "validated_files" in details:
+        payload["validated_files"] = details["validated_files"]
+    if isinstance(details.get("files"), list):
+        payload["files"] = details["files"]
+
+    config_name = _resolve_request_config_name(data if isinstance(data, dict) else {})
+    entry_type = str((data or {}).get("playlist_file_type") or "").strip().lower()
+    entry_location = str((data or {}).get("playlist_file_location") or "").strip()
+    if entry_type == "file" and entry_location and config_name:
+        normalized_entry, changed, normalize_error = _normalize_library_external_entry(
+            "playlist_files",
+            {"type": entry_type, "location": entry_location},
+            config_name,
+            "shared_playlist_files",
+            validate_local=False,
+            require_managed_context=True,
+        )
+        if normalize_error:
+            return jsonify({"valid": False, "error": normalize_error}), 400
+        payload["normalized_location"] = normalized_entry["location"]
+        payload["organized"] = bool(changed)
+        if changed:
+            payload["message"] = payload.get("message") or "Source validated and organized into Quickstart playlist_files."
+
+    return jsonify(payload)
 
 
 @app.route("/restart", methods=["POST"])
