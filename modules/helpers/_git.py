@@ -12,7 +12,7 @@ except ImportError:
 
 
 def detect_git_branch(repo_root=None, default="develop"):
-    from modules.helpers._legacy import get_app_root
+    from modules.helpers._pid import get_app_root
 
     root = Path(repo_root or get_app_root()).resolve()
 

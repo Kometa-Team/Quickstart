@@ -103,7 +103,7 @@ def resolve_imagemaid_update_branch(branch_override=None):
     if branch:
         return branch
     from modules.helpers._git import detect_git_branch
-    from modules.helpers._legacy import get_app_root
+    from modules.helpers._pid import get_app_root
 
     qs_branch = detect_git_branch(get_app_root())
     return "master" if qs_branch == "master" else "develop"
