@@ -18,6 +18,18 @@ from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers, persistence, database
+from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
+    _coerce_bool,
+    _coerce_string_list,
+    _normalize_template_value,
+    _parse_comma_string_list,
+    _parse_string_list,
+    _parse_string_list_mapping,
+    _parse_string_mapping,
+    _parse_template_mapping_dict,
+    _playlist_scalar_or_list,
+    _to_number,
+)
 
 _EMPTY_OUTPUT = object()
 
@@ -159,15 +171,6 @@ def clean_section_data(section_data, config_attribute):
     return clean_data
 
 
-def _normalize_template_value(value):
-    if isinstance(value, dict):
-        if "value" in value:
-            value = value.get("value")
-    if isinstance(value, str):
-        return value.strip()
-    return value
-
-
 def _rewrite_custom_font_paths(config_data):
     available_fonts = set(helpers.list_available_fonts(include_static=True, include_custom=True))
     if not available_fonts:
@@ -204,28 +207,6 @@ def _rewrite_custom_font_paths(config_data):
 
     walk(config_data)
     return config_data
-
-
-def _coerce_bool(value):
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        lowered = value.strip().lower()
-        if lowered in {"true", "false"}:
-            return lowered == "true"
-    return None
-
-
-def _to_number(value):
-    if isinstance(value, (int, float)):
-        return value
-    if isinstance(value, str):
-        cleaned = value.strip()
-        if re.fullmatch(r"-?\d+", cleaned):
-            return int(cleaned)
-        if re.fullmatch(r"-?\d*\.\d+", cleaned):
-            return float(cleaned)
-    return None
 
 
 def _format_playlist_files(libraries_list, template_variables=None):
@@ -368,129 +349,6 @@ def _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data, ord
             selected_libraries.append(library_name)
 
     return _ordered_selected_libraries(selected_libraries, ordered_library_names)
-
-
-def _coerce_string_list(values):
-    cleaned = []
-    seen = set()
-    for item in values:
-        if item is None:
-            continue
-        text = str(item).strip()
-        if text in {"[", "]"}:
-            continue
-        if not text or text in seen:
-            continue
-        cleaned.append(text)
-        seen.add(text)
-    return cleaned
-
-
-def _parse_string_list(value):
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return _coerce_string_list(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return []
-        if stripped.startswith("[") and stripped.endswith("]"):
-            try:
-                parsed = json.loads(stripped)
-            except Exception:
-                parsed = None
-            if isinstance(parsed, list):
-                return _coerce_string_list(parsed)
-            try:
-                parsed = ast.literal_eval(stripped)
-            except Exception:
-                parsed = None
-            if isinstance(parsed, list):
-                return _coerce_string_list(parsed)
-        return _coerce_string_list([stripped])
-    return _coerce_string_list([value])
-
-
-def _parse_comma_string_list(value):
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return _coerce_string_list(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return []
-        if stripped.startswith("[") and stripped.endswith("]"):
-            try:
-                parsed = json.loads(stripped)
-            except Exception:
-                parsed = None
-            if isinstance(parsed, list):
-                return _coerce_string_list(parsed)
-            try:
-                parsed = ast.literal_eval(stripped)
-            except Exception:
-                parsed = None
-            if isinstance(parsed, list):
-                return _coerce_string_list(parsed)
-        return _coerce_string_list(part.strip() for part in stripped.split(","))
-    return _coerce_string_list([value])
-
-
-def _parse_string_list_mapping(value):
-    if value is None:
-        return {}
-    parsed = value
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return {}
-        try:
-            parsed = json.loads(stripped)
-        except Exception:
-            try:
-                parsed = ast.literal_eval(stripped)
-            except Exception:
-                parsed = None
-    if not isinstance(parsed, dict):
-        return {}
-
-    normalized = {}
-    for raw_key, raw_values in parsed.items():
-        key_text = str(raw_key or "").strip()
-        if not key_text:
-            continue
-        values = _parse_comma_string_list(raw_values)
-        if values:
-            normalized[key_text] = values
-    return normalized
-
-
-def _parse_string_mapping(value):
-    parsed = _parse_template_mapping_dict(value)
-    if not parsed:
-        return {}
-
-    normalized = {}
-    for raw_key, raw_value in parsed.items():
-        key_text = str(raw_key or "").strip()
-        if not key_text:
-            continue
-        if isinstance(raw_value, (list, tuple, set)):
-            parts = _coerce_string_list(raw_value)
-            value_text = ", ".join(parts)
-        else:
-            value_text = str(raw_value or "").strip()
-        if value_text:
-            normalized[key_text] = value_text
-    return normalized
-
-
-def _playlist_scalar_or_list(values):
-    if not values:
-        return None
-    return values[0] if len(values) == 1 else values
 
 
 def _normalize_playlist_template_var_value(key, value):
@@ -687,27 +545,6 @@ def _normalize_collection_template_var_value(key, value):
         list_values = _parse_string_list(value)
         return list_values if list_values else None
     return value
-
-
-def _parse_template_mapping_dict(value):
-    if isinstance(value, dict):
-        return value
-    if value in (None, ""):
-        return {}
-
-    raw_text = str(value).strip()
-    if not raw_text:
-        return {}
-
-    try:
-        parsed = json.loads(raw_text)
-    except Exception:
-        try:
-            parsed = ast.literal_eval(raw_text)
-        except Exception:
-            return {}
-
-    return parsed if isinstance(parsed, dict) else {}
 
 
 def _normalize_dynamic_child_override_value(value_kind, raw_value):
