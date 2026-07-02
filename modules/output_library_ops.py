@@ -416,3 +416,147 @@ def build_template_variables(templates, library_type, library_key, has_collectio
         template_vars["collection_mode"] = "hide"
 
     return template_vars
+
+
+# The 17 operations that share the same order/custom/custom_string
+# tri-input shape.  Each one is emitted as a block-style YAML list of
+# strings / numbers.  mass_genre_update is deliberately excluded --
+# its custom-list is wrapped in a nested flow-style sequence and its
+# builder lives in build_mass_genre_update_operation.
+_GROUPED_OPERATIONS = (
+    "mass_content_rating_update",
+    "mass_original_title_update",
+    "mass_studio_update",
+    "mass_tagline_update",
+    "mass_originally_available_update",
+    "mass_added_at_update",
+    "mass_audience_rating_update",
+    "mass_critic_rating_update",
+    "mass_user_rating_update",
+    "mass_episode_audience_rating_update",
+    "mass_episode_critic_rating_update",
+    "mass_episode_user_rating_update",
+    "mass_background_update",
+    "mass_poster_update",
+    "radarr_remove_by_tag",
+    "sonarr_remove_by_tag",
+)
+
+# Rating operations whose ``custom_string`` fallback must be coerced
+# to float instead of string.  Frozen so callers can't mutate it.
+_RATING_OPERATIONS_FLOAT_COERCE = frozenset(
+    {
+        "mass_critic_rating_update",
+        "mass_user_rating_update",
+        "mass_audience_rating_update",
+        "mass_episode_critic_rating_update",
+        "mass_episode_user_rating_update",
+        "mass_episode_audience_rating_update",
+    }
+)
+
+
+def _collect_grouped_op_items(parsed_list, values):
+    """Append valid items from ``parsed_list`` to ``values`` in place.
+
+    Numeric items pass through untouched; strings get whitespace-
+    stripped and skipped if empty.  Anything else is ignored.
+    Shared by the ``_order`` and ``_custom`` list handlers so both
+    apply identical filtering.
+    """
+    for item in parsed_list:
+        if isinstance(item, (int, float)):
+            values.append(item)
+        elif isinstance(item, str) and item.strip():
+            values.append(item.strip())
+
+
+def _coerce_custom_string_fallback(raw_value, op):
+    """Convert the single-value ``custom_string`` fallback to a list item.
+
+    * Rating operations (see ``_RATING_OPERATIONS_FLOAT_COERCE``) get
+      float-coerced; a ``ValueError`` yields no item.
+    * Everything else keeps the string (whitespace-stripped).
+    * Numeric inputs pass through directly.
+
+    Returns a single-element list, or an empty list if the raw value
+    couldn't be turned into anything useful.
+    """
+    if isinstance(raw_value, (int, float)):
+        return [raw_value]
+    if not isinstance(raw_value, str) or not raw_value.strip():
+        return []
+    stripped = raw_value.strip()
+    if op in _RATING_OPERATIONS_FLOAT_COERCE:
+        try:
+            return [float(stripped)]
+        except ValueError:
+            return []
+    return [stripped]
+
+
+def _format_grouped_op_sequence(values):
+    """Wrap ``values`` in a block-style CommentedSeq for YAML emission.
+
+    Float values that happen to be whole numbers (e.g. ``5.0``) get
+    re-rendered as ``5.0`` explicitly (via ``f"{v:.1f}"``) so ruamel.yaml
+    doesn't drop the decimal point.  This preserves the visual hint
+    that the field is a rating, not a count.
+    """
+    seq = CommentedSeq(values)
+    seq.fa.set_block_style()
+    for i, v in enumerate(seq):
+        if isinstance(v, float) and v.is_integer():
+            seq[i] = float(f"{v:.1f}")
+    return seq
+
+
+def build_grouped_mass_update_operations(attr_group, library_type, lib_id):
+    """Return a dict of the 17 grouped mass_update operations.
+
+    For each operation name in ``_GROUPED_OPERATIONS``, reads three
+    attribute inputs:
+
+    1. ``<op>_order``          -- JSON list of sortable source strings
+    2. ``<op>_custom``         -- JSON list of custom values
+    3. ``<op>_custom_string``  -- single fallback value used when
+                                  no ``_custom`` list was provided
+
+    Combines the order + (custom OR custom_string) into one list.
+    Rating operations coerce the custom_string fallback to float;
+    everything else preserves the string.  Non-empty results are
+    wrapped in a block-style ``CommentedSeq``.
+
+    Returns a dict that the caller merges into ``operations`` via
+    ``operations.update(result)``.  Empty when none of the 17 have
+    any input.
+    """
+    result = {}
+    for op in _GROUPED_OPERATIONS:
+        values = []
+
+        # 1. Ordered source list (sortable)
+        order_items = _parse_json_list(
+            attr_group.get(_attr_key(library_type, lib_id, f"{op}_order")),
+            f"{op}_order",
+        )
+        if order_items is not None:
+            _collect_grouped_op_items(order_items, values)
+
+        # 2. Custom list (JSON array from UI) -- takes precedence over
+        #    the single-value custom_string fallback.
+        custom_list_key = _attr_key(library_type, lib_id, f"{op}_custom")
+        custom_list_raw = attr_group.get(custom_list_key)
+        if custom_list_raw:
+            custom_items = _parse_json_list(custom_list_raw, f"{op}_custom")
+            if custom_items is not None:
+                _collect_grouped_op_items(custom_items, values)
+        elif _attr_key(library_type, lib_id, f"{op}_custom_string") in attr_group:
+            # 3. Fallback to single custom_string when _custom is absent.
+            raw_value = attr_group.get(_attr_key(library_type, lib_id, f"{op}_custom_string"))
+            values.extend(_coerce_custom_string_fallback(raw_value, op))
+
+        if values:
+            result[op] = _format_grouped_op_sequence(values)
+
+    return result

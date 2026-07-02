@@ -48,6 +48,7 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
 )
 from modules.output_library_ops import (
     build_delete_collections_operation,
+    build_grouped_mass_update_operations,
     build_mapper_operations,
     build_mass_background_update_operation,
     build_mass_genre_update_operation,
@@ -1154,90 +1155,7 @@ def build_libraries_section(
         entry["template_variables"] = build_template_variables(templates, library_type, library_key, has_collectionless)
 
         # Grouped mass update operations (excluding mass_genre_update, handled earlier)
-        grouped_operations = [
-            "mass_content_rating_update",
-            "mass_original_title_update",
-            "mass_studio_update",
-            "mass_tagline_update",
-            "mass_originally_available_update",
-            "mass_added_at_update",
-            "mass_audience_rating_update",
-            "mass_critic_rating_update",
-            "mass_user_rating_update",
-            "mass_episode_audience_rating_update",
-            "mass_episode_critic_rating_update",
-            "mass_episode_user_rating_update",
-            "mass_background_update",
-            "mass_poster_update",
-            "radarr_remove_by_tag",
-            "sonarr_remove_by_tag",
-        ]
-
-        for op in grouped_operations:
-            custom_list_key = f"{library_type}-library_{lib_id}-attribute_{op}_custom"
-            custom_string_key = f"{library_type}-library_{lib_id}-attribute_{op}_custom_string"
-            order_key = f"{library_type}-library_{lib_id}-attribute_{op}_order"
-
-            op_values = []
-
-            # 1. Ordered source list (sortable)
-            order_value = attr_group.get(order_key)
-            if order_value:
-                try:
-                    parsed = json.loads(order_value)
-                    if isinstance(parsed, list):
-                        for item in parsed:
-                            if isinstance(item, (int, float)):
-                                op_values.append(item)
-                            elif isinstance(item, str) and item.strip():
-                                # Preserve valid date strings (e.g. "2023-01-01")
-                                op_values.append(item.strip())
-                except Exception as e:
-                    helpers.ts_log(f"Skipping invalid JSON in {op}_order: {order_value} — {e}", level="ERROR")
-
-            # 2. Custom list (JSON array from UI)
-            custom_list_value = attr_group.get(custom_list_key)
-            if custom_list_value:
-                try:
-                    parsed_custom = json.loads(custom_list_value)
-                    if isinstance(parsed_custom, list):
-                        for item in parsed_custom:
-                            if isinstance(item, (int, float)):
-                                op_values.append(item)
-                            elif isinstance(item, str) and item.strip():
-                                op_values.append(item.strip())
-                except Exception as e:
-                    helpers.ts_log(f"Skipping invalid JSON in {op}_custom: {custom_list_value} — {e}", level="ERROR")
-
-            # 3. Fallback to single custom string (if defined)
-            elif custom_string_key in attr_group:
-                raw_value = attr_group.get(custom_string_key)
-                if isinstance(raw_value, str) and raw_value.strip():
-                    if op in [
-                        "mass_critic_rating_update",
-                        "mass_user_rating_update",
-                        "mass_audience_rating_update",
-                        "mass_episode_critic_rating_update",
-                        "mass_episode_user_rating_update",
-                        "mass_episode_audience_rating_update",
-                    ]:
-                        try:
-                            op_values.append(float(raw_value.strip()))
-                        except ValueError:
-                            pass  # Invalid float, skip
-                    else:
-                        op_values.append(raw_value.strip())
-                elif isinstance(raw_value, (int, float)):
-                    op_values.append(raw_value)
-
-            # 4. Output formatting
-            if op_values:
-                seq = CommentedSeq(op_values)
-                seq.fa.set_block_style()
-                for i in range(len(seq)):
-                    if isinstance(seq[i], float) and seq[i].is_integer():
-                        seq[i] = float(f"{seq[i]:.1f}")
-                operations[op] = seq
+        operations.update(build_grouped_mass_update_operations(attr_group, library_type, lib_id))
 
         # genre_mapper and content_rating_mapper
         operations.update(build_mapper_operations(attr_group, library_type, lib_id))
