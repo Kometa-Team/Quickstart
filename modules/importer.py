@@ -64,6 +64,53 @@ LIBRARY_SONARR_IMPORT_FIELDS = {
     "sonarr_path": "string",
     "plex_path": "string",
 }
+PLAYLIST_SHARED_IMPORT_FIELDS = {
+    "style": "string",
+    "sync_to_users": "string_list",
+    "exclude_users": "string_list",
+    "minimum_items": "integer",
+    "hub_priority": "integer",
+    "url_poster": "string",
+    "file_poster": "string",
+    "schedule": "string",
+    "delete_not_scheduled": "boolean",
+    "limit": "integer",
+    "delete_playlist": "boolean",
+    "ignore_ids": "string_list",
+    "ignore_imdb_ids": "string_list",
+    "item_radarr_tag": "string_list",
+    "item_sonarr_tag": "string_list",
+    "radarr_add_missing": "boolean",
+    "radarr_folder": "string",
+    "radarr_tag": "string_list",
+    "sonarr_add_missing": "boolean",
+    "sonarr_folder": "string",
+    "sonarr_tag": "string_list",
+}
+PLAYLIST_KEYED_IMPORT_FIELDS = {
+    "use_": "boolean",
+    "name_": "string",
+    "summary_": "string",
+    "schedule_": "string",
+    "url_poster_": "string",
+    "file_poster_": "string",
+    "limit_": "integer",
+    "delete_playlist_": "boolean",
+    "exclude_users_": "string_list",
+    "exclude_user_": "string_list",
+    "imdb_list_": "string_list",
+    "item_radarr_tag_": "string_list",
+    "item_sonarr_tag_": "string_list",
+    "mdblist_list_": "string_list",
+    "radarr_add_missing_": "boolean",
+    "radarr_folder_": "string",
+    "radarr_tag_": "string_list",
+    "sonarr_add_missing_": "boolean",
+    "sonarr_folder_": "string",
+    "sonarr_tag_": "string_list",
+    "sync_to_users_": "string_list",
+    "trakt_list_": "string_list",
+}
 
 
 def sanitize_config_name(raw_name: str | None) -> str:
@@ -383,6 +430,54 @@ def _collect_dynamic_child_field_specs(template_vars: Any) -> list[dict[str, str
             }
         )
     return specs
+
+
+def _coerce_import_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "yes", "1"}:
+            return True
+        if lowered in {"false", "no", "0"}:
+            return False
+    return None
+
+
+def _coerce_import_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and re.fullmatch(r"-?\d+", value.strip()):
+        return int(value.strip())
+    return None
+
+
+def _coerce_import_string_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text:
+        return []
+    return [item.strip() for item in text.split(",") if item.strip()]
+
+
+def _serialize_playlist_import_value(value_kind: str, value: Any) -> Any:
+    kind = str(value_kind or "string").strip().lower()
+    if kind == "boolean":
+        bool_value = _coerce_import_bool(value)
+        return None if bool_value is None else ("true" if bool_value else "false")
+    if kind == "integer":
+        int_value = _coerce_import_int(value)
+        return None if int_value is None else str(int_value)
+    if kind == "string_list":
+        values = _coerce_import_string_list(value)
+        return values if values else None
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _collect_overlay_source_override_keys(overlay_meta: Any) -> set[str]:
@@ -1239,6 +1334,8 @@ def prepare_import_payload(
         return True, imported_any
 
     playlist_libraries: set[str] = set()
+    playlist_template_field_values: dict[str, Any] = {}
+    playlist_keyed_template_field_values: dict[str, dict[str, Any]] = {}
     playlist_payload = config_data.get("playlist_files")
     if playlist_payload is not None:
         if isinstance(playlist_payload, list):
@@ -1270,6 +1367,51 @@ def prepare_import_payload(
                 report.add("imported", f"playlist_files[{idx}].template_variables.libraries")
                 for lib_idx in range(len(entry_libs)):
                     report.add("imported", f"playlist_files[{idx}].template_variables.libraries[{lib_idx}]")
+                for key, value in tv.items():
+                    if key == "libraries":
+                        continue
+
+                    if key == "exclude_user":
+                        key = "exclude_users"
+                    if key == "exclude_user_":
+                        key = "exclude_users_"
+
+                    if key in PLAYLIST_SHARED_IMPORT_FIELDS:
+                        value_kind = PLAYLIST_SHARED_IMPORT_FIELDS[key]
+                        if value_kind == "boolean":
+                            normalized_value = _coerce_import_bool(value)
+                        elif value_kind == "integer":
+                            normalized_value = _coerce_import_int(value)
+                        elif value_kind == "string_list":
+                            values = _coerce_import_string_list(value)
+                            normalized_value = values if values else None
+                        else:
+                            text = str(value).strip() if value is not None else ""
+                            normalized_value = text or None
+
+                        if normalized_value is None:
+                            report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Unsupported playlist template variable value.")
+                            continue
+
+                        playlist_template_field_values[key] = normalized_value
+                        report.add("imported", f"playlist_files[{idx}].template_variables.{key}")
+                        continue
+
+                    matched_prefix = next((prefix for prefix in PLAYLIST_KEYED_IMPORT_FIELDS if key.startswith(prefix)), None)
+                    if matched_prefix:
+                        suffix = str(key[len(matched_prefix) :] or "").strip()
+                        if not suffix:
+                            report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Missing playlist key suffix.")
+                            continue
+                        serialized_value = _serialize_playlist_import_value(PLAYLIST_KEYED_IMPORT_FIELDS[matched_prefix], value)
+                        if serialized_value is None:
+                            report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Unsupported playlist keyed template variable value.")
+                            continue
+                        playlist_keyed_template_field_values.setdefault(matched_prefix, {})[suffix] = serialized_value
+                        report.add("imported", f"playlist_files[{idx}].template_variables.{key}")
+                        continue
+
+                    report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Playlist template variable not available in Quickstart.")
             if playlist_libraries:
                 report.add("imported", "playlist_files")
         else:
@@ -1837,6 +1979,17 @@ def prepare_import_payload(
                     f"libraries.{lib_name}.{key}",
                     "Field not supported for import.",
                 )
+
+        for key, value in playlist_template_field_values.items():
+            hidden_name = f"playlist-template_variables[{key}]"
+            if key in {"sync_to_users", "exclude_users", "ignore_ids", "ignore_imdb_ids", "item_radarr_tag", "item_sonarr_tag", "radarr_tag", "sonarr_tag"}:
+                libraries_data[hidden_name] = json.dumps(value, ensure_ascii=True)
+            else:
+                libraries_data[hidden_name] = value
+        for prefix, mapping in playlist_keyed_template_field_values.items():
+            canonical_prefix = "exclude_users_" if prefix == "exclude_user_" else prefix
+            if mapping:
+                libraries_data[f"playlist-template_variables[{canonical_prefix}]"] = json.dumps(mapping, ensure_ascii=True)
 
         if libraries_data:
             payload["libraries"] = {"libraries": libraries_data}

@@ -2298,6 +2298,32 @@ def test_runtime_config_schema_accepts_franchise_build_collection_and_title_over
     assert errors == []
 
 
+def test_runtime_config_schema_accepts_playlist_exclude_users_keyed_override(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "playlist_files": [
+            {
+                "default": "playlist",
+                "template_variables": {
+                    "libraries": ["Movies"],
+                    "exclude_users_mcu": ["guest"],
+                },
+            }
+        ],
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
+
+
 def test_build_libraries_section_emits_collection_hub_priority(app):
     from modules import output
 

@@ -231,3 +231,38 @@ def test_playlist_files_follow_library_output_order(monkeypatch, qs_module):
 
     assert library_order == ["A Movies", "B Movies", "Z Shows"]
     assert playlist_order == library_order
+
+
+def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs_module):
+    payload = {
+        "validated": True,
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-playlist": "true",
+            "mov-library_movies-collection_collectionless": True,
+            "sho-library_shows-library": "Shows",
+            "sho-library_shows-playlist": "true",
+            "sho-library_shows-collection_collectionless": True,
+            "playlist-template_variables[style]": "rainier",
+            "playlist-template_variables[sync_to_users]": '["alice", "bob"]',
+            "playlist-template_variables[radarr_add_missing]": True,
+            "playlist-template_variables[sonarr_add_missing]": True,
+            "playlist-template_variables[name_]": '{"mcu": "Marvel Timeline"}',
+            "playlist-template_variables[delete_playlist_]": '{"mcu": "true"}',
+            "playlist-template_variables[trakt_list_]": '{"mcu": ["https://trakt.tv/users/example/lists/mcu"]}',
+            "playlist-template_variables[exclude_users_]": '{"mcu": ["guest"]}',
+        },
+    }
+
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+    template_vars = parsed["playlist_files"][0]["template_variables"]
+
+    assert template_vars["libraries"] == ["Movies", "Shows"]
+    assert template_vars["style"] == "rainier"
+    assert template_vars["sync_to_users"] == ["alice", "bob"]
+    assert template_vars["radarr_add_missing"] is True
+    assert template_vars["sonarr_add_missing"] is True
+    assert template_vars["name_mcu"] == "Marvel Timeline"
+    assert template_vars["delete_playlist_mcu"] is True
+    assert template_vars["trakt_list_mcu"] == "https://trakt.tv/users/example/lists/mcu"
+    assert template_vars["exclude_users_mcu"] == "guest"

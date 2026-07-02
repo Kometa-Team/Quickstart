@@ -2314,6 +2314,9 @@ QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
     ("library", "library_type"): "internal_importer_or_analyzer_metadata",
     ("library", "sort_by"): "library_template_variable_not_documented_for_quickstart",
     ("library", "exclude"): "library_template_variable_not_documented_for_quickstart",
+    ("library", "use_separators"): "invalid_separator_toggle_typo_not_recommended",
+    ("library", "use_seperator"): "invalid_separator_toggle_typo_not_recommended",
+    ("library", "use_sepeartor"): "invalid_separator_toggle_typo_not_recommended",
 }
 
 
@@ -2332,6 +2335,9 @@ MERGED_FIX_QUEUE_EXCLUSIONS: dict[tuple[str, str], str] = {
     ("library", "library_type"): "internal_importer_or_analyzer_metadata",
     ("library", "sort_by"): "library_template_variable_not_documented_for_quickstart",
     ("library", "exclude"): "library_template_variable_not_documented_for_quickstart",
+    ("library", "use_separators"): "invalid_separator_toggle_typo_not_recommended",
+    ("library", "use_seperator"): "invalid_separator_toggle_typo_not_recommended",
+    ("library", "use_sepeartor"): "invalid_separator_toggle_typo_not_recommended",
 }
 
 

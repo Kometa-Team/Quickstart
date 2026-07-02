@@ -57,6 +57,53 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_item_sonarr_tag_overrides": ("item_sonarr_tag_", "string_list"),
     "child_sonarr_monitor_overrides": ("sonarr_monitor_", "select"),
 }
+PLAYLIST_SHARED_TEMPLATE_VAR_SPECS = {
+    "style": "string",
+    "sync_to_users": "string_list",
+    "exclude_users": "string_list",
+    "minimum_items": "integer",
+    "hub_priority": "integer",
+    "url_poster": "string",
+    "file_poster": "string",
+    "schedule": "string",
+    "delete_not_scheduled": "boolean",
+    "limit": "integer",
+    "delete_playlist": "boolean",
+    "ignore_ids": "ignore_ids",
+    "ignore_imdb_ids": "string_list",
+    "item_radarr_tag": "string_list",
+    "item_sonarr_tag": "string_list",
+    "radarr_add_missing": "boolean",
+    "radarr_folder": "string",
+    "radarr_tag": "string_list",
+    "sonarr_add_missing": "boolean",
+    "sonarr_folder": "string",
+    "sonarr_tag": "string_list",
+}
+PLAYLIST_KEYED_TEMPLATE_VAR_SPECS = {
+    "use_": "boolean",
+    "name_": "string",
+    "summary_": "string",
+    "schedule_": "string",
+    "url_poster_": "string",
+    "file_poster_": "string",
+    "limit_": "integer",
+    "delete_playlist_": "boolean",
+    "exclude_users_": "string_list",
+    "exclude_user_": "string_list",
+    "imdb_list_": "string_list",
+    "item_radarr_tag_": "string_list",
+    "item_sonarr_tag_": "string_list",
+    "mdblist_list_": "string_list",
+    "radarr_add_missing_": "boolean",
+    "radarr_folder_": "string",
+    "radarr_tag_": "string_list",
+    "sonarr_add_missing_": "boolean",
+    "sonarr_folder_": "string",
+    "sonarr_tag_": "string_list",
+    "sync_to_users_": "string_list",
+    "trakt_list_": "string_list",
+}
 LIBRARY_SONARR_FIELDS = {
     "url": "string",
     "token": "string",
@@ -189,12 +236,16 @@ def _to_number(value):
     return None
 
 
-def _format_playlist_files(libraries_list):
+def _format_playlist_files(libraries_list, template_variables=None):
+    normalized_template_variables = {}
+    if isinstance(template_variables, dict):
+        normalized_template_variables.update(template_variables)
+    normalized_template_variables["libraries"] = libraries_list
     return {
         "playlist_files": [
             {
                 "default": "playlist",
-                "template_variables": {"libraries": libraries_list},
+                "template_variables": normalized_template_variables,
             }
         ]
     }
@@ -391,6 +442,102 @@ def _parse_string_mapping(value):
         if value_text:
             normalized[key_text] = value_text
     return normalized
+
+
+def _playlist_scalar_or_list(values):
+    if not values:
+        return None
+    return values[0] if len(values) == 1 else values
+
+
+def _normalize_playlist_template_var_value(key, value):
+    if key == "ignore_ids":
+        list_values = _parse_comma_string_list(value)
+        if not list_values:
+            return None
+        if len(list_values) == 1:
+            number = _to_number(list_values[0])
+            if isinstance(number, (int, float)) and float(number).is_integer():
+                return int(number)
+            return list_values[0]
+        return ", ".join(list_values)
+    if key in {"sync_to_users", "exclude_users", "exclude_user", "ignore_imdb_ids", "item_radarr_tag", "item_sonarr_tag", "radarr_tag", "sonarr_tag"}:
+        return _playlist_scalar_or_list(_parse_comma_string_list(value))
+    if key in {"minimum_items", "hub_priority", "limit"}:
+        number = _to_number(value)
+        if isinstance(number, (int, float)) and float(number).is_integer():
+            return int(number)
+        return None
+    if key in {"delete_not_scheduled", "delete_playlist", "radarr_add_missing", "sonarr_add_missing"}:
+        return _coerce_bool(value)
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalize_playlist_keyed_template_var_value(value_kind, raw_value):
+    if raw_value in (None, ""):
+        return None
+    kind = str(value_kind or "string").strip().lower()
+    if kind == "string_list":
+        return _playlist_scalar_or_list(_parse_comma_string_list(raw_value))
+    if kind == "boolean":
+        return _coerce_bool(raw_value)
+    if kind == "integer":
+        number = _to_number(raw_value)
+        if isinstance(number, (int, float)) and float(number).is_integer():
+            return int(number)
+        return None
+    text = str(raw_value).strip()
+    return text or None
+
+
+def _collect_playlist_template_variables_from_libraries_data(nested_libraries_data):
+    if not isinstance(nested_libraries_data, dict):
+        return {}
+
+    template_vars = {}
+
+    for raw_key, raw_value in nested_libraries_data.items():
+        if not isinstance(raw_key, str):
+            continue
+        match = re.fullmatch(r"playlist-template_variables\[(.+)\]", raw_key)
+        if not match:
+            continue
+
+        field_key = str(match.group(1) or "").strip()
+        if not field_key or field_key == "libraries":
+            continue
+
+        if field_key == "exclude_user":
+            field_key = "exclude_users"
+        if field_key == "exclude_user_":
+            field_key = "exclude_users_"
+
+        if field_key in PLAYLIST_KEYED_TEMPLATE_VAR_SPECS:
+            mapping = _parse_template_mapping_dict(raw_value)
+            if not mapping:
+                continue
+            value_kind = PLAYLIST_KEYED_TEMPLATE_VAR_SPECS[field_key]
+            for raw_suffix, mapping_value in mapping.items():
+                suffix = str(raw_suffix or "").strip()
+                if not suffix:
+                    continue
+                normalized_value = _normalize_playlist_keyed_template_var_value(value_kind, mapping_value)
+                if normalized_value is None:
+                    continue
+                template_vars[f"{field_key}{suffix}"] = normalized_value
+            continue
+
+        if field_key not in PLAYLIST_SHARED_TEMPLATE_VAR_SPECS:
+            continue
+
+        normalized_value = _normalize_playlist_template_var_value(field_key, raw_value)
+        if normalized_value is not None:
+            template_vars[field_key] = normalized_value
+
+    return template_vars
 
 
 def _parse_tmdb_person_window(value):
@@ -2953,12 +3100,17 @@ def build_config(header_style="standard", config_name=None):
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Extracted libraries value: {libraries_value}", level="DEBUG")
 
-        libraries_list = [lib.strip() for lib in libraries_value.split(",") if lib.strip()]
+        if isinstance(libraries_value, list):
+            libraries_list = [str(lib).strip() for lib in libraries_value if str(lib).strip()]
+        else:
+            libraries_list = [lib.strip() for lib in str(libraries_value or "").split(",") if lib.strip()]
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Processed libraries list: {libraries_value}", level="DEBUG")
 
+        playlist_template_variables = {key: value for key, value in playlist_data.items() if key != "libraries" and value not in (None, "", [], {})}
+
         # Format playlist_files data
-        formatted_playlist_files = _format_playlist_files(libraries_list)
+        formatted_playlist_files = _format_playlist_files(libraries_list, playlist_template_variables)
         if app.config["QS_DEBUG"]:
             helpers.ts_log("Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
 
@@ -3163,9 +3315,10 @@ def build_config(header_style="standard", config_name=None):
             nested_libraries_data,
             ordered_library_names=ordered_library_names,
         )
+        playlist_template_variables = _collect_playlist_template_variables_from_libraries_data(nested_libraries_data)
         if has_playlist_toggle:
             if playlist_libraries:
-                config_data["playlist_files"] = _format_playlist_files(playlist_libraries)
+                config_data["playlist_files"] = _format_playlist_files(playlist_libraries, playlist_template_variables)
             else:
                 config_data.pop("playlist_files", None)
         else:
@@ -3174,7 +3327,7 @@ def build_config(header_style="standard", config_name=None):
                 ordered_library_names=ordered_library_names,
             )
             if legacy_playlist_libraries:
-                config_data["playlist_files"] = _format_playlist_files(legacy_playlist_libraries)
+                config_data["playlist_files"] = _format_playlist_files(legacy_playlist_libraries, playlist_template_variables)
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 
