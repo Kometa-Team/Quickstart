@@ -42,6 +42,8 @@ import ast
 import json
 import re
 
+from modules import helpers
+from modules.output_file_entries import _parse_collection_file_block_entries
 from modules.output_values import (
     _coerce_bool,
     _parse_comma_string_list,
@@ -314,3 +316,202 @@ def _normalize_legacy_collection_template_vars(config_data):
                 continue
             template_vars[new_key] = template_vars.pop(old_key)
     return config_data
+
+
+# ---------------------------------------------------------------------------
+# Collection-file assembly.
+#
+# build_collection_files() is invoked once per library inside
+# ``modules.output.build_libraries_section.add_entry`` to translate the
+# per-library ``collections`` selection map into the ``collection_files``
+# YAML block.
+# ---------------------------------------------------------------------------
+
+# Legacy Region key spelling migration.  Older Quickstart runs used
+# "South Eastern Asia" (space); Kometa now expects the hyphenated form.
+# When both keys exist, the new-key value wins.
+_LEGACY_REGION_KEYS = {
+    "use_South Eastern Asia": "use_South-Eastern Asia",
+    "radarr_add_missing_South Eastern Asia": "radarr_add_missing_South-Eastern Asia",
+    "sonarr_add_missing_South Eastern Asia": "sonarr_add_missing_South-Eastern Asia",
+}
+
+# Template-var keys that hold delimited lists.  Empty parses drop the key.
+_LIST_KEYS = ("include", "exclude", "exclude_prefix")
+
+
+def _coerce_bool_like_string(value):
+    """Coerce case-insensitive "true"/"false" strings to bool, pass others through."""
+    if isinstance(value, (bool, str)):
+        lowered = str(value).lower()
+        if lowered == "true":
+            return True
+        if lowered == "false":
+            return False
+    return value
+
+
+def _migrate_legacy_region_keys(template_vars):
+    """Rewrite legacy ``South Eastern Asia`` region keys to the hyphenated form.
+
+    Mutates *template_vars* in place.  When both the legacy and current keys
+    are present, the current-key value wins (legacy is silently dropped).
+    """
+    for old_key, new_key in _LEGACY_REGION_KEYS.items():
+        if old_key not in template_vars:
+            continue
+        if new_key not in template_vars:
+            template_vars[new_key] = template_vars[old_key]
+        template_vars.pop(old_key, None)
+
+
+def _normalize_list_template_vars(template_vars):
+    """Normalize ``include`` / ``exclude`` / ``exclude_prefix`` list keys.
+
+    Delegates to ``_parse_string_list`` for the value; drops empty results.
+    Mutates *template_vars* in place.
+    """
+    for list_key in _LIST_KEYS:
+        if list_key not in template_vars:
+            continue
+        list_values = _parse_string_list(template_vars.get(list_key))
+        if list_values:
+            template_vars[list_key] = list_values
+        else:
+            template_vars.pop(list_key, None)
+
+
+def _apply_template_var_normalizers(template_vars, raw_id):
+    """Full normalization pass for a collection's template_variables dict.
+
+    Franchise collections receive an extra dynamic-child-override expansion
+    pass; every collection receives the legacy region key migration, list
+    normalization, and per-value normalization via
+    ``_normalize_collection_template_var_value``.
+    """
+    if raw_id == "franchise":
+        _expand_franchise_dynamic_child_overrides(template_vars)
+    _migrate_legacy_region_keys(template_vars)
+    _normalize_list_template_vars(template_vars)
+    for template_key in list(template_vars.keys()):
+        normalized_value = _normalize_collection_template_var_value(template_key, template_vars.get(template_key))
+        if normalized_value is None:
+            template_vars.pop(template_key, None)
+        else:
+            template_vars[template_key] = normalized_value
+
+
+def _is_collectionless_entry(item):
+    """True for the special 'collectionless' pseudo-collection.
+
+    Recognizes 'collectionless', 'collection_collectionless', and any
+    default ending in 'collectionless' (case-insensitive after strip).
+    """
+    default_name = str(item.get("default", "")).strip().lower()
+    return default_name in {"collectionless", "collection_collectionless"} or default_name.endswith("collectionless")
+
+
+def _build_child_prefix(library_key, raw_id):
+    """Compute the template-child-key prefix for a collection.
+
+    Template collection children do NOT contain '-library-' in their key,
+    so we strip that segment when present.
+    """
+    child_prefix = f"{library_key}-template_collection_{raw_id}_"
+    return child_prefix.replace(
+        f"-library-template_collection_{raw_id}_",
+        f"-template_collection_{raw_id}_",
+    )
+
+
+def build_collection_files(
+    library_key,
+    library_type,
+    collections,
+    templates,
+    movie_collection_files,
+    show_collection_files,
+    *,
+    debug=False,
+):
+    """Assemble the ``collection_files`` list for a single library.
+
+    Returns ``(collection_files, has_collectionless)`` where:
+
+    * ``collection_files`` is a list of dicts each shaped like
+      ``{"default": <id>, "template_variables": {...}}`` (the
+      ``template_variables`` key is omitted when empty).
+    * ``has_collectionless`` is True iff at least one selected
+      collection is the special 'collectionless' pseudo-collection.
+
+    Selected collections are followed by any raw-block file entries
+    parsed out of ``<library_prefix>-collection_files`` from the raw
+    collection group; user-authored ordering wins for those.
+
+    The returned list is stably sorted so 'collectionless' sinks to
+    the end (Kometa expects it last within a library).
+    """
+    collection_key = helpers.extract_library_name(library_key)
+    if debug:
+        helpers.ts_log(
+            f"collections keys for {collection_key}: " f"{list(collections.get(collection_key, {}).keys())}",
+            level="DEBUG",
+        )
+        helpers.ts_log(
+            f"templates keys for {collection_key}: " f"{list(templates.get(collection_key, {}).keys())}",
+            level="DEBUG",
+        )
+
+    has_collectionless = False
+    if not collection_key:
+        return [], has_collectionless
+
+    collection_files = []
+    for key, selected in collections.get(collection_key, {}).items():
+        if "template_collection_" in key:
+            if debug:
+                helpers.ts_log(
+                    f"Skipping invalid collection key (template child): {key}",
+                    level="DEBUG",
+                )
+            continue
+        if selected is not True:
+            continue
+
+        raw_id = key.split(f"{library_type}-library_{collection_key}-collection_")[-1]
+        if isinstance(raw_id, str) and raw_id.strip().lower().endswith("collectionless"):
+            has_collectionless = True
+        file_entry = {"default": raw_id}
+
+        child_prefix = _build_child_prefix(library_key, raw_id)
+        all_children = {k[len(child_prefix) :]: v for k, v in collections[collection_key].items() if k.startswith(child_prefix)}
+
+        if debug:
+            prefix = f"{library_key}_collection_{raw_id}_"
+            helpers.ts_log(f"Collection: {raw_id}", level="DEBUG")
+            helpers.ts_log(f"Prefix:       {prefix}", level="DEBUG")
+            helpers.ts_log(f"Child Prefix: {child_prefix}", level="DEBUG")
+            helpers.ts_log(
+                f"Found {len(all_children)} child template_variables: {all_children}",
+                level="DEBUG",
+            )
+
+        if all_children:
+            template_vars = {k: _coerce_bool_like_string(v) for k, v in all_children.items()}
+            _apply_template_var_normalizers(template_vars, raw_id)
+            if template_vars:
+                file_entry["template_variables"] = template_vars
+
+        collection_files.append(file_entry)
+
+    raw_collection_group = movie_collection_files.get(collection_key, {}) if library_type == "mov" else show_collection_files.get(collection_key, {})
+    library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
+    raw_collection_entries = _parse_collection_file_block_entries(raw_collection_group.get(f"{library_prefix}-collection_files"))
+
+    if collection_files:
+        collection_files.sort(key=_is_collectionless_entry)
+
+    if raw_collection_entries:
+        collection_files.extend(raw_collection_entries)
+
+    return collection_files, has_collectionless
