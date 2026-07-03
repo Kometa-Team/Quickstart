@@ -334,3 +334,57 @@ def _collect_playlist_file_entries_from_libraries_data(nested_libraries_data):
     if not isinstance(nested_libraries_data, dict):
         return []
     return _parse_playlist_file_entries_value(nested_libraries_data.get("playlist_files_entries"))
+
+
+def apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section):
+    """Compute ``config_data['playlist_files']`` from library-level toggles.
+
+    Runs AFTER :func:`build_libraries_section` has produced the ordered
+    library set.  Two branches:
+
+    * **New shape** (``has_playlist_toggle`` is True) -- the user
+      opted into playlists via per-library ``playlist_files`` toggles.
+      Use the toggle-derived library list.  When neither libraries
+      nor raw file-block entries exist, the playlist_files section
+      is stripped entirely (any stale value from the earlier
+      ``normalize_playlist_files_section`` pass is discarded).
+
+    * **Legacy shape** (no toggle present) -- fall back to the older
+      ``_legacy_playlist_libraries_for_selected_libraries`` derivation.
+      When neither libraries nor raw entries exist, leaves any earlier
+      normalize result in place (legacy configs may still populate
+      the section without a library-level toggle).
+
+    Mutates *config_data* in place.  No-op when
+    *nested_libraries_data* isn't a dict.
+    """
+    ordered_library_names = _library_names_in_output_order(libraries_section)
+    has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(
+        nested_libraries_data,
+        ordered_library_names=ordered_library_names,
+    )
+    playlist_template_variables = _collect_playlist_template_variables_from_libraries_data(nested_libraries_data)
+    playlist_file_entries = _collect_playlist_file_entries_from_libraries_data(nested_libraries_data)
+
+    if has_playlist_toggle:
+        if playlist_libraries or playlist_file_entries:
+            config_data["playlist_files"] = _format_playlist_file_entries(
+                libraries_list=playlist_libraries,
+                template_variables=playlist_template_variables,
+                extra_entries=playlist_file_entries,
+            )
+        else:
+            config_data.pop("playlist_files", None)
+        return
+
+    # Legacy: no library-toggle present.
+    legacy_libraries = _legacy_playlist_libraries_for_selected_libraries(
+        nested_libraries_data,
+        ordered_library_names=ordered_library_names,
+    )
+    if legacy_libraries or playlist_file_entries:
+        config_data["playlist_files"] = _format_playlist_file_entries(
+            libraries_list=legacy_libraries,
+            template_variables=playlist_template_variables,
+            extra_entries=playlist_file_entries,
+        )

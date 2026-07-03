@@ -76,6 +76,7 @@ from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<n
     _ordered_selected_libraries,
     _parse_playlist_file_entries_value,
     _playlist_libraries_from_library_toggles,
+    apply_playlist_libraries_toggle,
 )
 from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.<name> keeps working
     _rewrite_custom_font_paths,
@@ -369,33 +370,7 @@ def build_config(header_style="standard", config_name=None):
             show_top_level,
         )
         config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
-        ordered_library_names = _library_names_in_output_order(libraries_section)
-        has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(
-            nested_libraries_data,
-            ordered_library_names=ordered_library_names,
-        )
-        playlist_template_variables = _collect_playlist_template_variables_from_libraries_data(nested_libraries_data)
-        playlist_file_entries = _collect_playlist_file_entries_from_libraries_data(nested_libraries_data)
-        if has_playlist_toggle:
-            if playlist_libraries or playlist_file_entries:
-                config_data["playlist_files"] = _format_playlist_file_entries(
-                    libraries_list=playlist_libraries,
-                    template_variables=playlist_template_variables,
-                    extra_entries=playlist_file_entries,
-                )
-            else:
-                config_data.pop("playlist_files", None)
-        else:
-            legacy_playlist_libraries = _legacy_playlist_libraries_for_selected_libraries(
-                nested_libraries_data,
-                ordered_library_names=ordered_library_names,
-            )
-            if legacy_playlist_libraries or playlist_file_entries:
-                config_data["playlist_files"] = _format_playlist_file_entries(
-                    libraries_list=legacy_playlist_libraries,
-                    template_variables=playlist_template_variables,
-                    extra_entries=playlist_file_entries,
-                )
+        apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section)
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 
