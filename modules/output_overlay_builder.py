@@ -22,9 +22,14 @@ from cleanup keeps each module cohesive and under ~600 lines.
 
 from __future__ import annotations
 
+from modules import helpers
+from modules.output_file_entries import _parse_overlay_file_block_entries
 from modules.output_overlays import (
+    apply_per_overlay_type_cleanup,
     overlay_lookup_name,
     prune_rating_template_vars,
+    reorder_rating_template_vars,
+    sort_overlay_entries,
 )
 from modules.output_values import _parse_string_list
 
@@ -243,3 +248,43 @@ def build_overlay_entries(library_type, overlay_key, raw_overlay_entries):
         return _build_show_overlay_entries(overlay_key, raw_overlay_entries, library_type)
     # Unknown library type -- return empty result rather than crash.
     return [], []
+
+
+def build_overlay_files_for_library(library_key, library_type, overlays):
+    """Assemble the final ``overlay_files`` list for a single library.
+
+    Wraps the four-stage overlay pipeline into one call:
+
+    1. ``build_overlay_entries`` -- classify + populate template vars.
+    2. ``apply_per_overlay_type_cleanup`` -- per-type field normalization.
+    3. Per-entry ``reorder_rating_template_vars`` + list-level
+       ``sort_overlay_entries`` -- final field / entry ordering.
+    4. ``_parse_overlay_file_block_entries`` on the raw
+       ``<library_prefix>-overlay_files`` value -- appended verbatim.
+
+    Returns the final list.  When the library has no overlay data
+    (no matching key in *overlays* and no raw overlay_files block)
+    returns an empty list.  Caller is responsible for whether to
+    assign to ``entry['overlay_files']``.
+    """
+    overlay_key = helpers.extract_library_name(library_key)
+    if not overlay_key:
+        return []
+
+    library_overlay_group = overlays.get(overlay_key, {}) if overlay_key in overlays else None
+    if library_overlay_group is None:
+        return []
+
+    overlay_entries, overlay_name_order = build_overlay_entries(library_type, overlay_key, library_overlay_group)
+    apply_per_overlay_type_cleanup(overlay_entries)
+    if overlay_entries:
+        for ov in overlay_entries:
+            reorder_rating_template_vars(ov)
+        sort_overlay_entries(overlay_entries, overlay_name_order)
+
+    overlay_library_prefix = helpers.strip_library_suffix(library_key)
+    raw_overlay_file_entries = _parse_overlay_file_block_entries(library_overlay_group.get(f"{overlay_library_prefix}-overlay_files"))
+    if raw_overlay_file_entries:
+        overlay_entries.extend(raw_overlay_file_entries)
+
+    return overlay_entries

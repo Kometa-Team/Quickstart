@@ -54,3 +54,22 @@ def extract_library_name(key):
         key,
     )
     return match.group(1) if match else None
+
+
+def strip_library_suffix(library_key):
+    """Return *library_key* with its trailing ``-library`` suffix removed.
+
+    Kometa uses two closely related shapes for library-scoped keys:
+
+    * ``mov-library_<id>-library`` -- the top-level library selection key.
+    * ``mov-library_<id>-collection_<name>`` etc. -- attribute keys within
+      that library, all of which share the ``mov-library_<id>`` prefix.
+
+    Building filenames such as ``<prefix>-collection_files``,
+    ``<prefix>-overlay_files`` or ``<prefix>-metadata_files`` requires the
+    library-prefix form.  When the input isn't a string or doesn't end with
+    ``-library`` we return it unchanged so callers can pass either shape.
+    """
+    if isinstance(library_key, str) and library_key.endswith("-library"):
+        return library_key[: -len("-library")]
+    return library_key
