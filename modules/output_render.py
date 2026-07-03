@@ -1,33 +1,92 @@
-"""Final-phase orchestration for ``build_config``.
+"""Orchestration helpers for ``build_config``.
 
 Extracted from ``modules.output.build_config``.
 
-After all sections have been retrieved, normalized, and the libraries
-section built, ``build_config`` runs a fixed sequence of final
-transformations before dumping YAML.  This module owns:
+This module owns the wrap-around orchestration that sits at both ends
+of ``build_config``: pulling per-section data out of persistence at the
+start, and running the fixed transformation chain before YAML dump
+at the end.  The library-processing phase in the middle lives in
+:mod:`modules.output_libraries_data` /
+:mod:`modules.output_libraries_section`.
+
+Public entry points:
+
+* :func:`retrieve_config_sections` -- walk the template list and pull
+  every validated section out of persistence.  Returns
+  ``(config_data, header_art)`` where the latter is the pre-rendered
+  header-art dict keyed by section name.
 
 * :data:`ORDERED_CONFIG_SECTIONS` -- the compile-time section order
-  used when writing YAML.  Moving it to module scope means it's read
-  once at import time instead of allocated fresh on every request.
+  used when writing YAML.  Loaded once at import time.
 
-* :func:`apply_final_transformations` -- the five-step chain that
+* :func:`apply_final_transformations` -- the six-step chain that
   scrubs, optimizes, and reshapes ``config_data`` before dump.
   Preserves the exact call order because several later steps assume
   earlier ones have already run.
 
-* :func:`_strip_mal_code_verifier` -- private helper for a specific
-  one-line security scrub that ``build_config`` had inline.
+Private helpers:
+
+* :func:`_strip_mal_code_verifier` -- one-line PKCE half-secret scrub.
 """
 
 from __future__ import annotations
 
-from modules import helpers
+import copy
+
+from modules import helpers, persistence
 from modules.output_collections import (
     _collapse_collection_data_template_vars,
     _normalize_legacy_collection_template_vars,
 )
+from modules.output_headers import render_section_header
 from modules.output_optimize import optimize_template_variables
-from modules.output_postprocess import _rewrite_custom_font_paths
+from modules.output_postprocess import _rewrite_custom_font_paths, clean_section_data
+
+
+def retrieve_config_sections(header_style):
+    """Walk the template list and pull every validated section into memory.
+
+    Returns ``(config_data, header_art)``:
+
+    * ``config_data`` -- ``{config_attribute: cleaned_section_data}``
+      for every section whose persistence row has ``validated=True``.
+      Deep-copied at read time so any downstream normalization can
+      mutate freely without corrupting the persistence-layer cache
+      for the rest of the request lifecycle.
+    * ``header_art`` -- ``{config_attribute: rendered_header_string}``
+      pre-rendered once per section using *header_style*.  The dump
+      loop later re-uses these instead of re-rendering per section.
+
+    Reads section data via :mod:`modules.persistence`, so must be
+    called within a Flask app context (persistence depends on
+    ``current_app`` for its DB handle).
+
+    A section that isn't validated is skipped for ``config_data`` but
+    still gets its header art rendered -- ``build_config``'s dump loop
+    won't emit it (guarded by ``section_key in config_data``) but the
+    header would be available if a future caller wanted to render
+    an empty-but-present section.
+    """
+    sections = helpers.get_template_list()
+    config_data = {}
+    header_art = {}
+
+    for name in sections:
+        item = sections[name]
+        persistence_key = item["stem"]
+        config_attribute = item["raw_name"]
+
+        header_art[config_attribute] = render_section_header(item["name"], header_style)
+
+        # Deep-copy here so YAML normalization can't mutate the
+        # in-memory persistence cache for this request lifecycle.
+        section_data = copy.deepcopy(persistence.retrieve_settings(persistence_key))
+
+        if "validated" in section_data and section_data["validated"]:
+            config_data[config_attribute] = clean_section_data(section_data, config_attribute)
+
+    return config_data, header_art
+
 
 # The order Kometa's YAML file uses for top-level sections.  Anchored
 # alongside the render logic so both live in the same module.  Second
