@@ -1,11 +1,11 @@
-import copy
 import os
 
 import jsonschema
 from flask import current_app as app, has_request_context, session
 from ruamel.yaml import YAML
 
-from modules import helpers, persistence
+from modules import helpers
+from modules import persistence  # noqa: F401 -- re-exported so tests monkeypatching output.persistence.retrieve_settings keep working
 from modules.output_collections import (  # noqa: F401 -- re-exported so output.<name> keeps working
     FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS,
     _collapse_collection_data_template_vars,
@@ -66,7 +66,7 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     _rewrite_custom_font_paths,
     clean_section_data,
 )
-from modules.output_render import ORDERED_CONFIG_SECTIONS, apply_final_transformations
+from modules.output_render import ORDERED_CONFIG_SECTIONS, apply_final_transformations, retrieve_config_sections
 from modules.output_reorder import reorder_library_section  # noqa: F401 -- re-exported so tests calling output.reorder_library_section keep working
 from modules.output_yaml_header import render_yaml_header
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
@@ -95,32 +95,13 @@ def build_config(header_style="standard", config_name=None):
     if not config_name and has_request_context():
         config_name = session.get("config_name")
 
-    sections = helpers.get_template_list()
-    config_data = {}
-    header_art = {}
+    config_data, header_art = retrieve_config_sections(header_style)
     library_types = {}
 
     def header_for_section(section_key, display_name):
         if section_key in header_art:
             return header_art[section_key]
         return render_section_header(display_name, header_style)
-
-    # Process sections and generate header art
-    for name in sections:
-        item = sections[name]
-        persistence_key = item["stem"]
-        config_attribute = item["raw_name"]
-
-        # Handle all header styles
-        header_art[config_attribute] = render_section_header(item["name"], header_style)
-
-        # Retrieve settings for each section.
-        # Deep-copy here so YAML normalization cannot mutate the in-memory
-        # structure returned from persistence for this request lifecycle.
-        section_data = copy.deepcopy(persistence.retrieve_settings(persistence_key))
-
-        if "validated" in section_data and section_data["validated"]:
-            config_data[config_attribute] = clean_section_data(section_data, config_attribute)
 
     normalize_playlist_files_section(config_data, debug=app.config["QS_DEBUG"])
     normalize_webhooks_section(config_data, debug=app.config["QS_DEBUG"])
@@ -129,7 +110,6 @@ def build_config(header_style="standard", config_name=None):
     # Initialize movie and show libraries
     movie_libraries = {}
     show_libraries = {}
-    library_types = {}
 
     # Process the libraries section
     if "libraries" in config_data and "libraries" in config_data["libraries"]:
