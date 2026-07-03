@@ -207,43 +207,8 @@ def build_libraries_section(
                 apply_per_overlay_type_cleanup(overlay_entries)
 
                 if overlay_entries:
-                    # Final cleanup: drop rating pairs if either side is empty
-                    for ov in overlay_entries:
-                        default_name = ov.get("default", "")
-                        if not (isinstance(default_name, str) and (default_name == "ratings" or default_name.startswith("overlay_ratings"))):
-                            continue
-                        tv = ov.get("template_variables")
-                        if not isinstance(tv, dict):
-                            continue
-                        for idx in ["1", "2", "3"]:
-                            r_key = f"rating{idx}"
-                            i_key = f"{r_key}_image"
-                            r_val = tv.get(r_key)
-                            i_val = tv.get(i_key)
-
-                            def _is_empty(val):
-                                if val is None or val is False:
-                                    return True
-                                if isinstance(val, dict):
-                                    raw_val = val.get("value", "")
-                                    return raw_val is None or (isinstance(raw_val, str) and (raw_val.strip() == "" or raw_val.strip().lower() == "none"))
-                                if isinstance(val, str):
-                                    return val.strip() == "" or val.strip().lower() == "none"
-                                return False
-
-                            if _is_empty(r_val):
-                                tv.pop(r_key, None)
-                                tv.pop(i_key, None)
-                                continue
-                            if _is_empty(i_val):
-                                tv.pop(r_key, None)
-                                tv.pop(i_key, None)
-                        if not tv:
-                            ov.pop("template_variables", None)
-
                     for ov in overlay_entries:
                         reorder_rating_template_vars(ov)
-
                     sort_overlay_entries(overlay_entries, overlay_name_order)
 
                 overlay_library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
