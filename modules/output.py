@@ -59,7 +59,11 @@ from modules.output_library_ops import (
     build_top_level_fields,
 )
 from modules.output_optimize import optimize_template_variables
-from modules.output_overlays import prune_rating_template_vars
+from modules.output_overlays import (
+    overlay_lookup_name,
+    prune_rating_template_vars,
+    reorder_rating_template_vars,
+)
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
     PLAYLIST_SHARED_TEMPLATE_VAR_SPECS,
@@ -278,74 +282,6 @@ def build_libraries_section(
             overlay_key = helpers.extract_library_name(library_key)
             overlay_entries = []
             overlay_name_order = []
-
-            def overlay_lookup_name(name):
-                if not isinstance(name, str):
-                    return name
-                if name in {"commonsense", "overlay_content_rating_commonsense", "content_rating_commonsense"}:
-                    return "content_rating_commonsense"
-                return name
-
-            def reorder_rating_template_vars(overlay_entry):
-                if not isinstance(overlay_entry, dict):
-                    return
-                default_name = overlay_entry.get("default", "")
-                if not (isinstance(default_name, str) and (default_name == "ratings" or default_name.startswith("overlay_ratings"))):
-                    return
-                tv = overlay_entry.get("template_variables")
-                if not isinstance(tv, dict) or not tv:
-                    return
-                preferred_order = [
-                    "builder_level",
-                    "rating1",
-                    "rating1_image",
-                    "rating1_font",
-                    "rating1_font_size",
-                    "rating1_font_color",
-                    "rating1_stroke_width",
-                    "rating1_stroke_color",
-                    "rating1_horizontal_offset",
-                    "rating1_vertical_offset",
-                    "rating2",
-                    "rating2_image",
-                    "rating2_font",
-                    "rating2_font_size",
-                    "rating2_font_color",
-                    "rating2_stroke_width",
-                    "rating2_stroke_color",
-                    "rating2_horizontal_offset",
-                    "rating2_vertical_offset",
-                    "rating3",
-                    "rating3_image",
-                    "rating3_font",
-                    "rating3_font_size",
-                    "rating3_font_color",
-                    "rating3_stroke_width",
-                    "rating3_stroke_color",
-                    "rating3_horizontal_offset",
-                    "rating3_vertical_offset",
-                    "horizontal_position",
-                    "horizontal_offset",
-                    "vertical_offset",
-                    "flag_alignment",
-                    "back_align",
-                    "back_color",
-                    "back_height",
-                    "back_width",
-                    "back_line_color",
-                    "back_line_width",
-                    "back_padding",
-                    "back_radius",
-                    "use_subtitles",
-                ]
-                ordered = {}
-                for key in preferred_order:
-                    if key in tv:
-                        ordered[key] = tv[key]
-                for key in tv:
-                    if key not in ordered:
-                        ordered[key] = tv[key]
-                overlay_entry["template_variables"] = ordered
 
             default_language_flag_codes = ["en", "de", "fr", "es", "pt", "ja"]
             default_language_flag_weights = {
