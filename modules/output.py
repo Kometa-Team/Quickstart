@@ -103,23 +103,49 @@ _EMPTY_OUTPUT = object()
 
 
 def build_libraries_section(
-    movie_libraries,
-    show_libraries,
-    movie_collections,
-    show_collections,
-    movie_collection_files,
-    show_collection_files,
-    movie_overlays,
-    show_overlays,
-    movie_attributes,
-    show_attributes,
-    movie_metadata_files,
-    show_metadata_files,
-    movie_templates,
-    show_templates,
-    movie_top_level,
-    show_top_level,
+    movie_libraries=None,
+    show_libraries=None,
+    movie_collections=None,
+    show_collections=None,
+    movie_collection_files=None,
+    show_collection_files=None,
+    movie_overlays=None,
+    show_overlays=None,
+    movie_attributes=None,
+    show_attributes=None,
+    movie_metadata_files=None,
+    show_metadata_files=None,
+    movie_templates=None,
+    show_templates=None,
+    movie_top_level=None,
+    show_top_level=None,
 ):
+    """Build the ``libraries:`` YAML block from per-kind grouped dicts.
+
+    All 16 arguments are optional and default to an empty dict when
+    omitted -- ``build_config`` passes everything; tests typically
+    populate only one or two slots.  Passing ``None`` is treated as an
+    explicit empty dict so callers can rely on the same defaults.
+    """
+    # Coerce ``None`` -> ``{}`` for all 16 slots so downstream code can
+    # rely on dict semantics without guarding at every .get().
+    movie_libraries = movie_libraries or {}
+    show_libraries = show_libraries or {}
+    movie_collections = movie_collections or {}
+    show_collections = show_collections or {}
+    movie_collection_files = movie_collection_files or {}
+    show_collection_files = show_collection_files or {}
+    movie_overlays = movie_overlays or {}
+    show_overlays = show_overlays or {}
+    movie_attributes = movie_attributes or {}
+    show_attributes = show_attributes or {}
+    movie_metadata_files = movie_metadata_files or {}
+    show_metadata_files = show_metadata_files or {}
+    movie_templates = movie_templates or {}
+    show_templates = show_templates or {}
+    movie_top_level = movie_top_level or {}
+    show_top_level = show_top_level or {}
+
     libraries_section = {}
 
     def sorted_library_items(libraries):
@@ -335,39 +361,25 @@ def build_config(header_style="standard", config_name=None):
         movie_libraries = bundle.movie_libraries
         show_libraries = bundle.show_libraries
         library_types = bundle.library_types
-        movie_collections = bundle.movie_groups["collections"]
-        show_collections = bundle.show_groups["collections"]
-        movie_collection_files = bundle.movie_groups["collection_files"]
-        show_collection_files = bundle.show_groups["collection_files"]
-        movie_overlays = bundle.movie_groups["overlays"]
-        show_overlays = bundle.show_groups["overlays"]
-        movie_attributes = bundle.movie_groups["attributes"]
-        show_attributes = bundle.show_groups["attributes"]
-        movie_metadata_files = bundle.movie_groups["metadata_files"]
-        show_metadata_files = bundle.show_groups["metadata_files"]
-        movie_templates = bundle.movie_groups["templates"]
-        show_templates = bundle.show_groups["templates"]
-        movie_top_level = bundle.movie_groups["top_level"]
-        show_top_level = bundle.show_groups["top_level"]
 
         # Build nested libraries structure
         libraries_section = build_libraries_section(
-            movie_libraries,
-            show_libraries,
-            movie_collections,
-            show_collections,
-            movie_collection_files,
-            show_collection_files,
-            movie_overlays,
-            show_overlays,
-            movie_attributes,
-            show_attributes,
-            movie_metadata_files,
-            show_metadata_files,
-            movie_templates,
-            show_templates,
-            movie_top_level,
-            show_top_level,
+            movie_libraries=movie_libraries,
+            show_libraries=show_libraries,
+            movie_collections=bundle.movie_groups["collections"],
+            show_collections=bundle.show_groups["collections"],
+            movie_collection_files=bundle.movie_groups["collection_files"],
+            show_collection_files=bundle.show_groups["collection_files"],
+            movie_overlays=bundle.movie_groups["overlays"],
+            show_overlays=bundle.show_groups["overlays"],
+            movie_attributes=bundle.movie_groups["attributes"],
+            show_attributes=bundle.show_groups["attributes"],
+            movie_metadata_files=bundle.movie_groups["metadata_files"],
+            show_metadata_files=bundle.show_groups["metadata_files"],
+            movie_templates=bundle.movie_groups["templates"],
+            show_templates=bundle.show_groups["templates"],
+            movie_top_level=bundle.movie_groups["top_level"],
+            show_top_level=bundle.show_groups["top_level"],
         )
         config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
         apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section)

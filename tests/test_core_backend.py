@@ -1929,17 +1929,8 @@ def test_build_libraries_section_emits_metadata_files(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_metadata_files={
                 "movies": {
                     "mov-library_movies-metadata_files": json.dumps(
                         [
@@ -1952,11 +1943,6 @@ def test_build_libraries_section_emits_metadata_files(app):
                     )
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
         assert libraries_section["libraries"]["Movies"]["metadata_files"] == [
@@ -1976,13 +1962,8 @@ def test_build_libraries_section_emits_raw_overlay_files(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-overlay_files": json.dumps(
                         [
@@ -1995,15 +1976,6 @@ def test_build_libraries_section_emits_raw_overlay_files(app):
                     )
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
         assert libraries_section["libraries"]["Movies"]["overlay_files"] == [
@@ -2023,11 +1995,9 @@ def test_build_libraries_section_emits_collection_files(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {"movies": {"mov-library_movies-collection_collectionless": True}},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={"movies": {"mov-library_movies-collection_collectionless": True}},
+            movie_collection_files={
                 "movies": {
                     "mov-library_movies-collection_files": json.dumps(
                         [
@@ -2040,17 +2010,6 @@ def test_build_libraries_section_emits_collection_files(app):
                     )
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
         assert libraries_section["libraries"]["Movies"]["collection_files"] == [
@@ -2068,28 +2027,14 @@ def test_build_libraries_section_preserves_collection_include_and_exclude(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
                 "movies": {
                     "mov-library_movies-collection_actor": True,
                     "mov-library_movies-template_collection_actor_include": ["Tom Hanks"],
                     "mov-library_movies-template_collection_actor_exclude": ["Morgan Freeman"],
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     actor_entry = next(
@@ -2106,9 +2051,8 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
                 "movies": {
                     "mov-library_movies-collection_tautulli": True,
                     "mov-library_movies-template_collection_tautulli_list_days": "14",
@@ -2160,19 +2104,6 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_content_rating_us_limit_other": "5",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     collection_entries = libraries_section["libraries"]["Movies"]["collection_files"]
@@ -2233,9 +2164,9 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {"sho-library_shows-library": "Shows"},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_collections={
                 "movies": {
                     "mov-library_movies-collection_franchise": True,
                     "mov-library_movies-template_collection_franchise_build_collection": False,
@@ -2245,7 +2176,7 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
                     "mov-library_movies-template_collection_franchise_title_override": '{"10": "Star Wars: Skywalker Saga"}',
                 }
             },
-            {
+            show_collections={
                 "shows": {
                     "sho-library_shows-collection_franchise": True,
                     "sho-library_shows-template_collection_franchise_build_collection": False,
@@ -2255,18 +2186,6 @@ def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):
                     "sho-library_shows-template_collection_franchise_item_sonarr_tag": '["watched", "tracked"]',
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     movie_entry = next(
@@ -2353,9 +2272,8 @@ def test_build_libraries_section_emits_collection_hub_priority(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
                 "movies": {
                     "mov-library_movies-collection_content_rating_uk": True,
                     "mov-library_movies-template_collection_content_rating_uk_visible_home": "true",
@@ -2364,19 +2282,6 @@ def test_build_libraries_section_emits_collection_hub_priority(app):
                     "mov-library_movies-template_collection_content_rating_uk_hub_priority_12A": "1",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     movie_entry = next(
@@ -2396,9 +2301,9 @@ def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(a
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {"sho-library_shows-library": "Shows"},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_collections={
                 "movies": {
                     "mov-library_movies-collection_franchise": True,
                     "mov-library_movies-template_collection_franchise_child_name_overrides": '{"10": "Skywalker Saga"}',
@@ -2407,7 +2312,7 @@ def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(a
                     "mov-library_movies-template_collection_franchise_child_radarr_add_missing_overrides": '{"10": "true"}',
                 }
             },
-            {
+            show_collections={
                 "shows": {
                     "sho-library_shows-collection_franchise": True,
                     "sho-library_shows-template_collection_franchise_child_summary_overrides": '{"1399": "Dragons and dynasties"}',
@@ -2416,18 +2321,6 @@ def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(a
                     "sho-library_shows-template_collection_franchise_child_item_sonarr_tag_overrides": '{"1399": "tracked,priority"}',
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     movie_entry = next(
@@ -2456,15 +2349,9 @@ def test_build_libraries_section_emits_library_arr_overrides(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {"sho-library_shows-library": "Shows"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_attributes={
                 "movies": {
                     "mov-library_movies-attribute_radarr_url": "http://radarr.local:7878",
                     "mov-library_movies-attribute_radarr_quality_profile": "HD-1080p",
@@ -2472,7 +2359,7 @@ def test_build_libraries_section_emits_library_arr_overrides(app):
                     "mov-library_movies-attribute_radarr_add_existing": "false",
                 }
             },
-            {
+            show_attributes={
                 "shows": {
                     "sho-library_shows-attribute_sonarr_url": "http://sonarr.local:8989",
                     "sho-library_shows-attribute_sonarr_language_profile": "English",
@@ -2480,12 +2367,6 @@ def test_build_libraries_section_emits_library_arr_overrides(app):
                     "sho-library_shows-attribute_sonarr_season_folder": "true",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     movies = libraries_section["libraries"]["Movies"]["radarr"]
@@ -4896,22 +4777,8 @@ def test_build_libraries_section_emits_schedule_overlays(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {"movies": {"mov-library_movies-top_level_schedule_overlays": "weekly(saturday)"}},
-            {},
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_top_level={"movies": {"mov-library_movies-top_level_schedule_overlays": "weekly(saturday)"}},
         )
 
     movies = libraries_section["libraries"]["Movies"]
@@ -4924,22 +4791,8 @@ def test_build_libraries_section_emits_auto_sort_hubs(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {"movies": {"mov-library_movies-top_level_auto_sort_hubs": "configured.desc"}},
-            {},
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_top_level={"movies": {"mov-library_movies-top_level_auto_sort_hubs": "configured.desc"}},
         )
 
     movies = libraries_section["libraries"]["Movies"]
@@ -4952,28 +4805,14 @@ def test_build_libraries_section_keeps_default_ratings_overlay_when_overlay_file
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_ratings": True,
                     "mov-library_movies-movie-template_overlay_ratings[rating1]": "critic",
                     "mov-library_movies-movie-template_overlay_ratings[rating1_image]": "imdb",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -4988,28 +4827,14 @@ def test_build_libraries_section_emits_languages_overlay_language_list(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_languages": True,
                     "mov-library_movies-movie-template_overlay_languages[languages]": ["en", "ja"],
                     "mov-library_movies-movie-template_overlay_languages[style]": "square",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -5025,28 +4850,14 @@ def test_build_libraries_section_emits_subtitle_languages_overlay_language_list(
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_languages_subtitles": True,
                     "mov-library_movies-movie-template_overlay_languages_subtitles[languages]": ["en", "ja"],
                     "mov-library_movies-movie-template_overlay_languages_subtitles[style]": "square",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -5064,28 +4875,14 @@ def test_build_libraries_section_emits_languages_overlay_alignment_template_vari
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_languages": True,
                     "mov-library_movies-movie-template_overlay_languages[flag_alignment]": "right",
                     "mov-library_movies-movie-template_overlay_languages[back_align]": "center",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -5101,28 +4898,14 @@ def test_build_libraries_section_emits_subtitle_languages_overlay_alignment_temp
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_languages_subtitles": True,
                     "mov-library_movies-movie-template_overlay_languages_subtitles[flag_alignment]": "left",
                     "mov-library_movies-movie-template_overlay_languages_subtitles[back_align]": "right",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -5140,28 +4923,14 @@ def test_build_libraries_section_emits_streaming_overlay_region_originals_and_di
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_streaming": True,
                     "mov-library_movies-movie-template_overlay_streaming[region]": "CA",
                     "mov-library_movies-movie-template_overlay_streaming[originals_only]": True,
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -5176,28 +4945,14 @@ def test_build_libraries_section_emits_only_non_default_language_weight_override
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
                 "movies": {
                     "mov-library_movies-movie-overlay_languages": True,
                     "mov-library_movies-movie-template_overlay_languages[weight_en]": "610",
                     "mov-library_movies-movie-template_overlay_languages[weight_ja]": "700",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     overlay_entries = libraries_section["libraries"]["Movies"]["overlay_files"]
@@ -5278,19 +5033,8 @@ def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_templates={
                 "movies": {
                     "mov-library_movies-template_variables[use_separator]": "gray",
                     "mov-library_movies-attribute_template_variables[placeholder_imdb_id]": "tt0108052",
@@ -5298,9 +5042,6 @@ def test_build_libraries_section_includes_separator_placeholder_imdb_id(app):
                     "mov-library_movies-template_variables[collection_mode]": "hide",
                 }
             },
-            {},
-            {},
-            {},
         )
 
     template_variables = libraries_section["libraries"]["Movies"]["template_variables"]
@@ -5315,28 +5056,14 @@ def test_build_libraries_section_includes_separator_placeholder_tmdb_movie(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_templates={
                 "movies": {
                     "mov-library_movies-template_variables[use_separator]": "gray",
                     "mov-library_movies-attribute_template_variables[placeholder_tmdb_movie]": "603",
                     "mov-library_movies-template_variables[language]": "en",
                 }
             },
-            {},
-            {},
-            {},
         )
 
     template_variables = libraries_section["libraries"]["Movies"]["template_variables"]
@@ -5350,28 +5077,14 @@ def test_build_libraries_section_includes_separator_placeholder_tvdb_show(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {},
-            {"sho-library_shows-library": "Shows"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {
+            show_libraries={"sho-library_shows-library": "Shows"},
+            show_templates={
                 "shows": {
                     "sho-library_shows-template_variables[use_separator]": "gray",
                     "sho-library_shows-attribute_template_variables[placeholder_tvdb_show]": "121361",
                     "sho-library_shows-template_variables[language]": "en",
                 }
             },
-            {},
-            {},
         )
 
     template_variables = libraries_section["libraries"]["Shows"]["template_variables"]
@@ -5419,27 +5132,13 @@ def test_build_libraries_section_omits_empty_collectionless_exclude_prefix(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
                 "movies": {
                     "mov-library_movies-collection_collectionless": True,
                     "mov-library_movies-template_collection_collectionless_exclude_prefix": "[]",
                 }
             },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
         )
 
     collection_entries = libraries_section["libraries"]["Movies"]["collection_files"]
@@ -5454,22 +5153,8 @@ def test_build_libraries_section_emits_schedule(app):
 
     with app.app_context():
         libraries_section = output.build_libraries_section(
-            {"mov-library_movies-library": "Movies"},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {"movies": {"mov-library_movies-top_level_schedule": "weekly(saturday)"}},
-            {},
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_top_level={"movies": {"mov-library_movies-top_level_schedule": "weekly(saturday)"}},
         )
 
     movies = libraries_section["libraries"]["Movies"]
