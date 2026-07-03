@@ -505,7 +505,7 @@ def build_collection_files(
         collection_files.append(file_entry)
 
     raw_collection_group = movie_collection_files.get(collection_key, {}) if library_type == "mov" else show_collection_files.get(collection_key, {})
-    library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
+    library_prefix = helpers.strip_library_suffix(library_key)
     raw_collection_entries = _parse_collection_file_block_entries(raw_collection_group.get(f"{library_prefix}-collection_files"))
 
     if collection_files:

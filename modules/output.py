@@ -60,12 +60,7 @@ from modules.output_library_ops import (
     build_top_level_fields,
 )
 from modules.output_optimize import optimize_template_variables
-from modules.output_overlay_builder import build_overlay_entries
-from modules.output_overlays import (
-    apply_per_overlay_type_cleanup,
-    reorder_rating_template_vars,
-    sort_overlay_entries,
-)
+from modules.output_overlay_builder import build_overlay_files_for_library
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
     PLAYLIST_SHARED_TEMPLATE_VAR_SPECS,
@@ -193,38 +188,16 @@ def build_libraries_section(
 
         collection_key = helpers.extract_library_name(library_key)
         if collection_key:
-
-            # Process Overlays
-            overlay_key = helpers.extract_library_name(library_key)
-            overlay_entries = []
-            overlay_name_order = []
-
-            if overlay_key and overlay_key in overlays:
-                raw_overlay_entries = overlays[overlay_key]
-                overlay_entries, overlay_name_order = build_overlay_entries(library_type, overlay_key, raw_overlay_entries)
-
-                # Final cleanup for specific overlays (e.g., drop text for aspect/video_format)
-                apply_per_overlay_type_cleanup(overlay_entries)
-
-                if overlay_entries:
-                    for ov in overlay_entries:
-                        reorder_rating_template_vars(ov)
-                    sort_overlay_entries(overlay_entries, overlay_name_order)
-
-                overlay_library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
-                raw_overlay_file_entries = _parse_overlay_file_block_entries(overlays.get(overlay_key, {}).get(f"{overlay_library_prefix}-overlay_files"))
-                if raw_overlay_file_entries:
-                    overlay_entries.extend(raw_overlay_file_entries)
-
-                if overlay_entries:
-                    entry["overlay_files"] = overlay_entries
+            overlay_files = build_overlay_files_for_library(library_key, library_type, overlays)
+            if overlay_files:
+                entry["overlay_files"] = overlay_files
 
         metadata_group = (
             movie_metadata_files.get(helpers.extract_library_name(library_key), {})
             if library_type == "mov"
             else show_metadata_files.get(helpers.extract_library_name(library_key), {})
         )
-        library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
+        library_prefix = helpers.strip_library_suffix(library_key)
         metadata_entries = _parse_metadata_file_entries(metadata_group.get(f"{library_prefix}-metadata_files"))
         if metadata_entries:
             entry["metadata_files"] = metadata_entries
