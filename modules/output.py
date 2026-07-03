@@ -1,7 +1,6 @@
 import io
 import copy
 import os
-import json
 import shutil
 import subprocess
 from datetime import datetime
@@ -11,7 +10,6 @@ import psutil
 import jsonschema
 from flask import current_app as app, has_request_context, session
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers, persistence
 from modules.output_collections import (  # noqa: F401 -- re-exported so output.<name> keeps working
@@ -158,103 +156,6 @@ def build_libraries_section(
         mass_genre_update = build_mass_genre_update_operation(attr_group, library_type, lib_id)
         if mass_genre_update:
             operations["mass_genre_update"] = mass_genre_update
-
-        # Begin: Mass Content Rating Update Section
-        mass_content_rating_update = []
-
-        # Get the ordered source list (sortable)
-        rating_custom_order_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_order"
-        rating_custom_order_value = attr_group.get(rating_custom_order_key)
-
-        if rating_custom_order_value:
-            try:
-                parsed = json.loads(rating_custom_order_value)
-                if isinstance(parsed, list):
-                    mass_content_rating_update.extend(parsed)
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}", level="ERROR")
-
-        rating_custom_list_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom"
-        rating_custom_list_value = attr_group.get(rating_custom_list_key)
-        if rating_custom_list_value:
-            try:
-                parsed_custom = json.loads(rating_custom_list_value)
-                if isinstance(parsed_custom, list):
-                    for item in parsed_custom:
-                        if isinstance(item, (int, float)):
-                            mass_content_rating_update.append(item)
-                        elif isinstance(item, str) and item.strip():
-                            mass_content_rating_update.append(item.strip())
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid JSON in content rating custom list: {rating_custom_list_value} — {e}", level="ERROR")
-
-        # Get the optional custom string (e.g., "NR")
-        rating_custom_string_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom_string"
-        rating_custom_string_value = None
-        if attr_group and rating_custom_string_key in attr_group:
-            raw_value = attr_group.get(rating_custom_string_key)
-            if raw_value:
-                rating_custom_string_value = raw_value.strip()
-
-        if rating_custom_string_value:
-            mass_content_rating_update.append(rating_custom_string_value)
-
-        # Only add to operations if we have any items
-        if mass_content_rating_update:
-            mcru_list = CommentedSeq(mass_content_rating_update)
-            mcru_list.fa.set_block_style()  # ensures YAML list style
-            operations["mass_content_rating_update"] = mcru_list
-
-        # Begin: Mass Original Title Update Section
-        mass_original_title_update = []
-
-        # Handle the toggle order list
-        original_title_order_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_order"
-        original_title_order_value = attr_group.get(original_title_order_key)
-
-        if original_title_order_value:
-            try:
-                parsed = json.loads(original_title_order_value)
-                if isinstance(parsed, list):
-                    for item in parsed:
-                        if isinstance(item, str):
-                            mass_original_title_update.append(item)
-                        elif isinstance(item, list):  # nested list — flatten it
-                            mass_original_title_update.extend(item)
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid JSON in original title order: {original_title_order_value} — {e}", level="DEBUG")
-
-        original_title_custom_list_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom"
-        original_title_custom_list_value = attr_group.get(original_title_custom_list_key)
-        if original_title_custom_list_value:
-            try:
-                parsed_custom = json.loads(original_title_custom_list_value)
-                if isinstance(parsed_custom, list):
-                    for item in parsed_custom:
-                        if isinstance(item, str) and item.strip():
-                            mass_original_title_update.append(item.strip())
-            except Exception as e:
-                helpers.ts_log(
-                    f"Skipping invalid JSON in original title custom list: {original_title_custom_list_value} — {e}",
-                    level="ERROR",
-                )
-
-        # Handle the optional custom string (e.g., "Unknown")
-        original_title_custom_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom_string"
-        original_title_custom_value = attr_group.get(original_title_custom_key)
-
-        if original_title_custom_value:
-            try:
-                stripped = original_title_custom_value.strip()
-                if stripped:
-                    mass_original_title_update.append(stripped)
-            except Exception as e:
-                helpers.ts_log(f"Skipping invalid original title custom string: {original_title_custom_value} — {e}", level="ERROR")
-
-        if mass_original_title_update:
-            motu_list = CommentedSeq(mass_original_title_update)
-            motu_list.fa.set_block_style()
-            operations["mass_original_title_update"] = motu_list
 
         # Handle nested delete_collections block
         delete_collections = build_delete_collections_operation(attr_group, library_type, lib_id)
