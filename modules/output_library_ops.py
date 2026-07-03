@@ -1,13 +1,16 @@
-"""Per-library operation builders for build_libraries_section.
+"""Per-library builders for build_libraries_section.
 
 Extracted incrementally from the giant ``add_entry`` closure inside
-``modules/output.py``.  Each function here takes the raw
-``attr_group`` dict for one library plus a couple of identity keys,
-and returns the operation's YAML-ready value (or ``None`` when the
-operation is disabled).
+``modules/output.py``.  Each function here takes the raw form-input
+dict (``attr_group``, ``top_group``, or ``template_data``) plus a
+couple of identity keys, and returns the operation / entry-field
+value ready for YAML serialization (or an empty container when the
+input is disabled/absent).
 
-The naming convention is ``build_<operation_name>_operation`` so it's
-obvious what shape the return type matches.
+Naming conventions:
+  * ``build_<operation_name>_operation`` -- goes under ``entry.operations``
+  * ``build_<field_group>_fields``       -- merged into ``entry`` directly
+  * ``build_template_variables``         -- goes under ``entry.template_variables``
 
 Public surface: none.  These helpers are called from the
 ``build_libraries_section`` orchestrator; ``output.py`` imports each
@@ -324,3 +327,92 @@ def build_top_level_fields(top_group, library_type, lib_id):
         result["reset_overlays"] = reset_overlays
 
     return result
+
+
+# Suffix -> template_variables output key.  We iterate template_data
+# looking for keys ending in one of these six suffixes with the
+# matching library prefix, and stash the value under the mapped key.
+# The prefix is checked so a movie library doesn't accidentally pick
+# up template variables meant for a show library with the same lib_id.
+_TEMPLATE_VAR_SUFFIXES = {
+    "-template_variables[use_separator]": "use_separator",
+    "-attribute_template_variables[placeholder_imdb_id]": "placeholder_imdb_id",
+    "-attribute_template_variables[placeholder_tmdb_movie]": "placeholder_tmdb_movie",
+    "-attribute_template_variables[placeholder_tvdb_show]": "placeholder_tvdb_show",
+    "-template_variables[language]": "language",
+    "-template_variables[collection_mode]": "collection_mode",
+}
+
+
+def _discover_template_variables(template_data, library_type, template_key):
+    """Walk ``template_data`` and pull out the six known template-variable inputs.
+
+    Returns a dict keyed by the output name (``use_separator``,
+    ``placeholder_imdb_id``, ...).  Missing inputs are simply absent
+    from the returned dict.
+    """
+    prefix = f"{library_type}-library_{template_key}"
+    discovered = {}
+    for key, value in template_data.items():
+        if not key.startswith(prefix):
+            continue
+        for suffix, output_name in _TEMPLATE_VAR_SUFFIXES.items():
+            if key.endswith(suffix):
+                discovered[output_name] = value
+                break
+    return discovered
+
+
+def build_template_variables(templates, library_type, library_key, has_collectionless):
+    """Return the ``template_variables`` dict for a library entry.
+
+    Extracts the template-key from ``library_key`` (via
+    :func:`helpers.extract_library_name`), looks up the matching
+    template-data dict in ``templates``, and walks it for the six
+    known template-variable inputs.  Assembles the result into the
+    shape Kometa expects.
+
+    Rules:
+      * ``use_separator`` is always emitted (defaults ``False``).
+      * ``sep_style`` is emitted only when a separator color is set --
+        the raw value from the form doubles as the style.
+      * For movie libraries (``library_type == "mov"``), the
+        ``placeholder_tmdb_movie`` input wins over ``placeholder_imdb_id``.
+        For show libraries, ``placeholder_tvdb_show`` wins.
+      * ``language`` and ``collection_mode`` are passed through when set.
+      * If the library has a collectionless entry (``has_collectionless``),
+        ``collection_mode`` is forced to ``"hide"`` (overriding any
+        user-set value).
+    """
+    template_key = helpers.extract_library_name(library_key)
+    template_data = templates.get(template_key, {})
+    discovered = _discover_template_variables(template_data, library_type, template_key)
+
+    sep_color = discovered.get("use_separator")
+    template_vars = {"use_separator": bool(sep_color)}
+    if sep_color:
+        template_vars["sep_style"] = sep_color
+
+    # Placeholder selection: media-specific placeholder wins over the
+    # generic IMDB fallback.
+    imdb_fallback = discovered.get("placeholder_imdb_id")
+    if library_type == "mov":
+        primary = discovered.get("placeholder_tmdb_movie")
+        primary_key = "placeholder_tmdb_movie"
+    else:
+        primary = discovered.get("placeholder_tvdb_show")
+        primary_key = "placeholder_tvdb_show"
+    if primary:
+        template_vars[primary_key] = primary
+    elif imdb_fallback:
+        template_vars["placeholder_imdb_id"] = imdb_fallback
+
+    for optional_key in ("language", "collection_mode"):
+        value = discovered.get(optional_key)
+        if value:
+            template_vars[optional_key] = value
+
+    if has_collectionless:
+        template_vars["collection_mode"] = "hide"
+
+    return template_vars

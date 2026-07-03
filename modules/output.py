@@ -53,6 +53,7 @@ from modules.output_library_ops import (
     build_mass_genre_update_operation,
     build_mass_poster_update_operation,
     build_metadata_backup_operation,
+    build_template_variables,
     build_top_level_fields,
 )
 from modules.output_optimize import optimize_template_variables
@@ -1150,62 +1151,7 @@ def build_libraries_section(
             entry["metadata_files"] = metadata_entries
 
         # Template Variables
-        template_key = helpers.extract_library_name(library_key)
-        template_data = templates.get(template_key, {})
-
-        sep_color_key = None
-        placeholder_imdb_key = None
-        placeholder_tmdb_movie_key = None
-        placeholder_tvdb_show_key = None
-        language_key = None
-        collection_mode_key = None
-
-        for key in template_data.keys():
-            if key.endswith("-template_variables[use_separator]") and key.startswith(f"{library_type}-library_{template_key}"):
-                sep_color_key = key
-            if key.endswith("-attribute_template_variables[placeholder_imdb_id]") and key.startswith(f"{library_type}-library_{template_key}"):
-                placeholder_imdb_key = key
-            if key.endswith("-attribute_template_variables[placeholder_tmdb_movie]") and key.startswith(f"{library_type}-library_{template_key}"):
-                placeholder_tmdb_movie_key = key
-            if key.endswith("-attribute_template_variables[placeholder_tvdb_show]") and key.startswith(f"{library_type}-library_{template_key}"):
-                placeholder_tvdb_show_key = key
-            if key.endswith("-template_variables[language]") and key.startswith(f"{library_type}-library_{template_key}"):
-                language_key = key
-            if key.endswith("-template_variables[collection_mode]") and key.startswith(f"{library_type}-library_{template_key}"):
-                collection_mode_key = key
-
-        sep_color = template_data.get(sep_color_key)
-        placeholder_imdb_id = template_data.get(placeholder_imdb_key)
-        placeholder_tmdb_movie = template_data.get(placeholder_tmdb_movie_key)
-        placeholder_tvdb_show = template_data.get(placeholder_tvdb_show_key)
-        language_value = template_data.get(language_key)
-        collection_mode_value = template_data.get(collection_mode_key)
-
-        template_vars = {"use_separator": True if sep_color else False}
-
-        if sep_color:
-            template_vars["sep_style"] = sep_color
-
-        if library_type == "mov":
-            if placeholder_tmdb_movie:
-                template_vars["placeholder_tmdb_movie"] = placeholder_tmdb_movie
-            elif placeholder_imdb_id:
-                template_vars["placeholder_imdb_id"] = placeholder_imdb_id
-        else:
-            if placeholder_tvdb_show:
-                template_vars["placeholder_tvdb_show"] = placeholder_tvdb_show
-            elif placeholder_imdb_id:
-                template_vars["placeholder_imdb_id"] = placeholder_imdb_id
-
-        if language_value:
-            template_vars["language"] = language_value
-        if collection_mode_value:
-            template_vars["collection_mode"] = collection_mode_value
-
-        if has_collectionless:
-            template_vars["collection_mode"] = "hide"
-
-        entry["template_variables"] = template_vars
+        entry["template_variables"] = build_template_variables(templates, library_type, library_key, has_collectionless)
 
         # Grouped mass update operations (excluding mass_genre_update, handled earlier)
         grouped_operations = [
