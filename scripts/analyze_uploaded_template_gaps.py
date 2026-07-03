@@ -46,6 +46,7 @@ QS_SPECIAL_LIBRARY_TEMPLATE_KEYS = {
     "sep_style",
 }
 QS_SPECIAL_GLOBAL_SUPPORTED_KEYS = {
+    "collection_section",
     "minimum_items",
     "playlist_exclude_users",
     "playlist_sync_to_users",
@@ -146,6 +147,8 @@ LIBRARY_OVERLAY_ONLY_KEYS = {
     "vertical_align",
     "horizontal_offset",
     "vertical_offset",
+    "horizontal_position",
+    "vertical_position",
     "back_width",
     "back_height",
     "back_padding",
@@ -154,7 +157,14 @@ LIBRARY_OVERLAY_ONLY_KEYS = {
     "back_align",
     "back_color",
     "back_line_color",
+    "builder_level",
+    "rating_alignment",
 }
+LIBRARY_OVERLAY_ONLY_PREFIXES = (
+    "rating1",
+    "rating2",
+    "rating3",
+)
 INTERNAL_OVERLAY_TEMPLATE_KEYS = {
     "final_horizontal_offset",
     "final_vertical_offset",
@@ -672,12 +682,20 @@ def build_qs_overlay_map(qs_overlays_path: Path, *, enrich_runtime_support: bool
 
 def overlay_key_supported_in_quickstart(alias: str | None, key: str, qs_overlays: dict[str, set[str]]) -> bool:
     alias_text = str(alias or "").strip().lower()
-    if key in qs_overlays.get(alias_text, set()):
+    alias_keys = qs_overlays.get(alias_text, set())
+    if key in alias_keys:
         return True
+
+    # Quickstart exposes ratings font sizing per slot rather than as the
+    # shared Kometa template variable, but users still get full control over
+    # the rendered ratings font sizes through those slot inputs.
+    if alias_text == "ratings" and key == "font_size":
+        if any(f"rating{idx}_font_size" in alias_keys for idx in ("1", "2", "3")):
+            return True
 
     source_override_prefixes = ("file", "url", "git", "repo")
     for prefix in source_override_prefixes:
-        if key.startswith(f"{prefix}_") and prefix in qs_overlays.get(alias_text, set()):
+        if key.startswith(f"{prefix}_") and prefix in alias_keys:
             return True
 
     # Quickstart models subtitle language flags as a dedicated overlay alias,
@@ -2349,7 +2367,16 @@ def build_importer_summary(rows: list[dict[str, Any]]) -> dict[tuple[str, str | 
     return summary
 
 
+def is_library_overlay_only_key(key: str) -> bool:
+    if key in LIBRARY_OVERLAY_ONLY_KEYS:
+        return True
+    return any(key == prefix or key.startswith(f"{prefix}_") for prefix in LIBRARY_OVERLAY_ONLY_PREFIXES)
+
+
 QUICKSTART_RECOMMENDATION_EXCLUSIONS: dict[tuple[str, str], str] = {
+    ("collection", "in_the_last_released"): "basic_chart_search_window_not_user_facing_quickstart",
+    ("collection", "in_the_last_episodes"): "basic_chart_search_window_not_user_facing_quickstart",
+    ("overlay", "text"): "valid_but_not_recommended_for_quickstart",
     ("library", "metadata_path"): "legacy_library_path_key_not_recommended",
     ("library", "overlay_path"): "legacy_library_path_key_not_recommended",
     ("library", "reapply_overlays"): "valid_but_not_recommended_for_quickstart",
@@ -2368,12 +2395,17 @@ def get_quickstart_recommendation_exclusion(row: dict[str, Any]) -> str | None:
         return structural_reason
     kind = str(row.get("kind") or "")
     key = str(row.get("key") or "")
-    if kind == "library" and key in LIBRARY_OVERLAY_ONLY_KEYS:
+    if kind == "library" and is_library_overlay_only_key(key):
         return "overlay_rendering_key_misclassified_at_library_scope"
+    if kind == "overlay" and str(row.get("default") or "") == "languages" and key == "text":
+        return "valid_but_not_recommended_for_quickstart"
     return QUICKSTART_RECOMMENDATION_EXCLUSIONS.get((kind, key))
 
 
 MERGED_FIX_QUEUE_EXCLUSIONS: dict[tuple[str, str], str] = {
+    ("collection", "in_the_last_released"): "basic_chart_search_window_not_user_facing_quickstart",
+    ("collection", "in_the_last_episodes"): "basic_chart_search_window_not_user_facing_quickstart",
+    ("overlay", "text"): "valid_but_not_recommended_for_quickstart",
     ("library", "library_type"): "internal_importer_or_analyzer_metadata",
     ("library", "sort_by"): "library_template_variable_not_documented_for_quickstart",
     ("library", "exclude"): "library_template_variable_not_documented_for_quickstart",
@@ -2389,6 +2421,10 @@ def get_merged_fix_queue_exclusion(row: dict[str, Any]) -> str | None:
         return structural_reason
     kind = str(row.get("kind") or "")
     key = str(row.get("key") or "")
+    if kind == "library" and is_library_overlay_only_key(key):
+        return "overlay_rendering_key_misclassified_at_library_scope"
+    if kind == "overlay" and str(row.get("default") or "") == "languages" and key == "text":
+        return "valid_but_not_recommended_for_quickstart"
     return MERGED_FIX_QUEUE_EXCLUSIONS.get((kind, key))
 
 
