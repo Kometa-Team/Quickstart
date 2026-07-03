@@ -24,23 +24,42 @@ Public entry points:
   Preserves the exact call order because several later steps assume
   earlier ones have already run.
 
+* :func:`emit_and_validate_config` -- final phase.  Combines
+  ``apply_final_transformations``, YAML dump per section, and
+  jsonschema validation into one call that returns the 5-tuple
+  ``build_config`` needs to return to its caller.
+
 Private helpers:
 
 * :func:`_strip_mal_code_verifier` -- one-line PKCE half-secret scrub.
+* :func:`_load_config_schema` -- open the config JSON schema once,
+  return a shared YAML parser + parsed schema dict.
+* :func:`_dump_config_sections` -- iterate
+  :data:`ORDERED_CONFIG_SECTIONS` and append each section's YAML to
+  the running text.
+* :func:`_validate_yaml_content` -- run the parsed YAML through
+  Draft7 jsonschema.
 """
 
 from __future__ import annotations
 
 import copy
+import os
+
+import jsonschema
+from flask import current_app as app
+from ruamel.yaml import YAML
 
 from modules import helpers, persistence
 from modules.output_collections import (
     _collapse_collection_data_template_vars,
     _normalize_legacy_collection_template_vars,
 )
+from modules.output_dump import dump_section
 from modules.output_headers import render_section_header
 from modules.output_optimize import optimize_template_variables
 from modules.output_postprocess import _rewrite_custom_font_paths, clean_section_data
+from modules.output_yaml_header import render_yaml_header
 
 
 def retrieve_config_sections(header_style):
@@ -164,3 +183,102 @@ def apply_final_transformations(config_data, library_types, *, optimize_defaults
     config_data = helpers.enforce_string_fields(config_data, helpers.STRING_FIELDS)
     config_data = _rewrite_custom_font_paths(config_data)
     return config_data
+
+
+def _load_config_schema():
+    """Return ``(yaml_parser, schema_dict)`` for validation.
+
+    Uses a pure/safe ``YAML`` instance since we only need JSON-like
+    parsing of a schema file we control.  ``helpers.ensure_json_schema()``
+    is a no-op after the first successful call, so calling it here on
+    every request is cheap.
+    """
+    yaml = YAML(typ="safe", pure=True)
+    yaml.default_flow_style = False
+    yaml.sort_keys = False
+
+    helpers.ensure_json_schema()
+    schema_path = os.path.join(helpers.JSON_SCHEMA_DIR, "config-schema.json")
+    with open(schema_path, "r") as file:
+        schema = yaml.load(file)
+
+    return yaml, schema
+
+
+def _dump_config_sections(config_data, header_art, header_style, config_name):
+    """Iterate :data:`ORDERED_CONFIG_SECTIONS` and dump each present section.
+
+    Returns the accumulated YAML string (no leading header).  Sections
+    with no entry in *config_data* are skipped.  The pre-rendered header
+    art from :func:`retrieve_config_sections` is preferred over a fresh
+    render so identical section names stay byte-identical between the
+    initial retrieval pass and the emission pass.
+    """
+    yaml_body = ""
+    for section_key, _section_stem in ORDERED_CONFIG_SECTIONS:
+        if section_key not in config_data:
+            continue
+        section_data = config_data[section_key]
+        # Prefer the pre-rendered header art; fall back to re-rendering
+        # for sections that didn't come from the template list.
+        if section_key in header_art:
+            section_art = header_art[section_key]
+        else:
+            section_art = render_section_header(helpers.user_visible_name(section_key), header_style)
+        yaml_body += dump_section(section_art, section_key, section_data, header_style, config_name)
+    return yaml_body
+
+
+def _validate_yaml_content(yaml_content, yaml_parser, schema):
+    """Validate *yaml_content* against *schema*.
+
+    Returns ``(validated, first_error, sorted_errors)`` where:
+
+    * ``validated`` -- bool, True when no errors
+    * ``first_error`` -- the earliest error by path (stable ordering)
+      or ``None`` when valid
+    * ``sorted_errors`` -- the full sorted-by-path list; may be empty
+    """
+    parsed_yaml = yaml_parser.load(yaml_content)
+    validator = jsonschema.Draft7Validator(schema)
+    sorted_errors = sorted(validator.iter_errors(parsed_yaml), key=lambda err: list(err.path))
+    if sorted_errors:
+        return False, sorted_errors[0], sorted_errors
+    return True, None, []
+
+
+def emit_and_validate_config(
+    config_data,
+    header_art,
+    header_style,
+    config_name,
+    library_types,
+    movie_libraries,
+    show_libraries,
+):
+    """Final phase of ``build_config``: header + transforms + dump + validate.
+
+    Composes the six-step transformation chain
+    (:func:`apply_final_transformations`, gated by
+    ``QS_OPTIMIZE_DEFAULTS``), YAML dump per ordered section
+    (:func:`_dump_config_sections`), and jsonschema validation
+    (:func:`_validate_yaml_content`) into one call.
+
+    Reuses the update snapshot cached at ``app.config['VERSION_CHECK']``
+    when available -- avoids a network call on every final-page render.
+
+    Returns the 5-tuple ``build_config`` returns to its caller:
+    ``(validated, first_error, transformed_config_data, yaml_content, sorted_errors)``.
+    """
+    yaml_parser, schema = _load_config_schema()
+
+    version_info = app.config.get("VERSION_CHECK") or helpers.check_for_update()
+    yaml_content = render_yaml_header(header_style, config_name, movie_libraries, show_libraries, version_info)
+
+    optimize_defaults = helpers.booler(app.config.get("QS_OPTIMIZE_DEFAULTS", True))
+    config_data = apply_final_transformations(config_data, library_types, optimize_defaults=optimize_defaults)
+
+    yaml_content += _dump_config_sections(config_data, header_art, header_style, config_name)
+
+    validated, first_error, sorted_errors = _validate_yaml_content(yaml_content, yaml_parser, schema)
+    return validated, first_error, config_data, yaml_content, sorted_errors

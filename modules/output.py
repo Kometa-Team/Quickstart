@@ -1,8 +1,5 @@
-import os
-
-import jsonschema
+import jsonschema  # noqa: F401 -- re-exported so tests monkeypatching output.jsonschema.Draft7Validator keep working
 from flask import current_app as app, has_request_context, session
-from ruamel.yaml import YAML
 
 from modules import helpers
 from modules import persistence  # noqa: F401 -- re-exported so tests monkeypatching output.persistence.retrieve_settings keep working
@@ -33,7 +30,6 @@ from modules.output_defaults import (  # noqa: F401 -- re-exported so output.<na
     _prune_template_variables,
     _values_match,
 )
-from modules.output_dump import dump_section
 from modules.output_file_entries import (  # noqa: F401 -- re-exported so output.<name> keeps working
     _parse_collection_file_block_entries,
     _parse_metadata_file_entries,
@@ -66,9 +62,8 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     _rewrite_custom_font_paths,
     clean_section_data,
 )
-from modules.output_render import ORDERED_CONFIG_SECTIONS, apply_final_transformations, retrieve_config_sections
+from modules.output_render import emit_and_validate_config, retrieve_config_sections
 from modules.output_reorder import reorder_library_section  # noqa: F401 -- re-exported so tests calling output.reorder_library_section keep working
-from modules.output_yaml_header import render_yaml_header
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
     _coerce_string_list,
@@ -98,11 +93,6 @@ def build_config(header_style="standard", config_name=None):
     config_data, header_art = retrieve_config_sections(header_style)
     library_types = {}
 
-    def header_for_section(section_key, display_name):
-        if section_key in header_art:
-            return header_art[section_key]
-        return render_section_header(display_name, header_style)
-
     normalize_playlist_files_section(config_data, debug=app.config["QS_DEBUG"])
     normalize_webhooks_section(config_data, debug=app.config["QS_DEBUG"])
     normalize_apprise_section(config_data)
@@ -130,39 +120,12 @@ def build_config(header_style="standard", config_name=None):
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 
-    # Build YAML content
-    yaml = YAML(typ="safe", pure=True)
-    yaml.default_flow_style = False
-    yaml.sort_keys = False
-
-    helpers.ensure_json_schema()
-
-    with open(os.path.join(helpers.JSON_SCHEMA_DIR, "config-schema.json"), "r") as file:
-        schema = yaml.load(file)
-
-    # Reuse the shared update snapshot instead of re-checking on every final-page render.
-    version_info = app.config.get("VERSION_CHECK") or helpers.check_for_update()
-
-    yaml_content = render_yaml_header(header_style, config_name, movie_libraries, show_libraries, version_info)
-
-    optimize_defaults = helpers.booler(app.config.get("QS_OPTIMIZE_DEFAULTS", True))
-    config_data = apply_final_transformations(config_data, library_types, optimize_defaults=optimize_defaults)
-
-    for section_key, section_stem in ORDERED_CONFIG_SECTIONS:
-        if section_key in config_data:
-            section_data = config_data[section_key]
-            section_art = header_for_section(section_key, helpers.user_visible_name(section_key))
-            yaml_content += dump_section(section_art, section_key, section_data, header_style, config_name)
-
-    validated = False
-    validation_error = None
-    validation_errors = []
-    parsed_yaml = yaml.load(yaml_content)
-    validator = jsonschema.Draft7Validator(schema)
-    validation_errors = sorted(validator.iter_errors(parsed_yaml), key=lambda err: list(err.path))
-    if validation_errors:
-        validation_error = validation_errors[0]
-    else:
-        validated = True
-
-    return validated, validation_error, config_data, yaml_content, validation_errors
+    return emit_and_validate_config(
+        config_data,
+        header_art,
+        header_style,
+        config_name,
+        library_types,
+        movie_libraries,
+        show_libraries,
+    )
