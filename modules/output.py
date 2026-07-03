@@ -1,11 +1,6 @@
-import io
 import copy
+import io
 import os
-import shutil
-import subprocess
-from datetime import datetime
-import platform
-import psutil
 
 import jsonschema
 from flask import current_app as app, has_request_context, session
@@ -41,7 +36,6 @@ from modules.output_file_entries import (  # noqa: F401 -- re-exported so output
     _parse_overlay_file_block_entries,
 )
 from modules.output_headers import (  # noqa: F401 -- re-exported so output.<name> and public callers keep working
-    add_border_to_ascii_art,
     render_section_header,
     section_heading,
 )
@@ -83,6 +77,7 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     clean_section_data,
 )
 from modules.output_reorder import reorder_library_section  # public API used by tests as output.reorder_library_section
+from modules.output_yaml_header import render_yaml_header
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
     _coerce_string_list,
@@ -518,12 +513,6 @@ def build_config(header_style="standard", config_name=None):
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 
-    # Header comment for YAML file
-    header_comment = (
-        "### \n# We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
-        "and YAML by Red Hat extension. Visual Studio Code will also leverage the above link (yaml-language-server) to enhance Kometa yml edits.\n###"
-    )
-
     # Build YAML content
     yaml = YAML(typ="safe", pure=True)
     yaml.default_flow_style = False
@@ -536,97 +525,8 @@ def build_config(header_style="standard", config_name=None):
 
     # Reuse the shared update snapshot instead of re-checking on every final-page render.
     version_info = app.config.get("VERSION_CHECK") or helpers.check_for_update()
-    kometa_branch = version_info.get("kometa_branch", "nightly")  # Default to nightly if not found
 
-    # Fetch other Quickstart details
-    quickstart_branch = version_info.get("branch", "unknown")
-    quickstart_version = version_info.get("local_version", "unknown")
-    quickstart_environment = version_info.get("running_on", "unknown")
-
-    system_name = platform.system() or "Unknown OS"
-    system_release = platform.release() or ""
-    cpu_name = platform.processor() or platform.uname().processor or "Unknown CPU"
-    cpu_cores = psutil.cpu_count(logical=True) or 0
-    vm = psutil.virtual_memory()
-    mem_total = int(vm.total / (1024 * 1024))
-    mem_available = int(vm.available / (1024 * 1024))
-    mem_used = int((vm.total - vm.available) / (1024 * 1024))
-    mem_percent = int(vm.percent)
-    is_docker = bool(app.config.get("QUICKSTART_DOCKER")) or "Docker" in str(quickstart_environment)
-    python_version = platform.python_version() or platform.python_version_tuple()[0]
-    git_version = "Unavailable"
-    git_path = shutil.which("git")
-    if git_path:
-        try:
-            git_result = subprocess.run(
-                [git_path, "--version"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            git_output = (git_result.stdout or git_result.stderr or "").strip()
-            if git_output:
-                git_version = git_output
-        except Exception:
-            git_version = "Unavailable"
-    os_line = f"# OS: {system_name} {system_release}".strip()
-    browser_line = "Unknown"
-    if has_request_context():
-        browser_name = session.get("qs_user_agent_browser") or ""
-        browser_version = session.get("qs_user_agent_version") or ""
-        browser_platform = session.get("qs_user_agent_platform") or ""
-        if browser_name:
-            browser_line = browser_name
-            if browser_version:
-                browser_line = f"{browser_line} {browser_version}"
-            if browser_platform:
-                browser_line = f"{browser_line} ({browser_platform})"
-        else:
-            browser_line = session.get("qs_user_agent_raw") or session.get("qs_user_agent") or "Unknown"
-
-    # Get the current timestamp in a readable format
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Get plex info
-    plex_summary = helpers.get_plex_summary()
-    qs_settings_lines = helpers.get_quickstart_settings_summary()
-    qs_settings_block = "\n".join(qs_settings_lines) if qs_settings_lines else ""
-    movie_summary_names = sorted(
-        (str(name).strip() for name in movie_libraries.values() if str(name).strip()),
-        key=lambda value: value.casefold(),
-    )
-    show_summary_names = sorted(
-        (str(name).strip() for name in show_libraries.values() if str(name).strip()),
-        key=lambda value: value.casefold(),
-    )
-    library_names = movie_summary_names + show_summary_names
-    library_details = helpers.get_library_summaries(library_names)
-    schema_header = f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json"
-
-    yaml_content = (
-        f"{schema_header}\n\n"
-        f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
-        f"#==================== {config_name} ====================#\n"
-        f"# {config_name} config created by Quickstart on {timestamp}\n"
-        f"# System Information\n"
-        f"{os_line}\n"
-        f"# Docker: {is_docker}\n"
-        f"# CPU: {cpu_name} ({cpu_cores} cores)\n"
-        f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free\n"
-        f"# Python: {python_version}\n"
-        f"# Git: {git_version}\n"
-        f"# Browser: {browser_line}\n"
-        f"{qs_settings_block}\n"
-        f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
-        f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
-        f"###\n"
-        f"# Libraries configured with Quickstart: {len(movie_libraries)} movie, {len(show_libraries)} show\n"
-        f"{'# ' + library_details.replace(chr(10), chr(10) + '# ')}\n"
-        f"{header_comment}\n\n"
-        f"# This file is auto-generated by Quickstart. Do not edit manually unless you know what you are doing.\n"
-        f"#==================== {config_name} ====================#\n"
-        f"\n\n"
-    )
+    yaml_content = render_yaml_header(header_style, config_name, movie_libraries, show_libraries, version_info)
 
     ordered_sections = [
         ("libraries", "025-libraries"),
