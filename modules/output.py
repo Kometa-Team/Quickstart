@@ -59,7 +59,6 @@ from modules.output_library_ops import (
     build_top_level_fields,
 )
 from modules.output_libraries_data import extract_libraries_bundle
-from modules.output_optimize import optimize_template_variables
 from modules.output_overlay_builder import build_overlay_files_for_library
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
@@ -82,6 +81,7 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     _rewrite_custom_font_paths,
     clean_section_data,
 )
+from modules.output_render import ORDERED_CONFIG_SECTIONS, apply_final_transformations
 from modules.output_reorder import reorder_library_section  # public API used by tests as output.reorder_library_section
 from modules.output_yaml_header import render_yaml_header
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
@@ -389,44 +389,10 @@ def build_config(header_style="standard", config_name=None):
 
     yaml_content = render_yaml_header(header_style, config_name, movie_libraries, show_libraries, version_info)
 
-    ordered_sections = [
-        ("libraries", "025-libraries"),
-        ("playlist_files", "027-playlist_files"),
-        ("settings", "150-settings"),
-        ("webhooks", "140-webhooks"),
-        ("plex", "010-plex"),
-        ("tmdb", "020-tmdb"),
-        ("tautulli", "030-tautulli"),
-        ("github", "040-github"),
-        ("omdb", "050-omdb"),
-        ("mdblist", "060-mdblist"),
-        ("notifiarr", "070-notifiarr"),
-        ("gotify", "080-gotify"),
-        ("ntfy", "085-ntfy"),
-        ("apprise", "087-apprise"),
-        ("anidb", "090-anidb"),
-        ("radarr", "100-radarr"),
-        ("sonarr", "110-sonarr"),
-        ("trakt", "120-trakt"),
-        ("mal", "130-mal"),
-    ]
-
-    # Ensure `code_verifier` is removed from mal.authorization (wherever it exists)
-    if "mal" in config_data and "mal" in config_data["mal"]:
-        authorization_data = config_data["mal"]["mal"].get("authorization", {})
-        authorization_data.pop("code_verifier", None)  # Remove safely
-
-    config_data = _normalize_legacy_collection_template_vars(config_data)
     optimize_defaults = helpers.booler(app.config.get("QS_OPTIMIZE_DEFAULTS", True))
-    if optimize_defaults:
-        config_data = optimize_template_variables(config_data, library_types)
-    config_data = _collapse_collection_data_template_vars(config_data)
+    config_data = apply_final_transformations(config_data, library_types, optimize_defaults=optimize_defaults)
 
-    # Apply enforce_string_fields to ensure proper formatting
-    config_data = helpers.enforce_string_fields(config_data, helpers.STRING_FIELDS)
-    config_data = _rewrite_custom_font_paths(config_data)
-
-    for section_key, section_stem in ordered_sections:
+    for section_key, section_stem in ORDERED_CONFIG_SECTIONS:
         if section_key in config_data:
             section_data = config_data[section_key]
             section_art = header_for_section(section_key, helpers.user_visible_name(section_key))
