@@ -270,3 +270,57 @@ def build_metadata_backup_operation(attr_group, library_type, lib_id):
         result["add_blank_entries"] = True
 
     return result
+
+
+# The five 'top_level' fields whose emptiness rule is 'None or empty
+# string means user didn't set it'.  ``remove_overlays`` uses a
+# truthy check and ``reset_overlays`` also filters the literal
+# string 'None' (UI leftover), so they're handled inline below.
+_TOP_LEVEL_SIMPLE_FIELDS = (
+    "report_path",
+    "schedule",
+    "auto_sort_hubs",
+    "schedule_overlays",
+)
+
+
+def _top_level_key(library_type, lib_id, suffix):
+    """Compose a ``top_level_<suffix>`` lookup key.
+
+    Mirrors :func:`_attr_key` but for the ``top_level`` namespace so
+    ``top_group.get(_top_level_key(...))`` reads clean.
+    """
+    return f"{library_type}-library_{lib_id}-top_level_{suffix}"
+
+
+def build_top_level_fields(top_group, library_type, lib_id):
+    """Return the top-level fields dict to merge into a library's entry.
+
+    Reads six top-level inputs off ``top_group``:
+
+    * ``report_path``, ``schedule``, ``auto_sort_hubs``, ``schedule_overlays``
+      -- included when the value isn't ``None`` or empty string.
+    * ``remove_overlays`` -- included as literal ``True`` when the raw
+      value is truthy.  (The stored value is always emitted as ``True``
+      per the Kometa schema; we only care whether it was set.)
+    * ``reset_overlays`` -- included when the value isn't ``None``,
+      empty string, or the literal string ``"None"`` (a UI leftover).
+
+    Returns an empty dict when none of the six are set.  Callers merge
+    the result into their per-library entry dict via ``entry.update(...)``.
+    """
+    result = {}
+
+    for field in _TOP_LEVEL_SIMPLE_FIELDS:
+        value = top_group.get(_top_level_key(library_type, lib_id, field))
+        if value not in (None, ""):
+            result[field] = value
+
+    if top_group.get(_top_level_key(library_type, lib_id, "remove_overlays")):
+        result["remove_overlays"] = True
+
+    reset_overlays = top_group.get(_top_level_key(library_type, lib_id, "reset_overlays"))
+    if reset_overlays not in (None, "None", ""):
+        result["reset_overlays"] = reset_overlays
+
+    return result
