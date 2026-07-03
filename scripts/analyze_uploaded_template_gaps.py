@@ -46,6 +46,7 @@ QS_SPECIAL_LIBRARY_TEMPLATE_KEYS = {
     "sep_style",
 }
 QS_SPECIAL_GLOBAL_SUPPORTED_KEYS = {
+    "collection_section",
     "minimum_items",
     "playlist_exclude_users",
     "playlist_sync_to_users",
@@ -681,12 +682,20 @@ def build_qs_overlay_map(qs_overlays_path: Path, *, enrich_runtime_support: bool
 
 def overlay_key_supported_in_quickstart(alias: str | None, key: str, qs_overlays: dict[str, set[str]]) -> bool:
     alias_text = str(alias or "").strip().lower()
-    if key in qs_overlays.get(alias_text, set()):
+    alias_keys = qs_overlays.get(alias_text, set())
+    if key in alias_keys:
         return True
+
+    # Quickstart exposes ratings font sizing per slot rather than as the
+    # shared Kometa template variable, but users still get full control over
+    # the rendered ratings font sizes through those slot inputs.
+    if alias_text == "ratings" and key == "font_size":
+        if any(f"rating{idx}_font_size" in alias_keys for idx in ("1", "2", "3")):
+            return True
 
     source_override_prefixes = ("file", "url", "git", "repo")
     for prefix in source_override_prefixes:
-        if key.startswith(f"{prefix}_") and prefix in qs_overlays.get(alias_text, set()):
+        if key.startswith(f"{prefix}_") and prefix in alias_keys:
             return True
 
     # Quickstart models subtitle language flags as a dedicated overlay alias,

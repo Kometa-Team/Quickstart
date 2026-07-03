@@ -205,6 +205,16 @@ def test_overlay_key_supported_in_quickstart_uses_direct_alias_match_when_availa
     assert module.overlay_key_supported_in_quickstart("ratings", "rating3_image", qs_overlays) is True
 
 
+def test_overlay_key_supported_in_quickstart_accepts_ratings_shared_font_size_alias():
+    module = _load_gap_analyzer_module()
+
+    qs_overlays = {
+        "ratings": {"rating1_font_size", "rating2_font_size", "rating3_font_size"},
+    }
+
+    assert module.overlay_key_supported_in_quickstart("ratings", "font_size", qs_overlays) is True
+
+
 def test_overlay_key_supported_in_quickstart_is_case_insensitive_for_overlay_aliases():
     module = _load_gap_analyzer_module()
 
@@ -240,6 +250,16 @@ def test_build_qs_playlist_supported_keys_includes_shared_and_keyed_playlist_fie
     assert "sonarr_add_missing" in playlist_keys
     assert "trakt_list_" in playlist_keys
     assert "use_" in playlist_keys
+
+
+def test_build_qs_global_supported_keys_includes_collection_section(tmp_path):
+    module = _load_gap_analyzer_module()
+    qs_attributes = tmp_path / "quickstart_attributes.json"
+    qs_attributes.write_text('{"sections": []}', encoding="utf-8")
+
+    global_keys = module.build_qs_global_supported_keys(qs_attributes)
+
+    assert "collection_section" in global_keys
 
 
 def test_playlist_key_supported_in_quickstart_accepts_keyed_playlist_overrides():
