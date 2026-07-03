@@ -520,6 +520,54 @@ def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys(
             "value_shape_rule": "list",
         },
         {
+            "kind": "collection",
+            "default": "basic",
+            "key": "in_the_last_released",
+            "file": "config.yml",
+            "library": "Movies",
+            "matched_default_files": ["chart/basic.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "integer",
+        },
+        {
+            "kind": "collection",
+            "default": "basic",
+            "key": "in_the_last_episodes",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": ["chart/basic.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "integer",
+        },
+        {
+            "kind": "overlay",
+            "default": "languages",
+            "key": "text",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": ["overlays/languages.yml"],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
+        {
             "kind": "overlay",
             "default": "status",
             "key": "vertical_align",
@@ -542,13 +590,16 @@ def test_quickstart_recommendation_exclusion_summary_tracks_legacy_library_keys(
         key=lambda item: str(item["key"]),
     )
 
-    assert [item["key"] for item in excluded] == ["exclude", "library_type", "metadata_path", "reapply_overlays", "sort_by"]
+    assert [item["key"] for item in excluded] == ["exclude", "in_the_last_episodes", "in_the_last_released", "library_type", "metadata_path", "reapply_overlays", "sort_by", "text"]
     reasons = {item["key"]: item["reason"] for item in excluded}
+    assert reasons["in_the_last_released"] == "basic_chart_search_window_not_user_facing_quickstart"
+    assert reasons["in_the_last_episodes"] == "basic_chart_search_window_not_user_facing_quickstart"
     assert reasons["library_type"] == "internal_importer_or_analyzer_metadata"
     assert reasons["metadata_path"] == "legacy_library_path_key_not_recommended"
     assert reasons["reapply_overlays"] == "valid_but_not_recommended_for_quickstart"
     assert reasons["sort_by"] == "library_template_variable_not_documented_for_quickstart"
     assert reasons["exclude"] == "library_template_variable_not_documented_for_quickstart"
+    assert reasons["text"] == "valid_but_not_recommended_for_quickstart"
 
 
 def test_build_qs_collection_map_preserves_dynamic_family_edge_cases_for_repo_file():
@@ -1179,6 +1230,22 @@ def test_quickstart_recommendation_summary_excludes_overlay_style_keys_misclassi
             "value_shape_verified": True,
             "value_shape_rule": "number",
         },
+        {
+            "kind": "library",
+            "default": None,
+            "key": "rating1_image",
+            "file": "config.yml",
+            "library": "Shows",
+            "matched_default_files": [],
+            "supported_in_quickstart": False,
+            "quickstart_declared": False,
+            "schema_declared": True,
+            "kometa_declared": True,
+            "validation_level": "works_in_kometa_missing_from_quickstart",
+            "name_verified": True,
+            "value_shape_verified": True,
+            "value_shape_rule": "string",
+        },
     ]
 
     summary = module.build_quickstart_recommendation_summary(rows)
@@ -1188,6 +1255,7 @@ def test_quickstart_recommendation_summary_excludes_overlay_style_keys_misclassi
     assert ranked == []
     assert excluded[("library", "", "horizontal_align")]["reason"] == "overlay_rendering_key_misclassified_at_library_scope"
     assert excluded[("library", "", "back_width")]["reason"] == "overlay_rendering_key_misclassified_at_library_scope"
+    assert excluded[("library", "", "rating1_image")]["reason"] == "overlay_rendering_key_misclassified_at_library_scope"
 
 
 def test_build_merged_fix_queue_excludes_overlay_style_keys_misclassified_as_library_scope():
@@ -1197,7 +1265,7 @@ def test_build_merged_fix_queue_excludes_overlay_style_keys_misclassified_as_lib
         {
             "kind": "library",
             "default": None,
-            "key": "horizontal_align",
+            "key": "rating1",
             "occurrences": 10,
             "files": ["config.yml"],
             "libraries": ["Shows"],
@@ -1213,7 +1281,7 @@ def test_build_merged_fix_queue_excludes_overlay_style_keys_misclassified_as_lib
         {
             "kind": "library",
             "default": None,
-            "key": "horizontal_align",
+            "key": "rating1",
             "import_status": "unmapped",
             "reason_class": "missing_template_variable_support",
             "occurrences": 10,
