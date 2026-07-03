@@ -1,5 +1,4 @@
 import copy
-import io
 import os
 
 import jsonschema
@@ -44,22 +43,8 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
     render_section_header,
     section_heading,
 )
-from modules.output_library_ops import (
-    build_delete_collections_operation,
-    build_grouped_mass_update_operations,
-    build_library_operations,
-    build_library_settings,
-    build_mapper_operations,
-    build_mass_background_update_operation,
-    build_mass_genre_update_operation,
-    build_mass_poster_update_operation,
-    build_metadata_backup_operation,
-    build_service_overrides,
-    build_template_variables,
-    build_top_level_fields,
-)
 from modules.output_libraries_data import extract_libraries_bundle
-from modules.output_overlay_builder import build_overlay_files_for_library
+from modules.output_libraries_section import build_libraries_section  # noqa: F401 -- re-exported so tests calling output.build_libraries_section keep working
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
     PLAYLIST_SHARED_TEMPLATE_VAR_SPECS,
@@ -82,7 +67,7 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     clean_section_data,
 )
 from modules.output_render import ORDERED_CONFIG_SECTIONS, apply_final_transformations
-from modules.output_reorder import reorder_library_section  # public API used by tests as output.reorder_library_section
+from modules.output_reorder import reorder_library_section  # noqa: F401 -- re-exported so tests calling output.reorder_library_section keep working
 from modules.output_yaml_header import render_yaml_header
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
@@ -100,210 +85,6 @@ from modules.output_values import (  # noqa: F401 -- re-exported for tests calli
 )
 
 _EMPTY_OUTPUT = object()
-
-
-def build_libraries_section(
-    movie_libraries=None,
-    show_libraries=None,
-    movie_collections=None,
-    show_collections=None,
-    movie_collection_files=None,
-    show_collection_files=None,
-    movie_overlays=None,
-    show_overlays=None,
-    movie_attributes=None,
-    show_attributes=None,
-    movie_metadata_files=None,
-    show_metadata_files=None,
-    movie_templates=None,
-    show_templates=None,
-    movie_top_level=None,
-    show_top_level=None,
-):
-    """Build the ``libraries:`` YAML block from per-kind grouped dicts.
-
-    All 16 arguments are optional and default to an empty dict when
-    omitted -- ``build_config`` passes everything; tests typically
-    populate only one or two slots.  Passing ``None`` is treated as an
-    explicit empty dict so callers can rely on the same defaults.
-    """
-    # Coerce ``None`` -> ``{}`` for all 16 slots so downstream code can
-    # rely on dict semantics without guarding at every .get().
-    movie_libraries = movie_libraries or {}
-    show_libraries = show_libraries or {}
-    movie_collections = movie_collections or {}
-    show_collections = show_collections or {}
-    movie_collection_files = movie_collection_files or {}
-    show_collection_files = show_collection_files or {}
-    movie_overlays = movie_overlays or {}
-    show_overlays = show_overlays or {}
-    movie_attributes = movie_attributes or {}
-    show_attributes = show_attributes or {}
-    movie_metadata_files = movie_metadata_files or {}
-    show_metadata_files = show_metadata_files or {}
-    movie_templates = movie_templates or {}
-    show_templates = show_templates or {}
-    movie_top_level = movie_top_level or {}
-    show_top_level = show_top_level or {}
-
-    libraries_section = {}
-
-    def sorted_library_items(libraries):
-        """Return deterministic library ordering by display name, then key."""
-        if not isinstance(libraries, dict):
-            return []
-        return sorted(
-            libraries.items(),
-            key=lambda item: (str(item[1]).casefold(), str(item[0]).casefold()),
-        )
-
-    def add_entry(
-        library_key,
-        library_name,
-        library_type,
-        collections,
-        overlays,
-        attributes,
-        templates,
-        top_level,
-    ):
-        """Processes a single library and adds valid data to the output."""
-        entry = {}
-
-        lib_id = helpers.extract_library_name(library_key)
-
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Processing Library: {library_key} -> {library_name}", level="DEBUG")
-
-        # Process Library Settings and Operations Attributes
-        operations = {}
-        attr_group = attributes.get(lib_id, {})
-        library_settings = build_library_settings(attr_group, library_type, lib_id)
-        operations.update(build_library_operations(attr_group, library_type, lib_id))
-        service_name, service_overrides = build_service_overrides(attr_group, library_type, lib_id)
-
-        # Begin: Mass Genre Update Section
-        mass_genre_update = build_mass_genre_update_operation(attr_group, library_type, lib_id)
-        if mass_genre_update:
-            operations["mass_genre_update"] = mass_genre_update
-
-        # Handle nested delete_collections block
-        delete_collections = build_delete_collections_operation(attr_group, library_type, lib_id)
-        if delete_collections:
-            operations["delete_collections"] = delete_collections
-
-        if library_settings:
-            entry["settings"] = library_settings
-
-        if service_overrides:
-            entry[service_name] = service_overrides
-
-        if operations:
-            entry["operations"] = operations
-
-        # Process Collections
-        collection_files, has_collectionless = build_collection_files(
-            library_key,
-            library_type,
-            collections,
-            templates,
-            movie_collection_files,
-            show_collection_files,
-            debug=app.config["QS_DEBUG"],
-        )
-        if collection_files:
-            entry["collection_files"] = collection_files
-
-        collection_key = helpers.extract_library_name(library_key)
-        if collection_key:
-            overlay_files = build_overlay_files_for_library(library_key, library_type, overlays)
-            if overlay_files:
-                entry["overlay_files"] = overlay_files
-
-        metadata_group = (
-            movie_metadata_files.get(helpers.extract_library_name(library_key), {})
-            if library_type == "mov"
-            else show_metadata_files.get(helpers.extract_library_name(library_key), {})
-        )
-        library_prefix = helpers.strip_library_suffix(library_key)
-        metadata_entries = _parse_metadata_file_entries(metadata_group.get(f"{library_prefix}-metadata_files"))
-        if metadata_entries:
-            entry["metadata_files"] = metadata_entries
-
-        # Template Variables
-        entry["template_variables"] = build_template_variables(templates, library_type, library_key, has_collectionless)
-
-        # Grouped mass update operations (excluding mass_genre_update, handled earlier)
-        operations.update(build_grouped_mass_update_operations(attr_group, library_type, lib_id))
-
-        # genre_mapper and content_rating_mapper
-        operations.update(build_mapper_operations(attr_group, library_type, lib_id))
-
-        # metadata_backup
-        backup = build_metadata_backup_operation(attr_group, library_type, lib_id)
-        if backup:
-            operations["metadata_backup"] = backup
-
-        # mass_poster_update
-        poster = build_mass_poster_update_operation(attr_group, library_type, lib_id)
-        if poster:
-            operations["mass_poster_update"] = poster
-
-        # mass_background_update
-        background = build_mass_background_update_operation(attr_group, library_type, lib_id)
-        if background:
-            operations["mass_background_update"] = background
-
-        # Remove/Reset Overlays + other top-level fields
-        top_group = top_level.get(lib_id, {})
-        entry.update(build_top_level_fields(top_group, library_type, lib_id))
-
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Top Level for {lib_id}: {top_group}", level="DEBUG")
-
-        if operations:
-            entry["operations"] = operations
-
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Entry for {library_name}: {entry}", level="DEBUG")
-
-        libraries_section[library_name] = reorder_library_section(entry)
-
-    #############################################################################################
-
-    # Process movie libraries (A->Z by display name, deterministic on key ties)
-    for lk, ln in sorted_library_items(movie_libraries):
-        add_entry(
-            lk,
-            ln,
-            "mov",
-            movie_collections,
-            movie_overlays,
-            movie_attributes,
-            movie_templates,
-            movie_top_level,
-        )
-
-    # Process show libraries (A->Z by display name, deterministic on key ties)
-    for lk, ln in sorted_library_items(show_libraries):
-        add_entry(
-            lk,
-            ln,
-            "sho",
-            show_collections,
-            show_overlays,
-            show_attributes,
-            show_templates,
-            show_top_level,
-        )
-
-    if app.config["QS_DEBUG"]:
-        helpers.ts_log("Generated YAML Output:\n", level="DEBUG")
-        buf = io.BytesIO()
-        YAML().dump({"libraries": libraries_section}, buf)
-        helpers.ts_log(buf.getvalue().decode("utf-8"))
-
-    return {"libraries": libraries_section}
 
 
 def build_config(header_style="standard", config_name=None):
