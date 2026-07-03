@@ -144,24 +144,7 @@ def build_config(header_style="standard", config_name=None):
         library_types = bundle.library_types
 
         # Build nested libraries structure
-        libraries_section = build_libraries_section(
-            movie_libraries=movie_libraries,
-            show_libraries=show_libraries,
-            movie_collections=bundle.movie_groups["collections"],
-            show_collections=bundle.show_groups["collections"],
-            movie_collection_files=bundle.movie_groups["collection_files"],
-            show_collection_files=bundle.show_groups["collection_files"],
-            movie_overlays=bundle.movie_groups["overlays"],
-            show_overlays=bundle.show_groups["overlays"],
-            movie_attributes=bundle.movie_groups["attributes"],
-            show_attributes=bundle.show_groups["attributes"],
-            movie_metadata_files=bundle.movie_groups["metadata_files"],
-            show_metadata_files=bundle.show_groups["metadata_files"],
-            movie_templates=bundle.movie_groups["templates"],
-            show_templates=bundle.show_groups["templates"],
-            movie_top_level=bundle.movie_groups["top_level"],
-            show_top_level=bundle.show_groups["top_level"],
-        )
+        libraries_section = build_libraries_section(**bundle.to_section_kwargs())
         config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
         apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section)
         if app.config["QS_DEBUG"]:

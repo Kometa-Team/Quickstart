@@ -64,6 +64,38 @@ class LibrariesBundle:
     movie_groups: dict = field(default_factory=dict)
     show_groups: dict = field(default_factory=dict)
 
+    def to_section_kwargs(self):
+        """Unpack the bundle into the 16-kwarg form ``build_libraries_section`` wants.
+
+        Each keyword falls back to an empty dict when the corresponding
+        grouping stem isn't present -- matches
+        ``build_libraries_section``'s own default-coercion so callers
+        get identical behavior whether they use the bundle or hand-pass
+        args.
+
+        Returns a plain dict suitable for ``**kwargs`` unpacking, e.g.::
+
+            libraries_section = build_libraries_section(**bundle.to_section_kwargs())
+        """
+        return {
+            "movie_libraries": self.movie_libraries,
+            "show_libraries": self.show_libraries,
+            "movie_collections": self.movie_groups.get("collections", {}),
+            "show_collections": self.show_groups.get("collections", {}),
+            "movie_collection_files": self.movie_groups.get("collection_files", {}),
+            "show_collection_files": self.show_groups.get("collection_files", {}),
+            "movie_overlays": self.movie_groups.get("overlays", {}),
+            "show_overlays": self.show_groups.get("overlays", {}),
+            "movie_attributes": self.movie_groups.get("attributes", {}),
+            "show_attributes": self.show_groups.get("attributes", {}),
+            "movie_metadata_files": self.movie_groups.get("metadata_files", {}),
+            "show_metadata_files": self.show_groups.get("metadata_files", {}),
+            "movie_templates": self.movie_groups.get("templates", {}),
+            "show_templates": self.show_groups.get("templates", {}),
+            "movie_top_level": self.movie_groups.get("top_level", {}),
+            "show_top_level": self.show_groups.get("top_level", {}),
+        }
+
 
 def _is_selected_library_key(key, prefix):
     """Return True when *key* is a selected top-level library toggle.
