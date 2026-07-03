@@ -60,9 +60,11 @@ from modules.output_library_ops import (
 )
 from modules.output_optimize import optimize_template_variables
 from modules.output_overlays import (
+    apply_per_overlay_type_cleanup,
     overlay_lookup_name,
     prune_rating_template_vars,
     reorder_rating_template_vars,
+    sort_overlay_entries,
 )
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
@@ -283,91 +285,6 @@ def build_libraries_section(
             overlay_entries = []
             overlay_name_order = []
 
-            default_language_flag_codes = ["en", "de", "fr", "es", "pt", "ja"]
-            default_language_flag_weights = {
-                "en": 610,
-                "de": 600,
-                "fr": 590,
-                "es": 580,
-                "pt": 570,
-                "ja": 560,
-                "ko": 550,
-                "zh": 540,
-                "da": 530,
-                "ru": 520,
-                "it": 510,
-                "hi": 500,
-                "te": 490,
-                "fa": 480,
-                "th": 470,
-                "nl": 460,
-                "no": 450,
-                "is": 440,
-                "sv": 430,
-                "tr": 420,
-                "pl": 410,
-                "cs": 400,
-                "uk": 390,
-                "hu": 380,
-                "ar": 370,
-                "bg": 360,
-                "bn": 350,
-                "bs": 340,
-                "ca": 330,
-                "cy": 320,
-                "el": 310,
-                "et": 300,
-                "eu": 290,
-                "fi": 280,
-                "tl": 270,
-                "fil": 265,
-                "gl": 260,
-                "he": 250,
-                "hr": 240,
-                "id": 230,
-                "ka": 220,
-                "kk": 210,
-                "kn": 200,
-                "la": 190,
-                "lt": 180,
-                "lv": 170,
-                "mk": 160,
-                "ml": 150,
-                "mr": 140,
-                "ms": 130,
-                "nb": 120,
-                "nn": 110,
-                "pa": 100,
-                "ro": 90,
-                "sk": 80,
-                "sl": 70,
-                "sq": 60,
-                "sr": 50,
-                "so": 45,
-                "sw": 40,
-                "ta": 30,
-                "ur": 20,
-                "ay": 19,
-                "ga": 18,
-                "li": 17,
-                "kh": 16,
-                "vi": 15,
-                "mn": 14,
-                "af": 13,
-                "bm": 12,
-                "ln": 11,
-                "wo": 10,
-                "lo": 9,
-                "myn": 8,
-                "iu": 7,
-                "rom": 6,
-                "am": 5,
-                "su": 4,
-                "zu": 3,
-                "lb": 2,
-                "mos": 1,
-            }
-
             if overlay_key and overlay_key in overlays:
                 raw_overlay_entries = overlays[overlay_key]
 
@@ -510,131 +427,7 @@ def build_libraries_section(
                             overlay_entry["default"] = "languages"
 
                 # Final cleanup for specific overlays (e.g., drop text for aspect/video_format)
-                for ov in overlay_entries:
-                    default_name = ov.get("default", "")
-                    tv = ov.get("template_variables")
-                    if not isinstance(tv, dict):
-                        continue
-                    for key, value in list(tv.items()):
-                        if value is None:
-                            tv.pop(key, None)
-                    if tv.get("builder_level") == "show":
-                        tv.pop("builder_level", None)
-                        if not tv:
-                            ov.pop("template_variables", None)
-                            continue
-                    if isinstance(default_name, str) and default_name in {"resolution", "overlay_resolution"}:
-                        use_edition_val = tv.get("use_edition")
-                        use_resolution_val = tv.get("use_resolution")
-                        if isinstance(use_edition_val, str):
-                            use_edition_val = use_edition_val.lower() == "true"
-                        if isinstance(use_resolution_val, str):
-                            use_resolution_val = use_resolution_val.lower() == "true"
-                        if use_edition_val is None:
-                            tv["use_edition"] = True
-                            use_edition_val = True
-                        elif use_edition_val is False:
-                            tv["use_edition"] = False
-                            use_edition_val = False
-                        if use_resolution_val is None:
-                            tv["use_resolution"] = True
-                            use_resolution_val = True
-                        elif use_resolution_val is False:
-                            tv["use_resolution"] = False
-                            use_resolution_val = False
-                        if use_edition_val is True:
-                            resolution_levels = ["4k", "1080p", "720p", "576p", "480p"]
-                            resolution_variants = ["dvhdrplus", "dvhdr", "plus", "dv", "hlg", "hdr"]
-                            keep_keys = {
-                                "builder_level",
-                                "use_edition",
-                                "use_resolution",
-                                "use_4k",
-                                "use_1080p",
-                                "use_720p",
-                                "use_576p",
-                                "use_480p",
-                                "use_dv",
-                                "use_hlg",
-                                "use_hdr",
-                                "use_plus",
-                                "use_dvhdr",
-                                "use_dvhdrplus",
-                                "use_extended",
-                                "use_uncut",
-                                "use_unrated",
-                                "use_special",
-                                "use_anniversary",
-                                "use_collector",
-                                "use_diamond",
-                                "use_platinum",
-                                "use_directors",
-                                "use_final",
-                                "use_international",
-                                "use_theatrical",
-                                "use_ultimate",
-                                "use_alternate",
-                                "use_coda",
-                                "use_enhanced",
-                                "use_imax",
-                                "use_remastered",
-                                "use_criterion",
-                                "use_richarddonner",
-                                "use_blackchrome",
-                                "use_definitive",
-                                "use_openmatte",
-                                "use_ulysses",
-                                "use_producers",
-                                "horizontal_offset",
-                                "vertical_offset",
-                            }
-                            keep_keys.update(
-                                {f"use_{resolution_level}_{resolution_variant}" for resolution_level in resolution_levels for resolution_variant in resolution_variants}
-                            )
-                            for key in list(tv.keys()):
-                                if key not in keep_keys:
-                                    tv.pop(key, None)
-                            if not tv:
-                                ov.pop("template_variables", None)
-                                continue
-                    if isinstance(default_name, str) and default_name in {"commonsense", "overlay_content_rating_commonsense", "content_rating_commonsense"}:
-                        for key in ["text", "font", "font_size", "font_color"]:
-                            tv.pop(key, None)
-                        if not tv:
-                            ov.pop("template_variables", None)
-                        continue
-                    if isinstance(default_name, str) and default_name in {"episode_info", "overlay_episode_info"}:
-                        tv.pop("text", None)
-                        if not tv:
-                            ov.pop("template_variables", None)
-                        continue
-                    if isinstance(default_name, str) and default_name in {"languages", "overlay_languages"}:
-                        languages_value = tv.get("languages")
-                        if languages_value is not None:
-                            normalized_languages = _parse_string_list(languages_value)
-                            if normalized_languages == default_language_flag_codes or not normalized_languages:
-                                tv.pop("languages", None)
-                            else:
-                                tv["languages"] = normalized_languages
-                        for key in list(tv.keys()):
-                            if not (isinstance(key, str) and key.startswith("weight_")):
-                                continue
-                            language_key = key[len("weight_") :]
-                            default_weight = default_language_flag_weights.get(language_key)
-                            try:
-                                numeric_value = int(str(tv.get(key)).strip())
-                            except (TypeError, ValueError):
-                                continue
-                            tv[key] = numeric_value
-                            if default_weight is not None and numeric_value == default_weight:
-                                tv.pop(key, None)
-                        if not tv:
-                            ov.pop("template_variables", None)
-                            continue
-                    if isinstance(default_name, str) and default_name in {"aspect", "video_format", "overlay_aspect", "overlay_video_format"}:
-                        tv.pop("text", None)
-                        if not tv:
-                            ov.pop("template_variables", None)
+                apply_per_overlay_type_cleanup(overlay_entries)
 
                 if overlay_entries:
                     # Final cleanup: drop rating pairs if either side is empty
@@ -674,23 +467,7 @@ def build_libraries_section(
                     for ov in overlay_entries:
                         reorder_rating_template_vars(ov)
 
-                    if overlay_name_order:
-                        order_map = {name: idx for idx, name in enumerate(overlay_name_order)}
-                        level_order = {"show": 0, "season": 1, "episode": 2}
-
-                        def overlay_sort_key(overlay_entry):
-                            name = overlay_entry.get("default", "")
-                            sort_name = "languages" if name == "languages_subtitles" else name
-                            name_index = order_map.get(sort_name, len(order_map))
-                            tv = overlay_entry.get("template_variables") or {}
-                            if not isinstance(tv, dict):
-                                tv = {}
-                            level = tv.get("builder_level", "show")
-                            level_index = level_order.get(level, 0)
-                            subtitles_index = 1 if tv.get("use_subtitles") else 0
-                            return (name_index, level_index, subtitles_index)
-
-                        overlay_entries.sort(key=overlay_sort_key)
+                    sort_overlay_entries(overlay_entries, overlay_name_order)
 
                 overlay_library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
                 raw_overlay_file_entries = _parse_overlay_file_block_entries(overlays.get(overlay_key, {}).get(f"{overlay_library_prefix}-overlay_files"))
