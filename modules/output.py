@@ -18,6 +18,11 @@ from modules.output_collections import (  # noqa: F401 -- re-exported so output.
     _parse_tmdb_person_window,
     build_collection_files,
 )
+from modules.output_config_sections import (
+    normalize_apprise_section,
+    normalize_playlist_files_section,
+    normalize_webhooks_section,
+)
 from modules.output_defaults import (  # noqa: F401 -- re-exported so output.<name> keeps working
     _build_attribute_defaults,
     _build_collection_defaults,
@@ -309,85 +314,9 @@ def build_config(header_style="standard", config_name=None):
         if "validated" in section_data and section_data["validated"]:
             config_data[config_attribute] = clean_section_data(section_data, config_attribute)
 
-    # Process playlist_files section
-    if "playlist_files" in config_data:
-        playlist_data = config_data["playlist_files"]
-
-        # Debug raw data
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Raw config_data['playlist_files'] content (Level 1): {playlist_data}", level="DEBUG")
-
-        # Adjust for possible extra nesting
-        if "playlist_files" in playlist_data and isinstance(playlist_data["playlist_files"], dict):
-            playlist_data = playlist_data["playlist_files"]
-            if app.config["QS_DEBUG"]:
-                helpers.ts_log(f" playlist_data after extra nesting: {playlist_data}", level="DEBUG")
-
-        # Extract and process libraries
-        libraries_value = playlist_data.get("libraries", "")
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Extracted libraries value: {libraries_value}", level="DEBUG")
-
-        if isinstance(libraries_value, list):
-            libraries_list = [str(lib).strip() for lib in libraries_value if str(lib).strip()]
-        else:
-            libraries_list = [lib.strip() for lib in str(libraries_value or "").split(",") if lib.strip()]
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Processed libraries list: {libraries_value}", level="DEBUG")
-
-        playlist_template_variables = {key: value for key, value in playlist_data.items() if key != "libraries" and value not in (None, "", [], {})}
-
-        # Format playlist_files data
-        formatted_playlist_files = _format_playlist_file_entries(libraries_list=libraries_list, template_variables=playlist_template_variables)
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
-
-        # Replace in config_data
-        config_data["playlist_files"] = formatted_playlist_files
-
-    if "webhooks" in config_data:
-        webhooks_data = config_data["webhooks"]
-
-        # Handle case where `webhooks` is nested inside itself
-        if isinstance(webhooks_data, dict) and "webhooks" in webhooks_data:
-            webhooks_data = webhooks_data["webhooks"]  # Fix: Handle extra nesting
-
-        # Remove empty values
-        cleaned_webhooks = {key: value for key, value in webhooks_data.items() if value is not None and value != "" and value != [] and value != {}}
-
-        # If no valid webhooks exist, remove the "webhooks" section entirely
-        if cleaned_webhooks:
-            config_data["webhooks"] = {"webhooks": cleaned_webhooks}  # Preserve webhooks key
-        else:
-            config_data.pop("webhooks", None)  # Fully remove empty webhooks
-
-        # Debugging: Ensure webhooks are correctly cleaned
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}", level="DEBUG")
-            if "webhooks" not in config_data:
-                helpers.ts_log("Webhooks section completely removed.", level="DEBUG")
-
-    if "apprise" in config_data:
-        apprise_data = config_data["apprise"]
-        apprise_location = None
-
-        if isinstance(apprise_data, dict):
-            if "apprise" in apprise_data:
-                nested_apprise = apprise_data["apprise"]
-                if isinstance(nested_apprise, dict):
-                    apprise_location = nested_apprise.get("location")
-                else:
-                    apprise_location = nested_apprise
-            elif "location" in apprise_data:
-                apprise_location = apprise_data.get("location")
-        elif isinstance(apprise_data, str):
-            apprise_location = apprise_data
-
-        apprise_location = str(apprise_location).strip() if apprise_location is not None else ""
-        if apprise_location:
-            config_data["apprise"] = {"apprise": {"config": apprise_location}}
-        else:
-            config_data.pop("apprise", None)
+    normalize_playlist_files_section(config_data, debug=app.config["QS_DEBUG"])
+    normalize_webhooks_section(config_data, debug=app.config["QS_DEBUG"])
+    normalize_apprise_section(config_data)
 
     # Initialize movie and show libraries
     movie_libraries = {}
