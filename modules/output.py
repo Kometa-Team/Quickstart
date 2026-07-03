@@ -21,6 +21,7 @@ from modules.output_collections import (  # noqa: F401 -- re-exported so output.
     _normalize_legacy_collection_template_vars,
     _normalize_settings_section_value,
     _parse_tmdb_person_window,
+    build_collection_files,
 )
 from modules.output_defaults import (  # noqa: F401 -- re-exported so output.<name> keeps working
     _build_attribute_defaults,
@@ -179,105 +180,20 @@ def build_libraries_section(
             entry["operations"] = operations
 
         # Process Collections
-        has_collectionless = False
+        collection_files, has_collectionless = build_collection_files(
+            library_key,
+            library_type,
+            collections,
+            templates,
+            movie_collection_files,
+            show_collection_files,
+            debug=app.config["QS_DEBUG"],
+        )
+        if collection_files:
+            entry["collection_files"] = collection_files
+
         collection_key = helpers.extract_library_name(library_key)
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"collections keys for {collection_key}: {list(collections.get(collection_key, {}).keys())}", level="DEBUG")
-            helpers.ts_log(f"templates keys for {collection_key}: {list(templates.get(collection_key, {}).keys())}", level="DEBUG")
-
         if collection_key:
-            collection_files = []
-
-            for key, selected in collections.get(collection_key, {}).items():
-                if "template_collection_" in key:
-                    if app.config["QS_DEBUG"]:
-                        helpers.ts_log(f"Skipping invalid collection key (template child): {key}", level="DEBUG")
-                    continue
-
-                if selected is not True:
-                    continue
-
-                raw_id = key.split(f"{library_type}-library_{collection_key}-collection_")[-1]
-                if isinstance(raw_id, str) and raw_id.strip().lower().endswith("collectionless"):
-                    has_collectionless = True
-                file_entry = {"default": raw_id}
-
-                # IMPORTANT: Template collection children do NOT contain '-library-' in key
-                prefix = f"{library_key}_collection_{raw_id}_"
-
-                # Build flattened version of all template keys across libraries
-                all_template_entries = {}
-                for section in templates.values():
-                    all_template_entries.update(section)
-
-                # Collect matching keys from prefix styles
-                # Find matching template children manually instead of prefix-matching
-                child_prefix = f"{library_key}-template_collection_{raw_id}_".replace(f"-library-template_collection_{raw_id}_", f"-template_collection_{raw_id}_")
-                all_children = {k[len(child_prefix) :]: v for k, v in collections[collection_key].items() if k.startswith(child_prefix)}
-
-                if app.config["QS_DEBUG"]:
-                    helpers.ts_log(f"Collection: {raw_id}", level="DEBUG")
-                    helpers.ts_log(f"Prefix:       {prefix}", level="DEBUG")
-                    helpers.ts_log(f"Child Prefix: {child_prefix}", level="DEBUG")
-                    helpers.ts_log(f"Found {len(all_children)} child template_variables: {all_children}", level="DEBUG")
-
-                if all_children:
-                    template_vars = {
-                        k: (True if isinstance(v, (bool, str)) and str(v).lower() == "true" else False if isinstance(v, (bool, str)) and str(v).lower() == "false" else v)
-                        for k, v in all_children.items()
-                    }
-                    if raw_id == "franchise":
-                        _expand_franchise_dynamic_child_overrides(template_vars)
-                    # Normalize legacy Region key spelling so final YAML always uses
-                    # the current Kometa key with a hyphen.
-                    legacy_region_keys = {
-                        "use_South Eastern Asia": "use_South-Eastern Asia",
-                        "radarr_add_missing_South Eastern Asia": "radarr_add_missing_South-Eastern Asia",
-                        "sonarr_add_missing_South Eastern Asia": "sonarr_add_missing_South-Eastern Asia",
-                    }
-                    for old_key, new_key in legacy_region_keys.items():
-                        if old_key not in template_vars:
-                            continue
-                        # If both exist, prefer the new key's explicit value.
-                        if new_key not in template_vars:
-                            template_vars[new_key] = template_vars[old_key]
-                        template_vars.pop(old_key, None)
-                    for list_key in ("include", "exclude", "exclude_prefix"):
-                        if list_key not in template_vars:
-                            continue
-                        list_values = _parse_string_list(template_vars.get(list_key))
-                        if list_values:
-                            template_vars[list_key] = list_values
-                        else:
-                            template_vars.pop(list_key, None)
-                    for template_key in list(template_vars.keys()):
-                        normalized_value = _normalize_collection_template_var_value(template_key, template_vars.get(template_key))
-                        if normalized_value is None:
-                            template_vars.pop(template_key, None)
-                        else:
-                            template_vars[template_key] = normalized_value
-                    if template_vars:
-                        file_entry["template_variables"] = template_vars
-
-                collection_files.append(file_entry)
-
-            raw_collection_group = movie_collection_files.get(collection_key, {}) if library_type == "mov" else show_collection_files.get(collection_key, {})
-            library_prefix = library_key[: -len("-library")] if isinstance(library_key, str) and library_key.endswith("-library") else library_key
-            raw_collection_entries = _parse_collection_file_block_entries(raw_collection_group.get(f"{library_prefix}-collection_files"))
-
-            if collection_files:
-
-                def is_collectionless(item):
-                    default_name = str(item.get("default", "")).strip().lower()
-                    return default_name in {"collectionless", "collection_collectionless"} or default_name.endswith("collectionless")
-
-                collection_files.sort(key=lambda item: (is_collectionless(item)))
-
-            if raw_collection_entries:
-                collection_files.extend(raw_collection_entries)
-
-            if collection_files:
-                entry["collection_files"] = collection_files
 
             # Process Overlays
             # Process Overlays
