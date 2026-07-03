@@ -59,6 +59,7 @@ from modules.output_library_ops import (
     build_template_variables,
     build_top_level_fields,
 )
+from modules.output_grouping import group_movie_and_show_libraries
 from modules.output_optimize import optimize_template_variables
 from modules.output_overlay_builder import build_overlay_files_for_library
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
@@ -428,78 +429,23 @@ def build_config(header_style="standard", config_name=None):
             helpers.ts_log("Movie Library Names:", movie_library_names, level="DEBUG")
             helpers.ts_log("Show Library Names:", show_library_names, level="DEBUG")
 
-        def group_by_library(prefix, names, normalize_overlays=False):
-            """
-            Groups data (collections, overlays, attributes, etc.) by base library name.
-
-            If `normalize_overlays` is True, it strips builder-level suffixes
-            (e.g. `tv_shows-show` → `tv_shows`) to match show library names.
-            """
-            grouped = {}
-
-            def matches_group_prefix(key):
-                if not isinstance(key, str):
-                    return False
-                # Keep library-level *_files blocks isolated from the default
-                # collection/overlay groups so they do not suppress built-in
-                # defaults during YAML emission.
-                if prefix == "collection_":
-                    return "-collection_" in key or "-template_collection_" in key
-                if prefix == "overlay_":
-                    return "-overlay_" in key or "-template_overlay_" in key
-                if prefix == "attribute_":
-                    return "-attribute_" in key
-                if prefix == "template_variables":
-                    return "-template_variables" in key or "-attribute_template_variables" in key
-                if prefix == "top_level_":
-                    return "-top_level_" in key
-                if prefix in {"collection_files", "overlay_files", "metadata_files"}:
-                    return key.endswith(f"-{prefix}")
-                return prefix in key
-
-            for key, value in nested_libraries_data.items():
-                if not matches_group_prefix(key):
-                    continue
-
-                lib_name_raw = helpers.extract_library_name(key)
-
-                # Normalize overlays by trimming builder-level suffix (movie/show/season/episode),
-                # without losing hyphenated library names.
-                lib_name = lib_name_raw
-                if normalize_overlays and isinstance(lib_name_raw, str):
-                    for suffix in ("-movie", "-show", "-season", "-episode"):
-                        if lib_name_raw.endswith(suffix):
-                            lib_name = lib_name_raw[: -len(suffix)]
-                            break
-
-                if lib_name in names:
-                    grouped.setdefault(lib_name, {})[key] = value
-
-            return grouped
-
-        # Group collections, overlays, attributes, and templates only for selected libraries
-        movie_collections = group_by_library("collection_", movie_library_names)
-        show_collections = group_by_library("collection_", show_library_names)
-        movie_collection_files = group_by_library("collection_files", movie_library_names)
-        show_collection_files = group_by_library("collection_files", show_library_names)
-        movie_overlay_file_blocks = group_by_library("overlay_files", movie_library_names)
-        show_overlay_file_blocks = group_by_library("overlay_files", show_library_names)
-        # movie_overlays = group_by_library("overlay_", movie_library_names)
-        # show_overlays = group_by_library("overlay_", show_library_names)
-        movie_overlays = group_by_library("overlay_", movie_library_names, normalize_overlays=True)
-        show_overlays = group_by_library("overlay_", show_library_names, normalize_overlays=True)
-        for lib_name, payload in movie_overlay_file_blocks.items():
-            movie_overlays.setdefault(lib_name, {}).update(payload)
-        for lib_name, payload in show_overlay_file_blocks.items():
-            show_overlays.setdefault(lib_name, {}).update(payload)
-        movie_attributes = group_by_library("attribute_", movie_library_names)
-        show_attributes = group_by_library("attribute_", show_library_names)
-        movie_metadata_files = group_by_library("metadata_files", movie_library_names)
-        show_metadata_files = group_by_library("metadata_files", show_library_names)
-        movie_templates = group_by_library("template_variables", movie_library_names)
-        show_templates = group_by_library("template_variables", show_library_names)
-        movie_top_level = group_by_library("top_level_", movie_library_names)
-        show_top_level = group_by_library("top_level_", show_library_names)
+        movie_groups, show_groups = group_movie_and_show_libraries(nested_libraries_data, movie_library_names, show_library_names)
+        movie_collections = movie_groups["collections"]
+        show_collections = show_groups["collections"]
+        movie_collection_files = movie_groups["collection_files"]
+        show_collection_files = show_groups["collection_files"]
+        movie_overlay_file_blocks = movie_groups["overlay_file_blocks"]
+        show_overlay_file_blocks = show_groups["overlay_file_blocks"]
+        movie_overlays = movie_groups["overlays"]
+        show_overlays = show_groups["overlays"]
+        movie_attributes = movie_groups["attributes"]
+        show_attributes = show_groups["attributes"]
+        movie_metadata_files = movie_groups["metadata_files"]
+        show_metadata_files = show_groups["metadata_files"]
+        movie_templates = movie_groups["templates"]
+        show_templates = show_groups["templates"]
+        movie_top_level = movie_groups["top_level"]
+        show_top_level = show_groups["top_level"]
 
         # Debugging
         if app.config["QS_DEBUG"]:
