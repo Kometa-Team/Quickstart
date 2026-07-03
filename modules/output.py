@@ -58,7 +58,7 @@ from modules.output_library_ops import (
     build_template_variables,
     build_top_level_fields,
 )
-from modules.output_grouping import group_movie_and_show_libraries
+from modules.output_libraries_data import extract_libraries_bundle
 from modules.output_optimize import optimize_template_variables
 from modules.output_overlay_builder import build_overlay_files_for_library
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
@@ -321,76 +321,33 @@ def build_config(header_style="standard", config_name=None):
     # Initialize movie and show libraries
     movie_libraries = {}
     show_libraries = {}
+    library_types = {}
 
     # Process the libraries section
     if "libraries" in config_data and "libraries" in config_data["libraries"]:
         nested_libraries_data = config_data["libraries"]["libraries"]
 
-        # Debugging
         if app.config["QS_DEBUG"]:
             helpers.ts_log("Raw nested libraries data:", nested_libraries_data, level="DEBUG")
 
-        # Extract selected libraries
-        movie_libraries = {
-            key: value
-            for key, value in nested_libraries_data.items()
-            if key and isinstance(key, str) and key.startswith("mov-library_") and key.endswith("-library") and value not in [None, "", False]
-        }
-        show_libraries = {
-            key: value
-            for key, value in nested_libraries_data.items()
-            if key and isinstance(key, str) and key.startswith("sho-library_") and key.endswith("-library") and value not in [None, "", False]
-        }
-
-        # Extract **correct** movie and show library names
-        movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}
-        show_library_names = {helpers.extract_library_name(k) for k in show_libraries}
-        library_types = {name: "movie" for name in movie_libraries.values()}
-        library_types.update({name: "show" for name in show_libraries.values()})
-
-        # Debugging
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("Movie Library Names:", movie_library_names, level="DEBUG")
-            helpers.ts_log("Show Library Names:", show_library_names, level="DEBUG")
-
-        movie_groups, show_groups = group_movie_and_show_libraries(nested_libraries_data, movie_library_names, show_library_names)
-        movie_collections = movie_groups["collections"]
-        show_collections = show_groups["collections"]
-        movie_collection_files = movie_groups["collection_files"]
-        show_collection_files = show_groups["collection_files"]
-        movie_overlay_file_blocks = movie_groups["overlay_file_blocks"]
-        show_overlay_file_blocks = show_groups["overlay_file_blocks"]
-        movie_overlays = movie_groups["overlays"]
-        show_overlays = show_groups["overlays"]
-        movie_attributes = movie_groups["attributes"]
-        show_attributes = show_groups["attributes"]
-        movie_metadata_files = movie_groups["metadata_files"]
-        show_metadata_files = show_groups["metadata_files"]
-        movie_templates = movie_groups["templates"]
-        show_templates = show_groups["templates"]
-        movie_top_level = movie_groups["top_level"]
-        show_top_level = show_groups["top_level"]
-
-        # Debugging
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Extracted Movie Libraries: {movie_libraries}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Libraries: {show_libraries}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Collections: {movie_collections}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Collections: {show_collections}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Collection Files: {movie_collection_files}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Collection Files: {show_collection_files}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Overlay File Blocks: {movie_overlay_file_blocks}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Overlay File Blocks: {show_overlay_file_blocks}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Overlays: {movie_overlays}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Overlays: {show_overlays}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Attributes: {movie_attributes}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Attributes: {show_attributes}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Metadata Files: {movie_metadata_files}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Metadata Files: {show_metadata_files}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Templates: {movie_templates}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Templates: {show_templates}", level="DEBUG")
-            helpers.ts_log(f"Extracted Movie Top Level: {movie_top_level}", level="DEBUG")
-            helpers.ts_log(f"Extracted Show Top Level: {show_top_level}", level="DEBUG")
+        bundle = extract_libraries_bundle(nested_libraries_data, debug=app.config["QS_DEBUG"])
+        movie_libraries = bundle.movie_libraries
+        show_libraries = bundle.show_libraries
+        library_types = bundle.library_types
+        movie_collections = bundle.movie_groups["collections"]
+        show_collections = bundle.show_groups["collections"]
+        movie_collection_files = bundle.movie_groups["collection_files"]
+        show_collection_files = bundle.show_groups["collection_files"]
+        movie_overlays = bundle.movie_groups["overlays"]
+        show_overlays = bundle.show_groups["overlays"]
+        movie_attributes = bundle.movie_groups["attributes"]
+        show_attributes = bundle.show_groups["attributes"]
+        movie_metadata_files = bundle.movie_groups["metadata_files"]
+        show_metadata_files = bundle.show_groups["metadata_files"]
+        movie_templates = bundle.movie_groups["templates"]
+        show_templates = bundle.show_groups["templates"]
+        movie_top_level = bundle.movie_groups["top_level"]
+        show_top_level = bundle.show_groups["top_level"]
 
         # Build nested libraries structure
         libraries_section = build_libraries_section(
