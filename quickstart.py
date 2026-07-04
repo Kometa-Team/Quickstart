@@ -257,6 +257,8 @@ from modules.logscan_resume import (
 )
 from modules.logscan_imagemaid_analysis import (
     resolve_imagemaid_run_config_name as _resolve_imagemaid_run_config_name,
+)
+from modules.logscan_imagemaid_analyzer import (
     analyze_imagemaid_log_content as _analyze_imagemaid_log_content,
 )
 from modules.logscan_progress import (
