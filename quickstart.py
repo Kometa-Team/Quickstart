@@ -267,6 +267,8 @@ from modules.logscan_progress import (
     get_progress_library_list as _get_progress_library_list,
     build_incomplete_progress_snapshot as _build_incomplete_progress_snapshot,  # noqa: F401 (used directly by tests as qs_module._build_incomplete_progress_snapshot)
     build_completed_log_progress_snapshot as _build_completed_log_progress_snapshot,
+)
+from modules.logscan_incomplete_resume import (
     analyze_incomplete_log_for_resume as _analyze_incomplete_log_for_resume,  # noqa: F401 (used directly by tests as qs_module._analyze_incomplete_log_for_resume)
     build_incomplete_run_from_cache_entry as _build_incomplete_run_from_cache_entry,  # noqa: F401 (used directly by tests as qs_module._build_incomplete_run_from_cache_entry)
     build_incomplete_resume_cache_fields as _build_incomplete_resume_cache_fields,
