@@ -8,6 +8,7 @@ from modules import (
     logscan_command,
     logscan_content_extractors,
     logscan_finished_runs,
+    logscan_library_stats,
     logscan_maintenance,
     logscan_people,
     logscan_recommendations,
@@ -1492,138 +1493,19 @@ class LogscanAnalyzer:
         return started_at
 
     def _parse_hms_to_seconds(self, value):
-        if not value:
-            return None
-        parts = value.split(":")
-        try:
-            if len(parts) == 3:
-                hours = int(parts[0])
-                minutes = int(parts[1])
-                seconds = int(parts[2])
-                return hours * 3600 + minutes * 60 + seconds
-            if len(parts) == 2:
-                minutes = int(parts[0])
-                seconds = int(parts[1])
-                return minutes * 60 + seconds
-        except ValueError:
-            return None
-        return None
+        return logscan_library_stats.parse_hms_to_seconds(value)
 
     def extract_section_runtimes(self, content):
-        section_times = {}
-        if not content:
-            return section_times
-        inline_pattern = re.compile(r"Finished (?P<section>.+?) in (?P<time>\d+:\d{2}:\d{2})")
-        finished_pattern = re.compile(r"Finished (?P<section>.+?)\s*$")
-        runtime_pattern = re.compile(r"^\s*(?P<label>[A-Za-z][A-Za-z ]+?) Run Time:\s*(?P<time>\d+:\d{2}:\d{2})\s*$")
-        last_section = None
-        last_section_index = None
-        lines = content.splitlines()
-        for idx, line in enumerate(lines):
-            if not line:
-                continue
-            inline_match = inline_pattern.search(line)
-            if inline_match:
-                section = inline_match.group("section").strip()
-                if section.lower().startswith("at:"):
-                    continue
-                seconds = self._parse_hms_to_seconds(inline_match.group("time"))
-                if seconds is not None:
-                    section_times[section] = section_times.get(section, 0) + seconds
-                continue
-            finished_match = finished_pattern.search(line)
-            if finished_match:
-                section = finished_match.group("section").strip()
-                lowered = section.lower()
-                if lowered in ("run",) or lowered.startswith("run "):
-                    continue
-                last_section = section
-                last_section_index = idx
-                continue
-            runtime_match = runtime_pattern.search(line)
-            if not runtime_match:
-                continue
-            seconds = self._parse_hms_to_seconds(runtime_match.group("time"))
-            if seconds is None:
-                continue
-            section = None
-            if last_section and last_section_index is not None and (idx - last_section_index) <= 3:
-                section = last_section
-            else:
-                label = runtime_match.group("label").strip()
-                if label and label.lower() != "run":
-                    section = label
-            if section:
-                section_times[section] = section_times.get(section, 0) + seconds
-            last_section = None
-            last_section_index = None
-        return section_times
+        return logscan_library_stats.extract_section_runtimes(content)
 
     def count_log_levels(self, content):
-        counts = {
-            "debug": 0,
-            "info": 0,
-            "warning": 0,
-            "error": 0,
-            "critical": 0,
-            "trace": 0,
-        }
-        if not content:
-            return counts
-        for line in content.splitlines():
-            upper = line.upper()
-            if "[DEBUG]" in upper:
-                counts["debug"] += 1
-            if "[INFO]" in upper:
-                counts["info"] += 1
-            if "[WARNING]" in upper:
-                counts["warning"] += 1
-            if "[ERROR]" in upper:
-                counts["error"] += 1
-            if "[CRITICAL]" in upper:
-                counts["critical"] += 1
-            if "TRACEBACK" in upper:
-                counts["trace"] += 1
-        return counts
+        return logscan_library_stats.count_log_levels(content)
 
     def _normalize_library_name(self, value):
-        if not value:
-            return ""
-        text = str(value).lower()
-        text = text.replace("_", " ").replace("-", " ")
-        cleaned = []
-        for ch in text:
-            if ch.isalnum() or ch.isspace():
-                cleaned.append(ch)
-        normalized = " ".join("".join(cleaned).split())
-        return normalized
+        return logscan_library_stats.normalize_library_name(value)
 
     def _match_library_name(self, raw_name, library_entries):
-        if not raw_name:
-            return None
-        needle = self._normalize_library_name(raw_name)
-        if not needle:
-            return None
-        exact = None
-        candidates = []
-        for entry in library_entries:
-            name = entry.get("name")
-            if not name:
-                continue
-            normalized = self._normalize_library_name(name)
-            if not normalized:
-                continue
-            if needle == normalized:
-                exact = name
-                break
-            if needle in normalized or normalized in needle:
-                candidates.append((len(normalized), name))
-        if exact:
-            return exact
-        if candidates:
-            candidates.sort(reverse=True)
-            return candidates[0][1]
-        return None
+        return logscan_library_stats.match_library_name(raw_name, library_entries)
 
     def _strip_divider_wrappers(self, message):
         if not message:
@@ -2336,146 +2218,10 @@ class LogscanAnalyzer:
         return logscan_maintenance.extract_quiet_period_summary(content, maintenance_summary)
 
     def extract_config_line_count(self, content):
-        if not content:
-            return 0
-        lines = content.splitlines()
-        in_block = False
-        count = 0
-        for raw_line in lines:
-            line = raw_line.strip()
-            if not in_block:
-                if "Redacted Config" in line:
-                    in_block = True
-                continue
-            if "config.py:" not in line:
-                break
-            message = line.split("|", 1)[1].strip() if "|" in line else line
-            if not message:
-                continue
-            if "Quickstart run marker" in message:
-                break
-            if message.startswith("#"):
-                continue
-            if set(message.strip()) <= {"="}:
-                continue
-            count += 1
-        return count
+        return logscan_library_stats.extract_config_line_count(content)
 
     def extract_library_counts(self, content):
-        if not content:
-            return {}
-        lines = content.splitlines()
-        library_counts = {}
-        library_sources = {}
-        current_library = None
-        current_type = None
-
-        header_patterns = [
-            re.compile(r"Processing Library:\s*(.+)", re.IGNORECASE),
-            re.compile(r"Library:\s*(.+)", re.IGNORECASE),
-            re.compile(r"Information on library:\s*(.+)", re.IGNORECASE),
-        ]
-        type_pattern = re.compile(r"\b(Movie|Show)\b", re.IGNORECASE)
-        items_pattern = re.compile(r"Items Found:\s*(\d+)", re.IGNORECASE)
-        movies_pattern = re.compile(r"Movies Found:\s*(\d+)", re.IGNORECASE)
-        shows_pattern = re.compile(r"Shows Found:\s*(\d+)", re.IGNORECASE)
-        episodes_pattern = re.compile(r"Episodes Found:\s*(\d+)", re.IGNORECASE)
-        content_movies_pattern = re.compile(r"Content Count:\s*(\d+)\s+movies?", re.IGNORECASE)
-        content_shows_pattern = re.compile(r"Content Count:\s*(\d+)\s+shows?\s*/\s*(\d+)\s+episodes", re.IGNORECASE)
-        library_items_pattern = re.compile(r"Library\s+(.+?)\s+has\s+(\d+)\s+items", re.IGNORECASE)
-
-        for raw_line in lines:
-            line = raw_line.strip()
-            if line.startswith("#"):
-                line = line.lstrip("#").strip()
-            if not line:
-                continue
-            for pattern in header_patterns:
-                match = pattern.search(line)
-                if match:
-                    name = match.group(1).strip()
-                    if "->" in name:
-                        name = name.split("->", 1)[-1].strip()
-                    name = name.strip("- ").strip()
-                    if name:
-                        current_library = name
-                        current_type = None
-                        type_match = type_pattern.search(line)
-                        if type_match:
-                            current_type = type_match.group(1).lower()
-                    break
-
-            direct_match = library_items_pattern.search(line)
-            if direct_match:
-                name = direct_match.group(1).strip()
-                count = int(direct_match.group(2))
-                library_counts[name] = {
-                    "items": count,
-                }
-                continue
-
-            if not current_library:
-                continue
-
-            content_match = content_movies_pattern.search(line)
-            if content_match:
-                library_counts[current_library] = {
-                    "items": int(content_match.group(1)),
-                    "type": "movie",
-                }
-                library_sources[current_library] = "content_count"
-                continue
-
-            content_match = content_shows_pattern.search(line)
-            if content_match:
-                library_counts[current_library] = {
-                    "items": int(content_match.group(1)),
-                    "episodes": int(content_match.group(2)),
-                    "type": "show",
-                }
-                library_sources[current_library] = "content_count"
-                continue
-
-            items_match = items_pattern.search(line)
-            if items_match:
-                if library_sources.get(current_library) == "content_count":
-                    continue
-                library_counts[current_library] = {
-                    "items": int(items_match.group(1)),
-                    "type": current_type,
-                }
-                continue
-
-            movies_match = movies_pattern.search(line)
-            if movies_match:
-                if library_sources.get(current_library) == "content_count":
-                    continue
-                library_counts[current_library] = {
-                    "items": int(movies_match.group(1)),
-                    "type": "movie",
-                }
-                continue
-
-            shows_match = shows_pattern.search(line)
-            if shows_match:
-                if library_sources.get(current_library) == "content_count":
-                    continue
-                entry = library_counts.get(current_library, {})
-                entry["items"] = int(shows_match.group(1))
-                entry["type"] = entry.get("type") or "show"
-                library_counts[current_library] = entry
-                continue
-
-            episodes_match = episodes_pattern.search(line)
-            if episodes_match:
-                if library_sources.get(current_library) == "content_count":
-                    continue
-                entry = library_counts.get(current_library, {})
-                entry["episodes"] = int(episodes_match.group(1))
-                entry["type"] = entry.get("type") or "show"
-                library_counts[current_library] = entry
-
-        return library_counts
+        return logscan_library_stats.extract_library_counts(content)
 
     def _build_summary(
         self,
