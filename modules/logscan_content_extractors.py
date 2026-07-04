@@ -152,6 +152,44 @@ def extract_divider(content: str, fallback: str = DEFAULT_DIVIDER) -> str:
     return fallback
 
 
+def remove_repeated_dividers(line, divider: str) -> str:
+    """Collapse long runs of *divider* into a single empty span.
+
+    Kometa banner lines can contain hundreds of divider characters in
+    a row (e.g. ``==================...``).  We drop runs of 10 or
+    more so downstream regex parsers don't choke on them.  The
+    *divider* argument is typically ``analyzer.global_divider`` and
+    is regex-escaped before use so multi-char dividers work too.
+    """
+    line = str(line)
+    return re.sub(f"({re.escape(divider)}){{10,}}", "", line)
+
+
+def cleanup_content(content: str) -> str:
+    """Strip Kometa log prefixes and trailing punctuation from *content*.
+
+    Three-pass scrub:
+
+    1. Remove the ``[YYYY-MM-DD HH:MM:SS,mmm] [file.py:NN] [LEVEL] |``
+       Kometa log prefix (or a 65-space continuation-line prefix)
+       from the front of each line.
+    2. Strip a trailing ``|`` from each line (banner pipe).
+    3. Right-strip whitespace on each line.
+
+    Returned as a single ``\n``-joined string ready for downstream
+    line-oriented parsing.
+    """
+    cleanup_regex = r"\[(202[0-9])-\d+-\d+ \d+:\d+:\d+,\d+\] \[.*\.py:\d+\] +\[[INFODEBUGWARCTL]*\] +\||^[ ]{65}\|"
+    cleaned_content = re.sub(cleanup_regex, "", content)
+
+    lines = cleaned_content.splitlines()
+    cleaned_lines = [line.rstrip("|") if line.rstrip().endswith("|") else line for line in lines]
+    cleaned_content = "\n".join(cleaned_lines)
+
+    cleaned_lines = [line.rstrip() for line in cleaned_content.splitlines()]
+    return "\n".join(cleaned_lines)
+
+
 # ---------------------------------------------------------------------------
 # Scheduled run time / maintenance window
 # ---------------------------------------------------------------------------

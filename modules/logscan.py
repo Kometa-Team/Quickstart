@@ -1,6 +1,5 @@
 import hashlib
 import logging
-import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -52,15 +51,7 @@ class LogscanAnalyzer:
         self.server_versions = []
 
     def remove_repeated_dividers(self, line):
-        divider = self.global_divider
-
-        # Ensure that line is a string
-        line = str(line)
-
-        # Use regular expression to find and replace repeated dividers
-        line = re.sub(f"({re.escape(divider)}){{10,}}", "", line)
-
-        return line
+        return logscan_content_extractors.remove_repeated_dividers(line, self.global_divider)
 
     async def parse_attachment_content(self, content_bytes):
         try:
@@ -128,26 +119,7 @@ class LogscanAnalyzer:
         return logscan_recommendations.format_time_value(time_value)
 
     def cleanup_content(self, content):
-        """
-        Clean up the content by removing unnecessary lines and trailing characters.
-        """
-        cleanup_regex = r"\[(202[0-9])-\d+-\d+ \d+:\d+:\d+,\d+\] \[.*\.py:\d+\] +\[[INFODEBUGWARCTL]*\] +\||^[ ]{65}\|"
-        cleaned_content = re.sub(cleanup_regex, "", content)
-
-        # mylogger.info(f"content:\n{content}")
-        # mylogger.info(f"cleaned_content:\n{cleaned_content}")
-
-        # Second pass to remove trailing '|'
-        lines = cleaned_content.splitlines()
-        cleaned_lines = [line.rstrip("|") if line.rstrip().endswith("|") else line for line in lines]
-        cleaned_content = "\n".join(cleaned_lines)
-
-        # Third pass to remove trailing spaces
-        cleaned_lines = [line.rstrip() for line in cleaned_content.splitlines()]
-        cleaned_content = "\n".join(cleaned_lines)
-        # mylogger.info(f"cleaned_content3rdpass:\n{cleaned_content}")
-
-        return cleaned_content
+        return logscan_content_extractors.cleanup_content(content)
 
     def extract_filename_from_url(self, url):
         return logscan_people.extract_filename_from_url(url)
@@ -311,45 +283,13 @@ class LogscanAnalyzer:
         return logscan_command.hash_file(path)
 
     def _parse_finished_datetime(self, value):
-        if not value:
-            return None
-        text = str(value).strip()
-        match = re.search(r"(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})", text)
-        if match:
-            try:
-                return datetime.strptime(f"{match.group(1)} {match.group(2)}", "%Y-%m-%d %H:%M:%S")
-            except Exception:
-                return None
-        match = re.search(r"(\d{2}:\d{2}:\d{2})\s+(\d{4}-\d{2}-\d{2})", text)
-        if match:
-            try:
-                return datetime.strptime(f"{match.group(2)} {match.group(1)}", "%Y-%m-%d %H:%M:%S")
-            except Exception:
-                return None
-        return None
+        return logscan_finished_runs.parse_finished_datetime(value)
 
     def _normalize_finished_at(self, finished_at, log_mtime):
-        parsed = self._parse_finished_datetime(finished_at)
-        now = datetime.now()
-        if parsed and parsed > now + timedelta(days=1):
-            parsed = None
-        if not parsed and log_mtime:
-            try:
-                parsed = datetime.fromtimestamp(log_mtime)
-            except Exception:
-                parsed = None
-        if parsed:
-            return parsed.strftime("%Y-%m-%d %H:%M:%S")
-        return finished_at
+        return logscan_finished_runs.normalize_finished_at(finished_at, log_mtime)
 
     def _normalize_started_at(self, started_at):
-        parsed = self._parse_finished_datetime(started_at)
-        now = datetime.now()
-        if parsed and parsed > now + timedelta(days=1):
-            parsed = None
-        if parsed:
-            return parsed.strftime("%Y-%m-%d %H:%M:%S")
-        return started_at
+        return logscan_finished_runs.normalize_started_at(started_at)
 
     def _parse_hms_to_seconds(self, value):
         return logscan_library_stats.parse_hms_to_seconds(value)

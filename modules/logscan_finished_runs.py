@@ -30,7 +30,7 @@ results to ``self``.
 from __future__ import annotations
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 # ---------------------------------------------------------------------------
@@ -280,3 +280,78 @@ def format_contiguous_lines(line_numbers: list[int]) -> str:
         formatted_ranges.append(f"{start_range}-{end_range}")
 
     return ", ".join(formatted_ranges)
+
+
+# ---------------------------------------------------------------------------
+# Datetime normalizers.
+#
+# The started_at / finished_at fields in the summary payload can arrive
+# in several shapes: "2024-11-08 03:15:22", "2024-11-08T03:15:22",
+# "03:15:22 2024-11-08", or already-parsed datetimes from Kometa's
+# scheduler.  These helpers coerce them into the canonical
+# "YYYY-MM-DD HH:MM:SS" string form and reject far-future dates that
+# usually indicate a parse mistake.
+# ---------------------------------------------------------------------------
+
+
+def parse_finished_datetime(value) -> Optional[datetime]:
+    """Parse *value* into a naive datetime, or return None if it can't.
+
+    Accepts either ``YYYY-MM-DD[ T]HH:MM:SS`` or ``HH:MM:SS YYYY-MM-DD``
+    in the string form; anything else -> None.  Falsy inputs -> None.
+    """
+    if not value:
+        return None
+    text = str(value).strip()
+    match = re.search(r"(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})", text)
+    if match:
+        try:
+            return datetime.strptime(f"{match.group(1)} {match.group(2)}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return None
+    match = re.search(r"(\d{2}:\d{2}:\d{2})\s+(\d{4}-\d{2}-\d{2})", text)
+    if match:
+        try:
+            return datetime.strptime(f"{match.group(2)} {match.group(1)}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return None
+    return None
+
+
+def normalize_finished_at(finished_at, log_mtime) -> Optional[str]:
+    """Return *finished_at* as a canonical ``YYYY-MM-DD HH:MM:SS`` string.
+
+    If parsing fails or the parsed value is more than a day in the
+    future (typical when a log's clock is skewed), fall back to
+    *log_mtime* (a POSIX timestamp).  If even that fails, return the
+    original ``finished_at`` unchanged so the caller can decide what
+    to do with garbage.
+    """
+    parsed = parse_finished_datetime(finished_at)
+    now = datetime.now()
+    if parsed and parsed > now + timedelta(days=1):
+        parsed = None
+    if not parsed and log_mtime:
+        try:
+            parsed = datetime.fromtimestamp(log_mtime)
+        except Exception:
+            parsed = None
+    if parsed:
+        return parsed.strftime("%Y-%m-%d %H:%M:%S")
+    return finished_at
+
+
+def normalize_started_at(started_at) -> Optional[str]:
+    """Return *started_at* as a canonical ``YYYY-MM-DD HH:MM:SS`` string.
+
+    Same shape as :func:`normalize_finished_at` but without the
+    log-mtime fallback -- if the input can't be parsed or is too
+    far in the future, the raw input is returned unchanged.
+    """
+    parsed = parse_finished_datetime(started_at)
+    now = datetime.now()
+    if parsed and parsed > now + timedelta(days=1):
+        parsed = None
+    if parsed:
+        return parsed.strftime("%Y-%m-%d %H:%M:%S")
+    return started_at
