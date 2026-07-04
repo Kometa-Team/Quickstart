@@ -4,7 +4,14 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from modules import logscan_command, logscan_content_extractors, logscan_finished_runs, logscan_people, logscan_recommendations
+from modules import (
+    logscan_command,
+    logscan_content_extractors,
+    logscan_finished_runs,
+    logscan_maintenance,
+    logscan_people,
+    logscan_recommendations,
+)
 from modules.logscan_pms_versions import (
     VULNERABLE_RANGE_HIGH,
     VULNERABLE_RANGE_LOW,
@@ -2311,296 +2318,22 @@ class LogscanAnalyzer:
         return counts
 
     def extract_quickstart_marker(self, content):
-        if not content:
-            return None
-        match = re.search(r"\[Quickstart\]\s+Run marker:.*", content)
-        return match.group(0) if match else None
+        return logscan_maintenance.extract_quickstart_marker(content)
 
     def extract_quickstart_marker_fields(self, content):
-        marker = self.extract_quickstart_marker(content)
-        if not marker:
-            return {}
-        fields = {}
-        for match in re.finditer(r"(\w+)=([^\s]+)", marker):
-            key = str(match.group(1) or "").strip().lower()
-            value = str(match.group(2) or "").strip()
-            if key:
-                fields[key] = value
-        start_mode = str(fields.get("start_mode") or "").strip().lower()
-        if start_mode not in {"current", "recovery", "logged"}:
-            fields["start_mode"] = ""
-        else:
-            fields["start_mode"] = start_mode
-        return fields
+        return logscan_maintenance.extract_quickstart_marker_fields(content)
 
     def extract_quickstart_marker_capabilities(self, content):
-        capabilities = {"maintenance_markers": False}
-        marker = self.extract_quickstart_marker(content)
-        if not marker:
-            return capabilities
-        if re.search(r"\bmaintenance_markers=1\b", marker):
-            capabilities["maintenance_markers"] = True
-        return capabilities
+        return logscan_maintenance.extract_quickstart_marker_capabilities(content)
 
     def _parse_log_timestamp(self, line):
-        if not line or not line.startswith("["):
-            return None
-        match = re.match(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d{3}\]", line)
-        if not match:
-            return None
-        try:
-            return datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
-        except Exception:
-            return None
+        return logscan_maintenance.parse_log_timestamp(line)
 
     def extract_maintenance_summary(self, content):
-        summary = {
-            "had_pause": False,
-            "pause_count": 0,
-            "pause_seconds": 0,
-            "open_pause": False,
-            "window": None,
-            "events": [],
-        }
-        if not content:
-            return summary
-
-        marker_re = re.compile(
-            r"\[Quickstart\]\s+Maintenance marker:\s+event=(paused|resumed)\s+at=([^\s]+)" r"(?:\s+local_at=([^\s]+))?(?:\s+window=([^\s]+))?(?:\s+paused_seconds=(\d+))?",
-            re.IGNORECASE,
-        )
-        open_pause_at = None
-        open_pause_window = None
-        open_pause_local_at = None
-
-        for line in content.splitlines():
-            match = marker_re.search(line)
-            if not match:
-                continue
-            event = str(match.group(1) or "").strip().lower()
-            raw_ts = str(match.group(2) or "").strip()
-            local_at = str(match.group(3) or "").strip() or None
-            window = str(match.group(4) or "").strip() or None
-            paused_seconds_raw = match.group(5)
-            event_ts = None
-            try:
-                event_ts = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
-                if event_ts.tzinfo is not None:
-                    event_ts = event_ts.astimezone(timezone.utc)
-            except Exception:
-                event_ts = None
-            paused_seconds = None
-            if paused_seconds_raw is not None:
-                try:
-                    paused_seconds = max(0, int(paused_seconds_raw))
-                except Exception:
-                    paused_seconds = None
-
-            summary["events"].append(
-                {
-                    "event": event,
-                    "at": raw_ts,
-                    "local_at": local_at,
-                    "window": window,
-                    "paused_seconds": paused_seconds,
-                }
-            )
-            if window:
-                summary["window"] = window
-
-            if event == "paused":
-                summary["had_pause"] = True
-                summary["pause_count"] += 1
-                open_pause_at = event_ts
-                open_pause_window = window
-                open_pause_local_at = local_at
-                continue
-
-            if event == "resumed":
-                summary["had_pause"] = True
-                if paused_seconds is None and open_pause_at and event_ts:
-                    try:
-                        paused_seconds = max(0, int((event_ts - open_pause_at).total_seconds()))
-                    except Exception:
-                        paused_seconds = None
-                if paused_seconds is not None:
-                    summary["pause_seconds"] += paused_seconds
-                open_pause_at = None
-                open_pause_window = None
-                open_pause_local_at = None
-
-        if open_pause_at is not None:
-            summary["open_pause"] = True
-            summary["had_pause"] = True
-            if not summary["window"] and open_pause_window:
-                summary["window"] = open_pause_window
-            if summary["events"] and not summary["events"][-1].get("local_at") and open_pause_local_at:
-                summary["events"][-1]["local_at"] = open_pause_local_at
-
-        return summary
+        return logscan_maintenance.extract_maintenance_summary(content)
 
     def extract_quiet_period_summary(self, content, maintenance_summary=None):
-        summary = {
-            "longest_gap_seconds": 0,
-            "longest_gap_started_at": None,
-            "longest_gap_ended_at": None,
-            "longest_gap_start_line": None,
-            "longest_gap_end_line": None,
-            "longest_gap_last_line": None,
-            "longest_gap_first_line": None,
-            "gaps_over_300": 0,
-            "gaps_over_900": 0,
-            "gaps_over_1800": 0,
-            "longest_gap_maintenance_overlap": "unknown",
-            "longest_unexplained_gap_seconds": 0,
-            "longest_unexplained_gap_started_at": None,
-            "longest_unexplained_gap_ended_at": None,
-            "longest_unexplained_gap_start_line": None,
-            "longest_unexplained_gap_end_line": None,
-            "longest_unexplained_gap_last_line": None,
-            "longest_unexplained_gap_first_line": None,
-            "longest_unexplained_gap_maintenance_overlap": "unknown",
-            "confirmed_maintenance_gaps_over_300": 0,
-            "unexplained_gaps_over_300": 0,
-            "notable_gaps": [],
-        }
-        if not content:
-            return summary
-
-        capabilities = self.extract_quickstart_marker_capabilities(content)
-        maintenance_supported = bool(capabilities.get("maintenance_markers"))
-        timestamp_entries = []
-        for line_number, line in enumerate(content.splitlines(), start=1):
-            line_ts = self._parse_log_timestamp(line)
-            if line_ts is not None:
-                timestamp_entries.append(
-                    {
-                        "timestamp": line_ts,
-                        "line_number": line_number,
-                        "line": line.strip(),
-                    }
-                )
-        if len(timestamp_entries) < 2:
-            if maintenance_supported:
-                summary["longest_gap_maintenance_overlap"] = "none"
-            return summary
-
-        maintenance_summary = maintenance_summary if isinstance(maintenance_summary, dict) else {}
-        maintenance_intervals = []
-        open_start = None
-        for event in maintenance_summary.get("events") or []:
-            if not isinstance(event, dict):
-                continue
-            local_at = str(event.get("local_at") or "").strip()
-            event_name = str(event.get("event") or "").strip().lower()
-            event_ts = None
-            if local_at:
-                try:
-                    event_ts = datetime.fromisoformat(local_at)
-                except Exception:
-                    event_ts = None
-            if event_ts is None:
-                continue
-            if event_name == "paused":
-                open_start = event_ts
-            elif event_name == "resumed" and open_start is not None:
-                maintenance_intervals.append((open_start, event_ts))
-                open_start = None
-        if open_start is not None:
-            maintenance_intervals.append((open_start, None))
-
-        def _get_gap_overlap(start_ts, end_ts):
-            overlap = False
-            for interval_start, interval_end in maintenance_intervals:
-                if interval_end is None:
-                    if end_ts > interval_start:
-                        overlap = True
-                        break
-                    continue
-                if start_ts < interval_end and end_ts > interval_start:
-                    overlap = True
-                    break
-            if overlap:
-                return "confirmed"
-            if maintenance_supported:
-                return "none"
-            return "unknown"
-
-        longest_start = None
-        longest_end = None
-        longest_previous_entry = None
-        longest_current_entry = None
-        longest_unexplained_start = None
-        longest_unexplained_end = None
-        longest_unexplained_previous_entry = None
-        longest_unexplained_current_entry = None
-        for previous_entry, current_entry in zip(timestamp_entries, timestamp_entries[1:]):
-            previous_ts = previous_entry["timestamp"]
-            current_ts = current_entry["timestamp"]
-            gap_seconds = max(0, int((current_ts - previous_ts).total_seconds()))
-            if gap_seconds <= 0:
-                continue
-            if gap_seconds >= 300:
-                summary["gaps_over_300"] += 1
-            if gap_seconds >= 900:
-                summary["gaps_over_900"] += 1
-            if gap_seconds >= 1800:
-                summary["gaps_over_1800"] += 1
-            overlap_label = _get_gap_overlap(previous_ts, current_ts)
-            gap_detail = {
-                "gap_seconds": gap_seconds,
-                "started_at": previous_ts.isoformat(),
-                "ended_at": current_ts.isoformat(),
-                "start_line": previous_entry.get("line_number"),
-                "end_line": current_entry.get("line_number"),
-                "last_line": previous_entry.get("line"),
-                "first_line": current_entry.get("line"),
-                "maintenance_overlap": overlap_label,
-            }
-            if gap_seconds >= 300:
-                summary["notable_gaps"].append(gap_detail)
-                if overlap_label == "confirmed":
-                    summary["confirmed_maintenance_gaps_over_300"] += 1
-                else:
-                    summary["unexplained_gaps_over_300"] += 1
-            if gap_seconds > summary["longest_gap_seconds"]:
-                summary["longest_gap_seconds"] = gap_seconds
-                longest_start = previous_ts
-                longest_end = current_ts
-                longest_previous_entry = previous_entry
-                longest_current_entry = current_entry
-            if overlap_label != "confirmed" and gap_seconds > summary["longest_unexplained_gap_seconds"]:
-                summary["longest_unexplained_gap_seconds"] = gap_seconds
-                longest_unexplained_start = previous_ts
-                longest_unexplained_end = current_ts
-                longest_unexplained_previous_entry = previous_entry
-                longest_unexplained_current_entry = current_entry
-
-        if longest_start is not None and longest_end is not None:
-            summary["longest_gap_started_at"] = longest_start.isoformat()
-            summary["longest_gap_ended_at"] = longest_end.isoformat()
-            if longest_previous_entry:
-                summary["longest_gap_start_line"] = longest_previous_entry.get("line_number")
-                summary["longest_gap_last_line"] = longest_previous_entry.get("line")
-            if longest_current_entry:
-                summary["longest_gap_end_line"] = longest_current_entry.get("line_number")
-                summary["longest_gap_first_line"] = longest_current_entry.get("line")
-            summary["longest_gap_maintenance_overlap"] = _get_gap_overlap(longest_start, longest_end)
-
-        if longest_unexplained_start is not None and longest_unexplained_end is not None:
-            summary["longest_unexplained_gap_started_at"] = longest_unexplained_start.isoformat()
-            summary["longest_unexplained_gap_ended_at"] = longest_unexplained_end.isoformat()
-            if longest_unexplained_previous_entry:
-                summary["longest_unexplained_gap_start_line"] = longest_unexplained_previous_entry.get("line_number")
-                summary["longest_unexplained_gap_last_line"] = longest_unexplained_previous_entry.get("line")
-            if longest_unexplained_current_entry:
-                summary["longest_unexplained_gap_end_line"] = longest_unexplained_current_entry.get("line_number")
-                summary["longest_unexplained_gap_first_line"] = longest_unexplained_current_entry.get("line")
-            summary["longest_unexplained_gap_maintenance_overlap"] = _get_gap_overlap(longest_unexplained_start, longest_unexplained_end)
-        elif maintenance_supported and summary["longest_gap_seconds"] > 0:
-            summary["longest_unexplained_gap_maintenance_overlap"] = "none"
-
-        return summary
+        return logscan_maintenance.extract_quiet_period_summary(content, maintenance_summary)
 
     def extract_config_line_count(self, content):
         if not content:
