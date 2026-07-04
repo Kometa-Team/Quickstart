@@ -1344,3 +1344,86 @@ def _build_advisory_messages(
         "memory": kometa_mem_recommendation,
         "db_cache": kometa_db_cache_recommendation,
     }
+
+
+# ---------------------------------------------------------------------------
+# Recommendation post-processing helpers.
+#
+# These are pure functions that operate on the recommendation-message
+# list returned by :func:`make_recommendations` (or the ``counts`` dict
+# built by the same pipeline).  Kept here so ALL logic that touches
+# recommendation data lives in one module.
+# ---------------------------------------------------------------------------
+
+_PRIORITY_ICONS = {"\U0001f680", "\U0001f4a5", "\u274c", "\u26a0", "\U0001f4ac", "\u2139"}
+_PRIORITY_ORDER = {
+    "\U0001f680": 1,  # rocket
+    "\U0001f4a5": 2,  # collision
+    "\u274c": 3,  # cross mark
+    "\u26a0": 4,  # warning sign
+    "\U0001f4ac": 5,  # speech balloon
+    "\u2139": 5,  # information source
+}
+
+
+def ensure_recommendation_icons(recommendations):
+    """Prepend the default speech-balloon icon to any un-iconed messages.
+
+    Mutates *recommendations* in place.  A message whose first
+    non-whitespace character isn't one of the six priority icons
+    gets prefixed with a speech balloon so the dashboard renders a
+    consistent left-column glyph.
+    """
+    for rec in recommendations:
+        first_line = rec.get("first_line", "") or ""
+        trimmed = first_line.lstrip()
+        if not trimmed:
+            rec["first_line"] = "\U0001f4ac Recommendation"
+            continue
+        first_symbol = trimmed[0].rstrip("\ufe0f")
+        if first_symbol not in _PRIORITY_ICONS:
+            rec["first_line"] = f"\U0001f4ac {trimmed}"
+
+
+def reorder_recommendations(recommendations):
+    """Return *recommendations* sorted by leading-icon priority.
+
+    Priority is rocket -> collision -> cross -> warning -> speech/info.
+    Messages whose first character isn't one of those icons sort
+    to the end.  Non-mutating: returns a new list.
+    """
+
+    def sort_key(recommendation):
+        first_symbol = recommendation.get("first_line", "No first line available")[0]
+        first_symbol = first_symbol.rstrip("\ufe0f")
+        return _PRIORITY_ORDER.get(first_symbol, float("inf"))
+
+    return sorted(recommendations, key=sort_key)
+
+
+def extract_analyze_issue_counts(content):
+    """Count coarse "convert/anidb/regex" issue mentions in *content*.
+
+    Returns a dict with three canonical keys plus their long
+    ``analyze_*`` aliases (kept for callers that hard-coded the
+    older key names).  Empty content yields all-zero counts.
+    """
+    patterns = {
+        "analyze_convert": re.compile(r"\bconvert\s+(warning|error)\b", re.IGNORECASE),
+        "analyze_anidb": re.compile(r"\banidb\b.*\b(error|warning|failed)\b", re.IGNORECASE),
+        "analyze_regex": re.compile(r"\bregex\b.*\b(error|warning|invalid|failed)\b", re.IGNORECASE),
+    }
+    counts = {key: 0 for key in patterns}
+    if not content:
+        counts["convert"] = 0
+        counts["anidb"] = 0
+        counts["regex"] = 0
+        return counts
+    for line in content.splitlines():
+        for key, pattern in patterns.items():
+            if pattern.search(line):
+                counts[key] += 1
+    counts["convert"] = counts["analyze_convert"]
+    counts["anidb"] = counts["analyze_anidb"]
+    counts["regex"] = counts["analyze_regex"]
+    return counts

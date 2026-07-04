@@ -258,43 +258,10 @@ class LogscanAnalyzer:
         return logscan_recommendations_engine.make_recommendations(self, content, incomplete_message)
 
     def _ensure_recommendation_icons(self, recommendations):
-        priority_icons = {"🚀", "💥", "❌", "⚠", "💬", "ℹ"}
-        for rec in recommendations:
-            first_line = rec.get("first_line", "") or ""
-            trimmed = first_line.lstrip()
-            if not trimmed:
-                rec["first_line"] = "💬 Recommendation"
-                continue
-            first_symbol = trimmed[0].rstrip("\ufe0f")
-            if first_symbol not in priority_icons:
-                rec["first_line"] = f"💬 {trimmed}"
+        logscan_recommendations_engine.ensure_recommendation_icons(recommendations)
 
     def reorder_recommendations(self, recommendations):
-        # Define the priority order of symbols
-        priority_order = {"🚀": 1, "💥": 2, "❌": 3, "⚠": 4, "💬": 5, "ℹ": 5}
-
-        def sort_key(recommendation):
-            # Get the first symbol in the message
-            first_symbol = recommendation.get("first_line", "No first line available")[0]
-
-            # Remove variation selector if present
-            first_symbol = first_symbol.rstrip("\ufe0f")
-
-            # Check if the first symbol is in the priority_order dictionary
-            if first_symbol in priority_order:
-                priority = priority_order[first_symbol]
-                # mylogger.info(f"Original Message: {recommendation.get('first_line', 'No first line available')}")
-                # mylogger.info(f"First Symbol: {first_symbol}")
-                # mylogger.info(f"Priority: {priority}")
-                return priority
-            else:
-                # mylogger.info(f"Priority not found for symbol {first_symbol}, using default priority")
-                return float("inf")
-
-        # Sort recommendations based on the custom key
-        sorted_recommendations = sorted(recommendations, key=sort_key)
-
-        return sorted_recommendations
+        return logscan_recommendations_engine.reorder_recommendations(recommendations)
 
     def extract_plex_config(self, content):
         """Extract Plex configuration sections from ``content``.
@@ -430,25 +397,7 @@ class LogscanAnalyzer:
         )
 
     def extract_analyze_issue_counts(self, content):
-        patterns = {
-            "analyze_convert": re.compile(r"\bconvert\s+(warning|error)\b", re.IGNORECASE),
-            "analyze_anidb": re.compile(r"\banidb\b.*\b(error|warning|failed)\b", re.IGNORECASE),
-            "analyze_regex": re.compile(r"\bregex\b.*\b(error|warning|invalid|failed)\b", re.IGNORECASE),
-        }
-        counts = {key: 0 for key in patterns}
-        if not content:
-            counts["convert"] = 0
-            counts["anidb"] = 0
-            counts["regex"] = 0
-            return counts
-        for line in content.splitlines():
-            for key, pattern in patterns.items():
-                if pattern.search(line):
-                    counts[key] += 1
-        counts["convert"] = counts["analyze_convert"]
-        counts["anidb"] = counts["analyze_anidb"]
-        counts["regex"] = counts["analyze_regex"]
-        return counts
+        return logscan_recommendations_engine.extract_analyze_issue_counts(content)
 
     def extract_quickstart_marker(self, content):
         return logscan_maintenance.extract_quickstart_marker(content)
