@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from modules import logscan_command, logscan_finished_runs, logscan_people
+from modules import logscan_command, logscan_finished_runs, logscan_people, logscan_recommendations
 from modules.logscan_pms_versions import (
     VULNERABLE_RANGE_HIGH,
     VULNERABLE_RANGE_LOW,
@@ -208,140 +208,26 @@ class LogscanAnalyzer:
         return None  # Return None if WSL is not detected in the content
 
     def make_db_cache_recommendations(self, parsed_content):
-        disclaimer = (
-            "**NOTE**:The number you choose can vary wildly based on a number of factors "
-            "(such as the size and number of libraries, and the amount of files/operations/overlays that are being utilized)."
+        return logscan_recommendations.db_cache_recommendation(
+            self.extract_db_cache_value(parsed_content),
+            self.extract_memory_value(parsed_content),
         )
-        url_info = "https://kometa.wiki/en/latest/config/plex#plex-attributes"
-
-        # Extract db_cache value and total memory value
-        db_cache_value = self.extract_db_cache_value(parsed_content)
-        total_memory_value = self.extract_memory_value(parsed_content)
-
-        if db_cache_value is None or total_memory_value is None:
-            return None  # Unable to determine recommendations due to missing data
-
-        if db_cache_value >= total_memory_value:
-            # db_cache should not be greater than or equal to total memory
-            return (
-                f"❌ **PLEX DB CACHE ISSUE**\n"
-                f"The Plex DB cache setting (**{db_cache_value:.2f} GB**) is equal to or greater than the total memory "
-                f"(**{total_memory_value:.2f} GB**). Consider adjusting the Plex DB cache setting to a value **below** the total memory.\n"
-                f"For more info on this setting: {url_info}\n"
-                f"{disclaimer}"
-            )
-
-        elif db_cache_value < 1:
-            # db_cache is less than 1 GB, recommend updating based on total memory
-            return (
-                f"💬💡️ **PLEX DB CACHE ADVICE**\n"
-                f"Consider updating the Plex DB cache setting from **{db_cache_value:.2f} GB**, to a value **greater** than **1 GB** based on the total memory of **{total_memory_value:.2f} GB**.\nSetting `db_cache: 1024` within the plex settings in your config.yml is effectively 1024MB which is 1GB. "
-                f"For more info on this setting: {url_info}\n"
-                f"{disclaimer}"
-            )
-
-        return None  # No issues or recommendations
 
     def calculate_memory_recommendation(self, content):
-        disclaimer = (
-            "These numbers are purely estimates and can vary wildly based on a number of factors "
-            "(such as the size and number of libraries, and the amount of files/operations/overlays that are being utilized)."
-        )
-
-        # Extract memory value from the content
         memory_value = self.extract_memory_value(content)
-        overlay_value = self.contains_overlay_path(content)
-
-        # Check if overlay_value is still empty before updating it the second time
-        if not overlay_value:
-            overlay_value = self.contains_overlay_files(content)
-
-        if memory_value is None:
-            return "Error: Memory value not found in content."
-
-        if memory_value < 4:
-            if overlay_value:
-                return (
-                    f"⚠️ **MEMORY RECOMMENDATION**\n"
-                    f"The memory value is {memory_value:.2f} GB, which is less than 4 GB. "
-                    f"We advise having at least 8GB of RAM when running Kometa with overlays (we have detected overlays) to avoid potential out-of-memory issues.\n\n"
-                    f"{disclaimer}"
-                )
-            else:
-                return (
-                    f"⚠️ **MEMORY RECOMMENDATION**\n"
-                    f"The memory value is {memory_value:.2f} GB, which is less than 4 GB. "
-                    f"We advise having at least 4GB of RAM when running Kometa without overlays (we have NOT detected overlays) to avoid potential out-of-memory issues.\n\n"
-                    f"{disclaimer}"
-                )
-
-        elif memory_value < 8:
-            if overlay_value:
-                return (
-                    f"⚠️ **MEMORY RECOMMENDATION**\n"
-                    f"The memory value is {memory_value:.2f} GB, which is less than 8 GB. "
-                    f"We advise having at least 8GB of RAM when running Kometa with overlays (we have detected overlays) for optimal performance.\n\n"
-                    f"{disclaimer}"
-                )
-            else:
-                return None  # No specific recommendation for memory < 8GB without overlays
-
-        return None  # No specific recommendation for memory >= 8GB
+        has_overlays = bool(self.contains_overlay_path(content) or self.contains_overlay_files(content))
+        return logscan_recommendations.memory_recommendation(memory_value, has_overlays)
 
     def calculate_recommendation(self, kometa_scheduled_time, maintenance_start_time=None, maintenance_end_time=None):
-        if not kometa_scheduled_time:
-            return "Error: Plex scheduled time is missing."
-
-        kometa_scheduled_time = datetime.strptime(kometa_scheduled_time, "%H:%M").time()
-
-        # Check if maintenance times are provided
-        if maintenance_start_time is None or maintenance_end_time is None:
-            return None  # Cannot provide recommendations without maintenance times
-
-        maintenance_start_time = datetime.strptime(maintenance_start_time, "%H:%M").time()
-        maintenance_end_time = datetime.strptime(maintenance_end_time, "%H:%M").time()
-
-        plex_scheduled_datetime = datetime.combine(datetime.today(), kometa_scheduled_time)
-        maintenance_start_datetime = datetime.combine(datetime.today(), maintenance_start_time)
-        maintenance_end_datetime = datetime.combine(datetime.today(), maintenance_end_time)
-
-        if maintenance_start_datetime > plex_scheduled_datetime:
-            # Plex maintenance period starts on the next day
-            time_before_plex_maintenance = (maintenance_start_datetime - plex_scheduled_datetime).seconds // 60
-        else:
-            # Plex maintenance period starts on the same day
-            time_before_plex_maintenance = (maintenance_start_datetime - plex_scheduled_datetime).seconds // 60
-        # Calculate the buffer until the next plex maintenance in minutes
-        buffer_until_next_plex_maintenance = ((24 + maintenance_start_time.hour - maintenance_end_time.hour) * 60) % 1440  # 1440 minutes in a day
-
-        run_time_in_minutes = self.run_time.total_seconds() / 60
-        time_buffer = timedelta(minutes=buffer_until_next_plex_maintenance)
-        mylogger.info(f"time_before_plex_maintenance: {time_before_plex_maintenance}")
-        mylogger.info(f"buffer_until_next_plex_maintenance: {buffer_until_next_plex_maintenance}")
-        mylogger.info(f"time_buffer until next Plex maintenance: {time_buffer}")
-        mylogger.info(f"run_time_in_minutes: {run_time_in_minutes}")
-        plex_maint_url = "https://support.plex.tv/articles/202197488-scheduled-server-maintenance/"
-
-        if run_time_in_minutes > 1440:
-            return f"❌⏰ **KOMETA RUN TIME > 24 HOURS**\nThis Run took: `{self.run_time}`\nTime between Kometa scheduled time and Plex Maintenance start: `{time_buffer}`\nKometa scheduled start time: `{self._format_time_value(kometa_scheduled_time)}`\nPlex Scheduled Maintenance start time: `{self._format_time_value(maintenance_start_time)}`\nPlex Scheduled Maintenance end time: `{self._format_time_value(maintenance_end_time)}`\nIf your Kometa runs typically take this long [this run took `{self.run_time}`], your Kometa run time will coincide with the next Plex maintenance period as this run is greater than 24 hours.\n\nThe suggestion we can make at this point is to find ways to break down your run into smaller chunks and schedule them on different days.\nFor more information on Plex Maintenance, see {plex_maint_url}"
-
-        if run_time_in_minutes > buffer_until_next_plex_maintenance:
-            return f"❌⏰ **KOMETA RUN TIME > BUFFER BEFORE MAINTENANCE**\nThis Run took: `{self.run_time}`\nTime between Kometa Scheduled time and Plex Maintenance start: `{time_buffer}`\nKometa scheduled start time: `{self._format_time_value(kometa_scheduled_time)}`\nPlex Scheduled Maintenance start time: `{self._format_time_value(maintenance_start_time)}`\nPlex Scheduled Maintenance end time: `{self._format_time_value(maintenance_end_time)}`\nIf your Kometa runs typically take this long [this run took `{self.run_time}`], your Kometa run time will coincide with the next Plex maintenance period. Adjust the Kometa Scheduled start time to `{self._format_time_value(maintenance_end_time)}` (if needed) AND adjust the Plex Scheduled Maintenance start time to be later.\nFor more information on Plex Maintenance, see {plex_maint_url}"
-
-        if maintenance_start_datetime <= plex_scheduled_datetime < maintenance_end_datetime:
-            # Provide a message for the case when kometa_scheduled_time is between maintenance start and end times
-            return f"❌⏰ **KOMETA SCHEDULED TIME CONFLICT**\nThis Run took: `{self.run_time}`\nTime between Kometa Scheduled time and Plex Maintenance start: `{time_buffer}`\nKometa scheduled start time: `{self._format_time_value(kometa_scheduled_time)}`\nPlex Scheduled Maintenance start time: `{self._format_time_value(maintenance_start_time)}`\nPlex Scheduled Maintenance end time: `{self._format_time_value(maintenance_end_time)}`\nYou are within the maintenance window between Plex maintenance start time: `{self._format_time_value(maintenance_start_time)}` and end time: `{self._format_time_value(maintenance_end_time)}`. Adjust the Kometa Scheduled start time to `{self._format_time_value(maintenance_end_time)}` or adjust the Plex Scheduled Maintenance times to end prior to the Kometa Scheduled run time.\nFor more information on Plex Maintenance, see {plex_maint_url}"
-
-        if run_time_in_minutes > time_before_plex_maintenance:
-            return f"❌⏰ **KOMETA RUN TIME > TIME BEFORE MAINTENANCE**\nThis Run took: `{self.run_time}`\nTime between Kometa Scheduled time and Plex Maintenance start: `{time_buffer}`\nKometa scheduled start time: `{self._format_time_value(kometa_scheduled_time)}`\nPlex Scheduled Maintenance start time: `{self._format_time_value(maintenance_start_time)}`\nPlex Scheduled Maintenance end time: `{self._format_time_value(maintenance_end_time)}`\nIf your Kometa runs typically take this long [this run took `{self.run_time}`], your Kometa run time will coincide with the next Plex maintenance period. Consider moving the Kometa scheduled start time to `{self._format_time_value(maintenance_end_time)}` or adjust the Plex Scheduled Maintenance times to end prior to the Kometa Scheduled run time.\nFor more information on Plex Maintenance, see {plex_maint_url}"
-
-        return None
+        return logscan_recommendations.maintenance_time_recommendation(
+            kometa_scheduled_time,
+            maintenance_start_time,
+            maintenance_end_time,
+            run_time=self.run_time,
+        )
 
     def _format_time_value(self, time_value):
-        if not time_value:
-            return "N/A"
-        formatted = time_value.strftime("%H:%M")
-        return formatted[1:] if formatted.startswith("0") else formatted
+        return logscan_recommendations.format_time_value(time_value)
 
     def cleanup_content(self, content):
         """
