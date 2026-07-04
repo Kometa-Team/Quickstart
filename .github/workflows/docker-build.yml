@@ -125,7 +125,26 @@ jobs:
           fi
 
           echo "$manifest_command"
-          eval "$manifest_command"
+          
+          # Retry logic with exponential backoff
+          max_attempts=5
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt to create manifest..."
+            if eval "$manifest_command"; then
+              echo "Manifest created successfully"
+              break
+            else
+              if [ $attempt -lt $max_attempts ]; then
+                echo "Manifest creation failed, waiting before retry..."
+                sleep $((10 * attempt))  # 10s, 20s, 30s, 40s, 50s
+              else
+                echo "Max attempts reached. Failing."
+                exit 1
+              fi
+            fi
+            attempt=$((attempt + 1))
+          done
 
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}
 
