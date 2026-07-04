@@ -1,7 +1,7 @@
 import jsonschema  # noqa: F401 -- re-exported so tests monkeypatching output.jsonschema.Draft7Validator keep working
 from flask import current_app as app, has_request_context, session
 
-from modules import helpers
+from modules import helpers  # noqa: F401 -- re-exported so tests monkeypatching output.helpers.<name> keep working
 from modules import persistence  # noqa: F401 -- re-exported so tests monkeypatching output.persistence.retrieve_settings keep working
 from modules.output_collections import (  # noqa: F401 -- re-exported so output.<name> keeps working
     FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS,
@@ -39,7 +39,6 @@ from modules.output_headers import (  # noqa: F401 -- re-exported so output.<nam
     render_section_header,
     section_heading,
 )
-from modules.output_libraries_data import extract_libraries_bundle
 from modules.output_libraries_section import build_libraries_section  # noqa: F401 -- re-exported so tests calling output.build_libraries_section keep working
 from modules.output_playlists import (  # noqa: F401 -- re-exported so output.<name> keeps working
     PLAYLIST_KEYED_TEMPLATE_VAR_SPECS,
@@ -62,7 +61,7 @@ from modules.output_postprocess import (  # noqa: F401 -- re-exported so output.
     _rewrite_custom_font_paths,
     clean_section_data,
 )
-from modules.output_render import emit_and_validate_config, retrieve_config_sections
+from modules.output_render import emit_and_validate_config, process_libraries_block, retrieve_config_sections
 from modules.output_reorder import reorder_library_section  # noqa: F401 -- re-exported so tests calling output.reorder_library_section keep working
 from modules.output_values import (  # noqa: F401 -- re-exported for tests calling output._parse_string_list, etc.
     _coerce_bool,
@@ -79,8 +78,6 @@ from modules.output_values import (  # noqa: F401 -- re-exported for tests calli
     _to_number,
 )
 
-_EMPTY_OUTPUT = object()
-
 
 def build_config(header_style="standard", config_name=None):
     """
@@ -91,34 +88,12 @@ def build_config(header_style="standard", config_name=None):
         config_name = session.get("config_name")
 
     config_data, header_art = retrieve_config_sections(header_style)
-    library_types = {}
 
     normalize_playlist_files_section(config_data, debug=app.config["QS_DEBUG"])
     normalize_webhooks_section(config_data, debug=app.config["QS_DEBUG"])
     normalize_apprise_section(config_data)
 
-    # Initialize movie and show libraries
-    movie_libraries = {}
-    show_libraries = {}
-
-    # Process the libraries section
-    if "libraries" in config_data and "libraries" in config_data["libraries"]:
-        nested_libraries_data = config_data["libraries"]["libraries"]
-
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("Raw nested libraries data:", nested_libraries_data, level="DEBUG")
-
-        bundle = extract_libraries_bundle(nested_libraries_data, debug=app.config["QS_DEBUG"])
-        movie_libraries = bundle.movie_libraries
-        show_libraries = bundle.show_libraries
-        library_types = bundle.library_types
-
-        # Build nested libraries structure
-        libraries_section = build_libraries_section(**bundle.to_section_kwargs())
-        config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
-        apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section)
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
+    movie_libraries, show_libraries, library_types = process_libraries_block(config_data, debug=app.config["QS_DEBUG"])
 
     return emit_and_validate_config(
         config_data,

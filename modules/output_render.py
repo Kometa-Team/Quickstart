@@ -2,12 +2,12 @@
 
 Extracted from ``modules.output.build_config``.
 
-This module owns the wrap-around orchestration that sits at both ends
-of ``build_config``: pulling per-section data out of persistence at the
-start, and running the fixed transformation chain before YAML dump
-at the end.  The library-processing phase in the middle lives in
-:mod:`modules.output_libraries_data` /
-:mod:`modules.output_libraries_section`.
+This module owns the full orchestration pipeline for ``build_config``:
+pulling per-section data out of persistence at the start, building
+the libraries subtree in the middle, and running the fixed
+transformation chain plus YAML emission at the end.  Individual
+builders (``build_libraries_section``, ``build_collection_files``,
+etc.) live in their own modules; this module composes them.
 
 Public entry points:
 
@@ -15,6 +15,10 @@ Public entry points:
   every validated section out of persistence.  Returns
   ``(config_data, header_art)`` where the latter is the pre-rendered
   header-art dict keyed by section name.
+
+* :func:`process_libraries_block` -- build the libraries subtree in
+  place and return the per-library metadata (movie/show library
+  toggles and library_types) needed for the emit phase.
 
 * :data:`ORDERED_CONFIG_SECTIONS` -- the compile-time section order
   used when writing YAML.  Loaded once at import time.
@@ -57,7 +61,10 @@ from modules.output_collections import (
 )
 from modules.output_dump import dump_section
 from modules.output_headers import render_section_header
+from modules.output_libraries_data import extract_libraries_bundle
+from modules.output_libraries_section import build_libraries_section
 from modules.output_optimize import optimize_template_variables
+from modules.output_playlists import apply_playlist_libraries_toggle
 from modules.output_postprocess import _rewrite_custom_font_paths, clean_section_data
 from modules.output_yaml_header import render_yaml_header
 
@@ -105,6 +112,43 @@ def retrieve_config_sections(header_style):
             config_data[config_attribute] = clean_section_data(section_data, config_attribute)
 
     return config_data, header_art
+
+
+def process_libraries_block(config_data, *, debug=False):
+    """Build the libraries subtree in place; return per-library metadata.
+
+    Returns ``(movie_libraries, show_libraries, library_types)``.
+    Mutates *config_data* in place: replaces its ``"libraries"`` entry
+    with the nested libraries-section structure produced by
+    :func:`build_libraries_section`, and applies the playlist-libraries
+    toggle.
+
+    When the source ``config_data`` doesn't contain a nested
+    ``libraries.libraries`` block (e.g. no libraries were selected),
+    returns three empty dicts and leaves *config_data* untouched --
+    the emit phase later dumps an empty libraries section.
+
+    The ``debug`` flag controls two ts_log dumps (raw input dict and
+    final libraries-section dict) that are extremely noisy in
+    production but useful when diagnosing library-config bugs.
+    """
+    if "libraries" not in config_data or "libraries" not in config_data["libraries"]:
+        return {}, {}, {}
+
+    nested_libraries_data = config_data["libraries"]["libraries"]
+    if debug:
+        helpers.ts_log("Raw nested libraries data:", nested_libraries_data, level="DEBUG")
+
+    bundle = extract_libraries_bundle(nested_libraries_data, debug=debug)
+    libraries_section = build_libraries_section(**bundle.to_section_kwargs())
+
+    config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
+    apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section)
+
+    if debug:
+        helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
+
+    return bundle.movie_libraries, bundle.show_libraries, bundle.library_types
 
 
 # The order Kometa's YAML file uses for top-level sections.  Anchored
