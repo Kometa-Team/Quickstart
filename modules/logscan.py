@@ -5,6 +5,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from modules import logscan_command, logscan_people
+from modules.logscan_pms_versions import (
+    VULNERABLE_RANGE_HIGH,
+    VULNERABLE_RANGE_LOW,
+    format_version_tuple,
+    is_vulnerable_pms_version,
+)
 
 # Re-exported for back-compat with tests / quickstart imports.
 from modules.logscan_people import (  # noqa: F401
@@ -19,32 +25,6 @@ from modules.logscan_people import (  # noqa: F401
 # Create logger
 mylogger = logging.getLogger("logscan")
 mylogger.setLevel(logging.INFO)
-
-
-# --- PMS security vulnerability helpers (non-invasive; keep existing checks as-is) ---
-
-
-def _parse_pms_version_tuple(ver: str):
-    """Return a 4-int tuple for PMS versions like '1.41.7.9100' (trims any '-xyz')."""
-    ver = ver.split("-", 1)[0].strip()  # drop any '-whatever' suffix if present
-    parts = ver.split(".")
-    nums = []
-    for i in range(4):
-        try:
-            nums.append(int(parts[i]))
-        except Exception:
-            nums.append(0)
-    return tuple(nums[:4])
-
-
-def _version_in_inclusive_range(ver: str, low: tuple, high: tuple) -> bool:
-    v = _parse_pms_version_tuple(ver)
-    return low <= v <= high
-
-
-# Vulnerable range you want to flag (adjust as needed)
-_PMS_VULN_LOW = (1, 41, 7, 0)  # 1.41.7.x
-_PMS_VULN_HIGH = (1, 42, 0, 99999)  # through 1.42.0.x
 
 
 class LogscanAnalyzer:
@@ -688,7 +668,7 @@ class LogscanAnalyzer:
             if m:
                 sn = m.group(1).strip()
                 ver = m.group(2).strip()
-                if _version_in_inclusive_range(ver, _PMS_VULN_LOW, _PMS_VULN_HIGH):
+                if is_vulnerable_pms_version(ver):
                     security_vuln_hits.append((sn, ver, idx))
 
             if "Config Error: anidb sub-attribute" in line or "AniDB Error: Login failed" in line:
@@ -1454,8 +1434,8 @@ class LogscanAnalyzer:
                     seen.add(key)
                     items.append((sn, ver, ln))
 
-            vuln_low_str = ".".join(map(str, _PMS_VULN_LOW))
-            vuln_high_str = ".".join(map(str, _PMS_VULN_HIGH))
+            vuln_low_str = format_version_tuple(VULNERABLE_RANGE_LOW)
+            vuln_high_str = format_version_tuple(VULNERABLE_RANGE_HIGH)
             url_line = "[https://forums.plex.tv/t/plex-media-server-security-update/928341]"
 
             msg = (
