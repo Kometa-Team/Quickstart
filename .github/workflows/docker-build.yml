@@ -125,7 +125,7 @@ jobs:
           fi
 
           echo "$manifest_command"
-          
+
           # Retry logic with exponential backoff
           max_attempts=5
           attempt=1
