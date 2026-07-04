@@ -186,18 +186,6 @@ def _collect_dynamic_child_field_specs(template_vars: Any) -> list[dict[str, str
     return specs
 
 
-def _coerce_import_bool(value: Any) -> bool | None:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        lowered = value.strip().lower()
-        if lowered in {"true", "yes", "1"}:
-            return True
-        if lowered in {"false", "no", "0"}:
-            return False
-    return None
-
-
 def _coerce_import_int(value: Any) -> int | None:
     if isinstance(value, bool):
         return None
