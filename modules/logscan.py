@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from modules import logscan_command, logscan_people
+from modules import logscan_command, logscan_finished_runs, logscan_people
 from modules.logscan_pms_versions import (
     VULNERABLE_RANGE_HIGH,
     VULNERABLE_RANGE_LOW,
@@ -449,130 +449,26 @@ class LogscanAnalyzer:
         return sorted(names, key=str.lower)
 
     def extract_finished_runs(self, content):
-        lines = content.splitlines()
-        finished_runs = []
-
-        # Iterate through lines to find pairs
-        for i in range(len(lines) - 1):
-            line = lines[i]
-            next_line = lines[i + 1]
-
-            if "Finished " in line and " Run Time: " in next_line:
-                # mylogger.info(f"Pair Found L1: {line}")
-                # mylogger.info(f"Pair Found L2: {next_line}")
-                finished_match = re.search(r".*Finished\s+(.*?)\s*$", line)
-                run_time_match = re.search(r".*Run Time:(.*?)\s*$", next_line)
-
-                finished_text = finished_match.group(1).strip() if finished_match else "N/A"
-                run_time_text = run_time_match.group(1).strip() if run_time_match else "N/A"
-                # mylogger.info(f"finished_text L1: {finished_text}")
-                # mylogger.info(f"run_time_text L2: {run_time_text}")
-
-                # Join the pair into one line
-                combined_line = f"{finished_text} - {run_time_text}"
-                # mylogger.info(f"combined_line: {combined_line}")
-                finished_runs.append(combined_line)
-
-            # Check if there's a line with "Finished:" and "Run Time:" at the end
-            if "Finished: " in line and " Run Time: " in line:
-                finished_match = re.search(r".*Finished:\s+(.*?)\s*$", line)
-                run_time_match = re.search(r".*Run Time:(.*?)\s*$", line)
-
-                finished_text = finished_match.group(1).strip() if finished_match else "N/A"
-                run_time_text = run_time_match.group(1).strip() if run_time_match else "N/A"
-                # Join the pair into one line
-                combined_line = f"Finished at:{finished_text} - {run_time_text}"
-                # mylogger.info(f"FINAL:combined_line: {combined_line}")
-                # Add the line to the result
-                finished_runs.append(combined_line)
-
-        return finished_runs
+        return logscan_finished_runs.extract_finished_runs(content)
 
     def _parse_run_time_from_line(self, line):
-        if not line:
-            return None
-        match = re.search(
-            r"Run Time:\s*(?:(\d+)\s+day(?:s)?(?:,\s*|\s+))?(\d+):(\d{1,2}):(\d{1,2})",
-            line,
-            re.IGNORECASE,
-        )
-        if not match:
-            return None
-        try:
-            days = int(match.group(1) or 0)
-            hours = int(match.group(2))
-            minutes = int(match.group(3))
-            seconds = int(match.group(4))
-        except ValueError:
-            return None
-        return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+        return logscan_finished_runs.parse_run_time_from_line(line)
 
     def extract_last_lines(self, content):
-        lines = content.splitlines()
-
-        run_time_index = None
-        run_time_is_final = False
-        fallback_index = None
-        for idx in range(len(lines) - 1, -1, -1):
-            line = lines[idx]
-            if "Run Time:" not in line:
-                continue
-            if fallback_index is None:
-                fallback_index = idx
-            previous_line = lines[idx - 1] if idx > 0 else ""
-            previous_is_finished_run = re.search(r"\bFinished\s+Run\b", previous_line, re.IGNORECASE)
-            if "Finished:" in line or "Start Time:" in line or previous_is_finished_run:
-                run_time_index = idx
-                run_time_is_final = True
-                break
-
-        if run_time_index is None:
-            run_time_index = fallback_index
-
-        if run_time_index is None:
-            return None
-
-        start_index = max(0, run_time_index - 5)
-        extracted_lines = [line.lstrip() for line in lines[start_index:]]
-        run_time_line = lines[run_time_index]
-        parsed_run_time = self._parse_run_time_from_line(run_time_line)
-        if parsed_run_time and run_time_is_final:
-            self.run_time = parsed_run_time
-            start_match = re.search(r"Start Time:\s*(.*?)\s+Finished:", run_time_line)
-            if start_match:
-                self.started_at = start_match.group(1).strip()
-            timestamp_match = re.search(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),", run_time_line)
-            if timestamp_match:
-                self.finished_at = timestamp_match.group(1).strip()
-            else:
-                finished_match = re.search(r"Finished:\s*(.*?)\s+Run Time:", run_time_line)
-                if not finished_match:
-                    finished_match = re.search(r"Finished:\s*(.*?)\s*$", run_time_line)
-                if finished_match:
-                    self.finished_at = finished_match.group(1).strip()
-        return "\n".join(extracted_lines)
+        tail_text, metadata = logscan_finished_runs.extract_last_lines(content)
+        if metadata:
+            # Persist final-run metadata onto the analyzer; interim
+            # Run Time: lines return metadata=None and leave state alone.
+            if "run_time" in metadata:
+                self.run_time = metadata["run_time"]
+            if "started_at" in metadata:
+                self.started_at = metadata["started_at"]
+            if "finished_at" in metadata:
+                self.finished_at = metadata["finished_at"]
+        return tail_text
 
     def format_contiguous_lines(self, line_numbers):
-        formatted_ranges = []
-        start_range = line_numbers[0]
-        end_range = line_numbers[0]
-
-        for i in range(1, len(line_numbers)):
-            if line_numbers[i] == line_numbers[i - 1] + 1:
-                end_range = line_numbers[i]
-            else:
-                if start_range == end_range:
-                    formatted_ranges.append(str(start_range))
-                else:
-                    formatted_ranges.append(f"{start_range}-{end_range}")
-                start_range = end_range = line_numbers[i]
-
-        if start_range == end_range:
-            formatted_ranges.append(str(start_range))
-        else:
-            formatted_ranges.append(f"{start_range}-{end_range}")
-
-        return ", ".join(formatted_ranges)
+        return logscan_finished_runs.format_contiguous_lines(line_numbers)
 
     def make_recommendations(self, content, incomplete_message):
         self.checkfiles_flg = None
