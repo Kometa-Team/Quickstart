@@ -139,3 +139,38 @@ def test_prepare_import_payload_maps_apprise_config_to_location():
 
     assert payload["apprise"]["apprise"]["location"] == "/config/apprise.yml"
     assert report.counts["imported"] >= 1
+
+
+def test_coerce_import_bool_accepts_yaml_wide_truthy_and_falsy_values():
+    """Regression guard for the duplicate `_coerce_import_bool` bug.
+
+    Prior to develop #TBD, importer.py had TWO `_coerce_import_bool`
+    definitions.  Python's last-def-wins meant callers got the "wide"
+    version that accepts YAML-native `on`/`off` alongside the usual
+    `true`/`false`/`yes`/`no`/`1`/`0`.
+
+    The narrow (dead-code) def has been removed; this test locks
+    in the wide semantics so a future refactor can't silently
+    re-narrow the accepted set and break config imports that use
+    `field: on` / `field: off`.
+    """
+    assert importer._coerce_import_bool("true") is True
+    assert importer._coerce_import_bool("yes") is True
+    assert importer._coerce_import_bool("1") is True
+    assert importer._coerce_import_bool("on") is True
+    assert importer._coerce_import_bool("True") is True  # case-insensitive
+    assert importer._coerce_import_bool(" YES ") is True  # whitespace-tolerant
+
+    assert importer._coerce_import_bool("false") is False
+    assert importer._coerce_import_bool("no") is False
+    assert importer._coerce_import_bool("0") is False
+    assert importer._coerce_import_bool("off") is False
+    assert importer._coerce_import_bool("False") is False
+
+    assert importer._coerce_import_bool("maybe") is None
+    assert importer._coerce_import_bool("") is None
+    assert importer._coerce_import_bool(None) is None
+    assert importer._coerce_import_bool(42) is None
+
+    assert importer._coerce_import_bool(True) is True
+    assert importer._coerce_import_bool(False) is False
