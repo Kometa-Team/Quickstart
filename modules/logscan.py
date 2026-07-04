@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from modules import logscan_command, logscan_finished_runs, logscan_people, logscan_recommendations
+from modules import logscan_command, logscan_content_extractors, logscan_finished_runs, logscan_people, logscan_recommendations
 from modules.logscan_pms_versions import (
     VULNERABLE_RANGE_HIGH,
     VULNERABLE_RANGE_LOW,
@@ -76,136 +76,30 @@ class LogscanAnalyzer:
         return cleaned_content
 
     def set_global_divider(self, content):
-        """
-        Search for the divider string in the content and set the global divider.
-        """
-        # Define the patterns to search for
-        patterns = [
-            r'--divider \(KOMETA_DIVIDER\): ?["\']?([^"\']{1})["\']?',  # KOMETA_DIVIDER pattern
-            r'--divider \(PMM_DIVIDER\): ?["\']?([^"\']{1})["\']?',  # PMM_DIVIDER pattern
-        ]
-
-        # Try each pattern and set global_divider if a match is found
-        for pattern in patterns:
-            divider_match = re.search(pattern, content)
-            if divider_match:
-                divider = divider_match.group(1)
-                self.global_divider = divider
-                mylogger.debug(f"Divider found and set to: {divider}")
-                return  # Exit the function once a divider is found
-
-        # If no match is found for any pattern, keep existing divider or fallback
-        if not getattr(self, "global_divider", None):
-            self.global_divider = "="
-            mylogger.debug(f"Divider not found, using default divider: {self.global_divider}")
+        """Search *content* for a KOMETA/PMM divider and store it on self."""
+        divider = logscan_content_extractors.extract_divider(content, fallback=getattr(self, "global_divider", None) or logscan_content_extractors.DEFAULT_DIVIDER)
+        self.global_divider = divider
 
     def extract_memory_value(self, content):
-        """
-        Extract the memory value from the given content.
-        """
-        # Regular expression to match the memory value
-        memory_match = re.search(r"Memory:\s*([\d.]+)\s*(\w+)", content)
-
-        if memory_match:
-            value = float(memory_match.group(1))
-            unit = memory_match.group(2).lower()
-
-            # Convert value to gigabytes (GB)
-            if unit == "gb":
-                return value
-            elif unit == "mb":
-                return value / 1024  # Convert MB to GB
-            elif unit == "tb":
-                return value * 1024  # Convert TB to GB
-
-        return None  # Return None if no valid memory value is found
+        return logscan_content_extractors.extract_memory_value(content)
 
     def extract_db_cache_value(self, content):
-        """
-        Extract the db_cache value from the given content.
-        """
-        # Regular expression to match the memory value
-        memory_match = re.search(r"Plex DB cache setting:\s*([\d.]+)\s*(\w+)", content)
-
-        if memory_match:
-            value = float(memory_match.group(1))
-            unit = memory_match.group(2).lower()
-
-            # Convert value to gigabytes (GB)
-            if unit == "gb":
-                return value
-            elif unit == "mb":
-                return value / 1024  # Convert MB to GB
-            elif unit == "tb":
-                return value * 1024  # Convert TB to GB
-
-        return None  # Return None if no valid memory value is found
+        return logscan_content_extractors.extract_db_cache_value(content)
 
     def extract_scheduled_run_time(self, content):
-        """
-        Extract the scheduled run time from the content.
-        """
-        # Define the patterns to search for
-        patterns = [
-            r'--times? \((KOMETA_TIMES?)\): ?["\']?(\d{1,2}:\d{2})["\']?',  # KOMETA_TIMES pattern
-            r'--times? \((PMM_TIMES?)\): ?["\']?(\d{1,2}:\d{2})["\']?',  # PMM_TIMES pattern
-        ]
-
-        # Try each pattern and return the first match found
-        for pattern in patterns:
-            scheduled_run_time_match = re.search(pattern, content)
-            if scheduled_run_time_match:
-                scheduled_run_time = scheduled_run_time_match.group(2)
-                mylogger.debug(f"Scheduled run time found: {scheduled_run_time}")
-                return scheduled_run_time
-
-        # If no match is found
-        mylogger.debug("Scheduled run time not found in content.")
-        return None
+        return logscan_content_extractors.extract_scheduled_run_time(content)
 
     def extract_maintenance_times(self, content):
-        """
-        Extract the start and end times of the maintenance from the content.
-        """
-        maintenance_times_match = re.search(r"Scheduled maintenance running between (\d+:\d+) and (\d+:\d+)", content)
-
-        if maintenance_times_match:
-            start_time = maintenance_times_match.group(1)
-            end_time = maintenance_times_match.group(2)
-            mylogger.debug(f"Scheduled maintenance times found: Start time: {start_time}, End time: {end_time}")
-            return start_time, end_time
-        else:
-            mylogger.debug("Scheduled maintenance times not found in content.")
-            return None, None
+        return logscan_content_extractors.extract_maintenance_times(content)
 
     def contains_overlay_path(self, content):
-        # Regular expression to search for overlay_path
-        return bool(re.search(r"\boverlay_path:\s*", content, re.IGNORECASE))
+        return logscan_content_extractors.contains_overlay_path(content)
 
     def contains_overlay_files(self, content):
-        # Regular expression to search for overlay_files
-        return bool(re.search(r"\boverlay_files:\s*", content, re.IGNORECASE))
+        return logscan_content_extractors.contains_overlay_files(content)
 
     def detect_wsl_and_recommendation(self, content):
-        # Regular expression to check if the content contains information about WSL platform
-        wsl_pattern = r"Platform: .*-WSL"
-
-        if re.search(wsl_pattern, content):
-            recommendation = (
-                "💬🪟🐧 **WSL MEMORY RECOMMENDATION**\n"
-                "According to Microsoft’s documentation, the amount of system memory (RAM) that gets allocated to WSL is limited to "
-                "either 50% of your total memory or 8GB, whichever happens to be smaller.\n\n"
-                "It is possible to override the maximum RAM allocation, we suggest googling 'WSL memory limit' to learn more otherwise the following may work for you:"
-                "To override the maximum RAM allocation when running Windows Subsystem for Linux (WSL), you need to modify the configuration settings. Here are the steps to do this:\n"
-                "1. Open a PowerShell window as an administrator.\n"
-                "2. Run the command: `wsl --set-default-version 2` to set WSL version to 2 (WSL 2).\n"
-                "3. Run the command: `wsl --set-memory <your_memory_limit>` to set the maximum memory limit for WSL (replace `<your_memory_limit>` with the desired memory limit, e.g., `4GB`).\n"
-                "4. Restart WSL by running the command: `wsl --shutdown`.\n\n"
-                "It is important to note that modifying these settings may require a reboot of your system."
-            )
-            return recommendation
-
-        return None  # Return None if WSL is not detected in the content
+        return logscan_content_extractors.detect_wsl_recommendation(content)
 
     def make_db_cache_recommendations(self, parsed_content):
         return logscan_recommendations.db_cache_recommendation(
