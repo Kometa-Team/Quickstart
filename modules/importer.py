@@ -251,6 +251,9 @@ from modules import importer_collections  # noqa: E402
 # Same import pattern as importer_collections -- module-level import so the
 # call site inside prepare_import_payload reads as importer_overlays.process_*.
 from modules import importer_overlays  # noqa: E402
+# Per-library metadata_files handling moved to modules/importer_metadata.py.
+# Same module-level import pattern as importer_collections.
+from modules import importer_metadata  # noqa: E402
 
 
 def _build_attribute_sets(
@@ -469,51 +472,13 @@ def prepare_import_payload(
                 language_weight_template_keys=LANGUAGE_WEIGHT_TEMPLATE_KEYS,
             )
 
-            metadata_files = lib_cfg.get("metadata_files")
-            if isinstance(metadata_files, list):
-                imported_metadata_files = []
-                for idx, entry in enumerate(metadata_files):
-                    entry_type = None
-                    location = None
-                    if isinstance(entry, dict):
-                        if "file" in entry:
-                            entry_type = "file"
-                            location = entry.get("file")
-                        elif "folder" in entry:
-                            entry_type = "folder"
-                            location = entry.get("folder")
-                        elif "git" in entry:
-                            entry_type = "git"
-                            location = entry.get("git")
-                        elif "repo" in entry:
-                            entry_type = "repo"
-                            location = entry.get("repo")
-                        elif "url" in entry:
-                            entry_type = "url"
-                            location = entry.get("url")
-                    if entry_type not in {"file", "folder", "url", "git", "repo"}:
-                        report.add(
-                            "unmapped",
-                            f"libraries.{lib_name}.metadata_files[{idx}]",
-                            "Only file, folder, url, git, and repo metadata files are supported.",
-                        )
-                        continue
-                    location = str(location or "").strip()
-                    if not location:
-                        report.add(
-                            "unmapped",
-                            f"libraries.{lib_name}.metadata_files[{idx}]",
-                            "Metadata file location is required.",
-                        )
-                        continue
-                    imported_metadata_files.append({"type": entry_type, "location": location})
-                    report.add("imported", f"libraries.{lib_name}.metadata_files[{idx}].{entry_type}")
-
-                if imported_metadata_files:
-                    libraries_data[f"{lib_id}-metadata_files"] = json.dumps(imported_metadata_files, ensure_ascii=True)
-                    report.add("imported", f"libraries.{lib_name}.metadata_files")
-            elif metadata_files is not None:
-                report.add("unmapped", f"libraries.{lib_name}.metadata_files", "Unsupported metadata_files format.")
+            importer_metadata.process_metadata_files(
+                lib_id,
+                str(lib_name),
+                lib_cfg,
+                libraries_data=libraries_data,
+                report=report,
+            )
 
             # Library settings
             settings_section = lib_cfg.get("settings")
