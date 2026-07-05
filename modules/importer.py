@@ -64,46 +64,6 @@ LIBRARY_SONARR_IMPORT_FIELDS = {
     "sonarr_path": "string",
     "plex_path": "string",
 }
-PLAYLIST_SHARED_IMPORT_FIELDS = {
-    "sync_to_users": "string_list",
-    "exclude_users": "string_list",
-    "delete_playlist": "boolean",
-    "ignore_ids": "string_list",
-    "ignore_imdb_ids": "string_list",
-    "item_radarr_tag": "string_list",
-    "item_sonarr_tag": "string_list",
-    "radarr_add_missing": "boolean",
-    "radarr_folder": "string",
-    "radarr_tag": "string_list",
-    "sonarr_add_missing": "boolean",
-    "sonarr_folder": "string",
-    "sonarr_tag": "string_list",
-    "trakt_list": "string_list",
-    "imdb_list": "string_list",
-    "mdblist_list": "string_list",
-}
-PLAYLIST_KEYED_IMPORT_FIELDS = {
-    "use_": "boolean",
-    "name_": "string",
-    "summary_": "string",
-    "url_poster_": "string",
-    "delete_playlist_": "boolean",
-    "exclude_users_": "string_list",
-    "exclude_user_": "string_list",
-    "imdb_list_": "string_list",
-    "item_radarr_tag_": "string_list",
-    "item_sonarr_tag_": "string_list",
-    "mdblist_list_": "string_list",
-    "radarr_add_missing_": "boolean",
-    "radarr_folder_": "string",
-    "radarr_tag_": "string_list",
-    "sonarr_add_missing_": "boolean",
-    "sonarr_folder_": "string",
-    "sonarr_tag_": "string_list",
-    "sync_to_users_": "string_list",
-    "trakt_list_": "string_list",
-}
-
 # Language codes recognized as `weight_<code>` overlay-source ordering keys.
 # Hoisted out of prepare_import_payload's ~95-line nested comprehension --
 # this is data, not logic, and belongs at module scope where it's easy to
@@ -280,6 +240,19 @@ from modules.importer_value_coercion import (  # noqa: E402
 # makes it obvious these are the operation-handler cluster.
 from modules import importer_operations  # noqa: E402
 
+# Playlist section parser moved to modules/importer_playlists.py.
+# Both PLAYLIST_*_IMPORT_FIELDS constants are re-exported here because:
+#   * scripts/analyze_uploaded_template_gaps.py reads them as
+#     importer.PLAYLIST_SHARED_IMPORT_FIELDS / importer.PLAYLIST_KEYED_IMPORT_FIELDS
+#     (guarded by tests/test_template_gap_analyzer)
+#   * The libraries block downstream still uses PLAYLIST_SHARED_IMPORT_FIELDS
+#     for one type-check on playlist template values.
+from modules import importer_playlists  # noqa: E402
+from modules.importer_playlists import (  # noqa: E402
+    PLAYLIST_KEYED_IMPORT_FIELDS,  # noqa: F401 (scripts/analyze_uploaded_template_gaps.py)
+    PLAYLIST_SHARED_IMPORT_FIELDS,  # noqa: F401 (used by libraries block below + scripts)
+)
+
 
 def _build_attribute_sets(
     attribute_config: dict,
@@ -406,105 +379,11 @@ def prepare_import_payload(
         toggle_select_defs,
     ) = _build_attribute_sets(attribute_config)
 
-    playlist_libraries: set[str] = set()
-    playlist_file_entries: list[dict[str, str]] = []
-    playlist_template_field_values: dict[str, Any] = {}
-    playlist_keyed_template_field_values: dict[str, dict[str, Any]] = {}
-    playlist_payload = config_data.get("playlist_files")
-    if playlist_payload is not None:
-        if isinstance(playlist_payload, list):
-            for idx, entry in enumerate(playlist_payload):
-                if not isinstance(entry, dict):
-                    report.add("unmapped", f"playlist_files[{idx}]", "Unsupported playlist entry format.")
-                    continue
-                raw_entry_type = None
-                raw_entry_location = None
-                for candidate in ("file", "url", "git", "repo"):
-                    location = entry.get(candidate)
-                    if location:
-                        raw_entry_type = candidate
-                        raw_entry_location = str(location).strip()
-                        break
-                if raw_entry_type and raw_entry_location:
-                    playlist_file_entries.append({"type": raw_entry_type, "location": raw_entry_location})
-                    report.add("imported", f"playlist_files[{idx}]")
-                    report.add("imported", f"playlist_files[{idx}].{raw_entry_type}")
-                    if entry.get("template_variables") not in (None, {}):
-                        report.add("unmapped", f"playlist_files[{idx}].template_variables", "Template variables for direct playlist file entries are not supported in Quickstart.")
-                    continue
-                tv = entry.get("template_variables", {})
-                if not isinstance(tv, dict):
-                    report.add("unmapped", f"playlist_files[{idx}].template_variables", "Unsupported template_variables format.")
-                    continue
-                libs = tv.get("libraries")
-                if not isinstance(libs, list):
-                    report.add("unmapped", f"playlist_files[{idx}].template_variables.libraries", "Missing playlist library entries.")
-                    continue
-                entry_libs = [str(lib).strip() for lib in libs if str(lib).strip()]
-                if not entry_libs:
-                    report.add("unmapped", f"playlist_files[{idx}].template_variables.libraries", "Missing playlist library entries.")
-                    continue
-
-                playlist_libraries.update(entry_libs)
-                report.add("imported", f"playlist_files[{idx}]")
-                default_value = entry.get("default")
-                if default_value == "playlist":
-                    report.add("imported", f"playlist_files[{idx}].default")
-                elif default_value is not None:
-                    report.add("unmapped", f"playlist_files[{idx}].default", "Unsupported playlist default.")
-                report.add("imported", f"playlist_files[{idx}].template_variables")
-                report.add("imported", f"playlist_files[{idx}].template_variables.libraries")
-                for lib_idx in range(len(entry_libs)):
-                    report.add("imported", f"playlist_files[{idx}].template_variables.libraries[{lib_idx}]")
-                for key, value in tv.items():
-                    if key == "libraries":
-                        continue
-
-                    if key == "exclude_user":
-                        key = "exclude_users"
-                    if key == "exclude_user_":
-                        key = "exclude_users_"
-
-                    if key in PLAYLIST_SHARED_IMPORT_FIELDS:
-                        value_kind = PLAYLIST_SHARED_IMPORT_FIELDS[key]
-                        if value_kind == "boolean":
-                            normalized_value = _coerce_import_bool(value)
-                        elif value_kind == "integer":
-                            normalized_value = _coerce_import_int(value)
-                        elif value_kind == "string_list":
-                            values = _coerce_import_string_list(value)
-                            normalized_value = values if values else None
-                        else:
-                            text = str(value).strip() if value is not None else ""
-                            normalized_value = text or None
-
-                        if normalized_value is None:
-                            report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Unsupported playlist template variable value.")
-                            continue
-
-                        playlist_template_field_values[key] = normalized_value
-                        report.add("imported", f"playlist_files[{idx}].template_variables.{key}")
-                        continue
-
-                    matched_prefix = next((prefix for prefix in PLAYLIST_KEYED_IMPORT_FIELDS if key.startswith(prefix)), None)
-                    if matched_prefix:
-                        suffix = str(key[len(matched_prefix) :] or "").strip()
-                        if not suffix:
-                            report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Missing playlist key suffix.")
-                            continue
-                        serialized_value = _serialize_playlist_import_value(PLAYLIST_KEYED_IMPORT_FIELDS[matched_prefix], value)
-                        if serialized_value is None:
-                            report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Unsupported playlist keyed template variable value.")
-                            continue
-                        playlist_keyed_template_field_values.setdefault(matched_prefix, {})[suffix] = serialized_value
-                        report.add("imported", f"playlist_files[{idx}].template_variables.{key}")
-                        continue
-
-                    report.add("unmapped", f"playlist_files[{idx}].template_variables.{key}", "Playlist template variable not available in Quickstart.")
-            if playlist_libraries or playlist_file_entries:
-                report.add("imported", "playlist_files")
-        else:
-            report.add("unmapped", "playlist_files", "Unsupported playlist_files format.")
+    _playlist_state = importer_playlists.parse_playlist_config(config_data, report)
+    playlist_libraries = _playlist_state.libraries
+    playlist_file_entries = _playlist_state.file_entries
+    playlist_template_field_values = _playlist_state.template_field_values
+    playlist_keyed_template_field_values = _playlist_state.keyed_template_field_values
 
     for section in SIMPLE_SECTIONS:
         if section not in config_data:
