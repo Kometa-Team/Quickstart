@@ -256,6 +256,12 @@ from modules import importer_overlays  # noqa: E402
 # Same module-level import pattern as importer_collections.
 from modules import importer_metadata  # noqa: E402
 
+# Per-library settings block handling moved to modules/importer_library_settings.py.
+# Handles asset_directory (list/multiline-string -> stripped list) and
+# prioritize_assets (restricted bool coercion) -- everything else in
+# settings: is currently marked unmapped.
+from modules import importer_library_settings  # noqa: E402
+
 
 def _build_attribute_sets(
     attribute_config: dict,
@@ -481,64 +487,13 @@ def prepare_import_payload(
                 report=report,
             )
 
-            # Library settings
-            settings_section = lib_cfg.get("settings")
-            if isinstance(settings_section, dict):
-                imported_settings = False
-                for key, value in settings_section.items():
-                    if key == "asset_directory":
-                        if isinstance(value, list):
-                            normalized = [str(item).strip() for item in value if str(item).strip()]
-                        elif isinstance(value, str):
-                            normalized = [line.strip() for line in value.splitlines() if line.strip()]
-                        else:
-                            normalized = []
-
-                        if normalized:
-                            libraries_data[f"{lib_id}-attribute_{key}"] = normalized
-                            report.add("imported", f"libraries.{lib_name}.settings.{key}")
-                            imported_settings = True
-                        else:
-                            report.add(
-                                "unmapped",
-                                f"libraries.{lib_name}.settings.{key}",
-                                "No importable asset directory entries found.",
-                            )
-                        continue
-
-                    if key == "prioritize_assets" and not isinstance(value, (dict, list)):
-                        bool_value = None
-                        if isinstance(value, bool):
-                            bool_value = value
-                        elif isinstance(value, str):
-                            lowered = value.strip().lower()
-                            if lowered in {"true", "yes", "1"}:
-                                bool_value = True
-                            elif lowered in {"false", "no", "0"}:
-                                bool_value = False
-
-                        if bool_value is None:
-                            report.add(
-                                "unmapped",
-                                f"libraries.{lib_name}.settings.{key}",
-                                "Invalid boolean value.",
-                            )
-                        else:
-                            libraries_data[f"{lib_id}-attribute_{key}"] = bool_value
-                            report.add("imported", f"libraries.{lib_name}.settings.{key}")
-                            imported_settings = True
-                        continue
-
-                    report.add(
-                        "unmapped",
-                        f"libraries.{lib_name}.settings.{key}",
-                        "Library setting not supported for import.",
-                    )
-
-                if imported_settings:
-                    report.add("imported", f"libraries.{lib_name}.settings")
-            elif settings_section is not None:
-                report.add("unmapped", f"libraries.{lib_name}.settings", "Unsupported settings format.")
+            importer_library_settings.process_library_settings(
+                lib_id,
+                str(lib_name),
+                lib_cfg,
+                libraries_data=libraries_data,
+                report=report,
+            )
 
             for service_name, field_map in (
                 ("radarr", LIBRARY_RADARR_IMPORT_FIELDS),
