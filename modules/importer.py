@@ -104,6 +104,125 @@ PLAYLIST_KEYED_IMPORT_FIELDS = {
     "trakt_list_": "string_list",
 }
 
+# Language codes recognized as `weight_<code>` overlay-source ordering keys.
+# Hoisted out of prepare_import_payload's ~95-line nested comprehension --
+# this is data, not logic, and belongs at module scope where it's easy to
+# review and doesn't rebuild on every import call.
+LANGUAGE_WEIGHT_TEMPLATE_KEYS: frozenset[str] = frozenset(
+    f"weight_{key}"
+    for key in (
+        "en",
+        "de",
+        "fr",
+        "es",
+        "pt",
+        "ja",
+        "ko",
+        "zh",
+        "da",
+        "ru",
+        "it",
+        "hi",
+        "te",
+        "fa",
+        "th",
+        "nl",
+        "no",
+        "is",
+        "sv",
+        "tr",
+        "pl",
+        "cs",
+        "uk",
+        "hu",
+        "ar",
+        "bg",
+        "bn",
+        "bs",
+        "ca",
+        "cy",
+        "el",
+        "et",
+        "eu",
+        "fi",
+        "tl",
+        "fil",
+        "gl",
+        "he",
+        "hr",
+        "id",
+        "ka",
+        "kk",
+        "kn",
+        "la",
+        "lt",
+        "lv",
+        "mk",
+        "ml",
+        "mr",
+        "ms",
+        "nb",
+        "nn",
+        "pa",
+        "ro",
+        "sk",
+        "sl",
+        "sq",
+        "sr",
+        "so",
+        "sw",
+        "ta",
+        "ur",
+        "ay",
+        "ga",
+        "li",
+        "kh",
+        "vi",
+        "mn",
+        "af",
+        "bm",
+        "ln",
+        "wo",
+        "lo",
+        "myn",
+        "iu",
+        "rom",
+        "am",
+        "su",
+        "zu",
+        "lb",
+        "mos",
+    )
+)
+
+
+def _encode_json(values: list) -> str:
+    """Compact JSON encoder used by the operation handlers."""
+    return json.dumps(values, ensure_ascii=True)
+
+
+def _clean_custom_value(value: Any) -> Any | None:
+    """Normalize a single custom-value entry for mass-update operations.
+
+    None/False collapse to None; numbers pass through; strings get
+    stripped and only survive if non-empty.
+    """
+    if value is None or value is False:
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    text = str(value).strip()
+    return text if text else None
+
+
+def _normalize_op_items(value: Any) -> list:
+    """Coerce an operation's value into a uniform list for iteration."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
 
 def sanitize_config_name(raw_name: str | None) -> str:
     if not isinstance(raw_name, str):
@@ -300,92 +419,6 @@ def prepare_import_payload(
 
     collection_by_id, collection_by_alias = _build_collection_index(collection_config)
     overlay_by_id, overlay_by_alias, overlay_radio = _build_overlay_index(overlay_config)
-    language_weight_template_keys = {
-        f"weight_{key}"
-        for key in {
-            "en",
-            "de",
-            "fr",
-            "es",
-            "pt",
-            "ja",
-            "ko",
-            "zh",
-            "da",
-            "ru",
-            "it",
-            "hi",
-            "te",
-            "fa",
-            "th",
-            "nl",
-            "no",
-            "is",
-            "sv",
-            "tr",
-            "pl",
-            "cs",
-            "uk",
-            "hu",
-            "ar",
-            "bg",
-            "bn",
-            "bs",
-            "ca",
-            "cy",
-            "el",
-            "et",
-            "eu",
-            "fi",
-            "tl",
-            "fil",
-            "gl",
-            "he",
-            "hr",
-            "id",
-            "ka",
-            "kk",
-            "kn",
-            "la",
-            "lt",
-            "lv",
-            "mk",
-            "ml",
-            "mr",
-            "ms",
-            "nb",
-            "nn",
-            "pa",
-            "ro",
-            "sk",
-            "sl",
-            "sq",
-            "sr",
-            "so",
-            "sw",
-            "ta",
-            "ur",
-            "ay",
-            "ga",
-            "li",
-            "kh",
-            "vi",
-            "mn",
-            "af",
-            "bm",
-            "ln",
-            "wo",
-            "lo",
-            "myn",
-            "iu",
-            "rom",
-            "am",
-            "su",
-            "zu",
-            "lb",
-            "mos",
-        }
-    }
     (
         template_vars,
         simple_attrs,
@@ -394,24 +427,6 @@ def prepare_import_payload(
         mass_update_defs,
         toggle_select_defs,
     ) = _build_attribute_sets(attribute_config)
-
-    def _encode_json(values: list) -> str:
-        return json.dumps(values, ensure_ascii=True)
-
-    def _clean_custom_value(value: Any) -> Any | None:
-        if value is None or value is False:
-            return None
-        if isinstance(value, (int, float)):
-            return value
-        text = str(value).strip()
-        return text if text else None
-
-    def _normalize_op_items(value: Any) -> list:
-        if value is None:
-            return []
-        if isinstance(value, list):
-            return value
-        return [value]
 
     def _handle_mass_update_operation(
         lib_id: str,
@@ -1086,7 +1101,7 @@ def prepare_import_payload(
                         allowed.update(_collect_overlay_source_override_keys(overlay_meta))
                         if overlay_id in {"overlay_languages", "overlay_languages_subtitles"}:
                             allowed = set(allowed)
-                            allowed.update(language_weight_template_keys)
+                            allowed.update(LANGUAGE_WEIGHT_TEMPLATE_KEYS)
                         for key, value in template_values.items():
                             if key not in allowed:
                                 if key == "builder_level":
