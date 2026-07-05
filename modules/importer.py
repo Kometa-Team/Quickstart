@@ -542,63 +542,16 @@ def prepare_import_payload(
                 if imported_service:
                     report.add("imported", f"libraries.{lib_name}.{service_name}")
 
-            # Operations
-            operations = lib_cfg.get("operations")
-            if isinstance(operations, dict):
-                imported_ops = False
-                for key, value in operations.items():
-                    if key in simple_attrs and not isinstance(value, (dict, list)):
-                        libraries_data[f"{lib_id}-attribute_{key}"] = value
-                        report.add("imported", f"libraries.{lib_name}.operations.{key}")
-                        imported_ops = True
-                        continue
-
-                    handled, imported = importer_operations.handle_delete_collections_operation(
-                        lib_id,
-                        str(lib_name),
-                        key,
-                        value,
-                        libraries_data=libraries_data,
-                        report=report,
-                    )
-                    if handled:
-                        imported_ops = imported_ops or imported
-                        continue
-
-                    handled, imported = importer_operations.handle_mass_update_operation(
-                        lib_id,
-                        str(lib_name),
-                        key,
-                        value,
-                        mass_update_defs=mass_update_defs,
-                        libraries_data=libraries_data,
-                        report=report,
-                    )
-                    if handled:
-                        imported_ops = imported_ops or imported
-                        continue
-
-                    handled, imported = importer_operations.handle_toggle_select_operation(
-                        lib_id,
-                        str(lib_name),
-                        key,
-                        value,
-                        toggle_select_defs=toggle_select_defs,
-                        libraries_data=libraries_data,
-                        report=report,
-                    )
-                    if handled:
-                        imported_ops = imported_ops or imported
-                        continue
-                    report.add(
-                        "unmapped",
-                        f"libraries.{lib_name}.operations.{key}",
-                        "Complex operation not supported for import.",
-                    )
-                if imported_ops:
-                    report.add("imported", f"libraries.{lib_name}.operations")
-            elif operations is not None:
-                report.add("unmapped", f"libraries.{lib_name}.operations", "Unsupported operations format.")
+            importer_operations.process_operations_block(
+                lib_id,
+                str(lib_name),
+                lib_cfg,
+                libraries_data=libraries_data,
+                report=report,
+                simple_attrs=simple_attrs,
+                mass_update_defs=mass_update_defs,
+                toggle_select_defs=toggle_select_defs,
+            )
 
             handled_keys = {"collection_files", "overlay_files", "metadata_files", "template_variables", "settings", "operations", "radarr", "sonarr"}
             handled_keys.update(top_level_map.keys())
