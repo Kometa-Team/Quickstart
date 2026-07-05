@@ -83,9 +83,7 @@ def process_metadata_files(
         )
 
     if imported_metadata_files:
-        libraries_data[f"{lib_id}-metadata_files"] = json.dumps(
-            imported_metadata_files, ensure_ascii=True
-        )
+        libraries_data[f"{lib_id}-metadata_files"] = json.dumps(imported_metadata_files, ensure_ascii=True)
         report.add("imported", f"libraries.{lib_name}.metadata_files")
 
 
