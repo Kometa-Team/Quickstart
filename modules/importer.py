@@ -251,6 +251,7 @@ from modules import importer_collections  # noqa: E402
 # Same import pattern as importer_collections -- module-level import so the
 # call site inside prepare_import_payload reads as importer_overlays.process_*.
 from modules import importer_overlays  # noqa: E402
+
 # Per-library metadata_files handling moved to modules/importer_metadata.py.
 # Same module-level import pattern as importer_collections.
 from modules import importer_metadata  # noqa: E402
