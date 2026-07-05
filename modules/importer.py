@@ -247,6 +247,11 @@ from modules.importer_simple_sections import (  # noqa: E402
 # makes it obvious this is the collection-processing pipeline.
 from modules import importer_collections  # noqa: E402
 
+# Per-library overlay_files handling moved to modules/importer_overlays.py.
+# Same import pattern as importer_collections -- module-level import so the
+# call site inside prepare_import_payload reads as importer_overlays.process_*.
+from modules import importer_overlays  # noqa: E402
+
 
 def _build_attribute_sets(
     attribute_config: dict,
@@ -451,114 +456,18 @@ def prepare_import_payload(
                 collection_by_alias=collection_by_alias,
             )
 
-            # Overlays
-            overlay_files = lib_cfg.get("overlay_files")
-            if isinstance(overlay_files, list):
-                imported_overlay_files = []
-                for idx, entry in enumerate(overlay_files):
-                    default_value = None
-                    template_values = None
-                    builder_level = builder_default
-                    raw_entry_type = None
-                    raw_entry_location = None
-                    if isinstance(entry, dict):
-                        default_value = entry.get("default")
-                        template_values = entry.get("template_variables")
-                        for candidate in ("file", "folder", "url", "git", "repo"):
-                            location = entry.get(candidate)
-                            if location:
-                                raw_entry_type = candidate
-                                raw_entry_location = str(location)
-                                break
-                        if isinstance(template_values, dict) and "builder_level" in template_values:
-                            level = template_values.get("builder_level")
-                            if level in {"show", "season", "episode"}:
-                                builder_level = level
-                    elif isinstance(entry, str):
-                        default_value = entry
-
-                    if raw_entry_type and raw_entry_location:
-                        imported_overlay_files.append({"type": raw_entry_type, "location": raw_entry_location})
-                        report.add("imported", f"libraries.{lib_name}.overlay_files[{idx}].{raw_entry_type}")
-                        continue
-
-                    if not default_value:
-                        report.add("unmapped", f"libraries.{lib_name}.overlay_files[{idx}]", "Missing default.")
-                        continue
-
-                    raw_default = str(default_value)
-                    overlay_id = _resolve_overlay_id(raw_default, overlay_by_id, overlay_by_alias)
-                    if overlay_id not in overlay_by_id:
-                        report.add(
-                            "unmapped",
-                            f"libraries.{lib_name}.overlay_files[{idx}].default",
-                            "Overlay not found in Quickstart.",
-                        )
-                        continue
-
-                    overlay_meta = overlay_by_id.get(overlay_id, {})
-                    if overlay_id == "overlay_languages" and isinstance(template_values, dict) and str(template_values.get("use_subtitles", "")).strip().lower() == "true":
-                        subtitles_id = overlay_by_alias.get("languages_subtitles")
-                        if subtitles_id:
-                            overlay_id = subtitles_id
-                            overlay_meta = overlay_by_id.get(overlay_id, {})
-                            template_values = dict(template_values)
-                            template_values.pop("use_subtitles", None)
-                            report.add(
-                                "imported",
-                                f"libraries.{lib_name}.overlay_files[{idx}].template_variables.use_subtitles",
-                            )
-                    media_types = overlay_meta.get("media_types") or []
-                    if builder_level == "movie" and media_types and "movie" not in media_types:
-                        report.add(
-                            "unmapped",
-                            f"libraries.{lib_name}.overlay_files[{idx}].default",
-                            "Overlay not available for movie libraries.",
-                        )
-                        continue
-                    if builder_level not in media_types and builder_level != "movie":
-                        if "show" in media_types:
-                            builder_level = "show"
-                        elif media_types:
-                            builder_level = media_types[0]
-
-                    radio_info = overlay_radio.get(overlay_id)
-                    if radio_info:
-                        radio_key = f"{lib_id}-{builder_level}-{radio_info['group_name']}"
-                        libraries_data[radio_key] = radio_info.get("value")
-                    else:
-                        libraries_data[f"{lib_id}-{builder_level}-{overlay_id}"] = True
-                    report.add("imported", f"libraries.{lib_name}.overlay_files[{idx}].default")
-
-                    if isinstance(template_values, dict):
-                        allowed = _collect_template_keys(overlay_meta.get("template_variables"))
-                        allowed.update(_collect_overlay_source_override_keys(overlay_meta))
-                        if overlay_id in {"overlay_languages", "overlay_languages_subtitles"}:
-                            allowed = set(allowed)
-                            allowed.update(LANGUAGE_WEIGHT_TEMPLATE_KEYS)
-                        for key, value in template_values.items():
-                            if key not in allowed:
-                                if key == "builder_level":
-                                    continue
-                                report.add(
-                                    "unmapped",
-                                    f"libraries.{lib_name}.overlay_files[{idx}].template_variables.{key}",
-                                    "Template variable not available in Quickstart.",
-                                )
-                                continue
-                            child_name = f"{lib_id}-{builder_level}-template_{overlay_id}[{key}]"
-                            libraries_data[child_name] = value
-                            report.add(
-                                "imported",
-                                f"libraries.{lib_name}.overlay_files[{idx}].template_variables.{key}",
-                            )
-
-                if imported_overlay_files:
-                    libraries_data[f"{lib_id}-overlay_files"] = json.dumps(imported_overlay_files, ensure_ascii=True)
-                    report.add("imported", f"libraries.{lib_name}.overlay_files")
-
-            elif overlay_files is not None:
-                report.add("unmapped", f"libraries.{lib_name}.overlay_files", "Unsupported overlay_files format.")
+            importer_overlays.process_overlay_files(
+                lib_id,
+                str(lib_name),
+                lib_cfg,
+                builder_default,
+                libraries_data=libraries_data,
+                report=report,
+                overlay_by_id=overlay_by_id,
+                overlay_by_alias=overlay_by_alias,
+                overlay_radio=overlay_radio,
+                language_weight_template_keys=LANGUAGE_WEIGHT_TEMPLATE_KEYS,
+            )
 
             metadata_files = lib_cfg.get("metadata_files")
             if isinstance(metadata_files, list):
