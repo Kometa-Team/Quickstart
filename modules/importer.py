@@ -241,6 +241,12 @@ from modules.importer_simple_sections import (  # noqa: E402
     SIMPLE_SECTIONS,  # noqa: F401 (used by tail unknown-key sweep in prepare_import_payload)
 )
 
+# Per-library collection_files handling moved to modules/importer_collections.py.
+# Imported as a module (not name-by-name) because the call site inside
+# prepare_import_payload passes kwargs and the `importer_collections.` prefix
+# makes it obvious this is the collection-processing pipeline.
+from modules import importer_collections  # noqa: E402
+
 
 def _build_attribute_sets(
     attribute_config: dict,
@@ -435,128 +441,15 @@ def prepare_import_payload(
             elif lib_template_vars is not None:
                 report.add("unmapped", f"libraries.{lib_name}.template_variables", "Unsupported template_variables format.")
 
-            # Collections
-            collection_files = lib_cfg.get("collection_files")
-            if isinstance(collection_files, list):
-                imported_collection_files = []
-                for idx, entry in enumerate(collection_files):
-                    default_value = None
-                    template_values = None
-                    raw_entry_type = None
-                    raw_entry_location = None
-                    if isinstance(entry, dict):
-                        default_value = entry.get("default")
-                        template_values = entry.get("template_variables")
-                        for candidate in ("file", "folder", "url", "git", "repo"):
-                            location = entry.get(candidate)
-                            if location:
-                                raw_entry_type = candidate
-                                raw_entry_location = str(location)
-                                break
-                    elif isinstance(entry, str):
-                        default_value = entry
-                    if raw_entry_type and raw_entry_location:
-                        imported_collection_files.append({"type": raw_entry_type, "location": raw_entry_location})
-                        report.add("imported", f"libraries.{lib_name}.collection_files[{idx}].{raw_entry_type}")
-                        continue
-                    if not default_value:
-                        report.add("unmapped", f"libraries.{lib_name}.collection_files[{idx}]", "Missing default.")
-                        continue
-
-                    raw_default = str(default_value)
-                    collection_id = _resolve_collection_id(raw_default, collection_by_id, collection_by_alias)
-                    if not collection_id or collection_id not in collection_by_id:
-                        report.add(
-                            "unmapped",
-                            f"libraries.{lib_name}.collection_files[{idx}].default",
-                            "Collection not found in Quickstart.",
-                        )
-                        continue
-
-                    libraries_data[f"{lib_id}-{collection_id}"] = True
-                    report.add("imported", f"libraries.{lib_name}.collection_files[{idx}].default")
-
-                    if isinstance(template_values, dict):
-                        allowed = _collect_template_keys(collection_by_id[collection_id].get("template_variables"))
-                        dynamic_child_fields = _collect_dynamic_child_field_specs(collection_by_id[collection_id].get("template_variables"))
-                        clean_id = collection_id.replace("collection_", "", 1)
-                        expanded_template_values = dict(template_values)
-                        data_block = expanded_template_values.get("data")
-                        data_reported = set()
-                        pending_dynamic_child_maps: dict[str, dict[str, str]] = {}
-                        if isinstance(data_block, dict):
-                            for subkey, subval in data_block.items():
-                                flat_key = f"data_{subkey}"
-                                if flat_key in allowed and flat_key not in expanded_template_values:
-                                    expanded_template_values[flat_key] = subval
-                                if flat_key in allowed:
-                                    report.add(
-                                        "imported",
-                                        f"libraries.{lib_name}.collection_files[{idx}].template_variables.data.{subkey}",
-                                    )
-                                    data_reported.add(subkey)
-                            if "data" in expanded_template_values and "data" not in allowed:
-                                expanded_template_values.pop("data", None)
-                            if data_reported:
-                                report.add(
-                                    "imported",
-                                    f"libraries.{lib_name}.collection_files[{idx}].template_variables.data",
-                                )
-                        if _has_template_string_list_values(expanded_template_values.get("include")) and _has_template_string_list_values(expanded_template_values.get("exclude")):
-                            report.add(
-                                "skipped",
-                                f"libraries.{lib_name}.collection_files[{idx}].template_variables.include_exclude_warning",
-                                "Warning - include and exclude were both imported. Kometa code allows this, but the wiki says not to combine them.",
-                            )
-                        for key, value in expanded_template_values.items():
-                            if key in allowed:
-                                child_name = f"{lib_id}-template_collection_{clean_id}_{key}"
-                                if isinstance(value, list):
-                                    libraries_data[child_name] = json.dumps(value, ensure_ascii=True)
-                                else:
-                                    libraries_data[child_name] = value
-                                report.add(
-                                    "imported",
-                                    f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
-                                )
-                            else:
-                                matched_dynamic_child = next(
-                                    (spec for spec in dynamic_child_fields if key.startswith(spec["child_prefix"]) and key != spec["child_prefix"]),
-                                    None,
-                                )
-                                if matched_dynamic_child:
-                                    suffix = key[len(matched_dynamic_child["child_prefix"]) :].strip()
-                                    serialized_value = _serialize_dynamic_child_mapping_value(
-                                        value,
-                                        matched_dynamic_child["value_kind"],
-                                    )
-                                    if suffix and serialized_value:
-                                        pending_dynamic_child_maps.setdefault(
-                                            matched_dynamic_child["field_key"],
-                                            {},
-                                        )[suffix] = serialized_value
-                                        report.add(
-                                            "imported",
-                                            f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
-                                        )
-                                        continue
-                                report.add(
-                                    "unmapped",
-                                    f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
-                                    "Template variable not available in Quickstart.",
-                                )
-
-                        for field_key, field_map in pending_dynamic_child_maps.items():
-                            if not field_map:
-                                continue
-                            libraries_data[f"{lib_id}-template_collection_{clean_id}_{field_key}"] = json.dumps(field_map, ensure_ascii=True)
-
-                if imported_collection_files:
-                    libraries_data[f"{lib_id}-collection_files"] = json.dumps(imported_collection_files, ensure_ascii=True)
-                    report.add("imported", f"libraries.{lib_name}.collection_files")
-
-            elif collection_files is not None:
-                report.add("unmapped", f"libraries.{lib_name}.collection_files", "Unsupported collection_files format.")
+            importer_collections.process_collection_files(
+                lib_id,
+                str(lib_name),
+                lib_cfg,
+                libraries_data=libraries_data,
+                report=report,
+                collection_by_id=collection_by_id,
+                collection_by_alias=collection_by_alias,
+            )
 
             # Overlays
             overlay_files = lib_cfg.get("overlay_files")
