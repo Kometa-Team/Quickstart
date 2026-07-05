@@ -6,27 +6,6 @@ from ruamel.yaml import YAML
 
 from modules import helpers
 
-SIMPLE_SECTIONS = {
-    "plex",
-    "tmdb",
-    "omdb",
-    "mdblist",
-    "tautulli",
-    "notifiarr",
-    "gotify",
-    "ntfy",
-    "apprise",
-    "github",
-    "radarr",
-    "sonarr",
-    "trakt",
-    "mal",
-    "anidb",
-    "webhooks",
-    "settings",
-    "playlist_files",
-}
-
 LIBRARY_RADARR_IMPORT_FIELDS = {
     "url": "string",
     "token": "string",
@@ -253,6 +232,15 @@ from modules.importer_playlists import (  # noqa: E402
     PLAYLIST_SHARED_IMPORT_FIELDS,  # noqa: F401 (used by libraries block below + scripts)
 )
 
+# Top-level "simple section" handling (apprise, plex, tmdb, ...) moved to
+# modules/importer_simple_sections.py.  SIMPLE_SECTIONS is re-imported here
+# because the end-of-function unknown-key sweep still uses it to decide
+# which config keys count as "handled" vs. "not supported".
+from modules import importer_simple_sections  # noqa: E402
+from modules.importer_simple_sections import (  # noqa: E402
+    SIMPLE_SECTIONS,  # noqa: F401 (used by tail unknown-key sweep in prepare_import_payload)
+)
+
 
 def _build_attribute_sets(
     attribute_config: dict,
@@ -334,26 +322,6 @@ def _build_attribute_sets(
     )
 
 
-def _flatten_dict(base: str, payload: Any, report: ImportReport, max_depth: int = 3) -> None:
-    if max_depth <= 0:
-        report.add("imported", base)
-        return
-    if isinstance(payload, dict):
-        for key, value in payload.items():
-            child = f"{base}.{key}"
-            _flatten_dict(child, value, report, max_depth - 1)
-        if not payload:
-            report.add("imported", base)
-    elif isinstance(payload, list):
-        for idx, value in enumerate(payload):
-            child = f"{base}[{idx}]"
-            _flatten_dict(child, value, report, max_depth - 1)
-        if not payload:
-            report.add("imported", base)
-    else:
-        report.add("imported", base)
-
-
 def prepare_import_payload(
     config_data: dict,
     plex_movie_names: set[str],
@@ -385,58 +353,7 @@ def prepare_import_payload(
     playlist_template_field_values = _playlist_state.template_field_values
     playlist_keyed_template_field_values = _playlist_state.keyed_template_field_values
 
-    for section in SIMPLE_SECTIONS:
-        if section not in config_data:
-            continue
-        section_payload = config_data.get(section)
-        if section == "playlist_files":
-            continue
-
-        if section == "apprise":
-            apprise_location = None
-            if isinstance(section_payload, dict):
-                if "config" in section_payload:
-                    apprise_location = section_payload.get("config")
-                elif "location" in section_payload:
-                    apprise_location = section_payload.get("location")
-                elif "apprise" in section_payload:
-                    nested_apprise = section_payload.get("apprise")
-                    if isinstance(nested_apprise, dict):
-                        apprise_location = nested_apprise.get("config") or nested_apprise.get("location")
-                    else:
-                        apprise_location = nested_apprise
-            elif isinstance(section_payload, str):
-                apprise_location = section_payload
-
-            apprise_location = str(apprise_location).strip() if apprise_location is not None else ""
-            if apprise_location:
-                normalized_apprise = {"location": apprise_location}
-                payload[section] = {section: normalized_apprise}
-                _flatten_dict(section, normalized_apprise, report)
-            else:
-                report.add("unmapped", section, "Unsupported section format.")
-            continue
-
-        if isinstance(section_payload, dict):
-            if section == "settings":
-                asset_directory = section_payload.get("asset_directory")
-                if isinstance(asset_directory, (str, list)):
-                    normalized = (
-                        [line.strip() for line in str(asset_directory).splitlines()] if isinstance(asset_directory, str) else [str(item).strip() for item in asset_directory]
-                    )
-                    normalized = [entry for entry in normalized if entry]
-                    section_payload = dict(section_payload)
-                    section_payload["asset_directory"] = normalized
-            if section == "anidb":
-                if "enable" not in section_payload:
-                    has_values = any(value not in [None, "", [], {}] for value in section_payload.values())
-                    if has_values:
-                        section_payload = dict(section_payload)
-                        section_payload["enable"] = True
-            payload[section] = {section: section_payload}
-            _flatten_dict(section, section_payload, report)
-        else:
-            report.add("unmapped", section, "Unsupported section format.")
+    importer_simple_sections.process_simple_sections(config_data, payload=payload, report=report)
 
     libraries_payload = config_data.get("libraries")
     if isinstance(libraries_payload, dict):
