@@ -12,21 +12,25 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~810 lines, still above the 600-line soft-limit.  Four
-chunks have already moved out:
+This file is ~730 lines, still above the 600-line soft-limit.  Six
+chunks have moved out:
 
-* :mod:`blueprints.import_config_helpers` -- 12 pure helpers (~240 lines)
+* :mod:`blueprints.import_config_helpers` -- 12 pure helpers (~245 lines)
 * :mod:`blueprints.import_config_bundle` -- upload / zip extraction
-  and the ``cleanup_bundle_dir`` helper (~245 lines)
+  and the ``cleanup_bundle_dir`` helper (~240 lines)
 * :mod:`blueprints.import_config_validators` -- Plex + TMDb credential
   validation state machines for BOTH the preview and confirm flows,
-  plus the library-mapping validator (~555 lines)
+  plus the ``validate_library_mapping`` (confirm, error-on-fail) and
+  ``apply_library_mapping_for_preview`` (accumulate-and-report)
+  variants (~650 lines)
+* :mod:`blueprints.import_config_cache` -- shared token + cache-load
+  logic used by three routes (~70 lines)
+* :mod:`blueprints.import_config_report_builder` -- the alias-line
+  generator and line-counts calculator (~105 lines)
 
-Both ``import_config_preview`` (~220 lines) and ``import_config_confirm``
-(~250 lines) are now firmly out of elephant territory.  The four
-routes remain in one file because they're tightly coupled through a
-shared session-cache flow (import_preview_token / import_preview_path
-/ import_preview_*_url / import_preview_*_token).
+All four routes are now under 250 lines each.  The four remain in
+one file because they're tightly coupled through the shared
+session-cache flow.
 """
 
 import json
@@ -38,6 +42,7 @@ from pathlib import Path
 from flask import Blueprint, current_app, jsonify, request, session
 
 from blueprints.import_config_bundle import extract_bundle_upload
+from blueprints.import_config_cache import load_preview_cache
 from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tests and legacy callers)
     _coerce_validation_response_payload,
     _import_preview_json_default,
@@ -52,7 +57,12 @@ from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tes
     _parse_tmdb_credentials_from_form,
     count_annotated_lines,
 )
+from blueprints.import_config_report_builder import (
+    build_alias_report_lines,
+    compute_line_counts,
+)
 from blueprints.import_config_validators import (
+    apply_library_mapping_for_preview,
     validate_confirm_plex_credentials,
     validate_confirm_tmdb_credentials,
     validate_library_mapping,
@@ -294,18 +304,9 @@ def import_config_preview():
 @bp.route("/import-config/report", methods=["GET"])
 def import_config_report():
     token = request.args.get("token")
-    if not token or token != session.get("import_preview_token"):
-        return jsonify(success=False, message="Import token is invalid."), 400
-
-    cache_path = session.get("import_preview_path")
-    if not cache_path:
-        return jsonify(success=False, message="Import preview not found."), 400
-
-    try:
-        with open(cache_path, "r", encoding="utf-8") as handle:
-            cached = json.load(handle)
-    except Exception:
-        return jsonify(success=False, message="Import preview is unavailable."), 400
+    cached, _cache_path, err = load_preview_cache(token)
+    if err:
+        return err
 
     config_name = cached.get("config_name") or "import"
     report_lines = cached.get("report_lines") or []
@@ -364,15 +365,9 @@ def import_config_preview_mapped():
     if library_mapping and not isinstance(library_mapping, dict):
         return jsonify(success=False, message="Invalid library mapping."), 400
 
-    cache_path = session.get("import_preview_path")
-    if not cache_path:
-        return jsonify(success=False, message="Import preview not found."), 400
-
-    try:
-        with open(cache_path, "r", encoding="utf-8") as handle:
-            cached = json.load(handle)
-    except Exception:
-        return jsonify(success=False, message="Import preview is unavailable."), 400
+    cached, cache_path, err = load_preview_cache(token)
+    if err:
+        return err
 
     config_data = cached.get("config_data") or {}
     if not isinstance(config_data, dict):
@@ -401,45 +396,19 @@ def import_config_preview_mapped():
     alias_map = {}
     mapping_stats = {"mapped": 0, "ignored": 0, "missing": 0, "invalid": 0, "duplicate": 0}
     if isinstance(config_data.get("libraries"), dict):
-        mapped_libraries = {}
-        used_targets = set()
-        for lib_name, lib_cfg in config_data.get("libraries", {}).items():
-            name = str(lib_name)
-            if name in plex_lookup:
-                target = plex_lookup[name]
-            else:
-                mapped = library_mapping.get(name)
-                if mapped is None or str(mapped).strip() == "":
-                    mapping_skip_reasons[name] = "Library mapping not provided."
-                    mapping_stats["missing"] += 1
-                    continue
-                mapped = str(mapped).strip()
-                if mapped == "__ignore__":
-                    mapping_skip_reasons[name] = "Mapping set to ignore library."
-                    mapping_stats["ignored"] += 1
-                    continue
-                if mapped not in plex_lookup:
-                    mapping_skip_reasons[name] = "Mapped library not found in Plex."
-                    mapping_stats["invalid"] += 1
-                    continue
-                target = plex_lookup[mapped]
-
-            if target != name:
-                alias_map[name] = target
-
-            if target in used_targets:
-                mapping_skip_reasons[name] = "Mapped library already assigned to another entry."
-                if name not in plex_names:
-                    mapping_stats["duplicate"] += 1
-                continue
-            used_targets.add(target)
-            mapped_libraries[target] = lib_cfg
-            if name not in plex_names:
-                mapping_stats["mapped"] += 1
+        mapping_result = apply_library_mapping_for_preview(
+            libraries_payload=config_data.get("libraries", {}),
+            library_mapping=library_mapping,
+            movie_names=movie_names,
+            show_names=show_names,
+        )
+        mapping_skip_reasons = mapping_result.skip_reasons
+        alias_map = mapping_result.alias_map
+        mapping_stats = mapping_result.stats
 
         config_copy = json.loads(json.dumps(config_data))
-        if mapped_libraries:
-            config_copy["libraries"] = mapped_libraries
+        if mapping_result.mapped_libraries:
+            config_copy["libraries"] = mapping_result.mapped_libraries
         else:
             config_copy.pop("libraries", None)
     else:
@@ -460,58 +429,22 @@ def import_config_preview_mapped():
                 report_lines.append(line)
                 seen.add(line)
     if alias_map and isinstance(config_data.get("libraries"), dict):
-        alias_lines = []
-        seen = set(report_lines)
-        for original_name, mapped_name in alias_map.items():
-            if not original_name:
-                continue
-            mapped_name = str(mapped_name).strip()
-            if not mapped_name or mapped_name == "__ignore__":
-                continue
-            if mapped_name == original_name:
-                continue
-            prefix = f"libraries.{mapped_name}"
-            for line in report_lines:
-                if not isinstance(line, str) or ":" not in line:
-                    continue
-                status, rest = line.split(":", 1)
-                status = status.strip()
-                path = rest.strip()
-                suffix = ""
-                if " :: " in path:
-                    path, reason = path.split(" :: ", 1)
-                    path = path.strip()
-                    suffix = f" :: {reason}"
-                elif status != "imported" and " - " in path:
-                    path, reason = path.split(" - ", 1)
-                    path = path.strip()
-                    suffix = f" - {reason}"
-                if path == prefix or path.startswith(prefix + "."):
-                    alias_path = f"libraries.{original_name}{path[len(prefix):]}"
-                    alias_line = f"{status}: {alias_path}{suffix}"
-                    if alias_line not in seen:
-                        alias_lines.append(alias_line)
-                        seen.add(alias_line)
+        alias_lines = build_alias_report_lines(
+            report_lines=report_lines,
+            alias_map=alias_map,
+            libraries_payload=config_data.get("libraries"),
+        )
         if alias_lines:
             report_lines.extend(alias_lines)
     annotated_report = importer.annotate_yaml_with_report(config_text, report_lines, binary=True)
     comments_count = cached.get("comments_count")
     if not isinstance(comments_count, int):
         comments_count = sum(1 for line in str(config_text).splitlines() if line.lstrip().startswith("#"))
-    blank_count = sum(1 for line in str(config_text).splitlines() if not line.strip())
-    total_lines = len(str(config_text).splitlines())
-    annotated_counts = count_annotated_lines(str(annotated_report))
-    imported_lines = annotated_counts.get("imported", 0)
-    not_imported_lines = annotated_counts.get("not_imported", 0)
-    diff_count = total_lines - (imported_lines + not_imported_lines + blank_count + comments_count)
-    line_counts = {
-        "imported_lines": imported_lines,
-        "not_imported_lines": not_imported_lines,
-        "comments": comments_count,
-        "blank": blank_count,
-        "total": total_lines,
-        "diff": diff_count,
-    }
+    line_counts = compute_line_counts(
+        config_text=config_text,
+        annotated_report=annotated_report,
+        comments_count=comments_count,
+    )
 
     cached["payload"] = payload
     cached["report_lines"] = report_lines
@@ -571,15 +504,9 @@ def import_config_confirm():
 
     merge_mode = _boolish(raw_merge_mode)
 
-    cache_path = session.get("import_preview_path")
-    if not cache_path:
-        return jsonify(success=False, message="Import preview not found."), 400
-
-    try:
-        with open(cache_path, "r", encoding="utf-8") as handle:
-            cached = json.load(handle)
-    except Exception:
-        return jsonify(success=False, message="Import preview is unavailable."), 400
+    cached, cache_path, err = load_preview_cache(token)
+    if err:
+        return err
 
     config_name = cached.get("config_name")
     payload = cached.get("payload") or {}

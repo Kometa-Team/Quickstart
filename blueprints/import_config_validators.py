@@ -553,3 +553,96 @@ def validate_library_mapping(
         )
 
     return mapped_libraries, None
+
+
+# ---------------------------------------------------------------------------
+# Preview-mapped library mapping (accumulating variant).
+#
+# import_config_preview_mapped needs to run the same library-mapping logic
+# as import_config_confirm, but with different failure semantics: instead
+# of erroring on missing / invalid / duplicate entries, it accumulates
+# skip reasons + stats so the preview UI can show a "here's what will
+# happen" report.  The failure modes and their string messages are
+# byte-identical to the develop code they replace.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True)
+class PreviewMappingResult:
+    """Outcome of :func:`apply_library_mapping_for_preview`.
+
+    Unlike :class:`PlexValidationOutcome` there's no ``error_response``
+    -- preview-mapped never errors out on library mapping issues, it
+    just records them and lets the caller build a report.
+    """
+
+    mapped_libraries: dict = field(default_factory=dict)
+    alias_map: dict = field(default_factory=dict)
+    skip_reasons: dict = field(default_factory=dict)
+    stats: dict = field(default_factory=lambda: {"mapped": 0, "ignored": 0, "missing": 0, "invalid": 0, "duplicate": 0})
+
+
+def apply_library_mapping_for_preview(
+    *,
+    libraries_payload: dict,
+    library_mapping: dict,
+    movie_names,
+    show_names,
+) -> PreviewMappingResult:
+    """Apply library mapping to a preview-mapped payload, accumulating stats.
+
+    Same core loop as :func:`validate_library_mapping` (confirm flow)
+    but records outcomes rather than returning an error tuple.  Callers
+    use the returned ``skip_reasons`` and ``alias_map`` to build the
+    preview report shown to the user before they hit "Import".
+
+    :param libraries_payload: dict of imported library name -> config.
+    :param library_mapping: dict of imported name -> Plex target name.
+    :param movie_names: known Plex movie library names.
+    :param show_names: known Plex show library names.
+    :returns: :class:`PreviewMappingResult` with mapped_libraries,
+              alias_map (source -> target rename), skip_reasons (per
+              library name), and stats counters.
+    """
+    plex_lookup = {name: name for name in movie_names}
+    plex_lookup.update({name: name for name in show_names})
+    plex_names = set(plex_lookup.values())
+
+    result = PreviewMappingResult()
+    used_targets: set = set()
+
+    for lib_name, lib_cfg in libraries_payload.items():
+        name = str(lib_name)
+        if name in plex_lookup:
+            target = plex_lookup[name]
+        else:
+            mapped = library_mapping.get(name)
+            if mapped is None or str(mapped).strip() == "":
+                result.skip_reasons[name] = "Library mapping not provided."
+                result.stats["missing"] += 1
+                continue
+            mapped = str(mapped).strip()
+            if mapped == "__ignore__":
+                result.skip_reasons[name] = "Mapping set to ignore library."
+                result.stats["ignored"] += 1
+                continue
+            if mapped not in plex_lookup:
+                result.skip_reasons[name] = "Mapped library not found in Plex."
+                result.stats["invalid"] += 1
+                continue
+            target = plex_lookup[mapped]
+
+        if target != name:
+            result.alias_map[name] = target
+
+        if target in used_targets:
+            result.skip_reasons[name] = "Mapped library already assigned to another entry."
+            if name not in plex_names:
+                result.stats["duplicate"] += 1
+            continue
+        used_targets.add(target)
+        result.mapped_libraries[target] = lib_cfg
+        if name not in plex_names:
+            result.stats["mapped"] += 1
+
+    return result
