@@ -13,9 +13,19 @@ from flask import current_app as app, has_app_context, has_request_context, sess
 
 from modules import database, helpers, imagemaid, persistence
 
-KOMETA_CPU_CACHE = {}
-SYSTEM_CPU_CACHE = {"total": None, "idle": None}
-PROCESS_IO_CACHE = {"kometa": {}, "imagemaid": {}}
+# Process-metric calculators (CPU / IO stats) extracted to modules.process_metrics.
+# Re-exported here so callers using ``from modules.process_control import ...``
+# and ``modules.process_control.<name>`` continue to work.
+from modules.process_metrics import (  # noqa: F401
+    KOMETA_CPU_CACHE,
+    PROCESS_IO_CACHE,
+    SYSTEM_CPU_CACHE,
+    calculate_process_cpu_percent,
+    calculate_process_io_stats,
+    calculate_system_cpu_percent,
+    clear_process_metric_cache,
+)
+
 MAINTENANCE_STATE = {
     "paused": False,
     "paused_since": None,
@@ -59,120 +69,6 @@ def _get_version_info():
     if not has_app_context():
         return {}
     return app.config.get("VERSION_CHECK") or {}
-
-
-def calculate_process_cpu_percent(proc):
-    try:
-        cpu_times = proc.cpu_times()
-    except Exception:
-        return None
-    total_cpu = cpu_times.user + cpu_times.system
-    try:
-        for child in proc.children(recursive=True):
-            try:
-                child_times = child.cpu_times()
-                total_cpu += child_times.user + child_times.system
-            except Exception:
-                continue
-    except Exception:
-        pass
-    now = time.time()
-    entry = KOMETA_CPU_CACHE.get(proc.pid)
-    KOMETA_CPU_CACHE[proc.pid] = {"time": now, "cpu": total_cpu}
-    if not entry:
-        return None
-    elapsed = now - entry.get("time", now)
-    if elapsed <= 0:
-        return None
-    delta_cpu = total_cpu - entry.get("cpu", total_cpu)
-    if delta_cpu < 0:
-        return None
-    percent = (delta_cpu / elapsed) * 100.0
-    return max(0.0, percent)
-
-
-def calculate_system_cpu_percent():
-    try:
-        cpu_times = psutil.cpu_times()
-    except Exception:
-        return None
-    total = sum(cpu_times)
-    idle = getattr(cpu_times, "idle", 0)
-    last_total = SYSTEM_CPU_CACHE.get("total")
-    last_idle = SYSTEM_CPU_CACHE.get("idle")
-    SYSTEM_CPU_CACHE["total"] = total
-    SYSTEM_CPU_CACHE["idle"] = idle
-    if last_total is None or last_idle is None:
-        return None
-    delta_total = total - last_total
-    if delta_total <= 0:
-        return None
-    delta_idle = idle - last_idle
-    busy = max(0.0, delta_total - delta_idle)
-    percent = (busy / delta_total) * 100.0
-    return max(0.0, min(100.0, percent))
-
-
-def calculate_process_io_stats(proc, cache_name):
-    bucket = PROCESS_IO_CACHE.setdefault(cache_name, {})
-    total_read = 0
-    total_write = 0
-    saw_counters = False
-
-    def _accumulate_io(target_proc):
-        nonlocal total_read, total_write, saw_counters
-        try:
-            counters = target_proc.io_counters()
-        except Exception:
-            return
-        read_bytes = getattr(counters, "read_bytes", None)
-        write_bytes = getattr(counters, "write_bytes", None)
-        if read_bytes is None or write_bytes is None:
-            return
-        saw_counters = True
-        total_read += max(0, int(read_bytes))
-        total_write += max(0, int(write_bytes))
-
-    _accumulate_io(proc)
-    try:
-        for child in proc.children(recursive=True):
-            _accumulate_io(child)
-    except Exception:
-        pass
-
-    if not saw_counters:
-        return None
-
-    now = time.time()
-    entry = bucket.get(proc.pid)
-    bucket[proc.pid] = {"time": now, "read": total_read, "write": total_write}
-
-    read_rate_mb_s = None
-    write_rate_mb_s = None
-    if entry:
-        elapsed = now - entry.get("time", now)
-        if elapsed > 0:
-            delta_read = total_read - entry.get("read", total_read)
-            delta_write = total_write - entry.get("write", total_write)
-            if delta_read >= 0:
-                read_rate_mb_s = delta_read / (1024 * 1024) / elapsed
-            if delta_write >= 0:
-                write_rate_mb_s = delta_write / (1024 * 1024) / elapsed
-
-    return {
-        "disk_read_mb": total_read / (1024 * 1024),
-        "disk_write_mb": total_write / (1024 * 1024),
-        "disk_read_rate_mb_s": read_rate_mb_s,
-        "disk_write_rate_mb_s": write_rate_mb_s,
-    }
-
-
-def clear_process_metric_cache(pid, cache_name=None):
-    if pid is None:
-        return
-    KOMETA_CPU_CACHE.pop(pid, None)
-    if cache_name:
-        PROCESS_IO_CACHE.setdefault(cache_name, {}).pop(pid, None)
 
 
 def parse_maintenance_window_minutes(window_str):
