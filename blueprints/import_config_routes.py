@@ -12,24 +12,21 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~875 lines, still above the 600-line soft-limit.  Three
+This file is ~810 lines, still above the 600-line soft-limit.  Four
 chunks have already moved out:
 
 * :mod:`blueprints.import_config_helpers` -- 12 pure helpers (~240 lines)
 * :mod:`blueprints.import_config_bundle` -- upload / zip extraction
   and the ``cleanup_bundle_dir`` helper (~245 lines)
 * :mod:`blueprints.import_config_validators` -- Plex + TMDb credential
-  validation state machines (~340 lines)
+  validation state machines for BOTH the preview and confirm flows,
+  plus the library-mapping validator (~555 lines)
 
-``import_config_preview`` alone is now ~85 lines (down from ~510) --
-firmly out of elephant territory.
-
-The four remaining routes are tightly coupled through a shared
-session-cache flow (import_preview_token / import_preview_path /
-import_preview_*_url / import_preview_*_token) so splitting them into
-separate per-route modules would either duplicate the shared local logic
-or require a sub-package with relative imports -- both worse than
-keeping them together.
+Both ``import_config_preview`` (~220 lines) and ``import_config_confirm``
+(~250 lines) are now firmly out of elephant territory.  The four
+routes remain in one file because they're tightly coupled through a
+shared session-cache flow (import_preview_token / import_preview_path
+/ import_preview_*_url / import_preview_*_token).
 """
 
 import json
@@ -38,7 +35,7 @@ import secrets
 import shutil
 from pathlib import Path
 
-from flask import Blueprint, Flask, current_app, jsonify, request, session
+from flask import Blueprint, current_app, jsonify, request, session
 
 from blueprints.import_config_bundle import extract_bundle_upload
 from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tests and legacy callers)
@@ -56,6 +53,9 @@ from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tes
     count_annotated_lines,
 )
 from blueprints.import_config_validators import (
+    validate_confirm_plex_credentials,
+    validate_confirm_tmdb_credentials,
+    validate_library_mapping,
     validate_plex_credentials,
     validate_tmdb_credentials,
 )
@@ -656,137 +656,35 @@ def import_config_confirm():
                 # Skip Plex validation when base config provides library cache.
                 pass
             else:
-                plex_url = session.get("import_preview_plex_url") or ""
-                plex_token = session.get("import_preview_plex_token") or ""
-                if not plex_url or not plex_token:
-                    return (
-                        jsonify(
-                            success=False,
-                            message="Plex credentials are required to confirm the import. Re-run Preview Import.",
-                        ),
-                        400,
-                    )
-
-                plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
-                plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
-                if not plex_result or not plex_result.get("validated"):
-                    error_message = plex_result.get("error") if isinstance(plex_result, dict) else None
-                    return (
-                        jsonify(
-                            success=False,
-                            message=error_message or "Plex validation failed. Re-run Preview Import.",
-                        ),
-                        400,
-                    )
-                movie_names = _parse_csv_or_list_to_set(plex_result.get("movie_libraries", []))
-                show_names = _parse_csv_or_list_to_set(plex_result.get("show_libraries", []))
-                if not movie_names and not show_names:
-                    return (
-                        jsonify(
-                            success=False,
-                            message="No movie or show libraries found in Plex.",
-                        ),
-                        400,
-                    )
+                plex_outcome = validate_confirm_plex_credentials()
+                if plex_outcome.error_response:
+                    return plex_outcome.error_response
+                movie_names = plex_outcome.movie_names
+                show_names = plex_outcome.show_names
         else:
             plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
             movie_names = _parse_csv_or_list_to_set(plex_data.get("tmp_movie_libraries", ""))
             show_names = _parse_csv_or_list_to_set(plex_data.get("tmp_show_libraries", ""))
 
         if needs_tmdb:
-            tmdb_apikey = session.get("import_preview_tmdb_apikey") or ""
-            if not tmdb_apikey:
-                return (
-                    jsonify(
-                        success=False,
-                        message="TMDb API key is required to confirm the import. Re-run Preview Import.",
-                    ),
-                    400,
-                )
-            tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": tmdb_apikey})
-            tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
-            if not tmdb_result or not tmdb_result.get("valid"):
-                error_message = tmdb_result.get("message") if isinstance(tmdb_result, dict) else None
-                return (
-                    jsonify(
-                        success=False,
-                        message=error_message or "TMDb validation failed. Re-run Preview Import.",
-                    ),
-                    400,
-                )
+            tmdb_error = validate_confirm_tmdb_credentials()
+            if tmdb_error:
+                return tmdb_error
 
         plex_lookup = {name: name for name in movie_names}
         plex_lookup.update({name: name for name in show_names})
         plex_names = set(plex_lookup.values())
 
         if isinstance(libraries_payload, dict):
-            if needs_plex and not plex_names:
-                return (
-                    jsonify(
-                        success=False,
-                        message="Plex libraries are unavailable. Validate Plex and preview the import again.",
-                    ),
-                    400,
-                )
-
-            missing = []
-            invalid_targets = []
-            duplicates = []
-            used_targets = set()
-            mapped_libraries = {}
-
-            for lib_name, lib_cfg in libraries_payload.items():
-                name = str(lib_name)
-                if name in plex_lookup:
-                    target = plex_lookup[name]
-                else:
-                    mapped = library_mapping.get(name)
-                    if mapped is None:
-                        missing.append(name)
-                        continue
-                    mapped = str(mapped).strip()
-                    if not mapped:
-                        missing.append(name)
-                        continue
-                    if mapped == "__ignore__":
-                        continue
-                    if mapped not in plex_lookup:
-                        invalid_targets.append(mapped)
-                        continue
-                    target = plex_lookup[mapped]
-
-                if target in used_targets:
-                    duplicates.append(target)
-                    continue
-                used_targets.add(target)
-                mapped_libraries[target] = lib_cfg
-
-            if missing:
-                return (
-                    jsonify(
-                        success=False,
-                        message=f"Library mapping required for: {', '.join(missing)}",
-                    ),
-                    400,
-                )
-            if invalid_targets:
-                unique_targets = sorted(set(invalid_targets))
-                return (
-                    jsonify(
-                        success=False,
-                        message=f"Invalid Plex libraries selected: {', '.join(unique_targets)}",
-                    ),
-                    400,
-                )
-            if duplicates:
-                unique_targets = sorted(set(duplicates))
-                return (
-                    jsonify(
-                        success=False,
-                        message=f"Multiple imports mapped to the same Plex library: {', '.join(unique_targets)}",
-                    ),
-                    400,
-                )
+            mapped_libraries, mapping_error = validate_library_mapping(
+                libraries_payload=libraries_payload,
+                library_mapping=library_mapping,
+                movie_names=movie_names,
+                show_names=show_names,
+                needs_plex=needs_plex,
+            )
+            if mapping_error:
+                return mapping_error
 
             if mapped_libraries:
                 config_data["libraries"] = mapped_libraries
