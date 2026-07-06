@@ -5,24 +5,34 @@ each setup step is for the active config. Computing the per-step status,
 the dependency hints, and the final "ready to build" gate is all done
 here.
 
-The two main entry points are:
+The two main entry points that still LIVE in this module are:
 
-* ``_build_workspace_status_context(config_name, template_list, ...)`` —
+* ``_build_workspace_status_context(config_name, template_list, ...)`` --
   rolls up DB section rows and the menu template list into the dict the
   workspace endpoint serialises.
-* ``_build_workspace_app_readiness(config_name, ...)`` — drives the
+* ``_build_workspace_app_readiness(config_name, ...)`` /
+  ``_build_workspace_app_readiness_from_status(...)`` -- drives the
   Kometa/ImageMaid app-readiness cards on the workspace page.
 
-Both are pure (the only side effects are DB reads via
-``modules.database``). Tests exercise them via
-``qs_module._build_workspace_status_context`` re-exports.
+All the leaf helpers moved out:
+
+* ``modules.workspace_status_constants`` -- ``QS_*`` module constants
+  (step-key lists, status order, warn/error reason sets, freshness TTL).
+* ``modules.workspace_rollups`` -- ``_worst_status``, the two
+  ``*_live_final_validation_*`` rollups, the four timestamp helpers,
+  ``_build_final_gate``, ``_step_href``, ``_latest_bulk_validation_timestamp``,
+  and ``_workspace_step_status_from_app_readiness``.
+* ``modules.workspace_step_status`` -- ``_is_nonblank_setting``,
+  ``_is_meaningful_optional_status_input``, ``_has_meaningful_optional_input``,
+  and the 100-line ``_derive_step_status`` dispatch.
+
+All re-exported below so ``qs_module.<name>`` (via ``quickstart.py``'s
+big ``from modules.workspace_status import ...`` block) keeps working.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-
-from flask import has_request_context, url_for
+from flask import has_request_context, url_for  # noqa: F401 (kept for parity with prior module surface)
 
 from modules import database, helpers
 from modules.dependency_reasons import (
@@ -42,7 +52,6 @@ from modules.dependency_reasons import (
     _config_sonarr_dependency_reasons,
     _config_tautulli_dependency_reasons,
     _config_trakt_dependency_reasons,
-    _normalize_status,
 )
 from modules.imagemaid import (
     get_imagemaid_settings_section as _get_imagemaid_settings_section,
@@ -50,307 +59,46 @@ from modules.imagemaid import (
     validate_imagemaid_settings as _validate_imagemaid_settings,
 )
 from modules.kometa_install import (
-    KOMETA_INSTALL_MODE_MANAGED,
     build_kometa_install_context as _build_kometa_install_context,
-    canonicalize_kometa_section as _canonicalize_kometa_section,
-    validate_saved_kometa_selection as _validate_saved_kometa_selection,
+)
+
+# Constants extracted to modules.workspace_status_constants. Re-exported here.
+from modules.workspace_status_constants import (  # noqa: F401
+    QS_ERROR_REASONS,
+    QS_FINAL_VALIDATION_TTL_HOURS,
+    QS_REQUIRED_STEP_KEYS,
+    QS_REVIEW_STEP_KEYS,
+    QS_STATUS_ORDER,
+    QS_VALIDATION_STEP_KEYS,
+    QS_WARN_REASONS,
+)
+
+# Rollup helpers (status/timestamp/final-gate/nav) extracted to
+# modules.workspace_rollups. Re-exported here.
+from modules.workspace_rollups import (  # noqa: F401
+    _build_final_gate,
+    _build_live_validation_rollup,
+    _bulk_validation_is_fresh,
+    _derive_live_final_validation_status,
+    _format_validation_age,
+    _latest_bulk_validation_timestamp,
+    _latest_iso_timestamp,
+    _parse_iso_datetime,
+    _step_href,
+    _workspace_step_status_from_app_readiness,
+    _worst_status,
+)
+
+# Per-step status derivation extracted to modules.workspace_step_status.
+# Re-exported here.
+from modules.workspace_step_status import (  # noqa: F401
+    _derive_step_status,
+    _has_meaningful_optional_input,
+    _is_meaningful_optional_status_input,
+    _is_nonblank_setting,
 )
 
 utc_now_iso = helpers.utc_now_iso
-
-
-# --- workspace constants ---------------------------------------------------
-
-QS_REQUIRED_STEP_KEYS = ["001-start", "010-plex", "020-tmdb", "025-libraries", "150-settings"]
-QS_REVIEW_STEP_KEYS = ["900-kometa", "905-analytics", "910-sponsor", "915-imagemaid"]
-QS_VALIDATION_STEP_KEYS = {
-    "010-plex",
-    "020-tmdb",
-    "025-libraries",
-    "030-tautulli",
-    "040-github",
-    "050-omdb",
-    "060-mdblist",
-    "070-notifiarr",
-    "080-gotify",
-    "085-ntfy",
-    "087-apprise",
-    "090-webhooks",
-    "100-anidb",
-    "110-radarr",
-    "120-sonarr",
-    "130-trakt",
-    "140-mal",
-    "150-settings",
-}
-QS_STATUS_ORDER = {"unknown": 0, "ok": 1, "warn": 2, "error": 3}
-QS_WARN_REASONS = {
-    "missing_credentials",
-    "missing_tokens",
-    "no_libraries",
-    "missing_settings",
-    "disabled",
-    "no_webhooks",
-}
-QS_ERROR_REASONS = {
-    "missing_plex_validation",
-    "missing_location",
-    "token_invalid",
-    "account_locked",
-    "validation_error",
-    "invalid_paths",
-    "invalid_arr_overrides",
-    "invalid_collection_files",
-    "invalid_overlay_files",
-    "invalid_fields",
-    "invalid_metadata_files",
-    "missing_library_defaults",
-    "missing_separator_placeholder",
-}
-QS_FINAL_VALIDATION_TTL_HOURS = 12
-
-
-# --- status rollup helpers -------------------------------------------------
-
-
-def _worst_status(statuses):
-    worst = "ok"
-    for status in statuses:
-        normalized = _normalize_status(status)
-        if QS_STATUS_ORDER.get(normalized, 1) > QS_STATUS_ORDER.get(worst, 1):
-            worst = normalized
-    return worst
-
-
-def _derive_live_final_validation_status(step_statuses, template_keys):
-    validation_states = []
-    for key in template_keys:
-        if key not in QS_VALIDATION_STEP_KEYS:
-            continue
-        if key not in step_statuses:
-            continue
-        validation_states.append(_normalize_status(step_statuses.get(key)))
-
-    if not validation_states:
-        return "warn"
-    if any(state == "error" for state in validation_states):
-        return "error"
-    if any(state == "warn" for state in validation_states):
-        return "warn"
-    if any(state == "ok" for state in validation_states):
-        return "ok"
-    return "warn"
-
-
-def _build_live_validation_rollup(step_statuses, template_keys):
-    counts = {"validated": 0, "failed": 0, "skipped": 0, "unknown": 0}
-    for key in template_keys:
-        if key not in QS_VALIDATION_STEP_KEYS:
-            continue
-        state = _normalize_status(step_statuses.get(key))
-        if state == "ok":
-            counts["validated"] += 1
-        elif state == "error":
-            counts["failed"] += 1
-        elif state == "warn":
-            counts["skipped"] += 1
-        else:
-            counts["unknown"] += 1
-
-    if counts["failed"] > 0:
-        state = "error"
-    elif counts["skipped"] > 0:
-        state = "warn"
-    elif counts["validated"] > 0:
-        state = "ok"
-    else:
-        state = "unknown"
-
-    summary_text = f"Current. Validated: {counts['validated']} \u2022 " f"Failed: {counts['failed']} \u2022 " f"Pending: {counts['skipped']}"
-    if counts["unknown"] > 0:
-        summary_text += f" \u2022 Not checked: {counts['unknown']}"
-    summary_text += "."
-
-    return {"counts": counts, "state": state, "summary_text": summary_text}
-
-
-# --- timestamp helpers -----------------------------------------------------
-
-
-def _latest_iso_timestamp(values):
-    latest_dt = None
-    for value in values:
-        text = str(value or "").strip()
-        if not text:
-            continue
-        try:
-            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-        except ValueError:
-            continue
-        if latest_dt is None or parsed > latest_dt:
-            latest_dt = parsed
-    return latest_dt.isoformat().replace("+00:00", "Z") if latest_dt else None
-
-
-def _format_validation_age(iso_text):
-    text = str(iso_text or "").strip()
-    if not text:
-        return "Never", "never"
-    try:
-        dt_value = datetime.fromisoformat(text.replace("Z", "+00:00"))
-    except ValueError:
-        return "Unknown", "never"
-    if dt_value.tzinfo is None:
-        dt_value = dt_value.replace(tzinfo=timezone.utc)
-    now_utc = datetime.now(timezone.utc)
-    delta = now_utc - dt_value.astimezone(timezone.utc)
-    if delta.total_seconds() < 0:
-        delta = timedelta(0)
-    seconds = int(delta.total_seconds())
-    if seconds < 60:
-        return "Just now", "fresh"
-    if seconds < 3600:
-        return f"{max(1, seconds // 60)}m ago", "fresh"
-    if seconds < 86400:
-        hours = max(1, seconds // 3600)
-        return f"{hours}h ago", "stale"
-    days = max(1, seconds // 86400)
-    return f"{days}d ago", "stale"
-
-
-def _parse_iso_datetime(iso_text):
-    text = str(iso_text or "").strip()
-    if not text:
-        return None
-    try:
-        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
-
-
-def _bulk_validation_is_fresh(iso_text, ttl_hours=QS_FINAL_VALIDATION_TTL_HOURS):
-    parsed = _parse_iso_datetime(iso_text)
-    if parsed is None:
-        return False
-    return datetime.now(timezone.utc) - parsed <= timedelta(hours=ttl_hours)
-
-
-# --- final gate / step navigation ------------------------------------------
-
-
-def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at):
-    label_map = {file.rsplit(".", 1)[0]: display_name for file, display_name in template_list or []}
-    step_statuses = workspace_status.get("step_statuses", {}) if isinstance(workspace_status, dict) else {}
-    required_keys = workspace_status.get("required_keys", []) if isinstance(workspace_status, dict) else []
-    optional_keys = workspace_status.get("optional_keys", []) if isinstance(workspace_status, dict) else []
-
-    blockers = []
-    seen = set()
-    for key in required_keys:
-        state = step_statuses.get(key, "warn")
-        if state == "ok":
-            continue
-        blockers.append({"key": key, "label": label_map.get(key, key), "state": state, "group": "required"})
-        seen.add(key)
-
-    for key in optional_keys:
-        state = step_statuses.get(key, "unknown")
-        if state not in {"warn", "error"} or key in seen:
-            continue
-        blockers.append({"key": key, "label": label_map.get(key, key), "state": state, "group": "optional"})
-        seen.add(key)
-
-    dependency_defs = [
-        ("tautulli", QS_TAUTULLI_REQUIRED_STEP_KEY, "Tautulli", "tautulli_requirement_reasons", "qs-tautulli-required-hint"),
-        ("omdb", QS_OMDB_REQUIRED_STEP_KEY, "OMDb", "omdb_requirement_reasons", "qs-omdb-required-hint"),
-        ("mdblist", QS_MDBLIST_REQUIRED_STEP_KEY, "MDBList", "mdblist_requirement_reasons", "qs-mdblist-required-hint"),
-        ("anidb", QS_ANIDB_REQUIRED_STEP_KEY, "AniDB", "anidb_requirement_reasons", "qs-anidb-required-hint"),
-        ("radarr", QS_RADARR_REQUIRED_STEP_KEY, "Radarr", "radarr_requirement_reasons", "qs-radarr-required-hint"),
-        ("sonarr", QS_SONARR_REQUIRED_STEP_KEY, "Sonarr", "sonarr_requirement_reasons", "qs-sonarr-required-hint"),
-        ("trakt", QS_TRAKT_REQUIRED_STEP_KEY, "Trakt", "trakt_requirement_reasons", "qs-trakt-required-hint"),
-        ("mal", QS_MAL_REQUIRED_STEP_KEY, "MyAnimeList", "mal_requirement_reasons", "qs-mal-required-hint"),
-    ]
-    dependency_cards = []
-    for provider, step_key, label, reasons_key, css_class in dependency_defs:
-        reasons = workspace_status.get(reasons_key, []) if isinstance(workspace_status, dict) else []
-        if not reasons or step_statuses.get(step_key) == "ok":
-            continue
-        dependency_cards.append(
-            {
-                "provider": provider,
-                "key": step_key,
-                "label": label,
-                "title": f"{label} required by",
-                "reasons": reasons,
-                "state": step_statuses.get(step_key, "warn"),
-                "css_class": css_class,
-            }
-        )
-    dependency_keys = {card["key"] for card in dependency_cards}
-    setup_blockers = [blocker for blocker in blockers if blocker.get("key") not in dependency_keys]
-
-    bulk_fresh = _bulk_validation_is_fresh(validation_bulk_rollup_at)
-    if blockers:
-        stage = "todo"
-    elif not bulk_fresh:
-        stage = "freshness"
-    else:
-        stage = "config"
-
-    return {
-        "stage": stage,
-        "todo_count": len(blockers),
-        "todo_blockers": blockers,
-        "dependency_cards": dependency_cards,
-        "setup_blockers": setup_blockers,
-        "bulk_validation_fresh": bulk_fresh,
-        "bulk_validation_at": validation_bulk_rollup_at or "",
-        "validation_ttl_hours": QS_FINAL_VALIDATION_TTL_HOURS,
-        "can_build_config": not blockers and bulk_fresh,
-        "config_valid": False,
-    }
-
-
-def _step_href(step_key):
-    target = str(step_key or "").strip()
-    if not target:
-        target = "001-start"
-    if has_request_context():
-        try:
-            return url_for("step", name=target)
-        except Exception:
-            return f"/step/{target}"
-    return f"/step/{target}"
-
-
-def _latest_bulk_validation_timestamp(config_name):
-    if not config_name:
-        return ""
-    try:
-        stored_validation = database.retrieve_section_data(config_name, "validation_summary")
-        stored_payload = stored_validation[2] if stored_validation else None
-        if isinstance(stored_payload, dict):
-            return str(stored_payload.get("updated_at") or "").strip()
-    except Exception:
-        return ""
-    return ""
-
-
-# --- app-readiness cards ---------------------------------------------------
-
-
-def _workspace_step_status_from_app_readiness(state):
-    normalized = str(state or "").strip().lower()
-    if normalized in {"ready", "review", "running", "queued"}:
-        return "ok"
-    if normalized == "needs_validation":
-        return "warn"
-    if normalized in {"needs_prepare", "needs_setup", "blocked", "error"}:
-        return "error"
-    return "unknown"
 
 
 def _build_workspace_app_readiness_from_status(config_name, workspace_status, template_list=None):
@@ -489,215 +237,6 @@ def _build_workspace_app_readiness(config_name, template_list=None, available_co
         include_app_readiness_overrides=False,
     )
     return _build_workspace_app_readiness_from_status(config_name, workspace_status, template_list=template_list)
-
-
-# --- optional-input "meaningful" probes ------------------------------------
-
-
-def _is_nonblank_setting(value):
-    if value is None:
-        return False
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return True
-    text = str(value).strip()
-    if not text:
-        return False
-    return text.lower() not in {"none", "null", "false"}
-
-
-def _is_meaningful_optional_status_input(value):
-    if not _is_nonblank_setting(value):
-        return False
-    text = str(value).strip().lower()
-    # UI template placeholders can be persisted as defaults; they should not
-    # make an optional page look user-configured in the workspace menu
-    return not (text.startswith("enter ") and any(token in text for token in ("token", "api key", "url", "client")))
-
-
-def _has_meaningful_optional_input(template_key, payload):
-    if not isinstance(payload, dict):
-        return False
-
-    # Playlists intentionally treat pass-through differently (handled in its own branch).
-    if template_key == "027-playlist_files":
-        return True
-
-    if template_key == "100-anidb":
-        anidb = payload.get("anidb", {})
-        return isinstance(anidb, dict) and helpers.booler(anidb.get("enable"))
-
-    if template_key == "087-apprise":
-        apprise = payload.get("apprise", {})
-        if not isinstance(apprise, dict):
-            return False
-        return _is_meaningful_optional_status_input(apprise.get("location"))
-
-    simple_key_requirements = {
-        "030-tautulli": ("tautulli", ("url", "apikey")),
-        "040-github": ("github", ("token",)),
-        "050-omdb": ("omdb", ("apikey",)),
-        "060-mdblist": ("mdblist", ("apikey",)),
-        "070-notifiarr": ("notifiarr", ("apikey",)),
-        "080-gotify": ("gotify", ("url", "token")),
-        "085-ntfy": ("ntfy", ("url", "token", "topic")),
-        "090-webhooks": ("webhooks", ("notifiarr", "gotify", "ntfy", "slack", "discord", "webhook", "url")),
-        "110-radarr": ("radarr", ("url", "token")),
-        "120-sonarr": ("sonarr", ("url", "token")),
-    }
-
-    req = simple_key_requirements.get(template_key)
-    if req:
-        section_name, keys = req
-        section_data = payload.get(section_name, {})
-        if isinstance(section_data, dict):
-            if template_key == "090-webhooks":
-                return any(_is_meaningful_optional_status_input(value) for value in section_data.values())
-            return any(_is_meaningful_optional_status_input(section_data.get(key)) for key in keys)
-        return False
-
-    if template_key == "130-trakt":
-        trakt = payload.get("trakt", {})
-        if not isinstance(trakt, dict):
-            return False
-        auth = trakt.get("authorization", {}) if isinstance(trakt.get("authorization"), dict) else {}
-        return any(
-            _is_meaningful_optional_status_input(value)
-            for value in (
-                trakt.get("client_id"),
-                trakt.get("client_secret"),
-                trakt.get("pin"),
-                auth.get("access_token"),
-                auth.get("refresh_token"),
-            )
-        )
-
-    if template_key == "140-mal":
-        mal = payload.get("mal", {})
-        if not isinstance(mal, dict):
-            return False
-        auth = mal.get("authorization", {}) if isinstance(mal.get("authorization"), dict) else {}
-        return any(
-            _is_meaningful_optional_status_input(value)
-            for value in (
-                mal.get("client_id"),
-                mal.get("client_secret"),
-                mal.get("localhost_url"),
-                auth.get("access_token"),
-                auth.get("refresh_token"),
-            )
-        )
-
-    # For unknown validation-backed optional steps, keep prior behavior.
-    return True
-
-
-# --- per-step status derivation --------------------------------------------
-
-
-def _derive_step_status(template_key, group, section_rows, config_exists):
-    if template_key == "001-start":
-        if not config_exists:
-            return "error"
-        kometa_entry = section_rows.get("kometa") if isinstance(section_rows, dict) else None
-        kometa_entry = kometa_entry if isinstance(kometa_entry, dict) else {}
-        kometa_payload = kometa_entry.get("data")
-        kometa_payload = kometa_payload if isinstance(kometa_payload, dict) else {}
-        kometa_section = kometa_payload.get("kometa") if isinstance(kometa_payload.get("kometa"), dict) else {}
-        kometa_selection = _canonicalize_kometa_section(kometa_section)
-        if kometa_selection.get("install_mode") == KOMETA_INSTALL_MODE_MANAGED:
-            return "ok"
-        is_valid, _reason, _details = _validate_saved_kometa_selection(kometa_selection)
-        return "ok" if is_valid else "error"
-
-    if template_key == "900-kometa":
-        return "warn"
-
-    if template_key in {"905-analytics", "910-sponsor"}:
-        return "ok"
-
-    section_name = template_key.split("-", 1)[1] if "-" in template_key else template_key
-    section_entry = section_rows.get(section_name) if isinstance(section_rows, dict) else None
-    section_entry = section_entry if isinstance(section_entry, dict) else {}
-    section_row_present = bool(section_entry)
-
-    validated = helpers.booler(section_entry.get("validated", False))
-    user_entered = helpers.booler(section_entry.get("user_entered", False))
-    payload = section_entry.get("data")
-    payload = payload if isinstance(payload, dict) else {}
-    validation_status = str(payload.get("validation_status") or "").strip().lower()
-    validation_reason = str(payload.get("validation_reason") or "").strip().lower()
-    was_previously_validated = bool(payload.get("validated_at"))
-    if template_key == "027-playlist_files":
-        playlist_payload = payload.get("playlist_files", payload if isinstance(payload, dict) else {})
-        if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
-            playlist_payload = playlist_payload.get("playlist_files", {})
-        playlist_libraries = ""
-        if isinstance(playlist_payload, dict):
-            raw_libraries = playlist_payload.get("libraries")
-            if isinstance(raw_libraries, list):
-                selected_libraries = [str(item).strip() for item in raw_libraries if str(item).strip()]
-            else:
-                playlist_libraries = str(raw_libraries or "")
-                selected_libraries = [item.strip() for item in playlist_libraries.split(",") if item.strip()]
-        else:
-            selected_libraries = []
-
-        if validation_status == "failed":
-            return "error"
-        if selected_libraries:
-            # Playlist selection itself is the completion signal for this optional page.
-            return "ok"
-
-        # If user has visited/passed-through this page (even with no libraries selected),
-        # treat it as intentionally acknowledged/valid.
-        was_visited = section_row_present and (user_entered or bool(validation_status) or bool(payload.get("validation_updated_at")) or bool(payload.get("validated_at")))
-        if was_visited:
-            return "ok"
-        return "unknown"
-
-    if template_key in QS_VALIDATION_STEP_KEYS:
-        if group == "optional" and not _has_meaningful_optional_input(template_key, payload):
-            return "unknown"
-
-        if validated or validation_status == "validated":
-            return "ok"
-
-        if validation_status == "failed":
-            return "error"
-
-        if validation_status == "skipped":
-            if template_key == "027-playlist_files" and validation_reason == "no_libraries":
-                return "unknown"
-            if validation_reason in QS_ERROR_REASONS:
-                return "error"
-            if group == "optional":
-                # Optional sections should remain neutral when users simply pass through
-                # or when validation is skipped due to missing optional inputs.
-                return "unknown"
-            if validation_reason in QS_WARN_REASONS:
-                return "warn"
-            return "warn" if group == "required" else ("warn" if user_entered else "ok")
-
-        if group == "required":
-            if not user_entered:
-                return "error"
-            if was_previously_validated:
-                return "error"
-            return "warn"
-
-        if not user_entered and not was_previously_validated and not validation_status:
-            return "unknown"
-        if was_previously_validated:
-            return "error"
-        return "warn" if user_entered else "ok"
-
-    if group == "required":
-        return "warn" if user_entered else "error"
-    if group == "optional":
-        return "warn" if user_entered else "unknown"
-    return "ok"
 
 
 # --- the main workspace status context builder -----------------------------
