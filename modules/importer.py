@@ -6,43 +6,6 @@ from ruamel.yaml import YAML
 
 from modules import helpers
 
-LIBRARY_RADARR_IMPORT_FIELDS = {
-    "url": "string",
-    "token": "string",
-    "root_folder_path": "string",
-    "quality_profile": "string",
-    "availability": "string",
-    "tag": "string",
-    "monitor": "bool",
-    "search": "bool",
-    "add_missing": "bool",
-    "add_existing": "bool",
-    "upgrade_existing": "bool",
-    "monitor_existing": "bool",
-    "ignore_cache": "bool",
-    "radarr_path": "string",
-    "plex_path": "string",
-}
-LIBRARY_SONARR_IMPORT_FIELDS = {
-    "url": "string",
-    "token": "string",
-    "root_folder_path": "string",
-    "quality_profile": "string",
-    "language_profile": "string",
-    "series_type": "string",
-    "season_folder": "bool",
-    "monitor": "string",
-    "tag": "string",
-    "search": "bool",
-    "cutoff_search": "bool",
-    "add_missing": "bool",
-    "add_existing": "bool",
-    "upgrade_existing": "bool",
-    "monitor_existing": "bool",
-    "ignore_cache": "bool",
-    "sonarr_path": "string",
-    "plex_path": "string",
-}
 # Language codes recognized as `weight_<code>` overlay-source ordering keys.
 # Hoisted out of prepare_import_payload's ~95-line nested comprehension --
 # this is data, not logic, and belongs at module scope where it's easy to
@@ -261,6 +224,16 @@ from modules import importer_metadata  # noqa: E402
 # prioritize_assets (restricted bool coercion) -- everything else in
 # settings: is currently marked unmapped.
 from modules import importer_library_settings  # noqa: E402
+
+# Per-library service-override (radarr / sonarr) handling moved to
+# modules/importer_services.py.  The two field-map dicts are the canonical
+# definitions and re-exported here so external tooling that imports them
+# by name (importer.LIBRARY_RADARR_IMPORT_FIELDS etc.) keeps working.
+from modules import importer_services  # noqa: E402
+from modules.importer_services import (  # noqa: E402
+    LIBRARY_RADARR_IMPORT_FIELDS,  # noqa: F401 (re-export for backward compat)
+    LIBRARY_SONARR_IMPORT_FIELDS,  # noqa: F401 (re-export for backward compat)
+)
 
 
 def _build_attribute_sets(
@@ -495,52 +468,13 @@ def prepare_import_payload(
                 report=report,
             )
 
-            for service_name, field_map in (
-                ("radarr", LIBRARY_RADARR_IMPORT_FIELDS),
-                ("sonarr", LIBRARY_SONARR_IMPORT_FIELDS),
-            ):
-                service_section = lib_cfg.get(service_name)
-                if not isinstance(service_section, dict):
-                    if service_section is not None:
-                        report.add("unmapped", f"libraries.{lib_name}.{service_name}", "Unsupported service override format.")
-                    continue
-
-                imported_service = False
-                if service_name == "radarr" and not str(lib_id).startswith("mov-library_"):
-                    report.add("unmapped", f"libraries.{lib_name}.radarr", "Radarr overrides are only supported on movie libraries.")
-                    continue
-                if service_name == "sonarr" and not str(lib_id).startswith("sho-library_"):
-                    report.add("unmapped", f"libraries.{lib_name}.sonarr", "Sonarr overrides are only supported on show libraries.")
-                    continue
-
-                for key, value in service_section.items():
-                    field_type = field_map.get(str(key))
-                    if not field_type:
-                        report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Library service override not supported for import.")
-                        continue
-
-                    target_key = f"{lib_id}-attribute_{service_name}_{key}"
-                    if field_type == "bool":
-                        bool_value = _coerce_import_bool(value)
-                        if bool_value is None:
-                            report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Invalid boolean value.")
-                            continue
-                        libraries_data[target_key] = "true" if bool_value else "false"
-                    else:
-                        if isinstance(value, (dict, list)):
-                            report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Unsupported override value format.")
-                            continue
-                        text_value = str(value).strip()
-                        if not text_value:
-                            report.add("unmapped", f"libraries.{lib_name}.{service_name}.{key}", "Override value is empty.")
-                            continue
-                        libraries_data[target_key] = text_value
-
-                    report.add("imported", f"libraries.{lib_name}.{service_name}.{key}")
-                    imported_service = True
-
-                if imported_service:
-                    report.add("imported", f"libraries.{lib_name}.{service_name}")
+            importer_services.process_service_overrides(
+                lib_id,
+                str(lib_name),
+                lib_cfg,
+                libraries_data=libraries_data,
+                report=report,
+            )
 
             importer_operations.process_operations_block(
                 lib_id,
