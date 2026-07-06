@@ -331,3 +331,101 @@ def handle_delete_collections_operation(
     else:
         report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
     return True, imported_any
+
+
+def process_operations_block(
+    lib_id: str,
+    lib_name: str,
+    lib_cfg: dict,
+    *,
+    libraries_data: dict[str, Any],
+    report: ImportReport,
+    simple_attrs: set[str],
+    mass_update_defs: dict[str, dict],
+    toggle_select_defs: dict[str, dict],
+) -> None:
+    """Process ``lib_cfg['operations']`` into libraries_data + report.
+
+    Dispatches each operation key to the appropriate handler:
+
+    1. **Simple scalar attributes** (``simple_attrs``) get written
+       directly as ``libraries_data[lib_id-attribute_<key>]``.
+    2. **``delete_collections`` operation** -- handled specially via
+       :func:`handle_delete_collections_operation`.
+    3. **Mass-update operations** (``mass_update_defs``) -- dispatched
+       to :func:`handle_mass_update_operation`.
+    4. **Toggle/select operations** (``toggle_select_defs``) --
+       dispatched to :func:`handle_toggle_select_operation`.
+    5. Anything else records an ``unmapped`` "Complex operation" note.
+
+    A no-op when the library has no ``operations`` key.  Records an
+    unmapped report entry if the key is present but not a dict.
+    Emits a top-level ``libraries.<name>.operations`` imported entry
+    when at least one operation inside was importable.
+    """
+    operations = lib_cfg.get("operations")
+    if operations is None:
+        return
+
+    if not isinstance(operations, dict):
+        report.add(
+            "unmapped",
+            f"libraries.{lib_name}.operations",
+            "Unsupported operations format.",
+        )
+        return
+
+    imported_ops = False
+    for key, value in operations.items():
+        if key in simple_attrs and not isinstance(value, (dict, list)):
+            libraries_data[f"{lib_id}-attribute_{key}"] = value
+            report.add("imported", f"libraries.{lib_name}.operations.{key}")
+            imported_ops = True
+            continue
+
+        handled, imported = handle_delete_collections_operation(
+            lib_id,
+            lib_name,
+            key,
+            value,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        if handled:
+            imported_ops = imported_ops or imported
+            continue
+
+        handled, imported = handle_mass_update_operation(
+            lib_id,
+            lib_name,
+            key,
+            value,
+            mass_update_defs=mass_update_defs,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        if handled:
+            imported_ops = imported_ops or imported
+            continue
+
+        handled, imported = handle_toggle_select_operation(
+            lib_id,
+            lib_name,
+            key,
+            value,
+            toggle_select_defs=toggle_select_defs,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        if handled:
+            imported_ops = imported_ops or imported
+            continue
+
+        report.add(
+            "unmapped",
+            f"libraries.{lib_name}.operations.{key}",
+            "Complex operation not supported for import.",
+        )
+
+    if imported_ops:
+        report.add("imported", f"libraries.{lib_name}.operations")
