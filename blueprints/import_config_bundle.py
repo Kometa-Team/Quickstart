@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import shutil
 import zipfile
 from dataclasses import dataclass, field
 from io import BytesIO
@@ -215,3 +216,22 @@ def _extract_bundled_files(archive, member_names, extracted_dir: Path) -> None:
                 dest.write(source.read())
         except Exception:
             continue
+
+
+def cleanup_bundle_dir(extracted_dir: Path | None) -> None:
+    """Silently remove an extracted bundle directory, ignoring errors.
+
+    Used on the error path of the /import-config/preview flow where
+    the caller has already committed to returning a 4xx error and
+    just needs to release disk space held by ``extract_bundle_upload``'s
+    scratch dir.  If ``extracted_dir`` is ``None`` this is a no-op.
+
+    Was previously eight byte-identical inline blocks scattered
+    through the plex + tmdb validation paths.
+    """
+    if not extracted_dir:
+        return
+    try:
+        shutil.rmtree(extracted_dir)
+    except OSError:
+        pass

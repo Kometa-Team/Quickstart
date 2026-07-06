@@ -12,22 +12,24 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~1,080 lines, still above the 600-line soft-limit.  Two
+This file is ~875 lines, still above the 600-line soft-limit.  Three
 chunks have already moved out:
 
 * :mod:`blueprints.import_config_helpers` -- 12 pure helpers (~240 lines)
 * :mod:`blueprints.import_config_bundle` -- upload / zip extraction
-  (~230 lines)
+  and the ``cleanup_bundle_dir`` helper (~245 lines)
+* :mod:`blueprints.import_config_validators` -- Plex + TMDb credential
+  validation state machines (~340 lines)
+
+``import_config_preview`` alone is now ~85 lines (down from ~510) --
+firmly out of elephant territory.
 
 The four remaining routes are tightly coupled through a shared
 session-cache flow (import_preview_token / import_preview_path /
 import_preview_*_url / import_preview_*_token) so splitting them into
 separate per-route modules would either duplicate the shared local logic
 or require a sub-package with relative imports -- both worse than
-keeping them together.  ``import_config_preview`` alone is ~400 lines
-(down from ~510 after the bundle extraction); its plex-validation
-(~125 lines) and tmdb-validation (~180 lines) blocks are the next
-natural sub-extractions.
+keeping them together.
 """
 
 import json
@@ -52,6 +54,10 @@ from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tes
     _parse_tmdb_credentials_from_config,
     _parse_tmdb_credentials_from_form,
     count_annotated_lines,
+)
+from blueprints.import_config_validators import (
+    validate_plex_credentials,
+    validate_tmdb_credentials,
 )
 from modules import assets, bundle_artifacts, database, helpers, importer, persistence, validations
 from modules.library_file_entries import _normalize_imported_libraries_payload
@@ -125,217 +131,32 @@ def import_config_preview():
     plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
 
     if needs_plex:
-        base_movie_names, base_show_names = (set(), set())
-        skip_plex_validation = False
-        if merge_mode and base_config:
-            base_movie_names, base_show_names = _parse_base_plex_libraries(base_config)
-            if base_movie_names or base_show_names:
-                movie_names = base_movie_names
-                show_names = base_show_names
-                plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
-                skip_plex_validation = True
-
-        form_plex_url, form_plex_token = _parse_plex_credentials_from_form(request.form or {})
-        imported_plex_url, imported_plex_token = _parse_plex_credentials_from_config(parsed)
-        base_plex_url, base_plex_token = _parse_plex_credentials_from_base(base_config) if merge_mode else ("", "")
-        has_form = bool(form_plex_url and form_plex_token)
-        has_imported = bool(imported_plex_url and imported_plex_token)
-        has_base = bool(base_plex_url and base_plex_token)
-        used_plex_url = ""
-        used_plex_token = ""
-
-        if not skip_plex_validation and not has_form and not has_imported and not has_base:
-            if extracted_dir:
-                try:
-                    shutil.rmtree(extracted_dir)
-                except OSError:
-                    pass
-            return (
-                jsonify(
-                    success=False,
-                    needs_plex_credentials=True,
-                    message=("Plex credentials are required to import library settings. " "Enter a Plex URL and token to continue."),
-                    plex_url="",
-                    plex_token="",
-                ),
-                400,
-            )
-
-        if not skip_plex_validation:
-            plex_result = None
-            last_error = None
-            if has_form:
-                used_plex_url = form_plex_url
-                used_plex_token = form_plex_token
-                plex_response = validations.validate_plex_server({"plex_url": form_plex_url, "plex_token": form_plex_token})
-                plex_result = _coerce_validation_response_payload(plex_response)
-                if not plex_result or not plex_result.get("validated"):
-                    if isinstance(plex_result, dict):
-                        last_error = plex_result.get("error")
-                    if extracted_dir:
-                        try:
-                            shutil.rmtree(extracted_dir)
-                        except OSError:
-                            pass
-                    return (
-                        jsonify(
-                            success=False,
-                            needs_plex_credentials=True,
-                            message=last_error or "Plex validation failed. Please enter valid credentials.",
-                            plex_url=form_plex_url or "",
-                            plex_token=form_plex_token or "",
-                        ),
-                        400,
-                    )
-            else:
-                candidates = []
-                if merge_mode and has_base:
-                    candidates.append((base_plex_url, base_plex_token))
-                if has_imported:
-                    candidates.append((imported_plex_url, imported_plex_token))
-                if not candidates:
-                    candidates.append((imported_plex_url or base_plex_url, imported_plex_token or base_plex_token))
-                for candidate_url, candidate_token in candidates:
-                    used_plex_url = candidate_url
-                    used_plex_token = candidate_token
-                    plex_response = validations.validate_plex_server({"plex_url": used_plex_url, "plex_token": used_plex_token})
-                    plex_result = _coerce_validation_response_payload(plex_response)
-                    if plex_result and plex_result.get("validated"):
-                        last_error = None
-                        break
-                    if isinstance(plex_result, dict):
-                        last_error = plex_result.get("error")
-                if not plex_result or not plex_result.get("validated"):
-                    if extracted_dir:
-                        try:
-                            shutil.rmtree(extracted_dir)
-                        except OSError:
-                            pass
-                    return (
-                        jsonify(
-                            success=False,
-                            needs_plex_credentials=True,
-                            message=last_error or ("Plex credentials from the import/base config could not be validated. " "Please enter a valid Plex URL and token."),
-                            plex_url=imported_plex_url or base_plex_url or "",
-                            plex_token=imported_plex_token or base_plex_token or "",
-                        ),
-                        400,
-                    )
-        if not skip_plex_validation:
-            session["import_preview_plex_url"] = used_plex_url
-            session["import_preview_plex_token"] = used_plex_token
-        if used_plex_url and used_plex_token:
-            plex_block = parsed.get("plex")
-            if not isinstance(plex_block, dict):
-                plex_block = {}
-                parsed["plex"] = plex_block
-            plex_block["url"] = used_plex_url
-            plex_block["token"] = used_plex_token
-        if not skip_plex_validation:
-            movie_names = _parse_csv_or_list_to_set(plex_result.get("movie_libraries", []))
-            show_names = _parse_csv_or_list_to_set(plex_result.get("show_libraries", []))
-            plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
-            if not movie_names and not show_names:
-                if extracted_dir:
-                    try:
-                        shutil.rmtree(extracted_dir)
-                    except OSError:
-                        pass
-                return (
-                    jsonify(
-                        success=False,
-                        message="No movie or show libraries found in Plex.",
-                    ),
-                    400,
-                )
+        plex_outcome = validate_plex_credentials(
+            parsed=parsed,
+            form_data=request.form,
+            merge_mode=merge_mode,
+            base_config=base_config,
+            extracted_dir=extracted_dir,
+            default_movie_names=movie_names,
+            default_show_names=show_names,
+            default_plex_libraries=plex_libraries,
+        )
+        if plex_outcome.error_response:
+            return plex_outcome.error_response
+        movie_names = plex_outcome.movie_names
+        show_names = plex_outcome.show_names
+        plex_libraries = plex_outcome.plex_libraries
 
     if needs_tmdb:
-        form_tmdb_key = _parse_tmdb_credentials_from_form(request.form or {})
-        imported_tmdb_key = _parse_tmdb_credentials_from_config(parsed)
-        base_tmdb_key = _parse_tmdb_credentials_from_base(base_config) if merge_mode else ""
-        has_form = bool(form_tmdb_key)
-        has_imported = bool(imported_tmdb_key)
-        has_base = bool(base_tmdb_key)
-        used_tmdb_key = ""
-
-        if not has_form and not has_imported and not has_base:
-            if extracted_dir:
-                try:
-                    shutil.rmtree(extracted_dir)
-                except OSError:
-                    pass
-            return (
-                jsonify(
-                    success=False,
-                    needs_tmdb_credentials=True,
-                    message="TMDb API key is required to import metadata settings. Enter a valid TMDb API key to continue.",
-                    tmdb_apikey="",
-                ),
-                400,
-            )
-
-        tmdb_result = None
-        last_error = None
-        if has_form:
-            used_tmdb_key = form_tmdb_key
-            tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": form_tmdb_key})
-            tmdb_result = _coerce_validation_response_payload(tmdb_response)
-            if not tmdb_result or not tmdb_result.get("valid"):
-                if isinstance(tmdb_result, dict):
-                    last_error = tmdb_result.get("message")
-                if extracted_dir:
-                    try:
-                        shutil.rmtree(extracted_dir)
-                    except OSError:
-                        pass
-                return (
-                    jsonify(
-                        success=False,
-                        needs_tmdb_credentials=True,
-                        message=last_error or "TMDb validation failed. Please enter a valid API key.",
-                        tmdb_apikey=form_tmdb_key or "",
-                    ),
-                    400,
-                )
-        else:
-            candidates = []
-            if merge_mode and has_base:
-                candidates.append(base_tmdb_key)
-            if has_imported:
-                candidates.append(imported_tmdb_key)
-            if not candidates:
-                candidates.append(imported_tmdb_key or base_tmdb_key)
-            for candidate_key in candidates:
-                used_tmdb_key = candidate_key
-                tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": used_tmdb_key})
-                tmdb_result = _coerce_validation_response_payload(tmdb_response)
-                if tmdb_result and tmdb_result.get("valid"):
-                    last_error = None
-                    break
-                if isinstance(tmdb_result, dict):
-                    last_error = tmdb_result.get("message")
-            if not tmdb_result or not tmdb_result.get("valid"):
-                if extracted_dir:
-                    try:
-                        shutil.rmtree(extracted_dir)
-                    except OSError:
-                        pass
-                return (
-                    jsonify(
-                        success=False,
-                        needs_tmdb_credentials=True,
-                        message=last_error or "TMDb API key from the import/base config could not be validated. Please enter a valid key.",
-                        tmdb_apikey=imported_tmdb_key or base_tmdb_key or "",
-                    ),
-                    400,
-                )
-        session["import_preview_tmdb_apikey"] = used_tmdb_key
-        if used_tmdb_key:
-            tmdb_block = parsed.get("tmdb")
-            if not isinstance(tmdb_block, dict):
-                tmdb_block = {}
-                parsed["tmdb"] = tmdb_block
-            tmdb_block["apikey"] = used_tmdb_key
+        tmdb_error = validate_tmdb_credentials(
+            parsed=parsed,
+            form_data=request.form,
+            merge_mode=merge_mode,
+            base_config=base_config,
+            extracted_dir=extracted_dir,
+        )
+        if tmdb_error:
+            return tmdb_error
 
     try:
         _library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
