@@ -38,6 +38,7 @@ import logging
 import re
 from datetime import timedelta
 
+from modules.logscan_issue_counts import build_issue_counts
 from modules.logscan_pms_versions import (
     VULNERABLE_RANGE_HIGH,
     VULNERABLE_RANGE_LOW,
@@ -366,114 +367,61 @@ def make_recommendations(analyzer, content, incomplete_message):
     # ------------------------------------------------------------------
     # PHASE 6 -- issue-counts dict for the dashboard
     # ------------------------------------------------------------------
-    wsl_recommendation = platform_recs["wsl"]
-    kometa_time_recommendation = platform_recs["time"]
-    kometa_mem_recommendation = platform_recs["memory"]
-    kometa_db_cache_recommendation = platform_recs["db_cache"]
-
-    issue_counts = {
-        "service_connectivity": (
-            len(tmdb_api_errors)
-            + len(tmdb_fail_errors)
-            + len(trakt_connection_errors)
-            + len(omdb_errors)
-            + len(omdb_api_limit_errors)
-            + len(mdblist_errors)
-            + len(mdblist_api_limit_errors)
-            + len(mdblist_attr_errors)
-            + len(mal_connection_errors)
-            + len(tautulli_url_errors)
-            + len(tautulli_apikey_errors)
-            + len(flixpatrol_errors)
-            + len(flixpatrol_paywall)
-            + len(lsio_errors)
-        ),
-        "config_setup": (
-            len(to_be_configured_errors)
-            + len(api_blank_errors)
-            + len(bad_version_found_errors)
-            + len(missing_path_errors)
-            + len(cache_false)
-            + len(mass_update_errors)
-            + len(other_award)
-            + len(delete_unmanaged_collections_errors)
-        ),
-        "plex_issues": len(plex_url_errors) + len(plex_regex_errors) + len(plex_lib_errors) + len(rounding_errors),
-        "metadata_overlay_playlist": (
-            len(metadata_attribute_errors)
-            + len(metadata_load_errors)
-            + len(overlay_load_errors)
-            + len(overlay_apply_errors)
-            + len(overlay_level_errors)
-            + len(overlay_font_missing)
-            + len(overlay_image_missing)
-            + len(playlist_load_errors)
-            + len(playlist_errors)
-            + len(overlays_bloat)
-        ),
-        "convert_issues": len(convert_errors),
-        "image_issues": len(corrupt_image_errors) + len(image_size),
-        "runtime_behavior": len(run_order_errors) + len(checkFiles) + len(timeout_errors),
-        "update_version": len(new_version_found_errors) + len(new_plexapi_version_found_errors) + len(git_kometa_errors),
-        "platform_system": (
-            (1 if wsl_recommendation else 0) + (1 if kometa_time_recommendation else 0) + (1 if kometa_mem_recommendation else 0) + (1 if kometa_db_cache_recommendation else 0)
-        ),
-        "anidb_issues": len(anidb69_errors) + len(anidb_auth_errors),
-        "misc": len(internal_server_errors) + len(no_items_found_errors) + len(pmm_legacy_errors),
-        "tmdb_api_errors": len(tmdb_api_errors),
-        "tmdb_fail_errors": len(tmdb_fail_errors),
-        "trakt_connection_errors": len(trakt_connection_errors),
-        "omdb_errors": len(omdb_errors),
-        "omdb_api_limit_errors": len(omdb_api_limit_errors),
-        "mdblist_errors": len(mdblist_errors),
-        "mdblist_api_limit_errors": len(mdblist_api_limit_errors),
-        "mdblist_attr_errors": len(mdblist_attr_errors),
-        "mal_connection_errors": len(mal_connection_errors),
-        "tautulli_url_errors": len(tautulli_url_errors),
-        "tautulli_apikey_errors": len(tautulli_apikey_errors),
-        "flixpatrol_errors": len(flixpatrol_errors),
-        "flixpatrol_paywall": len(flixpatrol_paywall),
-        "lsio_errors": len(lsio_errors),
-        "config_to_be_configured": len(to_be_configured_errors),
-        "config_api_blank": len(api_blank_errors),
-        "config_bad_version": len(bad_version_found_errors),
-        "config_missing_path": len(missing_path_errors),
-        "config_cache_false": len(cache_false),
-        "config_mass_update": len(mass_update_errors),
-        "config_other_award": len(other_award),
-        "config_delete_unmanaged": len(delete_unmanaged_collections_errors),
-        "plex_url_errors": len(plex_url_errors),
-        "plex_regex_errors": len(plex_regex_errors),
-        "plex_library_errors": len(plex_lib_errors),
-        "plex_rounding_errors": len(rounding_errors),
-        "metadata_attribute_errors": len(metadata_attribute_errors),
-        "metadata_load_errors": len(metadata_load_errors),
-        "overlay_load_errors": len(overlay_load_errors),
-        "overlay_apply_errors": len(overlay_apply_errors),
-        "overlay_level_errors": len(overlay_level_errors),
-        "overlay_font_missing": len(overlay_font_missing),
-        "overlay_image_missing": len(overlay_image_missing),
-        "playlist_load_errors": len(playlist_load_errors),
-        "playlist_errors": len(playlist_errors),
-        "overlays_bloat": len(overlays_bloat),
-        "image_corrupt": len(corrupt_image_errors),
-        "image_size": len(image_size),
-        "runtime_run_order": len(run_order_errors),
-        "runtime_checkfiles": len(checkFiles),
-        "runtime_timeout": len(timeout_errors),
-        "update_kometa": len(new_version_found_errors),
-        "update_plexapi": len(new_plexapi_version_found_errors),
-        "update_git": len(git_kometa_errors),
-        "platform_wsl": 1 if wsl_recommendation else 0,
-        "platform_kometa_time": 1 if kometa_time_recommendation else 0,
-        "platform_memory": 1 if kometa_mem_recommendation else 0,
-        "platform_db_cache": 1 if kometa_db_cache_recommendation else 0,
-        "anidb_69": len(anidb69_errors),
-        "anidb_auth": len(anidb_auth_errors),
-        "misc_internal_server": len(internal_server_errors),
-        "misc_no_items": len(no_items_found_errors),
-        "misc_pmm_legacy": len(pmm_legacy_errors),
-    }
+    issue_counts = build_issue_counts(
+        buckets={
+            "tmdb_api_errors": tmdb_api_errors,
+            "tmdb_fail_errors": tmdb_fail_errors,
+            "trakt_connection_errors": trakt_connection_errors,
+            "omdb_errors": omdb_errors,
+            "omdb_api_limit_errors": omdb_api_limit_errors,
+            "mdblist_errors": mdblist_errors,
+            "mdblist_api_limit_errors": mdblist_api_limit_errors,
+            "mdblist_attr_errors": mdblist_attr_errors,
+            "mal_connection_errors": mal_connection_errors,
+            "tautulli_url_errors": tautulli_url_errors,
+            "tautulli_apikey_errors": tautulli_apikey_errors,
+            "flixpatrol_errors": flixpatrol_errors,
+            "flixpatrol_paywall": flixpatrol_paywall,
+            "lsio_errors": lsio_errors,
+            "to_be_configured_errors": to_be_configured_errors,
+            "api_blank_errors": api_blank_errors,
+            "bad_version_found_errors": bad_version_found_errors,
+            "missing_path_errors": missing_path_errors,
+            "cache_false": cache_false,
+            "mass_update_errors": mass_update_errors,
+            "other_award": other_award,
+            "delete_unmanaged_collections_errors": delete_unmanaged_collections_errors,
+            "plex_url_errors": plex_url_errors,
+            "plex_regex_errors": plex_regex_errors,
+            "plex_lib_errors": plex_lib_errors,
+            "rounding_errors": rounding_errors,
+            "metadata_attribute_errors": metadata_attribute_errors,
+            "metadata_load_errors": metadata_load_errors,
+            "overlay_load_errors": overlay_load_errors,
+            "overlay_apply_errors": overlay_apply_errors,
+            "overlay_level_errors": overlay_level_errors,
+            "overlay_font_missing": overlay_font_missing,
+            "overlay_image_missing": overlay_image_missing,
+            "playlist_load_errors": playlist_load_errors,
+            "playlist_errors": playlist_errors,
+            "overlays_bloat": overlays_bloat,
+            "convert_errors": convert_errors,
+            "corrupt_image_errors": corrupt_image_errors,
+            "image_size": image_size,
+            "run_order_errors": run_order_errors,
+            "checkFiles": checkFiles,
+            "timeout_errors": timeout_errors,
+            "new_version_found_errors": new_version_found_errors,
+            "new_plexapi_version_found_errors": new_plexapi_version_found_errors,
+            "git_kometa_errors": git_kometa_errors,
+            "anidb69_errors": anidb69_errors,
+            "anidb_auth_errors": anidb_auth_errors,
+            "internal_server_errors": internal_server_errors,
+            "no_items_found_errors": no_items_found_errors,
+            "pmm_legacy_errors": pmm_legacy_errors,
+        },
+        platform_recs=platform_recs,
+    )
 
     return recommendation_messages, issue_counts
 
