@@ -3357,7 +3357,12 @@ def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):
         def myPlexAccount(self):
             return FakeAccount()
 
-    monkeypatch.setattr(qs_module.validations, "PlexServer", FakePlex)
+    # PlexServer is imported into modules.validations_services (extracted from
+    # modules.validations in the Sprint 4 refactor).  Patch it there so the
+    # validate_plex_server function actually sees FakePlex.
+    from modules import validations_services
+
+    monkeypatch.setattr(validations_services, "PlexServer", FakePlex)
 
     with app.app_context():
         resp = qs_module.validations.validate_plex_server({"plex_url": "http://localhost:32400", "plex_token": "token"})
