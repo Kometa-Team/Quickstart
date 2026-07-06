@@ -12,21 +12,22 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~1,400 lines, well above the 600-line soft-limit.  The four
-routes are tightly coupled through a shared session-cache flow
-(import_preview_token / import_preview_path / import_preview_*_url /
-import_preview_*_token) and a shared helper layer.  Splitting them into
-separate per-route modules would either duplicate the helpers or require
-a sub-package with relative imports -- both worse than keeping them
-together.  ``import_config_preview`` alone is ~510 lines (down from ~590
-after hoisting six nested credential parsers to module scope); that one
-mega-function is still the real elephant and a candidate for further
-internal decomposition (zip extraction, plex validation, tmdb validation).
+This file is ~1,200 lines, still above the 600-line soft-limit.  The 12
+shared helpers moved to :mod:`blueprints.import_config_helpers` in a
+previous PR, trimming ~200 lines.  The four remaining routes are tightly
+coupled through a shared session-cache flow (import_preview_token /
+import_preview_path / import_preview_*_url / import_preview_*_token) so
+splitting them into separate per-route modules would either duplicate the
+shared local logic or require a sub-package with relative imports -- both
+worse than keeping them together.  ``import_config_preview`` alone is
+~510 lines (down from ~590 after hoisting six nested credential parsers
+to module scope); that one mega-function is still the real elephant and
+a candidate for further internal decomposition (zip extraction, plex
+validation, tmdb validation).
 """
 
 import json
 import os
-import re
 import secrets
 import shutil
 import zipfile
@@ -35,6 +36,20 @@ from pathlib import Path
 
 from flask import Blueprint, Flask, current_app, jsonify, request, session
 
+from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tests and legacy callers)
+    _coerce_validation_response_payload,
+    _import_preview_json_default,
+    _map_playlist_libraries,
+    _parse_base_plex_libraries,
+    _parse_csv_or_list_to_set,
+    _parse_plex_credentials_from_base,
+    _parse_plex_credentials_from_config,
+    _parse_plex_credentials_from_form,
+    _parse_tmdb_credentials_from_base,
+    _parse_tmdb_credentials_from_config,
+    _parse_tmdb_credentials_from_form,
+    count_annotated_lines,
+)
 from modules import assets, bundle_artifacts, database, helpers, importer, persistence, validations
 from modules.library_file_entries import (
     _is_bundled_library_archive_member,
@@ -42,215 +57,6 @@ from modules.library_file_entries import (
 )
 
 bp = Blueprint("import_config_routes", __name__)
-
-
-# --- module-level helpers (deduplicated from cluster) ---------------------
-
-
-def _import_preview_json_default(value):
-    if isinstance(value, Path):
-        return str(value)
-    if isinstance(value, set):
-        return sorted(str(item) for item in value)
-    isoformat = getattr(value, "isoformat", None)
-    if callable(isoformat):
-        try:
-            return isoformat()
-        except Exception:
-            pass
-    return str(value)
-
-
-def _coerce_validation_response_payload(response):
-    if isinstance(response, tuple) and response:
-        response = response[0]
-    if hasattr(response, "get_json"):
-        response = response.get_json()
-    return response if isinstance(response, dict) else {}
-
-
-def _parse_csv_or_list_to_set(value):
-    """Coerce a comma-string or list into a stripped set of strings.
-
-    DRY refactor: pre-refactor this lived as an inner closure named
-    ``parse_list`` in THREE separate routes (import_config_preview,
-    import_config_preview_mapped, import_config_confirm) with byte-for-byte
-    identical 6-line bodies (18 lines of literal duplication).  Hoisted
-    to module scope and renamed for clarity.
-    """
-    if isinstance(value, str):
-        return {v.strip() for v in value.split(",") if v.strip()}
-    if isinstance(value, list):
-        return {str(v).strip() for v in value if str(v).strip()}
-    return set()
-
-
-def _parse_base_plex_libraries(base_name: str):
-    """Look up cached movie/show library names from a saved base config.
-
-    DRY refactor: pre-refactor this lived as an inner closure named
-    ``parse_base_plex_libraries`` in TWO routes (import_config_preview,
-    import_config_confirm) with byte-for-byte identical 13-line bodies
-    (26 lines of literal duplication).  Hoisted to module scope.
-    """
-    if not base_name:
-        return set(), set()
-    try:
-        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
-    except Exception:
-        return set(), set()
-    if not isinstance(stored, dict):
-        return set(), set()
-    plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
-    if not isinstance(plex_block, dict):
-        return set(), set()
-    return (
-        _parse_csv_or_list_to_set(plex_block.get("tmp_movie_libraries", "")),
-        _parse_csv_or_list_to_set(plex_block.get("tmp_show_libraries", "")),
-    )
-
-
-# --- credential parsers ---------------------------------------------------
-#
-# Six tiny pure functions that pull ``(url, token)`` / ``api_key`` out of the
-# three shapes credentials might arrive in during an import:
-#
-#   * ``_parse_*_from_config`` -- an already-loaded YAML/dict from the
-#     uploaded config file
-#   * ``_parse_*_from_base``   -- the persisted section data of a *different*
-#     saved config, when the caller is merging into it
-#   * ``_parse_*_from_form``   -- the raw form fields submitted alongside
-#     the upload
-#
-# Hoisted from nested closures inside ``import_config_preview`` where they
-# were 52 lines of setup that had zero closure state -- the elephant
-# function shed ~50 lines and these are now unit-testable in isolation.
-
-
-def _parse_plex_credentials_from_config(config_data):
-    plex_block = config_data.get("plex", {}) if isinstance(config_data, dict) else {}
-    if not isinstance(plex_block, dict):
-        return "", ""
-    url = plex_block.get("url") or plex_block.get("plex_url") or ""
-    token = plex_block.get("token") or plex_block.get("plex_token") or ""
-    return str(url).strip(), str(token).strip()
-
-
-def _parse_plex_credentials_from_base(base_name: str):
-    if not base_name:
-        return "", ""
-    try:
-        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
-    except Exception:
-        return "", ""
-    if not isinstance(stored, dict):
-        return "", ""
-    if "plex" in stored:
-        return _parse_plex_credentials_from_config(stored)
-    url = stored.get("url") or stored.get("plex_url") or ""
-    token = stored.get("token") or stored.get("plex_token") or ""
-    return str(url).strip(), str(token).strip()
-
-
-def _parse_plex_credentials_from_form(form_data):
-    url = form_data.get("plex_url", "") or ""
-    token = form_data.get("plex_token", "") or ""
-    return str(url).strip(), str(token).strip()
-
-
-def _parse_tmdb_credentials_from_config(config_data):
-    tmdb_block = config_data.get("tmdb", {}) if isinstance(config_data, dict) else {}
-    if not isinstance(tmdb_block, dict):
-        return ""
-    api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
-    return str(api_key).strip()
-
-
-def _parse_tmdb_credentials_from_base(base_name: str):
-    if not base_name:
-        return ""
-    try:
-        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "tmdb")
-    except Exception:
-        return ""
-    if not isinstance(stored, dict):
-        return ""
-    if "tmdb" in stored:
-        return _parse_tmdb_credentials_from_config(stored)
-    api_key = stored.get("apikey") or stored.get("api_key") or stored.get("tmdb_apikey") or stored.get("token") or ""
-    return str(api_key).strip()
-
-
-def _parse_tmdb_credentials_from_form(form_data):
-    api_key = form_data.get("tmdb_apikey", "") or ""
-    return str(api_key).strip()
-
-
-def count_annotated_lines(text: str) -> dict:
-    """Count YAML lines tagged with ``# imported`` or ``# not imported``.
-
-    DRY refactor: this body existed twice -- once as a module-level
-    function in quickstart.py and once as an inner closure inside
-    ``import_config_preview``, byte-for-byte identical.  Now the inner
-    copy is gone and both call sites use this module-level version.
-    """
-    imported = 0
-    not_imported = 0
-    if not isinstance(text, str):
-        return {"imported": 0, "not_imported": 0}
-    imported_pattern = re.compile(r"(?:#|\|) imported(?:\s*-.*)?$")
-    not_imported_pattern = re.compile(r"(?:#|\|) not imported(?:\s*-.*)?$")
-    for line in text.splitlines():
-        trimmed = line.rstrip()
-        if imported_pattern.search(trimmed):
-            imported += 1
-        elif not_imported_pattern.search(trimmed):
-            not_imported += 1
-    return {"imported": imported, "not_imported": not_imported}
-
-
-def _map_playlist_libraries(payload, library_mapping, plex_names):
-    if not isinstance(payload, dict):
-        return
-    playlist_payload = payload.get("playlist_files")
-    if not isinstance(playlist_payload, list):
-        return
-    mapped_entries = []
-    for entry in playlist_payload:
-        if not isinstance(entry, dict):
-            mapped_entries.append(entry)
-            continue
-        tv = entry.get("template_variables")
-        if isinstance(tv, dict):
-            libs = tv.get("libraries")
-            if isinstance(libs, list):
-                mapped = []
-                for lib in libs:
-                    name = str(lib).strip()
-                    if not name:
-                        continue
-                    mapped_name = library_mapping.get(name, name)
-                    if mapped_name is None:
-                        mapped_name = name
-                    mapped_name = str(mapped_name).strip()
-                    if not mapped_name or mapped_name == "__ignore__":
-                        continue
-                    mapped.append(mapped_name)
-                deduped = []
-                seen = set()
-                for lib_name in mapped:
-                    if lib_name in seen:
-                        continue
-                    seen.add(lib_name)
-                    deduped.append(lib_name)
-                if plex_names:
-                    deduped = [lib_name for lib_name in deduped if lib_name in plex_names]
-                tv = dict(tv)
-                tv["libraries"] = deduped
-                entry = dict(entry)
-                entry["template_variables"] = tv
-        mapped_entries.append(entry)
-    payload["playlist_files"] = mapped_entries
 
 
 # --- routes ---------------------------------------------------------------
