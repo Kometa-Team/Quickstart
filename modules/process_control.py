@@ -3,13 +3,12 @@ import re
 import shlex
 import subprocess
 import sys
-import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import psutil
-from flask import current_app as app, has_app_context, has_request_context, session
+from flask import has_request_context, session
 
 from modules import database, helpers, imagemaid, persistence
 
@@ -26,49 +25,45 @@ from modules.process_metrics import (  # noqa: F401
     clear_process_metric_cache,
 )
 
-MAINTENANCE_STATE = {
-    "paused": False,
-    "paused_since": None,
-    "imagemaid_paused": False,
-    "imagemaid_paused_since": None,
-    "active": False,
-    "window": None,
-    "queued_started_at": None,
-    "window_unavailable": False,
-    "window_unavailable_since": None,
-}
-MAINTENANCE_STATE_LOCK = threading.Lock()
-MAINTENANCE_GUARD_INTERVAL = 45
-PENDING_KOMETA_START = {"command": None, "config_name": None, "requested_at": None, "start_mode": "current"}
-PENDING_KOMETA_START_LOCK = threading.Lock()
+# Shared module-level state (dicts, locks, constants) and the
+# ``normalize_kometa_start_mode`` helper live in modules.process_control_state
+# to avoid circular imports between process_control and its extractions.
+from modules.process_control_state import (  # noqa: F401
+    IMAGEMAID_RUN_CONTEXT,
+    IMAGEMAID_RUN_CONTEXT_LOCK,
+    MAINTENANCE_GUARD_INTERVAL,
+    MAINTENANCE_STATE,
+    MAINTENANCE_STATE_LOCK,
+    PENDING_KOMETA_START,
+    PENDING_KOMETA_START_LOCK,
+    RUN_CONTEXT,
+    RUN_CONTEXT_LOCK,
+    normalize_kometa_start_mode,
+)
 
-RUN_CONTEXT_LOCK = threading.Lock()
-RUN_CONTEXT = {
-    "command": None,
-    "selected_libraries": None,
-    "run_option": None,
-    "run_mode": "all",
-    "start_mode": "current",
-    "config_name": None,
-    "config_path": None,
-    "started_at": None,
-    "updated_at": None,
-    "stop_requested_at": None,
-}
-IMAGEMAID_RUN_CONTEXT_LOCK = threading.Lock()
-IMAGEMAID_RUN_CONTEXT = {
-    "command": None,
-    "mode": None,
-    "config_name": None,
-    "started_at": None,
-    "updated_at": None,
-}
-
-
-def _get_version_info():
-    if not has_app_context():
-        return {}
-    return app.config.get("VERSION_CHECK") or {}
+# Marker-file writers (run markers, maintenance sidecars, meta.log
+# helpers, config-path resolution) extracted to modules.process_markers.
+from modules.process_markers import (  # noqa: F401
+    _get_version_info,
+    append_imagemaid_maintenance_sidecar_line,
+    append_kometa_maintenance_sidecar_line,
+    append_quickstart_imagemaid_log_line,
+    append_quickstart_meta_log_line,
+    extract_kometa_config_path,
+    get_imagemaid_maintenance_sidecar_path,
+    get_kometa_maintenance_sidecar_path,
+    is_logscan_maintenance_sidecar,
+    reset_imagemaid_maintenance_sidecar,
+    reset_kometa_maintenance_sidecar,
+    schedule_quickstart_run_marker,
+    stamp_quickstart_config_marker,
+    write_quickstart_imagemaid_maintenance_marker,
+    write_quickstart_imagemaid_run_marker,
+    write_quickstart_imagemaid_stop_marker,
+    write_quickstart_maintenance_marker,
+    write_quickstart_run_marker,
+    write_quickstart_stop_marker,
+)
 
 
 def parse_maintenance_window_minutes(window_str):
@@ -227,11 +222,6 @@ def refresh_maintenance_window_availability(preserve_active_state=False):
         else:
             MAINTENANCE_STATE["window_unavailable"] = False
             MAINTENANCE_STATE["window_unavailable_since"] = None
-
-
-def normalize_kometa_start_mode(raw_mode):
-    mode = str(raw_mode or "current").strip().lower()
-    return mode if mode in {"current", "recovery", "logged"} else "current"
 
 
 def set_pending_kometa_start(command, config_name, start_mode="current"):
@@ -847,309 +837,3 @@ def maintenance_guard_loop(app_in):
                 with MAINTENANCE_STATE_LOCK:
                     MAINTENANCE_STATE["imagemaid_paused"] = False
                     MAINTENANCE_STATE["imagemaid_paused_since"] = None
-
-
-def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current"):
-    try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
-        safe_config = (config_name or "default").strip() or "default"
-        safe_start_mode = normalize_kometa_start_mode(start_mode)
-        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = (
-            f"[Quickstart] Run marker: started={timestamp} "
-            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
-            f"maintenance_markers=1 start_mode={safe_start_mode}"
-        )
-        reset_kometa_maintenance_sidecar(kometa_root)
-        append_quickstart_meta_log_line(kometa_root, marker)
-    except Exception:
-        pass
-
-
-def append_quickstart_meta_log_line(kometa_root, line):
-    if not line:
-        return False
-    try:
-        log_dir = Path(kometa_root) / "config" / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_path = log_dir / "meta.log"
-        with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
-            handle.write(str(line).rstrip() + "\n")
-        return True
-    except Exception:
-        return False
-
-
-def get_kometa_maintenance_sidecar_path(kometa_root):
-    return Path(kometa_root) / "config" / "logs" / "meta.quickstart-maintenance.log"
-
-
-def reset_kometa_maintenance_sidecar(kometa_root):
-    try:
-        sidecar_path = get_kometa_maintenance_sidecar_path(kometa_root)
-        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
-        sidecar_path.write_text("", encoding="utf-8")
-        return True
-    except Exception:
-        return False
-
-
-def append_kometa_maintenance_sidecar_line(kometa_root, line):
-    if not line:
-        return False
-    try:
-        sidecar_path = get_kometa_maintenance_sidecar_path(kometa_root)
-        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
-        with sidecar_path.open("a", encoding="utf-8", errors="ignore") as handle:
-            handle.write(str(line).rstrip() + "\n")
-        return True
-    except Exception:
-        return False
-
-
-def is_logscan_maintenance_sidecar(path):
-    try:
-        name = Path(path).name.lower()
-    except Exception:
-        return False
-    return name in {"meta.quickstart-maintenance.log", "imagemaid.quickstart-maintenance.log"}
-
-
-def append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=None):
-    if not line:
-        return False
-    try:
-        root = Path(imagemaid_root)
-        log_dir = root / "config" / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        target = Path(log_path) if log_path else (log_dir / "imagemaid.log")
-        with target.open("a", encoding="utf-8", errors="ignore") as handle:
-            handle.write(str(line).rstrip() + "\n")
-        return True
-    except Exception:
-        return False
-
-
-def get_imagemaid_maintenance_sidecar_path(imagemaid_root):
-    return Path(imagemaid_root) / "config" / "logs" / "imagemaid.quickstart-maintenance.log"
-
-
-def reset_imagemaid_maintenance_sidecar(imagemaid_root):
-    try:
-        sidecar_path = get_imagemaid_maintenance_sidecar_path(imagemaid_root)
-        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
-        sidecar_path.write_text("", encoding="utf-8")
-        return True
-    except Exception:
-        return False
-
-
-def append_imagemaid_maintenance_sidecar_line(imagemaid_root, line):
-    if not line:
-        return False
-    try:
-        sidecar_path = get_imagemaid_maintenance_sidecar_path(imagemaid_root)
-        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
-        with sidecar_path.open("a", encoding="utf-8", errors="ignore") as handle:
-            handle.write(str(line).rstrip() + "\n")
-        return True
-    except Exception:
-        return False
-
-
-def write_quickstart_maintenance_marker(kometa_root, event, window=None, paused_seconds=None):
-    event_name = str(event or "").strip().lower()
-    if event_name not in {"paused", "resumed"}:
-        return False
-    local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-    parts = [
-        "[Quickstart] Maintenance marker:",
-        f"event={event_name}",
-        f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
-        f"local_at={local_at}",
-    ]
-    if window:
-        parts.append(f"window={str(window).strip()}")
-    if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
-        parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
-    import quickstart
-
-    line = " ".join(parts)
-    meta_ok = quickstart._append_quickstart_meta_log_line(kometa_root, line)
-    sidecar_ok = append_kometa_maintenance_sidecar_line(kometa_root, line) if not meta_ok else False
-    if not meta_ok and sidecar_ok:
-        helpers.ts_log("Quickstart maintenance marker could not be appended to meta.log; preserved in sidecar instead.", level="WARNING")
-    return bool(meta_ok or sidecar_ok)
-
-
-def write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, log_path=None):
-    try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
-        safe_mode = (mode or "report").strip().lower() or "report"
-        safe_config = (config_name or "default").strip() or "default"
-        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch} " f"tool=imagemaid mode={safe_mode}"
-        reset_imagemaid_maintenance_sidecar(imagemaid_root)
-        return append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
-    except Exception:
-        return False
-
-
-def write_quickstart_stop_marker(kometa_root, config_name=None, reason="user_stop"):
-    try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
-        safe_config = (config_name or "default").strip() or "default"
-        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = (
-            f"[Quickstart] Run event: event=stopped at={timestamp} "
-            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
-            f"tool=kometa reason={str(reason or 'user_stop').strip() or 'user_stop'}"
-        )
-        return append_quickstart_meta_log_line(kometa_root, marker)
-    except Exception:
-        return False
-
-
-def write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, config_name=None, log_path=None, reason="user_stop"):
-    try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
-        safe_mode = (mode or "report").strip().lower() or "report"
-        safe_config = (config_name or "default").strip() or "default"
-        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = (
-            f"[Quickstart] Run event: event=stopped at={timestamp} "
-            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
-            f"tool=imagemaid mode={safe_mode} reason={str(reason or 'user_stop').strip() or 'user_stop'}"
-        )
-        return append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
-    except Exception:
-        return False
-
-
-def write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, config_name=None, window=None, log_path=None, paused_seconds=None):
-    event_name = str(event or "").strip().lower()
-    if event_name not in {"blocked_start", "paused", "resumed"}:
-        return False
-    try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
-        safe_mode = (mode or "report").strip().lower() or "report"
-        safe_config = (config_name or "default").strip() or "default"
-        local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        parts = [
-            "[Quickstart] Maintenance marker:",
-            f"event={event_name}",
-            f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
-            f"local_at={local_at}",
-            f"config={safe_config}",
-            "tool=imagemaid",
-            f"mode={safe_mode}",
-            f"quickstart={qs_version}",
-            f"branch={qs_branch}",
-        ]
-        if window:
-            parts.append(f"window={str(window).strip()}")
-        if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
-            parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
-        line = " ".join(parts)
-        meta_ok = append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=log_path)
-        sidecar_ok = append_imagemaid_maintenance_sidecar_line(imagemaid_root, line) if not meta_ok else False
-        if not meta_ok and sidecar_ok:
-            helpers.ts_log("ImageMaid maintenance marker could not be appended to the live log; preserved in sidecar instead.", level="WARNING")
-        return bool(meta_ok or sidecar_ok)
-    except Exception:
-        return False
-
-
-def schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20, start_mode="current"):
-    log_path = Path(kometa_root) / "config" / "logs" / "meta.log"
-    state = {"mtime": None, "size": None}
-    if log_path.exists():
-        try:
-            stat = log_path.stat()
-            state["mtime"] = stat.st_mtime
-            state["size"] = stat.st_size
-        except OSError:
-            pass
-
-    def worker():
-        deadline = time.time() + timeout_seconds
-        while time.time() < deadline:
-            try:
-                if log_path.exists():
-                    stat = log_path.stat()
-                    if state["mtime"] is None:
-                        if stat.st_size > 0:
-                            write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
-                            return
-                    else:
-                        if stat.st_mtime != state["mtime"] and stat.st_size > 0:
-                            write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
-                            return
-            except OSError:
-                pass
-            time.sleep(0.5)
-        write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
-
-    threading.Thread(target=worker, daemon=True).start()
-
-
-def extract_kometa_config_path(command_parts, kometa_root):
-    config_value = None
-    for idx, part in enumerate(command_parts):
-        if part in {"-c", "--config"} and idx + 1 < len(command_parts):
-            config_value = command_parts[idx + 1]
-            break
-        if part.startswith("--config="):
-            config_value = part.split("=", 1)[1]
-            break
-        if part.startswith("-c="):
-            config_value = part.split("=", 1)[1]
-            break
-    if not config_value:
-        return None
-    try:
-        path = Path(config_value)
-    except Exception:
-        return None
-    if not path.is_absolute():
-        path = Path(kometa_root) / path
-    return path
-
-
-def stamp_quickstart_config_marker(config_path, config_name=None):
-    if not config_path:
-        return False
-    path = Path(config_path)
-    if not path.exists() or not path.is_file():
-        return False
-    try:
-        content = path.read_text(encoding="utf-8", errors="ignore")
-    except Exception:
-        return False
-    newline = "\r\n" if "\r\n" in content else "\n"
-    lines = content.splitlines()
-    lines = [line for line in lines if not line.lstrip().startswith("# Quickstart run marker:")]
-    version_info = _get_version_info()
-    qs_version = version_info.get("local_version") or "unknown"
-    qs_branch = version_info.get("branch") or "unknown"
-    safe_config = (config_name or "default").strip() or "default"
-    timestamp = datetime.now(timezone.utc).isoformat()
-    marker = f"# Quickstart run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
-    if lines and lines[-1].strip():
-        lines.append("")
-    lines.append(marker)
-    try:
-        path.write_text(newline.join(lines) + newline, encoding="utf-8")
-        return True
-    except Exception:
-        return False
