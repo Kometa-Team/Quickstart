@@ -12,30 +12,33 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~1,200 lines, still above the 600-line soft-limit.  The 12
-shared helpers moved to :mod:`blueprints.import_config_helpers` in a
-previous PR, trimming ~200 lines.  The four remaining routes are tightly
-coupled through a shared session-cache flow (import_preview_token /
-import_preview_path / import_preview_*_url / import_preview_*_token) so
-splitting them into separate per-route modules would either duplicate the
-shared local logic or require a sub-package with relative imports -- both
-worse than keeping them together.  ``import_config_preview`` alone is
-~510 lines (down from ~590 after hoisting six nested credential parsers
-to module scope); that one mega-function is still the real elephant and
-a candidate for further internal decomposition (zip extraction, plex
-validation, tmdb validation).
+This file is ~1,080 lines, still above the 600-line soft-limit.  Two
+chunks have already moved out:
+
+* :mod:`blueprints.import_config_helpers` -- 12 pure helpers (~240 lines)
+* :mod:`blueprints.import_config_bundle` -- upload / zip extraction
+  (~230 lines)
+
+The four remaining routes are tightly coupled through a shared
+session-cache flow (import_preview_token / import_preview_path /
+import_preview_*_url / import_preview_*_token) so splitting them into
+separate per-route modules would either duplicate the shared local logic
+or require a sub-package with relative imports -- both worse than
+keeping them together.  ``import_config_preview`` alone is ~400 lines
+(down from ~510 after the bundle extraction); its plex-validation
+(~125 lines) and tmdb-validation (~180 lines) blocks are the next
+natural sub-extractions.
 """
 
 import json
 import os
 import secrets
 import shutil
-import zipfile
-from io import BytesIO
 from pathlib import Path
 
 from flask import Blueprint, Flask, current_app, jsonify, request, session
 
+from blueprints.import_config_bundle import extract_bundle_upload
 from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tests and legacy callers)
     _coerce_validation_response_payload,
     _import_preview_json_default,
@@ -51,10 +54,7 @@ from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tes
     count_annotated_lines,
 )
 from modules import assets, bundle_artifacts, database, helpers, importer, persistence, validations
-from modules.library_file_entries import (
-    _is_bundled_library_archive_member,
-    _normalize_imported_libraries_payload,
-)
+from modules.library_file_entries import _normalize_imported_libraries_payload
 
 bp = Blueprint("import_config_routes", __name__)
 
@@ -98,116 +98,12 @@ def import_config_preview():
         base_config = base_match
 
     raw_text = upload.read()
-    config_text = ""
-    extracted_fonts = []
-    extracted_dir = None
-    if file_name.endswith(".zip"):
-        try:
-            with zipfile.ZipFile(BytesIO(raw_text)) as archive:
-                archive_members = archive.namelist()
-                unexpected_members = []
-                bundled_library_files = []
-                bundled_overlay_images = []
-                config_files = []
-                font_files = []
-
-                for member_name in archive_members:
-                    normalized_member = bundle_artifacts.normalize_bundle_member_name(member_name)
-                    if not normalized_member:
-                        continue
-                    if not bundle_artifacts.is_allowed_bundle_member(normalized_member):
-                        unexpected_members.append(normalized_member)
-                        continue
-                    if _is_bundled_library_archive_member(normalized_member):
-                        bundled_library_files.append(member_name)
-                    elif bundle_artifacts.is_bundled_overlay_image_archive_member(normalized_member):
-                        bundled_overlay_images.append(member_name)
-                    elif bundle_artifacts.yaml_path_suffix(normalized_member):
-                        config_files.append(member_name)
-                    elif normalized_member.lower().endswith((".ttf", ".otf")):
-                        font_files.append(member_name)
-
-                if unexpected_members:
-                    preview = ", ".join(unexpected_members[:5])
-                    if len(unexpected_members) > 5:
-                        preview += ", ..."
-                    return jsonify(success=False, message=f"Zip file contains unsupported entries: {preview}"), 400
-                if not config_files:
-                    return jsonify(success=False, message="No YAML config found in zip file."), 400
-                if len(config_files) > 1:
-                    return jsonify(success=False, message="Zip file must contain exactly one YAML config."), 400
-
-                try:
-                    with archive.open(config_files[0]) as handle:
-                        config_text = handle.read().decode("utf-8", errors="ignore")
-                except Exception:
-                    return jsonify(success=False, message="Unable to read config from zip."), 400
-
-                if font_files or bundled_library_files or bundled_overlay_images:
-                    cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
-                    cache_dir.mkdir(parents=True, exist_ok=True)
-                    extracted_dir = cache_dir / f"bundle_{secrets.token_urlsafe(8)}"
-                    extracted_dir.mkdir(parents=True, exist_ok=True)
-                    if font_files:
-                        fonts_dir = extracted_dir / "fonts"
-                        fonts_dir.mkdir(parents=True, exist_ok=True)
-                        seen_names = set()
-                        for font_name in font_files:
-                            base_name = os.path.basename(font_name)
-                            if not base_name:
-                                continue
-                            safe_name = base_name
-                            counter = 1
-                            while safe_name in seen_names:
-                                stem, ext = os.path.splitext(base_name)
-                                safe_name = f"{stem}_{counter}{ext}"
-                                counter += 1
-                            seen_names.add(safe_name)
-                            try:
-                                with archive.open(font_name) as source:
-                                    target = fonts_dir / safe_name
-                                    with open(target, "wb") as dest:
-                                        dest.write(source.read())
-                                    extracted_fonts.append(safe_name)
-                            except Exception:
-                                continue
-                    for member_name in bundled_library_files:
-                        normalized_member = str(member_name).replace("\\", "/").lstrip("/")
-                        if not normalized_member or normalized_member.endswith("/"):
-                            continue
-                        target = (extracted_dir / Path(normalized_member)).resolve()
-                        try:
-                            target.relative_to(extracted_dir.resolve())
-                        except Exception:
-                            continue
-                        target.parent.mkdir(parents=True, exist_ok=True)
-                        try:
-                            with archive.open(member_name) as source, open(target, "wb") as dest:
-                                dest.write(source.read())
-                        except Exception:
-                            continue
-                    for member_name in bundled_overlay_images:
-                        normalized_member = str(member_name).replace("\\", "/").lstrip("/")
-                        if not normalized_member or normalized_member.endswith("/"):
-                            continue
-                        target = (extracted_dir / Path(normalized_member)).resolve()
-                        try:
-                            target.relative_to(extracted_dir.resolve())
-                        except Exception:
-                            continue
-                        target.parent.mkdir(parents=True, exist_ok=True)
-                        try:
-                            with archive.open(member_name) as source, open(target, "wb") as dest:
-                                dest.write(source.read())
-                        except Exception:
-                            continue
-        except Exception:
-            return jsonify(success=False, message="Unable to read zip file."), 400
-    else:
-        try:
-            config_text = raw_text.decode("utf-8")
-        except UnicodeDecodeError:
-            config_text = raw_text.decode("utf-8", errors="ignore")
+    result = extract_bundle_upload(raw_text, file_name)
+    if result.error_response:
+        return result.error_response
+    config_text = result.config_text
+    extracted_fonts = result.extracted_fonts
+    extracted_dir = result.extracted_dir
 
     parsed = importer.load_yaml_config(config_text)
     if not parsed:
