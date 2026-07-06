@@ -199,17 +199,6 @@ def build_advisory_messages(
         )
         special_check_lines.append(checkFiles_message)
 
-    # if current_year:
-    #     url_line = "[https://kometa.wiki/en/latest/files/dynamic_types/?h=latest#imdb-awards]"
-    #     formatted_errors = analyzer.format_contiguous_lines(current_year)
-    #     current_year_message = (
-    #             "⚠️ **LEGACY SCHEMA DETECTED**\n"
-    #             "As of 1.20 `current_year` is no longer used and should be replaced with `latest`.\n"
-    #             f"For more information on handling these, {url_line}\n"
-    #             f"{len(current_year)} line(s) with `current_year` issues. Line number(s): {formatted_errors}"
-    #     )
-    #     special_check_lines.append(current_year_message)
-
     if other_award:
         url_line = "[https://kometa.wiki/en/latest/kometa/faqs/?h=other_award#pmm-120-release-changes]"
         formatted_errors = analyzer.format_contiguous_lines(other_award)
