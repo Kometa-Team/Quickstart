@@ -46,7 +46,11 @@ const browserGlobals = {
 // module, remove `jumpTo` from this list and add it to the
 // `no-restricted-syntax` ban below.
 const quickstartGlobals = {
-  $: 'readonly',
+  // NOTE: `$` was removed from this list on 2026-07-07 alongside the
+  // jQuery <script> removal from templates/000-base.html (Roadmap Step
+  // 7 completion). Re-adding it would silently allow jQuery calls to
+  // creep back in and either crash at runtime or force jQuery to be
+  // reintroduced. Don't.
   bootstrap: 'readonly',
   validateButton: 'readonly',
   showSpinner: 'readonly',
