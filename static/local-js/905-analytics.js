@@ -1,82 +1,84 @@
-const $tableBody = $('#logscan-trends-table tbody')
-const $tableSummary = $('#logscan-table-summary')
-const $tablePolicy = $('#logscan-table-policy')
-const $tableSortKey = $('#logscan-table-sort-key')
-const $tableSortDir = $('#logscan-table-sort-dir')
-const $tablePageSize = $('#logscan-table-page-size')
-const $tableFilterCount = $('#logscan-table-filter-count')
-const $tablePageInfo = $('#logscan-table-page-info')
-const $tablePrev = $('#logscan-table-prev')
-const $tableNext = $('#logscan-table-next')
-const $tableToggle = $('#logscan-table-toggle')
-const $tableSelectAll = $('#logscan-table-select-all')
-const $tableSelectComplete = $('#logscan-table-select-complete')
-const $tableSelectIncomplete = $('#logscan-table-select-incomplete')
-const $tableClearSelection = $('#logscan-table-clear-selection')
-const $tableCompressSelected = $('#logscan-table-compress-selected')
-const $tableDeleteSelected = $('#logscan-table-delete-selected')
-const $tableSelectionSummary = $('#logscan-table-selection-summary')
+import { elementGroup } from './modules/elementGroup.js'
+
+const tableBody = document.querySelector('#logscan-trends-table tbody')
+const tableSummary = document.getElementById('logscan-table-summary')
+const tablePolicy = document.getElementById('logscan-table-policy')
+const tableSortKey = document.getElementById('logscan-table-sort-key')
+const tableSortDir = document.getElementById('logscan-table-sort-dir')
+const tablePageSize = document.getElementById('logscan-table-page-size')
+const tableFilterCount = document.getElementById('logscan-table-filter-count')
+const tablePageInfo = document.getElementById('logscan-table-page-info')
+const tablePrev = document.getElementById('logscan-table-prev')
+const tableNext = document.getElementById('logscan-table-next')
+const tableToggle = document.getElementById('logscan-table-toggle')
+const tableSelectAll = document.getElementById('logscan-table-select-all')
+const tableSelectComplete = document.getElementById('logscan-table-select-complete')
+const tableSelectIncomplete = document.getElementById('logscan-table-select-incomplete')
+const tableClearSelection = document.getElementById('logscan-table-clear-selection')
+const tableCompressSelected = document.getElementById('logscan-table-compress-selected')
+const tableDeleteSelected = document.getElementById('logscan-table-delete-selected')
+const tableSelectionSummary = document.getElementById('logscan-table-selection-summary')
 const tableCollapseEl = document.getElementById('logscan-recent-runs-collapse')
-const $summary = $('#logscan-trends-summary')
-const $daily = $('#logscan-trends-daily')
-const $dailyRuntime = $('#logscan-trends-daily-runtime')
-const $runtime = $('#logscan-trends-runtime')
-const $imagemaidSummary = $('#logscan-trends-imagemaid-summary')
-const $imagemaidRecovered = $('#logscan-trends-imagemaid-recovered')
-const $imagemaidFiles = $('#logscan-trends-imagemaid-files')
-const $imagemaidModes = $('#logscan-trends-imagemaid-modes')
-const $counts = $('#logscan-trends-counts')
-const $countsSeries = $('#logscan-trends-counts-series')
-const $ingest = $('#logscan-trends-ingest')
-const $issues = $('#logscan-trends-issues')
-const $libraries = $('#logscan-trends-libraries')
-const $libraryFilter = $('#logscan-trends-library-filter, #logscan-trends-library-filter-bottom')
-const $status = $('#logscan-trends-status')
-const $progress = $('#logscan-trends-progress')
-const $progressBar = $('#logscan-trends-progress-bar')
-const $progressText = $('#logscan-trends-progress-text')
-const $limit = $('#logscan-trends-limit, #logscan-trends-limit-bottom')
-const $configFilter = $('#logscan-trends-config-filter, #logscan-trends-config-filter-bottom')
-const $toolFilter = $('#logscan-trends-tool-filter, #logscan-trends-tool-filter-bottom')
-const $timeRange = $('#logscan-trends-time-range, #logscan-trends-time-range-bottom')
-const $commandFilter = $('#logscan-trends-command-filter, #logscan-trends-command-filter-bottom')
-const $resetFilters = $('#logscan-trends-reset-filters, #logscan-trends-reset-filters-bottom')
-const $dateStart = $('#logscan-trends-date-start, #logscan-trends-date-start-bottom')
-const $dateEnd = $('#logscan-trends-date-end, #logscan-trends-date-end-bottom')
-const $customDateRow = $('#logscan-trends-custom-date-row, #logscan-trends-custom-date-row-bottom')
-const $dateHint = $('#logscan-trends-date-hint, #logscan-trends-date-hint-bottom')
-const $runCount = $('#logscan-trends-count, #logscan-trends-count-bottom')
-const $reset = $('#logscan-trends-reset')
-const $reingest = $('#logscan-trends-reingest')
-const $clearInvalidArchived = $('#logscan-trends-clear-invalid')
-const $confirmReset = $('#logscan-confirm-reset')
-const $confirmReingest = $('#logscan-confirm-reingest')
-const $missingDownload = $('#logscan-trends-missing-download')
-const $invalidLogBody = $('#logscan-invalid-log-body')
-const $invalidLogStatus = $('#logscan-invalid-log-status')
-const $invalidLogSuccess = $('#logscan-invalid-log-success')
-const $invalidLogError = $('#logscan-invalid-log-error')
-const $confirmInvalidLog = $('#logscan-confirm-invalid-log')
-const $cancelInvalidLog = $('#logscan-cancel-invalid-log')
-const $confirmMissingDownload = $('#logscan-confirm-missing-download')
-const $deleteLogBody = $('#logscan-delete-log-body')
-const $deleteLogStatus = $('#logscan-delete-log-status')
-const $deleteLogSuccess = $('#logscan-delete-log-success')
-const $deleteLogError = $('#logscan-delete-log-error')
-const $confirmDeleteLog = $('#logscan-confirm-delete-log')
-const $cancelDeleteLog = $('#logscan-cancel-delete-log')
-const $compressLogBody = $('#logscan-compress-log-body')
-const $compressLogStatus = $('#logscan-compress-log-status')
-const $compressLogSuccess = $('#logscan-compress-log-success')
-const $compressLogError = $('#logscan-compress-log-error')
-const $confirmCompressLog = $('#logscan-confirm-compress-log')
-const $cancelCompressLog = $('#logscan-cancel-compress-log')
-const $runDetailsBody = $('#logscan-run-details-body')
-const $runDetailsTitle = $('#logscan-run-details-title')
-const $preferencesSave = $('#logscan-preferences-save')
-const $preferencesRecommended = $('#logscan-preferences-recommended')
-const $preferencesStatus = $('#logscan-preferences-status')
-const $preferencesInputs = $('.logscan-pref-input')
+const summaryEl = document.getElementById('logscan-trends-summary')
+const daily = document.getElementById('logscan-trends-daily')
+const dailyRuntime = document.getElementById('logscan-trends-daily-runtime')
+const runtimeEl = document.getElementById('logscan-trends-runtime')
+const imagemaidSummary = document.getElementById('logscan-trends-imagemaid-summary')
+const imagemaidRecovered = document.getElementById('logscan-trends-imagemaid-recovered')
+const imagemaidFiles = document.getElementById('logscan-trends-imagemaid-files')
+const imagemaidModes = document.getElementById('logscan-trends-imagemaid-modes')
+const countsEl = document.getElementById('logscan-trends-counts')
+const countsSeries = document.getElementById('logscan-trends-counts-series')
+const ingest = document.getElementById('logscan-trends-ingest')
+const issuesEl = document.getElementById('logscan-trends-issues')
+const librariesEl = document.getElementById('logscan-trends-libraries')
+const libraryFilter = elementGroup('#logscan-trends-library-filter', '#logscan-trends-library-filter-bottom')
+const statusEl = document.getElementById('logscan-trends-status')
+const progress = document.getElementById('logscan-trends-progress')
+const progressBar = document.getElementById('logscan-trends-progress-bar')
+const progressText = document.getElementById('logscan-trends-progress-text')
+const limit = elementGroup('#logscan-trends-limit', '#logscan-trends-limit-bottom')
+const configFilter = elementGroup('#logscan-trends-config-filter', '#logscan-trends-config-filter-bottom')
+const toolFilter = elementGroup('#logscan-trends-tool-filter', '#logscan-trends-tool-filter-bottom')
+const timeRange = elementGroup('#logscan-trends-time-range', '#logscan-trends-time-range-bottom')
+const commandFilter = elementGroup('#logscan-trends-command-filter', '#logscan-trends-command-filter-bottom')
+const resetFilters = elementGroup('#logscan-trends-reset-filters', '#logscan-trends-reset-filters-bottom')
+const dateStart = elementGroup('#logscan-trends-date-start', '#logscan-trends-date-start-bottom')
+const dateEnd = elementGroup('#logscan-trends-date-end', '#logscan-trends-date-end-bottom')
+const customDateRow = elementGroup('#logscan-trends-custom-date-row', '#logscan-trends-custom-date-row-bottom')
+const dateHint = elementGroup('#logscan-trends-date-hint', '#logscan-trends-date-hint-bottom')
+const runCount = elementGroup('#logscan-trends-count', '#logscan-trends-count-bottom')
+const reset = document.getElementById('logscan-trends-reset')
+const reingest = document.getElementById('logscan-trends-reingest')
+const clearInvalidArchived = document.getElementById('logscan-trends-clear-invalid')
+const confirmReset = document.getElementById('logscan-confirm-reset')
+const confirmReingest = document.getElementById('logscan-confirm-reingest')
+const missingDownload = document.getElementById('logscan-trends-missing-download')
+const invalidLogBody = document.getElementById('logscan-invalid-log-body')
+const invalidLogStatus = document.getElementById('logscan-invalid-log-status')
+const invalidLogSuccess = document.getElementById('logscan-invalid-log-success')
+const invalidLogError = document.getElementById('logscan-invalid-log-error')
+const confirmInvalidLog = document.getElementById('logscan-confirm-invalid-log')
+const cancelInvalidLog = document.getElementById('logscan-cancel-invalid-log')
+const confirmMissingDownload = document.getElementById('logscan-confirm-missing-download')
+const deleteLogBody = document.getElementById('logscan-delete-log-body')
+const deleteLogStatus = document.getElementById('logscan-delete-log-status')
+const deleteLogSuccess = document.getElementById('logscan-delete-log-success')
+const deleteLogError = document.getElementById('logscan-delete-log-error')
+const confirmDeleteLog = document.getElementById('logscan-confirm-delete-log')
+const cancelDeleteLog = document.getElementById('logscan-cancel-delete-log')
+const compressLogBody = document.getElementById('logscan-compress-log-body')
+const compressLogStatus = document.getElementById('logscan-compress-log-status')
+const compressLogSuccess = document.getElementById('logscan-compress-log-success')
+const compressLogError = document.getElementById('logscan-compress-log-error')
+const confirmCompressLog = document.getElementById('logscan-confirm-compress-log')
+const cancelCompressLog = document.getElementById('logscan-cancel-compress-log')
+const runDetailsBody = document.getElementById('logscan-run-details-body')
+const runDetailsTitle = document.getElementById('logscan-run-details-title')
+const preferencesSave = document.getElementById('logscan-preferences-save')
+const preferencesRecommended = document.getElementById('logscan-preferences-recommended')
+const preferencesStatus = document.getElementById('logscan-preferences-status')
+const preferencesInputs = document.querySelectorAll('.logscan-pref-input')
 const resetModalEl = document.getElementById('logscan-reset-modal')
 const reingestModalEl = document.getElementById('logscan-reingest-modal')
 const invalidLogModalEl = document.getElementById('logscan-invalid-log-modal')
@@ -108,15 +110,15 @@ const selectedRunKeys = new Set()
 const sortState = { key: 'finished_at', dir: 'desc' }
 let lastIngestState = null
 let analyticsPrefs = null
-const defaultReingestButtonLabel = $reingest.text().trim() || 'Reingest logs'
+const defaultReingestButtonLabel = reingest.textContent.trim() || 'Reingest logs'
 
-function syncMirroredControlValue ($controls, source) {
-  if (!$controls.length || !source) return
-  const value = $(source).val()
-  $controls.each(function () {
-    if (this === source) return
-    $(this).val(value)
-  })
+function syncMirroredControlValue (controls, source) {
+  if (!controls.length || !source) return
+  const value = source.value
+  for (const el of controls) {
+    if (el === source) continue
+    el.value = value
+  }
 }
 
 function escapeHtml (value) {
@@ -808,7 +810,7 @@ function getIssueCount (run, key, fallbackKey) {
 }
 
 function getPreferenceConfigName () {
-  return ($configFilter.val() || 'all').trim() || 'all'
+  return (configFilter.value || 'all').trim() || 'all'
 }
 
 function mergePreferences (prefs) {
@@ -852,39 +854,39 @@ function mergePreferences (prefs) {
 }
 
 function applyPanelVisibility () {
-  $('[data-panel-key]').each(function () {
-    const key = $(this).data('panelKey') || $(this).attr('data-panel-key')
+  document.querySelectorAll('[data-panel-key]').forEach((el) => {
+    const key = el.dataset.panelKey || el.getAttribute('data-panel-key')
     const enabled = analyticsPrefs && analyticsPrefs.panels
       ? analyticsPrefs.panels[key] !== false
       : true
-    $(this).toggleClass('d-none', !enabled)
+    el.classList.toggle('d-none', !enabled)
   })
 }
 
 function syncPreferencesModal () {
-  if (!$preferencesInputs.length) return
-  $preferencesInputs.each(function () {
-    const group = $(this).data('prefGroup') || $(this).attr('data-pref-group')
-    const key = $(this).data('prefKey') || $(this).attr('data-pref-key')
+  if (!preferencesInputs.length) return
+  preferencesInputs.forEach((el) => {
+    const group = el.dataset.prefGroup || el.getAttribute('data-pref-group')
+    const key = el.dataset.prefKey || el.getAttribute('data-pref-key')
     const value = analyticsPrefs && analyticsPrefs[group] && typeof analyticsPrefs[group][key] === 'boolean'
       ? analyticsPrefs[group][key]
       : true
-    $(this).prop('checked', value)
+    el.checked = value
   })
-  if ($preferencesStatus.length) {
+  if (preferencesStatus) {
     const configName = getPreferenceConfigName()
-    $preferencesStatus.text(`Saved per config: ${configName}`)
+    preferencesStatus.textContent = `Saved per config: ${configName}`
   }
 }
 
 function collectPreferencesFromModal () {
   const prefs = { panels: {}, issues: {} }
-  $preferencesInputs.each(function () {
-    const group = $(this).data('prefGroup') || $(this).attr('data-pref-group')
-    const key = $(this).data('prefKey') || $(this).attr('data-pref-key')
+  preferencesInputs.forEach((el) => {
+    const group = el.dataset.prefGroup || el.getAttribute('data-pref-group')
+    const key = el.dataset.prefKey || el.getAttribute('data-pref-key')
     if (!group || !key) return
     if (!prefs[group]) prefs[group] = {}
-    prefs[group][key] = $(this).is(':checked')
+    prefs[group][key] = el.checked
   })
   return prefs
 }
@@ -1190,7 +1192,7 @@ function getSelectedCountSeries () {
 }
 
 function renderCountsSeriesSelector () {
-  if (!$countsSeries.length) return
+  if (!countsSeries.length) return
   const html = LOG_LEVEL_SERIES.map(series => {
     const active = Boolean(countsSeriesSelection && countsSeriesSelection[series.key])
     return `
@@ -1200,7 +1202,7 @@ function renderCountsSeriesSelector () {
       </button>
     `
   }).join('')
-  $countsSeries.html(`<div class="logscan-series-filter">${html}</div>`)
+  countsSeries.innerHTML = `<div class="logscan-series-filter">${html}</div>`
 }
 
 function buildConfigColorMap (configs) {
@@ -1387,7 +1389,7 @@ function buildSectionDetails (sectionRuntimes, runSeconds) {
 
 function renderSummary (runs) {
   if (!runs.length) {
-    $summary.text('No runs stored yet.')
+    summaryEl.textContent = 'No runs stored yet.'
     return
   }
   let latest = runs[0]
@@ -1425,11 +1427,11 @@ function renderSummary (runs) {
       title: 'Average number of log lines containing "from Cache" per day across the filtered runs.'
     }
   ]
-  const selectedConfig = $configFilter.val()
+  const selectedConfig = configFilter.value
   if (selectedConfig) {
     lines.push(`Filtered config: ${selectedConfig}`)
   }
-  const selectedLibrary = $libraryFilter.length ? $libraryFilter.val() : ''
+  const selectedLibrary = libraryFilter.length ? libraryFilter.value : ''
   const latestSnapshot = getLatestLibrarySnapshot(runs)
   if (latestSnapshot && latestSnapshot.libraries && Object.keys(latestSnapshot.libraries).length) {
     const libraryEntries = Object.values(latestSnapshot.libraries)
@@ -1473,7 +1475,7 @@ function renderSummary (runs) {
       }
     }
   }
-  $summary.html(lines.map(line => {
+  summaryEl.innerHTML = lines.map(line => {
     if (typeof line === 'string') {
       return `<div>${escapeHtml(line)}</div>`
     }
@@ -1481,14 +1483,14 @@ function renderSummary (runs) {
     const title = line && typeof line.title === 'string' ? line.title : ''
     const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
     return `<div${titleAttr}>${escapeHtml(text)}</div>`
-  }).join(''))
+  }).join('')
 }
 
 function renderImagemaidSummary (runs) {
-  if (!$imagemaidSummary.length) return
+  if (!imagemaidSummary) return
   const imagemaidRuns = getImagemaidRuns(runs)
   if (!imagemaidRuns.length) {
-    $imagemaidSummary.text('No ImageMaid runs in the current filters.')
+    imagemaidSummary.textContent = 'No ImageMaid runs in the current filters.'
     return
   }
   const totals = imagemaidRuns.reduce((acc, run) => {
@@ -1514,7 +1516,7 @@ function renderImagemaidSummary (runs) {
     `Average recovered per run: ${formatBytes(avgRecovered)}`,
     `Modes tracked: ${modeEntries.length || 0}`
   ]
-  $imagemaidSummary.html(`
+  imagemaidSummary.innerHTML = `
     <div class="logscan-kpi-grid">
       ${cards.map(card => `
         <div class="logscan-kpi">
@@ -1524,20 +1526,20 @@ function renderImagemaidSummary (runs) {
       `).join('')}
     </div>
     <div class="small text-muted mt-2">${notes.map(note => `<div>${escapeHtml(note)}</div>`).join('')}</div>
-  `)
+  `
 }
 
-function renderImagemaidTrendChart ($el, runs, metricKey, options = {}) {
-  if (!$el.length) return
+function renderImagemaidTrendChart (el, runs, metricKey, options = {}) {
+  if (!el) return
   const imagemaidRuns = getImagemaidRuns(runs)
   if (!imagemaidRuns.length) {
-    $el.text('No ImageMaid runs in the current filters.')
+    el.textContent = 'No ImageMaid runs in the current filters.'
     return
   }
   const buckets = buildImagemaidDailyBuckets(imagemaidRuns)
   const days = Object.keys(buckets).sort().slice(-14)
   if (!days.length) {
-    $el.text('No ImageMaid trend data yet.')
+    el.textContent = 'No ImageMaid trend data yet.'
     return
   }
   const values = days.map(day => {
@@ -1545,7 +1547,7 @@ function renderImagemaidTrendChart ($el, runs, metricKey, options = {}) {
     return Number.isFinite(bucket[metricKey]) ? bucket[metricKey] : 0
   })
   if (!values.some(value => value > 0)) {
-    $el.text(options.emptyText || 'No ImageMaid activity recorded for this metric yet.')
+    el.textContent = options.emptyText || 'No ImageMaid activity recorded for this metric yet.'
     return
   }
   const maxValue = Math.max(...values, 1)
@@ -1588,7 +1590,7 @@ function renderImagemaidTrendChart ($el, runs, metricKey, options = {}) {
       <span class="logscan-legend-item"><span class="logscan-legend-line"></span>7-day avg</span>
     </div>
   `
-  $el.html(`
+  el.innerHTML = `
     <div class="logscan-library-meta">${escapeHtml(options.metaLabel || 'Last 14 days of ImageMaid activity')}</div>
     <div class="logscan-daily-chart">
       <svg class="logscan-daily-svg" viewBox="0 0 ${chartWidth} ${chartHeight}" preserveAspectRatio="none">
@@ -1600,14 +1602,14 @@ function renderImagemaidTrendChart ($el, runs, metricKey, options = {}) {
       </div>
     </div>
     ${legend}
-  `)
+  `
 }
 
 function renderImagemaidModeMix (runs) {
-  if (!$imagemaidModes.length) return
+  if (!imagemaidModes) return
   const imagemaidRuns = getImagemaidRuns(runs)
   if (!imagemaidRuns.length) {
-    $imagemaidModes.text('No ImageMaid runs in the current filters.')
+    imagemaidModes.textContent = 'No ImageMaid runs in the current filters.'
     return
   }
   const counts = {}
@@ -1617,7 +1619,7 @@ function renderImagemaidModeMix (runs) {
   })
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1])
   if (!entries.length) {
-    $imagemaidModes.text('No ImageMaid mode data yet.')
+    imagemaidModes.textContent = 'No ImageMaid mode data yet.'
     return
   }
   const maxCount = Math.max(...entries.map(([, count]) => count), 1)
@@ -1633,11 +1635,11 @@ function renderImagemaidModeMix (runs) {
       </div>
     `
   })
-  $imagemaidModes.html(rows.join(''))
+  imagemaidModes.innerHTML = rows.join('')
 }
 
 function renderArchiveStorageSummary (storage) {
-  if (!$tablePolicy.length) return
+  if (!tablePolicy.length) return
   const kometaKeepLimit = storage && Number.isFinite(storage.kometa_keep_limit)
     ? storage.kometa_keep_limit
     : (parseInt((window.QS_AppConfig && window.QS_AppConfig.QS_KOMETA_LOG_KEEP) || '0', 10) || 0)
@@ -1663,22 +1665,22 @@ function renderArchiveStorageSummary (storage) {
     const extraLabel = extraArchivedFiles === 1 ? 'file' : 'files'
     lines.push(`Additional archived logs on disk not linked to Analytics: ${formatBytes(extraArchivedBytes)} across ${extraArchivedFiles} ${extraLabel}`)
   }
-  $tablePolicy.html(lines.map(line => `<div>${escapeHtml(line)}</div>`).join(''))
+  tablePolicy.innerHTML = lines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
 }
 
 function renderDaily (runs) {
   const buckets = buildDailyBuckets(runs)
   const days = Object.keys(buckets).sort().slice(-14)
   if (!days.length) {
-    $daily.text('No daily totals yet.')
-    if ($dailyRuntime.length) {
-      $dailyRuntime.text('No runtime averages yet.')
+    daily.textContent = 'No daily totals yet.'
+    if (dailyRuntime.length) {
+      dailyRuntime.textContent = 'No runtime averages yet.'
     }
     return
   }
   const totals = days.map(day => buckets[day].total || 0)
   const maxTotal = Math.max(...totals, 1)
-  const selectedConfig = $configFilter.val()
+  const selectedConfig = configFilter.value
   const configTotals = {}
   days.forEach(day => {
     const configs = buckets[day].configs || {}
@@ -1752,12 +1754,12 @@ function renderDaily (runs) {
       </div>
       <div class="logscan-daily-legend">${legendItems.join('')}</div>
     `
-  $daily.html(html)
+  daily.innerHTML = html
   renderDailyRuntimeAverages(runs, days)
 }
 
 function renderDailyRuntimeAverages (runs, days) {
-  if (!$dailyRuntime.length) return
+  if (!dailyRuntime.length) return
   const buckets = {}
   runs.forEach(run => {
     const key = getRunDateKey(run)
@@ -1776,7 +1778,7 @@ function renderDailyRuntimeAverages (runs, days) {
     return { day, avg }
   })
   if (!rowsData.some(row => row.avg > 0)) {
-    $dailyRuntime.text('No runtime averages yet.')
+    dailyRuntime.textContent = 'No runtime averages yet.'
     return
   }
   const maxAvg = Math.max(...rowsData.map(row => row.avg), 1)
@@ -1794,11 +1796,11 @@ function renderDailyRuntimeAverages (runs, days) {
       </div>
     `
   })
-  $dailyRuntime.html(rows.join(''))
+  dailyRuntime.innerHTML = rows.join('')
 }
 
 function getTablePageSize () {
-  const parsed = parseInt($tablePageSize.val() || '10', 10)
+  const parsed = parseInt(tablePageSize.value || '10', 10)
   if ([10, 25, 100].includes(parsed)) return parsed
   return 10
 }
@@ -1838,36 +1840,36 @@ function pruneSelectedRunKeys () {
 }
 
 function updateSelectionSummary () {
-  if (!$tableSelectionSummary.length) return
+  if (!tableSelectionSummary.length) return
   const selectedCount = selectedRunKeys.size
   const visibleSelectable = getSelectableRuns(currentTableRuns).length
   const visibleCompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, false).length
   const visibleIncompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, true).length
   const selectedCompressibleCount = getSelectedCompressibleRuns().length
   if (!selectedCount) {
-    $tableSelectionSummary.text('No logs selected.')
+    tableSelectionSummary.textContent = 'No logs selected.'
   } else {
-    $tableSelectionSummary.text(`${selectedCount} selected. ${selectedCompressibleCount} compressible. ${visibleSelectable} deletable in current view.`)
+    tableSelectionSummary.textContent = `${selectedCount} selected. ${selectedCompressibleCount} compressible. ${visibleSelectable} deletable in current view.`
   }
-  if ($tableCompressSelected.length) {
-    $tableCompressSelected.prop('disabled', selectedCompressibleCount === 0)
+  if (tableCompressSelected.length) {
+    tableCompressSelected.disabled = selectedCompressibleCount === 0
   }
-  if ($tableDeleteSelected.length) {
-    $tableDeleteSelected.prop('disabled', selectedCount === 0)
+  if (tableDeleteSelected.length) {
+    tableDeleteSelected.disabled = selectedCount === 0
   }
-  if ($tableClearSelection.length) {
-    $tableClearSelection.prop('disabled', selectedCount === 0)
+  if (tableClearSelection.length) {
+    tableClearSelection.disabled = selectedCount === 0
   }
-  if ($tableSelectAll.length) {
-    $tableSelectAll.prop('disabled', visibleSelectable === 0)
+  if (tableSelectAll.length) {
+    tableSelectAll.disabled = visibleSelectable === 0
   }
-  if ($tableSelectComplete.length) {
-    $tableSelectComplete.prop('disabled', visibleCompleteSelectable === 0)
-    $tableSelectComplete.toggleClass('is-active', tableStatusFilter === 'complete')
+  if (tableSelectComplete.length) {
+    tableSelectComplete.disabled = visibleCompleteSelectable === 0
+    tableSelectComplete.classList.toggle('is-active', tableStatusFilter === 'complete')
   }
-  if ($tableSelectIncomplete.length) {
-    $tableSelectIncomplete.prop('disabled', visibleIncompleteSelectable === 0)
-    $tableSelectIncomplete.toggleClass('is-active', tableStatusFilter === 'incomplete')
+  if (tableSelectIncomplete.length) {
+    tableSelectIncomplete.disabled = visibleIncompleteSelectable === 0
+    tableSelectIncomplete.classList.toggle('is-active', tableStatusFilter === 'incomplete')
   }
 }
 
@@ -1887,29 +1889,29 @@ function updateTableSummary (total, pageSize, pageCount) {
   const totalIncomplete = Number.isFinite(allIncompleteRunsTotal) ? allIncompleteRunsTotal : allIncompleteRuns.length
   const loaded = allTableRuns.length
   const grandTotal = totalComplete + totalIncomplete
-  if ($tableSummary.length) {
+  if (tableSummary.length) {
     if (!total) {
-      $tableSummary.text('No runs match the current filters.')
+      tableSummary.textContent = 'No runs match the current filters.'
     } else {
-      $tableSummary.text(`Ingested: ${totalComplete}. Incomplete: ${totalIncomplete}. Showing: ${total}. Page size: ${pageSize}.`)
+      tableSummary.textContent = `Ingested: ${totalComplete}. Incomplete: ${totalIncomplete}. Showing: ${total}. Page size: ${pageSize}.`
     }
   }
-  if ($tableFilterCount.length) {
+  if (tableFilterCount.length) {
     let filterText = `Filtered: ${total} of ${loaded} loaded`
     if (grandTotal > loaded) {
       filterText += ` (${grandTotal} total)`
     }
-    $tableFilterCount.text(filterText)
+    tableFilterCount.textContent = filterText
   }
-  if (!$tablePageInfo.length) return
+  if (!tablePageInfo.length) return
   if (!total) {
-    $tablePageInfo.text('No rows')
+    tablePageInfo.textContent = 'No rows'
     updateSelectionSummary()
     return
   }
   const start = ((tablePage - 1) * pageSize) + 1
   const end = Math.min(total, tablePage * pageSize)
-  $tablePageInfo.text(`Showing ${start}-${end} of ${total} loaded entr${total === 1 ? 'y' : 'ies'} (page ${tablePage}/${pageCount})`)
+  tablePageInfo.textContent = `Showing ${start}-${end} of ${total} loaded entr${total === 1 ? 'y' : 'ies'} (page ${tablePage}/${pageCount})`
   updateSelectionSummary()
 }
 
@@ -1921,10 +1923,10 @@ function renderTable (runs) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   tablePage = Math.min(Math.max(tablePage, 1), pageCount)
   updateTableSummary(total, pageSize, pageCount)
-  $tablePrev.prop('disabled', tablePage <= 1 || total === 0)
-  $tableNext.prop('disabled', tablePage >= pageCount || total === 0)
+  tablePrev.disabled = tablePage <= 1 || total === 0
+  tableNext.disabled = tablePage >= pageCount || total === 0
   if (!total) {
-    $tableBody.html('<tr><td colspan="18" class="text-muted">No runs match the current filters.</td></tr>')
+    tableBody.innerHTML = '<tr><td colspan="18" class="text-muted">No runs match the current filters.</td></tr>'
     return
   }
   sectionDetailsByRunKey.clear()
@@ -2062,16 +2064,16 @@ function renderTable (runs) {
       </tr>
     `
   })
-  $tableBody.html(rows.join(''))
+  tableBody.innerHTML = rows.join('')
 }
 
 function renderRuntimeDistribution (runs) {
-  if (!$runtime.length) return
+  if (!runtimeEl) return
   const durations = runs
     .map(run => getEffectiveRunTimeSeconds(run))
     .filter(val => typeof val === 'number' && Number.isFinite(val) && val > 0)
   if (!durations.length) {
-    $runtime.text('No runtime data yet.')
+    runtimeEl.textContent = 'No runtime data yet.'
     return
   }
   const bins = [
@@ -2101,14 +2103,14 @@ function renderRuntimeDistribution (runs) {
       </div>
     `
   })
-  $runtime.html(rows.join(''))
+  runtimeEl.innerHTML = rows.join('')
 }
 
 function renderCountsMix (runs) {
-  if (!$counts.length) return
+  if (!countsEl) return
   const selectedSeries = getSelectedCountSeries()
   if (!selectedSeries.length) {
-    $counts.text('Select at least one series to display.')
+    countsEl.textContent = 'Select at least one series to display.'
     return
   }
   const buckets = {}
@@ -2135,7 +2137,7 @@ function renderCountsMix (runs) {
   })
   const days = Object.keys(buckets).sort().slice(-14)
   if (!days.length) {
-    $counts.text('No log-level averages yet.')
+    countsEl.textContent = 'No log-level averages yet.'
     return
   }
   const totals = days.map(day => {
@@ -2187,13 +2189,13 @@ function renderCountsMix (runs) {
       ${selectedSeries.map(series => `<span><span class="logscan-legend-swatch ${series.css}"></span>${escapeHtml(series.label)}</span>`).join('')}
     </div>
   `
-  $counts.html(`${rows.join('')}${legend}`)
+  countsEl.innerHTML = `${rows.join('')}${legend}`
 }
 
 function renderIssueTrends (runs) {
-  if (!$issues.length) return
+  if (!issuesEl) return
   if (!runs.length) {
-    $issues.text('No issue data yet.')
+    issuesEl.textContent = 'No issue data yet.'
     return
   }
   const selectedItems = ISSUE_PREFS.filter(item => {
@@ -2201,7 +2203,7 @@ function renderIssueTrends (runs) {
     return analyticsPrefs.issues[item.key] !== false
   })
   if (!selectedItems.length) {
-    $issues.text('No issue toggles selected.')
+    issuesEl.textContent = 'No issue toggles selected.'
     return
   }
   const sorted = runs.slice().sort((a, b) => {
@@ -2254,25 +2256,25 @@ function renderIssueTrends (runs) {
       )).join('')}
     </div>
   `
-  $issues.html(`${rows.join('')}${legend}`)
+  issuesEl.innerHTML = `${rows.join('')}${legend}`
 }
 
 function updateLibraryFilter (runs) {
-  if (!$libraryFilter.length) return false
+  if (!libraryFilter.length) return false
   const names = collectLibraryNames(runs)
-  const selected = $libraryFilter.val() || ''
+  const selected = libraryFilter.value || ''
   const options = ['<option value="">All libraries</option>']
   names.forEach(name => {
     options.push(`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
   })
-  $libraryFilter.html(options.join(''))
+  libraryFilter.setHTML(options.join(''))
   const nextValue = selected && names.includes(selected) ? selected : ''
-  $libraryFilter.val(nextValue)
+  libraryFilter.setValue(nextValue)
   return nextValue !== selected
 }
 
 function renderLibraryInventory (runs) {
-  if (!$libraries.length) return
+  if (!librariesEl) return
   const runsWithCounts = runs.filter(run => {
     const counts = run && run.library_counts && typeof run.library_counts === 'object'
       ? run.library_counts
@@ -2280,14 +2282,14 @@ function renderLibraryInventory (runs) {
     return counts && Object.keys(counts).length
   })
   if (!runsWithCounts.length) {
-    $libraries.text('No library totals yet.')
+    librariesEl.textContent = 'No library totals yet.'
     return
   }
-  const selectedLibrary = $libraryFilter.val() || ''
+  const selectedLibrary = libraryFilter.value || ''
   const snapshots = buildLibrarySnapshots(runsWithCounts)
   const days = Object.keys(snapshots).sort().slice(-14)
   if (!days.length) {
-    $libraries.text('No library totals yet.')
+    librariesEl.textContent = 'No library totals yet.'
     return
   }
   const rowsData = days.map(day => {
@@ -2321,7 +2323,7 @@ function renderLibraryInventory (runs) {
     }
   })
   if (selectedLibrary && rowsData.every(row => row.total === 0 && row.shows === 0)) {
-    $libraries.text('No totals recorded for the selected library yet.')
+    librariesEl.textContent = 'No totals recorded for the selected library yet.'
     return
   }
   const totals = rowsData.map(row => row.total || 0)
@@ -2386,35 +2388,35 @@ function renderLibraryInventory (runs) {
     </div>
     ${legend}
   `
-  $libraries.html(html)
+  librariesEl.innerHTML = html
 }
 
 function renderIngestHealth (state) {
-  if (!$ingest.length) return
+  if (!ingest.length) return
   const invalidArchivedCount = Number.isFinite(state && state.invalid_archived_count) ? state.invalid_archived_count : 0
   const invalidArchivedSample = Array.isArray(state && state.invalid_archived_sample) ? state.invalid_archived_sample : []
 
-  if ($clearInvalidArchived.length) {
+  if (clearInvalidArchived) {
     if (invalidArchivedCount > 0) {
-      $clearInvalidArchived
-        .removeClass('d-none')
-        .prop('disabled', false)
-        .text(invalidArchivedCount > 1 ? `Clear invalid archived logs (${invalidArchivedCount})` : 'Clear invalid archived log')
+      clearInvalidArchived.classList.remove('d-none')
+      clearInvalidArchived.disabled = false
+      clearInvalidArchived.textContent = invalidArchivedCount > 1
+        ? `Clear invalid archived logs (${invalidArchivedCount})`
+        : 'Clear invalid archived log'
       pendingInvalidLogCleanup = {
         count: invalidArchivedCount,
         sample: invalidArchivedSample
       }
     } else {
-      $clearInvalidArchived
-        .addClass('d-none')
-        .prop('disabled', true)
-        .text('Clear invalid archived logs')
+      clearInvalidArchived.classList.add('d-none')
+      clearInvalidArchived.disabled = true
+      clearInvalidArchived.textContent = 'Clear invalid archived logs'
       pendingInvalidLogCleanup = null
     }
   }
 
   if (!state) {
-    $ingest.text('No ingest history yet.')
+    ingest.textContent = 'No ingest history yet.'
     return
   }
 
@@ -2447,12 +2449,12 @@ function renderIngestHealth (state) {
     }
     if (!notes.length) notes.push('Ingest complete.')
     const notesHtml = notes.map(note => `<div>${escapeHtml(note)}</div>`).join('')
-    $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${notesHtml}</div>`)
+    ingest.innerHTML = `<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${notesHtml}</div>`
     return
   }
 
   if (typeof state.total !== 'number') {
-    $ingest.text('No ingest history yet.')
+    ingest.textContent = 'No ingest history yet.'
     return
   }
   const items = [
@@ -2497,7 +2499,7 @@ function renderIngestHealth (state) {
     lines.push(`Invalid archived samples: ${invalidArchivedSample.join(', ')}`)
   }
   const linesHtml = lines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
-  $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${linesHtml}</div>`)
+  ingest.innerHTML = `<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${linesHtml}</div>`
 }
 
 function getSortValue (run, key) {
@@ -2590,33 +2592,35 @@ function sortRuns (runs) {
 }
 
 function updateSortIndicators () {
-  $('#logscan-trends-table thead .logscan-sort-button').removeClass('is-asc is-desc')
+  document.querySelectorAll('#logscan-trends-table thead .logscan-sort-button').forEach((el) => {
+    el.classList.remove('is-asc', 'is-desc')
+  })
   const selector = `.logscan-sort-button[data-sort="${sortState.key}"]`
-  const $button = $(selector)
-  if ($button.length) {
-    $button.addClass(sortState.dir === 'asc' ? 'is-asc' : 'is-desc')
+  const button = document.querySelector(selector)
+  if (button) {
+    button.classList.add(sortState.dir === 'asc' ? 'is-asc' : 'is-desc')
   }
-  $tableSortKey.val(sortState.key)
-  $tableSortDir.val(sortState.dir === 'asc' ? 'asc' : 'desc')
+  tableSortKey.value = sortState.key
+  tableSortDir.value = sortState.dir === 'asc' ? 'asc' : 'desc'
 }
 
 function updateConfigFilter (runs) {
-  if (!$configFilter.length) return false
-  const selected = $configFilter.val() || ''
+  if (!configFilter.length) return false
+  const selected = configFilter.value || ''
   const configs = Array.from(new Set(runs.map(run => normalizeConfigName(run.config_name)))).sort()
   const options = ['<option value="">All configs</option>']
   configs.forEach(cfg => {
     options.push(`<option value="${escapeHtml(cfg)}">${escapeHtml(cfg)}</option>`)
   })
-  $configFilter.html(options.join(''))
+  configFilter.setHTML(options.join(''))
   const nextValue = selected && configs.includes(selected) ? selected : ''
-  $configFilter.val(nextValue)
+  configFilter.setValue(nextValue)
   return nextValue !== selected
 }
 
 function updateCommandFilter (runs) {
-  if (!$commandFilter.length) return false
-  const selected = $commandFilter.val() || ''
+  if (!commandFilter.length) return false
+  const selected = commandFilter.value || ''
   const counts = new Map()
   runs.forEach(run => {
     const command = getRunCommandValue(run)
@@ -2635,9 +2639,9 @@ function updateCommandFilter (runs) {
       `<option value="${escapeHtml(command)}" title="${escapeHtml(command)}">${escapeHtml(label)}</option>`
     )
   })
-  $commandFilter.html(options.join(''))
+  commandFilter.setHTML(options.join(''))
   const nextValue = selected && counts.has(selected) ? selected : ''
-  $commandFilter.val(nextValue)
+  commandFilter.setValue(nextValue)
   return nextValue !== selected
 }
 
@@ -2650,31 +2654,31 @@ function getAvailableDateBounds (runs) {
 }
 
 function updateDateRangeInputs (runs, state) {
-  if (!$dateStart.length || !$dateEnd.length) return false
+  if (!dateStart.length || !dateEnd.length) return false
   const { minDate, maxDate } = getAvailableDateBounds(runs)
   const isCustom = state.timeRange === 'custom'
   if (!minDate || !maxDate) {
-    const hadValue = $dateStart.val() || $dateEnd.val()
-    $dateStart.val('')
-    $dateEnd.val('')
-    $dateStart.prop('disabled', true)
-    $dateEnd.prop('disabled', true)
-    if ($dateHint.length) $dateHint.text('No dated runs available for the current scope.')
+    const hadValue = dateStart.value || dateEnd.value
+    dateStart.setValue('')
+    dateEnd.setValue('')
+    dateStart.setDisabled(true)
+    dateEnd.setDisabled(true)
+    if (dateHint.length) dateHint.setText('No dated runs available for the current scope.')
     return Boolean(hadValue)
   }
-  $dateStart.prop('disabled', !isCustom)
-  $dateEnd.prop('disabled', !isCustom)
-  $dateStart.attr('min', minDate)
-  $dateStart.attr('max', maxDate)
-  $dateEnd.attr('min', minDate)
-  $dateEnd.attr('max', maxDate)
-  if ($dateHint.length) {
-    $dateHint.text(`Available data: ${minDate} to ${maxDate}`)
+  dateStart.setDisabled(!isCustom)
+  dateEnd.setDisabled(!isCustom)
+  dateStart.setAttr('min', minDate)
+  dateStart.setAttr('max', maxDate)
+  dateEnd.setAttr('min', minDate)
+  dateEnd.setAttr('max', maxDate)
+  if (dateHint.length) {
+    dateHint.setText(`Available data: ${minDate} to ${maxDate}`)
   }
   if (!isCustom) {
-    const hadValue = $dateStart.val() || $dateEnd.val()
-    $dateStart.val('')
-    $dateEnd.val('')
+    const hadValue = dateStart.value || dateEnd.value
+    dateStart.setValue('')
+    dateEnd.setValue('')
     return Boolean(hadValue)
   }
   let start = state.start || ''
@@ -2683,21 +2687,21 @@ function updateDateRangeInputs (runs, state) {
   if (!end || end > maxDate || end < minDate) end = maxDate
   if (start > end) start = end
   const changed = start !== state.start || end !== state.end
-  $dateStart.val(start)
-  $dateEnd.val(end)
+  dateStart.setValue(start)
+  dateEnd.setValue(end)
   return changed
 }
 
 function clearDateFilters () {
-  if (!$dateStart.length || !$dateEnd.length) return
-  $dateStart.val('')
-  $dateEnd.val('')
+  if (!dateStart.length || !dateEnd.length) return
+  dateStart.setValue('')
+  dateEnd.setValue('')
 }
 
 function syncDateRangeVisibility () {
-  if (!$customDateRow.length) return
-  const isCustom = ($timeRange.val() || 'all') === 'custom'
-  $customDateRow.toggleClass('d-none', !isCustom)
+  if (!customDateRow.length) return
+  const isCustom = (timeRange.value || 'all') === 'custom'
+  customDateRow.toggleClass('d-none', !isCustom)
 }
 
 function getRelativeDateRangeBounds (runs, days) {
@@ -2712,7 +2716,7 @@ function getRelativeDateRangeBounds (runs, days) {
 }
 
 function updateRunCountDisplay (filtered) {
-  if (!$runCount.length) return
+  if (!runCount.length) return
   const loaded = allTableRuns.length
   const total = (Number.isFinite(allRunsTotal) ? allRunsTotal : allRuns.length) +
     (Number.isFinite(allIncompleteRunsTotal) ? allIncompleteRunsTotal : allIncompleteRuns.length)
@@ -2724,18 +2728,18 @@ function updateRunCountDisplay (filtered) {
   if (total > loaded) {
     text += ` (${total} total)`
   }
-  $runCount.text(text)
+  runCount.setText(text)
 }
 
 function getFilterState () {
   return {
-    config: $configFilter.val() || '',
-    tool: $toolFilter.val() || '',
-    timeRange: $timeRange.val() || 'all',
-    command: $commandFilter.val() || '',
-    library: $libraryFilter.val() || '',
-    start: $dateStart.val() || '',
-    end: $dateEnd.val() || ''
+    config: configFilter.value || '',
+    tool: toolFilter.value || '',
+    timeRange: timeRange.value || 'all',
+    command: commandFilter.value || '',
+    library: libraryFilter.value || '',
+    start: dateStart.value || '',
+    end: dateEnd.value || ''
   }
 }
 
@@ -2773,17 +2777,17 @@ function updateFilterOptions (state) {
 }
 
 function updateToolFilter (runs) {
-  if (!$toolFilter.length) return false
-  const selected = $toolFilter.val() || ''
+  if (!toolFilter.length) return false
+  const selected = toolFilter.value || ''
   const tools = Array.from(new Set(runs.map(run => getRunToolName(run)))).sort()
   const options = ['<option value="">All apps</option>']
   tools.forEach(tool => {
     const label = tool === 'imagemaid' ? 'ImageMaid' : 'Kometa'
     options.push(`<option value="${escapeHtml(tool)}">${escapeHtml(label)}</option>`)
   })
-  $toolFilter.html(options.join(''))
+  toolFilter.setHTML(options.join(''))
   const nextValue = selected && tools.includes(selected) ? selected : getDefaultToolFilterValue(tools)
-  $toolFilter.val(nextValue)
+  toolFilter.setValue(nextValue)
   return nextValue !== selected
 }
 
@@ -2802,13 +2806,13 @@ function applyFiltersAndRender () {
   renderSummary(filtered)
   renderDaily(filtered)
   renderImagemaidSummary(filtered)
-  renderImagemaidTrendChart($imagemaidRecovered, filtered, 'recoveredBytes', {
+  renderImagemaidTrendChart(imagemaidRecovered, filtered, 'recoveredBytes', {
     barColor: '#43aa8b',
     seriesLabel: 'Recovered space',
     formatValue: value => formatBytes(value),
     metaLabel: 'Daily total recovered space from ImageMaid runs'
   })
-  renderImagemaidTrendChart($imagemaidFiles, filtered, 'removedFiles', {
+  renderImagemaidTrendChart(imagemaidFiles, filtered, 'removedFiles', {
     barColor: '#f9c74f',
     seriesLabel: 'Files removed',
     formatValue: value => formatCompactNumber(value),
@@ -2826,25 +2830,25 @@ function applyFiltersAndRender () {
 }
 
 function updateStatus (message) {
-  if ($status.length) $status.text(message)
+  if (statusEl) statusEl.textContent = message
 }
 
 function setReingestButtonLabel (label) {
-  if (!$reingest.length) return
-  $reingest.text(label || defaultReingestButtonLabel)
+  if (!reingest.length) return
+  reingest.textContent = label || defaultReingestButtonLabel
 }
 
 function setProgressVisible (visible) {
-  if (!$progress.length) return
+  if (!progress.length) return
   if (visible) {
-    $progress.removeClass('d-none')
+    progress.classList.remove('d-none')
   } else {
-    $progress.addClass('d-none')
+    progress.classList.add('d-none')
   }
 }
 
 function updateProgressFromState (state) {
-  if (!state || !$progressBar.length) return
+  if (!state || !progressBar.length) return
   lastIngestState = state
   renderIngestHealth(lastIngestState)
   const total = Number.isFinite(state.total) ? state.total : 0
@@ -2854,7 +2858,7 @@ function updateProgressFromState (state) {
   const skippedInvalid = Number.isFinite(state.skipped_invalid) ? state.skipped_invalid : 0
   const errors = Number.isFinite(state.errors) ? state.errors : 0
   const pct = total ? Math.min(100, Math.round((scanned / total) * 100)) : 0
-  $progressBar.css('width', `${pct}%`)
+  progressBar.css('width', `${pct}%`)
   const pieces = [
     `Scanned: ${scanned}/${total}`,
     `Ingested: ${ingested}`,
@@ -2864,8 +2868,8 @@ function updateProgressFromState (state) {
   if (state.current_file) {
     pieces.unshift(`Processing: ${formatProcessingFileLabel(state.current_file)}`)
   }
-  if ($progressText.length) {
-    $progressText.text(pieces.join(' | '))
+  if (progressText.length) {
+    progressText.textContent = pieces.join(' | ')
   }
 }
 
@@ -2885,81 +2889,83 @@ function formatProcessingFileLabel (value) {
   return `${text.slice(0, 56)}...${text.slice(-suffixLength)}`
 }
 
-function setButtonSpinner ($button, text) {
-  if (!$button || !$button.length) return
-  $button.html(`<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${escapeHtml(text)}`)
+function setButtonSpinner (button, text) {
+  if (!button) return
+  button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${escapeHtml(text)}`
 }
 
-function setModalAlert ($el, message) {
-  if (!$el || !$el.length) return
+function setModalAlert (el, message) {
+  if (!el) return
   if (!message) {
-    $el.addClass('d-none').text('')
+    el.classList.add('d-none')
+    el.textContent = ''
     return
   }
-  $el.removeClass('d-none').text(message)
+  el.classList.remove('d-none')
+  el.textContent = message
 }
 
 function setDeleteModalBusy (busy) {
-  $confirmDeleteLog.prop('disabled', busy)
-  $cancelDeleteLog.prop('disabled', busy)
+  confirmDeleteLog.disabled = busy
+  cancelDeleteLog.disabled = busy
   if (deleteLogModalEl) {
-    $(deleteLogModalEl).find('.btn-close').prop('disabled', busy)
+    deleteLogModalEl.querySelectorAll('.btn-close').forEach((el) => { el.disabled = busy })
   }
 }
 
 function setInvalidLogModalBusy (busy) {
-  $confirmInvalidLog.prop('disabled', busy)
-  $cancelInvalidLog.prop('disabled', busy)
+  confirmInvalidLog.disabled = busy
+  cancelInvalidLog.disabled = busy
   if (invalidLogModalEl) {
-    $(invalidLogModalEl).find('.btn-close').prop('disabled', busy)
+    invalidLogModalEl.querySelectorAll('.btn-close').forEach((el) => { el.disabled = busy })
   }
 }
 
 function setCompressModalBusy (busy) {
-  $confirmCompressLog.prop('disabled', busy)
-  $cancelCompressLog.prop('disabled', busy)
+  confirmCompressLog.disabled = busy
+  cancelCompressLog.disabled = busy
   if (compressLogModalEl) {
-    $(compressLogModalEl).find('.btn-close').prop('disabled', busy)
+    compressLogModalEl.querySelectorAll('.btn-close').forEach((el) => { el.disabled = busy })
   }
 }
 
 function setControlsDisabled (disabled) {
-  $reset.prop('disabled', disabled)
-  $reingest.prop('disabled', disabled)
-  $clearInvalidArchived.prop('disabled', disabled || $clearInvalidArchived.hasClass('d-none'))
-  $limit.prop('disabled', disabled)
-  $tableSortKey.prop('disabled', disabled)
-  $tableSortDir.prop('disabled', disabled)
-  $tablePageSize.prop('disabled', disabled)
-  $tablePrev.prop('disabled', disabled || tablePage <= 1 || currentTableRuns.length === 0)
-  $tableNext.prop('disabled', disabled || tablePage >= Math.max(1, Math.ceil(currentTableRuns.length / getTablePageSize())) || currentTableRuns.length === 0)
-  $configFilter.prop('disabled', disabled)
-  $toolFilter.prop('disabled', disabled)
-  $commandFilter.prop('disabled', disabled)
-  $dateStart.prop('disabled', disabled)
-  $dateEnd.prop('disabled', disabled)
-  $confirmReset.prop('disabled', disabled)
-  $confirmReingest.prop('disabled', disabled)
-  $confirmInvalidLog.prop('disabled', disabled)
-  $confirmMissingDownload.prop('disabled', disabled)
-  $tableSelectAll.prop('disabled', disabled || getSelectableRuns(currentTableRuns).length === 0)
-  $tableSelectComplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, false).length === 0)
-  $tableSelectIncomplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, true).length === 0)
-  $tableClearSelection.prop('disabled', disabled || selectedRunKeys.size === 0)
-  $tableCompressSelected.prop('disabled', disabled || getSelectedCompressibleRuns().length === 0)
-  $tableDeleteSelected.prop('disabled', disabled || selectedRunKeys.size === 0)
+  reset.disabled = disabled
+  reingest.disabled = disabled
+  clearInvalidArchived.disabled = disabled || clearInvalidArchived.classList.contains('d-none')
+  limit.setDisabled(disabled)
+  tableSortKey.disabled = disabled
+  tableSortDir.disabled = disabled
+  tablePageSize.disabled = disabled
+  tablePrev.disabled = disabled || tablePage <= 1 || currentTableRuns.length === 0
+  tableNext.disabled = disabled || tablePage >= Math.max(1, Math.ceil(currentTableRuns.length / getTablePageSize())) || currentTableRuns.length === 0
+  configFilter.setDisabled(disabled)
+  toolFilter.setDisabled(disabled)
+  commandFilter.setDisabled(disabled)
+  dateStart.setDisabled(disabled)
+  dateEnd.setDisabled(disabled)
+  confirmReset.disabled = disabled
+  confirmReingest.disabled = disabled
+  confirmInvalidLog.disabled = disabled
+  confirmMissingDownload.disabled = disabled
+  tableSelectAll.disabled = disabled || getSelectableRuns(currentTableRuns).length === 0
+  tableSelectComplete.disabled = disabled || getSelectableRunsByCompletion(currentTableRuns, false).length === 0
+  tableSelectIncomplete.disabled = disabled || getSelectableRunsByCompletion(currentTableRuns, true).length === 0
+  tableClearSelection.disabled = disabled || selectedRunKeys.size === 0
+  tableCompressSelected.disabled = disabled || getSelectedCompressibleRuns().length === 0
+  tableDeleteSelected.disabled = disabled || selectedRunKeys.size === 0
 }
 
 function setMissingDownloadVisible (visible, count) {
   if (visible) {
     if (typeof count === 'number') {
-      $missingDownload.text(`Download missing people log (${count})`)
+      missingDownload.textContent = `Download missing people log (${count})`
     } else {
-      $missingDownload.text('Download missing people log')
+      missingDownload.textContent = 'Download missing people log'
     }
-    $missingDownload.removeClass('d-none')
+    missingDownload.classList.remove('d-none')
   } else {
-    $missingDownload.addClass('d-none')
+    missingDownload.classList.add('d-none')
   }
 }
 
@@ -3191,11 +3197,11 @@ function buildKometaDetailsBlock (run) {
 
 function showRunDetails (runKey) {
   if (!runKey) return
-  if ($runDetailsBody.length) {
-    $runDetailsBody.html('Loading recommendations...')
+  if (runDetailsBody.length) {
+    runDetailsBody.innerHTML = 'Loading recommendations...'
   }
-  if ($runDetailsTitle.length) {
-    $runDetailsTitle.text('Run Recommendations')
+  if (runDetailsTitle.length) {
+    runDetailsTitle.textContent = 'Run Recommendations'
   }
   if (runDetailsModalEl) {
     bootstrap.Modal.getOrCreateInstance(runDetailsModalEl).show()
@@ -3204,16 +3210,16 @@ function showRunDetails (runKey) {
     .then(res => res.json().then(data => ({ ok: res.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) {
-        if ($runDetailsBody.length) {
-          $runDetailsBody.text(data && data.error ? data.error : 'Unable to load recommendations.')
+        if (runDetailsBody.length) {
+          runDetailsBody.textContent = data && data.error ? data.error : 'Unable to load recommendations.'
         }
         return
       }
       const detailsBlock = `${buildKometaDetailsBlock(data && data.run)}${buildImagemaidDetailsBlock(data && data.run)}`
       const recs = Array.isArray(data.recommendations) ? data.recommendations : []
       if (!recs.length) {
-        if ($runDetailsBody.length) {
-          $runDetailsBody.html(detailsBlock || 'No recommendations recorded for this run.')
+        if (runDetailsBody.length) {
+          runDetailsBody.innerHTML = detailsBlock || 'No recommendations recorded for this run.'
         }
         return
       }
@@ -3227,13 +3233,13 @@ function showRunDetails (runKey) {
           </div>
         `
       })
-      if ($runDetailsBody.length) {
-        $runDetailsBody.html(`${detailsBlock}${blocks.join('')}`)
+      if (runDetailsBody.length) {
+        runDetailsBody.innerHTML = `${detailsBlock}${blocks.join('')}`
       }
     })
     .catch(() => {
-      if ($runDetailsBody.length) {
-        $runDetailsBody.text('Unable to load recommendations.')
+      if (runDetailsBody.length) {
+        runDetailsBody.textContent = 'Unable to load recommendations.'
       }
     })
 }
@@ -3269,10 +3275,10 @@ function maybeStartAutoReingest (ingestHealth) {
 function showSectionDetails (runKey) {
   const payload = sectionDetailsByRunKey.get(runKey)
   if (!payload) return
-  if ($runDetailsTitle.length) {
-    $runDetailsTitle.text('Section Runtimes')
+  if (runDetailsTitle.length) {
+    runDetailsTitle.textContent = 'Section Runtimes'
   }
-  if ($runDetailsBody.length) {
+  if (runDetailsBody.length) {
     const summary = payload.summary || 'n/a'
     const details = Array.isArray(payload.details) ? payload.details : []
     let bodyHtml = `
@@ -3291,7 +3297,7 @@ function showSectionDetails (runKey) {
         </div>
       `
     }
-    $runDetailsBody.html(bodyHtml)
+    runDetailsBody.innerHTML = bodyHtml
   }
   if (runDetailsModalEl) {
     bootstrap.Modal.getOrCreateInstance(runDetailsModalEl).show()
@@ -3302,10 +3308,10 @@ function showQuietPeriodDetails (runKey) {
   const run = allTableRuns.find(entry => entry && entry.run_key === runKey)
   const summary = getQuietPeriodSummary(run)
   if (!run || summary.longestGapSeconds <= 0) return
-  if ($runDetailsTitle.length) {
-    $runDetailsTitle.text('Quiet Period Details')
+  if (runDetailsTitle.length) {
+    runDetailsTitle.textContent = 'Quiet Period Details'
   }
-  if ($runDetailsBody.length) {
+  if (runDetailsBody.length) {
     const renderGapBlock = (title, gapSeconds, startedAtRaw, endedAtRaw, startLine, endLine, overlap, lastLine, firstLine) => {
       if (!(gapSeconds > 0)) {
         return `
@@ -3365,7 +3371,7 @@ function showQuietPeriodDetails (runKey) {
           `
       }).join('')
       : '<tr><td colspan="4" class="text-muted">No notable gaps recorded.</td></tr>'
-    $runDetailsBody.html(`
+    runDetailsBody.innerHTML = `
       <div class="mb-3">
         <div class="fw-semibold mb-2">Summary</div>
         <div class="small text-muted">Longest unexplained quiet period: ${escapeHtml(formatSeconds(summary.longestUnexplainedGapSeconds) || 'n/a')}</div>
@@ -3411,7 +3417,7 @@ function showQuietPeriodDetails (runKey) {
           </table>
         </div>
       </div>
-    `)
+    `
   }
   if (runDetailsModalEl) {
     bootstrap.Modal.getOrCreateInstance(runDetailsModalEl).show()
@@ -3420,7 +3426,7 @@ function showQuietPeriodDetails (runKey) {
 
 function fetchRuns (options = {}) {
   const suppressStatus = options && options.suppressStatus
-  const rawLimit = String($limit.val() || '500').toLowerCase()
+  const rawLimit = String(limit.value || '500').toLowerCase()
   const safeLimit = rawLimit === 'all' ? 'all' : (Number.isFinite(parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 500)
   if (!suppressStatus) updateStatus('Loading trends...')
   fetch(`/logscan/trends?limit=${safeLimit}`)
@@ -3452,21 +3458,21 @@ function fetchRuns (options = {}) {
     .catch(err => {
       console.error(err)
       if (!suppressStatus) updateStatus('Failed to load trends.')
-      $summary.text('Unable to load summary.')
-      $daily.text('Unable to load daily totals.')
-      if ($dailyRuntime.length) {
-        $dailyRuntime.text('Unable to load runtime averages.')
+      summaryEl.textContent = 'Unable to load summary.'
+      daily.textContent = 'Unable to load daily totals.'
+      if (dailyRuntime.length) {
+        dailyRuntime.textContent = 'Unable to load runtime averages.'
       }
-      $runtime.text('Unable to load runtime distribution.')
-      $counts.text('Unable to load log-level averages.')
-      $issues.text('Unable to load issue trends.')
-      $libraries.text('Unable to load library totals.')
-      if ($tableSummary.length) $tableSummary.text('Unable to load runs.')
-      if ($tablePolicy.length) $tablePolicy.text('Unable to load archived log policy.')
-      if ($tablePageInfo.length) $tablePageInfo.text('No rows')
-      $tablePrev.prop('disabled', true)
-      $tableNext.prop('disabled', true)
-      $tableBody.html('<tr><td colspan="18" class="text-muted">Unable to load runs.</td></tr>')
+      runtimeEl.textContent = 'Unable to load runtime distribution.'
+      countsEl.textContent = 'Unable to load log-level averages.'
+      issuesEl.textContent = 'Unable to load issue trends.'
+      librariesEl.textContent = 'Unable to load library totals.'
+      if (tableSummary) tableSummary.textContent = 'Unable to load runs.'
+      if (tablePolicy) tablePolicy.textContent = 'Unable to load archived log policy.'
+      if (tablePageInfo) tablePageInfo.textContent = 'No rows'
+      tablePrev.disabled = true
+      tableNext.disabled = true
+      tableBody.innerHTML = '<tr><td colspan="18" class="text-muted">Unable to load runs.</td></tr>'
       updateSelectionSummary()
     })
 }
@@ -3493,11 +3499,11 @@ function openCompressLogModal (runKeys, runLabel) {
     runLabel,
     bulk: normalizedRunKeys.length > 1
   }
-  if ($compressLogBody.length) {
+  if (compressLogBody.length) {
     if (normalizedRunKeys.length === 1) {
-      $compressLogBody.html(`Compress archived log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> as <code>.log.gz</code>?`)
+      compressLogBody.innerHTML = `Compress archived log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> as <code>.log.gz</code>?`
     } else {
-      $compressLogBody.html(`Compress <strong>${normalizedRunKeys.length} selected logs</strong> as <code>.log.gz</code>?`)
+      compressLogBody.innerHTML = `Compress <strong>${normalizedRunKeys.length} selected logs</strong> as <code>.log.gz</code>?`
     }
   }
   if (compressLogModalEl) {
@@ -3522,17 +3528,17 @@ function openDeleteLogModal (runKeys, runLabel) {
     runLabel,
     bulk: normalizedRunKeys.length > 1
   }
-  if ($deleteLogBody.length) {
+  if (deleteLogBody.length) {
     if (normalizedRunKeys.length === 1) {
-      $deleteLogBody.html(`Delete log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> from disk and remove it from Analytics?`)
+      deleteLogBody.innerHTML = `Delete log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> from disk and remove it from Analytics?`
     } else {
-      $deleteLogBody.html(`Delete <strong>${normalizedRunKeys.length} selected logs</strong> from disk and remove their runs from Analytics?`)
+      deleteLogBody.innerHTML = `Delete <strong>${normalizedRunKeys.length} selected logs</strong> from disk and remove their runs from Analytics?`
     }
   }
-  setModalAlert($deleteLogStatus, '')
-  setModalAlert($deleteLogSuccess, '')
-  setModalAlert($deleteLogError, '')
-  $confirmDeleteLog.text('Delete')
+  setModalAlert(deleteLogStatus, '')
+  setModalAlert(deleteLogSuccess, '')
+  setModalAlert(deleteLogError, '')
+  confirmDeleteLog.textContent = 'Delete'
   setDeleteModalBusy(false)
   if (deleteLogModalEl) {
     bootstrap.Modal.getOrCreateInstance(deleteLogModalEl).show()
@@ -3552,20 +3558,18 @@ function openInvalidLogModal () {
   }
   const invalidCount = pendingInvalidLogCleanup.count
   const sample = Array.isArray(pendingInvalidLogCleanup.sample) ? pendingInvalidLogCleanup.sample : []
-  if ($invalidLogBody.length) {
+  if (invalidLogBody) {
     const sampleHtml = sample.length
       ? `<div class="small text-muted mt-2">Samples: ${escapeHtml(sample.join(', '))}</div>`
       : ''
-    $invalidLogBody.html(
-      invalidCount === 1
-        ? `Delete <strong>1 invalid archived log</strong> from disk?${sampleHtml}`
-        : `Delete <strong>${invalidCount} invalid archived logs</strong> from disk?${sampleHtml}`
-    )
+    invalidLogBody.innerHTML = invalidCount === 1
+      ? `Delete <strong>1 invalid archived log</strong> from disk?${sampleHtml}`
+      : `Delete <strong>${invalidCount} invalid archived logs</strong> from disk?${sampleHtml}`
   }
-  setModalAlert($invalidLogStatus, '')
-  setModalAlert($invalidLogSuccess, '')
-  setModalAlert($invalidLogError, '')
-  $confirmInvalidLog.text('Delete')
+  setModalAlert(invalidLogStatus, '')
+  setModalAlert(invalidLogSuccess, '')
+  setModalAlert(invalidLogError, '')
+  confirmInvalidLog.textContent = 'Delete'
   setInvalidLogModalBusy(false)
   if (invalidLogModalEl) {
     bootstrap.Modal.getOrCreateInstance(invalidLogModalEl).show()
@@ -3586,11 +3590,11 @@ function handleDeleteLog () {
   }
   let deleteSucceeded = false
   const deleteCount = pendingDeleteRun.runKeys.length
-  setModalAlert($deleteLogSuccess, '')
-  setModalAlert($deleteLogError, '')
-  setModalAlert($deleteLogStatus, deleteCount > 1 ? `Deleting ${deleteCount} logs...` : 'Deleting log...')
+  setModalAlert(deleteLogSuccess, '')
+  setModalAlert(deleteLogError, '')
+  setModalAlert(deleteLogStatus, deleteCount > 1 ? `Deleting ${deleteCount} logs...` : 'Deleting log...')
   setDeleteModalBusy(true)
-  setButtonSpinner($confirmDeleteLog, 'Deleting...')
+  setButtonSpinner(confirmDeleteLog, 'Deleting...')
   fetch('/logscan/trends/log/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3610,8 +3614,8 @@ function handleDeleteLog () {
       const deletedCount = Number.isFinite(data && data.deleted) ? data.deleted : deletedKeys.length
       deleteSucceeded = true
       pendingDeleteRun = null
-      setModalAlert($deleteLogStatus, '')
-      setModalAlert($deleteLogSuccess, deletedCount > 1 ? `${deletedCount} logs deleted. Updating Analytics...` : 'Log deleted. Updating Analytics...')
+      setModalAlert(deleteLogStatus, '')
+      setModalAlert(deleteLogSuccess, deletedCount > 1 ? `${deletedCount} logs deleted. Updating Analytics...` : 'Log deleted. Updating Analytics...')
       if (Array.isArray(data && data.failures) && data.failures.length) {
         updateStatus(`${deletedCount} logs deleted. ${data.failures.length} failed.`)
       } else {
@@ -3622,13 +3626,13 @@ function handleDeleteLog () {
     })
     .catch(err => {
       console.error(err)
-      setModalAlert($deleteLogStatus, '')
-      setModalAlert($deleteLogError, err && err.message ? err.message : 'Failed to delete log.')
+      setModalAlert(deleteLogStatus, '')
+      setModalAlert(deleteLogError, err && err.message ? err.message : 'Failed to delete log.')
       updateStatus(err && err.message ? err.message : 'Failed to delete log.', true)
     })
     .finally(() => {
       if (!deleteSucceeded) {
-        $confirmDeleteLog.text('Delete')
+        confirmDeleteLog.textContent = 'Delete'
         setDeleteModalBusy(false)
       }
     })
@@ -3641,11 +3645,11 @@ function handleInvalidLogDelete () {
   }
   let deleteSucceeded = false
   const invalidCount = pendingInvalidLogCleanup.count
-  setModalAlert($invalidLogSuccess, '')
-  setModalAlert($invalidLogError, '')
-  setModalAlert($invalidLogStatus, invalidCount > 1 ? `Deleting ${invalidCount} invalid archived logs...` : 'Deleting invalid archived log...')
+  setModalAlert(invalidLogSuccess, '')
+  setModalAlert(invalidLogError, '')
+  setModalAlert(invalidLogStatus, invalidCount > 1 ? `Deleting ${invalidCount} invalid archived logs...` : 'Deleting invalid archived log...')
   setInvalidLogModalBusy(true)
-  setButtonSpinner($confirmInvalidLog, 'Deleting...')
+  setButtonSpinner(confirmInvalidLog, 'Deleting...')
   fetch('/logscan/trends/log/invalid/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }
@@ -3658,8 +3662,8 @@ function handleInvalidLogDelete () {
       const deletedCount = Number.isFinite(data && data.deleted) ? data.deleted : invalidCount
       deleteSucceeded = true
       pendingInvalidLogCleanup = null
-      setModalAlert($invalidLogStatus, '')
-      setModalAlert($invalidLogSuccess, deletedCount > 1 ? `${deletedCount} invalid archived logs deleted. Updating Analytics...` : 'Invalid archived log deleted. Updating Analytics...')
+      setModalAlert(invalidLogStatus, '')
+      setModalAlert(invalidLogSuccess, deletedCount > 1 ? `${deletedCount} invalid archived logs deleted. Updating Analytics...` : 'Invalid archived log deleted. Updating Analytics...')
       if (Array.isArray(data && data.failures) && data.failures.length) {
         updateStatus(`${deletedCount} invalid archived logs deleted. ${data.failures.length} failed.`)
       } else {
@@ -3670,13 +3674,13 @@ function handleInvalidLogDelete () {
     })
     .catch(err => {
       console.error(err)
-      setModalAlert($invalidLogStatus, '')
-      setModalAlert($invalidLogError, err && err.message ? err.message : 'Failed to delete invalid archived logs.')
+      setModalAlert(invalidLogStatus, '')
+      setModalAlert(invalidLogError, err && err.message ? err.message : 'Failed to delete invalid archived logs.')
       updateStatus(err && err.message ? err.message : 'Failed to delete invalid archived logs.', true)
     })
     .finally(() => {
       if (!deleteSucceeded) {
-        $confirmInvalidLog.text('Delete')
+        confirmInvalidLog.textContent = 'Delete'
         setInvalidLogModalBusy(false)
       }
     })
@@ -3689,11 +3693,11 @@ function handleCompressLog () {
   }
   let compressSucceeded = false
   const compressCount = pendingCompressRun.runKeys.length
-  setModalAlert($compressLogSuccess, '')
-  setModalAlert($compressLogError, '')
-  setModalAlert($compressLogStatus, compressCount > 1 ? `Compressing ${compressCount} logs...` : 'Compressing log...')
+  setModalAlert(compressLogSuccess, '')
+  setModalAlert(compressLogError, '')
+  setModalAlert(compressLogStatus, compressCount > 1 ? `Compressing ${compressCount} logs...` : 'Compressing log...')
   setCompressModalBusy(true)
-  setButtonSpinner($confirmCompressLog, 'Compressing...')
+  setButtonSpinner(confirmCompressLog, 'Compressing...')
   fetch('/logscan/trends/log/compress', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3711,8 +3715,8 @@ function handleCompressLog () {
       const compressedCount = Number.isFinite(data && data.compressed) ? data.compressed : pendingCompressRun.runKeys.length
       compressSucceeded = true
       pendingCompressRun = null
-      setModalAlert($compressLogStatus, '')
-      setModalAlert($compressLogSuccess, compressedCount > 1 ? `${compressedCount} logs compressed. Updating Analytics...` : 'Log compressed. Updating Analytics...')
+      setModalAlert(compressLogStatus, '')
+      setModalAlert(compressLogSuccess, compressedCount > 1 ? `${compressedCount} logs compressed. Updating Analytics...` : 'Log compressed. Updating Analytics...')
       if (Array.isArray(data && data.failures) && data.failures.length) {
         updateStatus(`${compressedCount} logs compressed. ${data.failures.length} failed.`)
       } else {
@@ -3723,45 +3727,45 @@ function handleCompressLog () {
     })
     .catch(err => {
       console.error(err)
-      setModalAlert($compressLogStatus, '')
-      setModalAlert($compressLogError, err && err.message ? err.message : 'Failed to compress log.')
+      setModalAlert(compressLogStatus, '')
+      setModalAlert(compressLogError, err && err.message ? err.message : 'Failed to compress log.')
       updateStatus(err && err.message ? err.message : 'Failed to compress log.', true)
     })
     .finally(() => {
       if (!compressSucceeded) {
-        $confirmCompressLog.text('Compress')
+        confirmCompressLog.textContent = 'Compress'
         setCompressModalBusy(false)
       }
     })
 }
 
-$limit.on('change', function () {
-  syncMirroredControlValue($limit, this)
+limit.on('change', function () {
+  syncMirroredControlValue(limit, this)
   tablePage = 1
   fetchRuns()
 })
-$tablePageSize.on('change', function () {
+tablePageSize.addEventListener('change', function () {
   tablePage = 1
   renderTable(currentTableRuns)
 })
-$tableSortKey.on('change', function () {
-  const key = String($tableSortKey.val() || 'finished_at')
+tableSortKey.addEventListener('change', function () {
+  const key = String(tableSortKey.value || 'finished_at')
   if (!key) return
   sortState.key = key
   tablePage = 1
   applyFiltersAndRender()
 })
-$tableSortDir.on('change', function () {
-  sortState.dir = $tableSortDir.val() === 'asc' ? 'asc' : 'desc'
+tableSortDir.addEventListener('change', function () {
+  sortState.dir = tableSortDir.value === 'asc' ? 'asc' : 'desc'
   tablePage = 1
   applyFiltersAndRender()
 })
-$tablePrev.on('click', function () {
+tablePrev.addEventListener('click', function () {
   if (tablePage <= 1) return
   tablePage -= 1
   renderTable(currentTableRuns)
 })
-$tableNext.on('click', function () {
+tableNext.addEventListener('click', function () {
   const pageCount = Math.max(1, Math.ceil(currentTableRuns.length / getTablePageSize()))
   if (tablePage >= pageCount) return
   tablePage += 1
@@ -3769,50 +3773,50 @@ $tableNext.on('click', function () {
 })
 if (tableCollapseEl) {
   tableCollapseEl.addEventListener('shown.bs.collapse', function () {
-    $tableToggle.text('Hide table')
+    tableToggle.textContent = 'Hide table'
   })
   tableCollapseEl.addEventListener('hidden.bs.collapse', function () {
-    $tableToggle.text('Show table')
+    tableToggle.textContent = 'Show table'
   })
 }
-$configFilter.on('change', function () {
-  syncMirroredControlValue($configFilter, this)
+configFilter.on('change', function () {
+  syncMirroredControlValue(configFilter, this)
   tablePage = 1
   loadPreferences().then(() => applyFiltersAndRender())
 })
-$toolFilter.on('change', function () {
-  syncMirroredControlValue($toolFilter, this)
+toolFilter.on('change', function () {
+  syncMirroredControlValue(toolFilter, this)
   tablePage = 1
   clearDateFilters()
   applyFiltersAndRender()
 })
-$timeRange.on('change', function () {
-  syncMirroredControlValue($timeRange, this)
+timeRange.on('change', function () {
+  syncMirroredControlValue(timeRange, this)
   tablePage = 1
   clearDateFilters()
   applyFiltersAndRender()
 })
-$commandFilter.on('change', function () {
-  syncMirroredControlValue($commandFilter, this)
+commandFilter.on('change', function () {
+  syncMirroredControlValue(commandFilter, this)
   tablePage = 1
   applyFiltersAndRender()
 })
-$dateStart.on('change', function () {
-  syncMirroredControlValue($dateStart, this)
+dateStart.on('change', function () {
+  syncMirroredControlValue(dateStart, this)
   tablePage = 1
   applyFiltersAndRender()
 })
-$dateEnd.on('change', function () {
-  syncMirroredControlValue($dateEnd, this)
+dateEnd.on('change', function () {
+  syncMirroredControlValue(dateEnd, this)
   tablePage = 1
   applyFiltersAndRender()
 })
-$libraryFilter.on('change', function () {
-  syncMirroredControlValue($libraryFilter, this)
+libraryFilter.on('change', function () {
+  syncMirroredControlValue(libraryFilter, this)
   renderLibraryInventory(currentFilteredRuns)
 })
-$countsSeries.on('click', '.logscan-series-toggle', function () {
-  const key = $(this).data('seriesKey') || $(this).attr('data-series-key')
+delegate(countsSeries, 'click', '.logscan-series-toggle', function () {
+  const key = this.dataset.seriesKey || this.getAttribute('data-series-key')
   if (!key || !Object.prototype.hasOwnProperty.call(countsSeriesSelection, key)) return
   const currentlyEnabled = Boolean(countsSeriesSelection[key])
   if (currentlyEnabled && getSelectedCountSeries().length <= 1) {
@@ -3823,15 +3827,15 @@ $countsSeries.on('click', '.logscan-series-toggle', function () {
   renderCountsSeriesSelector()
   renderCountsMix(currentFilteredRuns)
 })
-$resetFilters.on('click', function () {
-  $limit.val('500')
+resetFilters.on('click', function () {
+  limit.setValue('500')
   tablePage = 1
   tableStatusFilter = 'all'
-  $configFilter.val('')
-  $toolFilter.val('')
-  $timeRange.val('all')
-  $commandFilter.val('')
-  $libraryFilter.val('')
+  configFilter.setValue('')
+  toolFilter.setValue('')
+  timeRange.setValue('all')
+  commandFilter.setValue('')
+  libraryFilter.setValue('')
   clearDateFilters()
   fetchRuns({ suppressStatus: true })
 })
@@ -3840,52 +3844,52 @@ if (preferencesModalEl) {
     syncPreferencesModal()
   })
 }
-$preferencesSave.on('click', function () {
+preferencesSave.addEventListener('click', function () {
   const prefs = collectPreferencesFromModal()
   savePreferences(prefs)
     .then(() => {
-      if ($preferencesStatus.length) {
-        $preferencesStatus.text('Preferences saved.')
+      if (preferencesStatus) {
+        preferencesStatus.textContent = 'Preferences saved.'
       }
       applyFiltersAndRender()
     })
     .catch(() => {
-      if ($preferencesStatus.length) {
-        $preferencesStatus.text('Unable to save preferences.')
+      if (preferencesStatus) {
+        preferencesStatus.textContent = 'Unable to save preferences.'
       }
     })
 })
-$preferencesRecommended.on('click', function () {
+preferencesRecommended.addEventListener('click', function () {
   const prefs = mergePreferences(ANALYTICS_RECOMMENDED_PREFS)
   analyticsPrefs = prefs
   applyPanelVisibility()
   syncPreferencesModal()
   savePreferences(prefs)
     .then(() => {
-      if ($preferencesStatus.length) {
-        $preferencesStatus.text('Recommended preset saved.')
+      if (preferencesStatus) {
+        preferencesStatus.textContent = 'Recommended preset saved.'
       }
       applyFiltersAndRender()
     })
     .catch(() => {
-      if ($preferencesStatus.length) {
-        $preferencesStatus.text('Unable to save recommended preset.')
+      if (preferencesStatus) {
+        preferencesStatus.textContent = 'Unable to save recommended preset.'
       }
     })
 })
-$confirmReset.on('click', handleReset)
-$confirmReingest.on('click', handleReingest)
-$clearInvalidArchived.on('click', function () {
-  if ($clearInvalidArchived.hasClass('d-none')) return
+confirmReset.addEventListener('click', handleReset)
+confirmReingest.addEventListener('click', handleReingest)
+clearInvalidArchived.addEventListener('click', function () {
+  if (clearInvalidArchived.classList.contains('d-none')) return
   openInvalidLogModal()
 })
-$confirmInvalidLog.on('click', handleInvalidLogDelete)
-$confirmDeleteLog.on('click', handleDeleteLog)
-$confirmCompressLog.on('click', handleCompressLog)
-$missingDownload.on('click', function (event) {
+confirmInvalidLog.addEventListener('click', handleInvalidLogDelete)
+confirmDeleteLog.addEventListener('click', handleDeleteLog)
+confirmCompressLog.addEventListener('click', handleCompressLog)
+missingDownload.addEventListener('click', function (event) {
   event.preventDefault()
-  if (!$missingDownload.length || $missingDownload.hasClass('d-none')) return
-  missingDownloadUrl = $missingDownload.attr('href') || ''
+  if (!missingDownload || missingDownload.classList.contains('d-none')) return
+  missingDownloadUrl = missingDownload.getAttribute('href') || ''
   if (!missingDownloadModalEl) {
     if (missingDownloadUrl) window.location.href = missingDownloadUrl
     return
@@ -3893,7 +3897,7 @@ $missingDownload.on('click', function (event) {
   const modal = bootstrap.Modal.getOrCreateInstance(missingDownloadModalEl)
   modal.show()
 })
-$confirmMissingDownload.on('click', function () {
+confirmMissingDownload.addEventListener('click', function () {
   if (!missingDownloadUrl) {
     hideModal(missingDownloadModalEl)
     return
@@ -3901,12 +3905,26 @@ $confirmMissingDownload.on('click', function () {
   hideModal(missingDownloadModalEl)
   window.location.href = missingDownloadUrl
 })
-$tableBody.on('click', '.logscan-run-details', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+// Event delegation helper: attach a listener to `parent` that fires
+// only when the event target (or an ancestor) matches `selector`.
+// The `handler` receives `this` bound to the matched element (native
+// event-handler context), plus the event as its first argument.
+// No-op if parent is null (element not in DOM).
+function delegate (parent, event, selector, handler) {
+  if (!parent) return
+  parent.addEventListener(event, function (e) {
+    const target = e.target.closest(selector)
+    if (!target || !parent.contains(target)) return
+    handler.call(target, e)
+  })
+}
+
+delegate(tableBody, 'click', '.logscan-run-details', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
   showRunDetails(runKey)
 })
-$tableBody.on('click', '.logscan-progress-toggle', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+delegate(tableBody, 'click', '.logscan-progress-toggle', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
   if (!runKey) return
   if (expandedProgressRunKeys.has(runKey)) {
     expandedProgressRunKeys.delete(runKey)
@@ -3915,66 +3933,66 @@ $tableBody.on('click', '.logscan-progress-toggle', function () {
   }
   renderTable(currentTableRuns)
 })
-$tableBody.on('change', '.logscan-select-toggle-input', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+delegate(tableBody, 'change', '.logscan-select-toggle-input', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
   if (!runKey) return
-  if ($(this).is(':checked')) {
+  if (this.checked) {
     selectedRunKeys.add(runKey)
   } else {
     selectedRunKeys.delete(runKey)
   }
   renderTable(currentTableRuns)
 })
-$tableBody.on('click', '.logscan-delete-log', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
-  const runLabel = $(this).data('runLabel') || $(this).attr('data-run-label') || runKey
+delegate(tableBody, 'click', '.logscan-delete-log', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
+  const runLabel = this.dataset.runLabel || this.getAttribute('data-run-label') || runKey
   if (!runKey) return
   openDeleteLogModal(runKey, runLabel)
 })
-$tableBody.on('click', '.logscan-compress-log', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
-  const runLabel = $(this).data('runLabel') || $(this).attr('data-run-label') || runKey
+delegate(tableBody, 'click', '.logscan-compress-log', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
+  const runLabel = this.dataset.runLabel || this.getAttribute('data-run-label') || runKey
   if (!runKey) return
   openCompressLogModal(runKey, runLabel)
 })
-$tableSelectAll.on('click', function () {
+tableSelectAll.addEventListener('click', function () {
   getSelectableRuns(currentTableRuns).forEach(run => selectedRunKeys.add(run.run_key))
   renderTable(currentTableRuns)
 })
-$tableSelectComplete.on('click', function () {
+tableSelectComplete.addEventListener('click', function () {
   tableStatusFilter = tableStatusFilter === 'complete' ? 'all' : 'complete'
   tablePage = 1
   applyFiltersAndRender()
 })
-$tableSelectIncomplete.on('click', function () {
+tableSelectIncomplete.addEventListener('click', function () {
   tableStatusFilter = tableStatusFilter === 'incomplete' ? 'all' : 'incomplete'
   tablePage = 1
   applyFiltersAndRender()
 })
-$tableClearSelection.on('click', function () {
+tableClearSelection.addEventListener('click', function () {
   selectedRunKeys.clear()
   renderTable(currentTableRuns)
 })
-$tableDeleteSelected.on('click', function () {
+tableDeleteSelected.addEventListener('click', function () {
   const selectedRuns = getSelectedRuns()
   if (!selectedRuns.length) return
   openDeleteLogModal(selectedRuns.map(run => run.run_key), `${selectedRuns.length} selected logs`)
 })
-$tableCompressSelected.on('click', function () {
+tableCompressSelected.addEventListener('click', function () {
   const selectedRuns = getSelectedCompressibleRuns()
   if (!selectedRuns.length) return
   openCompressLogModal(selectedRuns.map(run => run.run_key), `${selectedRuns.length} selected logs`)
 })
-$tableBody.on('click', '[data-section-details="1"]', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+delegate(tableBody, 'click', '[data-section-details="1"]', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
   showSectionDetails(runKey)
 })
-$tableBody.on('click', '.logscan-quiet-period-details', function () {
-  const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+delegate(tableBody, 'click', '.logscan-quiet-period-details', function () {
+  const runKey = this.dataset.runKey || this.getAttribute('data-run-key')
   showQuietPeriodDetails(runKey)
 })
-$('#logscan-trends-table thead').on('click', '.logscan-sort-button', function () {
-  const key = $(this).data('sort')
+delegate(document.querySelector('#logscan-trends-table thead'), 'click', '.logscan-sort-button', function () {
+  const key = this.dataset.sort
   if (!key) return
   tablePage = 1
   if (sortState.key === key) {
