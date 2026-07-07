@@ -52,7 +52,8 @@ const ValidationHandler = {
   },
 
   validatePlexState: function () {
-    const plexValid = $('#plex_valid').data('plex-valid') === 'True'
+    const plexValidEl = document.getElementById('plex_valid')
+    const plexValid = plexValidEl && plexValidEl.dataset.plexValid === 'True'
     console.log('[DEBUG] Plex Valid:', plexValid)
 
     if (!plexValid) {
@@ -230,11 +231,11 @@ const ValidationHandler = {
     }
 
     const allPlaceholdersValid = validatePlaceholderSelection()
-    const pathValid = (typeof PathValidation !== 'undefined' && PathValidation.validateAll)
-      ? PathValidation.validateAll()
+    const pathValid = (typeof window.PathValidation !== 'undefined' && window.PathValidation.validateAll)
+      ? window.PathValidation.validateAll()
       : true
-    const urlValid = (typeof URLValidation !== 'undefined' && URLValidation.validateAll)
-      ? URLValidation.validateAll()
+    const urlValid = (typeof window.URLValidation !== 'undefined' && window.URLValidation.validateAll)
+      ? window.URLValidation.validateAll()
       : true
 
     console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
@@ -295,10 +296,10 @@ const ValidationHandler = {
     const selectedLibraries = libraryInput ? libraryInput.value.split(',').map(item => item.trim()) : []
     console.log('[DEBUG] Restoring Selected Libraries:', selectedLibraries)
 
-    $('.library-checkbox').each(function () {
-      if (selectedLibraries.includes($(this).val())) {
-        console.log(`[DEBUG] Restoring selection: ${$(this).val()}`)
-        $(this).prop('checked', true)
+    document.querySelectorAll('.library-checkbox').forEach(checkbox => {
+      if (selectedLibraries.includes(checkbox.value)) {
+        console.log(`[DEBUG] Restoring selection: ${checkbox.value}`)
+        checkbox.checked = true
       }
     })
   },
@@ -330,7 +331,8 @@ const ValidationHandler = {
     })
 
     // Keep the Previous button enabled
-    document.querySelector("#configForm button[data-nav-action='prev']").disabled = false
+    const prevBtn = document.querySelector("#configForm button[data-nav-action='prev']")
+    if (prevBtn) prevBtn.disabled = false
 
     // Handle accordions based on the lockAccordions flag
     if (!lockAccordions) {
