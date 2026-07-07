@@ -22,7 +22,7 @@ let autosaveTimer = null
 let imagemaidAutosaveInFlight = false
 let imagemaidAutosavePending = false
 let imagemaidStartupDeadline = 0
-let lastImageMaidMode = String($('#imagemaid_mode').val() || 'report').trim().toLowerCase()
+let lastImageMaidMode = String(document.getElementById('imagemaid_mode').value || 'report').trim().toLowerCase()
 let restoreFolderModeConflict = false
 let imagemaidProbeInFlight = false
 let imagemaidUpdateCheckInFlight = false
@@ -59,89 +59,90 @@ if (stopModalEl && typeof bootstrap !== 'undefined') {
 }
 
 const els = {
-  installState: $('#imagemaid-install-state'),
-  installSummary: $('#imagemaid-install-summary'),
-  installLog: $('#imagemaid-install-log'),
-  installPath: $('#imagemaid-install-path'),
-  branchSelection: $('#imagemaid-branch-selection'),
-  effectiveBranch: $('#imagemaid-effective-branch'),
-  updatePhaseBadge: $('#imagemaid-update-phase-badge'),
-  localVersionStatus: $('#imagemaid-local-version-status'),
-  remoteVersionStatus: $('#imagemaid-remote-version-status'),
-  localBranchStatus: $('#imagemaid-local-branch-status'),
-  localShaStatus: $('#imagemaid-local-sha-status'),
-  remoteShaStatus: $('#imagemaid-remote-sha-status'),
-  branchSourceUrl: $('#imagemaid-branch-source-url'),
-  zipSourceUrl: $('#imagemaid-zip-source-url'),
-  branchOverrideWarning: $('#imagemaid-branch-override-warning'),
-  updateBox: $('#imagemaid-update-box'),
-  localVersionInline: $('#imagemaid-local-version-inline'),
-  localBranchInline: $('#imagemaid-local-branch-inline'),
-  localShaInline: $('#imagemaid-local-sha-inline'),
-  remoteVersionInline: $('#imagemaid-remote-version-inline'),
-  remoteShaInline: $('#imagemaid-remote-sha-inline'),
-  validationBadge: $('#imagemaid-validation-badge'),
-  validationStatus: $('#imagemaid-validation-status'),
-  maintenanceBadge: $('#imagemaid-maintenance-page-badge'),
-  runGate: $('#imagemaid-run-gate'),
-  runGateTitle: $('#imagemaid-run-gate-title'),
-  runGateText: $('#imagemaid-run-gate-text'),
-  runSurface: $('#imagemaid-run-surface'),
-  runState: $('#imagemaid-run-state'),
-  runStatusRow: $('#imagemaid-run-status-row'),
-  runStatusTimer: $('#imagemaid-run-status-timer'),
-  runStatusMetrics: $('#imagemaid-run-status-metrics'),
-  runStatusLog: $('#imagemaid-run-status-log'),
-  runStatusSparklines: $('#imagemaid-run-status-sparklines'),
-  runMaintenanceRow: $('#imagemaid-run-maintenance-row'),
-  runStatus: $('#imagemaid-run-status'),
-  runLog: $('#imagemaid-run-log'),
-  logAutoscroll: $('#imagemaid-log-autoscroll'),
-  logTailSize: $('#imagemaid-log-tail-size'),
-  tailLabel: $('#imagemaid-tail-label'),
-  downloadLog: $('#imagemaid-download-log'),
-  pauseLogPolling: $('#imagemaid-pause-log-polling'),
-  logFilter: $('#imagemaid-log-filter'),
-  logLevelButtons: $('.imagemaid-log-level-btn'),
-  logStatValues: $('[data-imagemaid-log-stat]'),
-  commandPreview: $('#imagemaid-command-preview'),
-  updateBtn: $('#update-imagemaid-btn'),
-  forceUpdateToggle: $('#force-update-imagemaid'),
-  validateBtn: $('#validate-imagemaid-btn'),
-  runBtn: $('#run-imagemaid-btn'),
-  stopBtn: $('#stop-imagemaid-btn'),
-  confirmMoveRunBtn: $('#confirm-imagemaid-move-run'),
-  mode: $('#imagemaid_mode'),
-  branch: $('#imagemaid_branch_override'),
-  modeHelp: $('#imagemaid-mode-help'),
-  modeHelpTitle: $('#imagemaid-mode-help-title'),
-  modeHelpText: $('#imagemaid-mode-help-text'),
-  modeHelpDetail: $('#imagemaid-mode-help-detail'),
-  moveConfirmDetail: $('#imagemaid-move-confirm-detail')
+  installState: document.getElementById('imagemaid-install-state'),
+  installSummary: document.getElementById('imagemaid-install-summary'),
+  installLog: document.getElementById('imagemaid-install-log'),
+  installPath: document.getElementById('imagemaid-install-path'),
+  branchSelection: document.getElementById('imagemaid-branch-selection'),
+  effectiveBranch: document.getElementById('imagemaid-effective-branch'),
+  updatePhaseBadge: document.getElementById('imagemaid-update-phase-badge'),
+  localVersionStatus: document.getElementById('imagemaid-local-version-status'),
+  remoteVersionStatus: document.getElementById('imagemaid-remote-version-status'),
+  localBranchStatus: document.getElementById('imagemaid-local-branch-status'),
+  localShaStatus: document.getElementById('imagemaid-local-sha-status'),
+  remoteShaStatus: document.getElementById('imagemaid-remote-sha-status'),
+  branchSourceUrl: document.getElementById('imagemaid-branch-source-url'),
+  zipSourceUrl: document.getElementById('imagemaid-zip-source-url'),
+  branchOverrideWarning: document.getElementById('imagemaid-branch-override-warning'),
+  updateBox: document.getElementById('imagemaid-update-box'),
+  localVersionInline: document.getElementById('imagemaid-local-version-inline'),
+  localBranchInline: document.getElementById('imagemaid-local-branch-inline'),
+  localShaInline: document.getElementById('imagemaid-local-sha-inline'),
+  remoteVersionInline: document.getElementById('imagemaid-remote-version-inline'),
+  remoteShaInline: document.getElementById('imagemaid-remote-sha-inline'),
+  validationBadge: document.getElementById('imagemaid-validation-badge'),
+  validationStatus: document.getElementById('imagemaid-validation-status'),
+  maintenanceBadge: document.getElementById('imagemaid-maintenance-page-badge'),
+  runGate: document.getElementById('imagemaid-run-gate'),
+  runGateTitle: document.getElementById('imagemaid-run-gate-title'),
+  runGateText: document.getElementById('imagemaid-run-gate-text'),
+  runSurface: document.getElementById('imagemaid-run-surface'),
+  runState: document.getElementById('imagemaid-run-state'),
+  runStatusRow: document.getElementById('imagemaid-run-status-row'),
+  runStatusTimer: document.getElementById('imagemaid-run-status-timer'),
+  runStatusMetrics: document.getElementById('imagemaid-run-status-metrics'),
+  runStatusLog: document.getElementById('imagemaid-run-status-log'),
+  runStatusSparklines: document.getElementById('imagemaid-run-status-sparklines'),
+  runMaintenanceRow: document.getElementById('imagemaid-run-maintenance-row'),
+  runStatus: document.getElementById('imagemaid-run-status'),
+  runLog: document.getElementById('imagemaid-run-log'),
+  logAutoscroll: document.getElementById('imagemaid-log-autoscroll'),
+  logTailSize: document.getElementById('imagemaid-log-tail-size'),
+  tailLabel: document.getElementById('imagemaid-tail-label'),
+  downloadLog: document.getElementById('imagemaid-download-log'),
+  pauseLogPolling: document.getElementById('imagemaid-pause-log-polling'),
+  logFilter: document.getElementById('imagemaid-log-filter'),
+  logLevelButtons: document.querySelectorAll('.imagemaid-log-level-btn'),
+  logStatValues: document.querySelectorAll('[data-imagemaid-log-stat]'),
+  commandPreview: document.getElementById('imagemaid-command-preview'),
+  updateBtn: document.getElementById('update-imagemaid-btn'),
+  forceUpdateToggle: document.getElementById('force-update-imagemaid'),
+  validateBtn: document.getElementById('validate-imagemaid-btn'),
+  runBtn: document.getElementById('run-imagemaid-btn'),
+  stopBtn: document.getElementById('stop-imagemaid-btn'),
+  confirmMoveRunBtn: document.getElementById('confirm-imagemaid-move-run'),
+  mode: document.getElementById('imagemaid_mode'),
+  branch: document.getElementById('imagemaid_branch_override'),
+  modeHelp: document.getElementById('imagemaid-mode-help'),
+  modeHelpTitle: document.getElementById('imagemaid-mode-help-title'),
+  modeHelpText: document.getElementById('imagemaid-mode-help-text'),
+  modeHelpDetail: document.getElementById('imagemaid-mode-help-detail'),
+  moveConfirmDetail: document.getElementById('imagemaid-move-confirm-detail')
 }
 
 const optionalRows = {
-  noVerifySsl: $('#imagemaid-no-verify-ssl-row'),
-  overlaysOnly: $('#imagemaid-overlays-only-row')
+  noVerifySsl: document.getElementById('imagemaid-no-verify-ssl-row'),
+  overlaysOnly: document.getElementById('imagemaid-overlays-only-row')
 }
-const $runSparkCpuSystem = $('#imagemaid-run-spark-cpu-system')
-const $runSparkCpuImageMaid = $('#imagemaid-run-spark-cpu-imagemaid')
-const $runSparkMemSystem = $('#imagemaid-run-spark-mem-system')
-const $runSparkMemImageMaid = $('#imagemaid-run-spark-mem-imagemaid')
+const runSparkCpuSystem = document.getElementById('imagemaid-run-spark-cpu-system')
+const runSparkCpuImageMaid = document.getElementById('imagemaid-run-spark-cpu-imagemaid')
+const runSparkMemSystem = document.getElementById('imagemaid-run-spark-mem-system')
+const runSparkMemImageMaid = document.getElementById('imagemaid-run-spark-mem-imagemaid')
 
 function syncMaintenanceBadge (data) {
-  if (!els.maintenanceBadge.length) return
+  if (!els.maintenanceBadge) return
   maintenanceActive = Boolean(data && data.maintenance_active)
   maintenanceWindowLabel = data && data.maintenance_window ? ` (${data.maintenance_window})` : ''
   const paused = Boolean(data && data.maintenance_paused)
   const active = maintenanceActive || paused
   const windowLabel = maintenanceWindowLabel
   if (active) {
-    els.maintenanceBadge.removeClass('d-none')
-    const textEl = els.maintenanceBadge.find('span').last()
-    if (textEl.length) textEl.text(`${paused ? 'Paused for' : 'Blocked by'} Plex maintenance${windowLabel}`)
+    els.maintenanceBadge.classList.remove('d-none')
+    const spans = els.maintenanceBadge.querySelectorAll('span')
+    const textEl = spans.length ? spans[spans.length - 1] : null
+    if (textEl) textEl.textContent = `${paused ? 'Paused for' : 'Blocked by'} Plex maintenance${windowLabel}`
   } else {
-    els.maintenanceBadge.addClass('d-none')
+    els.maintenanceBadge.classList.add('d-none')
   }
   syncRunGate()
 }
@@ -151,19 +152,19 @@ document.addEventListener('qs:maintenance-status', function (event) {
 })
 
 function syncOptionalCapabilityRows () {
-  optionalRows.noVerifySsl.toggleClass('d-none', !imagemaidSupportsNoVerifySsl)
-  optionalRows.overlaysOnly.toggleClass('d-none', !imagemaidSupportsOverlaysOnly)
+  if (optionalRows.noVerifySsl) optionalRows.noVerifySsl.classList.toggle('d-none', !imagemaidSupportsNoVerifySsl)
+  if (optionalRows.overlaysOnly) optionalRows.overlaysOnly.classList.toggle('d-none', !imagemaidSupportsOverlaysOnly)
 }
 
 function getRestoreDirPath () {
-  const plexPath = String($('#imagemaid_plex_path').val() || '').trim()
+  const plexPath = String(document.getElementById('imagemaid_plex_path').value || '').trim()
   if (!plexPath) return ''
   const normalized = plexPath.replace(/[\\/]+$/, '')
   return `${normalized}\\ImageMaid Restore`
 }
 
 function updateModeHelp () {
-  const mode = String(els.mode.val() || 'report').trim().toLowerCase()
+  const mode = String(els.mode.value || 'report').trim().toLowerCase()
   const restoreDir = getRestoreDirPath()
   const hasRestoreDirPath = Boolean(restoreDir)
   let tone = 'alert-secondary'
@@ -207,20 +208,21 @@ function updateModeHelp () {
       : 'Use nothing, restore, or clear while the existing ImageMaid Restore folder is present.'
   }
 
-  els.modeHelp.removeClass('alert-secondary alert-warning alert-danger').addClass(tone)
-  els.modeHelpTitle.text(title)
-  els.modeHelpText.text(text)
-  els.modeHelpDetail.text(detail)
-  if (els.moveConfirmDetail.length) {
+  els.modeHelp.classList.remove('alert-secondary', 'alert-warning', 'alert-danger')
+  els.modeHelp.classList.add(tone)
+  els.modeHelpTitle.textContent = title
+  els.modeHelpText.textContent = text
+  els.modeHelpDetail.textContent = detail
+  if (els.moveConfirmDetail) {
     const moveDetail = hasRestoreDirPath ? `Destination folder: ${restoreDir}` : 'Enter the Plex path first so Quickstart can show the restore folder.'
-    els.moveConfirmDetail.text(moveDetail)
+    els.moveConfirmDetail.textContent = moveDetail
   }
 }
 
-function setBadge ($el, tone, text) {
-  $el.removeClass('text-bg-secondary text-bg-success text-bg-warning text-bg-danger text-bg-primary')
-  $el.addClass(tone)
-  $el.text(text)
+function setBadge (el, tone, text) {
+  el.classList.remove('text-bg-secondary', 'text-bg-success', 'text-bg-warning', 'text-bg-danger', 'text-bg-primary')
+  el.classList.add(tone)
+  el.textContent = text
 }
 
 function shortSha (value) {
@@ -229,7 +231,7 @@ function shortSha (value) {
 }
 
 function syncBranchSummary () {
-  const override = String(els.branch.val() || '').trim().toLowerCase()
+  const override = String(els.branch.value || '').trim().toLowerCase()
   const selection = override || 'auto'
   let effective = 'develop'
   if (override === 'master' || override === 'develop') {
@@ -237,9 +239,9 @@ function syncBranchSummary () {
   } else if (imagemaidEffectiveBranch) {
     effective = imagemaidEffectiveBranch
   }
-  els.branchSelection.text(selection === 'auto' ? 'Auto' : selection)
-  els.effectiveBranch.text(effective)
-  els.branchOverrideWarning.toggleClass('d-none', selection === 'auto')
+  els.branchSelection.textContent = selection === 'auto' ? 'Auto' : selection
+  els.effectiveBranch.textContent = effective
+  els.branchOverrideWarning.classList.toggle('d-none', selection === 'auto')
 }
 
 function setUpdatePhase (tone, text) {
@@ -247,7 +249,7 @@ function setUpdatePhase (tone, text) {
 }
 
 function syncUpdateButtonLabel () {
-  const force = els.forceUpdateToggle.is(':checked')
+  const force = els.forceUpdateToggle.checked
   let html = '<i class="bi bi-arrow-clockwise me-1"></i> Check for ImageMaid Updates'
   if (force) {
     html = imagemaidInstalled
@@ -262,12 +264,12 @@ function syncUpdateButtonLabel () {
   } else if (imagemaidUpdateCheckCompleted && !imagemaidUpdateCheckSkipped) {
     html = '<i class="bi bi-check-circle me-1"></i> Up to date'
   }
-  els.updateBtn.html(html)
-  els.updateBtn.prop('disabled', imagemaidRunning && !force)
+  els.updateBtn.innerHTML = html
+  els.updateBtn.disabled = imagemaidRunning && !force
 }
 
 function syncPrepareSummary (body, options = {}) {
-  if (body && body.imagemaid_root_display) els.installPath.text(body.imagemaid_root_display)
+  if (body && body.imagemaid_root_display) els.installPath.textContent = body.imagemaid_root_display
   if (body && body.effective_branch) imagemaidEffectiveBranch = String(body.effective_branch || '').trim() || imagemaidEffectiveBranch
   imagemaidInstalled = Boolean(body && body.imagemaid_installed)
   imagemaidVenvReady = Boolean(body && body.venv_python_exists)
@@ -280,23 +282,23 @@ function syncPrepareSummary (body, options = {}) {
 
   const localVersion = String((body && body.local_version) || '').trim()
   const remoteVersion = String((body && body.remote_version) || '').trim()
-  els.localVersionStatus.text(localVersion || 'Unknown')
-  els.remoteVersionStatus.text(remoteVersion || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked'))
-  els.localBranchStatus.text((body && body.local_branch) || 'Unknown')
-  els.localShaStatus.text(shortSha(body && body.local_sha) || 'Unknown')
-  els.remoteShaStatus.text(shortSha(body && body.remote_sha) || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked'))
-  els.branchSourceUrl.text((body && body.branch_source_url) || '')
-  els.zipSourceUrl.text((body && body.zip_source_url) || '')
+  els.localVersionStatus.textContent = localVersion || 'Unknown'
+  els.remoteVersionStatus.textContent = remoteVersion || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked')
+  els.localBranchStatus.textContent = (body && body.local_branch) || 'Unknown'
+  els.localShaStatus.textContent = shortSha(body && body.local_sha) || 'Unknown'
+  els.remoteShaStatus.textContent = shortSha(body && body.remote_sha) || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked')
+  els.branchSourceUrl.textContent = (body && body.branch_source_url) || ''
+  els.zipSourceUrl.textContent = (body && body.zip_source_url) || ''
 
   const localBranch = (body && body.local_branch) || 'unknown'
   const localSha = shortSha(body && body.local_sha) || 'unknown'
   const remoteSha = shortSha(body && body.remote_sha) || 'unknown'
-  els.localVersionInline.text(localVersion || 'unknown')
-  els.localBranchInline.text(localBranch)
-  els.localShaInline.text(localSha)
-  els.remoteVersionInline.text(remoteVersion || 'unknown')
-  els.remoteShaInline.text(remoteSha)
-  els.updateBox.toggleClass('d-none', !imagemaidUpdateAvailable)
+  els.localVersionInline.textContent = localVersion || 'unknown'
+  els.localBranchInline.textContent = localBranch
+  els.localShaInline.textContent = localSha
+  els.remoteVersionInline.textContent = remoteVersion || 'unknown'
+  els.remoteShaInline.textContent = remoteSha
+  els.updateBox.classList.toggle('d-none', !imagemaidUpdateAvailable)
 
   if (options.phaseTone && options.phaseText) {
     setUpdatePhase(options.phaseTone, options.phaseText)
@@ -321,23 +323,24 @@ function syncPrepareSummary (body, options = {}) {
 }
 
 function boolValue (selector) {
-  return $(selector).is(':checked')
+  // selector is always an id-string like '#imagemaid_photo_transcoder'
+  return document.querySelector(selector)?.checked || false
 }
 
 function collectPayload () {
   const activeConfig = String(
     window.pageInfo?.config_name ||
-    $('#qs-active-config-input').val() ||
-    $('.qs-main-page-meta-value').first().text() ||
+    document.getElementById('qs-active-config-input').value ||
+    document.querySelector('.qs-main-page-meta-value')?.textContent ||
     ''
   ).trim()
   return {
     config_name: activeConfig,
-    branch_override: String($('#imagemaid_branch_override').val() || '').trim(),
-    plex_path: String($('#imagemaid_plex_path').val() || '').trim(),
-    mode: String($('#imagemaid_mode').val() || 'report').trim(),
-    timeout: String($('#imagemaid_timeout').val() || '').trim(),
-    sleep: String($('#imagemaid_sleep').val() || '').trim(),
+    branch_override: String(document.getElementById('imagemaid_branch_override').value || '').trim(),
+    plex_path: String(document.getElementById('imagemaid_plex_path').value || '').trim(),
+    mode: String(document.getElementById('imagemaid_mode').value || 'report').trim(),
+    timeout: String(document.getElementById('imagemaid_timeout').value || '').trim(),
+    sleep: String(document.getElementById('imagemaid_sleep').value || '').trim(),
     photo_transcoder: boolValue('#imagemaid_photo_transcoder'),
     empty_trash: boolValue('#imagemaid_empty_trash'),
     clean_bundles: boolValue('#imagemaid_clean_bundles'),
@@ -381,7 +384,7 @@ function escapeCommandValue (value) {
 function updatePreviewFromPayload () {
   const payload = collectPayload()
   if (!payload.plex_path) {
-    els.commandPreview.val('Preview unavailable until the Plex path is provided.')
+    els.commandPreview.value = 'Preview unavailable until the Plex path is provided.'
     return
   }
 
@@ -419,7 +422,7 @@ function updatePreviewFromPayload () {
   if (payload.timeout) parts.push('--timeout', payload.timeout)
   if (payload.sleep) parts.push('--sleep', payload.sleep)
 
-  els.commandPreview.val(parts.join(' '))
+  els.commandPreview.value = parts.join(' ')
 }
 
 function setInstallState (state, summary) {
@@ -434,58 +437,61 @@ function setInstallState (state, summary) {
   } else {
     setBadge(els.installState, 'text-bg-secondary', 'Not checked')
   }
-  if (summary) els.installSummary.text(summary)
+  if (summary) els.installSummary.textContent = summary
 }
 
 function syncRunGate () {
   if (imagemaidRunning || imagemaidStarting) {
-    els.runGate.addClass('d-none')
-    els.runSurface.removeClass('d-none')
+    els.runGate.classList.add('d-none')
+    els.runSurface.classList.remove('d-none')
     return
   }
 
   if (maintenanceActive) {
-    els.runGate.removeClass('d-none alert-secondary alert-danger').addClass('alert-warning')
-    els.runGateTitle.text('Blocked by Plex maintenance')
-    els.runGateText.text(`Plex maintenance is active${maintenanceWindowLabel}. Wait for the maintenance window to end before running ImageMaid.`)
-    els.runSurface.addClass('d-none')
+    els.runGate.classList.remove('d-none', 'alert-secondary', 'alert-danger')
+    els.runGate.classList.add('alert-warning')
+    els.runGateTitle.textContent = 'Blocked by Plex maintenance'
+    els.runGateText.textContent = `Plex maintenance is active${maintenanceWindowLabel}. Wait for the maintenance window to end before running ImageMaid.`
+    els.runSurface.classList.add('d-none')
     return
   }
 
   if (!imagemaidInstalled || !imagemaidVenvReady) {
-    els.runGate.removeClass('d-none alert-warning alert-danger').addClass('alert-secondary')
-    els.runGateTitle.text('Prepare ImageMaid first')
-    els.runGateText.text('Install or prepare ImageMaid before Quickstart can build the run command and show the run controls.')
-    els.runSurface.addClass('d-none')
+    els.runGate.classList.remove('d-none', 'alert-warning', 'alert-danger')
+    els.runGate.classList.add('alert-secondary')
+    els.runGateTitle.textContent = 'Prepare ImageMaid first'
+    els.runGateText.textContent = 'Install or prepare ImageMaid before Quickstart can build the run command and show the run controls.'
+    els.runSurface.classList.add('d-none')
     return
   }
 
   if (imagemaidDirty || !imagemaidValidated) {
-    els.runGate.removeClass('d-none alert-secondary alert-danger').addClass('alert-warning')
-    els.runGateTitle.text('Validate ImageMaid first')
-    els.runGateText.text('Configuration changed or has not been validated yet. Validate ImageMaid to unlock the command preview and run controls.')
-    els.runSurface.addClass('d-none')
+    els.runGate.classList.remove('d-none', 'alert-secondary', 'alert-danger')
+    els.runGate.classList.add('alert-warning')
+    els.runGateTitle.textContent = 'Validate ImageMaid first'
+    els.runGateText.textContent = 'Configuration changed or has not been validated yet. Validate ImageMaid to unlock the command preview and run controls.'
+    els.runSurface.classList.add('d-none')
     return
   }
 
-  els.runGate.addClass('d-none')
-  els.runSurface.removeClass('d-none')
+  els.runGate.classList.add('d-none')
+  els.runSurface.classList.remove('d-none')
 }
 
 function syncValidateButton (state) {
-  els.validateBtn.removeClass('btn-success btn-dark btn-warning btn-secondary')
+  els.validateBtn.classList.remove('btn-success', 'btn-dark', 'btn-warning', 'btn-secondary')
   if (state === 'ok') {
-    els.validateBtn.addClass('btn-dark')
-    els.validateBtn.prop('disabled', true)
-    els.validateBtn.html('<i class="bi bi-check2-circle me-1"></i> Validated')
+    els.validateBtn.classList.add('btn-dark')
+    els.validateBtn.disabled = true
+    els.validateBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Validated'
   } else if (state === 'running') {
-    els.validateBtn.addClass('btn-warning')
-    els.validateBtn.prop('disabled', true)
-    els.validateBtn.html('<i class="bi bi-arrow-repeat me-1"></i> Validating...')
+    els.validateBtn.classList.add('btn-warning')
+    els.validateBtn.disabled = true
+    els.validateBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Validating...'
   } else {
-    els.validateBtn.addClass('btn-success')
-    els.validateBtn.prop('disabled', false)
-    els.validateBtn.html('<i class="bi bi-check2-circle me-1"></i> Validate ImageMaid')
+    els.validateBtn.classList.add('btn-success')
+    els.validateBtn.disabled = false
+    els.validateBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Validate ImageMaid'
   }
 }
 
@@ -499,17 +505,17 @@ function setValidationState (state, message) {
   } else {
     setBadge(els.validationBadge, 'text-bg-secondary', 'Not validated')
   }
-  els.validationStatus.removeClass('text-muted text-success text-danger text-warning')
+  els.validationStatus.classList.remove('text-muted', 'text-success', 'text-danger', 'text-warning')
   if (state === 'ok') {
-    els.validationStatus.addClass('text-success')
+    els.validationStatus.classList.add('text-success')
   } else if (state === 'error') {
-    els.validationStatus.addClass('text-danger')
+    els.validationStatus.classList.add('text-danger')
   } else if (state === 'running') {
-    els.validationStatus.addClass('text-warning')
+    els.validationStatus.classList.add('text-warning')
   } else {
-    els.validationStatus.addClass('text-muted')
+    els.validationStatus.classList.add('text-muted')
   }
-  if (message) els.validationStatus.text(message)
+  if (message) els.validationStatus.textContent = message
   syncValidateButton(state)
   syncRunGate()
 }
@@ -543,12 +549,12 @@ function queueAutosave (payload = collectPayload(), signature = buildPayloadSign
             imagemaid_installed: imagemaidInstalled,
             venv_python_exists: imagemaidVenvReady,
             imagemaid_running: imagemaidRunning,
-            local_branch: els.localBranchStatus.text(),
-            local_sha: els.localShaStatus.text(),
+            local_branch: els.localBranchStatus.textContent,
+            local_sha: els.localShaStatus.textContent,
             effective_branch: imagemaidEffectiveBranch,
-            branch_source_url: els.branchSourceUrl.text(),
-            zip_source_url: els.zipSourceUrl.text(),
-            imagemaid_root_display: els.installPath.text()
+            branch_source_url: els.branchSourceUrl.textContent,
+            zip_source_url: els.zipSourceUrl.textContent,
+            imagemaid_root_display: els.installPath.textContent
           }, {
             updateAvailable: false,
             updateCheckCompleted: false,
@@ -631,20 +637,20 @@ function buildSparklinePointsScaled (series, maxValue) {
 }
 
 function renderRunSparklines () {
-  if (!els.runStatusSparklines.length) return
+  if (!els.runStatusSparklines) return
   const hasData = imagemaidSparkState.cpu.system.length || imagemaidSparkState.cpu.imagemaid.length ||
     imagemaidSparkState.mem.system.length || imagemaidSparkState.mem.imagemaid.length ||
     imagemaidSparkState.io.read.length || imagemaidSparkState.io.write.length
-  els.runStatusSparklines.toggleClass('d-none', !hasData)
-  $runSparkCpuSystem.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.cpu.system) : '')
-  $runSparkCpuImageMaid.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.cpu.imagemaid) : '')
-  $runSparkMemSystem.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.mem.system) : '')
-  $runSparkMemImageMaid.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.mem.imagemaid) : '')
-  const $runSparkIoRead = $('#imagemaid-run-spark-io-read')
-  const $runSparkIoWrite = $('#imagemaid-run-spark-io-write')
+  els.runStatusSparklines.classList.toggle('d-none', !hasData)
+  runSparkCpuSystem.setAttribute('points', hasData ? buildSparklinePoints(imagemaidSparkState.cpu.system) : '')
+  runSparkCpuImageMaid.setAttribute('points', hasData ? buildSparklinePoints(imagemaidSparkState.cpu.imagemaid) : '')
+  runSparkMemSystem.setAttribute('points', hasData ? buildSparklinePoints(imagemaidSparkState.mem.system) : '')
+  runSparkMemImageMaid.setAttribute('points', hasData ? buildSparklinePoints(imagemaidSparkState.mem.imagemaid) : '')
+  const runSparkIoRead = document.getElementById('imagemaid-run-spark-io-read')
+  const runSparkIoWrite = document.getElementById('imagemaid-run-spark-io-write')
   const ioMax = Math.max(0, ...imagemaidSparkState.io.read, ...imagemaidSparkState.io.write)
-  $runSparkIoRead.attr('points', hasData ? buildSparklinePointsScaled(imagemaidSparkState.io.read, ioMax) : '')
-  $runSparkIoWrite.attr('points', hasData ? buildSparklinePointsScaled(imagemaidSparkState.io.write, ioMax) : '')
+  runSparkIoRead.setAttribute('points', hasData ? buildSparklinePointsScaled(imagemaidSparkState.io.read, ioMax) : '')
+  runSparkIoWrite.setAttribute('points', hasData ? buildSparklinePointsScaled(imagemaidSparkState.io.write, ioMax) : '')
 }
 
 function resetRunSparklines () {
@@ -678,13 +684,13 @@ function updateRunSparklines (data) {
 }
 
 function syncRunStatusVisibility () {
-  if (!els.runStatusRow.length) return
-  const hasText = Boolean(els.runStatusTimer.text() || els.runStatusMetrics.text() || els.runStatusLog.text())
-  els.runStatusRow.toggleClass('d-none', !hasText)
+  if (!els.runStatusRow) return
+  const hasText = Boolean(els.runStatusTimer.textContent || els.runStatusMetrics.textContent || els.runStatusLog.textContent)
+  els.runStatusRow.classList.toggle('d-none', !hasText)
 }
 
 function updateRunStatusDetails (data) {
-  if (!els.runStatusRow.length) return
+  if (!els.runStatusRow) return
   const status = String((data && data.status) || '').trim().toLowerCase()
   if (status === 'running' || status === 'starting') {
     const startedAt = formatTimestampLocal(data.started_at)
@@ -716,21 +722,21 @@ function updateRunStatusDetails (data) {
     const diskText = hasDiskData
       ? ` | Disk: R ${formatDiskRate(data.disk_read_rate_mb_s)} • W ${formatDiskRate(data.disk_write_rate_mb_s)} • ${formatDiskMb(data.disk_read_mb)} read • ${formatDiskMb(data.disk_write_mb)} written`
       : ''
-    els.runStatusTimer.text(`${status === 'starting' ? 'Starting' : 'Running since'}: ${startedAt || 'n/a'}${elapsed ? ` • Elapsed: ${elapsed}` : ''}`)
-    els.runStatusMetrics.text(`ImageMaid: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})${diskText}`)
+    els.runStatusTimer.textContent = `${status === 'starting' ? 'Starting' : 'Running since'}: ${startedAt || 'n/a'}${elapsed ? ` • Elapsed: ${elapsed}` : ''}`
+    els.runStatusMetrics.textContent = `ImageMaid: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})${diskText}`
   } else if (status === 'done') {
-    els.runStatusTimer.text('ImageMaid run complete.')
-    els.runStatusMetrics.text('')
+    els.runStatusTimer.textContent = 'ImageMaid run complete.'
+    els.runStatusMetrics.textContent = ''
   } else {
-    els.runStatusTimer.text('')
-    els.runStatusMetrics.text('')
+    els.runStatusTimer.textContent = ''
+    els.runStatusMetrics.textContent = ''
   }
   updateRunSparklines(data)
   syncRunStatusVisibility()
 }
 
 function updateMaintenanceRow (data) {
-  if (!els.runMaintenanceRow.length) return
+  if (!els.runMaintenanceRow) return
   const windowLabel = data && data.maintenance_window ? ` (${data.maintenance_window})` : ''
   if (data && data.maintenance_paused) {
     let pauseLabel = 'Paused'
@@ -739,21 +745,24 @@ function updateMaintenanceRow (data) {
       const elapsedSeconds = Math.max(0, Math.floor((Date.now() - pausedSince.getTime()) / 1000))
       pauseLabel = formatRunSeconds(elapsedSeconds) || 'Paused'
     }
-    els.runMaintenanceRow.html(`
+    els.runMaintenanceRow.innerHTML = `
       <span class="me-2 fw-semibold">Maintenance</span>
       <span class="badge text-bg-warning text-dark">Paused${windowLabel}</span>
       <span class="badge text-bg-secondary">${pauseLabel}</span>
-    `).removeClass('d-none')
+    `
+    els.runMaintenanceRow.classList.remove('d-none')
     return
   }
   if (data && data.maintenance_active) {
-    els.runMaintenanceRow.html(`
+    els.runMaintenanceRow.innerHTML = `
       <span class="me-2 fw-semibold">Maintenance</span>
       <span class="badge text-bg-warning text-dark">Window Active${windowLabel}</span>
-    `).removeClass('d-none')
+    `
+    els.runMaintenanceRow.classList.remove('d-none')
     return
   }
-  els.runMaintenanceRow.addClass('d-none').empty()
+  els.runMaintenanceRow.classList.add('d-none')
+  els.runMaintenanceRow.replaceChildren()
 }
 
 function computeLogStats (text, matcher) {
@@ -776,28 +785,27 @@ function computeLogStats (text, matcher) {
 }
 
 function updateLogStatBadges (stats) {
-  els.logStatValues.each(function () {
-    const key = String($(this).data('imagemaid-log-stat') || '').trim()
-    $(this).text(String((stats && stats[key]) || 0))
+  els.logStatValues.forEach((el) => {
+    const key = String(el.dataset.imagemaidLogStat || '').trim()
+    el.textContent = String((stats && stats[key]) || 0)
   })
 }
 
 function syncLogLevelButtons () {
-  const activeFilter = String(els.logFilter.val() || '').trim()
-  els.logLevelButtons.each(function () {
-    const level = String($(this).data('level') || '').trim()
+  const activeFilter = String(els.logFilter.value || '').trim()
+  els.logLevelButtons.forEach((el) => {
+    const level = String(el.dataset.level || '').trim()
     const isActive = Boolean(level) && level === activeFilter
-    $(this)
-      .toggleClass('btn-primary', isActive)
-      .toggleClass('btn-outline-secondary', !isActive)
-      .attr('aria-pressed', isActive ? 'true' : 'false')
+    el.classList.toggle('btn-primary', isActive)
+    el.classList.toggle('btn-outline-secondary', !isActive)
+    el.setAttribute('aria-pressed', isActive ? 'true' : 'false')
   })
 }
 
 function applyLogFilter () {
   const payload = lastImageMaidLogPayload || {}
   const rawText = String(payload.text || lastImageMaidLogText || '')
-  const filterText = String(els.logFilter.val() || '').trim()
+  const filterText = String(els.logFilter.value || '').trim()
   let filteredText = rawText
   let textMatcher = null
   if (filterText) {
@@ -813,18 +821,18 @@ function applyLogFilter () {
   if (matcher) {
     filteredText = rawText.split(/\r?\n/).filter(line => matcher(line)).join('\n')
   }
-  els.runLog.text(filteredText || (rawText ? 'No lines matched the current filter.' : 'ImageMaid log is empty.'))
+  els.runLog.textContent = filteredText || (rawText ? 'No lines matched the current filter.' : 'ImageMaid log is empty.')
   updateLogStatBadges(computeLogStats(rawText, matcher))
   syncLogLevelButtons()
-  if (imagemaidLogAutoScroll && els.runLog.length) {
-    els.runLog.scrollTop(els.runLog[0].scrollHeight)
+  if (imagemaidLogAutoScroll && els.runLog) {
+    els.runLog.scrollTop = els.runLog.scrollHeight
   }
 }
 
 function updateLogRecency (payload) {
-  if (!els.runStatusLog.length) return
+  if (!els.runStatusLog) return
   if (!payload || typeof payload.log_age_seconds !== 'number') {
-    els.runStatusLog.text('')
+    els.runStatusLog.textContent = ''
     syncRunStatusVisibility()
     return
   }
@@ -832,7 +840,7 @@ function updateLogRecency (payload) {
   const totalLines = typeof payload.total_lines === 'number' && Number.isFinite(payload.total_lines)
     ? payload.total_lines.toLocaleString()
     : '0'
-  els.runStatusLog.text(`${lastImageMaidLogPath ? `${lastImageMaidLogPath.split(/[\\\\/]/).pop()} updated ` : 'Log updated '}${ageText} ago • ${totalLines} lines`)
+  els.runStatusLog.textContent = `${lastImageMaidLogPath ? `${lastImageMaidLogPath.split(/[\\\\/]/).pop()} updated ` : 'Log updated '}${ageText} ago • ${totalLines} lines`
   syncRunStatusVisibility()
 }
 
@@ -842,37 +850,37 @@ function setRunState (state, message) {
     imagemaidStarting = false
     imagemaidStartupDeadline = 0
     setBadge(els.runState, 'text-bg-success', 'Running')
-    els.runBtn.prop('disabled', true)
-    els.stopBtn.prop('disabled', false)
+    els.runBtn.disabled = true
+    els.stopBtn.disabled = false
   } else if (state === 'starting') {
     imagemaidRunning = false
     imagemaidStarting = true
     setBadge(els.runState, 'text-bg-primary', 'Starting')
-    els.runBtn.prop('disabled', true)
-    els.stopBtn.prop('disabled', false)
+    els.runBtn.disabled = true
+    els.stopBtn.disabled = false
   } else if (state === 'blocked') {
     imagemaidRunning = false
     imagemaidStarting = false
     imagemaidStartupDeadline = 0
     setBadge(els.runState, 'text-bg-warning', 'Blocked')
-    els.runBtn.prop('disabled', false)
-    els.stopBtn.prop('disabled', true)
+    els.runBtn.disabled = false
+    els.stopBtn.disabled = true
   } else if (state === 'error') {
     imagemaidRunning = false
     imagemaidStarting = false
     imagemaidStartupDeadline = 0
     setBadge(els.runState, 'text-bg-danger', 'Error')
-    els.runBtn.prop('disabled', false)
-    els.stopBtn.prop('disabled', true)
+    els.runBtn.disabled = false
+    els.stopBtn.disabled = true
   } else {
     imagemaidRunning = false
     imagemaidStarting = false
     imagemaidStartupDeadline = 0
     setBadge(els.runState, 'text-bg-secondary', 'Idle')
-    els.runBtn.prop('disabled', false)
-    els.stopBtn.prop('disabled', true)
+    els.runBtn.disabled = false
+    els.stopBtn.disabled = true
   }
-  if (message) els.runStatus.text(message)
+  if (message) els.runStatus.textContent = message
   if (!imagemaidRunning && !imagemaidStarting) {
     updateMaintenanceRow(lastImageMaidStatusPayload)
   }
@@ -881,8 +889,8 @@ function setRunState (state, message) {
 
 function appendInstallLog (lines) {
   if (!Array.isArray(lines) || !lines.length) return
-  els.installLog.text(lines.join('\n'))
-  els.installLog.scrollTop(els.installLog[0].scrollHeight)
+  els.installLog.textContent = lines.join('\n')
+  els.installLog.scrollTop = els.installLog.scrollHeight
 }
 
 function probeRoot () {
@@ -892,7 +900,7 @@ function probeRoot () {
   return fetch('/probe-imagemaid-root', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: rootPath, branch_override: String(els.branch.val() || '').trim() })
+    body: JSON.stringify({ path: rootPath, branch_override: String(els.branch.value || '').trim() })
   })
     .then(async (res) => ({ ok: res.ok, body: await res.json() }))
     .then(({ ok, body }) => {
@@ -929,7 +937,7 @@ function checkForImageMaidUpdate (forceRefresh = false) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       path: rootPath,
-      branch_override: String(els.branch.val() || '').trim(),
+      branch_override: String(els.branch.value || '').trim(),
       force: !!forceRefresh
     })
   })
@@ -977,11 +985,11 @@ function pollUpdateProgress () {
     .then(async (res) => ({ ok: res.ok, body: await res.json() }))
     .then(({ ok, body }) => {
       if (!ok || !body.success) return
-      const currentText = String(els.installLog.text() || '')
+      const currentText = String(els.installLog.textContent || '')
       const extra = Array.isArray(body.lines) ? body.lines : []
       if (extra.length) {
-        els.installLog.text([currentText, ...extra].filter(Boolean).join('\n'))
-        els.installLog.scrollTop(els.installLog[0].scrollHeight)
+        els.installLog.textContent = [currentText, ...extra].filter(Boolean).join('\n')
+        els.installLog.scrollTop = els.installLog.scrollHeight
       }
       updateLogIndex = Number(body.next_index || updateLogIndex)
       if (body.done) {
@@ -1010,12 +1018,12 @@ function pollUpdateProgress () {
 function startUpdate (force) {
   setInstallState('running', force ? 'Force updating ImageMaid...' : (imagemaidInstalled ? 'Preparing ImageMaid...' : 'Installing ImageMaid...'))
   setUpdatePhase('text-bg-primary', force ? 'Force update' : (imagemaidInstalled ? 'Preparing' : 'Installing'))
-  els.installLog.text('Starting ImageMaid update job...')
+  els.installLog.textContent = 'Starting ImageMaid update job...'
   fetch('/update-imagemaid', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      branch_override: String(els.branch.val() || '').trim(),
+      branch_override: String(els.branch.value || '').trim(),
       force: !!force,
       background: true
     })
@@ -1064,7 +1072,7 @@ function validateImageMaid () {
       imagemaidLastPayloadSignature = buildPayloadSignature()
       restoreFolderModeConflict = Boolean(body && body.reason === 'restore_dir_blocks_mode')
       if (body && body.command_preview) {
-        els.commandPreview.val(body.command_preview)
+        els.commandPreview.value = body.command_preview
       } else {
         updatePreviewFromPayload()
       }
@@ -1101,7 +1109,7 @@ function loadLog (force = false) {
         lastImageMaidLogPayload = null
         lastImageMaidLogText = ''
         lastImageMaidLogPath = ''
-        els.runLog.text((body && body.error) || 'No ImageMaid log found yet.')
+        els.runLog.textContent = (body && body.error) || 'No ImageMaid log found yet.'
         updateLogStatBadges({ filter: 0, cache: 0, debug: 0, info: 0, warn: 0, error: 0, crit: 0, trace: 0 })
         updateLogRecency(null)
         return
@@ -1110,13 +1118,13 @@ function loadLog (force = false) {
       lastImageMaidLogText = String(body.text || '')
       lastImageMaidLogPath = String(body.path || '')
       const requested = String(body.requested_lines || imagemaidTailSize)
-      els.tailLabel.text(requested.toLowerCase() === 'all' ? 'all' : requested)
+      els.tailLabel.textContent = requested.toLowerCase() === 'all' ? 'all' : requested
       updateLogRecency(body)
       applyLogFilter()
     })
     .catch(() => {
       lastImageMaidLogPayload = null
-      els.runLog.text('Failed to load the ImageMaid log.')
+      els.runLog.textContent = 'Failed to load the ImageMaid log.'
       updateLogRecency(null)
     })
     .finally(() => {
@@ -1137,7 +1145,7 @@ function updateStatus (force = false) {
       updateRunStatusDetails(body)
       updateMaintenanceRow(body)
       if (body && body.active_command && (String(body.status || '').trim().toLowerCase() === 'running' || String(body.status || '').trim().toLowerCase() === 'starting')) {
-        els.commandPreview.val(body.active_command)
+        els.commandPreview.value = body.active_command
       }
       if (typeof window.QS_handleImageMaidStatus === 'function') {
         window.QS_handleImageMaidStatus(body)
@@ -1203,7 +1211,7 @@ function submitRun () {
       if (status >= 400) {
         setRunState('error', body.error || 'ImageMaid failed to start.')
         if (body && body.error) {
-          els.runLog.text(body.error)
+          els.runLog.textContent = body.error
         }
         loadLog(true)
         showToast('error', body.error || 'ImageMaid failed to start.')
@@ -1267,13 +1275,13 @@ function onConfigChanged () {
   updateModeHelp()
   syncRunGate()
   queueAutosave(payload, nextSignature)
-  if (switchedToBlockedMode && String($('#imagemaid_plex_path').val() || '').trim()) {
+  if (switchedToBlockedMode && String(document.getElementById('imagemaid_plex_path').value || '').trim()) {
     validateImageMaid()
   }
 }
 
-els.updateBtn.on('click', () => {
-  const force = els.forceUpdateToggle.is(':checked')
+els.updateBtn.addEventListener('click', () => {
+  const force = els.forceUpdateToggle.checked
   if (force || !imagemaidInstalled || imagemaidUpdateAvailable) {
     startUpdate(force)
     return
@@ -1287,57 +1295,76 @@ els.updateBtn.on('click', () => {
     }
   })
 })
-els.forceUpdateToggle.on('change', syncUpdateButtonLabel)
-els.validateBtn.on('click', validateImageMaid)
-els.stopBtn.on('click', () => {
+els.forceUpdateToggle.addEventListener('change', syncUpdateButtonLabel)
+els.validateBtn.addEventListener('click', validateImageMaid)
+els.stopBtn.addEventListener('click', () => {
   if (stopConfirmModal) {
     stopConfirmModal.show()
     return
   }
   stopRunConfirmed()
 })
-els.runBtn.on('click', () => {
-  const mode = String(els.mode.val() || 'report').trim().toLowerCase()
+els.runBtn.addEventListener('click', () => {
+  const mode = String(els.mode.value || 'report').trim().toLowerCase()
   if (mode === 'move' && moveConfirmModal) {
     moveConfirmModal.show()
     return
   }
   submitRun()
 })
-els.confirmMoveRunBtn.on('click', () => {
+els.confirmMoveRunBtn.addEventListener('click', () => {
   if (moveConfirmModal) moveConfirmModal.hide()
   submitRun()
 })
-$('#confirm-stop-imagemaid').on('click', stopRunConfirmed)
+document.getElementById('confirm-stop-imagemaid').addEventListener('click', stopRunConfirmed)
 
-$('#imagemaid_mode, #imagemaid_plex_path, #imagemaid_timeout, #imagemaid_sleep, #imagemaid_branch_override').on('input change', onConfigChanged)
-$('#imagemaid_photo_transcoder, #imagemaid_empty_trash, #imagemaid_clean_bundles, #imagemaid_optimize_db, #imagemaid_local_db, #imagemaid_use_existing, #imagemaid_ignore_running, #imagemaid_trace, #imagemaid_log_requests, #imagemaid_no_verify_ssl, #imagemaid_overlays_only').on('change', onConfigChanged)
-els.logAutoscroll.on('change', function () {
-  imagemaidLogAutoScroll = $(this).is(':checked')
+function wireInputChange (selectors, handler) {
+  for (const selector of selectors) {
+    const el = document.querySelector(selector)
+    if (!el) continue
+    el.addEventListener('input', handler)
+    el.addEventListener('change', handler)
+  }
+}
+
+wireInputChange([
+  '#imagemaid_mode', '#imagemaid_plex_path', '#imagemaid_timeout',
+  '#imagemaid_sleep', '#imagemaid_branch_override'
+], onConfigChanged)
+wireInputChange([
+  '#imagemaid_photo_transcoder', '#imagemaid_empty_trash', '#imagemaid_clean_bundles',
+  '#imagemaid_optimize_db', '#imagemaid_local_db', '#imagemaid_use_existing',
+  '#imagemaid_ignore_running', '#imagemaid_trace', '#imagemaid_log_requests',
+  '#imagemaid_no_verify_ssl', '#imagemaid_overlays_only'
+], onConfigChanged)
+els.logAutoscroll.addEventListener('change', function () {
+  imagemaidLogAutoScroll = this.checked
 })
-els.logTailSize.on('change', function () {
-  const next = String($(this).val() || '2000').trim().toLowerCase()
+els.logTailSize.addEventListener('change', function () {
+  const next = String(this.value || '2000').trim().toLowerCase()
   imagemaidTailSize = next === 'all' ? 'all' : (['200', '2000', '20000'].includes(next) ? next : '2000')
-  els.tailLabel.text(imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize)
+  els.tailLabel.textContent = imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize
   loadLog(true)
 })
-els.logFilter.on('input', applyLogFilter)
-els.logLevelButtons.on('click', function () {
-  const nextLevel = String($(this).data('level') || '').trim()
-  const currentFilter = String(els.logFilter.val() || '').trim()
-  els.logFilter.val(currentFilter === nextLevel ? '' : nextLevel)
-  applyLogFilter()
+els.logFilter.addEventListener('input', applyLogFilter)
+els.logLevelButtons.forEach((btn) => {
+  btn.addEventListener('click', function () {
+    const nextLevel = String(this.dataset.level || '').trim()
+    const currentFilter = String(els.logFilter.value || '').trim()
+    els.logFilter.value = currentFilter === nextLevel ? '' : nextLevel
+    applyLogFilter()
+  })
 })
-els.pauseLogPolling.on('click', function () {
+els.pauseLogPolling.addEventListener('click', function () {
   imagemaidLogPollingPaused = !imagemaidLogPollingPaused
   if (imagemaidLogPollingPaused) {
-    $(this).html('<i class="bi bi-play-circle me-1"></i> Resume')
+    this.innerHTML = '<i class="bi bi-play-circle me-1"></i> Resume'
   } else {
-    $(this).html('<i class="bi bi-pause-circle me-1"></i> Pause')
+    this.innerHTML = '<i class="bi bi-pause-circle me-1"></i> Pause'
     loadLog(true)
   }
 })
-els.downloadLog.on('click', function () {
+els.downloadLog.addEventListener('click', function () {
   const text = String((lastImageMaidLogPayload && lastImageMaidLogPayload.text) || lastImageMaidLogText || '')
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
@@ -1360,10 +1387,10 @@ syncOptionalCapabilityRows()
 syncBranchSummary()
 syncUpdateButtonLabel()
 imagemaidLastPayloadSignature = buildPayloadSignature()
-els.tailLabel.text(imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize)
-imagemaidLogAutoScroll = els.logAutoscroll.is(':checked')
+els.tailLabel.textContent = imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize
+imagemaidLogAutoScroll = els.logAutoscroll.checked
 syncLogLevelButtons()
-setValidationState(imagemaidValidated ? 'ok' : 'idle', String(els.validationStatus.text() || '').trim())
+setValidationState(imagemaidValidated ? 'ok' : 'idle', String(els.validationStatus.textContent || '').trim())
 probeRoot()
 updateStatus(true)
 loadLog(true)
