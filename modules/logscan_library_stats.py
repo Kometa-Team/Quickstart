@@ -272,7 +272,7 @@ def extract_config_line_count(content: Optional[str]) -> int:
     * Divider lines composed entirely of ``=``.
 
     Stops when we exit the config block (line without ``config.py:``)
-    or hit the ``Quickstart run marker``.
+    or hit the Quickstart config marker echo.
     """
     if not content:
         return 0
@@ -293,7 +293,7 @@ def extract_config_line_count(content: Optional[str]) -> int:
         message = line.split("|", 1)[1].strip() if "|" in line else line
         if not message:
             continue
-        if "Quickstart run marker" in message:
+        if "Quickstart run marker" in message or "[Quickstart] Run marker" in message:
             break
         if message.startswith("#"):
             continue

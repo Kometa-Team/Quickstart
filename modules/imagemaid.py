@@ -354,7 +354,7 @@ def get_latest_imagemaid_log_path():
     if not log_dir.exists():
         return None
     candidates = sorted(
-        [path for path in log_dir.glob("*.log") if path.name.lower() != "imagemaid.quickstart-maintenance.log"],
+        [path for path in log_dir.glob("*.log") if path.name.lower() not in {"imagemaid.quickstart-maintenance.log", "imagemaid.quickstart-pending.log"}],
         key=lambda path: path.stat().st_mtime,
         reverse=True,
     )
