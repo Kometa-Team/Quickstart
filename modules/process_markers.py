@@ -64,7 +64,6 @@ working unchanged.
 from __future__ import annotations
 
 import threading
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -133,15 +132,11 @@ def _read_marker_lines(path):
         return []
 
 
-def _write_marker_with_pending_fallback(direct_writer, pending_writer, root, line, warning_message):
-    direct_ok = direct_writer(root, line)
-    pending_ok = pending_writer(root, line) if not direct_ok else False
-    if not direct_ok:
-        if pending_ok:
-            helpers.ts_log(warning_message, level="WARNING")
-        else:
-            helpers.ts_log(f"{warning_message.rstrip('.')} and could not be written to the pending journal.", level="WARNING")
-    return bool(direct_ok or pending_ok)
+def _append_marker_to_pending_journal(pending_writer, root, line, marker_label):
+    pending_ok = pending_writer(root, line)
+    if not pending_ok:
+        helpers.ts_log(f"Failed to append {marker_label} marker to the pending journal.", level="WARNING")
+    return bool(pending_ok)
 
 
 def _collect_unique_pending_marker_lines(*paths):
@@ -270,13 +265,11 @@ def is_logscan_maintenance_sidecar(path):
 
 
 def _write_quickstart_marker_line(kometa_root, line, marker_kind="marker"):
-    message = f"Quickstart {marker_kind} marker could not be appended to meta.log; preserved in pending journal instead."
-    return _write_marker_with_pending_fallback(
-        append_quickstart_meta_log_line,
+    return _append_marker_to_pending_journal(
         append_kometa_pending_marker_line,
         kometa_root,
         line,
-        message,
+        f"Quickstart {marker_kind}",
     )
 
 
@@ -328,22 +321,11 @@ def append_imagemaid_pending_marker_line(imagemaid_root, line):
 
 
 def _write_imagemaid_marker_line(imagemaid_root, line, log_path=None, marker_kind="marker"):
-    def direct_writer(root, value):
-        return append_quickstart_imagemaid_log_line(root, value, log_path=log_path)
-
-    pending_target = "the live ImageMaid log"
-    if log_path:
-        try:
-            pending_target = Path(log_path).name
-        except Exception:
-            pending_target = "the live ImageMaid log"
-    message = f"ImageMaid {marker_kind} marker could not be appended to {pending_target}; preserved in pending journal instead."
-    return _write_marker_with_pending_fallback(
-        direct_writer,
+    return _append_marker_to_pending_journal(
         append_imagemaid_pending_marker_line,
         imagemaid_root,
         line,
-        message,
+        f"ImageMaid {marker_kind}",
     )
 
 
@@ -481,33 +463,7 @@ def write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=No
 
 
 def schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20, start_mode="current"):
-    log_path = _get_tool_log_dir(kometa_root) / "meta.log"
-    state = {"mtime": None, "size": None}
-    if log_path.exists():
-        try:
-            stat = log_path.stat()
-            state["mtime"] = stat.st_mtime
-            state["size"] = stat.st_size
-        except OSError:
-            pass
-
     def worker():
-        deadline = time.time() + timeout_seconds
-        while time.time() < deadline:
-            try:
-                if log_path.exists():
-                    stat = log_path.stat()
-                    if state["mtime"] is None:
-                        if stat.st_size > 0:
-                            write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
-                            return
-                    else:
-                        if stat.st_mtime != state["mtime"] and stat.st_size > 0:
-                            write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
-                            return
-            except OSError:
-                pass
-            time.sleep(0.5)
         write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
 
     threading.Thread(target=worker, daemon=True).start()

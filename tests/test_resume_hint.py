@@ -399,11 +399,15 @@ def test_read_logscan_text_appends_live_kometa_maintenance_sidecar(tmp_path, qs_
     assert content.count("Maintenance marker") == 1
 
 
-def test_write_quickstart_maintenance_marker_falls_back_to_pending_journal(monkeypatch, tmp_path, qs_module):
+def test_write_quickstart_maintenance_marker_writes_pending_journal_without_touching_meta_log(monkeypatch, tmp_path, qs_module):
     import modules.process_markers as process_markers
 
     kometa_root = tmp_path
-    monkeypatch.setattr(process_markers, "append_quickstart_meta_log_line", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(
+        process_markers,
+        "append_quickstart_meta_log_line",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("meta.log should not be written during runtime")),
+    )
 
     ok = qs_module._write_quickstart_maintenance_marker(kometa_root, "paused", window="02:00-05:00")
 

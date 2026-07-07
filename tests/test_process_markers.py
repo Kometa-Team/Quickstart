@@ -1,8 +1,12 @@
-def test_write_quickstart_run_marker_falls_back_to_pending_journal(monkeypatch, tmp_path, qs_module):
+def test_write_quickstart_run_marker_writes_pending_journal_without_touching_meta_log(monkeypatch, tmp_path, qs_module):
     import modules.process_markers as process_markers
 
     with qs_module.app.app_context():
-        monkeypatch.setattr(process_markers, "append_quickstart_meta_log_line", lambda *_args, **_kwargs: False)
+        monkeypatch.setattr(
+            process_markers,
+            "append_quickstart_meta_log_line",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("meta.log should not be written during runtime")),
+        )
 
         ok = process_markers.write_quickstart_run_marker(tmp_path, config_name="demo", start_mode="current")
 
@@ -14,10 +18,14 @@ def test_write_quickstart_run_marker_falls_back_to_pending_journal(monkeypatch, 
     assert "config=demo" in pending_text
 
 
-def test_write_quickstart_stop_marker_falls_back_to_pending_journal(monkeypatch, tmp_path):
+def test_write_quickstart_stop_marker_writes_pending_journal_without_touching_meta_log(monkeypatch, tmp_path):
     import modules.process_markers as process_markers
 
-    monkeypatch.setattr(process_markers, "append_quickstart_meta_log_line", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(
+        process_markers,
+        "append_quickstart_meta_log_line",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("meta.log should not be written during runtime")),
+    )
 
     ok = process_markers.write_quickstart_stop_marker(tmp_path, config_name="demo", reason="user_stop")
 
