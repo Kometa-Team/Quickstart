@@ -1879,7 +1879,7 @@ function syncIncompleteRunActions () {
   runRecovery.classList.toggle('d-none', !alertVisible)
   runRecovery.disabled = !recoveryRunnable
   if (recoveryRunnable) {
-    runRecovery.removeAttr('title')
+    runRecovery.removeAttribute('title')
   } else if (!alertVisible) {
     runRecovery.setAttribute('title', 'Recovery actions are only available when an incomplete-run recovery command is visible.')
   } else if (KOMETA_VALIDATION_IN_PROGRESS) {
