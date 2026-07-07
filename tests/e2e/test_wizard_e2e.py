@@ -2064,3 +2064,78 @@ def test_overlayhandler_module_loads_via_import(page, live_server):
     assert state["hasBoards"], "OverlayHandler.initializeOverlayBoards must be a function"
     assert state["hasJumpBtns"], "OverlayHandler.initializeJumpButtons must be a function"
     assert state["hasToggleSync"], "window.setupParentChildToggleSync must be a function"
+
+
+# Regression test for the jQuery straggler `runRecovery.removeAttr('title')`
+# fixed in fix/900-kometa-removeattr-regression.
+#
+# Original bug: syncIncompleteRunActions() called runRecovery.removeAttr('title')
+# — a jQuery method. On the vanilla DOM node returned by
+# document.getElementById(), that throws TypeError, breaking the whole
+# updateValidationGate() chain.
+#
+# The bug fires only when recoveryRunnable === true, which requires
+# (a) #run-recovery-command exists, (b) #incomplete-run-alert visible,
+# (c) #recovery-command-output has non-empty text, (d) no in-progress flags.
+# In the natural /step/900-kometa render these elements only appear when
+# an incomplete resume hint exists — the existing generic console-error
+# smoke test misses this code path entirely.
+#
+# We use `page.add_init_script` to install those elements BEFORE the
+# module bootstraps, then assert no TypeError fired.
+
+
+@pytest.mark.e2e
+def test_900_kometa_sync_incomplete_run_actions_no_jquery(page, live_server):
+    errors: list[str] = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.on(
+        "console",
+        lambda msg: errors.append(f"{msg.type}: {msg.text}") if msg.type == "error" else None,
+    )
+
+    # Inject the incomplete-run DOM at DOMContentLoaded, before 900-kometa.js
+    # runs its bootstrap chain (updateValidationGate -> updateRunNowState ->
+    # syncIncompleteRunActions). This puts us into the recoveryRunnable=true
+    # branch that hits the removeAttribute() call.
+    page.add_init_script("""
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!document.getElementById('incomplete-run-alert')) {
+                const alert = document.createElement('div')
+                alert.id = 'incomplete-run-alert'
+                alert.className = 'alert alert-warning'
+                document.body.appendChild(alert)
+            }
+            if (!document.getElementById('recovery-command-output')) {
+                const cmd = document.createElement('code')
+                cmd.id = 'recovery-command-output'
+                cmd.textContent = 'kometa --run something'
+                document.body.appendChild(cmd)
+            }
+            if (!document.getElementById('run-recovery-command')) {
+                const btn = document.createElement('button')
+                btn.id = 'run-recovery-command'
+                btn.setAttribute('title', 'stale placeholder title')
+                document.body.appendChild(btn)
+            }
+        }, { once: true })
+    """)
+
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    # Let the module fully bootstrap.
+    page.wait_for_timeout(500)
+
+    # 1) No TypeError from a jQuery-shaped call.
+    remove_attr_errors = [e for e in errors if "removeAttr" in e or "is not a function" in e]
+    assert not remove_attr_errors, f"900-kometa.js hit a jQuery-shaped method on a vanilla DOM element: " f"{remove_attr_errors}"
+
+    # 2) The button's stale placeholder title should be gone — proof that
+    #    removeAttribute() ran successfully in the recoveryRunnable=true
+    #    branch. (If the call had thrown, the title would still be there.)
+    button_title = page.evaluate("""() => {
+        const btn = document.getElementById('run-recovery-command')
+        return btn ? btn.getAttribute('title') : '__missing__'
+    }""")
+    assert button_title != "stale placeholder title", (
+        f"syncIncompleteRunActions didn't update the title (got: " f"'{button_title}'). Suggests the function threw before reaching " f"the title-setting branch."
+    )
