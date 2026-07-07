@@ -1106,6 +1106,68 @@ def test_config_workspace_modal_changing_selector_shows_new_config_input(page, l
         assert "d-none" in classes_after_other, f"expected d-none ADDED after switching away from add_config; got class='{classes_after_other}'"
 
 
+@pytest.mark.e2e
+def test_config_workspace_reset_dispatches_to_clear_session(page, live_server):
+    """Clicking the Reset button in the config workspace modal, then
+    confirming, should POST to /clear_session with the selected config
+    name. Regression test for the jQuery-to-fetch conversion of the
+    $.post(...) call in 001-start.js.
+
+    Extra teeth: this test explicitly asserts the fetch works even
+    WITHOUT jQuery on window -- proving the reset flow is jQuery-free.
+    (jQuery is still loaded via 000-base.html today; when it's removed
+    in a follow-up PR, this test guards that this specific code path
+    doesn't regress.)
+    """
+    captured = {"url": None, "body": None, "content_type": None}
+
+    def handle_clear(route, request):
+        captured["url"] = request.url
+        captured["body"] = request.post_data
+        captured["content_type"] = request.headers.get("content-type", "")
+        route.fulfill(status=200, json={"status": "success", "message": "Session cleared for 'pytest_cfg'."})
+
+    page.route("**/clear_session", handle_clear)
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+
+    # Delete window.jQuery / window.$ to prove the reset flow doesn't
+    # rely on them anymore. Any hidden jQuery reference in this code
+    # path would now throw.
+    page.evaluate("() => { delete window.jQuery; delete window.$ }")
+
+    # Directly simulate the flow that triggers the fetch: pick a real
+    # config, click the reset button (setting currentAction='reset'
+    # inside the closure), and click the confirm button. This avoids
+    # the bootstrap modal choreography which isn't the code under test.
+    page.evaluate("""() => {
+        const sel = document.getElementById('configSelector')
+        if (sel) {
+            const opt = document.createElement('option')
+            opt.value = 'pytest_cfg'
+            opt.textContent = 'pytest_cfg'
+            sel.appendChild(opt)
+            sel.value = 'pytest_cfg'
+            sel.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+        const resetBtn = document.querySelector('[data-action="reset"]')
+        if (resetBtn) {
+            resetBtn.disabled = false
+            resetBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        }
+        document.getElementById('confirmConfigAction').click()
+    }""")
+
+    # Give the fetch a moment to fly.
+    page.wait_for_timeout(500)
+
+    assert captured["url"] is not None, "expected /clear_session to be hit"
+    assert "clear_session" in captured["url"]
+    # Body should be form-urlencoded 'name=pytest_cfg' (matches what Flask's
+    # request.values expects; $.post historically sent this too).
+    assert captured["content_type"].startswith("application/x-www-form-urlencoded"), f"expected form-urlencoded content-type, got: {captured['content_type']!r}"
+    assert captured["body"] == "name=pytest_cfg", f"expected body='name=pytest_cfg', got: {captured['body']!r}"
+
+
 # Navigation inline-handler cleanup (Group A). Previously the templates
 # had onclick="jumpTo('...')" and onclick='loading("prev", "...")' inline.
 # Now elements carry data-jumpto-page (+optional data-jumpto-label) and
@@ -1365,8 +1427,6 @@ def test_validation_handler_show_message_textcontent_by_default(page, live_serve
     # 900-kometa has it (templates/900-kometa.html:272).
     page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     page.add_script_tag(path="static/local-js/validationHandler.js")
-    # Need jQuery for the existing $('#plex_valid') call -- 900-kometa
-    # already loads it as part of the base layout.
     page.evaluate("""
         ValidationHandler.showValidationMessage(
             'Plain <strong>text</strong> message', 'danger'

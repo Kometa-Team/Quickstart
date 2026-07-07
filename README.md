@@ -564,7 +564,7 @@ venv/bin/python -m pytest tests/test_core_backend.py -k final
 Notes for Playwright on Windows:
 
 - Playwright requires named pipes. If you see `Access is denied`, re-run PowerShell as Administrator or adjust security policy to allow Playwright browser processes.
-- E2E tests load Bootstrap and jQuery from CDNs (`cdn.jsdelivr.net`, `code.jquery.com`). If you’re behind a strict firewall, allowlist those hosts or the tests may fail to render the UI correctly.
+- E2E tests load Bootstrap from `cdn.jsdelivr.net`. If you’re behind a strict firewall, allowlist that host or the tests may fail to render the UI correctly.
 
 ## Frontend Tooling
 

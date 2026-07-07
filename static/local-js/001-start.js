@@ -973,17 +973,24 @@ document.addEventListener('DOMContentLoaded', function () {
       return
     }
     if (currentAction === 'reset') {
-      $.post('/clear_session', { name: selectedConfig }, function (response) {
-        if (response.status === 'success') {
-          showToast('success', response.message)
-          setTimeout(() => window.location.reload(), 4500)
-        } else {
-          showToast('error', response.message || 'An unexpected error occurred.')
-        }
-      }).fail(function (error) {
-        const errorMessage = error.responseJSON?.message || 'An unknown error occurred.'
-        showToast('error', errorMessage)
+      const body = new URLSearchParams({ name: selectedConfig })
+      fetch('/clear_session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
       })
+        .then(response => response.json().then(data => ({ ok: response.ok, data })))
+        .then(({ ok, data }) => {
+          if (ok && data.status === 'success') {
+            showToast('success', data.message)
+            setTimeout(() => window.location.reload(), 4500)
+          } else {
+            showToast('error', data.message || 'An unexpected error occurred.')
+          }
+        })
+        .catch(() => {
+          showToast('error', 'An unknown error occurred.')
+        })
     } else if (currentAction === 'delete') {
       fetch(`/clear_data/${selectedConfig}`, { method: 'GET' })
         .then(response => {

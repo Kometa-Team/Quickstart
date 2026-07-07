@@ -152,16 +152,6 @@ def _configure_page(page):
       Modal: function () { this.show = function () {}; this.hide = function () {}; }
     };
   }
-
-  const attachTooltip = () => {
-    const jq = window.jQuery || window.$;
-    if (jq && jq.fn && !jq.fn.tooltip) {
-      jq.fn.tooltip = function () { return this; };
-    }
-  };
-
-  attachTooltip();
-  window.addEventListener('DOMContentLoaded', attachTooltip);
 })();
 """)
 
@@ -174,7 +164,6 @@ def _configure_page(page):
             "127.0.0.1",
             "localhost",
             "cdn.jsdelivr.net",
-            "code.jquery.com",
         }
         if parsed.hostname in allowed_hosts:
             route.continue_()

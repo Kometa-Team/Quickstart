@@ -25,9 +25,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 
-  <!-- Include jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
-    crossorigin="anonymous" defer></script>
+  <!-- jQuery removed 2026-07-07 as part of Roadmap Step 7 completion.
+       All static/local-js/* is now vanilla DOM. If you need to reintroduce
+       jQuery-shaped code, please: (1) don't; (2) if you must, load jQuery
+       as a devDependency in the specific page template, not globally. -->
 
   <!-- Include SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"
