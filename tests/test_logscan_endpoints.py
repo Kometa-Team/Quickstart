@@ -851,6 +851,23 @@ def test_normalize_logscan_archive_filenames_removes_archived_maintenance_sideca
     assert not sidecar_path.exists()
 
 
+def test_normalize_logscan_archive_filenames_removes_archived_pending_marker_artifact(isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    pending_path = archive_dir / "meta.quickstart-pending.log"
+    pending_path.write_text("pending marker\n", encoding="utf-8")
+    cache = {"version": 1, "logs": {str(pending_path.resolve()): {"run_key": "run-pending", "run_complete": False}}}
+    saved = {}
+
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: cache)
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: saved.setdefault("cache", value))
+
+    result = qs_module._normalize_logscan_archive_filenames()
+
+    assert result["renamed"] == 1
+    assert not pending_path.exists()
+
+
 def test_normalize_logscan_archive_filenames_collapses_repeated_kometa_archive_stem(isolated_config_dir, monkeypatch, qs_module):
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -1155,7 +1172,7 @@ def test_logscan_progress_includes_maintenance_sidecar_and_invalidates_cache(cli
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: True)
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"libraries": {}})
 
-    qs_module.LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "sidecar_mtime": None, "sidecar_size": None, "data": None})
+    qs_module.LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
 
     first = client.get("/logscan/progress")
     assert first.status_code == 200
@@ -1180,6 +1197,28 @@ def test_logscan_progress_includes_maintenance_sidecar_and_invalidates_cache(cli
     assert second_payload["maintenance_summary"]["had_pause"] is True
     assert second_payload["maintenance_summary"]["pause_count"] == 1
     assert second_payload["maintenance_summary"]["pause_seconds"] == 120
+
+
+def test_archive_log_file_refuses_live_meta_archive_when_pending_markers_cannot_flush(isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text("live meta log\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        qs_module,
+        "_flush_quickstart_pending_markers",
+        lambda *_args, **_kwargs: {"flushed": False, "inserted": 0, "anchor": "running"},
+    )
+
+    archived = qs_module._archive_log_file(log_path, archive_dir, log_dir=log_dir, allow_live_meta=True)
+
+    assert archived is None
+    assert log_path.exists()
+    assert list(archive_dir.glob("*")) == []
 
 
 def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, monkeypatch, qs_module):

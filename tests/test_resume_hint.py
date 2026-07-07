@@ -399,18 +399,55 @@ def test_read_logscan_text_appends_live_kometa_maintenance_sidecar(tmp_path, qs_
     assert content.count("Maintenance marker") == 1
 
 
-def test_write_quickstart_maintenance_marker_falls_back_to_sidecar(monkeypatch, tmp_path, qs_module):
+def test_write_quickstart_maintenance_marker_falls_back_to_pending_journal(monkeypatch, tmp_path, qs_module):
+    import modules.process_markers as process_markers
+
     kometa_root = tmp_path
-    monkeypatch.setattr(qs_module, "_append_quickstart_meta_log_line", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(process_markers, "append_quickstart_meta_log_line", lambda *_args, **_kwargs: False)
 
     ok = qs_module._write_quickstart_maintenance_marker(kometa_root, "paused", window="02:00-05:00")
 
     assert ok is True
-    sidecar_path = qs_module._get_kometa_maintenance_sidecar_path(kometa_root)
-    assert sidecar_path.exists()
-    sidecar_text = sidecar_path.read_text(encoding="utf-8")
-    assert "event=paused" in sidecar_text
-    assert "window=02:00-05:00" in sidecar_text
+    pending_path = qs_module._get_kometa_pending_marker_path(kometa_root)
+    assert pending_path.exists()
+    pending_text = pending_path.read_text(encoding="utf-8")
+    assert "event=paused" in pending_text
+    assert "window=02:00-05:00" in pending_text
+
+
+def test_read_logscan_text_flushes_pending_markers_into_meta_log_when_stopped(monkeypatch, tmp_path, qs_module):
+    log_dir = tmp_path / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    meta_path = log_dir / "meta.log"
+    pending_path = log_dir / "meta.quickstart-pending.log"
+    meta_path.write_text(
+        "\n".join(
+            [
+                "[2026-05-05 01:00:00,000] [kometa.py:1] [INFO] | Start",
+                "# [Quickstart] Run marker: started=2026-05-05T01:00:00Z config=demo quickstart=1.0.0 branch=develop",
+                "[2026-05-05 01:01:00,000] [kometa.py:1] [INFO] | Continue",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    pending_path.write_text(
+        "[Quickstart] Maintenance marker: event=paused at=2026-05-05T02:00:00Z local_at=2026-05-05T22:00:00 window=02:00-05:00\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+
+    content = qs_module._read_logscan_text(meta_path, encoding="utf-8", errors="replace")
+
+    assert "# [Quickstart] Marker replay start" in content
+    assert "[Quickstart] Maintenance marker: event=paused" in content
+    assert not pending_path.exists()
+    saved_text = meta_path.read_text(encoding="utf-8")
+    assert "# [Quickstart] Marker replay start" in saved_text
+    config_index = saved_text.index("# [Quickstart] Run marker:")
+    replay_index = saved_text.index("# [Quickstart] Marker replay start")
+    continue_index = saved_text.index("[2026-05-05 01:01:00,000]")
+    assert config_index < replay_index < continue_index
 
 
 def test_resume_explanation_calls_out_scoped_resume_for_collections(qs_module):

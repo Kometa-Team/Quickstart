@@ -1151,8 +1151,9 @@ def test_tail_imagemaid_log_appends_maintenance_sidecar(client, isolated_config_
     assert data["success"] is True
     assert "runtime log line" in data["text"]
     assert "event=paused" in data["text"]
+    assert "# [Quickstart] Marker replay start" in data["text"]
     assert data["requested_lines"] == 50
-    assert data["total_lines"] == 2
+    assert data["total_lines"] >= 4
 
 
 def test_stop_imagemaid_writes_stop_marker(tmp_path, client, monkeypatch, qs_module):

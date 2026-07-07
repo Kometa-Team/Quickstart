@@ -244,6 +244,17 @@ class TestExtractConfigLineCount:
         )
         assert extract_config_line_count(content) == 1
 
+    def test_stops_at_bracketed_quickstart_marker(self):
+        content = "\n".join(
+            [
+                "[XXX] Redacted Config",
+                "[XXX] [config.py:1] | libraries:",
+                "[XXX] [config.py:1] |   # [Quickstart] Run marker: started=2026-05-05T01:00:00Z",
+                "[XXX] [config.py:1] |   type: movie",  # not counted
+            ]
+        )
+        assert extract_config_line_count(content) == 1
+
 
 # ---------------------------------------------------------------------------
 # extract_library_counts -- priority rules

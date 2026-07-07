@@ -57,8 +57,18 @@ def is_logscan_gzip_path(path):
     return bool(path and str(path).endswith(".gz"))
 
 
+def _read_optional_text(path, encoding="utf-8", errors="replace"):
+    try:
+        candidate = Path(path)
+        if candidate.exists() and candidate.is_file():
+            return candidate.read_text(encoding=encoding, errors=errors).strip()
+    except Exception:
+        pass
+    return ""
+
+
 def read_logscan_text(path, encoding="utf-8", errors="replace"):
-    """Read text from a logscan file, handling gzip and maintenance sidecars."""
+    """Read text from a logscan file, handling gzip and Quickstart marker journals."""
     import gzip
 
     path = Path(path)
@@ -68,17 +78,41 @@ def read_logscan_text(path, encoding="utf-8", errors="replace"):
     content = path.read_text(encoding=encoding, errors=errors)
     try:
         if path.name.lower() == "meta.log":
-            sidecar_path = path.parent / "meta.quickstart-maintenance.log"
-            if sidecar_path.exists() and sidecar_path.is_file():
-                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
-                if sidecar_content:
-                    content = f"{content.rstrip()}\n{sidecar_content}\n"
-        elif path.suffix.lower() == ".log":
-            sidecar_path = path.parent / "imagemaid.quickstart-maintenance.log"
-            if sidecar_path.exists() and sidecar_path.is_file():
-                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
-                if sidecar_content:
-                    content = f"{content.rstrip()}\n{sidecar_content}\n"
+            from modules import helpers
+            from modules.process_markers import flush_quickstart_pending_markers
+
+            kometa_root = path.parent.parent.parent
+            if not helpers.is_kometa_running():
+                flush_quickstart_pending_markers(kometa_root, require_process_stopped=True)
+                content = path.read_text(encoding=encoding, errors=errors)
+            aux_content = []
+            for aux_path in (
+                path.parent / "meta.quickstart-pending.log",
+                path.parent / "meta.quickstart-maintenance.log",
+            ):
+                text = _read_optional_text(aux_path, encoding=encoding, errors=errors)
+                if text:
+                    aux_content.append(text)
+            if aux_content:
+                content = f"{content.rstrip()}\n" + "\n".join(aux_content) + "\n"
+        elif path.suffix.lower() == ".log" and path.name.lower().startswith("imagemaid"):
+            from modules import helpers
+            from modules.process_markers import flush_imagemaid_pending_markers
+
+            imagemaid_root = path.parent.parent.parent
+            if not helpers.is_imagemaid_running():
+                flush_imagemaid_pending_markers(imagemaid_root, log_path=path, require_process_stopped=True)
+                content = path.read_text(encoding=encoding, errors=errors)
+            aux_content = []
+            for aux_path in (
+                path.parent / "imagemaid.quickstart-pending.log",
+                path.parent / "imagemaid.quickstart-maintenance.log",
+            ):
+                text = _read_optional_text(aux_path, encoding=encoding, errors=errors)
+                if text:
+                    aux_content.append(text)
+            if aux_content:
+                content = f"{content.rstrip()}\n" + "\n".join(aux_content) + "\n"
     except Exception:
         pass
     return content

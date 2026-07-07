@@ -338,7 +338,11 @@ from modules.process_control import (
     maintenance_guard_loop as _maintenance_guard_loop,
     append_quickstart_meta_log_line as _append_quickstart_meta_log_line,  # noqa: F401 (used directly by tests as qs_module._append_quickstart_meta_log_line)
     get_kometa_maintenance_sidecar_path as _get_kometa_maintenance_sidecar_path,  # noqa: F401 (used directly by tests as qs_module._get_kometa_maintenance_sidecar_path)
+    get_kometa_pending_marker_path as _get_kometa_pending_marker_path,  # noqa: F401 (used directly by tests as qs_module._get_kometa_pending_marker_path)
+    get_imagemaid_pending_marker_path as _get_imagemaid_pending_marker_path,  # noqa: F401 (used directly by tests as qs_module._get_imagemaid_pending_marker_path)
     is_logscan_maintenance_sidecar as _is_logscan_maintenance_sidecar,
+    flush_quickstart_pending_markers as _flush_quickstart_pending_markers,  # noqa: F401 (used directly by tests as qs_module._flush_quickstart_pending_markers)
+    flush_imagemaid_pending_markers as _flush_imagemaid_pending_markers,  # noqa: F401 (used directly by tests as qs_module._flush_imagemaid_pending_markers)
     write_quickstart_maintenance_marker as _write_quickstart_maintenance_marker,  # noqa: F401 (used directly by tests as qs_module._write_quickstart_maintenance_marker)
     write_quickstart_imagemaid_run_marker as _write_quickstart_imagemaid_run_marker,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     write_quickstart_stop_marker as _write_quickstart_stop_marker,
@@ -406,7 +410,7 @@ ACTIVE_WORK_POLICIES = {
 }
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
-LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
+LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "aux_signature": None, "data": None}
 
 VALIDATION_DOC_BASE = "/step/"
 VALIDATION_DOC_FALLBACK = "/step/900-kometa"
@@ -4019,6 +4023,7 @@ def logscan_progress():
     kometa_root = helpers.get_kometa_root_path()
     log_path = helpers.get_kometa_log_dir() / "meta.log"
     sidecar_path = _get_kometa_maintenance_sidecar_path(kometa_root)
+    pending_path = _get_kometa_pending_marker_path(kometa_root)
 
     if not log_path.exists():
         return jsonify({"error": f"Log file not found at: {log_path}"}), 404
@@ -4036,18 +4041,32 @@ def logscan_progress():
             except Exception:
                 max_lines = 4000
         force_full_read = max_lines is None
+        running = helpers.is_kometa_running()
+
+        if not running:
+            try:
+                _flush_quickstart_pending_markers(kometa_root, require_process_stopped=True)
+            except Exception:
+                pass
 
         log_stats = None
         try:
             log_stats = log_path.stat()
         except Exception:
             log_stats = None
-        sidecar_stats = None
-        try:
-            if sidecar_path.exists():
-                sidecar_stats = sidecar_path.stat()
-        except Exception:
-            sidecar_stats = None
+
+        def _build_aux_signature():
+            signature = []
+            for aux_path in (pending_path, sidecar_path):
+                try:
+                    if aux_path.exists() and aux_path.is_file():
+                        aux_stats = aux_path.stat()
+                        signature.append((aux_path.name.lower(), aux_stats.st_mtime, aux_stats.st_size))
+                except Exception:
+                    continue
+            return tuple(signature)
+
+        aux_signature = _build_aux_signature()
 
         cached = LOGSCAN_PROGRESS_CACHE
 
@@ -4056,11 +4075,7 @@ def logscan_progress():
                 return False
             if cached.get("mtime") != log_stats.st_mtime or cached.get("size") != log_stats.st_size:
                 return False
-            cached_sidecar_mtime = cached.get("sidecar_mtime")
-            cached_sidecar_size = cached.get("sidecar_size")
-            current_sidecar_mtime = sidecar_stats.st_mtime if sidecar_stats else None
-            current_sidecar_size = sidecar_stats.st_size if sidecar_stats else None
-            return cached_sidecar_mtime == current_sidecar_mtime and cached_sidecar_size == current_sidecar_size
+            return cached.get("aux_signature") == aux_signature
 
         def _read_progress_log_content():
             if force_full_read:
@@ -4069,10 +4084,14 @@ def logscan_progress():
                 lines = deque(handle, maxlen=max_lines)
             content = "".join(lines)
             try:
-                if sidecar_path.exists() and sidecar_path.is_file():
-                    sidecar_content = sidecar_path.read_text(encoding="utf-8", errors="replace").strip()
-                    if sidecar_content:
-                        content = f"{content.rstrip()}\n{sidecar_content}\n"
+                aux_content = []
+                for aux_path in (pending_path, sidecar_path):
+                    if aux_path.exists() and aux_path.is_file():
+                        text = aux_path.read_text(encoding="utf-8", errors="replace").strip()
+                        if text:
+                            aux_content.append(text)
+                if aux_content:
+                    content = f"{content.rstrip()}\n" + "\n".join(aux_content) + "\n"
             except Exception:
                 pass
             return content
@@ -4150,7 +4169,6 @@ def logscan_progress():
         started_at = ctx.get("started_at")
         config_path = ctx.get("config_path")
         run_mode = ctx.get("run_mode") or "all"
-        running = helpers.is_kometa_running()
         stopped_requested = bool(ctx.get("stop_requested_at"))
         cached_data = LOGSCAN_PROGRESS_CACHE.get("data")
         cache_matches_run = bool(cached_data and cached_data.get("run_started_at") == started_at)
@@ -4169,7 +4187,7 @@ def logscan_progress():
             return jsonify(data)
 
         if cached_data and cached_data.get("run_started_at") != started_at:
-            LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "sidecar_mtime": None, "sidecar_size": None, "data": None})
+            LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
         analyzer = logscan.LogscanAnalyzer()
         config_data = _load_progress_config(config_path)
         log_content = _read_progress_log_content()
@@ -4209,8 +4227,7 @@ def logscan_progress():
                 {
                     "mtime": log_stats.st_mtime,
                     "size": log_stats.st_size,
-                    "sidecar_mtime": sidecar_stats.st_mtime if sidecar_stats else None,
-                    "sidecar_size": sidecar_stats.st_size if sidecar_stats else None,
+                    "aux_signature": aux_signature,
                     "data": progress,
                 }
             )
@@ -4414,16 +4431,17 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
     for current_archive_dir in archive_dirs:
         if not current_archive_dir.exists():
             continue
-        for sidecar_path in current_archive_dir.glob("*.quickstart-maintenance.log"):
-            try:
-                source_key = str(sidecar_path.resolve())
-                sidecar_path.unlink()
-                if source_key in cache_logs:
-                    cache_logs.pop(source_key, None)
-                    cache_dirty = True
-                renamed += 1
-            except Exception as exc:
-                errors.append(f"Failed to remove archived maintenance sidecar {sidecar_path}: {exc}")
+        for marker_glob in ("*.quickstart-maintenance.log", "*.quickstart-pending.log"):
+            for sidecar_path in current_archive_dir.glob(marker_glob):
+                try:
+                    source_key = str(sidecar_path.resolve())
+                    sidecar_path.unlink()
+                    if source_key in cache_logs:
+                        cache_logs.pop(source_key, None)
+                        cache_dirty = True
+                    renamed += 1
+                except Exception as exc:
+                    errors.append(f"Failed to remove archived Quickstart marker artifact {sidecar_path}: {exc}")
 
     for path in sorted(_iter_logscan_candidate_files(include_archive=True, include_compressed=True), key=lambda item: item.name.lower()):
         if _classify_logscan_file_location(path) != "archive":
@@ -4768,9 +4786,21 @@ def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
             return None
         if _is_logscan_maintenance_sidecar(path):
             return None
+        current_tool = _detect_logscan_tool_from_path(path)
         if path.name.lower() == "meta.log" and not allow_live_meta:
             return None
         if log_dir and path.resolve().parent != Path(log_dir).resolve():
+            return None
+        flush_result = None
+        if path.name.lower() == "meta.log":
+            flush_result = _flush_quickstart_pending_markers(path.parent.parent.parent, require_process_stopped=True)
+        elif current_tool == "imagemaid" and path.name.lower() == "imagemaid.log":
+            flush_result = _flush_imagemaid_pending_markers(path.parent.parent.parent, log_path=path, require_process_stopped=True)
+        if isinstance(flush_result, dict) and not flush_result.get("flushed"):
+            helpers.ts_log(
+                f"Skipping archive for {path.name} because pending Quickstart markers could not be flushed ({flush_result.get('anchor')}).",
+                level="WARNING",
+            )
             return None
         archive_dir = Path(archive_dir)
         archive_dir.mkdir(parents=True, exist_ok=True)
