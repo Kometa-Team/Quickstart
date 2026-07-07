@@ -85,6 +85,11 @@ def _get_version_info():
     return app.config.get("VERSION_CHECK") or {}
 
 
+def _resolve_version_fields(version_info=None):
+    data = version_info if version_info is not None else _get_version_info()
+    return data.get("local_version") or "unknown", data.get("branch") or "unknown"
+
+
 def _get_tool_log_dir(root):
     return Path(root) / "config" / "logs"
 
@@ -156,6 +161,25 @@ def _clear_marker_artifacts(*paths):
         _delete_text_file(path)
 
 
+def _logger_body(line):
+    if "|" not in line:
+        return str(line).strip()
+    return line.split("|", 1)[1].rsplit("|", 1)[0].strip()
+
+
+def _is_config_marker_continuation(line):
+    body = _logger_body(line)
+    if not body or body.startswith("#") or "[Quickstart]" in body:
+        return False
+    return "=" in body and ("[config.py:" in line.lower() or line.startswith(" "))
+
+
+def _has_config_marker(line):
+    stripped = str(line).lstrip()
+    body = _logger_body(line)
+    return any(stripped.startswith(prefix) or body.startswith(prefix) for prefix in QS_CONFIG_MARKER_PREFIXES)
+
+
 def _flush_pending_marker_file(log_path, pending_paths, marker_label):
     try:
         log_path = Path(log_path)
@@ -181,9 +205,10 @@ def _flush_pending_marker_file(log_path, pending_paths, marker_label):
         anchor_name = "eof"
 
         for idx, line in enumerate(file_lines):
-            stripped = line.lstrip()
-            if any(stripped.startswith(prefix) for prefix in QS_CONFIG_MARKER_PREFIXES):
+            if _has_config_marker(line):
                 anchor_index = idx + 1
+                while anchor_index < len(file_lines) and _is_config_marker_continuation(file_lines[anchor_index]):
+                    anchor_index += 1
                 anchor_name = "config_marker"
                 break
 
@@ -191,6 +216,9 @@ def _flush_pending_marker_file(log_path, pending_paths, marker_label):
             for idx, line in enumerate(file_lines):
                 if "[Quickstart]" in line:
                     anchor_index = idx + 1
+                    if _has_config_marker(line):
+                        while anchor_index < len(file_lines) and _is_config_marker_continuation(file_lines[anchor_index]):
+                            anchor_index += 1
                     anchor_name = "quickstart_line"
                     break
 
@@ -343,11 +371,9 @@ def flush_imagemaid_pending_markers(imagemaid_root, log_path=None, require_proce
     )
 
 
-def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current"):
+def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current", version_info=None):
     try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
+        qs_version, qs_branch = _resolve_version_fields(version_info)
         safe_config = (config_name or "default").strip() or "default"
         safe_start_mode = normalize_kometa_start_mode(start_mode)
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -463,8 +489,10 @@ def write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=No
 
 
 def schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20, start_mode="current"):
+    version_info = dict(_get_version_info())
+
     def worker():
-        write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
+        write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode, version_info=version_info)
 
     threading.Thread(target=worker, daemon=True).start()
 
