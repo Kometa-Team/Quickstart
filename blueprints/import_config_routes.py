@@ -12,8 +12,8 @@ Public surface (used by tests via ``qs_module.<name>`` re-exports):
 
 ## File-size note
 
-This file is ~730 lines, still above the 600-line soft-limit.  Six
-chunks have moved out:
+This file has shrunk substantially -- six extraction PRs have moved
+chunks out:
 
 * :mod:`blueprints.import_config_helpers` -- 12 pure helpers (~245 lines)
 * :mod:`blueprints.import_config_bundle` -- upload / zip extraction
@@ -30,7 +30,8 @@ chunks have moved out:
 
 All four routes are now under 250 lines each.  The four remain in
 one file because they're tightly coupled through the shared
-session-cache flow.
+session-cache flow (import_preview_token / import_preview_path /
+import_preview_*_url / import_preview_*_token).
 """
 
 import json

@@ -141,7 +141,7 @@ def validate_plex_credentials(
                 jsonify(
                     success=False,
                     needs_plex_credentials=True,
-                    message=("Plex credentials are required to import library settings. " "Enter a Plex URL and token to continue."),
+                    message=("Plex credentials are required to import library settings. Enter a Plex URL and token to continue."),
                     plex_url="",
                     plex_token="",
                 ),
@@ -198,7 +198,7 @@ def validate_plex_credentials(
                         jsonify(
                             success=False,
                             needs_plex_credentials=True,
-                            message=last_error or ("Plex credentials from the import/base config could not be validated. " "Please enter a valid Plex URL and token."),
+                            message=last_error or ("Plex credentials from the import/base config could not be validated. Please enter a valid Plex URL and token."),
                             plex_url=imported_plex_url or base_plex_url or "",
                             plex_token=imported_plex_token or base_plex_token or "",
                         ),
