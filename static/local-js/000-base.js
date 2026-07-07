@@ -437,15 +437,25 @@ function jumpTo (targetPage, targetLabel) {
   }
 
   // Append custom webhook URLs if needed
-  $('select.form-select').each(function () {
-    if ($(this).val() === 'custom') {
-      const customInputId = $(this).attr('id') + '_custom'
-      const customUrl = $('#' + customInputId).find('input.custom-webhook-url').val()
-      if (customUrl) {
-        $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>')
-        $(this).val(customUrl)
-      }
-    }
+  // NOTE: This block is functionally duplicated by 090-webhooks.js's
+  // form-submit listener, which runs the same select.form-select loop.
+  // Both are safe (idempotent on the same select): whichever runs first
+  // sets select.value to the URL, then the other's `select.value !==
+  // 'custom'` check short-circuits. Not consolidated here because
+  // jumpTo runs on every page (this block is defensively a no-op
+  // everywhere except 090-webhooks).
+  document.querySelectorAll('select.form-select').forEach(select => {
+    if (select.value !== 'custom') return
+    const customInputContainer = document.getElementById(select.id + '_custom')
+    const customUrlInput = customInputContainer?.querySelector('input.custom-webhook-url')
+    const customUrl = customUrlInput?.value
+    if (!customUrl) return
+    const opt = document.createElement('option')
+    opt.value = customUrl
+    opt.textContent = customUrl
+    opt.selected = true
+    select.appendChild(opt)
+    select.value = customUrl
   })
 
   const resolvedTargetLabel = String(targetLabel || '').trim() || qsGetStepLabel(targetPage)
