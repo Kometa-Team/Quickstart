@@ -18,6 +18,34 @@ def test_write_quickstart_run_marker_writes_pending_journal_without_touching_met
     assert "config=demo" in pending_text
 
 
+def test_schedule_quickstart_run_marker_preserves_version_outside_app_context(monkeypatch, tmp_path, qs_module):
+    import modules.process_markers as process_markers
+
+    captured = {}
+
+    class FakeThread:
+        def __init__(self, target, daemon=False):
+            captured["target"] = target
+            captured["daemon"] = daemon
+
+        def start(self):
+            captured["started"] = True
+
+    monkeypatch.setattr(process_markers.threading, "Thread", FakeThread)
+    qs_module.app.config["VERSION_CHECK"] = {"local_version": "0.10.4-build236", "branch": "develop"}
+
+    with qs_module.app.app_context():
+        process_markers.schedule_quickstart_run_marker(tmp_path, config_name="demo", start_mode="current")
+
+    assert captured["started"] is True
+    assert captured["daemon"] is True
+    captured["target"]()
+
+    pending_text = process_markers.get_kometa_pending_marker_path(tmp_path).read_text(encoding="utf-8")
+    assert "quickstart=0.10.4-build236" in pending_text
+    assert "branch=develop" in pending_text
+
+
 def test_write_quickstart_stop_marker_writes_pending_journal_without_touching_meta_log(monkeypatch, tmp_path):
     import modules.process_markers as process_markers
 
@@ -68,6 +96,42 @@ def test_flush_quickstart_pending_markers_falls_back_to_first_quickstart_line(mo
     continue_index = saved_text.index("[2026-05-05 01:01:00,000]")
     assert run_marker_index < replay_index < continue_index
     assert not pending_path.exists()
+
+
+def test_flush_quickstart_pending_markers_inserts_after_wrapped_config_marker(monkeypatch, tmp_path, qs_module):
+    log_dir = tmp_path / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    meta_path = log_dir / "meta.log"
+    pending_path = log_dir / "meta.quickstart-pending.log"
+    run_marker_line = (
+        "[2026-07-07 16:48:11,436] [config.py:296]             [DEBUG]    | " "# [Quickstart] Run marker: started=2026-07-07T20:48:08.128590+00:00                                |"
+    )
+    marker_continuation_line = (
+        "[2026-07-07 16:48:11,436] [config.py:296]             [DEBUG]    | " "  config=docker_unraid_bullmoose20_prod quickstart=0.10.4-build236 branch=develop                  |"
+    )
+    warning_line = (
+        "[2026-07-07 16:48:12,093] [config.py:625]             [WARNING]  | " "Config Warning: settings sub-attribute auto_sort_hubs not found using None as default              |"
+    )
+    meta_path.write_text(
+        "\n".join([run_marker_line, marker_continuation_line, warning_line]) + "\n",
+        encoding="utf-8",
+    )
+    pending_path.write_text(
+        "[Quickstart] Maintenance marker: event=paused at=2026-07-07T20:49:15Z local_at=2026-07-07T16:49:15 window=02:00-19:00\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    result = qs_module._flush_quickstart_pending_markers(tmp_path, require_process_stopped=True)
+
+    assert result["flushed"] is True
+    assert result["anchor"] == "config_marker"
+    saved_text = meta_path.read_text(encoding="utf-8")
+    run_marker_index = saved_text.index("# [Quickstart] Run marker:")
+    continuation_index = saved_text.index("config=docker_unraid_bullmoose20_prod")
+    replay_index = saved_text.index("# [Quickstart] Marker replay start")
+    warning_index = saved_text.index("Config Warning: settings sub-attribute auto_sort_hubs")
+    assert run_marker_index < continuation_index < replay_index < warning_index
 
 
 def test_stamp_quickstart_config_marker_replaces_legacy_prefix(tmp_path):
