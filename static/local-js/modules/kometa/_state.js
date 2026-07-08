@@ -86,5 +86,23 @@ export const kometaState = {
   // syncFinalAccordionRollups, the run controls, and the update job
   // to gate their UI. Was a top-level `let showYAML` in 900-kometa.js
   // pre-migration.
-  showYAML: false
+  showYAML: false,
+
+  // ---- Run command override ---------------------------------------
+  // When set, the run-command output panel shows this specific
+  // command (instead of the one buildCommand would freshly produce).
+  // Used for two paths:
+  //   - "recovery": show the command that Kometa was invoked with
+  //     when a run was interrupted and needs to be resumed
+  //   - "logged": show the command from the last completed log
+  //
+  // activeRunCommandOverride  = string or null (the frozen command)
+  // activeRunCommandMode      = 'current' | 'recovery' | 'logged'
+  //
+  // Written by applyActiveRunCommandState / clearActiveRunCommandState
+  // in _runCommand.js. Read by buildCommand (to decide whether to
+  // overwrite the output panel) and by the run-command polling loop
+  // (to include mode in the start-run payload).
+  activeRunCommandOverride: null,
+  activeRunCommandMode: null
 }

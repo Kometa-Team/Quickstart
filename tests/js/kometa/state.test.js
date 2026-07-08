@@ -77,9 +77,25 @@ describe('kometaState initial values', () => {
     expect(typeof kometaState.showYAML).toBe('boolean')
   })
 
+  it('activeRunCommandOverride starts as null', () => {
+    // Null (not '' or undefined) so buildCommand's
+    // `if (!kometaState.activeRunCommandOverride)` short-circuit
+    // works uniformly on first load.
+    expect(kometaState.activeRunCommandOverride).toBeNull()
+  })
+
+  it('activeRunCommandMode starts as null', () => {
+    // Callers fall back to 'current' or 'recovery' explicitly when
+    // no mode is set, so null (rather than 'current') keeps the
+    // "never been set" state distinguishable from "set to current".
+    expect(kometaState.activeRunCommandMode).toBeNull()
+  })
+
   it('exports exactly the fields the runtime relies on (guards against typos)', () => {
     // Sorted alphabetically for a stable comparison
     expect(Object.keys(kometaState).sort()).toEqual([
+      'activeRunCommandMode',
+      'activeRunCommandOverride',
       'kometaInterval',
       'kometaPollingStarted',
       'kometaProgressInterval',
