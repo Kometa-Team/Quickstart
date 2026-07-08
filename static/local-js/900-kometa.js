@@ -1,4 +1,25 @@
 // Global flag so other handlers know an update is in progress
+import {
+  quoteIfNeeded,
+  formatElapsed,
+  computeYamlLineCount,
+  normalizeFontName,
+  formatHeaderStyleLabel,
+  linkifyText,
+  formatTimestampLocal,
+  clampPercent,
+  formatRunSeconds,
+  coerceRunSeconds,
+  isValidTimesFormat,
+  isTimeWithinRange,
+  applyLogFilter,
+  computeLogStats,
+  pushSparkValue,
+  buildSparklinePoints,
+  buildSparklinePointsScaled,
+  copyTextToClipboard
+} from './modules/kometa/_util.js'
+
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
 let KOMETA_VALIDATION_IN_PROGRESS = false
@@ -35,6 +56,16 @@ let kometaUpdatePollInterval = null
 let kometaUpdateJobId = null
 let kometaUpdateLogIndex = 0
 
+// Sparkline state buffers. Rendering + reset + update functions that
+// operate on this still live in this file; the pure geometry helpers
+// (pushSparkValue, buildSparklinePoints, buildSparklinePointsScaled)
+// were extracted to _util.js.
+const runSparkState = {
+  cpu: { system: [], kometa: [] },
+  mem: { system: [], kometa: [] },
+  io: { read: [], write: [] }
+}
+
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
 const isWindows = typeof runningOn === 'string' && runningOn.includes('Windows')
@@ -43,15 +74,6 @@ const isWindows = typeof runningOn === 'string' && runningOn.includes('Windows')
 
 // function toDisplayPath (p) { return isWindows ? String(p).replace(/\//g, '\\') : String(p) }
 // function toPosix (p) { return String(p).replace(/\\/g, '/') }
-function quoteIfNeeded (s) { return /\s/.test(s) ? `"${s}"` : s }
-
-function formatElapsed (ms) {
-  const sec = Math.floor(ms / 1000)
-  const mm = String(Math.floor(sec / 60)).padStart(2, '0')
-  const ss = String(sec % 60).padStart(2, '0')
-  return `${mm}:${ss}`
-}
-
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
 const tailSelect = document.getElementById('run-log-tail')
@@ -428,14 +450,6 @@ if (tailSelect) {
   })
 }
 
-function computeYamlLineCount (text) {
-  if (!text) return 0
-  const normalized = String(text).replace(/\r\n/g, '\n')
-  let count = normalized.split('\n').length
-  if (normalized.endsWith('\n')) count -= 1
-  return Math.max(0, count)
-}
-
 function updateYamlLineCount () {
   if (!yamlLineCount || !yamlOutput) return
   const lineCount = computeYamlLineCount(yamlOutput.value)
@@ -445,16 +459,6 @@ function updateYamlLineCount () {
 
 updateYamlLineCount()
 yamlOutput?.addEventListener('input', updateYamlLineCount)
-
-function normalizeFontName (value) {
-  return String(value || '').trim().replace(/_/g, ' ')
-}
-
-function formatHeaderStyleLabel (value) {
-  const text = normalizeFontName(value)
-  if (!text) return 'Single line'
-  return text.replace(/_/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
-}
 
 function updateHeaderStyleLabel (value) {
   if (!headerStyleLabel) return
@@ -1414,31 +1418,6 @@ if (document.getElementById('run-command-output')) {
 
 initBootstrapTooltips(document, '[title]', { html: false, sanitize: true, placement: 'top', trigger: 'hover' })
 initBootstrapTooltips(document)
-
-function copyTextToClipboard (text) {
-  if (!text) return Promise.reject(new Error('Empty text'))
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text)
-  }
-  return new Promise((resolve, reject) => {
-    const textarea = document.createElement('textarea')
-    textarea.value = text
-    textarea.setAttribute('readonly', '')
-    textarea.style.position = 'absolute'
-    textarea.style.left = '-9999px'
-    document.body.appendChild(textarea)
-    textarea.select()
-    try {
-      const success = document.execCommand('copy')
-      document.body.removeChild(textarea)
-      if (success) resolve()
-      else reject(new Error('Copy failed'))
-    } catch (err) {
-      document.body.removeChild(textarea)
-      reject(err)
-    }
-  })
-}
 
 function syncKometaUpdateAttention () {
   if (kometaActionsHeading && kometaActionsToggle) {
@@ -2733,51 +2712,6 @@ pauseLogBtn?.addEventListener('click', function() {
   }
 })
 
-function applyLogFilter (text, filter) {
-  if (!filter) return text
-
-  // Support literal matching by default; allow regex if user wraps with /
-  const trimmed = filter.trim()
-  let re
-  try {
-    if (trimmed.length > 2 && trimmed.startsWith('/') && trimmed.endsWith('/')) {
-      re = new RegExp(trimmed.slice(1, -1), 'i')
-    } else {
-      const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      re = new RegExp(escaped, 'i')
-    }
-  } catch {
-    return text
-  }
-
-  return text.split('\n').filter(line => re.test(line)).join('\n')
-}
-
-function computeLogStats (text) {
-  const stats = {
-    cache: 0,
-    debug: 0,
-    info: 0,
-    warning: 0,
-    error: 0,
-    critical: 0,
-    trace: 0
-  }
-  if (!text) return stats
-  const lines = text.split(/\r?\n/)
-  lines.forEach(line => {
-    if (!line) return
-    if (line.toLowerCase().includes('from cache')) stats.cache += 1
-    if (line.includes('[DEBUG]')) stats.debug += 1
-    if (line.includes('[INFO]')) stats.info += 1
-    if (line.includes('[WARNING]')) stats.warning += 1
-    if (line.includes('[ERROR]')) stats.error += 1
-    if (line.includes('[CRITICAL]')) stats.critical += 1
-    if (line.toLowerCase().includes('traceback')) stats.trace += 1
-  })
-  return stats
-}
-
 function updateStatRow (row, stats) {
   if (!row || !stats) return
   const keys = ['cache', 'debug', 'info', 'warning', 'error', 'critical', 'trace']
@@ -2797,144 +2731,10 @@ function renderLogStats () {
   updateStatRow(logStatsFiltered, filteredStats)
 }
 
-function formatRunSeconds (seconds) {
-  if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return ''
-  const total = Math.max(0, Math.floor(seconds))
-  const hrs = Math.floor(total / 3600)
-  const mins = Math.floor((total % 3600) / 60)
-  const secs = total % 60
-  const parts = []
-  if (hrs) parts.push(`${hrs}h`)
-  if (mins || hrs) parts.push(`${mins}m`)
-  parts.push(`${secs}s`)
-  return parts.join(' ')
-}
-
-function coerceRunSeconds (value) {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value !== 'string') return null
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed)
-  const clockMatch = trimmed.match(/^(\d+):(\d{2}):(\d{2})$/)
-  if (clockMatch) {
-    const hrs = Number(clockMatch[1])
-    const mins = Number(clockMatch[2])
-    const secs = Number(clockMatch[3])
-    if ([hrs, mins, secs].every(num => Number.isFinite(num))) {
-      return (hrs * 3600) + (mins * 60) + secs
-    }
-  }
-  let total = 0
-  let matched = false
-  const hoursMatch = trimmed.match(/(\d+)\s*h\b/i)
-  if (hoursMatch) {
-    total += Number(hoursMatch[1]) * 3600
-    matched = true
-  }
-  const minsMatch = trimmed.match(/(\d+)\s*m\b/i)
-  if (minsMatch) {
-    total += Number(minsMatch[1]) * 60
-    matched = true
-  }
-  const secsMatch = trimmed.match(/(\d+)\s*s\b/i)
-  if (secsMatch) {
-    total += Number(secsMatch[1])
-    matched = true
-  }
-  if (matched && Number.isFinite(total)) return total
-  return null
-}
-
-function escapeHtml (value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
-function linkifyText (value) {
-  if (!value) return ''
-  const escaped = escapeHtml(value)
-  const placeholders = []
-  let counter = 0
-  const withPlaceholders = escaped.replace(/\[(https?:\/\/[^\s\]]+)\]/g, (_match, url) => {
-    const token = `__URLTOKEN${counter}__`
-    placeholders.push({ token, url })
-    counter += 1
-    return token
-  })
-  let linked = withPlaceholders.replace(/(https?:\/\/[^\s<]+)/g, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
-  })
-  placeholders.forEach(({ token, url }) => {
-    const anchor = `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
-    linked = linked.replace(token, anchor)
-  })
-  return linked
-}
-
-function formatTimestampLocal (value) {
-  if (!value) return 'n/a'
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return String(value)
-  return parsed.toLocaleString()
-}
-
 function updateTailNotice () {
   if (!tailNotice) return
   const sizeLabel = tailSize === 'all' ? 'all lines' : `last ${tailSize} lines`
   tailNotice.textContent = `Showing ${sizeLabel} from meta.log`
-}
-
-const SPARKLINE_WIDTH = 180
-const SPARKLINE_HEIGHT = 48
-const SPARKLINE_PADDING = 2
-const SPARKLINE_MAX_POINTS = 40
-const runSparkState = {
-  cpu: { system: [], kometa: [] },
-  mem: { system: [], kometa: [] },
-  io: { read: [], write: [] }
-}
-
-function clampPercent (value) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return null
-  return Math.max(0, Math.min(100, value))
-}
-
-function pushSparkValue (series, value) {
-  if (value == null) {
-    if (!series.length) return false
-    series.push(series[series.length - 1])
-  } else {
-    series.push(value)
-  }
-  if (series.length > SPARKLINE_MAX_POINTS) series.shift()
-  return true
-}
-
-function buildSparklinePoints (series) {
-  if (!series.length) return ''
-  const width = SPARKLINE_WIDTH - SPARKLINE_PADDING * 2
-  const height = SPARKLINE_HEIGHT - SPARKLINE_PADDING * 2
-  const step = series.length > 1 ? width / (series.length - 1) : 0
-  return series.map((value, idx) => {
-    const x = SPARKLINE_PADDING + (idx * step)
-    const y = SPARKLINE_PADDING + (height - (height * (value / 100)))
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
-}
-
-function buildSparklinePointsScaled (series, maxValue) {
-  if (!series.length) return ''
-  const safeMax = typeof maxValue === 'number' && Number.isFinite(maxValue) && maxValue > 0 ? maxValue : 1
-  const normalized = series.map(value => {
-    if (typeof value !== 'number' || !Number.isFinite(value)) return 0
-    return Math.max(0, Math.min(100, (value / safeMax) * 100))
-  })
-  return buildSparklinePoints(normalized)
 }
 
 function renderRunSparklines () {
@@ -3943,13 +3743,6 @@ function checkKometaStatus () {
     })
 }
 
-function isValidTimesFormat (timesStr) {
-  if (!timesStr.trim()) return false
-  const times = timesStr.split('|')
-  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
-  return times.every(t => timeRegex.test(t.trim()))
-}
-
 function toggleTimesInputVisibility (mainOption) {
   const timesContainer = document.getElementById('times-input-container')
   if (mainOption === '--times') {
@@ -3966,15 +3759,6 @@ function getMaintenanceWindow () {
 
   const [start, end] = windowStr.split('–').map(t => t.trim())
   return { start, end } // Strings in "HH:MM" format
-}
-
-function isTimeWithinRange (time, rangeStart, rangeEnd) {
-  const toMinutes = t => {
-    const [h, m] = t.split(':').map(Number)
-    return h * 60 + m
-  }
-  const timeMin = toMinutes(time)
-  return timeMin >= toMinutes(rangeStart) && timeMin < toMinutes(rangeEnd)
 }
 
 function checkMaintenanceWarning (mainOption) {
