@@ -23,6 +23,15 @@ import {
   checkMaintenanceWarning
 } from './modules/kometa/_maintenanceWindow.js'
 import { kometaState } from './modules/kometa/_state.js'
+import {
+  setHeaderRollupBadge,
+  updateSectionStyleHeaderBadge,
+  updateModeHeaderBadge,
+  updateRunOptionHeaderBadge,
+  updateModeFlagsHeaderBadge,
+  updateLogFlagsHeaderBadge,
+  updateOtherFlagsHeaderBadge
+} from './modules/kometa/_headerBadges.js'
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -181,32 +190,6 @@ function setMetaFlag (id, datasetKey, attrKey, value) {
   el.setAttribute(`data-${attrKey}`, serialized)
 }
 
-function setHeaderRollupBadge (id, state, label) {
-  const badge = document.getElementById(id)
-  if (!badge) return
-  badge.textContent = label
-  badge.classList.remove(
-    'qs-validation-rollup-badge--unknown',
-    'qs-validation-rollup-badge--ok',
-    'qs-validation-rollup-badge--warn',
-    'qs-validation-rollup-badge--error'
-  )
-  const normalized = ['unknown', 'ok', 'warn', 'error'].includes(state) ? state : 'unknown'
-  badge.classList.add(`qs-validation-rollup-badge--${normalized}`)
-}
-
-function prettifyFlag (value) {
-  const raw = String(value || '').trim()
-  if (!raw) return 'Default'
-  const noPrefix = raw.replace(/^--/, '')
-  return noPrefix.replace(/-/g, ' ')
-}
-
-function updateSectionStyleHeaderBadge (value) {
-  const label = formatHeaderStyleLabel(value)
-  setHeaderRollupBadge('header-style-rollup-badge', 'ok', label || 'Active')
-}
-
 function updateConfigOutputHeaderBadges () {
   const yamlText = yamlOutput ? String(yamlOutput.value || '') : ''
   const lineCount = computeYamlLineCount(yamlText)
@@ -216,71 +199,6 @@ function updateConfigOutputHeaderBadges () {
     return
   }
   setHeaderRollupBadge('config-output-rollup-badge', showYAML ? 'ok' : 'error', showYAML ? 'Validated' : 'Needs fixes')
-}
-
-function updateModeHeaderBadge () {
-  const cliToggle = document.getElementById('show-cli-toggle')
-  const showCli = Boolean(cliToggle && cliToggle.checked)
-  setHeaderRollupBadge('heading-mode-rollup-badge', showCli ? 'ok' : 'unknown', showCli ? 'CLI labels' : 'Friendly')
-}
-
-function updateRunOptionHeaderBadge () {
-  const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value || ''
-  const libSelect = document.getElementById('library-multiselect')
-  const selectedLibs = libSelect ? Array.from(libSelect.selectedOptions || []).map(o => o.value) : []
-  if (mainOption === '--run-libraries') {
-    if (!selectedLibs.length) {
-      setHeaderRollupBadge('heading-runopt-rollup-badge', 'warn', 'Libraries needed')
-    } else {
-      setHeaderRollupBadge('heading-runopt-rollup-badge', 'ok', `${selectedLibs.length} libraries`)
-    }
-    return
-  }
-  if (mainOption === '--times') {
-    const timesInput = document.getElementById('times-input').value.trim()
-    if (!timesInput) {
-      setHeaderRollupBadge('heading-runopt-rollup-badge', 'warn', 'Times needed')
-      return
-    }
-    setHeaderRollupBadge('heading-runopt-rollup-badge', isValidTimesFormat(timesInput) ? 'ok' : 'error', isValidTimesFormat(timesInput) ? 'Times set' : 'Invalid times')
-    return
-  }
-  if (mainOption === '--run') {
-    setHeaderRollupBadge('heading-runopt-rollup-badge', 'ok', 'Run now')
-    return
-  }
-  setHeaderRollupBadge('heading-runopt-rollup-badge', 'unknown', 'Scheduled')
-}
-
-function updateModeFlagsHeaderBadge () {
-  const modeFlag = (document.querySelector('input[name="mode-flag"]:checked') || {}).value || ''
-  setHeaderRollupBadge('heading-modeflags-rollup-badge', modeFlag ? 'ok' : 'unknown', prettifyFlag(modeFlag))
-}
-
-function updateLogFlagsHeaderBadge () {
-  const logFlag = (document.querySelector('input[name="log-flag"]:checked') || {}).value || ''
-  setHeaderRollupBadge('heading-logflags-rollup-badge', logFlag ? 'ok' : 'unknown', prettifyFlag(logFlag))
-}
-
-function updateOtherFlagsHeaderBadge () {
-  const isChecked = (id) => {
-    const el = document.getElementById(id)
-    return Boolean(el && el.checked)
-  }
-  const coreCount = [
-    'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
-    'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-    'ignore-schedules', 'no-verify-ssl', 'tests'
-  ].filter(opt => isChecked(`opt-${opt}`)).length
-  const extrasCount = (isChecked('opt-timeout') ? 1 : 0) +
-    (isChecked('opt-divider') ? 1 : 0) +
-    (isChecked('opt-width') ? 1 : 0)
-  const total = coreCount + extrasCount
-  if (!total) {
-    setHeaderRollupBadge('heading-otherflags-rollup-badge', 'unknown', 'Default')
-    return
-  }
-  setHeaderRollupBadge('heading-otherflags-rollup-badge', 'ok', `${total} enabled`)
 }
 
 function updateRunCommandHeaderBadge () {
