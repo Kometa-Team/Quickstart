@@ -3,8 +3,6 @@ import {
   quoteIfNeeded,
   formatElapsed,
   computeYamlLineCount,
-  normalizeFontName,
-  formatHeaderStyleLabel,
   linkifyText,
   formatTimestampLocal,
   clampPercent,
@@ -25,13 +23,17 @@ import {
 import { kometaState } from './modules/kometa/_state.js'
 import {
   setHeaderRollupBadge,
-  updateSectionStyleHeaderBadge,
   updateModeHeaderBadge,
   updateRunOptionHeaderBadge,
   updateModeFlagsHeaderBadge,
   updateLogFlagsHeaderBadge,
   updateOtherFlagsHeaderBadge
 } from './modules/kometa/_headerBadges.js'
+import {
+  updateHeaderStyleLabel,
+  setActiveGridCard,
+  loadHeaderGridSamples
+} from './modules/kometa/_headerGrid.js'
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -129,10 +131,6 @@ const headerGrid = document.getElementById('header-style-grid')
 const headerGridCollapse = document.getElementById('header-style-grid-collapse')
 const headerStyleWait = document.getElementById('header-style-wait')
 const finalContentWrapper = document.getElementById('final-content-wrapper')
-const headerGridStatus = document.getElementById('header-style-grid-status')
-const headerGridProgress = document.getElementById('header-style-grid-progress')
-const headerGridProgressBar = headerGridProgress ? headerGridProgress.querySelector('.progress-bar') : null
-const headerStyleLabel = document.getElementById('header-style-label')
 const kometaActionsHeading = document.getElementById('kometa-actions-heading')
 const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
 const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
@@ -377,12 +375,6 @@ function updateYamlLineCount () {
 updateYamlLineCount()
 yamlOutput?.addEventListener('input', updateYamlLineCount)
 
-function updateHeaderStyleLabel (value) {
-  if (!headerStyleLabel) return
-  headerStyleLabel.textContent = formatHeaderStyleLabel(value)
-  updateSectionStyleHeaderBadge(value)
-}
-
 function initBootstrapTooltips (scope, selector, options) {
   if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return
   const root = scope || document
@@ -418,109 +410,6 @@ function disposeBootstrapTooltips (scope, selector) {
     const existing = bootstrap.Tooltip.getInstance(el)
     if (existing) existing.dispose()
   })
-}
-
-function setActiveGridCard (fontName) {
-  if (!headerGrid) return
-  const activeFont = normalizeFontName(fontName)
-  headerGrid.querySelectorAll('.header-style-card').forEach(card => {
-    card.classList.toggle('active', card.dataset.font === activeFont)
-  })
-}
-
-function updateGridStatus (message) {
-  if (headerGridStatus) headerGridStatus.textContent = message || ''
-}
-
-function updateGridProgress (loaded, total) {
-  if (!headerGridProgress || !headerGridProgressBar) return
-  if (!total) {
-    headerGridProgress.classList.add('d-none')
-    headerGridProgressBar.style.width = '0%'
-    return
-  }
-  const pct = Math.min(100, Math.round((loaded / total) * 100))
-  headerGridProgress.classList.remove('d-none')
-  headerGridProgressBar.style.width = `${pct}%`
-}
-
-async function loadHeaderGridSamples () {
-  if (!headerGrid) return
-  const fonts = JSON.parse(headerGrid.dataset.fonts || '[]')
-  if (!fonts.length) {
-    headerGrid.replaceChildren()
-    const empty = document.createElement('div')
-    empty.className = 'text-muted small'
-    empty.textContent = 'No fonts available.'
-    headerGrid.appendChild(empty)
-    updateGridStatus('')
-    updateGridProgress(0, 0)
-    return
-  }
-
-  updateGridStatus(`Loading ${fonts.length} font previews...`)
-  updateGridProgress(0, fonts.length)
-
-  headerGrid.replaceChildren()
-  fonts.forEach(font => {
-    const card = document.createElement('button')
-    card.type = 'button'
-    card.className = 'header-style-card'
-    card.dataset.font = font
-    const title = document.createElement('div')
-    title.className = 'header-style-card-title'
-    title.textContent = font.replace(/_/g, ' ')
-    const preview = document.createElement('pre')
-    preview.className = 'header-style-card-preview'
-    preview.textContent = 'Loading...'
-    card.insertAdjacentHTML('beforeend', title, preview)
-    card.addEventListener('click', () => {
-      if (headerSelect) {
-        headerSelect.value = font
-        headerSelect.dispatchEvent(new Event('change'))
-      }
-      updateHeaderStyleLabel(font)
-      setActiveGridCard(font)
-    })
-    headerGrid.appendChild(card)
-  })
-
-  setActiveGridCard(headerSelect ? headerSelect.value : '')
-
-  const chunkSize = 12
-  let loadedCount = 0
-  for (let i = 0; i < fonts.length; i += chunkSize) {
-    const chunk = fonts.slice(i, i + chunkSize)
-    try {
-      const res = await fetch('/header-style-previews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fonts: chunk })
-      })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Preview unavailable.')
-      }
-      const previews = data.previews || []
-      previews.forEach(entry => {
-        const card = headerGrid.querySelector(`.header-style-card[data-font="${entry.font}"]`)
-        const pre = card ? card.querySelector('.header-style-card-preview') : null
-        if (pre) pre.textContent = entry.preview || ''
-      })
-    } catch {
-      chunk.forEach(font => {
-        const card = headerGrid.querySelector(`.header-style-card[data-font="${font}"]`)
-        const pre = card ? card.querySelector('.header-style-card-preview') : null
-        if (pre) pre.textContent = 'Preview unavailable.'
-      })
-    }
-    loadedCount += chunk.length
-    updateGridStatus(`Loaded ${Math.min(loadedCount, fonts.length)} of ${fonts.length} previews`)
-    updateGridProgress(Math.min(loadedCount, fonts.length), fonts.length)
-  }
-  updateGridStatus(`Loaded ${fonts.length} previews`)
-  updateGridProgress(fonts.length, fonts.length)
-  setTimeout(() => updateGridProgress(0, 0), 800)
 }
 
 if (headerGridCollapse && headerGrid) {
