@@ -4,14 +4,10 @@ import {
   computeYamlLineCount,
   linkifyText,
   formatTimestampLocal,
-  clampPercent,
   formatRunSeconds,
   coerceRunSeconds,
   applyLogFilter,
   computeLogStats,
-  pushSparkValue,
-  buildSparklinePoints,
-  buildSparklinePointsScaled,
   copyTextToClipboard,
   setMetaFlag
 } from './modules/kometa/_util.js'
@@ -49,6 +45,9 @@ import {
   applyActiveRunCommandState,
   clearActiveRunCommandState
 } from './modules/kometa/_runCommand.js'
+import {
+  updateRunSparklines
+} from './modules/kometa/_sparklines.js'
 
 // Thin wrapper: buildCommand needs updateRunNowState and
 // syncFinalAccordionRollups callbacks, but both are still owned by
@@ -84,16 +83,6 @@ let runProgressInFlight = false
 let latestKometaStatusPayload = null
 const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
 
-// Sparkline state buffers. Rendering + reset + update functions that
-// operate on this still live in this file; the pure geometry helpers
-// (pushSparkValue, buildSparklinePoints, buildSparklinePointsScaled)
-// were extracted to _util.js.
-const runSparkState = {
-  cpu: { system: [], kometa: [] },
-  mem: { system: [], kometa: [] },
-  io: { read: [], write: [] }
-}
-
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
 const tailSelect = document.getElementById('run-log-tail')
@@ -125,11 +114,6 @@ const runStatusRow = document.getElementById('run-status-row')
 const runStatusTimer = document.getElementById('run-status-timer')
 const runStatusMetrics = document.getElementById('run-status-metrics')
 const runStatusLog = document.getElementById('run-status-log')
-const runStatusSparklines = document.getElementById('run-status-sparklines')
-const runSparkCpuSystem = document.getElementById('run-spark-cpu-system')
-const runSparkCpuKometa = document.getElementById('run-spark-cpu-kometa')
-const runSparkMemSystem = document.getElementById('run-spark-mem-system')
-const runSparkMemKometa = document.getElementById('run-spark-mem-kometa')
 const yamlOutput = document.getElementById('final-yaml')
 const yamlLineCount = document.getElementById('yaml-line-count')
 const stopModalEl = document.getElementById('stop-kometa-modal')
@@ -2140,68 +2124,6 @@ function updateTailNotice () {
   if (!tailNotice) return
   const sizeLabel = tailSize === 'all' ? 'all lines' : `last ${tailSize} lines`
   tailNotice.textContent = `Showing ${sizeLabel} from meta.log`
-}
-
-function renderRunSparklines () {
-  if (!runStatusSparklines) return
-  const hasData = runSparkState.cpu.system.length || runSparkState.cpu.kometa.length ||
-    runSparkState.mem.system.length || runSparkState.mem.kometa.length ||
-    runSparkState.io.read.length || runSparkState.io.write.length
-  runStatusSparklines.classList.toggle('d-none', !hasData)
-  if (!hasData) {
-    if (runSparkCpuSystem) runSparkCpuSystem.setAttribute('points', '')
-    if (runSparkCpuKometa) runSparkCpuKometa.setAttribute('points', '')
-    if (runSparkMemSystem) runSparkMemSystem.setAttribute('points', '')
-    if (runSparkMemKometa) runSparkMemKometa.setAttribute('points', '')
-    const runSparkIoRead = document.getElementById('run-spark-io-read')
-    const runSparkIoWrite = document.getElementById('run-spark-io-write')
-    if (runSparkIoRead) runSparkIoRead.setAttribute('points', '')
-    if (runSparkIoWrite) runSparkIoWrite.setAttribute('points', '')
-    return
-  }
-  if (runSparkCpuSystem) runSparkCpuSystem.setAttribute('points', buildSparklinePoints(runSparkState.cpu.system))
-  if (runSparkCpuKometa) runSparkCpuKometa.setAttribute('points', buildSparklinePoints(runSparkState.cpu.kometa))
-  if (runSparkMemSystem) runSparkMemSystem.setAttribute('points', buildSparklinePoints(runSparkState.mem.system))
-  if (runSparkMemKometa) runSparkMemKometa.setAttribute('points', buildSparklinePoints(runSparkState.mem.kometa))
-  const runSparkIoRead = document.getElementById('run-spark-io-read')
-  const runSparkIoWrite = document.getElementById('run-spark-io-write')
-  const ioMax = Math.max(0, ...runSparkState.io.read, ...runSparkState.io.write)
-  if (runSparkIoRead) runSparkIoRead.setAttribute('points', buildSparklinePointsScaled(runSparkState.io.read, ioMax))
-  if (runSparkIoWrite) runSparkIoWrite.setAttribute('points', buildSparklinePointsScaled(runSparkState.io.write, ioMax))
-}
-
-function resetRunSparklines () {
-  runSparkState.cpu.system = []
-  runSparkState.cpu.kometa = []
-  runSparkState.mem.system = []
-  runSparkState.mem.kometa = []
-  runSparkState.io.read = []
-  runSparkState.io.write = []
-  renderRunSparklines()
-}
-
-function updateRunSparklines (data) {
-  if (!data || data.status !== 'running') {
-    resetRunSparklines()
-    return
-  }
-  const cpuSystem = clampPercent(data.system_cpu_percent)
-  const cpuKometa = clampPercent(data.cpu_percent)
-  const memSystem = clampPercent(data.system_memory_percent)
-  const memKometa = clampPercent(data.memory_percent)
-  const ioRead = (typeof data.disk_read_rate_mb_s === 'number' && Number.isFinite(data.disk_read_rate_mb_s))
-    ? Math.max(0, data.disk_read_rate_mb_s)
-    : null
-  const ioWrite = (typeof data.disk_write_rate_mb_s === 'number' && Number.isFinite(data.disk_write_rate_mb_s))
-    ? Math.max(0, data.disk_write_rate_mb_s)
-    : null
-  pushSparkValue(runSparkState.cpu.system, cpuSystem)
-  pushSparkValue(runSparkState.cpu.kometa, cpuKometa)
-  pushSparkValue(runSparkState.mem.system, memSystem)
-  pushSparkValue(runSparkState.mem.kometa, memKometa)
-  pushSparkValue(runSparkState.io.read, ioRead)
-  pushSparkValue(runSparkState.io.write, ioWrite)
-  renderRunSparklines()
 }
 
 function syncRunStatusVisibility () {
