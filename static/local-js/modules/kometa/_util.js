@@ -347,3 +347,58 @@ export function copyTextToClipboard (text) {
     }
   })
 }
+
+// ---------------------------------------------------------------------
+// DOM dataset flag helpers
+// ---------------------------------------------------------------------
+//
+// Each wizard step page embeds its "has this been validated?" flag as
+// a data attribute on a hidden <meta>-ish element. Server-rendered
+// markup writes the initial value; JS reads it during gate evaluation
+// and re-writes it after successful in-page validation.
+//
+// The dual-source read (`el.dataset[datasetKey] || el.getAttribute(...)`)
+// exists because older templates set data-plex-valid via kebab-case
+// attribute directly, while newer templates go through dataset. The
+// pair of writes on set keeps both in sync so subsequent reads via
+// either path stay consistent.
+//
+// These are pure DOM I/O with no module-scoped state, so they belong
+// in _util.js rather than a state-holding module.
+
+/**
+ * Read a boolean flag stored on an element as both a data-attribute
+ * and (redundantly) as a dataset property.
+ *
+ * @param {string} id          The element's id.
+ * @param {string} datasetKey  Camel-case dataset key (e.g. 'plexValid').
+ * @param {string} attrKey     Kebab-case attribute stem (e.g. 'plex-valid';
+ *                             the function prepends 'data-').
+ * @returns {boolean}          True iff the value string is 'true'
+ *                             (case-insensitive). Missing element or
+ *                             empty value returns false.
+ */
+export function readMetaFlag (id, datasetKey, attrKey) {
+  const el = document.getElementById(id)
+  if (!el) return false
+  const raw = (el.dataset && el.dataset[datasetKey]) || el.getAttribute(`data-${attrKey}`) || ''
+  return String(raw).toLowerCase() === 'true'
+}
+
+/**
+ * Write a boolean flag to an element. Serializes as the Python-flavored
+ * 'True'/'False' string (matching what Flask/Jinja renders) so that
+ * subsequent server-side reads see identical values.
+ *
+ * @param {string}  id          The element's id.
+ * @param {string}  datasetKey  Camel-case dataset key.
+ * @param {string}  attrKey     Kebab-case attribute stem.
+ * @param {boolean} value       Truthy => 'True', falsy => 'False'.
+ */
+export function setMetaFlag (id, datasetKey, attrKey, value) {
+  const el = document.getElementById(id)
+  if (!el) return
+  const serialized = value ? 'True' : 'False'
+  if (el.dataset) el.dataset[datasetKey] = serialized
+  el.setAttribute(`data-${attrKey}`, serialized)
+}

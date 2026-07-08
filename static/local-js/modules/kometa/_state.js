@@ -76,5 +76,15 @@ export const kometaState = {
   // rolling log buffer we've already displayed.
   kometaUpdatePollInterval: null,
   kometaUpdateJobId: null,
-  kometaUpdateLogIndex: 0
+  kometaUpdateLogIndex: 0,
+
+  // ---- Validation gate ---------------------------------------------
+  // showYAML is the master "is the config known-good enough to show
+  // the YAML output + run controls" flag. Written by
+  // updateValidationGate (in _validationGate.js) after synthesizing
+  // five per-page validation flags + the final gate stage. Read by
+  // syncFinalAccordionRollups, the run controls, and the update job
+  // to gate their UI. Was a top-level `let showYAML` in 900-kometa.js
+  // pre-migration.
+  showYAML: false
 }
