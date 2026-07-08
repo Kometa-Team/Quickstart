@@ -31,12 +31,8 @@
 //
 //   Orchestrator:
 //
-//     syncFinalAccordionRollups({ syncKometaBranchRollupBadge })
-//                                     -- one call to refresh every
-//                                        badge on the page. Takes a
-//                                        callbacks bag for functions
-//                                        that still live in
-//                                        900-kometa.js.
+//     syncFinalAccordionRollups()     -- one call to refresh every
+//                                        badge on the page.
 //
 // COLOR CLASSES:
 //
@@ -54,6 +50,7 @@
 import { formatHeaderStyleLabel, isValidTimesFormat, computeYamlLineCount } from './_util.js'
 import { kometaState } from './_state.js'
 import { isRunCommandValid } from './_runCommand.js'
+import { syncKometaBranchRollupBadge } from './_kometaBranch.js'
 
 // ---------------------------------------------------------------------
 // Core primitives
@@ -318,16 +315,8 @@ export function updateLogscanHeaderBadge (data) {
 /**
  * Refresh every section-header rollup badge on the page. One call
  * to bring the whole accordion into sync with current state.
- *
- * The `syncKometaBranchRollupBadge` function still lives in
- * 900-kometa.js (it depends on branch-override helpers that haven't
- * been extracted yet), so we take it as a callback. When those
- * helpers migrate to _kometaUpdate.js, this callback retires in favor
- * of a direct import.
- *
- * @param {{ syncKometaBranchRollupBadge: () => void }} [callbacks]
  */
-export function syncFinalAccordionRollups (callbacks) {
+export function syncFinalAccordionRollups () {
   updateModeHeaderBadge()
   updateRunOptionHeaderBadge()
   updateModeFlagsHeaderBadge()
@@ -336,7 +325,5 @@ export function syncFinalAccordionRollups (callbacks) {
   updateConfigOutputHeaderBadges()
   updateRunCommandHeaderBadge()
   updateLogscanHeaderBadge()
-  if (callbacks && typeof callbacks.syncKometaBranchRollupBadge === 'function') {
-    callbacks.syncKometaBranchRollupBadge()
-  }
+  syncKometaBranchRollupBadge()
 }
