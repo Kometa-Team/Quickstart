@@ -5,8 +5,9 @@
 //   updateValidationGate -- big orchestration: reads gate state +
 //                          per-page validation flags, mutates
 //                          kometaState.showYAML, toggles a swarm of
-//                          .d-none classes, calls the two extension
-//                          callbacks.
+//                          .d-none classes, calls updateRunNowState
+//                          and syncFinalAccordionRollups at every
+//                          exit path.
 //
 // COVERAGE STRATEGY:
 //
@@ -23,16 +24,35 @@
 //     Path D: stage='config' + all 5 flags true -> everything shown
 //     Path E: stage='config' + some flags missing -> validation msgs
 //     Path F: stage='config' + configValid + msg element missing (soft)
-//     Path G: callbacks are always invoked exactly once
+//     Path G: side-effect calls (updateRunNowState +
+//                                syncFinalAccordionRollups)
+//             fire exactly once at every exit point
 //     Path H: kometaState.showYAML is correctly toggled per branch
 //     Path I: run-now button label defaults to 'Run Now' in all branches
+//
+// updateRunNowState + syncFinalAccordionRollups are mocked via
+// vi.mock() so we can spy on invocation counts without needing to
+// build the full DOM those functions require.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock the two collaborators BEFORE importing _validationGate.js.
+// vi.mock() is hoisted so this happens regardless of position, but
+// keeping it near the imports for readability.
+vi.mock('../../../static/local-js/modules/kometa/_runControls.js', () => ({
+  updateRunNowState: vi.fn()
+}))
+vi.mock('../../../static/local-js/modules/kometa/_headerBadges.js', () => ({
+  syncFinalAccordionRollups: vi.fn()
+}))
+
 import { kometaState } from '../../../static/local-js/modules/kometa/_state.js'
 import {
   getFinalGateState,
   updateValidationGate
 } from '../../../static/local-js/modules/kometa/_validationGate.js'
+import { updateRunNowState } from '../../../static/local-js/modules/kometa/_runControls.js'
+import { syncFinalAccordionRollups } from '../../../static/local-js/modules/kometa/_headerBadges.js'
 
 // ---------------------------------------------------------------------
 // Fixture DOM helpers
@@ -104,19 +124,17 @@ function installGateDom ({
   document.body.innerHTML = parts.join('\n')
 }
 
-// Standard spy callbacks bundle -- shared shape across tests
-function makeCallbacks () {
-  return {
-    updateRunNowState: vi.fn(),
-    syncFinalAccordionRollups: vi.fn()
-  }
-}
+beforeEach(() => {
+  // Clear mock call history (the module mocks themselves stay in
+  // place; only their invocation counts reset).
+  updateRunNowState.mockClear()
+  syncFinalAccordionRollups.mockClear()
+})
 
 afterEach(() => {
   document.body.innerHTML = ''
   // Reset showYAML to its default so tests don't cross-contaminate
   kometaState.showYAML = false
-  vi.restoreAllMocks()
 })
 
 // ---------------------------------------------------------------------
@@ -182,8 +200,8 @@ describe('updateValidationGate stage=todo', () => {
   it('hides YAML/run controls/downloads and sets showYAML=false', () => {
     installGateDom({ gate: { stage: 'todo' } })
     kometaState.showYAML = true // sanity: even if it was true before
-    const cb = makeCallbacks()
-    updateValidationGate(cb)
+
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(false)
     expect(document.getElementById('validation-messages').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('run-controls-container').classList.contains('d-none')).toBe(true)
@@ -194,10 +212,10 @@ describe('updateValidationGate stage=todo', () => {
 
   it('invokes both callbacks exactly once', () => {
     installGateDom({ gate: { stage: 'todo' } })
-    const cb = makeCallbacks()
-    updateValidationGate(cb)
-    expect(cb.updateRunNowState).toHaveBeenCalledTimes(1)
-    expect(cb.syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
+
+    updateValidationGate()
+    expect(updateRunNowState).toHaveBeenCalledTimes(1)
+    expect(syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
   })
 
   it('short-circuits: does not read per-page validation flags', () => {
@@ -208,7 +226,7 @@ describe('updateValidationGate stage=todo', () => {
       gate: { stage: 'todo', configValid: true },
       flags: { plex: true, tmdb: true, libs: true, sett: true, yaml: true }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(false)
   })
 })
@@ -216,11 +234,11 @@ describe('updateValidationGate stage=todo', () => {
 describe('updateValidationGate stage=freshness', () => {
   it('behaves identically to stage=todo', () => {
     installGateDom({ gate: { stage: 'freshness' } })
-    const cb = makeCallbacks()
-    updateValidationGate(cb)
+
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(false)
-    expect(cb.updateRunNowState).toHaveBeenCalledTimes(1)
-    expect(cb.syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
+    expect(updateRunNowState).toHaveBeenCalledTimes(1)
+    expect(syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -234,7 +252,7 @@ describe('updateValidationGate stage=config, all flags valid', () => {
       gate: { stage: 'config', configValid: false },
       flags: { plex: true, tmdb: true, libs: true, sett: true, yaml: true }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(true)
     expect(document.getElementById('validation-messages').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('no-validation-warning').classList.contains('d-none')).toBe(true)
@@ -248,7 +266,7 @@ describe('updateValidationGate stage=config, all flags valid', () => {
       gate: { stage: 'config' },
       flags: { plex: true, tmdb: true, libs: true, sett: true, yaml: true }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     // The gate itself doesn't enable the button -- that's updateRunNowState's job
     expect(document.getElementById('run-now').disabled).toBe(true)
     expect(document.getElementById('run-now-label').textContent).toBe('Run Now')
@@ -261,7 +279,7 @@ describe('updateValidationGate stage=config, configValid=true (server override)'
       gate: { stage: 'config', configValid: true },
       flags: { plex: false, tmdb: false, libs: false, sett: false, yaml: false }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(true)
   })
 })
@@ -276,7 +294,7 @@ describe('updateValidationGate stage=config, some flags missing', () => {
       gate: { stage: 'config' },
       flags: { plex: false, tmdb: true, libs: false, sett: true, yaml: true }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(false)
     const msg = document.getElementById('validation-messages')
     expect(msg.classList.contains('d-none')).toBe(false)
@@ -296,7 +314,7 @@ describe('updateValidationGate stage=config, some flags missing', () => {
       gate: { stage: 'config' },
       flags: { plex: true, tmdb: true, libs: true, sett: true, yaml: false }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     expect(kometaState.showYAML).toBe(false)
     // With all page flags true but yaml false, no rows are pushed -->
     // messages list is empty --> the branch that hides validation-messages
@@ -310,7 +328,7 @@ describe('updateValidationGate stage=config, some flags missing', () => {
       gate: { stage: 'config' },
       flags: { plex: false }
     })
-    updateValidationGate(makeCallbacks())
+    updateValidationGate()
     expect(document.getElementById('no-validation-warning').classList.contains('d-none')).toBe(false)
     expect(document.getElementById('download-btn').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('run-controls-container').classList.contains('d-none')).toBe(true)
@@ -328,7 +346,7 @@ describe('updateValidationGate robustness', () => {
       flags: { plex: false },
       omit: ['validation-messages']
     })
-    expect(() => updateValidationGate(makeCallbacks())).not.toThrow()
+    expect(() => updateValidationGate()).not.toThrow()
   })
 
   it('does not throw when run-now / run-now-label are missing', () => {
@@ -336,7 +354,7 @@ describe('updateValidationGate robustness', () => {
       gate: { stage: 'todo' },
       omit: ['run-now', 'run-now-label']
     })
-    expect(() => updateValidationGate(makeCallbacks())).not.toThrow()
+    expect(() => updateValidationGate()).not.toThrow()
   })
 
   it('does not throw when any warning/download/yaml element is missing', () => {
@@ -345,7 +363,7 @@ describe('updateValidationGate robustness', () => {
       flags: { plex: true, tmdb: true, libs: true, sett: true, yaml: true },
       omit: ['no-validation-warning', 'yaml-warnings', 'download-btn', 'yaml-content']
     })
-    expect(() => updateValidationGate(makeCallbacks())).not.toThrow()
+    expect(() => updateValidationGate()).not.toThrow()
   })
 
   it('handles callbacks being missing (undefined)', () => {
