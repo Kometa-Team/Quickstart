@@ -19,9 +19,9 @@
 //   buildCommand                     -- the big assembler (~120 lines).
 //                                        Returns true/false/undefined
 //                                        depending on validation state.
-//   isRunCommandValid                -- true iff the run-command-output
-//                                        element has non-empty, non-'??'
-//                                        text content
+//
+// NOTE: isRunCommandValid moved to _util.js in PR #1572 to break a
+// cycle. Import from './_util.js' if you need it.
 //
 //   getRunCommandModeLabel           -- label above the command panel
 //   getRunCommandModeBadgeLabel      -- text of the mode indicator badge
@@ -36,11 +36,11 @@
 //
 // Design notes:
 //
-//   1. buildCommand takes callbacks (updateRunNowState,
-//      syncFinalAccordionRollups) as required properties of an
-//      options bag. Same hybrid pattern as _validationGate.js --
-//      once those functions themselves migrate to their own modules,
-//      the callbacks retire in favor of direct imports.
+//   1. buildCommand imports updateRunNowState (from _runControls.js)
+//      and syncFinalAccordionRollups (from _headerBadges.js) directly.
+//      These were callback parameters pre-#1572 to avoid a cycle with
+//      _runControls.js (which needed isRunCommandValid from here).
+//      Moving isRunCommandValid to _util.js in #1572 broke the cycle.
 //
 //   2. isWindowsPlatform is computed lazily via a private helper
 //      each call rather than cached at module load. Trivial cost,
@@ -56,6 +56,8 @@
 import { kometaState } from './_state.js'
 import { quoteIfNeeded, isValidTimesFormat } from './_util.js'
 import { toggleTimesInputVisibility, checkMaintenanceWarning } from './_maintenanceWindow.js'
+import { updateRunNowState } from './_runControls.js'
+import { syncFinalAccordionRollups } from './_headerBadges.js'
 
 // ---------------------------------------------------------------------
 // Private helpers
@@ -86,19 +88,6 @@ function normalizeMode (mode) {
 // ---------------------------------------------------------------------
 // Command validity + labels
 // ---------------------------------------------------------------------
-
-/**
- * True iff the run-command panel currently shows a real command
- * (non-empty, not a "??" placeholder for missing paths).
- *
- * @returns {boolean}
- */
-export function isRunCommandValid () {
-  const el = document.getElementById('run-command-output')
-  if (!el) return false
-  const cmd = (el.textContent || '').trim()
-  return Boolean(cmd) && !cmd.startsWith('??')
-}
 
 /**
  * The user-facing label above the run-command panel. Matches the
@@ -222,18 +211,16 @@ const CHECKBOX_FLAGS = [
  *                     divider)
  *   undefined    -- no run-command-output in the DOM (short-circuit)
  *
- * @param {{
- *   updateRunNowState: () => void,
- *   syncFinalAccordionRollups: () => void
- * }} callbacks  Both hooks are required (see module docstring).
+ * Side effects at every non-short-circuit exit:
+ *   - updateRunNowState() -- refresh the Run Now button
+ *   - syncFinalAccordionRollups() -- refresh header badges
  *
  * @returns {boolean | undefined}
  */
-export function buildCommand (callbacks) {
-  const { updateRunNowState, syncFinalAccordionRollups } = callbacks || {}
+export function buildCommand () {
   const notify = () => {
-    if (typeof updateRunNowState === 'function') updateRunNowState()
-    if (typeof syncFinalAccordionRollups === 'function') syncFinalAccordionRollups()
+    updateRunNowState()
+    syncFinalAccordionRollups()
   }
 
   const runCmdOutput = document.getElementById('run-command-output')

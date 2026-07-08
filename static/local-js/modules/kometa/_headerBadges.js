@@ -47,9 +47,8 @@
 //   setHeaderRollupBadge accepts any string; unknown values fall back
 //   to 'unknown' to keep the badge visually consistent.
 
-import { formatHeaderStyleLabel, isValidTimesFormat, computeYamlLineCount } from './_util.js'
+import { formatHeaderStyleLabel, isValidTimesFormat, computeYamlLineCount, isRunCommandValid } from './_util.js'
 import { kometaState } from './_state.js'
-import { isRunCommandValid } from './_runCommand.js'
 import { syncKometaBranchRollupBadge } from './_kometaBranch.js'
 
 // ---------------------------------------------------------------------

@@ -1,8 +1,7 @@
 // Tests for static/local-js/modules/kometa/_runCommand.js
 //
-// The module exports seven functions. Coverage strategy:
+// The module exports six functions. Coverage strategy:
 //
-//   isRunCommandValid            trivial DOM read, 4 tests
 //   getRunCommandModeLabel       pure fn, 3 tests
 //   getRunCommandModeBadgeLabel  pure fn, 3 tests
 //   getRunCommandModeBadgeClass  pure fn, 3 tests
@@ -10,18 +9,34 @@
 //   clearActiveRunCommandState   inverse, 3 tests
 //   buildCommand                 big one, 25+ tests covering every
 //                                validation branch
+//
+// NOTE: isRunCommandValid moved to _util.js in PR #1572; its tests
+// moved to util.test.js. See _runCommand.js docstring for the cycle
+// history.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock collaborators BEFORE importing _runCommand.js so buildCommand's
+// direct imports of updateRunNowState + syncFinalAccordionRollups are
+// spy-able without needing a full DOM.
+vi.mock('../../../static/local-js/modules/kometa/_runControls.js', () => ({
+  updateRunNowState: vi.fn()
+}))
+vi.mock('../../../static/local-js/modules/kometa/_headerBadges.js', () => ({
+  syncFinalAccordionRollups: vi.fn()
+}))
+
 import { kometaState } from '../../../static/local-js/modules/kometa/_state.js'
 import {
   buildCommand,
-  isRunCommandValid,
   getRunCommandModeLabel,
   getRunCommandModeBadgeLabel,
   getRunCommandModeBadgeClass,
   applyActiveRunCommandState,
   clearActiveRunCommandState
 } from '../../../static/local-js/modules/kometa/_runCommand.js'
+import { updateRunNowState } from '../../../static/local-js/modules/kometa/_runControls.js'
+import { syncFinalAccordionRollups } from '../../../static/local-js/modules/kometa/_headerBadges.js'
 
 // ---------------------------------------------------------------------
 // Fixture DOM helpers
@@ -115,44 +130,17 @@ function installRunCommandDom (opts = {}) {
   `
 }
 
-function makeCallbacks () {
-  return {
-    updateRunNowState: vi.fn(),
-    syncFinalAccordionRollups: vi.fn()
-  }
-}
+beforeEach(() => {
+  // Reset mock call counts before each test (the module mocks
+  // themselves persist; only invocation counts get cleared).
+  updateRunNowState.mockClear()
+  syncFinalAccordionRollups.mockClear()
+})
 
 afterEach(() => {
   document.body.innerHTML = ''
   kometaState.activeRunCommandOverride = null
   kometaState.activeRunCommandMode = null
-  vi.restoreAllMocks()
-})
-
-// ---------------------------------------------------------------------
-// isRunCommandValid
-// ---------------------------------------------------------------------
-
-describe('isRunCommandValid', () => {
-  it('is true when the run-command-output has real content', () => {
-    document.body.innerHTML = '<div id="run-command-output">python kometa.py --config config.yml</div>'
-    expect(isRunCommandValid()).toBe(true)
-  })
-
-  it("is false when the content starts with '??' placeholder", () => {
-    document.body.innerHTML = '<div id="run-command-output">?? no kometa root ??</div>'
-    expect(isRunCommandValid()).toBe(false)
-  })
-
-  it('is false when the content is empty/whitespace', () => {
-    document.body.innerHTML = '<div id="run-command-output">   </div>'
-    expect(isRunCommandValid()).toBe(false)
-  })
-
-  it('is false when the element is missing', () => {
-    document.body.innerHTML = ''
-    expect(isRunCommandValid()).toBe(false)
-  })
 })
 
 // ---------------------------------------------------------------------
@@ -297,8 +285,8 @@ describe('clearActiveRunCommandState', () => {
 describe('buildCommand basic path (no flags)', () => {
   it('assembles python + kometa.py + --config with quoting', () => {
     installRunCommandDom()
-    const cb = makeCallbacks()
-    const result = buildCommand(cb)
+
+    const result = buildCommand()
     expect(result).toBe(true)
     const out = document.getElementById('run-command-output')
     expect(out.dataset.builtCommand).toBe('/venv/bin/python /opt/kometa/kometa.py --config /opt/kometa/config/config.yml')
@@ -307,19 +295,19 @@ describe('buildCommand basic path (no flags)', () => {
 
   it('invokes both callbacks exactly once on the success path', () => {
     installRunCommandDom()
-    const cb = makeCallbacks()
-    buildCommand(cb)
-    expect(cb.updateRunNowState).toHaveBeenCalledTimes(1)
-    expect(cb.syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
+
+    buildCommand()
+    expect(updateRunNowState).toHaveBeenCalledTimes(1)
+    expect(syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
   })
 
   it('short-circuits (returns undefined) when run-command-output is missing', () => {
     document.body.innerHTML = '<div id="qs-env"></div>' // no run-command-output
-    const cb = makeCallbacks()
-    const result = buildCommand(cb)
+
+    const result = buildCommand()
     expect(result).toBeUndefined()
     // Callbacks should NOT have been called
-    expect(cb.updateRunNowState).not.toHaveBeenCalled()
+    expect(updateRunNowState).not.toHaveBeenCalled()
   })
 
   it('quotes paths containing spaces', () => {
@@ -327,7 +315,7 @@ describe('buildCommand basic path (no flags)', () => {
       venvPython: '/opt/my venv/bin/python',
       kometaRoot: '/opt/my kometa'
     })
-    buildCommand(makeCallbacks())
+    buildCommand()
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out).toContain('"/opt/my venv/bin/python"')
     expect(out).toContain('"/opt/my kometa/kometa.py"')
@@ -340,7 +328,7 @@ describe('buildCommand basic path (no flags)', () => {
       venvPython: 'C:/venv/Scripts/python.exe',
       kometaRoot: 'C:/Kometa'
     })
-    buildCommand(makeCallbacks())
+    buildCommand()
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out).toContain('C:\\venv\\Scripts\\python.exe')
     expect(out).toContain('C:\\Kometa\\kometa.py')
@@ -354,7 +342,7 @@ describe('buildCommand basic path (no flags)', () => {
     const out = document.getElementById('run-command-output')
     out.textContent = 'FROZEN COMMAND'
     kometaState.activeRunCommandOverride = 'FROZEN COMMAND'
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(out.textContent).toBe('FROZEN COMMAND')
     // But dataset.builtCommand should still be updated
     expect(out.dataset.builtCommand).toBe('/venv/bin/python /opt/kometa/kometa.py --config /opt/kometa/config/config.yml')
@@ -362,7 +350,7 @@ describe('buildCommand basic path (no flags)', () => {
 
   it('uses default python3 when venv-python attr is missing', () => {
     installRunCommandDom({ venvPython: '' })
-    buildCommand(makeCallbacks())
+    buildCommand()
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out.startsWith('python3 ')).toBe(true)
   })
@@ -372,7 +360,7 @@ describe('buildCommand mainOption --times', () => {
   it('appends quoted times string when valid', () => {
     installRunCommandDom({ runOption: '--times' })
     document.getElementById('times-input').value = '06:00|15:00'
-    buildCommand(makeCallbacks())
+    buildCommand()
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out).toContain('--times "06:00|15:00"')
   })
@@ -380,22 +368,22 @@ describe('buildCommand mainOption --times', () => {
   it("returns false and shows 'Invalid time format' on bad input", () => {
     installRunCommandDom({ runOption: '--times' })
     document.getElementById('times-input').value = 'not a time'
-    const cb = makeCallbacks()
-    const result = buildCommand(cb)
+
+    const result = buildCommand()
     expect(result).toBe(false)
     expect(document.getElementById('times-error').classList.contains('d-none')).toBe(false)
     expect(document.getElementById('run-command-output').textContent).toContain('Invalid time format')
     // Callbacks should still fire on the failure path (so run-now
     // gets disabled and the accordion rollup updates)
-    expect(cb.updateRunNowState).toHaveBeenCalledTimes(1)
-    expect(cb.syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
+    expect(updateRunNowState).toHaveBeenCalledTimes(1)
+    expect(syncFinalAccordionRollups).toHaveBeenCalledTimes(1)
   })
 
   it('hides the times-error div when the value becomes valid', () => {
     installRunCommandDom({ runOption: '--times' })
     document.getElementById('times-input').value = '06:00'
     document.getElementById('times-error').classList.remove('d-none') // stale
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(document.getElementById('times-error').classList.contains('d-none')).toBe(true)
   })
 })
@@ -405,7 +393,7 @@ describe('buildCommand mainOption --run-libraries', () => {
     installRunCommandDom({ runOption: '--run-libraries' })
     const sel = document.getElementById('library-multiselect')
     Array.from(sel.options).forEach(o => { o.selected = true })
-    buildCommand(makeCallbacks())
+    buildCommand()
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out).toContain('--run-libraries "Movies|TV Shows"')
   })
@@ -413,7 +401,7 @@ describe('buildCommand mainOption --run-libraries', () => {
   it('returns false with a warning when no libraries are selected', () => {
     installRunCommandDom({ runOption: '--run-libraries' })
     // Nothing selected
-    const result = buildCommand(makeCallbacks())
+    const result = buildCommand()
     expect(result).toBe(false)
     expect(document.getElementById('run-command-output').textContent).toContain('Please select at least one library')
   })
@@ -422,13 +410,13 @@ describe('buildCommand mainOption --run-libraries', () => {
 describe('buildCommand mode/log flags', () => {
   it('appends the selected mode flag', () => {
     installRunCommandDom({ modeFlag: '--dry-run' })
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--dry-run')
   })
 
   it('appends the selected log flag', () => {
     installRunCommandDom({ logFlag: '--debug' })
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--debug')
   })
 })
@@ -439,7 +427,7 @@ describe('buildCommand no-value checkboxes', () => {
     document.getElementById('opt-delete-collections').checked = true
     document.getElementById('opt-read-only-config').checked = true
     document.getElementById('opt-no-verify-ssl').checked = true
-    buildCommand(makeCallbacks())
+    buildCommand()
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out).toContain('--delete-collections')
     expect(out).toContain('--read-only-config')
@@ -452,7 +440,7 @@ describe('buildCommand no-value checkboxes', () => {
   it('is silent when a checkbox element is missing (no throw)', () => {
     installRunCommandDom()
     document.getElementById('opt-tests').remove()
-    expect(() => buildCommand(makeCallbacks())).not.toThrow()
+    expect(() => buildCommand()).not.toThrow()
   })
 })
 
@@ -461,7 +449,7 @@ describe('buildCommand --timeout validation', () => {
     installRunCommandDom()
     document.getElementById('opt-timeout').checked = true
     document.getElementById('opt-timeout-val').value = '60'
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--timeout 60')
   })
 
@@ -469,7 +457,7 @@ describe('buildCommand --timeout validation', () => {
     installRunCommandDom()
     document.getElementById('opt-timeout').checked = true
     document.getElementById('opt-timeout-val').value = 'abc'
-    expect(buildCommand(makeCallbacks())).toBe(false)
+    expect(buildCommand()).toBe(false)
     expect(document.getElementById('timeout-error').classList.contains('d-none')).toBe(false)
   })
 
@@ -477,14 +465,14 @@ describe('buildCommand --timeout validation', () => {
     installRunCommandDom()
     document.getElementById('opt-timeout').checked = true
     document.getElementById('opt-timeout-val').value = '0'
-    expect(buildCommand(makeCallbacks())).toBe(false)
+    expect(buildCommand()).toBe(false)
   })
 
   it('is a no-op when the timeout checkbox is unchecked', () => {
     installRunCommandDom()
     document.getElementById('opt-timeout').checked = false
     document.getElementById('opt-timeout-val').value = 'garbage but should be ignored'
-    expect(buildCommand(makeCallbacks())).toBe(true)
+    expect(buildCommand()).toBe(true)
     expect(document.getElementById('run-command-output').dataset.builtCommand).not.toContain('--timeout')
   })
 })
@@ -494,7 +482,7 @@ describe('buildCommand --width validation', () => {
     installRunCommandDom()
     document.getElementById('opt-width').checked = true
     document.getElementById('opt-width-val').value = '120'
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--width 120')
   })
 
@@ -502,26 +490,26 @@ describe('buildCommand --width validation', () => {
     installRunCommandDom()
     document.getElementById('opt-width').checked = true
     document.getElementById('opt-width-val').value = '80'
-    expect(buildCommand(makeCallbacks())).toBe(false)
+    expect(buildCommand()).toBe(false)
   })
 
   it('rejects widths over 300', () => {
     installRunCommandDom()
     document.getElementById('opt-width').checked = true
     document.getElementById('opt-width-val').value = '400'
-    expect(buildCommand(makeCallbacks())).toBe(false)
+    expect(buildCommand()).toBe(false)
   })
 
   it('accepts boundary values 90 and 300', () => {
     installRunCommandDom()
     document.getElementById('opt-width').checked = true
     document.getElementById('opt-width-val').value = '90'
-    expect(buildCommand(makeCallbacks())).toBe(true)
+    expect(buildCommand()).toBe(true)
 
     installRunCommandDom()
     document.getElementById('opt-width').checked = true
     document.getElementById('opt-width-val').value = '300'
-    expect(buildCommand(makeCallbacks())).toBe(true)
+    expect(buildCommand()).toBe(true)
   })
 })
 
@@ -530,7 +518,7 @@ describe('buildCommand --divider validation', () => {
     installRunCommandDom()
     document.getElementById('opt-divider').checked = true
     document.getElementById('opt-divider-val').value = '='
-    buildCommand(makeCallbacks())
+    buildCommand()
     expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--divider "="')
   })
 
@@ -538,14 +526,14 @@ describe('buildCommand --divider validation', () => {
     installRunCommandDom()
     document.getElementById('opt-divider').checked = true
     document.getElementById('opt-divider-val').value = '=='
-    expect(buildCommand(makeCallbacks())).toBe(false)
+    expect(buildCommand()).toBe(false)
   })
 
   it('rejects empty divider even when checkbox is checked', () => {
     installRunCommandDom()
     document.getElementById('opt-divider').checked = true
     document.getElementById('opt-divider-val').value = ''
-    expect(buildCommand(makeCallbacks())).toBe(false)
+    expect(buildCommand()).toBe(false)
   })
 })
 

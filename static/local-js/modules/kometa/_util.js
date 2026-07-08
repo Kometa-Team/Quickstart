@@ -402,3 +402,25 @@ export function setMetaFlag (id, datasetKey, attrKey, value) {
   if (el.dataset) el.dataset[datasetKey] = serialized
   el.setAttribute(`data-${attrKey}`, serialized)
 }
+
+// ---------------------------------------------------------------------
+// Run-command DOM helpers
+// ---------------------------------------------------------------------
+
+/**
+ * True iff the run-command panel currently shows a real command
+ * (non-empty, not a "??" placeholder for missing paths).
+ *
+ * Lives here (rather than in _runCommand.js) because it's a pure DOM
+ * read with zero dependencies, and moving it up to _util.js lets both
+ * _runCommand.js AND _runControls.js import it without creating a
+ * cycle. See PR #1571's design notes for the cycle history.
+ *
+ * @returns {boolean}
+ */
+export function isRunCommandValid () {
+  const el = document.getElementById('run-command-output')
+  if (!el) return false
+  const cmd = (el.textContent || '').trim()
+  return Boolean(cmd) && !cmd.startsWith('??')
+}

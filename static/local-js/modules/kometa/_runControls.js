@@ -31,8 +31,8 @@
 //   uses kometaState directly, this module is fully self-contained.
 
 import { kometaState } from './_state.js'
+import { isRunCommandValid } from './_util.js'
 import { updateRunCommandHeaderBadge } from './_headerBadges.js'
-import { isRunCommandValid } from './_runCommand.js'
 
 // ---------------------------------------------------------------------
 // Command-text readers (trivial DOM accessors)
