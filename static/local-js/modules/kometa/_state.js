@@ -198,5 +198,20 @@ export const kometaState = {
   kometaLocalVersionStatus: 'Unknown',
   kometaRemoteVersionStatus: '',
   kometaRemoteVersionChecked: false,
-  kometaRemoteVersionSkipped: false
+  kometaRemoteVersionSkipped: false,
+
+  // ---- Update-phase badge status ----------------------------------
+  //
+  // The 'phase' of a Kometa update in progress. Read by no one
+  // currently (the badge display is driven by DOM class manipulation
+  // in setKometaUpdatePhaseBadge), but preserved as state for future
+  // callers that want to know 'what phase are we in?' without
+  // scraping the badge's textContent. Written whenever
+  // setKometaUpdatePhaseBadge is called; defaults to 'idle'.
+  //
+  // Valid values (matches the phaseMap keys in _updatePhase.js):
+  //   'idle' | 'checking' | 'queued' | 'downloading' | 'extracting'
+  //   | 'preserving' | 'venv' | 'dependencies' | 'validating'
+  //   | 'ready' | 'failed'
+  kometaUpdatePhaseStatus: 'idle'
 }

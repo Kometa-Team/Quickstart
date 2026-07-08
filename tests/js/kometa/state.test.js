@@ -144,6 +144,14 @@ describe('kometaState initial values', () => {
     expect(kometaState.kometaRemoteVersionSkipped).toBe(false)
   })
 
+  it("kometaUpdatePhaseStatus starts as 'idle'", () => {
+    // Written by setKometaUpdatePhaseBadge (in _updatePhase.js) every
+    // time a phase is set. 'idle' is the visual default -- gray badge,
+    // 'Idle' label -- so starting here gives a clean first paint
+    // before any update flow kicks off.
+    expect(kometaState.kometaUpdatePhaseStatus).toBe('idle')
+  })
+
   it('exports exactly the fields the runtime relies on (guards against typos)', () => {
     // Sorted alphabetically for a stable comparison
     expect(Object.keys(kometaState).sort()).toEqual([
@@ -166,6 +174,7 @@ describe('kometaState initial values', () => {
       'kometaUpdateCheckSkipped',
       'kometaUpdateJobId',
       'kometaUpdateLogIndex',
+      'kometaUpdatePhaseStatus',
       'kometaUpdatePollInterval',
       'kometaUpdating',
       'kometaValidated',
