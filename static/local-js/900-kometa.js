@@ -20,12 +20,10 @@ import {
 } from './modules/kometa/_maintenanceWindow.js'
 import { kometaState } from './modules/kometa/_state.js'
 import {
-  setHeaderRollupBadge,
-  updateModeHeaderBadge,
-  updateRunOptionHeaderBadge,
-  updateModeFlagsHeaderBadge,
-  updateLogFlagsHeaderBadge,
-  updateOtherFlagsHeaderBadge
+  updateConfigOutputHeaderBadges,
+  updateRunCommandHeaderBadge,
+  updateLogscanHeaderBadge,
+  syncFinalAccordionRollups as _syncFinalAccordionRollups
 } from './modules/kometa/_headerBadges.js'
 import {
   updateHeaderStyleLabel,
@@ -60,6 +58,14 @@ function buildCommand () {
   return _buildCommand({ updateRunNowState, syncFinalAccordionRollups })
 }
 
+// Thin wrapper: the extracted syncFinalAccordionRollups still needs
+// to call syncKometaBranchRollupBadge, which lives here (it depends
+// on branch-override helpers not yet migrated to _kometaUpdate.js).
+// Wrapping here keeps every call site simple.
+function syncFinalAccordionRollups () {
+  _syncFinalAccordionRollups({ syncKometaBranchRollupBadge })
+}
+
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
 // See _state.js docstring for the state-machine notes.
@@ -70,7 +76,6 @@ let logFilter = ''
 let lastLogText = ''
 let lastLogStatsTotal = null
 let logStatsPollCounter = 0
-let lastLogscanPayload = null
 let logscanPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
 let lastRunProgressPayload = null
@@ -176,73 +181,6 @@ function syncKometaMaintenancePageBadge (data) {
 document.addEventListener('qs:maintenance-status', function (event) {
   syncKometaMaintenancePageBadge(event.detail || null)
 })
-
-function updateConfigOutputHeaderBadges () {
-  const yamlText = yamlOutput ? String(yamlOutput.value || '') : ''
-  const lineCount = computeYamlLineCount(yamlText)
-  setHeaderRollupBadge('config-output-lines-badge', lineCount > 0 ? 'ok' : 'unknown', `${lineCount} lines`)
-  if (!yamlText.trim()) {
-    setHeaderRollupBadge('config-output-rollup-badge', 'unknown', 'No YAML')
-    return
-  }
-  setHeaderRollupBadge('config-output-rollup-badge', kometaState.showYAML ? 'ok' : 'error', kometaState.showYAML ? 'Validated' : 'Needs fixes')
-}
-
-function updateRunCommandHeaderBadge () {
-  if (!kometaState.showYAML) {
-    setHeaderRollupBadge('run-command-rollup-badge', 'error', 'Fix validation')
-    return
-  }
-  if (kometaState.kometaValidationInProgress) {
-    setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Checking Kometa')
-    return
-  }
-  if (kometaState.kometaUpdating) {
-    setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Updating Kometa')
-    return
-  }
-  if (!kometaState.kometaValidated) {
-    setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Validate Kometa')
-    return
-  }
-  if (kometaState.kometaStatus === 'running') {
-    setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Run in progress')
-    return
-  }
-  setHeaderRollupBadge('run-command-rollup-badge', isRunCommandValid() ? 'ok' : 'warn', isRunCommandValid() ? 'Ready' : 'Incomplete')
-}
-
-function updateLogscanHeaderBadge (data) {
-  const source = data || lastLogscanPayload
-  if (!source) {
-    setHeaderRollupBadge('logscan-rollup-badge', 'unknown', 'Pending')
-    return
-  }
-  if (source.error) {
-    setHeaderRollupBadge('logscan-rollup-badge', 'error', 'Unavailable')
-    return
-  }
-  const recCount = Array.isArray(source.recommendations) ? source.recommendations.length : 0
-  const missingCount = Array.isArray(source.missing_people) ? source.missing_people.length : 0
-  const issueCount = recCount + missingCount
-  if (!issueCount) {
-    setHeaderRollupBadge('logscan-rollup-badge', 'ok', 'No issues')
-    return
-  }
-  setHeaderRollupBadge('logscan-rollup-badge', 'warn', `${issueCount} items`)
-}
-
-function syncFinalAccordionRollups () {
-  updateModeHeaderBadge()
-  updateRunOptionHeaderBadge()
-  updateModeFlagsHeaderBadge()
-  updateLogFlagsHeaderBadge()
-  updateOtherFlagsHeaderBadge()
-  updateConfigOutputHeaderBadges()
-  updateRunCommandHeaderBadge()
-  updateLogscanHeaderBadge()
-  syncKometaBranchRollupBadge()
-}
 
 updateValidationGate({ updateRunNowState, syncFinalAccordionRollups })
 
@@ -2480,7 +2418,7 @@ function renderLogscan (data) {
 function fetchLogscanAnalysis (force = false) {
   if (!logscanPanel) return
   logscanPollCounter += 1
-  const shouldFetch = force || (logscanPollCounter % 5 === 0) || !lastLogscanPayload
+  const shouldFetch = force || (logscanPollCounter % 5 === 0) || !kometaState.lastLogscanPayload
   if (!shouldFetch || logscanAnalyzeInFlight) return
 
   logscanAnalyzeInFlight = true
@@ -2488,7 +2426,7 @@ function fetchLogscanAnalysis (force = false) {
   fetch('/logscan/analyze')
     .then(res => res.json())
     .then(data => {
-      lastLogscanPayload = data
+      kometaState.lastLogscanPayload = data
       renderLogscan(data)
     })
     .catch(err => {
