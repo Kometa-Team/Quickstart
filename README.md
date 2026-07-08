@@ -478,7 +478,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If you're using a Python that ships from your OS vendor (`apt install python3.13`, the official `python.org` installer, Homebrew's `python@3.13`, or `uv`'s prebuilt CPython), you should not hit this at all — those builds always ship with SQLite and OpenSSL support.
+If you're using a Python that ships from your OS vendor (`apt install python3.13`, the official `python.org` installer, the Homebrew `python@3.13` formula, or the prebuilt CPython that `uv` downloads), you should not hit this at all — those builds always ship with SQLite and OpenSSL support.
 
 ### Debugging & Changing Ports
 
