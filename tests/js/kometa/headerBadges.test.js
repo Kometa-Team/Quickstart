@@ -28,7 +28,7 @@
 //   updateOtherFlagsHeaderBadge -- 0/some/all core flags, extras
 //                            (timeout/divider/width) counted separately
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   setHeaderRollupBadge,
   prettifyFlag,
@@ -37,8 +37,13 @@ import {
   updateRunOptionHeaderBadge,
   updateModeFlagsHeaderBadge,
   updateLogFlagsHeaderBadge,
-  updateOtherFlagsHeaderBadge
+  updateOtherFlagsHeaderBadge,
+  updateConfigOutputHeaderBadges,
+  updateRunCommandHeaderBadge,
+  updateLogscanHeaderBadge,
+  syncFinalAccordionRollups
 } from '../../../static/local-js/modules/kometa/_headerBadges.js'
+import { kometaState } from '../../../static/local-js/modules/kometa/_state.js'
 
 // ---------------------------------------------------------------------
 // Fixture DOM helpers
@@ -438,5 +443,254 @@ describe('updateOtherFlagsHeaderBadge', () => {
     updateOtherFlagsHeaderBadge()
     const badge = document.getElementById('heading-otherflags-rollup-badge')
     expect(badge.textContent).toBe('14 enabled')
+  })
+})
+
+// ---------------------------------------------------------------------
+// State-consulting: updateConfigOutputHeaderBadges
+// ---------------------------------------------------------------------
+
+describe('updateConfigOutputHeaderBadges', () => {
+  beforeEach(() => {
+    kometaState.showYAML = false
+  })
+
+  it('shows "No YAML" when the textarea is missing', () => {
+    installBadge('config-output-lines-badge')
+    installBadge('config-output-rollup-badge')
+    updateConfigOutputHeaderBadges()
+    expect(document.getElementById('config-output-rollup-badge').textContent).toBe('No YAML')
+    expect(document.getElementById('config-output-rollup-badge').classList.contains('qs-validation-rollup-badge--unknown')).toBe(true)
+  })
+
+  it('shows "No YAML" when the textarea has only whitespace', () => {
+    const t = document.createElement('textarea')
+    t.id = 'final-yaml'
+    t.value = '   \n  \t  '
+    document.body.appendChild(t)
+    installBadge('config-output-lines-badge')
+    installBadge('config-output-rollup-badge')
+    updateConfigOutputHeaderBadges()
+    expect(document.getElementById('config-output-rollup-badge').textContent).toBe('No YAML')
+  })
+
+  it('shows line count + "Validated" (ok) when showYAML is true', () => {
+    const t = document.createElement('textarea')
+    t.id = 'final-yaml'
+    t.value = 'libraries:\n  Movies:\n    metadata_path: []'
+    document.body.appendChild(t)
+    installBadge('config-output-lines-badge')
+    installBadge('config-output-rollup-badge')
+    kometaState.showYAML = true
+    updateConfigOutputHeaderBadges()
+    expect(document.getElementById('config-output-lines-badge').textContent).toBe('3 lines')
+    expect(document.getElementById('config-output-rollup-badge').textContent).toBe('Validated')
+    expect(document.getElementById('config-output-rollup-badge').classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+
+  it('shows "Needs fixes" (error) when YAML present but showYAML is false', () => {
+    const t = document.createElement('textarea')
+    t.id = 'final-yaml'
+    t.value = 'broken:\n  yaml'
+    document.body.appendChild(t)
+    installBadge('config-output-lines-badge')
+    installBadge('config-output-rollup-badge')
+    kometaState.showYAML = false
+    updateConfigOutputHeaderBadges()
+    expect(document.getElementById('config-output-rollup-badge').textContent).toBe('Needs fixes')
+    expect(document.getElementById('config-output-rollup-badge').classList.contains('qs-validation-rollup-badge--error')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------
+// State-consulting: updateRunCommandHeaderBadge (five-way state machine)
+// ---------------------------------------------------------------------
+
+describe('updateRunCommandHeaderBadge', () => {
+  // Reset the whole state slice this function reads. beforeEach
+  // matters here because tests intentionally flip one flag at a time.
+  beforeEach(() => {
+    kometaState.showYAML = false
+    kometaState.kometaValidated = false
+    kometaState.kometaValidationInProgress = false
+    kometaState.kometaUpdating = false
+    kometaState.kometaStatus = null
+    installBadge('run-command-rollup-badge')
+  })
+
+  it('shows "Fix validation" (error) when showYAML is false [highest priority]', () => {
+    // All other flags could be favorable; showYAML=false still wins.
+    kometaState.kometaValidated = true
+    kometaState.kometaStatus = 'idle'
+    updateRunCommandHeaderBadge()
+    const b = document.getElementById('run-command-rollup-badge')
+    expect(b.textContent).toBe('Fix validation')
+    expect(b.classList.contains('qs-validation-rollup-badge--error')).toBe(true)
+  })
+
+  it('shows "Checking Kometa" (unknown) when validationInProgress is true', () => {
+    kometaState.showYAML = true
+    kometaState.kometaValidationInProgress = true
+    updateRunCommandHeaderBadge()
+    expect(document.getElementById('run-command-rollup-badge').textContent).toBe('Checking Kometa')
+  })
+
+  it('shows "Updating Kometa" (unknown) when kometaUpdating is true', () => {
+    kometaState.showYAML = true
+    kometaState.kometaUpdating = true
+    updateRunCommandHeaderBadge()
+    expect(document.getElementById('run-command-rollup-badge').textContent).toBe('Updating Kometa')
+  })
+
+  it('shows "Validate Kometa" (warn) when validated is false [and no in-progress]', () => {
+    kometaState.showYAML = true
+    kometaState.kometaValidated = false
+    updateRunCommandHeaderBadge()
+    const b = document.getElementById('run-command-rollup-badge')
+    expect(b.textContent).toBe('Validate Kometa')
+    expect(b.classList.contains('qs-validation-rollup-badge--warn')).toBe(true)
+  })
+
+  it("shows \"Run in progress\" (warn) when kometaStatus is 'running'", () => {
+    kometaState.showYAML = true
+    kometaState.kometaValidated = true
+    kometaState.kometaStatus = 'running'
+    updateRunCommandHeaderBadge()
+    expect(document.getElementById('run-command-rollup-badge').textContent).toBe('Run in progress')
+  })
+
+  it('shows "Ready" (ok) when everything passes and run command is valid', () => {
+    kometaState.showYAML = true
+    kometaState.kometaValidated = true
+    // Install a valid run-command-output so isRunCommandValid() returns true
+    const out = document.createElement('div')
+    out.id = 'run-command-output'
+    out.textContent = 'python kometa.py --config config.yml'
+    document.body.appendChild(out)
+    updateRunCommandHeaderBadge()
+    const b = document.getElementById('run-command-rollup-badge')
+    expect(b.textContent).toBe('Ready')
+    expect(b.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+
+  it('shows "Incomplete" (warn) when everything passes but run command is placeholder', () => {
+    kometaState.showYAML = true
+    kometaState.kometaValidated = true
+    const out = document.createElement('div')
+    out.id = 'run-command-output'
+    out.textContent = '?? no root ??'
+    document.body.appendChild(out)
+    updateRunCommandHeaderBadge()
+    expect(document.getElementById('run-command-rollup-badge').textContent).toBe('Incomplete')
+  })
+})
+
+// ---------------------------------------------------------------------
+// State-consulting: updateLogscanHeaderBadge
+// ---------------------------------------------------------------------
+
+describe('updateLogscanHeaderBadge', () => {
+  beforeEach(() => {
+    kometaState.lastLogscanPayload = null
+    installBadge('logscan-rollup-badge')
+  })
+
+  it('shows "Pending" (unknown) when no data available', () => {
+    updateLogscanHeaderBadge()
+    const b = document.getElementById('logscan-rollup-badge')
+    expect(b.textContent).toBe('Pending')
+    expect(b.classList.contains('qs-validation-rollup-badge--unknown')).toBe(true)
+  })
+
+  it('reads from kometaState.lastLogscanPayload when no arg is passed', () => {
+    kometaState.lastLogscanPayload = { recommendations: [1, 2], missing_people: [] }
+    updateLogscanHeaderBadge()
+    expect(document.getElementById('logscan-rollup-badge').textContent).toBe('2 items')
+  })
+
+  it('passed data arg WINS over kometaState.lastLogscanPayload', () => {
+    kometaState.lastLogscanPayload = { recommendations: [1, 2, 3] }
+    updateLogscanHeaderBadge({ recommendations: [], missing_people: [] })
+    expect(document.getElementById('logscan-rollup-badge').textContent).toBe('No issues')
+  })
+
+  it('shows "Unavailable" (error) when payload has an error field', () => {
+    updateLogscanHeaderBadge({ error: 'boom' })
+    const b = document.getElementById('logscan-rollup-badge')
+    expect(b.textContent).toBe('Unavailable')
+    expect(b.classList.contains('qs-validation-rollup-badge--error')).toBe(true)
+  })
+
+  it('shows "No issues" (ok) for empty recs+missing arrays', () => {
+    updateLogscanHeaderBadge({ recommendations: [], missing_people: [] })
+    const b = document.getElementById('logscan-rollup-badge')
+    expect(b.textContent).toBe('No issues')
+    expect(b.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+
+  it('sums recommendations + missing_people counts', () => {
+    updateLogscanHeaderBadge({ recommendations: [1, 2, 3], missing_people: [4, 5] })
+    expect(document.getElementById('logscan-rollup-badge').textContent).toBe('5 items')
+  })
+
+  it('handles missing/non-array recommendations gracefully', () => {
+    updateLogscanHeaderBadge({ missing_people: [1] })
+    expect(document.getElementById('logscan-rollup-badge').textContent).toBe('1 items')
+  })
+})
+
+// ---------------------------------------------------------------------
+// Orchestrator: syncFinalAccordionRollups
+// ---------------------------------------------------------------------
+
+describe('syncFinalAccordionRollups', () => {
+  beforeEach(() => {
+    // Install all badges the orchestrator touches
+    installBadge('heading-style-rollup-badge')
+    installBadge('heading-mode-rollup-badge')
+    installBadge('heading-runopt-rollup-badge')
+    installBadge('heading-modeflags-rollup-badge')
+    installBadge('heading-logflags-rollup-badge')
+    installBadge('heading-otherflags-rollup-badge')
+    installBadge('config-output-lines-badge')
+    installBadge('config-output-rollup-badge')
+    installBadge('run-command-rollup-badge')
+    installBadge('logscan-rollup-badge')
+  })
+
+  it('invokes syncKometaBranchRollupBadge callback exactly once', () => {
+    const cb = vi.fn()
+    syncFinalAccordionRollups({ syncKometaBranchRollupBadge: cb })
+    expect(cb).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not throw when callbacks arg is undefined', () => {
+    expect(() => syncFinalAccordionRollups()).not.toThrow()
+  })
+
+  it('does not throw when syncKometaBranchRollupBadge is not a function', () => {
+    expect(() => syncFinalAccordionRollups({ syncKometaBranchRollupBadge: 42 })).not.toThrow()
+  })
+
+  it('refreshes every rollup badge on the page (touches all 10 ids)', () => {
+    // Pre-mark every badge with a sentinel string. After the call,
+    // every badge must have been rewritten (i.e. not equal to the
+    // sentinel).
+    const ids = [
+      'heading-mode-rollup-badge',
+      'heading-runopt-rollup-badge',
+      'heading-modeflags-rollup-badge',
+      'heading-logflags-rollup-badge',
+      'heading-otherflags-rollup-badge',
+      'config-output-lines-badge',
+      'config-output-rollup-badge',
+      'run-command-rollup-badge',
+      'logscan-rollup-badge'
+    ]
+    for (const id of ids) document.getElementById(id).textContent = 'SENTINEL'
+    syncFinalAccordionRollups({ syncKometaBranchRollupBadge: () => {} })
+    for (const id of ids) {
+      expect(document.getElementById(id).textContent).not.toBe('SENTINEL')
+    }
   })
 })

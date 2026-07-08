@@ -115,6 +115,14 @@ describe('kometaState initial values', () => {
     expect(kometaState.kometaStatus).toBeNull()
   })
 
+  it('lastLogscanPayload starts as null', () => {
+    // The logscan header badge distinguishes "no data yet" (Pending)
+    // from "data with 0 issues" (No issues) -- both are legit states.
+    // Null (rather than {}) keeps that distinction sharp on first
+    // page load, before the first /logscan poll returns.
+    expect(kometaState.lastLogscanPayload).toBeNull()
+  })
+
   it('exports exactly the fields the runtime relies on (guards against typos)', () => {
     // Sorted alphabetically for a stable comparison
     expect(Object.keys(kometaState).sort()).toEqual([
@@ -137,6 +145,7 @@ describe('kometaState initial values', () => {
       'kometaUpdating',
       'kometaValidated',
       'kometaValidationInProgress',
+      'lastLogscanPayload',
       'showYAML'
     ])
   })
