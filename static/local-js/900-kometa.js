@@ -1,6 +1,5 @@
 // Global flag so other handlers know an update is in progress
 import {
-  quoteIfNeeded,
   formatElapsed,
   computeYamlLineCount,
   linkifyText,
@@ -8,7 +7,6 @@ import {
   clampPercent,
   formatRunSeconds,
   coerceRunSeconds,
-  isValidTimesFormat,
   applyLogFilter,
   computeLogStats,
   pushSparkValue,
@@ -18,7 +16,6 @@ import {
   setMetaFlag
 } from './modules/kometa/_util.js'
 import {
-  toggleTimesInputVisibility,
   checkMaintenanceWarning
 } from './modules/kometa/_maintenanceWindow.js'
 import { kometaState } from './modules/kometa/_state.js'
@@ -48,6 +45,20 @@ import {
   kometaCanProbeRuntime,
   kometaCanReadLogs
 } from './modules/kometa/_runtime.js'
+import {
+  buildCommand as _buildCommand,
+  isRunCommandValid,
+  applyActiveRunCommandState,
+  clearActiveRunCommandState
+} from './modules/kometa/_runCommand.js'
+
+// Thin wrapper: buildCommand needs updateRunNowState and
+// syncFinalAccordionRollups callbacks, but both are still owned by
+// this file. Wrapping here keeps every call site simple
+// (`buildCommand()` with no args), matching the pre-extraction API.
+function buildCommand () {
+  return _buildCommand({ updateRunNowState, syncFinalAccordionRollups })
+}
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -75,8 +86,6 @@ let finalLogscanAnalyzeTriggered = false
 let lastRunProgressPayload = null
 let logscanAnalyzeInFlight = false
 let runProgressInFlight = false
-let activeRunCommandOverride = null
-let activeRunCommandMode = null
 let latestKometaStatusPayload = null
 const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
 
@@ -90,14 +99,6 @@ const runSparkState = {
   io: { read: [], write: [] }
 }
 
-const _qsEnvEl = document.getElementById('qs-env')
-const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
-const isWindows = typeof runningOn === 'string' && runningOn.includes('Windows')
-// const isFrozen = typeof runningOn === 'string' && runningOn.startsWith('Frozen')
-// const isDocker = runningOn === 'Docker'
-
-// function toDisplayPath (p) { return isWindows ? String(p).replace(/\//g, '\\') : String(p) }
-// function toPosix (p) { return String(p).replace(/\\/g, '/') }
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
 const tailSelect = document.getElementById('run-log-tail')
@@ -496,11 +497,6 @@ if (showCliToggle) {
   })
 }
 
-function isRunCommandValid () {
-  const cmd = document.getElementById('run-command-output').textContent.trim()
-  return Boolean(cmd) && !cmd.startsWith('??')
-}
-
 function setRunCommandPlaceholderState () {
   const panel = document.getElementById('run-command-panel-message')
   const panelTitle = document.getElementById('run-command-panel-title')
@@ -561,58 +557,6 @@ function clearRunCommandPlaceholderState () {
   document.getElementById('copy-command').classList.remove('d-none')
 }
 
-function getRunCommandModeLabel (mode) {
-  const normalized = String(mode || 'current').trim().toLowerCase()
-  if (normalized === 'recovery') return 'Recovery Command'
-  if (normalized === 'logged') return 'Last Logged Command'
-  return 'Command'
-}
-
-function getRunCommandModeBadgeLabel (mode) {
-  const normalized = String(mode || 'current').trim().toLowerCase()
-  if (normalized === 'recovery') return 'Recovery Active'
-  if (normalized === 'logged') return 'Logged Active'
-  return 'Current Active'
-}
-
-function getRunCommandModeBadgeClass (mode) {
-  const normalized = String(mode || 'current').trim().toLowerCase()
-  if (normalized === 'recovery') return 'text-bg-warning'
-  if (normalized === 'logged') return 'text-bg-secondary'
-  return 'text-bg-primary'
-}
-
-function applyActiveRunCommandState (command, mode) {
-  const normalizedMode = String(mode || 'current').trim().toLowerCase() || 'current'
-  activeRunCommandOverride = command || null
-  activeRunCommandMode = normalizedMode
-
-  if (command) {
-    document.getElementById('run-command-output').textContent = command
-  }
-
-  document.getElementById('run-command-label').textContent = getRunCommandModeLabel(normalizedMode)
-  const activeBadge = document.getElementById('run-command-active-badge')
-  if (activeBadge) {
-    activeBadge.classList.remove('d-none', 'text-bg-warning', 'text-bg-secondary', 'text-bg-primary')
-    activeBadge.classList.add(getRunCommandModeBadgeClass(normalizedMode))
-    activeBadge.textContent = getRunCommandModeBadgeLabel(normalizedMode)
-  }
-}
-
-function clearActiveRunCommandState () {
-  activeRunCommandOverride = null
-  activeRunCommandMode = null
-  const label = document.getElementById('run-command-label')
-  if (label) label.textContent = 'Command'
-  const activeBadge = document.getElementById('run-command-active-badge')
-  if (activeBadge) {
-    activeBadge.classList.add('d-none')
-    activeBadge.classList.remove('text-bg-warning', 'text-bg-secondary', 'text-bg-primary')
-    activeBadge.textContent = 'Recovery Active'
-  }
-}
-
 function resolveFreshnessGateAfterBulkValidation () {
   const gateEl = document.getElementById('final-gate-state')
   if (gateEl) {
@@ -649,135 +593,6 @@ function updateRunNowState () {
   runNow.disabled = false
   updateRunCommandHeaderBadge()
   syncIncompleteRunActions()
-}
-
-function buildCommand () {
-  const runCmdOutput = document.getElementById('run-command-output')
-  if (!runCmdOutput) return
-  const configFilename = runCmdOutput.dataset.configFilename || ''
-
-  // Always use normalized forward slashes internally
-  const pythonBinNorm = (runCmdOutput.dataset.venvPython || 'python3').replace(/\\/g, '/')
-  const kometaRootNorm = (runCmdOutput.dataset.kometaRoot || '').replace(/\\/g, '/')
-
-  const fullKometaPy = `${kometaRootNorm}/kometa.py`
-  const fullConfigPath = `${kometaRootNorm}/config/${configFilename}`
-
-  // use the global isWindows we computed from backend values
-  const finalPythonBin = isWindows ? pythonBinNorm.replace(/\//g, '\\') : pythonBinNorm
-  const finalKometaPy = isWindows ? fullKometaPy.replace(/\//g, '\\') : fullKometaPy
-  const finalConfigPath = isWindows ? fullConfigPath.replace(/\//g, '\\') : fullConfigPath
-
-  // Quote paths that may contain spaces
-  let cli = `${quoteIfNeeded(finalPythonBin)} ${quoteIfNeeded(finalKometaPy)}`
-
-  const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value || ''
-  const libSelectEl = document.getElementById('library-multiselect')
-  const selectedLibs = libSelectEl ? Array.from(libSelectEl.selectedOptions || []).map(o => o.value) : []
-
-  if (mainOption) cli += ` ${mainOption}`
-
-  if (mainOption === '--times') {
-    const timesInput = document.getElementById('times-input').value.trim()
-    const isValid = isValidTimesFormat(timesInput)
-    toggleTimesInputVisibility('--times')
-    if (!isValid) {
-      document.getElementById('times-error').classList.remove('d-none')
-      runCmdOutput.textContent = '⚠️ Invalid time format. Use pipe-separated 24h times like 06:00|15:00.'
-      updateRunNowState()
-      syncFinalAccordionRollups()
-      return false
-    } else {
-      document.getElementById('times-error').classList.add('d-none')
-      checkMaintenanceWarning(mainOption)
-      cli += ` "${timesInput}"`
-    }
-  } else {
-    toggleTimesInputVisibility(mainOption)
-  }
-
-  if (mainOption === '--run-libraries') {
-    if (!selectedLibs.length) {
-      runCmdOutput.textContent = '⚠️ Please select at least one library when using --run-libraries.'
-      updateRunNowState()
-      syncFinalAccordionRollups()
-      return false
-    }
-    cli += ` "${selectedLibs.join('|')}"`
-  }
-
-  const modeFlag = (document.querySelector('input[name="mode-flag"]:checked') || {}).value
-  if (modeFlag) cli += ` ${modeFlag}`
-
-  const logFlag = (document.querySelector('input[name="log-flag"]:checked') || {}).value
-  if (logFlag) cli += ` ${logFlag}`
-
-  const checkboxFlags = [
-    'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
-    'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-    'ignore-schedules', 'no-verify-ssl', 'tests'
-  ]
-  checkboxFlags.forEach(opt => {
-    const checkbox = document.getElementById(`opt-${opt}`)
-    if (checkbox && checkbox.checked) cli += ` --${opt}`
-  })
-
-  // Always append --config with platform-adjusted path
-  cli += ` --config ${quoteIfNeeded(finalConfigPath)}`
-
-  const timeoutChecked = document.getElementById('opt-timeout').checked
-  const timeoutValue = document.getElementById('opt-timeout-val').value.trim()
-  if (timeoutChecked) {
-    const timeoutNum = parseInt(timeoutValue, 10)
-    if (!/^\d+$/.test(timeoutValue) || timeoutNum <= 0) {
-      document.getElementById('timeout-error').classList.remove('d-none')
-      runCmdOutput.textContent = '⚠️ Invalid timeout. Please enter a positive whole number.'
-      updateRunNowState()
-      syncFinalAccordionRollups()
-      return false
-    } else {
-      document.getElementById('timeout-error').classList.add('d-none')
-      cli += ` --timeout ${timeoutNum}`
-    }
-  }
-
-  const widthChecked = document.getElementById('opt-width').checked
-  const widthValue = document.getElementById('opt-width-val').value.trim()
-  if (widthChecked) {
-    const widthNum = parseInt(widthValue, 10)
-    if (!/^\d+$/.test(widthValue) || widthNum < 90 || widthNum > 300) {
-      document.getElementById('width-error').classList.remove('d-none')
-      runCmdOutput.textContent = '⚠️ Width must be a number between 90 and 300.'
-      updateRunNowState()
-      syncFinalAccordionRollups()
-      return false
-    } else {
-      document.getElementById('width-error').classList.add('d-none')
-      cli += ` --width ${widthNum}`
-    }
-  }
-
-  if (document.getElementById('opt-divider').checked) {
-    const dividerValue = document.getElementById('opt-divider-val').value.trim()
-    if (!dividerValue || dividerValue.length !== 1) {
-      document.getElementById('divider-error').classList.remove('d-none')
-      runCmdOutput.textContent = '⚠️ Divider must be a single character.'
-      updateRunNowState()
-      syncFinalAccordionRollups()
-      return false
-    } else {
-      document.getElementById('divider-error').classList.add('d-none')
-      cli += ` --divider "${dividerValue}"`
-    }
-  }
-
-  runCmdOutput.dataset.builtCommand = cli
-  if (!activeRunCommandOverride) {
-    runCmdOutput.textContent = cli
-  }
-  updateRunNowState()
-  syncFinalAccordionRollups()
-  return true
 }
 
 document.querySelectorAll('input[name="run-option"]').forEach(el => el.addEventListener('change', function () {
@@ -3315,8 +3130,8 @@ function checkKometaStatus () {
 
       if (data.pending_start && data.status !== 'running') {
         applyActiveRunCommandState(
-          data.pending_command || activeRunCommandOverride || getRecoveryRunCommand(),
-          data.pending_start_mode || activeRunCommandMode || 'recovery'
+          data.pending_command || kometaState.activeRunCommandOverride || getRecoveryRunCommand(),
+          data.pending_start_mode || kometaState.activeRunCommandMode || 'recovery'
         )
         const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
         const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
@@ -3346,8 +3161,8 @@ function checkKometaStatus () {
       // Handle Kometa process states
       if (data.status === 'running') {
         applyActiveRunCommandState(
-          data.active_command || activeRunCommandOverride || getCurrentRunCommand(),
-          data.start_mode || activeRunCommandMode || 'current'
+          data.active_command || kometaState.activeRunCommandOverride || getCurrentRunCommand(),
+          data.start_mode || kometaState.activeRunCommandMode || 'current'
         )
         KOMETA_PENDING_START = false
         finalLogscanAnalyzeTriggered = false
