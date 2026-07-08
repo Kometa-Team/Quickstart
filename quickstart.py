@@ -1,3 +1,21 @@
+# ruff: noqa: E402
+#
+# We intentionally run enforce_preflight() before all other imports so
+# that broken Python builds (missing _sqlite3, _ssl, etc.) surface a
+# friendly error instead of a confusing stdlib traceback. That makes
+# this file's import-order-vs-code arrangement look like an E402 to
+# ruff for every subsequent import, so we suppress E402 file-wide.
+
+# Startup preflight: probe stdlib C-extensions (sqlite3, _ssl) BEFORE
+# any third-party import runs. Broken Python builds (usually pyenv/asdf
+# on hosts missing libsqlite3-dev / libssl-dev) would otherwise die
+# with a confusing traceback deep inside stdlib the moment `requests`
+# touches ssl or `modules.database` touches sqlite3. This surfaces a
+# friendly message instead. See modules/_preflight.py.
+from modules._preflight import enforce_preflight
+
+enforce_preflight()
+
 import argparse
 import gzip
 import inspect

@@ -227,6 +227,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
 - [5 - Installing locally](#5---installing-locally)
   - [Windows:](#windows)
   - [Linux/Mac:](#linuxmac)
+  - [Missing stdlib C extensions (sqlite3, _ssl, etc.)](#missing-stdlib-c-extensions-sqlite3-_ssl-etc)
   - [Debugging \& Changing Ports](#debugging--changing-ports)
 - [Testing](#testing)
   - [Developer Testing](#developer-testing)
@@ -447,6 +448,37 @@ Quickstart should launch a browser automatically. If you are on a headless machi
 - Manage Quickstart from the system tray icon
 
 ![image](static/images/readme/system-tray-launcher.png)
+
+### Missing stdlib C extensions (sqlite3, _ssl, etc.)
+
+If Quickstart refuses to start with a message that begins:
+
+```
+========================================================================
+Quickstart cannot start: your Python is missing required C extensions
+========================================================================
+```
+
+...it means your Python interpreter itself is broken — this is **not** a Quickstart bug. It happens most often when Python is installed via `pyenv`, `asdf`, or a manual `./configure && make install` build on a host that doesn't have the required system development headers. Python's build silently skips the affected C extension (e.g. `_sqlite3`, `_ssl`), leaving a Python that mostly works but explodes the moment anything touches the missing module.
+
+**The fix is to install the OS development headers, then rebuild Python:**
+
+| OS | Install the headers | Then rebuild Python |
+|---|---|---|
+| Debian / Ubuntu | `sudo apt install libsqlite3-dev libssl-dev` | `pyenv uninstall 3.14.x && pyenv install 3.14.x` |
+| Fedora / RHEL / CentOS | `sudo dnf install sqlite-devel openssl-devel` | (same, for your version manager) |
+| macOS (Homebrew) | `brew install sqlite3 openssl` | (same) |
+
+After reinstalling Python, **recreate your virtual environment** — old venvs still point at the broken interpreter:
+
+```
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+If you're using a Python that ships from your OS vendor (`apt install python3.13`, the official `python.org` installer, the Homebrew `python@3.13` formula, or the prebuilt CPython that `uv` downloads), you should not hit this at all — those builds always ship with SQLite and OpenSSL support.
 
 ### Debugging & Changing Ports
 

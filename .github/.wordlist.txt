@@ -3,11 +3,13 @@ AniDB
 AppIndicator
 bullmoose
 CDNs
+CentOS
 chazlarson
 chmod
 CLI
 config
 configs
+CPython
 Deduped
 deduplicated
 DOM
@@ -16,6 +18,7 @@ Emby
 exe
 executables
 Frontend
+Homebrew
 https
 ImageMaid
 Jellyfin
@@ -32,9 +35,11 @@ meisnate
 MyAnimeList
 NAS
 OMDb
+OpenSSL
 Personalization
 Plex
 PowerShell
+prebuilt
 Precompiled
 prefill
 PRs
@@ -46,11 +51,14 @@ Radarr
 reingests
 Reingest
 repo
+RHEL
 roadmap
 scm
 Seerr
 Sonarr
 Sortable
+ssl
+stdlib
 Tautulli
 tmdb
 TODO
@@ -61,6 +69,7 @@ txt
 ui
 unreferenced
 venv
+venvs
 Vite
 Vitest
 walkthrough
