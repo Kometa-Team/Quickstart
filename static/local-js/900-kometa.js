@@ -22,6 +22,7 @@ import {
   toggleTimesInputVisibility,
   checkMaintenanceWarning
 } from './modules/kometa/_maintenanceWindow.js'
+import { kometaState } from './modules/kometa/_state.js'
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -31,11 +32,9 @@ let KOMETA_UPDATE_CHECK_SKIPPED = false
 let KOMETA_UPDATE_CHECK_COMPLETED = false
 let KOMETA_INSTALLED = false
 let KOMETA_LOCAL_CHECK_COMPLETED = false
-// Polling handles (hoist to top so all handlers see them safely)
-let kometaInterval = null
-let kometaStatusInterval = null
-let kometaProgressInterval = null
-let kometaPollingStarted = false
+// Kometa run + update polling handles live in modules/kometa/_state.js
+// so they can be shared with extracted modules without ES-module
+// binding-reassignment pain. See _state.js docstring.
 let autoScrollEnabled = true
 let tailSize = '2000'
 let KOMETA_STATUS = null
@@ -55,9 +54,6 @@ let activeRunCommandOverride = null
 let activeRunCommandMode = null
 let latestKometaStatusPayload = null
 const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
-let kometaUpdatePollInterval = null
-let kometaUpdateJobId = null
-let kometaUpdateLogIndex = 0
 
 // Sparkline state buffers. Rendering + reset + update functions that
 // operate on this still live in this file; the pure geometry helpers
@@ -1700,15 +1696,15 @@ function runKometaStatusPass (forceRefresh = false) {
 }
 
 function stopKometaUpdatePolling () {
-  if (kometaUpdatePollInterval) {
-    clearInterval(kometaUpdatePollInterval)
-    kometaUpdatePollInterval = null
+  if (kometaState.kometaUpdatePollInterval) {
+    clearInterval(kometaState.kometaUpdatePollInterval)
+    kometaState.kometaUpdatePollInterval = null
   }
 }
 
 function pollKometaUpdateProgress () {
-  if (!kometaUpdateJobId) return Promise.resolve(null)
-  return fetch(`/background-jobs/${encodeURIComponent(kometaUpdateJobId)}?since=${encodeURIComponent(String(kometaUpdateLogIndex))}`)
+  if (!kometaState.kometaUpdateJobId) return Promise.resolve(null)
+  return fetch(`/background-jobs/${encodeURIComponent(kometaState.kometaUpdateJobId)}?since=${encodeURIComponent(String(kometaState.kometaUpdateLogIndex))}`)
     .then(async res => {
       const data = await res.json()
       if (!res.ok || !data.success || !data.job) throw new Error(data.error || 'Failed to fetch Kometa update progress.')
@@ -1720,7 +1716,7 @@ function pollKometaUpdateProgress () {
       if (job.phase === 'error') setKometaUpdatePhaseBadge('failed')
       const lines = Array.isArray(data.lines) ? data.lines : []
       lines.forEach(line => appendKometaStatusLine(line))
-      if (typeof data.next_index === 'number') kometaUpdateLogIndex = data.next_index
+      if (typeof data.next_index === 'number') kometaState.kometaUpdateLogIndex = data.next_index
       if (data.done) {
         stopKometaUpdatePolling()
       }
@@ -1943,8 +1939,8 @@ function startKometaCommand (command, opts = {}) {
           }
         }
         document.getElementById('stop-now').classList.add('d-none')
-        if (kometaStatusInterval) clearInterval(kometaStatusInterval)
-        kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+        if (kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
+        kometaState.kometaStatusInterval = setInterval(checkKometaStatus, 5000)
         syncIncompleteRunActions()
         return
       }
@@ -1952,7 +1948,7 @@ function startKometaCommand (command, opts = {}) {
       applyActiveRunCommandState(command, startMode)
 
       setTimeout(() => {
-        kometaPollingStarted = false
+        kometaState.kometaPollingStarted = false
         startPollingIfNeeded()
       }, 5500)
     })
@@ -2011,16 +2007,16 @@ function showRunCommandSectionAfterValidated () {
   updateRunNowState()
 }
 function startPollingIfNeeded () {
-  if (kometaPollingStarted) return
-  kometaPollingStarted = true
-  if (kometaInterval) clearInterval(kometaInterval)
-  if (kometaStatusInterval) clearInterval(kometaStatusInterval)
-  if (kometaProgressInterval) clearInterval(kometaProgressInterval)
+  if (kometaState.kometaPollingStarted) return
+  kometaState.kometaPollingStarted = true
+  if (kometaState.kometaInterval) clearInterval(kometaState.kometaInterval)
+  if (kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
+  if (kometaState.kometaProgressInterval) clearInterval(kometaState.kometaProgressInterval)
   fetchKometaLog()
   fetchRunProgress()
-  kometaInterval = setInterval(fetchKometaLog, 3000)
-  kometaStatusInterval = setInterval(checkKometaStatus, 5000)
-  kometaProgressInterval = setInterval(fetchRunProgress, 5000)
+  kometaState.kometaInterval = setInterval(fetchKometaLog, 3000)
+  kometaState.kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+  kometaState.kometaProgressInterval = setInterval(fetchRunProgress, 5000)
 }
 
 function resumeKometaLiveView () {
@@ -2029,7 +2025,7 @@ function resumeKometaLiveView () {
     .catch(() => null)
     .finally(() => {
       if (KOMETA_STATUS === 'running' || KOMETA_PENDING_START) {
-        kometaPollingStarted = false
+        kometaState.kometaPollingStarted = false
         startPollingIfNeeded()
         fetchRunProgress(true)
         fetchKometaLog()
@@ -2038,9 +2034,9 @@ function resumeKometaLiveView () {
 }
 
 function stopProgressPolling () {
-  if (kometaProgressInterval) {
-    clearInterval(kometaProgressInterval)
-    kometaProgressInterval = null
+  if (kometaState.kometaProgressInterval) {
+    clearInterval(kometaState.kometaProgressInterval)
+    kometaState.kometaProgressInterval = null
   }
 }
 
@@ -2500,8 +2496,8 @@ function callUpdateKometa () {
   const cleanupUI = () => {
     clearInterval(heartbeatId)
     stopKometaUpdatePolling()
-    kometaUpdateJobId = null
-    kometaUpdateLogIndex = 0
+    kometaState.kometaUpdateJobId = null
+    kometaState.kometaUpdateLogIndex = 0
     KOMETA_UPDATING = false
     runBox.classList.remove('opacity-50', 'position-relative')
     runNow.disabled = prevRunNowDisabled
@@ -2541,8 +2537,8 @@ function callUpdateKometa () {
     .then(data => {
       if (!data) return
       if (data.success && data.job_id) {
-        kometaUpdateJobId = data.job_id
-        kometaUpdateLogIndex = 0
+        kometaState.kometaUpdateJobId = data.job_id
+        kometaState.kometaUpdateLogIndex = 0
         stopKometaUpdatePolling()
         const finalize = (progress) => {
           if (!progress || !progress.done) return false
@@ -2577,7 +2573,7 @@ function callUpdateKometa () {
         return pollKometaUpdateProgress()
           .then(progress => {
             if (finalize(progress)) return
-            kometaUpdatePollInterval = setInterval(() => {
+            kometaState.kometaUpdatePollInterval = setInterval(() => {
               pollKometaUpdateProgress()
                 .then(finalize)
                 .catch(err => {
@@ -3537,8 +3533,8 @@ function performStopKometa () {
           showToast('success', msg)
         }
       }
-      clearInterval(kometaInterval)
-      clearInterval(kometaStatusInterval)
+      clearInterval(kometaState.kometaInterval)
+      clearInterval(kometaState.kometaStatusInterval)
       stopProgressPolling()
       if (lastRunProgressPayload) {
         const stoppedPayload = JSON.parse(JSON.stringify(lastRunProgressPayload))
@@ -3670,8 +3666,8 @@ function checkKometaStatus () {
           document.getElementById('run-output-log').insertAdjacentHTML('beforeend', `\n${message}`)
         }
         syncIncompleteRunActions()
-        if (kometaStatusInterval) clearInterval(kometaStatusInterval)
-        kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+        if (kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
+        kometaState.kometaStatusInterval = setInterval(checkKometaStatus, 5000)
         return
       }
 
@@ -3707,8 +3703,8 @@ function checkKometaStatus () {
       }
 
       // If we reach here, it's either "done" or "not started"
-      if (typeof kometaInterval !== 'undefined' && kometaInterval) clearInterval(kometaInterval)
-      if (typeof kometaStatusInterval !== 'undefined' && kometaStatusInterval) clearInterval(kometaStatusInterval)
+      if (typeof kometaState.kometaInterval !== 'undefined' && kometaState.kometaInterval) clearInterval(kometaState.kometaInterval)
+      if (typeof kometaState.kometaStatusInterval !== 'undefined' && kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
       stopProgressPolling()
       clearRunProgress(true)
       clearActiveRunCommandState()
