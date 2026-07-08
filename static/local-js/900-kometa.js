@@ -19,7 +19,7 @@ import {
   updateConfigOutputHeaderBadges,
   updateRunCommandHeaderBadge,
   updateLogscanHeaderBadge,
-  syncFinalAccordionRollups as _syncFinalAccordionRollups
+  syncFinalAccordionRollups
 } from './modules/kometa/_headerBadges.js'
 import {
   updateHeaderStyleLabel,
@@ -61,7 +61,6 @@ import {
   loadSavedKometaBranchOverride,
   saveKometaBranchOverride,
   syncKometaSourceStatus,
-  syncKometaBranchRollupBadge,
   syncKometaBranchOverrideWarning
 } from './modules/kometa/_kometaBranch.js'
 
@@ -71,14 +70,6 @@ import {
 // (`buildCommand()` with no args), matching the pre-extraction API.
 function buildCommand () {
   return _buildCommand({ updateRunNowState, syncFinalAccordionRollups })
-}
-
-// Thin wrapper: the extracted syncFinalAccordionRollups still needs
-// to call syncKometaBranchRollupBadge, which lives here (it depends
-// on branch-override helpers not yet migrated to _kometaUpdate.js).
-// Wrapping here keeps every call site simple.
-function syncFinalAccordionRollups () {
-  _syncFinalAccordionRollups({ syncKometaBranchRollupBadge })
 }
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js

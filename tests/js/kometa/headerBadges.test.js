@@ -28,7 +28,7 @@
 //   updateOtherFlagsHeaderBadge -- 0/some/all core flags, extras
 //                            (timeout/divider/width) counted separately
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   setHeaderRollupBadge,
   prettifyFlag,
@@ -656,20 +656,28 @@ describe('syncFinalAccordionRollups', () => {
     installBadge('config-output-rollup-badge')
     installBadge('run-command-rollup-badge')
     installBadge('logscan-rollup-badge')
+    // The branch rollup badge is written by syncKometaBranchRollupBadge
+    // (imported from _kometaBranch.js). The DOM contract there requires
+    // BOTH the badge element AND the #kometa-branch-override <select>
+    // to exist (the badge reads the current override).
+    const badgeEl = document.createElement('span')
+    badgeEl.id = 'kometa-branch-rollup-badge'
+    document.body.appendChild(badgeEl)
+    const overrideSel = document.createElement('select')
+    overrideSel.id = 'kometa-branch-override'
+    const emptyOpt = document.createElement('option')
+    emptyOpt.value = ''
+    overrideSel.appendChild(emptyOpt)
+    overrideSel.value = ''
+    document.body.appendChild(overrideSel)
   })
 
-  it('invokes syncKometaBranchRollupBadge callback exactly once', () => {
-    const cb = vi.fn()
-    syncFinalAccordionRollups({ syncKometaBranchRollupBadge: cb })
-    expect(cb).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not throw when callbacks arg is undefined', () => {
+  it('takes no arguments (retired callbacks-bag API)', () => {
+    // Post-#1569 the orchestrator no longer accepts callbacks;
+    // syncKometaBranchRollupBadge is imported directly from
+    // _kometaBranch.js. Passing an argument should be harmless
+    // (ignored) but the canonical call is no-args.
     expect(() => syncFinalAccordionRollups()).not.toThrow()
-  })
-
-  it('does not throw when syncKometaBranchRollupBadge is not a function', () => {
-    expect(() => syncFinalAccordionRollups({ syncKometaBranchRollupBadge: 42 })).not.toThrow()
   })
 
   it('refreshes every rollup badge on the page (touches all 10 ids)', () => {
@@ -685,10 +693,11 @@ describe('syncFinalAccordionRollups', () => {
       'config-output-lines-badge',
       'config-output-rollup-badge',
       'run-command-rollup-badge',
-      'logscan-rollup-badge'
+      'logscan-rollup-badge',
+      'kometa-branch-rollup-badge'
     ]
     for (const id of ids) document.getElementById(id).textContent = 'SENTINEL'
-    syncFinalAccordionRollups({ syncKometaBranchRollupBadge: () => {} })
+    syncFinalAccordionRollups()
     for (const id of ids) {
       expect(document.getElementById(id).textContent).not.toBe('SENTINEL')
     }
