@@ -68,6 +68,15 @@ describe('kometaState initial values', () => {
     expect(typeof kometaState.kometaUpdateLogIndex).toBe('number')
   })
 
+  it('showYAML starts as false (gate defaults to hidden)', () => {
+    // The default matches the pre-migration `let showYAML = false`
+    // top-level in 900-kometa.js. This is important: on page load,
+    // before any validation runs, we must NOT show YAML output or
+    // run controls.
+    expect(kometaState.showYAML).toBe(false)
+    expect(typeof kometaState.showYAML).toBe('boolean')
+  })
+
   it('exports exactly the fields the runtime relies on (guards against typos)', () => {
     // Sorted alphabetically for a stable comparison
     expect(Object.keys(kometaState).sort()).toEqual([
@@ -77,7 +86,8 @@ describe('kometaState initial values', () => {
       'kometaStatusInterval',
       'kometaUpdateJobId',
       'kometaUpdateLogIndex',
-      'kometaUpdatePollInterval'
+      'kometaUpdatePollInterval',
+      'showYAML'
     ])
   })
 })

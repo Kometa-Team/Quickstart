@@ -14,7 +14,8 @@ import {
   pushSparkValue,
   buildSparklinePoints,
   buildSparklinePointsScaled,
-  copyTextToClipboard
+  copyTextToClipboard,
+  setMetaFlag
 } from './modules/kometa/_util.js'
 import {
   toggleTimesInputVisibility,
@@ -34,6 +35,10 @@ import {
   setActiveGridCard,
   loadHeaderGridSamples
 } from './modules/kometa/_headerGrid.js'
+import {
+  getFinalGateState,
+  updateValidationGate
+} from './modules/kometa/_validationGate.js'
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -122,7 +127,6 @@ const runSparkMemSystem = document.getElementById('run-spark-mem-system')
 const runSparkMemKometa = document.getElementById('run-spark-mem-kometa')
 const yamlOutput = document.getElementById('final-yaml')
 const yamlLineCount = document.getElementById('yaml-line-count')
-let showYAML = false
 const stopModalEl = document.getElementById('stop-kometa-modal')
 const stopModal = (stopModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(stopModalEl) : null
 const confirmStopBtn = document.getElementById('confirm-stop-kometa')
@@ -173,21 +177,6 @@ document.addEventListener('qs:maintenance-status', function (event) {
   syncKometaMaintenancePageBadge(event.detail || null)
 })
 
-function readMetaFlag (id, datasetKey, attrKey) {
-  const el = document.getElementById(id)
-  if (!el) return false
-  const raw = (el.dataset && el.dataset[datasetKey]) || el.getAttribute(`data-${attrKey}`) || ''
-  return String(raw).toLowerCase() === 'true'
-}
-
-function setMetaFlag (id, datasetKey, attrKey, value) {
-  const el = document.getElementById(id)
-  if (!el) return
-  const serialized = value ? 'True' : 'False'
-  if (el.dataset) el.dataset[datasetKey] = serialized
-  el.setAttribute(`data-${attrKey}`, serialized)
-}
-
 function updateConfigOutputHeaderBadges () {
   const yamlText = yamlOutput ? String(yamlOutput.value || '') : ''
   const lineCount = computeYamlLineCount(yamlText)
@@ -196,11 +185,11 @@ function updateConfigOutputHeaderBadges () {
     setHeaderRollupBadge('config-output-rollup-badge', 'unknown', 'No YAML')
     return
   }
-  setHeaderRollupBadge('config-output-rollup-badge', showYAML ? 'ok' : 'error', showYAML ? 'Validated' : 'Needs fixes')
+  setHeaderRollupBadge('config-output-rollup-badge', kometaState.showYAML ? 'ok' : 'error', kometaState.showYAML ? 'Validated' : 'Needs fixes')
 }
 
 function updateRunCommandHeaderBadge () {
-  if (!showYAML) {
+  if (!kometaState.showYAML) {
     setHeaderRollupBadge('run-command-rollup-badge', 'error', 'Fix validation')
     return
   }
@@ -255,105 +244,7 @@ function syncFinalAccordionRollups () {
   syncKometaBranchRollupBadge()
 }
 
-function getFinalGateState () {
-  const el = document.getElementById('final-gate-state')
-  if (!el) {
-    return {
-      stage: 'config',
-      autoValidate: false,
-      configValid: false
-    }
-  }
-  return {
-    stage: String(el.dataset.stage || 'config'),
-    todoCount: Number(el.dataset.todoCount || 0),
-    autoValidate: el.dataset.autoValidate === 'true',
-    configValid: el.dataset.configValid === 'true',
-    bulkFresh: el.dataset.bulkFresh === 'true'
-  }
-}
-
-function updateValidationGate () {
-  const validationMsgEl = document.getElementById('validation-messages')
-  const runControls = document.getElementById('run-controls-container')
-  const runNowEl = document.getElementById('run-now')
-  const runNowLabelEl = document.getElementById('run-now-label')
-  const warningIds = ['no-validation-warning', 'yaml-warnings', 'yaml-warning-msg', 'validation-error']
-  const downloadIds = ['download-btn', 'download-redacted-btn']
-  const yamlIds = ['yaml-content', 'final-yaml', 'download-btn', 'download-redacted-btn']
-
-  const toggleGroup = (ids, cls, add) => {
-    ids.forEach(id => {
-      const el = document.getElementById(id)
-      if (el) el.classList.toggle(cls, add)
-    })
-  }
-
-  const finalGate = getFinalGateState()
-  if (finalGate.stage === 'todo' || finalGate.stage === 'freshness') {
-    showYAML = false
-    if (validationMsgEl) validationMsgEl.classList.add('d-none')
-    toggleGroup(warningIds, 'd-none', true)
-    toggleGroup(downloadIds, 'd-none', true)
-    if (runControls) runControls.classList.add('d-none')
-    if (runNowEl) runNowEl.disabled = true
-    if (runNowLabelEl) runNowLabelEl.textContent = 'Run Now'
-    updateRunNowState()
-    syncFinalAccordionRollups()
-    return
-  }
-
-  const plexValid = readMetaFlag('plex_valid', 'plexValid', 'plex-valid')
-  const tmdbValid = readMetaFlag('tmdb_valid', 'tmdbValid', 'tmdb-valid')
-  const libsValid = readMetaFlag('libs_valid', 'libsValid', 'libs-valid')
-  const settValid = readMetaFlag('sett_valid', 'settValid', 'sett-valid')
-  const yamlValid = readMetaFlag('yaml_valid', 'yamlValid', 'yaml-valid')
-
-  showYAML = finalGate.configValid || (plexValid && tmdbValid && libsValid && settValid && yamlValid)
-
-  const validationMessages = []
-  const rowFor = (label, href) => {
-    return `
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <span>${label}</span>
-        <a href="${href}" class="ms-2 text-decoration-none">
-          Open page
-          <i class="bi bi-box-arrow-up-right"></i>
-        </a>
-      </div>
-    `
-  }
-  if (!plexValid) validationMessages.push(rowFor('Plex settings have not been validated successfully.', '/step/010-plex'))
-  if (!tmdbValid) validationMessages.push(rowFor('TMDb settings have not been validated successfully.', '/step/020-tmdb'))
-  if (!libsValid) validationMessages.push(rowFor('Libraries page settings have not been validated successfully.', '/step/025-libraries'))
-  if (!settValid) validationMessages.push(rowFor('Settings page values have likely been skipped.', '/step/150-settings'))
-
-  if (runNowEl) runNowEl.disabled = true
-  if (runNowLabelEl) runNowLabelEl.textContent = 'Run Now'
-  if (!showYAML) {
-    if (validationMessages.length && validationMsgEl) {
-      validationMsgEl.innerHTML = validationMessages.join('<br>')
-      validationMsgEl.classList.remove('d-none')
-    } else if (validationMsgEl) {
-      validationMsgEl.classList.add('d-none')
-    }
-    toggleGroup(warningIds, 'd-none', false)
-    toggleGroup(downloadIds, 'd-none', true)
-    if (runControls) runControls.classList.add('d-none') // Hide run section
-  } else {
-    if (validationMsgEl) validationMsgEl.classList.add('d-none')
-    toggleGroup(warningIds, 'd-none', true)
-    toggleGroup(yamlIds, 'd-none', false)
-    if (runControls) runControls.classList.remove('d-none') // Show run section
-    if (runNowEl) runNowEl.disabled = true
-    if (runNowLabelEl) runNowLabelEl.textContent = 'Run Now'
-  }
-
-  updateRunNowState()
-  syncFinalAccordionRollups()
-}
-
-updateValidationGate()
+updateValidationGate({ updateRunNowState, syncFinalAccordionRollups })
 
 if (tailSelect) {
   tailSize = tailSelect.value || tailSize
@@ -617,7 +508,7 @@ function setRunCommandPlaceholderState () {
     : 'Open Prepare Kometa to install, validate, or update the local Kometa setup before running.'
   let showButton = true
 
-  if (!showYAML) {
+  if (!kometaState.showYAML) {
     title = 'Fix validation before building the run command'
     message = 'Resolve the current validation issues first. The run command will appear after the config validates cleanly.'
     showButton = false
@@ -732,7 +623,7 @@ function updateRunNowState () {
     return
   }
 
-  if (!showYAML || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING || KOMETA_STATUS === 'running' || !KOMETA_VALIDATED) {
+  if (!kometaState.showYAML || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING || KOMETA_STATUS === 'running' || !KOMETA_VALIDATED) {
     runNow.disabled = true
     updateRunCommandHeaderBadge()
     syncIncompleteRunActions()
@@ -1023,7 +914,7 @@ function validateKometaRoot (options = {}) {
           const el = document.getElementById(id)
           return el ? el.dataset[key] : ''
         }
-        const allValid = showYAML && (finalGate.configValid || (
+        const allValid = kometaState.showYAML && (finalGate.configValid || (
           _dv('plex_valid', 'plexValid') === 'True' &&
           _dv('tmdb_valid', 'tmdbValid') === 'True' &&
           _dv('libs_valid', 'libsValid') === 'True' &&
@@ -3139,7 +3030,7 @@ let previousStatuses = {}
 
 if (validateAllBtn) {
   document.addEventListener('qs:bulk-validation-start', function () {
-    previouslyBlocked = !showYAML
+    previouslyBlocked = !kometaState.showYAML
     previousStatuses = {}
     document.querySelectorAll('[data-validation-key]').forEach(row => {
       const key = row.dataset.validationKey
@@ -3230,9 +3121,9 @@ if (validateAllBtn) {
       return
     }
 
-    updateValidationGate()
+    updateValidationGate({ updateRunNowState, syncFinalAccordionRollups })
     const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])
-    if (previouslyBlocked && showYAML) {
+    if (previouslyBlocked && kometaState.showYAML) {
       showToast('info', 'Validation complete. Refreshing YAML output...')
       setTimeout(() => window.location.reload(), 300)
       return
