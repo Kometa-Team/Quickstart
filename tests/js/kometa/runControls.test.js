@@ -44,7 +44,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('../../../static/local-js/modules/kometa/_headerBadges.js', () => ({
   updateRunCommandHeaderBadge: vi.fn()
 }))
-vi.mock('../../../static/local-js/modules/kometa/_runCommand.js', () => ({
+// _util.js exports many pure helpers; we only want to stub
+// isRunCommandValid. importActual pulls the real module and we
+// spread its exports so the rest keep working (readMetaFlag,
+// computeYamlLineCount, etc., in case _runControls.js or its
+// transitive deps use them).
+vi.mock('../../../static/local-js/modules/kometa/_util.js', async (importActual) => ({
+  ...(await importActual()),
   isRunCommandValid: vi.fn(() => true)  // default: valid
 }))
 
@@ -56,7 +62,7 @@ import {
   syncIncompleteRunActions
 } from '../../../static/local-js/modules/kometa/_runControls.js'
 import { updateRunCommandHeaderBadge } from '../../../static/local-js/modules/kometa/_headerBadges.js'
-import { isRunCommandValid } from '../../../static/local-js/modules/kometa/_runCommand.js'
+import { isRunCommandValid } from '../../../static/local-js/modules/kometa/_util.js'
 
 // ---------------------------------------------------------------------
 // Fixtures

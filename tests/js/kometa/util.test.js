@@ -32,7 +32,8 @@ import {
   pushSparkValue,
   buildSparklinePoints,
   buildSparklinePointsScaled,
-  copyTextToClipboard
+  copyTextToClipboard,
+  isRunCommandValid
 } from '../../../static/local-js/modules/kometa/_util.js'
 
 afterEach(() => {
@@ -572,5 +573,36 @@ describe('copyTextToClipboard', () => {
         value: originalClipboard
       })
     }
+  })
+})
+
+// ---------------------------------------------------------------------
+// isRunCommandValid (moved from _runCommand.js in PR #1572)
+// ---------------------------------------------------------------------
+//
+// A "valid" run command has non-empty text and doesn't start with the
+// '??' placeholder sentinel that server-side rendering uses when
+// required config paths are still missing. All four combinations of
+// (present/missing element) x (valid/invalid content) are covered.
+
+describe('isRunCommandValid', () => {
+  it('is true when the run-command-output has real content', () => {
+    document.body.innerHTML = '<div id="run-command-output">python kometa.py --config config.yml</div>'
+    expect(isRunCommandValid()).toBe(true)
+  })
+
+  it("is false when the content starts with '??' placeholder", () => {
+    document.body.innerHTML = '<div id="run-command-output">?? no kometa root ??</div>'
+    expect(isRunCommandValid()).toBe(false)
+  })
+
+  it('is false when the content is empty/whitespace', () => {
+    document.body.innerHTML = '<div id="run-command-output">   </div>'
+    expect(isRunCommandValid()).toBe(false)
+  })
+
+  it('is false when the element is missing', () => {
+    document.body.innerHTML = ''
+    expect(isRunCommandValid()).toBe(false)
   })
 })

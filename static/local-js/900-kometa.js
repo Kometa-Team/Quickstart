@@ -39,7 +39,7 @@ import {
   kometaCanReadLogs
 } from './modules/kometa/_runtime.js'
 import {
-  buildCommand as _buildCommand,
+  buildCommand,
   applyActiveRunCommandState,
   clearActiveRunCommandState
 } from './modules/kometa/_runCommand.js'
@@ -67,16 +67,6 @@ import {
   getCurrentRunCommand,
   getRecoveryRunCommand
 } from './modules/kometa/_runControls.js'
-
-// Thin wrapper: buildCommand needs updateRunNowState and
-// syncFinalAccordionRollups callbacks. Both live in other modules
-// now, but wiring them through _runCommand.js as direct imports
-// would create a cycle:
-//   _runCommand.js -> _runControls.js -> _runCommand.js (isRunCommandValid)
-// So we keep the callbacks-bag bridge here.
-function buildCommand () {
-  return _buildCommand({ updateRunNowState, syncFinalAccordionRollups })
-}
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
