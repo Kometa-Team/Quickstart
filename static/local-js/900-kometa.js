@@ -11,7 +11,6 @@ import {
   formatRunSeconds,
   coerceRunSeconds,
   isValidTimesFormat,
-  isTimeWithinRange,
   applyLogFilter,
   computeLogStats,
   pushSparkValue,
@@ -19,6 +18,10 @@ import {
   buildSparklinePointsScaled,
   copyTextToClipboard
 } from './modules/kometa/_util.js'
+import {
+  toggleTimesInputVisibility,
+  checkMaintenanceWarning
+} from './modules/kometa/_maintenanceWindow.js'
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -3741,48 +3744,4 @@ function checkKometaStatus () {
       const outLog = document.getElementById('run-output-log')
       if (outLog) outLog.insertAdjacentHTML('beforeend', '\n️  Failed to check Kometa status.')
     })
-}
-
-function toggleTimesInputVisibility (mainOption) {
-  const timesContainer = document.getElementById('times-input-container')
-  if (mainOption === '--times') {
-    timesContainer.classList.remove('d-none')
-  } else {
-    timesContainer.classList.add('d-none')
-    document.getElementById('times-error').classList.add('d-none')
-  }
-}
-
-function getMaintenanceWindow () {
-  const windowStr = document.getElementById('plex-maintenance-window').dataset.window // e.g., "03:00–05:00"
-  if (!windowStr || !windowStr.includes('–')) return null
-
-  const [start, end] = windowStr.split('–').map(t => t.trim())
-  return { start, end } // Strings in "HH:MM" format
-}
-
-function checkMaintenanceWarning (mainOption) {
-  const warningBox = document.getElementById('times-warning')
-  const maintenance = getMaintenanceWindow()
-  warningBox.classList.add('d-none')
-
-  if (!maintenance) return
-
-  if (mainOption === '') {
-    const defaultTime = '05:00'
-    if (isTimeWithinRange(defaultTime, maintenance.start, maintenance.end)) {
-      warningBox.classList.remove('d-none')
-    }
-  }
-
-  if (mainOption === '--times') {
-    const timesInput = document.getElementById('times-input').value.trim()
-    if (isValidTimesFormat(timesInput)) {
-      const times = timesInput.split('|').map(t => t.trim())
-      const overlaps = times.some(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
-      if (overlaps) {
-        warningBox.classList.remove('d-none')
-      }
-    }
-  }
 }
