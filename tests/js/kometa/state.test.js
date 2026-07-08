@@ -91,18 +91,52 @@ describe('kometaState initial values', () => {
     expect(kometaState.activeRunCommandMode).toBeNull()
   })
 
+  it('all 8 kometa boolean status flags start as false', () => {
+    // Every KOMETA_* flag migrated from 900-kometa.js was pre-set to
+    // false at page load and updated on user actions / polling. The
+    // migration preserves that default so no code path sees a
+    // permissive 'true' before its first real evaluation.
+    expect(kometaState.kometaInstalled).toBe(false)
+    expect(kometaState.kometaValidated).toBe(false)
+    expect(kometaState.kometaValidationInProgress).toBe(false)
+    expect(kometaState.kometaLocalCheckCompleted).toBe(false)
+    expect(kometaState.kometaUpdating).toBe(false)
+    expect(kometaState.kometaUpdateAvailable).toBe(false)
+    expect(kometaState.kometaUpdateCheckSkipped).toBe(false)
+    expect(kometaState.kometaUpdateCheckCompleted).toBe(false)
+    expect(kometaState.kometaPendingStart).toBe(false)
+  })
+
+  it('kometaStatus starts as null (not "idle")', () => {
+    // Null distinguishes "never polled" from "polled and got 'idle'".
+    // Some code paths gate on `kometaStatus === 'running'` -- if we
+    // defaulted to 'idle', a first-page-load state check might
+    // report a stale status before the real status arrives.
+    expect(kometaState.kometaStatus).toBeNull()
+  })
+
   it('exports exactly the fields the runtime relies on (guards against typos)', () => {
     // Sorted alphabetically for a stable comparison
     expect(Object.keys(kometaState).sort()).toEqual([
       'activeRunCommandMode',
       'activeRunCommandOverride',
+      'kometaInstalled',
       'kometaInterval',
+      'kometaLocalCheckCompleted',
+      'kometaPendingStart',
       'kometaPollingStarted',
       'kometaProgressInterval',
+      'kometaStatus',
       'kometaStatusInterval',
+      'kometaUpdateAvailable',
+      'kometaUpdateCheckCompleted',
+      'kometaUpdateCheckSkipped',
       'kometaUpdateJobId',
       'kometaUpdateLogIndex',
       'kometaUpdatePollInterval',
+      'kometaUpdating',
+      'kometaValidated',
+      'kometaValidationInProgress',
       'showYAML'
     ])
   })

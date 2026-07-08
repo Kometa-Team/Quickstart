@@ -104,5 +104,52 @@ export const kometaState = {
   // overwrite the output panel) and by the run-command polling loop
   // (to include mode in the start-run payload).
   activeRunCommandOverride: null,
-  activeRunCommandMode: null
+  activeRunCommandMode: null,
+
+  // ---- Kometa runtime status flags ---------------------------------
+  //
+  // These ten booleans + one status string are the aggregate view of
+  // "where is the Kometa install and what is it doing right now?"
+  // They gate every run-related UI interaction (run-now enablement,
+  // update-flow visibility, badge state, etc.).
+  //
+  // Kept together to make the state machine visible in one place.
+  // Previously ten top-level `let KOMETA_*` in 900-kometa.js.
+  //
+  //   kometaInstalled            -- Kometa found at the configured
+  //                                 root (kometa.py + venv exist)
+  //   kometaValidated            -- validateKometaRoot succeeded
+  //                                 and the env is fully usable
+  //   kometaValidationInProgress -- validateKometaRoot fetch in flight
+  //   kometaLocalCheckCompleted  -- probeKometaRoot has finished at
+  //                                 least once this session
+  //
+  //   kometaUpdating             -- an install/update job is running
+  //   kometaUpdateAvailable      -- upstream has a newer version
+  //                                 than the local checkout
+  //   kometaUpdateCheckSkipped   -- the update check bailed early
+  //                                 (offline / external mode / etc.)
+  //   kometaUpdateCheckCompleted -- version check has finished at
+  //                                 least once this session
+  //
+  //   kometaStatus               -- 'idle' | 'running' | 'stopping'
+  //                                 | 'completed' | 'failed' | null
+  //   kometaPendingStart         -- a start-run request is in flight
+  //                                 (button was clicked, waiting for
+  //                                 the server confirm)
+  //
+  // NAMING NOTE: the pre-migration versions were SCREAMING_SNAKE_CASE
+  // (KOMETA_INSTALLED etc.). The migrated fields use camelCase to
+  // match the rest of kometaState. All references were renamed in the
+  // same PR that introduced these fields.
+  kometaInstalled: false,
+  kometaValidated: false,
+  kometaValidationInProgress: false,
+  kometaLocalCheckCompleted: false,
+  kometaUpdating: false,
+  kometaUpdateAvailable: false,
+  kometaUpdateCheckSkipped: false,
+  kometaUpdateCheckCompleted: false,
+  kometaStatus: null,
+  kometaPendingStart: false
 }

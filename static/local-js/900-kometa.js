@@ -60,21 +60,11 @@ function buildCommand () {
   return _buildCommand({ updateRunNowState, syncFinalAccordionRollups })
 }
 
-let KOMETA_UPDATING = false
-let KOMETA_VALIDATED = false
-let KOMETA_VALIDATION_IN_PROGRESS = false
-let KOMETA_UPDATE_AVAILABLE = false
-let KOMETA_UPDATE_CHECK_SKIPPED = false
-let KOMETA_UPDATE_CHECK_COMPLETED = false
-let KOMETA_INSTALLED = false
-let KOMETA_LOCAL_CHECK_COMPLETED = false
-// Kometa run + update polling handles live in modules/kometa/_state.js
-// so they can be shared with extracted modules without ES-module
-// binding-reassignment pain. See _state.js docstring.
+// Kometa runtime status flags migrated to modules/kometa/_state.js
+// (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
+// See _state.js docstring for the state-machine notes.
 let autoScrollEnabled = true
 let tailSize = '2000'
-let KOMETA_STATUS = null
-let KOMETA_PENDING_START = false
 let logPollingPaused = false
 let logFilter = ''
 let lastLogText = ''
@@ -203,19 +193,19 @@ function updateRunCommandHeaderBadge () {
     setHeaderRollupBadge('run-command-rollup-badge', 'error', 'Fix validation')
     return
   }
-  if (KOMETA_VALIDATION_IN_PROGRESS) {
+  if (kometaState.kometaValidationInProgress) {
     setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Checking Kometa')
     return
   }
-  if (KOMETA_UPDATING) {
+  if (kometaState.kometaUpdating) {
     setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Updating Kometa')
     return
   }
-  if (!KOMETA_VALIDATED) {
+  if (!kometaState.kometaValidated) {
     setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Validate Kometa')
     return
   }
-  if (KOMETA_STATUS === 'running') {
+  if (kometaState.kometaStatus === 'running') {
     setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Run in progress')
     return
   }
@@ -330,7 +320,7 @@ updateHeaderStyleLabel(headerSelect ? headerSelect.value : '')
 const openKometaActionsBtn = document.getElementById('open-kometa-actions-button')
 if (openKometaActionsBtn) {
   openKometaActionsBtn.addEventListener('click', function() {
-    if (KOMETA_STATUS === 'running') return
+    if (kometaState.kometaStatus === 'running') return
     if (!kometaActionsCollapse || typeof bootstrap === 'undefined' || !bootstrap.Collapse) return
     bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).show()
   })
@@ -338,7 +328,7 @@ if (openKometaActionsBtn) {
 const openKometaActionsPanelBtn = document.getElementById('open-kometa-actions-panel-button')
 if (openKometaActionsPanelBtn) {
   openKometaActionsPanelBtn.addEventListener('click', function() {
-    if (KOMETA_STATUS === 'running') return
+    if (kometaState.kometaStatus === 'running') return
     if (!kometaActionsCollapse || typeof bootstrap === 'undefined' || !bootstrap.Collapse) return
     bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).show()
   })
@@ -517,24 +507,24 @@ function setRunCommandPlaceholderState () {
     title = 'Fix validation before building the run command'
     message = 'Resolve the current validation issues first. The run command will appear after the config validates cleanly.'
     showButton = false
-  } else if (KOMETA_STATUS === 'running') {
+  } else if (kometaState.kometaStatus === 'running') {
     title = 'Kometa is currently running'
     message = 'Run output and stop controls are active below. Prepare Kometa is locked until the current run finishes.'
     showButton = false
-  } else if (KOMETA_UPDATING) {
+  } else if (kometaState.kometaUpdating) {
     title = 'Kometa update in progress'
     message = 'Wait for the current install or update to finish. The run command will appear automatically afterward.'
-  } else if (KOMETA_VALIDATION_IN_PROGRESS) {
+  } else if (kometaState.kometaValidationInProgress) {
     title = 'Preparing Kometa'
     message = 'Quickstart is validating the Kometa folder and environment now. The run command will appear automatically when ready.'
-  } else if (!KOMETA_LOCAL_CHECK_COMPLETED) {
+  } else if (!kometaState.kometaLocalCheckCompleted) {
     title = 'Checking Kometa state'
     message = 'Quickstart is probing the local Kometa path. Wait for that check to finish, then prepare Kometa if needed.'
     showButton = false
-  } else if (!KOMETA_INSTALLED) {
+  } else if (!kometaState.kometaInstalled) {
     title = 'Install Kometa to build the run command'
     message = 'Kometa is not installed in the selected path yet. Open Prepare Kometa to install it first.'
-  } else if (!KOMETA_VALIDATED) {
+  } else if (!kometaState.kometaValidated) {
     title = 'Validate Kometa to build the run command'
     message = 'Next step: open Prepare Kometa, let Quickstart validate the Kometa folder and environment, then this command will be generated here.'
   }
@@ -576,7 +566,7 @@ function updateRunNowState () {
     return
   }
 
-  if (!kometaState.showYAML || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING || KOMETA_STATUS === 'running' || !KOMETA_VALIDATED) {
+  if (!kometaState.showYAML || kometaState.kometaValidationInProgress || kometaState.kometaUpdating || kometaState.kometaStatus === 'running' || !kometaState.kometaValidated) {
     runNow.disabled = true
     updateRunCommandHeaderBadge()
     syncIncompleteRunActions()
@@ -622,13 +612,13 @@ checkboxFlags.forEach(opt => {
 function validateKometaRoot (options = {}) {
   if (!kometaCanProbeRuntime()) {
     appendKometaStatusLine('ℹ️ Runtime validation is not available in external Kometa mode. Quickstart can sync config and optional logs, but it cannot validate or launch the runtime directly.')
-    KOMETA_VALIDATION_IN_PROGRESS = false
-    KOMETA_VALIDATED = false
+    kometaState.kometaValidationInProgress = false
+    kometaState.kometaValidated = false
     syncKometaRollupBadge()
     return
   }
-  if (KOMETA_VALIDATION_IN_PROGRESS) return
-  KOMETA_VALIDATION_IN_PROGRESS = true
+  if (kometaState.kometaValidationInProgress) return
+  kometaState.kometaValidationInProgress = true
   setKometaUpdatePhaseBadge('validating')
   if (typeof showNavigationLoadingOverlay === 'function') {
     showNavigationLoadingOverlay('kometa-check')
@@ -649,8 +639,8 @@ function validateKometaRoot (options = {}) {
     logBox.textContent = '❌ Quickstart does not have a Kometa install path selected for this config yet.\nOpen the Start page and choose whether this config uses a Quickstart-managed install or an existing install.\n'
     if (spinner) spinner.classList.add('d-none')
     runNow.disabled = true
-    KOMETA_VALIDATION_IN_PROGRESS = false
-    KOMETA_VALIDATED = false
+    kometaState.kometaValidationInProgress = false
+    kometaState.kometaValidated = false
     syncKometaRollupBadge()
     return
   }
@@ -669,11 +659,11 @@ function validateKometaRoot (options = {}) {
   if (spinner) spinner.classList.remove('d-none')
   runNow.disabled = true
   const _validateSuccess = (res) => {
-      KOMETA_LOCAL_CHECK_COMPLETED = true
+      kometaState.kometaLocalCheckCompleted = true
       if (Array.isArray(res.log)) res.log.forEach(line => logBox.insertAdjacentHTML('beforeend', `${line}\n`))
 
       if (res.success) {
-        KOMETA_INSTALLED = true
+        kometaState.kometaInstalled = true
         logBox.insertAdjacentHTML('beforeend', '✅ Kometa root validated successfully.\n')
         if (res.kometa_version) logBox.insertAdjacentHTML('beforeend', `📦 Local Kometa version: ${res.kometa_version}\n`)
 
@@ -707,18 +697,18 @@ function validateKometaRoot (options = {}) {
         try { buildCommand() } catch { }
 
         if (allValid) {
-          KOMETA_VALIDATED = true
+          kometaState.kometaValidated = true
           showRunCommandSectionAfterValidated()
         } else {
-          KOMETA_VALIDATED = false
+          kometaState.kometaValidated = false
           hideRunCommandSectionUntilValidated()
           runNow.disabled = true
         }
-        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge(KOMETA_VALIDATED ? 'ready' : 'idle')
+        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge(kometaState.kometaValidated ? 'ready' : 'idle')
       } else {
-        KOMETA_INSTALLED = false
-        KOMETA_VALIDATED = false
-        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('failed')
+        kometaState.kometaInstalled = false
+        kometaState.kometaValidated = false
+        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
         hideRunCommandSectionUntilValidated()
         runNow.disabled = true
       }
@@ -728,22 +718,22 @@ function validateKometaRoot (options = {}) {
       syncKometaRollupBadge()
     }
   const _validateError = (msg) => {
-      KOMETA_LOCAL_CHECK_COMPLETED = true
+      kometaState.kometaLocalCheckCompleted = true
       const errMsg = msg || 'The Kometa root path is invalid or inaccessible. Please try again.'
       logBox.insertAdjacentHTML('beforeend', `❌ ${errMsg}\n`)
       const lowered = String(errMsg || '').toLowerCase()
       if (lowered.includes('kometa.py not found') || lowered.includes('requirements.txt not found')) {
-        KOMETA_INSTALLED = false
+        kometaState.kometaInstalled = false
       }
-      KOMETA_VALIDATED = false
-      if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('failed')
+      kometaState.kometaValidated = false
+      if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
       hideRunCommandSectionUntilValidated()
       runNow.disabled = true
       if (spinner) spinner.classList.add('d-none')
       syncKometaRollupBadge()
     }
   const _validateComplete = () => {
-      KOMETA_VALIDATION_IN_PROGRESS = false
+      kometaState.kometaValidationInProgress = false
       updateRunNowState()
       syncUpdateButtonLabel()
       syncKometaRollupBadge()
@@ -776,8 +766,8 @@ function probeKometaRoot () {
   }
 
   const _probeSuccess = (res) => {
-      KOMETA_LOCAL_CHECK_COMPLETED = true
-      KOMETA_INSTALLED = !!res.kometa_installed
+      kometaState.kometaLocalCheckCompleted = true
+      kometaState.kometaInstalled = !!res.kometa_installed
       if (Array.isArray(res.log)) res.log.forEach(line => appendKometaStatusLine(line))
 
       const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || configuredRootDisplay)
@@ -793,8 +783,8 @@ function probeKometaRoot () {
       if (installPathEl) installPathEl.textContent = kometaRootDisplay
       syncKometaSourceStatus({ localVersion: res.kometa_version || 'Unknown' })
 
-      if (!KOMETA_INSTALLED) {
-        KOMETA_VALIDATED = false
+      if (!kometaState.kometaInstalled) {
+        kometaState.kometaValidated = false
         hideRunCommandSectionUntilValidated()
       }
 
@@ -802,9 +792,9 @@ function probeKometaRoot () {
       syncKometaRollupBadge()
     }
   const _probeError = (msg) => {
-      KOMETA_LOCAL_CHECK_COMPLETED = true
-      KOMETA_INSTALLED = false
-      KOMETA_VALIDATED = false
+      kometaState.kometaLocalCheckCompleted = true
+      kometaState.kometaInstalled = false
+      kometaState.kometaValidated = false
       const errMsg = msg || 'Unable to probe the Kometa path.'
       appendKometaStatusLine(`❌ ${errMsg}`)
       syncKometaSourceStatus({ localVersion: 'Unknown' })
@@ -852,11 +842,11 @@ function checkKometaUpdate (forceRefresh = false) {
       return data
     })
     .then(data => {
-      KOMETA_LOCAL_CHECK_COMPLETED = true
-      KOMETA_INSTALLED = !!data.kometa_installed
-      KOMETA_UPDATE_CHECK_COMPLETED = !!data.update_check_completed
-      KOMETA_UPDATE_CHECK_SKIPPED = !!data.kometa_update_check_skipped
-      KOMETA_UPDATE_AVAILABLE = !!data.kometa_update_available
+      kometaState.kometaLocalCheckCompleted = true
+      kometaState.kometaInstalled = !!data.kometa_installed
+      kometaState.kometaUpdateCheckCompleted = !!data.update_check_completed
+      kometaState.kometaUpdateCheckSkipped = !!data.kometa_update_check_skipped
+      kometaState.kometaUpdateAvailable = !!data.kometa_update_available
       if (Array.isArray(data.log)) data.log.forEach(line => appendKometaStatusLine(line))
       syncKometaSourceStatus({
         localVersion: data.local_version || kometaLocalVersionStatus,
@@ -899,7 +889,7 @@ initBootstrapTooltips(document)
 function syncKometaUpdateAttention () {
   if (kometaActionsHeading && kometaActionsToggle) {
     const isCollapsed = kometaActionsToggle.classList.contains('collapsed')
-    const needsAttention = KOMETA_UPDATE_AVAILABLE && isCollapsed
+    const needsAttention = kometaState.kometaUpdateAvailable && isCollapsed
     kometaActionsHeading.classList.toggle('kometa-update-attention', needsAttention)
     kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
   }
@@ -1119,9 +1109,9 @@ function syncKometaBranchOverrideWarning () {
 }
 
 function invalidateKometaUpdateStatus () {
-  KOMETA_UPDATE_AVAILABLE = false
-  KOMETA_UPDATE_CHECK_COMPLETED = false
-  KOMETA_UPDATE_CHECK_SKIPPED = false
+  kometaState.kometaUpdateAvailable = false
+  kometaState.kometaUpdateCheckCompleted = false
+  kometaState.kometaUpdateCheckSkipped = false
   kometaRemoteVersionStatus = ''
   kometaRemoteVersionChecked = false
   kometaRemoteVersionSkipped = false
@@ -1150,13 +1140,13 @@ function runKometaStatusPass (forceRefresh = false) {
       if (getConfiguredKometaInstallMode() === 'external') {
         appendKometaStatusLine('')
         appendKometaStatusLine('ℹ️ External Kometa mode detected. Quickstart will not perform runtime update checks in this mode.')
-        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('idle')
+        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('idle')
         return res
       }
       if (!res || !res.kometa_installed) {
         appendKometaStatusLine('')
         appendKometaStatusLine('ℹ️ Remote update check skipped because Kometa is not installed.')
-        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('idle')
+        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('idle')
         return res
       }
       appendKometaStatusLine('')
@@ -1164,11 +1154,11 @@ function runKometaStatusPass (forceRefresh = false) {
       return checkKometaUpdate(forceRefresh)
     })
     .then((result) => {
-      if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge(KOMETA_INSTALLED ? 'ready' : 'idle')
+      if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge(kometaState.kometaInstalled ? 'ready' : 'idle')
       return result
     })
     .catch(() => {
-      if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('failed')
+      if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
       return null
     })
 }
@@ -1207,15 +1197,15 @@ function pollKometaUpdateProgress () {
 }
 
 function getKometaRollupStatus () {
-  if (KOMETA_UPDATING) return { state: 'unknown', label: 'Updating...' }
-  if (KOMETA_VALIDATION_IN_PROGRESS) return { state: 'unknown', label: 'Checking...' }
-  if (!KOMETA_LOCAL_CHECK_COMPLETED) return { state: 'unknown', label: 'Not checked' }
-  if (!KOMETA_INSTALLED) return { state: 'error', label: 'Install needed' }
-  if (!KOMETA_UPDATE_CHECK_COMPLETED) {
-    return { state: KOMETA_VALIDATED ? 'ok' : 'warn', label: KOMETA_VALIDATED ? 'Prepared' : 'Prepare needed' }
+  if (kometaState.kometaUpdating) return { state: 'unknown', label: 'Updating...' }
+  if (kometaState.kometaValidationInProgress) return { state: 'unknown', label: 'Checking...' }
+  if (!kometaState.kometaLocalCheckCompleted) return { state: 'unknown', label: 'Not checked' }
+  if (!kometaState.kometaInstalled) return { state: 'error', label: 'Install needed' }
+  if (!kometaState.kometaUpdateCheckCompleted) {
+    return { state: kometaState.kometaValidated ? 'ok' : 'warn', label: kometaState.kometaValidated ? 'Prepared' : 'Prepare needed' }
   }
-  if (KOMETA_UPDATE_CHECK_SKIPPED) return { state: 'unknown', label: 'Skipped while running' }
-  if (KOMETA_UPDATE_AVAILABLE) return { state: 'warn', label: 'Update available' }
+  if (kometaState.kometaUpdateCheckSkipped) return { state: 'unknown', label: 'Skipped while running' }
+  if (kometaState.kometaUpdateAvailable) return { state: 'warn', label: 'Update available' }
   return { state: 'ok', label: 'Up to date' }
 }
 
@@ -1327,10 +1317,10 @@ function syncIncompleteRunActions () {
   const alertVisible = Boolean(incompleteAlert) && !incompleteAlert.classList.contains('d-none')
   const recoveryRunnable = Boolean(recoveryCommand) &&
     alertVisible &&
-    !KOMETA_VALIDATION_IN_PROGRESS &&
-    !KOMETA_UPDATING &&
-    !KOMETA_PENDING_START &&
-    KOMETA_STATUS !== 'running'
+    !kometaState.kometaValidationInProgress &&
+    !kometaState.kometaUpdating &&
+    !kometaState.kometaPendingStart &&
+    kometaState.kometaStatus !== 'running'
 
   runRecovery.classList.toggle('d-none', !alertVisible)
   runRecovery.disabled = !recoveryRunnable
@@ -1338,13 +1328,13 @@ function syncIncompleteRunActions () {
     runRecovery.removeAttribute('title')
   } else if (!alertVisible) {
     runRecovery.setAttribute('title', 'Recovery actions are only available when an incomplete-run recovery command is visible.')
-  } else if (KOMETA_VALIDATION_IN_PROGRESS) {
+  } else if (kometaState.kometaValidationInProgress) {
     runRecovery.setAttribute('title', 'Wait for Kometa validation to finish before starting a recovery run.')
-  } else if (KOMETA_UPDATING) {
+  } else if (kometaState.kometaUpdating) {
     runRecovery.setAttribute('title', 'Wait for the Kometa update to finish before starting a recovery run.')
-  } else if (KOMETA_PENDING_START) {
+  } else if (kometaState.kometaPendingStart) {
     runRecovery.setAttribute('title', 'A Kometa start is already queued for the next Plex maintenance window.')
-  } else if (KOMETA_STATUS === 'running') {
+  } else if (kometaState.kometaStatus === 'running') {
     runRecovery.setAttribute('title', 'Kometa is already running.')
   } else {
     runRecovery.setAttribute('title', 'No recovery command is available for this incomplete run.')
@@ -1356,17 +1346,17 @@ function startKometaCommand (command, opts = {}) {
   const requireValidated = opts.requireValidated !== false
   const startMessage = opts.startMessage || 'Starting Kometa...\n'
 
-  if (KOMETA_UPDATING) {
+  if (kometaState.kometaUpdating) {
     showToast('warning', 'Kometa is updating. Please wait for it to finish before running.')
     return
   }
 
-  if (KOMETA_VALIDATION_IN_PROGRESS) {
+  if (kometaState.kometaValidationInProgress) {
     showToast('info', 'Kometa validation is still running. Please wait.')
     return
   }
 
-  if (requireValidated && !KOMETA_VALIDATED) {
+  if (requireValidated && !kometaState.kometaValidated) {
     showToast('warning', 'Kometa has not been validated yet.')
     return
   }
@@ -1403,7 +1393,7 @@ function startKometaCommand (command, opts = {}) {
 
       if (data.status === 'queued') {
         applyActiveRunCommandState(command, startMode)
-        KOMETA_PENDING_START = true
+        kometaState.kometaPendingStart = true
         const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
         const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
         const message = `Plex maintenance active${windowLabel} at ${nowLabel}. Kometa will start automatically when it ends.`
@@ -1502,7 +1492,7 @@ function resumeKometaLiveView () {
   checkKometaStatus()
     .catch(() => null)
     .finally(() => {
-      if (KOMETA_STATUS === 'running' || KOMETA_PENDING_START) {
+      if (kometaState.kometaStatus === 'running' || kometaState.kometaPendingStart) {
         kometaState.kometaPollingStarted = false
         startPollingIfNeeded()
         fetchRunProgress(true)
@@ -1822,7 +1812,7 @@ function fetchRunProgress (forceFull = false) {
     })
     .then(data => {
       if (!data) {
-        if (KOMETA_STATUS === 'running' && lastRunProgressPayload) {
+        if (kometaState.kometaStatus === 'running' && lastRunProgressPayload) {
           renderRunProgress(lastRunProgressPayload)
         } else {
           clearRunProgress(false)
@@ -1832,7 +1822,7 @@ function fetchRunProgress (forceFull = false) {
       renderRunProgress(data)
     })
     .catch(() => {
-      if (KOMETA_STATUS === 'running' && lastRunProgressPayload) {
+      if (kometaState.kometaStatus === 'running' && lastRunProgressPayload) {
         renderRunProgress(lastRunProgressPayload)
       } else {
         clearRunProgress(false)
@@ -1846,13 +1836,13 @@ function fetchRunProgress (forceFull = false) {
 function getUpdateButtonLabel () {
   const installMode = getConfiguredKometaInstallMode()
   if (installMode === 'existing') {
-    return `<i class="bi bi-arrow-clockwise me-1"></i> ${KOMETA_UPDATE_CHECK_COMPLETED ? 'Recheck Existing Status' : 'Check Existing Status'}`
+    return `<i class="bi bi-arrow-clockwise me-1"></i> ${kometaState.kometaUpdateCheckCompleted ? 'Recheck Existing Status' : 'Check Existing Status'}`
   }
   const force = forceUpdateToggle.checked
   const label = force
-    ? (KOMETA_INSTALLED ? 'Force Update Kometa' : 'Force Install Kometa')
-    : (KOMETA_INSTALLED
-        ? (KOMETA_UPDATE_AVAILABLE ? 'Update Available' : (KOMETA_UPDATE_CHECK_COMPLETED ? 'Up to date' : 'Check for Kometa Updates'))
+    ? (kometaState.kometaInstalled ? 'Force Update Kometa' : 'Force Install Kometa')
+    : (kometaState.kometaInstalled
+        ? (kometaState.kometaUpdateAvailable ? 'Update Available' : (kometaState.kometaUpdateCheckCompleted ? 'Up to date' : 'Check for Kometa Updates'))
         : 'Install Kometa')
   return `<i class="bi bi-arrow-clockwise me-1"></i> ${label}`
 }
@@ -1895,7 +1885,7 @@ function callUpdateKometa () {
       })
     return
   }
-  if (KOMETA_STATUS === 'running') {
+  if (kometaState.kometaStatus === 'running') {
     showToast('info', 'Kometa is currently running; update skipped.')
     return
   }
@@ -1911,7 +1901,7 @@ function callUpdateKometa () {
   const configuredInstallMode = getConfiguredKometaInstallMode()
   const forceUpdate = forceUpdateToggle.checked
 
-  if (KOMETA_INSTALLED && !forceUpdate && !KOMETA_UPDATE_AVAILABLE) {
+  if (kometaState.kometaInstalled && !forceUpdate && !kometaState.kometaUpdateAvailable) {
     btn.disabled = true
     btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Checking...'
     forceUpdateToggle.disabled = true
@@ -1937,10 +1927,10 @@ function callUpdateKometa () {
     return
   }
 
-  KOMETA_UPDATING = true
-  KOMETA_VALIDATED = false
-  KOMETA_UPDATE_CHECK_SKIPPED = false
-  KOMETA_UPDATE_CHECK_COMPLETED = false
+  kometaState.kometaUpdating = true
+  kometaState.kometaValidated = false
+  kometaState.kometaUpdateCheckSkipped = false
+  kometaState.kometaUpdateCheckCompleted = false
   setKometaUpdatePhaseBadge('queued')
   syncKometaRollupBadge()
   hideRunCommandSectionUntilValidated()
@@ -1953,8 +1943,8 @@ function callUpdateKometa () {
   runNow.innerHTML = '<i class="bi bi-hourglass me-1"></i> Updating...'
   stopNow.disabled = true
   const inProgressLabel = forceUpdate
-    ? (KOMETA_INSTALLED ? 'Force Updating...' : 'Force Installing...')
-    : (KOMETA_INSTALLED ? 'Checking for updates...' : 'Installing...')
+    ? (kometaState.kometaInstalled ? 'Force Updating...' : 'Force Installing...')
+    : (kometaState.kometaInstalled ? 'Checking for updates...' : 'Installing...')
   btn.disabled = true
   btn.innerHTML = `<i class="bi bi-arrow-repeat me-1"></i> ${inProgressLabel}`
   forceUpdateToggle.disabled = true
@@ -1976,7 +1966,7 @@ function callUpdateKometa () {
     stopKometaUpdatePolling()
     kometaState.kometaUpdateJobId = null
     kometaState.kometaUpdateLogIndex = 0
-    KOMETA_UPDATING = false
+    kometaState.kometaUpdating = false
     runBox.classList.remove('opacity-50', 'position-relative')
     runNow.disabled = prevRunNowDisabled
     runNow.innerHTML = prevRunNowHtml
@@ -2020,8 +2010,8 @@ function callUpdateKometa () {
         stopKometaUpdatePolling()
         const finalize = (progress) => {
           if (!progress || !progress.done) return false
-          KOMETA_LOCAL_CHECK_COMPLETED = false
-          KOMETA_UPDATE_AVAILABLE = false
+          kometaState.kometaLocalCheckCompleted = false
+          kometaState.kometaUpdateAvailable = false
           document.getElementById('kometa-update-box').classList.add('d-none')
           syncUpdateButtonLabel()
           const elapsed = formatElapsed(Date.now() - startTs)
@@ -2066,8 +2056,8 @@ function callUpdateKometa () {
           })
       }
       if (data.success) {
-        KOMETA_LOCAL_CHECK_COMPLETED = false
-        KOMETA_UPDATE_AVAILABLE = false
+        kometaState.kometaLocalCheckCompleted = false
+        kometaState.kometaUpdateAvailable = false
         document.getElementById('kometa-update-box').classList.add('d-none')
         syncUpdateButtonLabel()
         const elapsed = formatElapsed(Date.now() - startTs)
@@ -2102,12 +2092,12 @@ function callUpdateKometa () {
 // Kometa Update Button Click
 updateKometaBtn?.addEventListener('click', callUpdateKometa)
 forceUpdateToggle?.addEventListener('change', function() {
-  if (!KOMETA_UPDATING) syncUpdateButtonLabel()
+  if (!kometaState.kometaUpdating) syncUpdateButtonLabel()
 })
 kometaBranchOverride?.addEventListener('change', function() {
   saveKometaBranchOverride()
   syncKometaBranchOverrideWarning()
-  if (!KOMETA_UPDATING) runKometaStatusPass(true)
+  if (!kometaState.kometaUpdating) runKometaStatusPass(true)
 })
 loadSavedKometaBranchOverride()
 syncKometaBranchOverrideWarning()
@@ -2348,7 +2338,7 @@ function updateLogRecency (data) {
   if (typeof totalLines === 'number' && Number.isFinite(totalLines)) {
     logText += ` • ${totalLines.toLocaleString()} lines`
   }
-  if (data.log_is_stale && KOMETA_STATUS === 'running') {
+  if (data.log_is_stale && kometaState.kometaStatus === 'running') {
     logText += ' • waiting for new meta.log entries from this run'
     runStatusLog.classList.add('text-warning')
     runStatusLog.classList.remove('text-muted')
@@ -2596,7 +2586,7 @@ checkKometaStatus()
   .catch(() => null)
   .finally(() => {
     if (!document.getElementById('kometa-validation-log')) return
-    if (KOMETA_STATUS === 'running') return
+    if (kometaState.kometaStatus === 'running') return
     if (!kometaCanProbeRuntime()) {
       appendKometaStatusLine('ℹ️ External Kometa mode active. Runtime validation, launch, and update controls are disabled; generated config still syncs to the configured Kometa path.')
       return
@@ -2605,7 +2595,7 @@ checkKometaStatus()
       .finally(() => {
         const stage = getFinalGateState().stage
         if (stage === 'todo' || stage === 'freshness') return
-        if (KOMETA_STATUS === 'running' || KOMETA_UPDATING || KOMETA_VALIDATION_IN_PROGRESS) return
+        if (kometaState.kometaStatus === 'running' || kometaState.kometaUpdating || kometaState.kometaValidationInProgress) return
         validateKometaRoot({ appendStatus: true })
       })
   })
@@ -2615,13 +2605,13 @@ if (kometaActionsCollapse) {
     const stage = getFinalGateState().stage
     if (stage === 'todo' || stage === 'freshness') return
     if (!kometaCanProbeRuntime()) return
-    if (KOMETA_STATUS === 'running') {
+    if (kometaState.kometaStatus === 'running') {
       if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
         bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).hide()
       }
       return
     }
-    if (!KOMETA_INSTALLED || KOMETA_VALIDATED || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING) return
+    if (!kometaState.kometaInstalled || kometaState.kometaValidated || kometaState.kometaValidationInProgress || kometaState.kometaUpdating) return
     validateKometaRoot()
   })
 }
@@ -2632,11 +2622,11 @@ if (runCommandCollapse) {
       setRunCommandPlaceholderState()
       return
     }
-    if (KOMETA_STATUS === 'running') {
+    if (kometaState.kometaStatus === 'running') {
       clearRunCommandPlaceholderState()
       return
     }
-    if (!KOMETA_VALIDATED) {
+    if (!kometaState.kometaValidated) {
       setRunCommandPlaceholderState()
     }
   })
@@ -3033,7 +3023,7 @@ function performStopKometa () {
         lastRunProgressPayload = stoppedPayload
         renderRunProgress(stoppedPayload)
       }
-      KOMETA_STATUS = 'not started'
+      kometaState.kometaStatus = 'not started'
       document.getElementById('run-now').disabled = false
       document.getElementById('run-now-label').textContent = 'Run Now'
       document.getElementById('stop-now').classList.add('d-none') // hide stop again
@@ -3093,8 +3083,8 @@ function checkKometaStatus () {
     .then(res => res.json())
     .then(data => {
       latestKometaStatusPayload = data || null
-      KOMETA_STATUS = data.status || null
-      KOMETA_PENDING_START = Boolean(data.pending_start && data.status !== 'running')
+      kometaState.kometaStatus = data.status || null
+      kometaState.kometaPendingStart = Boolean(data.pending_start && data.status !== 'running')
       const updateBtn = updateKometaBtn
       const forceUpdate = forceUpdateToggle
       const runNow = document.getElementById('run-now')
@@ -3102,9 +3092,9 @@ function checkKometaStatus () {
       setKometaPrepareRunningState(data.status === 'running')
 
       // Disable update if Kometa is running or an update is in progress
-      const shouldDisableUpdate = (data.status === 'running') || KOMETA_UPDATING
+      const shouldDisableUpdate = (data.status === 'running') || kometaState.kometaUpdating
       if (shouldDisableUpdate) {
-        const why = KOMETA_UPDATING ? 'Kometa is updating; wait for it to finish.' : 'Kometa is running; stop it before updating.'
+        const why = kometaState.kometaUpdating ? 'Kometa is updating; wait for it to finish.' : 'Kometa is running; stop it before updating.'
         if (updateBtn) {
           updateBtn.disabled = true
           updateBtn.setAttribute('title', why)
@@ -3150,7 +3140,7 @@ function checkKometaStatus () {
       }
 
       // Lock the Run UI while updating
-      if (KOMETA_UPDATING) {
+      if (kometaState.kometaUpdating) {
         runNow.disabled = true
         runNow.innerHTML = '<i class="bi bi-hourglass me-1"></i> Updating...'
         stopNow.disabled = true
@@ -3164,7 +3154,7 @@ function checkKometaStatus () {
           data.active_command || kometaState.activeRunCommandOverride || getCurrentRunCommand(),
           data.start_mode || kometaState.activeRunCommandMode || 'current'
         )
-        KOMETA_PENDING_START = false
+        kometaState.kometaPendingStart = false
         finalLogscanAnalyzeTriggered = false
         const _iralert = document.getElementById('incomplete-run-alert')
         if (_iralert) _iralert.classList.add('d-none')
@@ -3196,7 +3186,7 @@ function checkKometaStatus () {
       updateRunNowState()
 
       if (data.status === 'done') {
-        KOMETA_PENDING_START = false
+        kometaState.kometaPendingStart = false
         if (!finalLogscanAnalyzeTriggered) {
           finalLogscanAnalyzeTriggered = true
           fetchLogscanAnalysis(true)
@@ -3207,13 +3197,13 @@ function checkKometaStatus () {
           document.getElementById('run-output-log').insertAdjacentHTML('beforeend', `\n⚠️ Kometa exited with code ${data.return_code}. Check logs for details.`)
         }
       } else if (data.status === 'not started') {
-        KOMETA_PENDING_START = false
+        kometaState.kometaPendingStart = false
         const outLog = document.getElementById('run-output-log')
         if (outLog) outLog.insertAdjacentHTML('beforeend', '\n🟥 Kometa is not running.')
       }
     })
     .catch(err => {
-      KOMETA_PENDING_START = false
+      kometaState.kometaPendingStart = false
       console.error('Error checking Kometa status:', err)
       const outLog = document.getElementById('run-output-log')
       if (outLog) outLog.insertAdjacentHTML('beforeend', '\n️  Failed to check Kometa status.')
