@@ -48,6 +48,11 @@ import {
 import {
   updateRunSparklines
 } from './modules/kometa/_sparklines.js'
+import {
+  initBootstrapTooltips,
+  disposeBootstrapTooltips,
+  showCopyButtonSuccess
+} from './modules/kometa/_ui.js'
 
 // Thin wrapper: buildCommand needs updateRunNowState and
 // syncFinalAccordionRollups callbacks, but both are still owned by
@@ -187,43 +192,6 @@ function updateYamlLineCount () {
 
 updateYamlLineCount()
 yamlOutput?.addEventListener('input', updateYamlLineCount)
-
-function initBootstrapTooltips (scope, selector, options) {
-  if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return
-  const root = scope || document
-  const query = selector || '[data-bs-toggle="tooltip"]'
-  const nodes = []
-  if (root && typeof root.matches === 'function' && root.matches(query)) nodes.push(root)
-  if (root && typeof root.querySelectorAll === 'function') {
-    root.querySelectorAll(query).forEach(el => nodes.push(el))
-  }
-  const seen = new Set()
-  nodes.forEach(el => {
-    if (!el || seen.has(el)) return
-    seen.add(el)
-    const existing = bootstrap.Tooltip.getInstance(el)
-    if (existing) existing.dispose()
-    bootstrap.Tooltip.getOrCreateInstance(el, Object.assign({ html: true, sanitize: false }, options || {}))
-  })
-}
-
-function disposeBootstrapTooltips (scope, selector) {
-  if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return
-  const root = scope || document
-  const query = selector || '[data-bs-toggle="tooltip"]'
-  const nodes = []
-  if (root && typeof root.matches === 'function' && root.matches(query)) nodes.push(root)
-  if (root && typeof root.querySelectorAll === 'function') {
-    root.querySelectorAll(query).forEach(el => nodes.push(el))
-  }
-  const seen = new Set()
-  nodes.forEach(el => {
-    if (!el || seen.has(el)) return
-    seen.add(el)
-    const existing = bootstrap.Tooltip.getInstance(el)
-    if (existing) existing.dispose()
-  })
-}
 
 if (headerGridCollapse && headerGrid) {
   let gridLoaded = false
@@ -1187,20 +1155,6 @@ function setKometaPrepareRunningState (isRunning) {
     kometaActionsToggle.disabled = false
     kometaActionsToggle.classList.remove('disabled')
   }
-}
-
-function showCopyButtonSuccess (iconSelector, textSelector) {
-  const icon = document.querySelector(iconSelector)
-  const text = document.querySelector(textSelector)
-  if (!icon || !text) return
-  icon.classList.remove('bi-files', 'bi-clipboard')
-  icon.classList.add('bi-check2')
-  text.textContent = 'Copied'
-  setTimeout(() => {
-    icon.classList.remove('bi-check2')
-    icon.classList.add('bi-files')
-    text.textContent = 'Copy'
-  }, 1500)
 }
 
 document.getElementById('copy-command')?.addEventListener('click', function() {
