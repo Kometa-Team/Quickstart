@@ -39,6 +39,15 @@ import {
   getFinalGateState,
   updateValidationGate
 } from './modules/kometa/_validationGate.js'
+import {
+  getConfiguredKometaInstallMode,
+  getConfiguredKometaRootPosix,
+  getConfiguredKometaRootDisplay,
+  kometaCanLaunch,
+  kometaCanCheckUpdateStatus,
+  kometaCanProbeRuntime,
+  kometaCanReadLogs
+} from './modules/kometa/_runtime.js'
 
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
@@ -794,50 +803,6 @@ checkboxFlags.forEach(opt => {
   const checkbox = document.getElementById(`opt-${opt}`)
   if (checkbox) checkbox.addEventListener('change', buildCommand)
 })
-
-function getConfiguredKometaInstallMode () {
-  const out = document.getElementById('run-command-output')
-  const raw = (out.dataset.kometaInstallMode || 'managed').toString().trim().toLowerCase()
-  if (raw === 'existing' || raw === 'external') return raw
-  return 'managed'
-}
-
-function getConfiguredKometaRootPosix () {
-  const out = document.getElementById('run-command-output')
-  const selected = (out.dataset.kometaRootSelected || '').toString().trim()
-  const fallback = (out.dataset.kometaRootDefault || '').toString().trim()
-  const configDir = (out.dataset.kometaConfigDir || '').toString().trim()
-  if (getConfiguredKometaInstallMode() === 'external') return configDir
-  return selected || fallback
-}
-
-function getConfiguredKometaRootDisplay () {
-  const out = document.getElementById('run-command-output')
-  const selected = (out.dataset.kometaRootSelectedDisplay || '').toString().trim()
-  const fallback = (out.dataset.kometaRootDefaultDisplay || getConfiguredKometaRootPosix())
-  const configDir = (out.dataset.kometaConfigDirDisplay || '').toString().trim()
-  if (getConfiguredKometaInstallMode() === 'external') return configDir || getConfiguredKometaRootPosix()
-  return selected || fallback
-}
-
-function kometaCanLaunch () {
-  const el = document.getElementById('run-command-output')
-  return ((el && el.dataset.kometaCanLaunch) || '').toString().toLowerCase() === 'true'
-}
-
-function kometaCanCheckUpdateStatus () {
-  return getConfiguredKometaInstallMode() !== 'external' && kometaCanProbeRuntime()
-}
-
-function kometaCanProbeRuntime () {
-  const el = document.getElementById('run-command-output')
-  return ((el && el.dataset.kometaCanProbeRuntime) || '').toString().toLowerCase() === 'true'
-}
-
-function kometaCanReadLogs () {
-  const el = document.getElementById('run-command-output')
-  return ((el && el.dataset.kometaCanReadLogs) || '').toString().toLowerCase() === 'true'
-}
 
 function validateKometaRoot (options = {}) {
   if (!kometaCanProbeRuntime()) {
