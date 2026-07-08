@@ -67,6 +67,11 @@ import {
   getCurrentRunCommand,
   getRecoveryRunCommand
 } from './modules/kometa/_runControls.js'
+import {
+  setKometaUpdatePhaseBadge,
+  setKometaStatusLog,
+  appendKometaStatusLine
+} from './modules/kometa/_updatePhase.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -104,7 +109,6 @@ const logscanSections = document.getElementById('logscan-sections')
 const updateKometaBtn = document.getElementById('update-kometa-btn')
 const forceUpdateToggle = document.getElementById('force-kometa-update')
 const kometaBranchOverride = document.getElementById('kometa-branch-override')
-const kometaUpdatePhaseBadge = document.getElementById('kometa-update-phase-badge')
 const kometaMaintenancePageBadge = document.getElementById('kometa-maintenance-page-badge')
 const runStatusRow = document.getElementById('run-status-row')
 const runStatusTimer = document.getElementById('run-status-timer')
@@ -125,7 +129,6 @@ const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
 const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
 const runCommandCollapse = document.getElementById('run-command-output-collapse')
 let headerStyleSubmitting = false
-let kometaUpdatePhaseStatus = 'idle'
 
 function syncKometaMaintenancePageBadge (data) {
   if (!kometaMaintenancePageBadge) return
@@ -743,129 +746,6 @@ function syncKometaUpdateAttention () {
     kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
   }
   syncKometaRollupBadge()
-}
-
-function setKometaUpdatePhaseBadge (phase) {
-  if (!kometaUpdatePhaseBadge) return
-
-  const phaseMap = {
-    idle: { label: 'Idle', klass: 'text-bg-secondary' },
-    checking: { label: 'Checking', klass: 'text-bg-info' },
-    queued: { label: 'Starting', klass: 'text-bg-primary' },
-    downloading: { label: 'Downloading', klass: 'text-bg-primary' },
-    extracting: { label: 'Extracting', klass: 'text-bg-warning' },
-    preserving: { label: 'Preserving data', klass: 'text-bg-warning' },
-    venv: { label: 'Preparing venv', klass: 'text-bg-info' },
-    dependencies: { label: 'Installing deps', klass: 'text-bg-warning' },
-    validating: { label: 'Validating', klass: 'text-bg-info' },
-    ready: { label: 'Ready', klass: 'text-bg-success' },
-    failed: { label: 'Failed', klass: 'text-bg-danger' }
-  }
-
-  const normalized = Object.prototype.hasOwnProperty.call(phaseMap, phase) ? phase : 'idle'
-  const next = phaseMap[normalized]
-  kometaUpdatePhaseStatus = normalized
-  kometaUpdatePhaseBadge.classList.remove('text-bg-secondary', 'text-bg-info', 'text-bg-primary', 'text-bg-warning', 'text-bg-success', 'text-bg-danger')
-  kometaUpdatePhaseBadge.classList.add(next.klass)
-  kometaUpdatePhaseBadge.textContent = next.label
-}
-
-function inferKometaUpdatePhaseFromLine (line) {
-  const text = String(line || '').trim()
-  if (!text) return null
-  const lower = text.toLowerCase()
-
-  if (
-    lower.startsWith('❌') ||
-    lower.includes(' update failed') ||
-    lower.includes('error occurred during kometa update') ||
-    lower.includes('aborting extraction') ||
-    lower.includes('failed to fetch kometa update progress')
-  ) {
-    return 'failed'
-  }
-  if (
-    lower.includes('kometa root validated successfully') ||
-    lower.includes('kometa root is valid and ready') ||
-    lower.includes('kometa update completed successfully') ||
-    lower.includes('kometa is already up to date') ||
-    lower.includes('kometa updated via zip')
-  ) {
-    return 'ready'
-  }
-  if (
-    lower.includes('re-validating kometa after update') ||
-    lower.includes('please wait while we validate') ||
-    lower.includes('validate your kometa installation')
-  ) {
-    return 'validating'
-  }
-  if (lower.includes('installing requirements') || lower.includes('upgrading pip')) {
-    return 'dependencies'
-  }
-  if (
-    lower.includes('creating virtual environment') ||
-    lower.includes('existing kometa-venv looks invalid') ||
-    lower.includes('venv python') ||
-    lower.includes('pyvenv.cfg')
-  ) {
-    return 'venv'
-  }
-  if (
-    lower.includes('backed up kometa logs/cache') ||
-    lower.includes('restored kometa logs/cache') ||
-    lower.includes('kometa backup')
-  ) {
-    return 'preserving'
-  }
-  if (
-    (lower.includes('removed ') && lower.includes('existing entr')) ||
-    lower.includes('removing existing kometa contents') ||
-    lower.includes('existing path still present after cleanup') ||
-    lower.includes('extracted version file') ||
-    lower.includes('extracted to:')
-  ) {
-    return 'extracting'
-  }
-  if (lower.includes('downloading ') && lower.includes('.zip')) {
-    return 'downloading'
-  }
-  if (
-    lower.includes('resolving upstream sha') ||
-    (lower.includes('upstream ') && lower.includes(' sha')) ||
-    lower.includes('refreshing kometa status') ||
-    lower.includes('checking kometa') ||
-    lower.includes('kometa branch selected') ||
-    lower.includes('quickstart branch:') ||
-    lower.includes('remote version source') ||
-    lower.includes('kometa branch override selected') ||
-    lower.includes('kometa branch selection: auto')
-  ) {
-    return 'checking'
-  }
-
-  return null
-}
-
-function updateKometaUpdatePhaseFromLine (line) {
-  const phase = inferKometaUpdatePhaseFromLine(line)
-  if (phase) setKometaUpdatePhaseBadge(phase)
-}
-
-function setKometaStatusLog (lines, phase = null) {
-  const logBox = document.getElementById('kometa-validation-log')
-  const text = Array.isArray(lines) ? lines.join('\n') : String(lines || '')
-  logBox.textContent = text ? `${text}\n` : ''
-  if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
-  if (phase) setKometaUpdatePhaseBadge(phase)
-}
-
-function appendKometaStatusLine (line) {
-  const logBox = document.getElementById('kometa-validation-log')
-  if (!logBox) return
-  logBox.insertAdjacentHTML('beforeend', `${line}\n`)
-  logBox.scrollTop = logBox.scrollHeight
-  updateKometaUpdatePhaseFromLine(line)
 }
 
 function invalidateKometaUpdateStatus () {
@@ -1786,7 +1666,7 @@ kometaBranchOverride?.addEventListener('change', function() {
 loadSavedKometaBranchOverride()
 syncKometaBranchOverrideWarning()
 syncKometaSourceStatus()
-setKometaUpdatePhaseBadge(kometaUpdatePhaseStatus)
+setKometaUpdatePhaseBadge(kometaState.kometaUpdatePhaseStatus)
 syncUpdateButtonLabel()
 syncKometaRollupBadge()
 
