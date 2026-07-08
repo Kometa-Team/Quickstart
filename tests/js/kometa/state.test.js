@@ -123,6 +123,27 @@ describe('kometaState initial values', () => {
     expect(kometaState.lastLogscanPayload).toBeNull()
   })
 
+  it('Kometa branch/version fields start in their pre-check defaults', () => {
+    // These four fields drive the source-status panel in _kometaBranch.js.
+    //
+    //   kometaLocalVersionStatus  -- 'Unknown' (not '' or null) so
+    //                                 first-render shows 'Unknown'
+    //                                 verbatim; empty would fall back
+    //                                 to 'Unknown' anyway but that
+    //                                 obscures intent.
+    //   kometaRemoteVersionStatus -- '' (empty means 'never fetched');
+    //                                 combined with checked=false the
+    //                                 UI shows 'Not checked'.
+    //   kometaRemoteVersionChecked -- false until we've actually hit
+    //                                  the remote endpoint at least once.
+    //   kometaRemoteVersionSkipped -- false unless the check was
+    //                                  intentionally skipped (running).
+    expect(kometaState.kometaLocalVersionStatus).toBe('Unknown')
+    expect(kometaState.kometaRemoteVersionStatus).toBe('')
+    expect(kometaState.kometaRemoteVersionChecked).toBe(false)
+    expect(kometaState.kometaRemoteVersionSkipped).toBe(false)
+  })
+
   it('exports exactly the fields the runtime relies on (guards against typos)', () => {
     // Sorted alphabetically for a stable comparison
     expect(Object.keys(kometaState).sort()).toEqual([
@@ -131,9 +152,13 @@ describe('kometaState initial values', () => {
       'kometaInstalled',
       'kometaInterval',
       'kometaLocalCheckCompleted',
+      'kometaLocalVersionStatus',
       'kometaPendingStart',
       'kometaPollingStarted',
       'kometaProgressInterval',
+      'kometaRemoteVersionChecked',
+      'kometaRemoteVersionSkipped',
+      'kometaRemoteVersionStatus',
       'kometaStatus',
       'kometaStatusInterval',
       'kometaUpdateAvailable',

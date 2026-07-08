@@ -168,5 +168,35 @@ export const kometaState = {
   // Written by the polling loop in 900-kometa.js after every
   // successful fetchLogscan(). Read by updateLogscanHeaderBadge (in
   // _headerBadges.js) when it's called without an explicit data arg.
-  lastLogscanPayload: null
+  lastLogscanPayload: null,
+
+  // ---- Kometa branch + version-check status ------------------------
+  //
+  // Written by syncKometaSourceStatus (in _kometaBranch.js) whenever
+  // checkKometaUpdate returns new data. Read by that same function
+  // on subsequent calls (so it can preserve unchanged fields) and by
+  // runKometaStatusPass (in 900-kometa.js) for the status-log lines.
+  //
+  //   kometaLocalVersionStatus     -- 'Unknown' | 'v1.2.3' | ...
+  //                                    string reflecting what the
+  //                                    local checkout reports
+  //   kometaRemoteVersionStatus    -- '' if not-yet-checked, else
+  //                                    'v1.2.4' | 'Unavailable' | ...
+  //   kometaRemoteVersionChecked   -- true iff we've actually fetched
+  //                                    the remote VERSION file this
+  //                                    session (as opposed to just
+  //                                    reading a stale cached value)
+  //   kometaRemoteVersionSkipped   -- true if the remote check was
+  //                                    intentionally skipped (e.g.
+  //                                    because Kometa is running --
+  //                                    we don't want to inflate load)
+  //
+  // The '' vs null vs 'Unknown' distinctions matter for the display
+  // logic in syncKometaSourceStatus: '' -> 'Not checked', 'Unknown'
+  // -> literal 'Unknown' text (server returned no version), non-empty
+  // string -> show it verbatim.
+  kometaLocalVersionStatus: 'Unknown',
+  kometaRemoteVersionStatus: '',
+  kometaRemoteVersionChecked: false,
+  kometaRemoteVersionSkipped: false
 }

@@ -53,6 +53,17 @@ import {
   disposeBootstrapTooltips,
   showCopyButtonSuccess
 } from './modules/kometa/_ui.js'
+import {
+  getKometaBranchOverride,
+  getEffectiveKometaBranch,
+  getKometaVersionSourceUrlValue,
+  getKometaZipSourceUrlValue,
+  loadSavedKometaBranchOverride,
+  saveKometaBranchOverride,
+  syncKometaSourceStatus,
+  syncKometaBranchRollupBadge,
+  syncKometaBranchOverrideWarning
+} from './modules/kometa/_kometaBranch.js'
 
 // Thin wrapper: buildCommand needs updateRunNowState and
 // syncFinalAccordionRollups callbacks, but both are still owned by
@@ -86,7 +97,6 @@ let lastRunProgressPayload = null
 let logscanAnalyzeInFlight = false
 let runProgressInFlight = false
 let latestKometaStatusPayload = null
-const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
 
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
@@ -107,13 +117,7 @@ const logscanSections = document.getElementById('logscan-sections')
 const updateKometaBtn = document.getElementById('update-kometa-btn')
 const forceUpdateToggle = document.getElementById('force-kometa-update')
 const kometaBranchOverride = document.getElementById('kometa-branch-override')
-const kometaBranchSelection = document.getElementById('kometa-branch-selection')
-const kometaEffectiveBranch = document.getElementById('kometa-effective-branch')
 const kometaUpdatePhaseBadge = document.getElementById('kometa-update-phase-badge')
-const kometaLocalVersionStatusEl = document.getElementById('kometa-local-version-status')
-const kometaRemoteVersionStatusEl = document.getElementById('kometa-remote-version-status')
-const kometaVersionSourceUrl = document.getElementById('kometa-version-source-url')
-const kometaZipSourceUrl = document.getElementById('kometa-zip-source-url')
 const kometaMaintenancePageBadge = document.getElementById('kometa-maintenance-page-badge')
 const runStatusRow = document.getElementById('run-status-row')
 const runStatusTimer = document.getElementById('run-status-timer')
@@ -132,13 +136,8 @@ const finalContentWrapper = document.getElementById('final-content-wrapper')
 const kometaActionsHeading = document.getElementById('kometa-actions-heading')
 const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
 const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
-const kometaBranchOverrideWarning = document.getElementById('kometa-branch-override-warning')
 const runCommandCollapse = document.getElementById('run-command-output-collapse')
 let headerStyleSubmitting = false
-let kometaLocalVersionStatus = 'Unknown'
-let kometaRemoteVersionStatus = ''
-let kometaRemoteVersionChecked = false
-let kometaRemoteVersionSkipped = false
 let kometaUpdatePhaseStatus = 'idle'
 
 function syncKometaMaintenancePageBadge (data) {
@@ -739,7 +738,7 @@ function checkKometaUpdate (forceRefresh = false) {
       kometaState.kometaUpdateAvailable = !!data.kometa_update_available
       if (Array.isArray(data.log)) data.log.forEach(line => appendKometaStatusLine(line))
       syncKometaSourceStatus({
-        localVersion: data.local_version || kometaLocalVersionStatus,
+        localVersion: data.local_version || kometaState.kometaLocalVersionStatus,
         remoteVersion: data.remote_version || '',
         checked: Boolean(data.update_check_completed),
         skipped: Boolean(data.kometa_update_check_skipped)
@@ -784,90 +783,6 @@ function syncKometaUpdateAttention () {
     kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
   }
   syncKometaRollupBadge()
-}
-
-function getKometaBranchOverride () {
-  if (!kometaBranchOverride) return ''
-  const raw = (kometaBranchOverride.value || '').toString().trim().toLowerCase()
-  return ['master', 'develop', 'nightly'].includes(raw) ? raw : ''
-}
-
-function getQuickstartBranch () {
-  return ((updateKometaBtn && updateKometaBtn.dataset.qsBranch) || 'master').toString().trim().toLowerCase()
-}
-
-function getAutoKometaBranch () {
-  return getQuickstartBranch() === 'master' ? 'master' : 'nightly'
-}
-
-function getEffectiveKometaBranch () {
-  return getKometaBranchOverride() || getAutoKometaBranch()
-}
-
-function getKometaVersionSourceUrlValue (branch) {
-  return `https://raw.githubusercontent.com/Kometa-Team/Kometa/${branch}/VERSION`
-}
-
-function getKometaZipSourceUrlValue (branch) {
-  return `https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/${branch}`
-}
-
-function loadSavedKometaBranchOverride () {
-  if (!kometaBranchOverride) return
-  try {
-    const saved = window.localStorage.getItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY) || ''
-    if (['master', 'develop', 'nightly'].includes(saved)) {
-      kometaBranchOverride.value = saved
-    } else {
-      kometaBranchOverride.value = ''
-    }
-  } catch {
-    kometaBranchOverride.value = ''
-  }
-}
-
-function saveKometaBranchOverride () {
-  try {
-    const value = getKometaBranchOverride()
-    if (value) window.localStorage.setItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY, value)
-    else window.localStorage.removeItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY)
-  } catch {}
-}
-
-function syncKometaSourceStatus (options = {}) {
-  if (Object.prototype.hasOwnProperty.call(options, 'localVersion')) {
-    kometaLocalVersionStatus = options.localVersion || 'Unknown'
-  }
-  if (Object.prototype.hasOwnProperty.call(options, 'remoteVersion')) {
-    kometaRemoteVersionStatus = options.remoteVersion || ''
-  }
-  if (Object.prototype.hasOwnProperty.call(options, 'checked')) {
-    kometaRemoteVersionChecked = Boolean(options.checked)
-  }
-  if (Object.prototype.hasOwnProperty.call(options, 'skipped')) {
-    kometaRemoteVersionSkipped = Boolean(options.skipped)
-  }
-
-  const selected = getKometaBranchOverride()
-  const effective = getEffectiveKometaBranch()
-  const selectionLabel = selected ? `Override (${selected})` : 'Auto'
-
-  if (kometaBranchSelection) kometaBranchSelection.textContent = selectionLabel
-  if (kometaEffectiveBranch) kometaEffectiveBranch.textContent = effective
-  if (kometaLocalVersionStatusEl) kometaLocalVersionStatusEl.textContent = kometaLocalVersionStatus || 'Unknown'
-  if (kometaRemoteVersionStatusEl) {
-    if (kometaRemoteVersionSkipped) {
-      kometaRemoteVersionStatusEl.textContent = 'Skipped while running'
-    } else if (kometaRemoteVersionChecked) {
-      kometaRemoteVersionStatusEl.textContent = kometaRemoteVersionStatus || 'Unknown'
-    } else {
-      kometaRemoteVersionStatusEl.textContent = 'Not checked'
-    }
-  }
-
-  if (kometaVersionSourceUrl) kometaVersionSourceUrl.textContent = getKometaVersionSourceUrlValue(effective)
-  if (kometaZipSourceUrl) kometaZipSourceUrl.textContent = getKometaZipSourceUrlValue(effective)
-  syncKometaBranchRollupBadge()
 }
 
 function setKometaUpdatePhaseBadge (phase) {
@@ -993,18 +908,13 @@ function appendKometaStatusLine (line) {
   updateKometaUpdatePhaseFromLine(line)
 }
 
-function syncKometaBranchOverrideWarning () {
-  if (!kometaBranchOverrideWarning) return
-  kometaBranchOverrideWarning.classList.toggle('d-none', !getKometaBranchOverride())
-}
-
 function invalidateKometaUpdateStatus () {
   kometaState.kometaUpdateAvailable = false
   kometaState.kometaUpdateCheckCompleted = false
   kometaState.kometaUpdateCheckSkipped = false
-  kometaRemoteVersionStatus = ''
-  kometaRemoteVersionChecked = false
-  kometaRemoteVersionSkipped = false
+  kometaState.kometaRemoteVersionStatus = ''
+  kometaState.kometaRemoteVersionChecked = false
+  kometaState.kometaRemoteVersionSkipped = false
   document.getElementById('kometa-update-box').classList.add('d-none')
   syncKometaSourceStatus()
   syncUpdateButtonLabel()
@@ -1111,25 +1021,6 @@ function syncKometaRollupBadge () {
     'qs-validation-rollup-badge--error'
   )
   badge.classList.add(`qs-validation-rollup-badge--${state}`)
-}
-
-function syncKometaBranchRollupBadge () {
-  const badge = document.getElementById('kometa-branch-rollup-badge')
-  if (!badge) return
-
-  const selected = getKometaBranchOverride()
-  const effective = getEffectiveKometaBranch()
-  const label = (selected || 'auto').toUpperCase()
-
-  badge.textContent = label
-  badge.classList.remove('text-bg-secondary', 'text-bg-warning', 'text-dark')
-  if (selected) {
-    badge.classList.add('text-bg-warning', 'text-dark')
-    badge.setAttribute('title', `Kometa branch override selected: ${selected}. Effective branch: ${effective}.`)
-  } else {
-    badge.classList.add('text-bg-secondary')
-    badge.setAttribute('title', `Kometa branch mode: auto. Effective branch: ${effective}.`)
-  }
 }
 
 if (kometaActionsCollapse) {
