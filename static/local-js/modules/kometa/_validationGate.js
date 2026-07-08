@@ -17,22 +17,16 @@
 //                             warning/download/YAML/run-controls
 //                             elements, populates the validation-messages
 //                             element with per-step links, and finally
-//                             delegates to two callback-style extension
-//                             points (updateRunNowState +
-//                             syncFinalAccordionRollups).
+//                             refreshes the run-now button + the
+//                             accordion rollups.
 //
-// EXTENSION POINTS:
+// UI COORDINATION:
 //
-//   updateValidationGate takes both callbacks as REQUIRED parameters.
-//   This is a temporary bridge pattern -- the "real" version once
-//   ALL of 900-kometa.js is split will be imports from the modules
-//   that own those functions. Until then, callers in 900-kometa.js
-//   pass the functions in explicitly.
-//
-//   Rationale: making the callbacks parameters (rather than importing
-//   them here) means _validationGate.js has ZERO imports from
-//   900-kometa.js, keeping the dependency graph acyclic. It also makes
-//   the module trivially testable -- vitest can pass vi.fn() spies.
+//   updateValidationGate calls updateRunNowState (from _runControls.js)
+//   and syncFinalAccordionRollups (from _headerBadges.js) as its final
+//   two steps. Both were callback parameters pre-#1571, migrated to
+//   direct imports once _runControls.js was extracted.
+////   the module trivially testable -- vitest can pass vi.fn() spies.
 //
 // PROTOCOL FOR "GATE STAGE":
 //
@@ -52,6 +46,8 @@
 
 import { kometaState } from './_state.js'
 import { readMetaFlag } from './_util.js'
+import { updateRunNowState } from './_runControls.js'
+import { syncFinalAccordionRollups } from './_headerBadges.js'
 
 /**
  * Read the current gate state from the server-populated
@@ -117,17 +113,12 @@ function rowFor (label, href) {
  * MUTATES kometaState.showYAML as a side-effect. Callers should treat
  * kometaState.showYAML as read-only after this returns.
  *
- * @param {{
- *   updateRunNowState: () => void,
- *   syncFinalAccordionRollups: () => void
- * }} callbacks  Extension points, see module docstring. Both are
- *               required; use no-op functions if the caller doesn't
- *               care about a particular hook. Tests should pass
- *               vi.fn() spies to verify orchestration order.
+ * Side effects at the end of every path:
+ *   - updateRunNowState() -- refresh the Run Now button state
+ *   - syncFinalAccordionRollups() -- refresh every section-header
+ *                                    rollup badge
  */
-export function updateValidationGate (callbacks) {
-  const { updateRunNowState, syncFinalAccordionRollups } = callbacks || {}
-
+export function updateValidationGate () {
   const validationMsgEl = document.getElementById('validation-messages')
   const runControls = document.getElementById('run-controls-container')
   const runNowEl = document.getElementById('run-now')
@@ -146,8 +137,8 @@ export function updateValidationGate (callbacks) {
     if (runControls) runControls.classList.add('d-none')
     if (runNowEl) runNowEl.disabled = true
     if (runNowLabelEl) runNowLabelEl.textContent = 'Run Now'
-    if (typeof updateRunNowState === 'function') updateRunNowState()
-    if (typeof syncFinalAccordionRollups === 'function') syncFinalAccordionRollups()
+    updateRunNowState()
+    syncFinalAccordionRollups()
     return
   }
 
@@ -194,6 +185,6 @@ export function updateValidationGate (callbacks) {
     // the runtime-state (Kometa installed?, not currently running?, etc.)
   }
 
-  if (typeof updateRunNowState === 'function') updateRunNowState()
-  if (typeof syncFinalAccordionRollups === 'function') syncFinalAccordionRollups()
+  updateRunNowState()
+  syncFinalAccordionRollups()
 }

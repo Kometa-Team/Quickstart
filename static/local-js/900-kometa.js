@@ -17,7 +17,6 @@ import {
 import { kometaState } from './modules/kometa/_state.js'
 import {
   updateConfigOutputHeaderBadges,
-  updateRunCommandHeaderBadge,
   updateLogscanHeaderBadge,
   syncFinalAccordionRollups
 } from './modules/kometa/_headerBadges.js'
@@ -41,7 +40,6 @@ import {
 } from './modules/kometa/_runtime.js'
 import {
   buildCommand as _buildCommand,
-  isRunCommandValid,
   applyActiveRunCommandState,
   clearActiveRunCommandState
 } from './modules/kometa/_runCommand.js'
@@ -63,11 +61,19 @@ import {
   syncKometaSourceStatus,
   syncKometaBranchOverrideWarning
 } from './modules/kometa/_kometaBranch.js'
+import {
+  updateRunNowState,
+  syncIncompleteRunActions,
+  getCurrentRunCommand,
+  getRecoveryRunCommand
+} from './modules/kometa/_runControls.js'
 
 // Thin wrapper: buildCommand needs updateRunNowState and
-// syncFinalAccordionRollups callbacks, but both are still owned by
-// this file. Wrapping here keeps every call site simple
-// (`buildCommand()` with no args), matching the pre-extraction API.
+// syncFinalAccordionRollups callbacks. Both live in other modules
+// now, but wiring them through _runCommand.js as direct imports
+// would create a cycle:
+//   _runCommand.js -> _runControls.js -> _runCommand.js (isRunCommandValid)
+// So we keep the callbacks-bag bridge here.
 function buildCommand () {
   return _buildCommand({ updateRunNowState, syncFinalAccordionRollups })
 }
@@ -161,7 +167,7 @@ document.addEventListener('qs:maintenance-status', function (event) {
   syncKometaMaintenancePageBadge(event.detail || null)
 })
 
-updateValidationGate({ updateRunNowState, syncFinalAccordionRollups })
+updateValidationGate()
 
 if (tailSelect) {
   tailSize = tailSelect.value || tailSize
@@ -436,33 +442,6 @@ function resolveFreshnessGateAfterBulkValidation () {
   }
   const panel = document.getElementById('final-gate-panel')
   if (panel) panel.classList.add('d-none')
-}
-
-function updateRunNowState () {
-  const runNow = document.getElementById('run-now')
-  if (!runNow) {
-    updateRunCommandHeaderBadge()
-    syncIncompleteRunActions()
-    return
-  }
-
-  if (!kometaState.showYAML || kometaState.kometaValidationInProgress || kometaState.kometaUpdating || kometaState.kometaStatus === 'running' || !kometaState.kometaValidated) {
-    runNow.disabled = true
-    updateRunCommandHeaderBadge()
-    syncIncompleteRunActions()
-    return
-  }
-
-  if (!isRunCommandValid()) {
-    runNow.disabled = true
-    updateRunCommandHeaderBadge()
-    syncIncompleteRunActions()
-    return
-  }
-
-  runNow.disabled = false
-  updateRunCommandHeaderBadge()
-  syncIncompleteRunActions()
 }
 
 document.querySelectorAll('input[name="run-option"]').forEach(el => el.addEventListener('change', function () {
@@ -1055,49 +1034,6 @@ document.getElementById('copy-recovery-command')?.addEventListener('click', func
     .then(() => showCopyButtonSuccess('#copy-recovery-icon', '#copy-recovery-text'))
     .catch(() => showToast('error', 'Copy failed. Please copy manually.'))
 })
-
-function getCurrentRunCommand () {
-  const el = document.getElementById('run-command-output')
-  return el ? el.textContent.trim() : ''
-}
-
-function getRecoveryRunCommand () {
-  const el = document.getElementById('recovery-command-output')
-  return el ? el.textContent.trim() : ''
-}
-
-function syncIncompleteRunActions () {
-  const runRecovery = document.getElementById('run-recovery-command')
-  if (!runRecovery) return
-
-  const incompleteAlert = document.getElementById('incomplete-run-alert')
-  const recoveryCommand = getRecoveryRunCommand()
-  const alertVisible = Boolean(incompleteAlert) && !incompleteAlert.classList.contains('d-none')
-  const recoveryRunnable = Boolean(recoveryCommand) &&
-    alertVisible &&
-    !kometaState.kometaValidationInProgress &&
-    !kometaState.kometaUpdating &&
-    !kometaState.kometaPendingStart &&
-    kometaState.kometaStatus !== 'running'
-
-  runRecovery.classList.toggle('d-none', !alertVisible)
-  runRecovery.disabled = !recoveryRunnable
-  if (recoveryRunnable) {
-    runRecovery.removeAttribute('title')
-  } else if (!alertVisible) {
-    runRecovery.setAttribute('title', 'Recovery actions are only available when an incomplete-run recovery command is visible.')
-  } else if (kometaState.kometaValidationInProgress) {
-    runRecovery.setAttribute('title', 'Wait for Kometa validation to finish before starting a recovery run.')
-  } else if (kometaState.kometaUpdating) {
-    runRecovery.setAttribute('title', 'Wait for the Kometa update to finish before starting a recovery run.')
-  } else if (kometaState.kometaPendingStart) {
-    runRecovery.setAttribute('title', 'A Kometa start is already queued for the next Plex maintenance window.')
-  } else if (kometaState.kometaStatus === 'running') {
-    runRecovery.setAttribute('title', 'Kometa is already running.')
-  } else {
-    runRecovery.setAttribute('title', 'No recovery command is available for this incomplete run.')
-  }
-}
 
 function startKometaCommand (command, opts = {}) {
   const startMode = opts.startMode || 'current'
@@ -2587,7 +2523,7 @@ if (validateAllBtn) {
       return
     }
 
-    updateValidationGate({ updateRunNowState, syncFinalAccordionRollups })
+    updateValidationGate()
     const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])
     if (previouslyBlocked && kometaState.showYAML) {
       showToast('info', 'Validation complete. Refreshing YAML output...')
