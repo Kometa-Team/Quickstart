@@ -151,5 +151,22 @@ export const kometaState = {
   kometaUpdateCheckSkipped: false,
   kometaUpdateCheckCompleted: false,
   kometaStatus: null,
-  kometaPendingStart: false
+  kometaPendingStart: false,
+
+  // ---- Logscan cache -----------------------------------------------
+  // The most recent /logscan payload fetched from the server, kept
+  // around so header-badge refreshes and other polling passes can
+  // work off a snapshot instead of blocking on a new HTTP round-trip.
+  //
+  //   null                       -- never fetched successfully yet
+  //   { error: '...' }           -- fetch failed; renderers show
+  //                                 'Unavailable' state
+  //   { recommendations: [...],  -- fetch succeeded; count arrays
+  //     missing_people: [...],     drive the 'N items' badge
+  //     ... }
+  //
+  // Written by the polling loop in 900-kometa.js after every
+  // successful fetchLogscan(). Read by updateLogscanHeaderBadge (in
+  // _headerBadges.js) when it's called without an explicit data arg.
+  lastLogscanPayload: null
 }

@@ -3,14 +3,13 @@
 // The Kometa configuration page uses Bootstrap accordions. Each
 // accordion header displays a small "rollup" badge summarizing the
 // state of its section -- e.g. "Friendly", "3 libraries", "Times
-// needed", "Invalid times". This module owns the pure-DOM-reading
-// badge functions that read the current UI state and set the
-// appropriate badge text + color class.
+// needed", "Invalid times". This module owns the badge functions that
+// read the current UI + kometaState and set the appropriate badge
+// text + color class.
 //
-// SCOPE OF THIS FILE (as of this PR):
+// EXPORTS (grouped by dependency):
 //
-//   Only the badge helpers that read exclusively from the DOM (no
-//   shared module-level state). Concretely:
+//   Pure DOM-reading helpers (no kometaState reads):
 //
 //     setHeaderRollupBadge         -- generic setter used by all badges
 //     prettifyFlag                 -- helper for CLI flag -> label
@@ -21,22 +20,23 @@
 //     updateLogFlagsHeaderBadge
 //     updateOtherFlagsHeaderBadge
 //
-//   Three sibling badge functions stay in 900-kometa.js FOR NOW:
+//   State-consulting helpers (read kometaState + maybe DOM):
 //
-//     updateConfigOutputHeaderBadges  -- needs the `showYAML` bool
-//     updateRunCommandHeaderBadge     -- needs 4 KOMETA_* flags,
-//                                        KOMETA_STATUS, showYAML,
-//                                        isRunCommandValid()
-//     updateLogscanHeaderBadge        -- needs lastLogscanPayload
+//     updateConfigOutputHeaderBadges  -- reads showYAML
+//     updateRunCommandHeaderBadge     -- reads showYAML + kometaValidated
+//                                        + kometaValidationInProgress
+//                                        + kometaUpdating + kometaStatus
+//                                        + isRunCommandValid()
+//     updateLogscanHeaderBadge        -- reads lastLogscanPayload
 //
-//   And the orchestrator:
+//   Orchestrator:
 //
-//     syncFinalAccordionRollups       -- calls both extracted and
-//                                        stay-behind functions
-//
-//   These will move here in follow-up PRs after the state they depend
-//   on migrates to _state.js (which is #1557's foundational work).
-//   Extracting the pure helpers first keeps the diff small and safe.
+//     syncFinalAccordionRollups({ syncKometaBranchRollupBadge })
+//                                     -- one call to refresh every
+//                                        badge on the page. Takes a
+//                                        callbacks bag for functions
+//                                        that still live in
+//                                        900-kometa.js.
 //
 // COLOR CLASSES:
 //
@@ -51,7 +51,9 @@
 //   setHeaderRollupBadge accepts any string; unknown values fall back
 //   to 'unknown' to keep the badge visually consistent.
 
-import { formatHeaderStyleLabel, isValidTimesFormat } from './_util.js'
+import { formatHeaderStyleLabel, isValidTimesFormat, computeYamlLineCount } from './_util.js'
+import { kometaState } from './_state.js'
+import { isRunCommandValid } from './_runCommand.js'
 
 // ---------------------------------------------------------------------
 // Core primitives
@@ -205,4 +207,136 @@ export function updateOtherFlagsHeaderBadge () {
     return
   }
   setHeaderRollupBadge('heading-otherflags-rollup-badge', 'ok', `${total} enabled`)
+}
+
+// ---------------------------------------------------------------------
+// State-consulting badges (read kometaState)
+// ---------------------------------------------------------------------
+
+/**
+ * Config-output section rollup: shows YAML line count + a Validated /
+ * Needs-fixes badge driven by kometaState.showYAML.
+ *
+ * DOM contract:
+ *   - #final-yaml           <textarea> holding the generated YAML.
+ *                            If absent or empty, the rollup badge
+ *                            reports 'No YAML'.
+ *   - #config-output-lines-badge   count-of-lines badge
+ *   - #config-output-rollup-badge  overall pass/fail badge
+ */
+export function updateConfigOutputHeaderBadges () {
+  const yamlOutput = document.getElementById('final-yaml')
+  const yamlText = yamlOutput ? String(yamlOutput.value || '') : ''
+  const lineCount = computeYamlLineCount(yamlText)
+  setHeaderRollupBadge('config-output-lines-badge', lineCount > 0 ? 'ok' : 'unknown', `${lineCount} lines`)
+  if (!yamlText.trim()) {
+    setHeaderRollupBadge('config-output-rollup-badge', 'unknown', 'No YAML')
+    return
+  }
+  setHeaderRollupBadge(
+    'config-output-rollup-badge',
+    kometaState.showYAML ? 'ok' : 'error',
+    kometaState.showYAML ? 'Validated' : 'Needs fixes'
+  )
+}
+
+/**
+ * Run-command section rollup: a five-way state machine keyed on
+ * validation + install + running-status flags. Prioritized top-down:
+ *
+ *   showYAML false                    -- config not passing yet:
+ *                                        'Fix validation' (error)
+ *   kometaValidationInProgress        -- 'Checking Kometa' (unknown)
+ *   kometaUpdating                    -- 'Updating Kometa' (unknown)
+ *   !kometaValidated                  -- 'Validate Kometa' (warn)
+ *   kometaStatus === 'running'        -- 'Run in progress' (warn)
+ *   otherwise                         -- isRunCommandValid() ?
+ *                                          'Ready' (ok) :
+ *                                          'Incomplete' (warn)
+ */
+export function updateRunCommandHeaderBadge () {
+  if (!kometaState.showYAML) {
+    setHeaderRollupBadge('run-command-rollup-badge', 'error', 'Fix validation')
+    return
+  }
+  if (kometaState.kometaValidationInProgress) {
+    setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Checking Kometa')
+    return
+  }
+  if (kometaState.kometaUpdating) {
+    setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Updating Kometa')
+    return
+  }
+  if (!kometaState.kometaValidated) {
+    setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Validate Kometa')
+    return
+  }
+  if (kometaState.kometaStatus === 'running') {
+    setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Run in progress')
+    return
+  }
+  const valid = isRunCommandValid()
+  setHeaderRollupBadge(
+    'run-command-rollup-badge',
+    valid ? 'ok' : 'warn',
+    valid ? 'Ready' : 'Incomplete'
+  )
+}
+
+/**
+ * Logscan section rollup: driven by the most recent /logscan payload.
+ * Callers can pass a fresh payload directly (e.g. right after fetch);
+ * omitting the arg uses the cached one in kometaState.lastLogscanPayload.
+ *
+ * @param {object} [data]  Optional payload to render from. Falls back
+ *                         to kometaState.lastLogscanPayload.
+ */
+export function updateLogscanHeaderBadge (data) {
+  const source = data || kometaState.lastLogscanPayload
+  if (!source) {
+    setHeaderRollupBadge('logscan-rollup-badge', 'unknown', 'Pending')
+    return
+  }
+  if (source.error) {
+    setHeaderRollupBadge('logscan-rollup-badge', 'error', 'Unavailable')
+    return
+  }
+  const recCount = Array.isArray(source.recommendations) ? source.recommendations.length : 0
+  const missingCount = Array.isArray(source.missing_people) ? source.missing_people.length : 0
+  const issueCount = recCount + missingCount
+  if (!issueCount) {
+    setHeaderRollupBadge('logscan-rollup-badge', 'ok', 'No issues')
+    return
+  }
+  setHeaderRollupBadge('logscan-rollup-badge', 'warn', `${issueCount} items`)
+}
+
+// ---------------------------------------------------------------------
+// Orchestrator
+// ---------------------------------------------------------------------
+
+/**
+ * Refresh every section-header rollup badge on the page. One call
+ * to bring the whole accordion into sync with current state.
+ *
+ * The `syncKometaBranchRollupBadge` function still lives in
+ * 900-kometa.js (it depends on branch-override helpers that haven't
+ * been extracted yet), so we take it as a callback. When those
+ * helpers migrate to _kometaUpdate.js, this callback retires in favor
+ * of a direct import.
+ *
+ * @param {{ syncKometaBranchRollupBadge: () => void }} [callbacks]
+ */
+export function syncFinalAccordionRollups (callbacks) {
+  updateModeHeaderBadge()
+  updateRunOptionHeaderBadge()
+  updateModeFlagsHeaderBadge()
+  updateLogFlagsHeaderBadge()
+  updateOtherFlagsHeaderBadge()
+  updateConfigOutputHeaderBadges()
+  updateRunCommandHeaderBadge()
+  updateLogscanHeaderBadge()
+  if (callbacks && typeof callbacks.syncKometaBranchRollupBadge === 'function') {
+    callbacks.syncKometaBranchRollupBadge()
+  }
 }
