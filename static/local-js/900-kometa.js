@@ -82,6 +82,13 @@ import {
   pollKometaUpdateProgress
 } from './modules/kometa/_updatePolling.js'
 import { checkKometaUpdate } from './modules/kometa/_updateCheck.js'
+import {
+  setRunCommandPlaceholderState,
+  clearRunCommandPlaceholderState,
+  hideRunCommandSectionUntilValidated,
+  revealRunCommandSection,
+  showRunCommandSectionAfterValidated
+} from './modules/kometa/_runCommandSection.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -373,66 +380,6 @@ if (showCliToggle) {
     const showCli = this.checked
     updateFlagLabels(showCli)
   })
-}
-
-function setRunCommandPlaceholderState () {
-  const panel = document.getElementById('run-command-panel-message')
-  const panelTitle = document.getElementById('run-command-panel-title')
-  const panelText = document.getElementById('run-command-panel-text')
-  const panelButton = document.getElementById('open-kometa-actions-panel-button')
-  const box = document.getElementById('run-command-box')
-
-  if (!panel) return
-
-  const installMode = getConfiguredKometaInstallMode()
-  let title = 'Run command is not ready yet'
-  let message = installMode === 'existing'
-    ? 'Open Prepare Kometa to validate the existing Kometa setup and check whether it needs a manual update before running.'
-    : 'Open Prepare Kometa to install, validate, or update the local Kometa setup before running.'
-  let showButton = true
-
-  if (!kometaState.showYAML) {
-    title = 'Fix validation before building the run command'
-    message = 'Resolve the current validation issues first. The run command will appear after the config validates cleanly.'
-    showButton = false
-  } else if (kometaState.kometaStatus === 'running') {
-    title = 'Kometa is currently running'
-    message = 'Run output and stop controls are active below. Prepare Kometa is locked until the current run finishes.'
-    showButton = false
-  } else if (kometaState.kometaUpdating) {
-    title = 'Kometa update in progress'
-    message = 'Wait for the current install or update to finish. The run command will appear automatically afterward.'
-  } else if (kometaState.kometaValidationInProgress) {
-    title = 'Preparing Kometa'
-    message = 'Quickstart is validating the Kometa folder and environment now. The run command will appear automatically when ready.'
-  } else if (!kometaState.kometaLocalCheckCompleted) {
-    title = 'Checking Kometa state'
-    message = 'Quickstart is probing the local Kometa path. Wait for that check to finish, then prepare Kometa if needed.'
-    showButton = false
-  } else if (!kometaState.kometaInstalled) {
-    title = 'Install Kometa to build the run command'
-    message = 'Kometa is not installed in the selected path yet. Open Prepare Kometa to install it first.'
-  } else if (!kometaState.kometaValidated) {
-    title = 'Validate Kometa to build the run command'
-    message = 'Next step: open Prepare Kometa, let Quickstart validate the Kometa folder and environment, then this command will be generated here.'
-  }
-
-  panelTitle.textContent = title
-  panelText.textContent = message
-  panelButton.classList.toggle('d-none', !showButton)
-  panel.classList.remove('d-none')
-  box.classList.add('d-none')
-  box.classList.remove('fade-in')
-}
-
-function clearRunCommandPlaceholderState () {
-  document.getElementById('run-command-panel-message').classList.add('d-none')
-  document.getElementById('run-command-placeholder').classList.add('d-none')
-  document.getElementById('open-kometa-actions-button').classList.add('d-none')
-  document.getElementById('run-command-box').classList.remove('d-none')
-  document.querySelector('#run-command-box .form-label').classList.remove('d-none')
-  document.querySelector('#run-command-box pre').classList.remove('d-none')
-  document.getElementById('copy-command').classList.remove('d-none')
 }
 
 function resolveFreshnessGateAfterBulkValidation () {
@@ -861,49 +808,6 @@ function startKometaCommand (command, opts = {}) {
     })
 }
 
-function hideRunCommandSectionUntilValidated () {
-  const accordion = document.getElementById('run-command-output-accordion')
-  if (accordion) accordion.classList.remove('d-none')
-  const collapse = document.getElementById('run-command-output-collapse')
-  if (collapse) collapse.classList.remove('show')
-  const headingBtn = document.querySelector('#run-command-output-heading .accordion-button')
-  if (headingBtn) {
-    headingBtn.classList.add('collapsed')
-    headingBtn.setAttribute('aria-expanded', 'false')
-  }
-  setRunCommandPlaceholderState()
-  {
-    const runNowBtn = document.getElementById('run-now')
-    if (runNowBtn) {
-      runNowBtn.disabled = true
-      runNowBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Waiting...'
-    }
-  }
-}
-
-function revealRunCommandSection () {
-  const accordion = document.getElementById('run-command-output-accordion')
-  const box = document.getElementById('run-command-box')
-
-  clearRunCommandPlaceholderState()
-  accordion.classList.remove('d-none')
-  document.getElementById('run-command-output-collapse').classList.add('show')
-  document.querySelector('#run-command-output-heading .accordion-button').classList.remove('collapsed')
-  document.querySelector('#run-command-output-heading .accordion-button').setAttribute('aria-expanded', 'true')
-  box.classList.remove('d-none') // Reveal element (opacity still 0)
-  setTimeout(() => {
-    box.classList.add('fade-in') // Let browser register change, then fade in
-  }, 10)
-}
-
-function showRunCommandSectionAfterValidated () {
-  clearRunCommandPlaceholderState()
-  revealRunCommandSection()
-  const runNowEl = document.getElementById('run-now')
-  if (runNowEl) runNowEl.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>'
-  try { buildCommand() } catch {}
-  updateRunNowState()
-}
 function startPollingIfNeeded () {
   if (kometaState.kometaPollingStarted) return
   kometaState.kometaPollingStarted = true
