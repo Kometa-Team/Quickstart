@@ -87,6 +87,10 @@ import {
 import {
   fetchLogscanAnalysis
 } from './modules/kometa/_logscan.js'
+import {
+  updateFlagLabels,
+  updateLibraryVisibility
+} from './modules/kometa/_cliFlags.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -217,156 +221,18 @@ if (openKometaActionsPanelBtn) {
   })
 }
 
-function updateLibraryVisibility (mainOption) {
-  const libSelect = document.getElementById('library-multiselect')
-  const librarySection = libSelect ? libSelect.closest('.mb-2') : null
-  if (!librarySection) return
-  if (mainOption === '--run-libraries') {
-    librarySection.classList.remove('d-none')
-  } else {
-    librarySection.classList.add('d-none')
-  }
-}
-
-const flagsMap = {
-  '--run': {
-    label: 'Run Immediately',
-    description: 'If you want Kometa to run immediately rather than waiting until 5AM, set this flag'
-  },
-  '--run-libraries': {
-    label: 'Run Specific Libraries',
-    description: 'Run Kometa only on selected libraries.'
-  },
-  '--times': {
-    label: 'Time to Run',
-    description: 'Run at these times. Kometa wakes up at 5:00 AM to process the config file. If you want to change that time, or tell Kometa to wake up at multiple times, use this flag.'
-  },
-  '--operations-only': {
-    label: 'Operations Only',
-    description: 'Only perform operations (e.g., rating/poster updates).'
-  },
-  '--metadata-only': {
-    label: 'Metadata Only',
-    description: 'Only run metadata files.'
-  },
-  '--collections-only': {
-    label: 'Collections Only',
-    description: 'Only build collections.'
-  },
-  '--playlists-only': {
-    label: 'Playlists Only',
-    description: 'Only build playlists, skip everything else.'
-  },
-  '--overlays-only': {
-    label: 'Overlays Only',
-    description: 'Only apply overlays to media posters.'
-  },
-  '--debug': {
-    label: 'Debug Logging',
-    description: 'Enable debug-level logging.'
-  },
-  '--trace': {
-    label: 'Trace Logging',
-    description: 'Enable trace-level (very verbose) logging.'
-  },
-  '--log-requests': {
-    label: 'Log Requests Logging',
-    description: 'Most verbose logging. If you enable this, every external network request made by Kometa will be logged, along with the data that is returned. This will add a lot of data to the logs, and will probably contain things like tokens, since the auto-redaction of such things is not generalized enough to catch any token that may be in any URL.<br><strong>WARNING</strong>:<br><code>This can potentially have personal information in it.</code>'
-  },
-  '--delete-collections': {
-    label: 'Delete Collections',
-    description: 'Delete all collections in each library as the first step in the run.<br><strong>WARNING</strong>:<br><code>You will lose all collections in the library - this will delete all collections, including ones not created or maintained by Kometa.</code>'
-  },
-  '--delete-labels': {
-    label: 'Delete Labels',
-    description: 'Delete all labels [except one, see below] on every item in a Library prior to running collections/operations.<br><strong>WARNING</strong>:<br><code>To preserve functionality of Kometa, this will not remove the Overlay label, which is required for Kometa to know which items have Overlays applied. This will impact any Smart Label Collections that you have in your library. We do not recommend using this on a regular basis if you also use any operations or collections that update labels, as you are effectively deleting and adding labels on each run.</code>'
-  },
-  '--read-only-config': {
-    label: 'Read Only Config',
-    description: 'Kometa reads in and then writes out a properly formatted version of your config.yml on each run;this makes the formatting consistent and ensures that you have visibility into new settings that get added. If you want to disable this behavior and tell Kometa to leave your config.yml as-is, use this flag.'
-  },
-  '--low-priority': {
-    label: 'Priority',
-    description: 'Run the Kometa process at a lower priority. Will default to normal priority if not specified.'
-  },
-  '--no-report': {
-    label: 'No Report',
-    description: 'Kometa can produce a report of missing items, collections, and other information. If you have this report enabled but want to disable it for a specific run, use this flag.'
-  },
-  '--no-missing': {
-    label: 'No Missing',
-    description: 'Kometa can take various actions on missing items, such as sending them to Radarr, listing them in the log, or saving a report. If you want to disable all of these actions, use this flag.'
-  },
-  '--no-countdown': {
-    label: 'No Countdown',
-    description: 'Typically, when not doing an immediate run, Kometa displays a countdown in the terminal where it is running. If you want to hide this countdown, use this flag.'
-  },
-  '--ignore-ghost': {
-    label: 'Ignore Ghost',
-    description: 'Kometa prints some things to the log that do not actually go into the log file on disk. Typically these are things like status messages while loading and/or filtering. If you want to hide all ghost logging for the run, use this flag.'
-  },
-  '--ignore-schedules': {
-    label: 'Ignore Schedules',
-    description: 'Ignore all schedules for the run. Range Scheduled collections (such as Christmas movies) will still be ignored.'
-  },
-  '--no-verify-ssl': {
-    label: 'No Verify SSL',
-    description: 'Turn SSL Verification off.<br><strong>NOTE</strong>:<br>Set this if your log file shows any errors similar to <code>SSL: CERTIFICATE_VERIFY_FAILED</code>'
-  },
-  '--tests': {
-    label: 'Run Tests',
-    description: 'If you set this flag to true, Kometa will run only collections that you have marked as test immediately, like KOMETA_RUN.<br><strong>NOTE</strong>:<br>This will only run collections with <code>test: true</code> in the definition.'
-  },
-  '--timeout': {
-    label: 'Timeout',
-    description: 'Change the timeout in seconds for all non-Plex services (such as TMDb, Radarr, and Trakt). This will default to <code>180</code> when not specified and is overwritten by any timeouts mentioned for specific services in the Configuration File.'
-  },
-  '--divider': {
-    label: 'Divider Character',
-    description: 'Customize the divider shown between repeated output elements (e.g., <code>></code>) Default is <code>=</code>'
-  },
-  '--width': {
-    label: 'Screen Width',
-    description: 'The log is formatted to fit within a certain width. If you wish to change that width, you can do that with this flag. Not that long lines are not wrapped or truncated to this width; this controls the minimum width of the log. Default is <code>100</code>'
-  }
-}
-
-function updateFlagLabels (showCli) {
-  const runOptions = ['--run', '--run-libraries', '--times']
-  const modeFlags = ['--operations-only', '--metadata-only', '--collections-only', '--overlays-only', '--playlists-only']
-  const logFlags = ['--debug', '--trace', '--log-requests']
-  const otherFlags = [
-    '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
-    '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
-    '--ignore-schedules', '--no-verify-ssl', '--tests', '--timeout', '--divider', '--width'
-  ]
-
-  function updateLabels (group, prefix = '') {
-    group.forEach(flag => {
-      const id = `${prefix}${flag.replace(/^--/, '')}`
-      const label = document.querySelector(`label[for="${id}"]`)
-      if (label) {
-        const content = showCli ? flag : (flagsMap[flag]?.label || flag)
-        label.innerHTML = `${content} <span class="text-info" data-bs-toggle="tooltip" title="${flagsMap[flag]?.description || ''}"><i class="bi bi-info-circle-fill ms-1"></i></span>`
-      }
-    })
-  }
-
-  updateLabels(runOptions, 'opt-')
-  updateLabels(modeFlags, 'opt-')
-  updateLabels(logFlags, 'opt-')
-  updateLabels(otherFlags, 'opt-')
-
-  initBootstrapTooltips(document)
-  syncFinalAccordionRollups()
-}
-
-updateFlagLabels(false) // Default to friendly labels
+updateFlagLabels(false, {
+  onInitTooltips: initBootstrapTooltips,
+  onLabelsUpdated: syncFinalAccordionRollups
+}) // Default to friendly labels
 const showCliToggle = document.getElementById('show-cli-toggle')
 if (showCliToggle) {
   showCliToggle.addEventListener('change', function() {
     const showCli = this.checked
-    updateFlagLabels(showCli)
+    updateFlagLabels(showCli, {
+      onInitTooltips: initBootstrapTooltips,
+      onLabelsUpdated: syncFinalAccordionRollups
+    })
   })
 }
 
