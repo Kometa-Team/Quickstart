@@ -231,6 +231,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Debugging \& Changing Ports](#debugging--changing-ports)
 - [Testing](#testing)
   - [Developer Testing](#developer-testing)
+- [Frontend Tooling](#frontend-tooling)
 - [Appendix: Dependency Map](#appendix-dependency-map)
   - [MyAnimeList-specific mass update operations](#myanimelist-specific-mass-update-operations)
   - [Notes](#notes)
@@ -506,7 +507,7 @@ Quickstart runs on port 7171 by default. You can change it in one of four ways:
 
 ## Testing
 
-Quickstart uses pytest for unit/integration tests and Playwright for E2E tests.
+Quickstart uses pytest for unit/integration tests and Playwright for E2E tests. For the JavaScript test suite (Vitest) and the Vite bundle build, see the [Frontend Tooling](#frontend-tooling) section.
 
 ### Developer Testing
 
@@ -600,31 +601,65 @@ Notes for Playwright on Windows:
 
 ## Frontend Tooling
 
-Quickstart uses [Vite](https://vitejs.dev/) to bundle its JavaScript. Templates pick the served asset via the `asset_url()` Jinja global:
+Quickstart uses [Vite](https://vitejs.dev/) to bundle its JavaScript. Templates pick the served asset via the `asset_url()` Jinja global (implemented in `modules/helpers/_vite_manifest.py`):
 
-- If `static/dist/.vite/manifest.json` exists (i.e. someone has run `npm run build`), pages load hashed, minified bundles like `/static/dist/000-base-DKccW2Od.js`. Filenames are hashed for cache busting.
-- Otherwise, pages fall back to raw source files from `/static/local-js/`. This keeps `python quickstart.py` after a fresh clone working with zero build step.
+- If `static/dist/.vite/manifest.json` exists, pages load hashed, minified bundles like `/static/dist/000-base-DKccW2Od.js`. Filenames are content-hashed for cache busting.
+- Otherwise, pages fall back to raw source files from `/static/local-js/`.
 
-The fallback exists specifically for the source-checkout / new-contributor experience. In shipped Docker and PyInstaller builds, `npm run build` is expected to run as part of the packaging step so the manifest is baked in.
+The fallback is deliberate: `python quickstart.py` after a fresh `git clone` works with zero build step, and contributors who only touch Python/templates don't need Node installed.
 
-Both Vitest and the Vite build itself are **enforced in CI** via `.github/workflows/lint.yml`:
+### Where the build runs
 
-- `Vitest` job — runs `npm test` on every push/PR (all `tests/js/**/*.test.js`)
-- `Vite Build` job — runs `npm run build` and verifies that expected page-scale entries (`000-base`, `001-start`, `010-plex`, `025-libraries`, `900-kometa`, `905-analytics`, `eventHandler`, `overlayHandler`) appear in the manifest. Prevents the auto-discovery from silently dropping an entry.
+| Environment | Who builds `static/dist/` |
+|---|---|
+| Local dev (Python only) | Nobody — falls back to `/static/local-js/` source files. Fully functional. |
+| Local dev (JS work) | You, via `npm run build` when you want to test optimized output |
+| CI | `Vite Build` job in `.github/workflows/lint.yml` on every push/PR (validates that bundling works; output not deployed) |
+| Docker images | `jsbuild` stage of `Dockerfile` / `Dockerfile.arm7` (Node 22, runs on `$BUILDPLATFORM` for fast multi-arch builds) |
+| Windows/macOS/Linux binaries | `Setup Node` + `Build JS Bundles` steps in `validate-pull.yml` and `release-notification.yml`, before PyInstaller runs |
 
-Use cases for developers:
+The end result is that **every shipped Quickstart instance** — Docker (amd64/arm64/arm7) and every native binary — ships with hashed, minified JS bundles baked in. Users see ~40-50% smaller JS downloads and get proper cache invalidation on every deploy.
+
+### For contributors editing JavaScript
+
+If you're only touching Python / templates / static CSS, you can ignore this whole section. If you're editing files under `static/local-js/`:
+
+**One-time setup:**
 
 ```
-npm install            # one-time, installs dev tooling
+npm install
+```
+
+**Everyday commands:**
+
+```
 npm run dev            # Vite dev server on http://localhost:5173 (HMR for ESM files)
 npm run build          # emits production bundles into static/dist/ (gitignored)
 npm run preview        # serves the built bundles for a quick smoke test
 npm test               # Vitest, one-shot run (used by CI)
 npm run test:watch     # Vitest in watch mode
-npm run lint:eslint    # existing ESLint job (unchanged)
+npm run lint:eslint    # ESLint over static/local-js/
 ```
 
-Which files Vite knows about: every file in `static/local-js/*.js` whose first non-comment/non-blank token is `import` or `export` is auto-discovered as a Vite entry point. Files under `static/local-js/modules/` are treated as dependencies, not entries. Classic scripts (no top-level `import`/`export`) — such as `100-anidb.js` and `915-imagemaid.js` — are intentionally skipped because bundling them would just copy the source. See `vite.detectModuleEntry.mjs` for the exact detection logic (unit-tested in `tests/js/detectModuleEntry.test.js`).
+**When to run `npm run build` locally:**
+
+- You want to see the production bundle in your browser (path validation, cache-busting behavior, minification impact).
+- You want to verify your change doesn't break the Vite build before pushing (CI will catch this anyway, but faster locally).
+
+**When you can skip it:**
+
+- Regular development. `python quickstart.py` serves your edits directly from `/static/local-js/` via the fallback path — no build step, no rebuild loop.
+
+### CI enforcement
+
+Both Vitest and the Vite build are enforced in CI via `.github/workflows/lint.yml`:
+
+- **`Vitest` job** — runs `npm test` on every push/PR (all `tests/js/**/*.test.js`)
+- **`Vite Build` job** — runs `npm run build` and verifies that the expected page-scale entries (`000-base`, `001-start`, `010-plex`, `025-libraries`, `900-kometa`, `905-analytics`, `eventHandler`, `overlayHandler`) appear in the manifest. Prevents auto-discovery from silently dropping an entry.
+
+### Which files Vite knows about
+
+Every file in `static/local-js/*.js` whose first non-comment/non-blank token is `import` or `export` is auto-discovered as a Vite entry point. Files under `static/local-js/modules/` are treated as dependencies, not entries. Classic scripts with no top-level `import`/`export` — such as `100-anidb.js` and `915-imagemaid.js` — are intentionally skipped because bundling them would just copy the source. See `vite.detectModuleEntry.mjs` for the exact detection logic (unit-tested in `tests/js/detectModuleEntry.test.js`).
 
 JS tests live under `tests/js/` (mirroring the existing `tests/` convention for Python tests) and use the jsdom environment so DOM-touching code can be exercised without a real browser.
 
