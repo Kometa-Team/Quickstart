@@ -34,7 +34,6 @@ import {
   getConfiguredKometaRootPosix,
   getConfiguredKometaRootDisplay,
   kometaCanLaunch,
-  kometaCanCheckUpdateStatus,
   kometaCanProbeRuntime,
   kometaCanReadLogs
 } from './modules/kometa/_runtime.js'
@@ -82,6 +81,7 @@ import {
   stopKometaUpdatePolling,
   pollKometaUpdateProgress
 } from './modules/kometa/_updatePolling.js'
+import { checkKometaUpdate } from './modules/kometa/_updateCheck.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -675,66 +675,6 @@ function probeKometaRoot () {
       return data
     })
     .catch(() => { _probeError(null); return null })
-}
-
-function checkKometaUpdate (forceRefresh = false) {
-  if (!kometaCanCheckUpdateStatus()) {
-    appendKometaStatusLine('ℹ️ Update checks are not available in external Kometa mode.')
-    return Promise.resolve({
-      success: true,
-      update_check_completed: false,
-      kometa_update_check_skipped: true,
-      kometa_update_available: false
-    })
-  }
-  const configuredRootPosix = getConfiguredKometaRootPosix()
-  const configuredInstallMode = getConfiguredKometaInstallMode()
-  const branchOverride = getKometaBranchOverride()
-  if (!configuredRootPosix) return Promise.resolve(null)
-
-  return fetch('/check-kometa-update', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: configuredRootPosix, install_mode: configuredInstallMode, force: forceRefresh, branch_override: branchOverride })
-  })
-    .then(async res => {
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to check Kometa update status.')
-      return data
-    })
-    .then(data => {
-      kometaState.kometaLocalCheckCompleted = true
-      kometaState.kometaInstalled = !!data.kometa_installed
-      kometaState.kometaUpdateCheckCompleted = !!data.update_check_completed
-      kometaState.kometaUpdateCheckSkipped = !!data.kometa_update_check_skipped
-      kometaState.kometaUpdateAvailable = !!data.kometa_update_available
-      if (Array.isArray(data.log)) data.log.forEach(line => appendKometaStatusLine(line))
-      syncKometaSourceStatus({
-        localVersion: data.local_version || kometaState.kometaLocalVersionStatus,
-        remoteVersion: data.remote_version || '',
-        checked: Boolean(data.update_check_completed),
-        skipped: Boolean(data.kometa_update_check_skipped)
-      })
-
-      if (data.local_version && data.remote_version && data.kometa_update_available) {
-        document.getElementById('kometa-update-box').classList.remove('d-none')
-        document.getElementById('kometa-local-version').textContent = data.local_version
-        document.getElementById('kometa-remote-version').textContent = data.remote_version
-      } else {
-        document.getElementById('kometa-update-box').classList.add('d-none')
-      }
-
-      syncUpdateButtonLabel()
-      syncKometaRollupBadge()
-      return data
-    })
-    .catch(err => {
-      appendKometaStatusLine(`❌ ${err.message || 'Failed to check Kometa update status.'}`)
-      syncKometaSourceStatus({ checked: false, skipped: false, remoteVersion: '' })
-      syncUpdateButtonLabel()
-      syncKometaRollupBadge()
-      throw err
-    })
 }
 
 if (document.getElementById('run-command-output')) {
