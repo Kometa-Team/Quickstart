@@ -55,6 +55,30 @@ from modules.process_markers import (
 )
 from modules.process_run_context import update_imagemaid_run_context
 
+_KOMETA_RUNTIME_BRANCHES = {"master", "develop", "nightly"}
+
+
+def _normalize_kometa_runtime_branch(value):
+    branch = str(value or "").strip().lower()
+    return branch if branch in _KOMETA_RUNTIME_BRANCHES else None
+
+
+def _resolve_kometa_runtime_branch(kometa_root):
+    branch = _normalize_kometa_runtime_branch(helpers.get_kometa_local_branch(kometa_root))
+    if branch:
+        return branch
+    return _normalize_kometa_runtime_branch(helpers.detect_git_branch(kometa_root, default=None))
+
+
+def _build_kometa_runtime_env(kometa_root):
+    env = os.environ.copy()
+    branch = _resolve_kometa_runtime_branch(kometa_root)
+    if branch:
+        env["BRANCH_NAME"] = branch
+    else:
+        env.pop("BRANCH_NAME", None)
+    return env, branch
+
 
 def stop_process_tree(proc):
     try:
@@ -123,8 +147,20 @@ def launch_kometa_command(command, config_name=None, start_mode="current"):
     stamp_quickstart_config_marker(config_path, config_name)
 
     helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
+    runtime_env, runtime_branch = _build_kometa_runtime_env(kometa_root)
+    if runtime_branch:
+        helpers.ts_log(f"Kometa launch BRANCH_NAME={runtime_branch}", level="DEBUG")
+    else:
+        helpers.ts_log("Kometa launch BRANCH_NAME cleared", level="DEBUG")
 
-    proc = subprocess.Popen(command_parts, cwd=str(kometa_root), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    proc = subprocess.Popen(
+        command_parts,
+        cwd=str(kometa_root),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+        env=runtime_env,
+    )
 
     with open(helpers.get_kometa_pid_file(), "w", encoding="utf-8") as f:
         f.write(str(proc.pid))
