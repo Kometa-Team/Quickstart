@@ -1,6 +1,5 @@
 // Global flag so other handlers know an update is in progress
 import {
-  formatElapsed,
   computeYamlLineCount,
   linkifyText,
   formatTimestampLocal,
@@ -30,8 +29,6 @@ import {
   updateValidationGate
 } from './modules/kometa/_validationGate.js'
 import {
-  getConfiguredKometaInstallMode,
-  getConfiguredKometaRootPosix,
   kometaCanLaunch,
   kometaCanProbeRuntime,
   kometaCanReadLogs
@@ -50,7 +47,6 @@ import {
   showCopyButtonSuccess
 } from './modules/kometa/_ui.js'
 import {
-  getKometaBranchOverride,
   loadSavedKometaBranchOverride,
   saveKometaBranchOverride,
   syncKometaSourceStatus,
@@ -72,10 +68,6 @@ import {
   syncUpdateButtonLabel
 } from './modules/kometa/_updateRollup.js'
 import {
-  stopKometaUpdatePolling,
-  pollKometaUpdateProgress
-} from './modules/kometa/_updatePolling.js'
-import {
   setRunCommandPlaceholderState,
   clearRunCommandPlaceholderState,
   hideRunCommandSectionUntilValidated,
@@ -83,6 +75,7 @@ import {
 } from './modules/kometa/_runCommandSection.js'
 import { validateKometaRoot } from './modules/kometa/_validateRoot.js'
 import { runKometaStatusPass } from './modules/kometa/_statusPass.js'
+import { callUpdateKometa } from './modules/kometa/_kometaUpdate.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -910,241 +903,6 @@ function fetchRunProgress (forceFull = false) {
     })
     .finally(() => {
       runProgressInFlight = false
-    })
-}
-
-function callUpdateKometa () {
-  const installMode = getConfiguredKometaInstallMode()
-  if (installMode === 'external') {
-    showToast('info', 'External Kometa mode cannot update the runtime. Quickstart can only sync config and optional logs in this mode.')
-    return
-  }
-  if (installMode === 'existing') {
-    updateKometaBtn.disabled = true
-    updateKometaBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Checking...'
-    runKometaStatusPass(true)
-      .then((data) => {
-        if (!data) return
-        if (data.kometa_update_available) {
-          showToast('warning', `Kometa update available: ${data.local_version} → ${data.remote_version}. Update this existing install manually outside Quickstart.`)
-          const noteEl = document.getElementById('kometa-update-box-note')
-          if (noteEl) {
-            noteEl.textContent = 'Update this existing Kometa install manually outside Quickstart before running.'
-          }
-        } else if (!data.kometa_update_check_skipped) {
-          showToast('success', 'Existing Kometa install checked. No newer version was detected.')
-        }
-      })
-      .catch(() => {
-        showToast('error', 'Failed to check existing Kometa status.')
-      })
-      .finally(() => {
-        updateKometaBtn.disabled = false
-        syncUpdateButtonLabel()
-      })
-    return
-  }
-  if (kometaState.kometaStatus === 'running') {
-    showToast('info', 'Kometa is currently running; update skipped.')
-    return
-  }
-
-  const btn = updateKometaBtn
-  const logBox = document.getElementById('kometa-validation-log')
-  const runNow = document.getElementById('run-now')
-  const stopNow = document.getElementById('stop-now')
-  const runBox = document.getElementById('run-command-box')
-  const qsBranch = btn.dataset.qsBranch || 'master'
-  const branchOverride = getKometaBranchOverride()
-  const configuredRootPosix = getConfiguredKometaRootPosix()
-  const configuredInstallMode = getConfiguredKometaInstallMode()
-  const forceUpdate = forceUpdateToggle.checked
-
-  if (kometaState.kometaInstalled && !forceUpdate && !kometaState.kometaUpdateAvailable) {
-    btn.disabled = true
-    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Checking...'
-    forceUpdateToggle.disabled = true
-    kometaBranchOverride.disabled = true
-    runKometaStatusPass(true)
-      .then((data) => {
-        if (!data) return
-        if (data.kometa_update_available) {
-          showToast('warning', `Kometa update available: ${data.local_version} → ${data.remote_version}.`)
-        } else if (!data.kometa_update_check_skipped) {
-          showToast('success', 'Kometa is already up to date.')
-        }
-      })
-      .catch(() => {
-        showToast('error', 'Failed to check Kometa update status.')
-      })
-      .finally(() => {
-        btn.disabled = false
-        forceUpdateToggle.disabled = false
-        kometaBranchOverride.disabled = false
-        syncUpdateButtonLabel()
-      })
-    return
-  }
-
-  kometaState.kometaUpdating = true
-  kometaState.kometaValidated = false
-  kometaState.kometaUpdateCheckSkipped = false
-  kometaState.kometaUpdateCheckCompleted = false
-  setKometaUpdatePhaseBadge('queued')
-  syncKometaRollupBadge()
-  hideRunCommandSectionUntilValidated()
-  syncFinalAccordionRollups()
-  const prevRunNowHtml = runNow.innerHTML
-  const prevRunNowDisabled = runNow.disabled
-
-  runBox.classList.add('opacity-50', 'position-relative')
-  runNow.disabled = true
-  runNow.innerHTML = '<i class="bi bi-hourglass me-1"></i> Updating...'
-  stopNow.disabled = true
-  const inProgressLabel = forceUpdate
-    ? (kometaState.kometaInstalled ? 'Force Updating...' : 'Force Installing...')
-    : (kometaState.kometaInstalled ? 'Checking for updates...' : 'Installing...')
-  btn.disabled = true
-  btn.innerHTML = `<i class="bi bi-arrow-repeat me-1"></i> ${inProgressLabel}`
-  forceUpdateToggle.disabled = true
-  kometaBranchOverride.disabled = true
-  logBox.insertAdjacentHTML('beforeend', '\nInitializing/Updating Kometa...\n')
-  if (logBox) logBox.scrollTop = logBox.scrollHeight
-
-  // progress heartbeat
-  const startTs = Date.now()
-  showToast('info', 'Still working on Kometa... (0 seconds elapsed)', 10000)
-  const heartbeatId = setInterval(() => {
-    const secs = Math.floor((Date.now() - startTs) / 1000)
-    showToast('info', `Still working on Kometa... (${secs} seconds elapsed)`, 10000)
-  }, 30000) // every 30s
-
-  let postUpdateLabel = null
-  const cleanupUI = () => {
-    clearInterval(heartbeatId)
-    stopKometaUpdatePolling()
-    kometaState.kometaUpdateJobId = null
-    kometaState.kometaUpdateLogIndex = 0
-    kometaState.kometaUpdating = false
-    runBox.classList.remove('opacity-50', 'position-relative')
-    runNow.disabled = prevRunNowDisabled
-    runNow.innerHTML = prevRunNowHtml
-    stopNow.disabled = false
-    btn.disabled = false
-    forceUpdateToggle.disabled = false
-    kometaBranchOverride.disabled = false
-    syncUpdateButtonLabel()
-    updateRunNowState()
-    syncFinalAccordionRollups()
-    if (postUpdateLabel) {
-      btn.innerHTML = postUpdateLabel
-      setTimeout(syncUpdateButtonLabel, 6000)
-    }
-  }
-
-  fetch('/update-kometa', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ branch: qsBranch, branch_override: branchOverride, path: configuredRootPosix, install_mode: configuredInstallMode, force: forceUpdate, background: true })
-  })
-    .then(async res => {
-      const data = await res.json()
-      if (res.status === 409) {
-        setKometaUpdatePhaseBadge('failed')
-        showToast('warning', data.error || 'Kometa is running; stop it before updating.')
-        logBox.insertAdjacentHTML('beforeend', `${data.error || 'Update blocked: Kometa running.'}\n`)
-        if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
-        return { success: false, log: data.log || [], blocked: true }
-      }
-      if (!res.ok) {
-        throw new Error(data.error || 'Kometa update failed to start.')
-      }
-      return data
-    })
-    .then(data => {
-      if (!data) return
-      if (data.success && data.job_id) {
-        kometaState.kometaUpdateJobId = data.job_id
-        kometaState.kometaUpdateLogIndex = 0
-        stopKometaUpdatePolling()
-        const finalize = (progress) => {
-          if (!progress || !progress.done) return false
-          kometaState.kometaLocalCheckCompleted = false
-          kometaState.kometaUpdateAvailable = false
-          document.getElementById('kometa-update-box').classList.add('d-none')
-          syncUpdateButtonLabel()
-          const elapsed = formatElapsed(Date.now() - startTs)
-          const updateSucceeded = progress.update_success ?? progress.success
-          if (updateSucceeded) {
-            if (progress.up_to_date) {
-              showToast('info', 'Kometa is already up to date.')
-              postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'
-              appendKometaStatusLine('Kometa is already up to date.')
-              setKometaUpdatePhaseBadge('ready')
-            } else {
-              showToast('success', `Kometa update completed in ${elapsed}.`)
-              appendKometaStatusLine('Kometa update completed successfully.')
-              setKometaUpdatePhaseBadge('validating')
-            }
-            validateKometaRoot({ appendStatus: true })
-          } else {
-            showToast('error', 'Kometa update failed.')
-            appendKometaStatusLine('Kometa update failed.')
-            setKometaUpdatePhaseBadge('failed')
-            validateKometaRoot({ appendStatus: true })
-          }
-          cleanupUI()
-          syncKometaRollupBadge()
-          return true
-        }
-        return pollKometaUpdateProgress()
-          .then(progress => {
-            if (finalize(progress)) return
-            kometaState.kometaUpdatePollInterval = setInterval(() => {
-              pollKometaUpdateProgress()
-                .then(finalize)
-                .catch(err => {
-                  console.error(err)
-                  appendKometaStatusLine(`❌ ${err.message || 'Failed to fetch Kometa update progress.'}`)
-                  setKometaUpdatePhaseBadge('failed')
-                  stopKometaUpdatePolling()
-                  cleanupUI()
-                  syncKometaRollupBadge()
-                })
-            }, 800)
-          })
-      }
-      if (data.success) {
-        kometaState.kometaLocalCheckCompleted = false
-        kometaState.kometaUpdateAvailable = false
-        document.getElementById('kometa-update-box').classList.add('d-none')
-        syncUpdateButtonLabel()
-        const elapsed = formatElapsed(Date.now() - startTs)
-        if (data.up_to_date) {
-          showToast('info', 'Kometa is already up to date.')
-          postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'
-          logBox.insertAdjacentHTML('beforeend', 'Kometa is already up to date.\n')
-        } else {
-          showToast('success', `Kometa update completed in ${elapsed}.`)
-          logBox.insertAdjacentHTML('beforeend', 'Kometa update completed successfully.\n')
-        }
-        if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
-        validateKometaRoot({ appendStatus: true })
-      } else if (!data.blocked) {
-        showToast('error', data.error || 'Kometa update failed.')
-        logBox.insertAdjacentHTML('beforeend', 'Kometa update failed.\n')
-        validateKometaRoot({ appendStatus: true })
-        if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
-      }
-    })
-    .catch(err => {
-      console.error(err)
-      showToast('error', 'Error during Kometa update.')
-      logBox.insertAdjacentHTML('beforeend', 'Error occurred during Kometa update.\n')
-      setKometaUpdatePhaseBadge('failed')
-      if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
-      cleanupUI()
-      syncKometaRollupBadge()
     })
 }
 
