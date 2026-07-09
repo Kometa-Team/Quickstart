@@ -91,6 +91,7 @@ import {
   updateFlagLabels,
   updateLibraryVisibility
 } from './modules/kometa/_cliFlags.js'
+import { buildRunStatusText } from './modules/kometa/_runStatusFormat.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -571,53 +572,12 @@ function syncRunStatusVisibility () {
 
 function updateRunStatus (data) {
   if (!runStatusRow) return
-  if (data && data.status === 'running') {
-    const startedAt = formatTimestampLocal(data.started_at)
-    const elapsed = formatRunSeconds(data.elapsed_seconds)
-    const formatMem = (valueMb) => {
-      if (typeof valueMb !== 'number' || !Number.isFinite(valueMb)) return 'n/a'
-      if (valueMb >= 1024) return `${(valueMb / 1024).toFixed(1)} GB`
-      return `${valueMb.toFixed(1)} MB`
-    }
-    const cpuText = (typeof data.cpu_percent === 'number' && Number.isFinite(data.cpu_percent))
-      ? `${data.cpu_percent.toFixed(1)}%`
-      : 'n/a'
-    const memRss = formatMem(data.memory_rss_mb)
-    const memPct = (typeof data.memory_percent === 'number' && Number.isFinite(data.memory_percent))
-      ? `${data.memory_percent.toFixed(1)}%`
-      : 'n/a'
-    const sysCpu = (typeof data.system_cpu_percent === 'number' && Number.isFinite(data.system_cpu_percent))
-      ? `${data.system_cpu_percent.toFixed(1)}%`
-      : 'n/a'
-    const sysUsed = formatMem(data.system_memory_used_mb)
-    const sysTotal = formatMem(data.system_memory_total_mb)
-    const sysPct = (typeof data.system_memory_percent === 'number' && Number.isFinite(data.system_memory_percent))
-      ? `${data.system_memory_percent.toFixed(1)}%`
-      : 'n/a'
-    const formatDiskMb = (valueMb) => {
-      if (typeof valueMb !== 'number' || !Number.isFinite(valueMb)) return 'n/a'
-      if (valueMb >= 1024) return `${(valueMb / 1024).toFixed(1)} GB`
-      return `${valueMb.toFixed(1)} MB`
-    }
-    const formatDiskRate = (valueMbS) => {
-      if (typeof valueMbS !== 'number' || !Number.isFinite(valueMbS)) return 'n/a'
-      if (valueMbS >= 1024) return `${(valueMbS / 1024).toFixed(2)} GB/s`
-      return `${valueMbS.toFixed(2)} MB/s`
-    }
-    const hasDiskData = [data.disk_read_mb, data.disk_write_mb, data.disk_read_rate_mb_s, data.disk_write_rate_mb_s]
-      .some(value => typeof value === 'number' && Number.isFinite(value))
-    const diskText = hasDiskData
-      ? ` | Disk: R ${formatDiskRate(data.disk_read_rate_mb_s)} • W ${formatDiskRate(data.disk_write_rate_mb_s)} • ${formatDiskMb(data.disk_read_mb)} read • ${formatDiskMb(data.disk_write_mb)} written`
-      : ''
-    runStatusTimer.textContent = `Running since: ${startedAt} • Elapsed: ${elapsed || 'n/a'}`
-    runStatusMetrics.textContent = `Kometa: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})${diskText}`
-  } else if (data && data.status === 'done') {
-    runStatusTimer.textContent = 'Kometa run complete.'
-    runStatusMetrics.textContent = ''
-  } else {
-    runStatusTimer.textContent = ''
-    runStatusMetrics.textContent = ''
-  }
+  const { timerText, metricsText } = buildRunStatusText(data, {
+    formatStartedAt: formatTimestampLocal,
+    formatElapsed: formatRunSeconds
+  })
+  runStatusTimer.textContent = timerText
+  runStatusMetrics.textContent = metricsText
   updateRunSparklines(data)
   syncRunStatusVisibility()
 }
