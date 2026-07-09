@@ -600,11 +600,14 @@ Notes for Playwright on Windows:
 
 ## Frontend Tooling
 
-Quickstart serves its JavaScript directly from `static/local-js/` via Flask in production and is gradually being migrated to ES modules (see roadmap issue #1334). [Vite](https://vitejs.dev/) is now wired up as the future build pipeline for the modular files.
+Quickstart serves its JavaScript directly from `static/local-js/` via Flask in production and is gradually being migrated to ES modules (see roadmap issue #1334). [Vite](https://vitejs.dev/) is wired up as the future build pipeline for the modular files.
 
-**Today, the Vite build tooling is dormant** — nothing in production references its output. Flask still loads JS from `static/local-js/` exactly as before. The scaffolding is in place so that future PRs (validation widget consolidation, Alpine, etc.) can plug into it.
+**Today, the Vite build output is not consumed in production** — Flask still loads JS from `static/local-js/` exactly as before. The build pipeline exists so that future PRs (Alpine widgets for Step 6, Svelte islands for Step 9) can adopt it page-by-page.
 
-Vitest, by contrast, is **active**: `npm test` is enforced in CI via the `Vitest` job in `.github/workflows/lint.yml`. New JS unit tests should land alongside the modules they cover.
+Both Vitest and the Vite build itself are **enforced in CI** via `.github/workflows/lint.yml`:
+
+- `Vitest` job — runs `npm test` on every push/PR (all `tests/js/**/*.test.js`)
+- `Vite Build` job — runs `npm run build` on every push/PR and verifies that the expected page-scale entries (`000-base`, `001-start`, `010-plex`, `025-libraries`, `900-kometa`, `905-analytics`, `eventHandler`, `overlayHandler`) all produced output. Prevents the auto-discovery from silently dropping an entry.
 
 Use cases for developers:
 
@@ -618,7 +621,7 @@ npm run test:watch     # Vitest in watch mode
 npm run lint:eslint    # existing ESLint job (unchanged)
 ```
 
-Which files Vite knows about: every file in `static/local-js/*.js` that already starts with an `import` or `export` statement is auto-discovered as a Vite entry point. This stays in sync with `MODULE_PAGE_SCRIPTS` in `quickstart.py` without manual updates.
+Which files Vite knows about: every file in `static/local-js/*.js` whose first non-comment/non-blank token is `import` or `export` is auto-discovered as a Vite entry point. Files under `static/local-js/modules/` are treated as dependencies, not entries. Classic scripts (no top-level `import`/`export`) — such as `100-anidb.js` and `915-imagemaid.js` — are intentionally skipped because bundling them would just copy the source. See `vite.detectModuleEntry.mjs` for the exact detection logic (unit-tested in `tests/js/detectModuleEntry.test.js`).
 
 JS tests live under `tests/js/` (mirroring the existing `tests/` convention for Python tests) and use the jsdom environment so DOM-touching code can be exercised without a real browser.
 
