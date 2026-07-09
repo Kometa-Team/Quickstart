@@ -213,5 +213,42 @@ export const kometaState = {
   //   'idle' | 'checking' | 'queued' | 'downloading' | 'extracting'
   //   | 'preserving' | 'venv' | 'dependencies' | 'validating'
   //   | 'ready' | 'failed'
-  kometaUpdatePhaseStatus: 'idle'
+  kometaUpdatePhaseStatus: 'idle',
+
+  // ---- Run-progress cache ------------------------------------------
+  //
+  // Cross-module state shared between _runProgress.js (writer) and
+  // 900-kometa.js (reader). Enables the 'refresh on transient error'
+  // pattern: when a /logscan/progress fetch fails or returns null AND
+  // Kometa is still running, we redraw the last successful payload
+  // instead of blanking the UI.
+  //
+  //   lastRunProgressPayload   -- last /logscan/progress response we
+  //                                actually rendered, or null if we
+  //                                haven't rendered yet this session.
+  //                                Reset to null by clearRunProgress
+  //                                (in _runProgress.js) when called
+  //                                with resetCache=true (i.e. when a
+  //                                run ends).
+  //   runProgressInFlight      -- guard against concurrent fetches.
+  //                                fetchRunProgress bails early if
+  //                                another fetch is already pending.
+  //                                Written only by fetchRunProgress.
+  lastRunProgressPayload: null,
+  runProgressInFlight: false,
+
+  // ---- Kometa status cache -----------------------------------------
+  //
+  // Latest /kometa-status response, kept so renderRunProgress
+  // (in _runProgress.js) can look up maintenance-window info without
+  // reissuing the status fetch. Written by checkKometaStatus (in
+  // 900-kometa.js) after every successful status poll.
+  //
+  //   null                     -- no successful status fetch yet
+  //   { maintenance_paused,    -- payload verbatim from server
+  //     maintenance_active,      (see /kometa-status endpoint)
+  //     maintenance_window,
+  //     maintenance_paused_since,
+  //     ... }
+  latestKometaStatusPayload: null
 }

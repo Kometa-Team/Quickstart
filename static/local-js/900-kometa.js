@@ -4,7 +4,6 @@ import {
   linkifyText,
   formatTimestampLocal,
   formatRunSeconds,
-  coerceRunSeconds,
   applyLogFilter,
   computeLogStats,
   copyTextToClipboard,
@@ -76,6 +75,11 @@ import {
 import { validateKometaRoot } from './modules/kometa/_validateRoot.js'
 import { runKometaStatusPass } from './modules/kometa/_statusPass.js'
 import { callUpdateKometa } from './modules/kometa/_kometaUpdate.js'
+import {
+  renderRunProgress,
+  clearRunProgress,
+  fetchRunProgress
+} from './modules/kometa/_runProgress.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -89,10 +93,7 @@ let lastLogStatsTotal = null
 let logStatsPollCounter = 0
 let logscanPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
-let lastRunProgressPayload = null
 let logscanAnalyzeInFlight = false
-let runProgressInFlight = false
-let latestKometaStatusPayload = null
 
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
@@ -579,331 +580,6 @@ function stopProgressPolling () {
     clearInterval(kometaState.kometaProgressInterval)
     kometaState.kometaProgressInterval = null
   }
-}
-
-const runPhaseOrder = [
-  { key: 'operations', label: 'Operations' },
-  { key: 'metadata', label: 'Metadata' },
-  { key: 'collections', label: 'Collections' },
-  { key: 'overlays', label: 'Overlays' },
-  { key: 'playlists', label: 'Playlists' }
-]
-
-function renderRunProgress (payload) {
-  const container = document.getElementById('run-progress')
-  if (!container) return
-
-  if (!payload || !Array.isArray(payload.libraries)) {
-    container.classList.add('d-none')
-    return
-  }
-
-  lastRunProgressPayload = payload
-  const libraries = payload.libraries
-  const total = payload.total_count || libraries.length
-  const completed = payload.completed_count != null
-    ? payload.completed_count
-    : libraries.filter(entry => entry.status === 'Done').length
-
-  const phaseOrderKeys = Array.isArray(payload.phase_order) && payload.phase_order.length
-    ? payload.phase_order
-    : runPhaseOrder.map(phase => phase.key)
-  const phaseCount = phaseOrderKeys.length || 1
-  const currentPhaseIndex = payload.phase_current
-    ? Math.max(0, phaseOrderKeys.indexOf(payload.phase_current))
-    : 0
-  const totalSteps = total * phaseCount
-  let completedSteps = completed * phaseCount
-  if (payload.current_library && total > 0) {
-    completedSteps = Math.min(totalSteps, completedSteps + currentPhaseIndex)
-  }
-  const percent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-  const bar = document.getElementById('run-progress-bar')
-  if (bar) {
-    bar.style.width = `${percent}%`
-    bar.setAttribute('aria-valuenow', String(percent))
-  }
-
-  const summary = document.getElementById('run-progress-summary')
-  if (summary) {
-    const current = payload.current_library ? ` | Current: ${payload.current_library}` : ''
-    const stepLabel = totalSteps > 0 ? ` | Step ${completedSteps}/${totalSteps}` : ''
-    let lastUpdated = ''
-    if (payload.last_log_at) {
-      const formatter = typeof window.QS_formatTimestamp === 'function' ? window.QS_formatTimestamp : null
-      const label = formatter ? formatter(payload.last_log_at) : new Date(payload.last_log_at).toLocaleString()
-      lastUpdated = ` | Last updated: ${label}`
-    }
-    summary.textContent = `${completed}/${total} libraries complete${current}${stepLabel}${lastUpdated}`
-  }
-
-  const prepRow = document.getElementById('run-prep-row')
-  if (prepRow) {
-    const prepLockedValue = coerceRunSeconds(payload.preparation_seconds)
-    const prepLiveValue = coerceRunSeconds(payload.preparation_elapsed_seconds)
-    const hasLockedPrep = typeof prepLockedValue === 'number'
-    const prepSeconds = hasLockedPrep ? prepLockedValue : prepLiveValue
-    if (prepSeconds != null) {
-      const prepLabel = formatRunSeconds(prepSeconds) || '0s'
-      const prepClass = hasLockedPrep ? 'text-bg-success' : 'text-bg-primary'
-      prepRow.innerHTML = `
-        <span class="me-2 fw-semibold">Preparation</span>
-        <span class="badge ${prepClass}">${prepLabel}</span>
-      `
-      prepRow.classList.remove('d-none')
-    } else {
-      prepRow.classList.add('d-none')
-    }
-  }
-
-  const maintenanceRow = document.getElementById('run-maintenance-row')
-  if (maintenanceRow) {
-    const statusData = latestKometaStatusPayload || {}
-    const progressMaintenance = payload && payload.maintenance_summary && typeof payload.maintenance_summary === 'object'
-      ? payload.maintenance_summary
-      : {}
-    const windowLabel = statusData.maintenance_window ? ` (${statusData.maintenance_window})` : ''
-    if (statusData.maintenance_paused) {
-      let pauseLabel = 'Paused'
-      const pausedSince = statusData.maintenance_paused_since ? new Date(statusData.maintenance_paused_since) : null
-      if (pausedSince && !Number.isNaN(pausedSince.getTime())) {
-        const elapsedSeconds = Math.max(0, Math.floor((Date.now() - pausedSince.getTime()) / 1000))
-        pauseLabel = formatRunSeconds(elapsedSeconds) || 'Paused'
-      }
-      maintenanceRow.innerHTML = `
-        <span class="me-2 fw-semibold">Maintenance</span>
-        <span class="badge text-bg-warning text-dark">Paused${windowLabel}</span>
-        <span class="badge text-bg-secondary">${pauseLabel}</span>
-      `
-      maintenanceRow.classList.remove('d-none')
-    } else if (statusData.maintenance_active) {
-      maintenanceRow.innerHTML = `
-        <span class="me-2 fw-semibold">Maintenance</span>
-        <span class="badge text-bg-warning text-dark">Window Active${windowLabel}</span>
-      `
-      maintenanceRow.classList.remove('d-none')
-    } else if (progressMaintenance.had_pause) {
-      const summaryWindow = progressMaintenance.window ? ` (${progressMaintenance.window})` : ''
-      const pauseCount = Number(progressMaintenance.pause_count || 0)
-      const pauseSeconds = Number(progressMaintenance.pause_seconds || 0)
-      const summaryLabel = pauseSeconds > 0
-        ? (formatRunSeconds(pauseSeconds) || `${pauseCount || 1} pause${(pauseCount || 1) === 1 ? '' : 's'}`)
-        : `${pauseCount || 1} pause${(pauseCount || 1) === 1 ? '' : 's'}`
-      const stateLabel = progressMaintenance.open_pause ? 'Paused (log)' : 'Completed'
-      maintenanceRow.innerHTML = `
-        <span class="me-2 fw-semibold">Maintenance</span>
-        <span class="badge text-bg-primary">${stateLabel}${summaryWindow}</span>
-        <span class="badge text-bg-secondary">${summaryLabel}</span>
-      `
-      maintenanceRow.classList.remove('d-none')
-    } else {
-      maintenanceRow.classList.add('d-none')
-    }
-  }
-
-  const allowed = Array.isArray(payload.allowed_phases) && payload.allowed_phases.length
-    ? new Set(payload.allowed_phases)
-    : null
-  const phaseLookup = new Map(runPhaseOrder.map(phase => [phase.key, phase.label]))
-  const phasesToShow = (Array.isArray(phaseOrderKeys) ? phaseOrderKeys : runPhaseOrder.map(phase => phase.key))
-    .filter(key => !allowed || allowed.has(key))
-    .map(key => ({ key, label: phaseLookup.get(key) || key }))
-  const phaseIndexLookup = new Map(phasesToShow.map((phase, idx) => [phase.key, idx]))
-
-  const headerRow = document.getElementById('run-library-header')
-  if (headerRow) {
-    const phaseHeaders = phasesToShow.map(phase => `<th class="text-end">${phase.label}</th>`).join('')
-    headerRow.innerHTML = `<th>Library</th><th>Type</th><th>Status</th>${phaseHeaders}`
-  }
-
-  const visibleLibraries = libraries.filter(entry => entry.status !== 'Skipped')
-  const rows = document.getElementById('run-library-rows')
-  if (rows) {
-    rows.innerHTML = visibleLibraries.map(entry => {
-      let klass = 'text-bg-secondary'
-      if (entry.status === 'Done') klass = 'text-bg-success'
-      else if (entry.status === 'In progress') klass = 'text-bg-primary'
-      else if (entry.status === 'Stopped') klass = 'text-bg-danger'
-      else if (entry.status === 'Skipped') klass = 'text-bg-dark'
-      const typeLabel = entry.type ? entry.type : '—'
-      const durations = entry.durations || {}
-      const currentPhaseForRow = payload.current_library === entry.name ? payload.phase_current : null
-      const explicitPhases = new Set(Object.keys(durations))
-      let lastSeenIndex = -1
-      explicitPhases.forEach(key => {
-        const idx = phaseIndexLookup.get(key)
-        if (idx != null && idx > lastSeenIndex) lastSeenIndex = idx
-      })
-      if (currentPhaseForRow) {
-        const idx = phaseIndexLookup.get(currentPhaseForRow)
-        if (idx != null && idx > lastSeenIndex) lastSeenIndex = idx
-      }
-      const inferredPhases = new Set()
-      if (entry.status !== 'Skipped' && lastSeenIndex >= 0) {
-        phasesToShow.forEach(phase => {
-          const idx = phaseIndexLookup.get(phase.key)
-          if (idx != null && idx < lastSeenIndex && !explicitPhases.has(phase.key)) {
-            inferredPhases.add(phase.key)
-          }
-        })
-      }
-
-      const durationCells = phasesToShow.map(phase => {
-        if (phase.key === 'playlists') {
-          const playlistTotal = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
-          const running = Boolean(payload.playlist_running)
-          const elapsed = typeof payload.playlist_elapsed_seconds === 'number' ? payload.playlist_elapsed_seconds : null
-          const detected = Boolean(payload.playlists_detected)
-          if (running) {
-            const label = elapsed != null ? formatRunSeconds(elapsed) : 'Running'
-            return `<td class="text-end"><span class="badge text-bg-primary">${label || 'Running'}</span></td>`
-          }
-          if (playlistTotal != null && (playlistTotal > 0 || detected)) {
-            return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(playlistTotal) || '0s'}</span></td>`
-          }
-          if (payload.run_finished) {
-            return '<td class="text-end"><span class="badge text-bg-secondary">Not Configured</span></td>'
-          }
-          return '<td class="text-end text-muted small">—</td>'
-        }
-        const seconds = durations[phase.key]
-        const hasSeconds = typeof seconds === 'number' && Number.isFinite(seconds)
-        const isRunning = currentPhaseForRow === phase.key
-        const isExplicit = explicitPhases.has(phase.key)
-        const isInferred = inferredPhases.has(phase.key)
-        if (entry.status === 'Skipped') {
-          return '<td class="text-end text-muted small">—</td>'
-        }
-        if (isRunning) {
-          const elapsed = typeof payload.current_phase_elapsed_seconds === 'number'
-            ? formatRunSeconds(payload.current_phase_elapsed_seconds)
-            : (hasSeconds ? formatRunSeconds(seconds) : 'Running')
-          return `<td class="text-end"><span class="badge text-bg-primary">${elapsed || 'Running'}</span></td>`
-        }
-        if (isExplicit && hasSeconds) {
-          return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(seconds)}</span></td>`
-        }
-        if (isInferred) {
-          return '<td class="text-end"><span class="badge text-bg-secondary">Not Configured</span></td>'
-        }
-        return '<td class="text-end text-muted small">—</td>'
-      }).join('')
-      return `
-        <tr>
-          <td>${entry.name}</td>
-          <td>${typeLabel}</td>
-          <td><span class="badge ${klass}">${entry.status}</span></td>
-          ${durationCells}
-        </tr>
-      `
-    }).join('')
-  }
-
-  const footer = document.getElementById('run-library-footer')
-  const totalRow = document.getElementById('run-library-total-row')
-  if (footer && totalRow) {
-    if (!libraries.length || !phasesToShow.length) {
-      footer.classList.add('d-none')
-    } else {
-      const totals = new Map(phasesToShow.map(phase => [phase.key, 0]))
-      visibleLibraries.forEach(entry => {
-        if (entry.status === 'Skipped') return
-        const durations = entry.durations || {}
-        phasesToShow.forEach(phase => {
-          if (phase.key === 'playlists') {
-            return
-          }
-          const seconds = durations[phase.key]
-          if (typeof seconds === 'number' && Number.isFinite(seconds)) {
-            totals.set(phase.key, (totals.get(phase.key) || 0) + seconds)
-          }
-        })
-      })
-      if (phasesToShow.some(phase => phase.key === 'playlists')) {
-        const playlistTotal = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
-        const playlistDetected = Boolean(payload.playlists_detected)
-        if (playlistTotal != null && (playlistTotal > 0 || playlistDetected)) {
-          totals.set('playlists', playlistTotal)
-        }
-      }
-      const prepSeconds = (() => {
-        const locked = coerceRunSeconds(payload.preparation_seconds)
-        if (typeof locked === 'number' && Number.isFinite(locked)) return locked
-        const live = coerceRunSeconds(payload.preparation_elapsed_seconds)
-        return typeof live === 'number' && Number.isFinite(live) ? live : 0
-      })()
-      let grandTotal = prepSeconds
-      totals.forEach((value) => {
-        if (typeof value === 'number' && Number.isFinite(value)) {
-          grandTotal += value
-        }
-      })
-      const totalCells = phasesToShow.map(phase => {
-        const totalSeconds = totals.get(phase.key)
-        if (phase.key === 'playlists' && typeof totalSeconds === 'number' && Number.isFinite(totalSeconds)) {
-          const detected = Boolean(payload.playlists_detected)
-          if (totalSeconds > 0 || detected) {
-            return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(totalSeconds) || '0s'}</span></td>`
-          }
-        }
-        if (typeof totalSeconds === 'number' && totalSeconds > 0) {
-          return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(totalSeconds)}</span></td>`
-        }
-        return '<td class="text-end text-muted small">—</td>'
-      }).join('')
-      const totalLabel = grandTotal > 0 ? `<span class="badge text-bg-success">${formatRunSeconds(grandTotal)}</span>` : '—'
-      totalRow.innerHTML = `<td class="fw-semibold">Total</td><td>—</td><td>${totalLabel}</td>${totalCells}`
-      footer.classList.remove('d-none')
-    }
-  }
-
-  container.classList.remove('d-none')
-}
-
-function clearRunProgress (resetCache = false) {
-  const container = document.getElementById('run-progress')
-  if (container) {
-    container.classList.add('d-none')
-  }
-  const maintenanceRow = document.getElementById('run-maintenance-row')
-  if (maintenanceRow) {
-    maintenanceRow.classList.add('d-none')
-  }
-  if (resetCache) {
-    lastRunProgressPayload = null
-  }
-}
-
-function fetchRunProgress (forceFull = false) {
-  if (runProgressInFlight) return Promise.resolve(null)
-  runProgressInFlight = true
-  const url = forceFull ? '/logscan/progress?size=all' : '/logscan/progress'
-  return fetch(url)
-    .then(res => {
-      if (!res.ok) return null
-      return res.json()
-    })
-    .then(data => {
-      if (!data) {
-        if (kometaState.kometaStatus === 'running' && lastRunProgressPayload) {
-          renderRunProgress(lastRunProgressPayload)
-        } else {
-          clearRunProgress(false)
-        }
-        return
-      }
-      renderRunProgress(data)
-    })
-    .catch(() => {
-      if (kometaState.kometaStatus === 'running' && lastRunProgressPayload) {
-        renderRunProgress(lastRunProgressPayload)
-      } else {
-        clearRunProgress(false)
-      }
-    })
-    .finally(() => {
-      runProgressInFlight = false
-    })
 }
 
 // Kometa Update Button Click
@@ -1759,8 +1435,8 @@ function performStopKometa () {
       clearInterval(kometaState.kometaInterval)
       clearInterval(kometaState.kometaStatusInterval)
       stopProgressPolling()
-      if (lastRunProgressPayload) {
-        const stoppedPayload = JSON.parse(JSON.stringify(lastRunProgressPayload))
+      if (kometaState.lastRunProgressPayload) {
+        const stoppedPayload = JSON.parse(JSON.stringify(kometaState.lastRunProgressPayload))
         const stoppedLibrary = stoppedPayload.current_library
         stoppedPayload.current_library = null
         stoppedPayload.phase_current = null
@@ -1775,7 +1451,7 @@ function performStopKometa () {
             return entry
           })
         }
-        lastRunProgressPayload = stoppedPayload
+        kometaState.lastRunProgressPayload = stoppedPayload
         renderRunProgress(stoppedPayload)
       }
       kometaState.kometaStatus = 'not started'
@@ -1837,7 +1513,7 @@ function checkKometaStatus () {
   return fetch('/kometa-status')
     .then(res => res.json())
     .then(data => {
-      latestKometaStatusPayload = data || null
+      kometaState.latestKometaStatusPayload = data || null
       kometaState.kometaStatus = data.status || null
       kometaState.kometaPendingStart = Boolean(data.pending_start && data.status !== 'running')
       const updateBtn = updateKometaBtn
@@ -1869,8 +1545,8 @@ function checkKometaStatus () {
       if (typeof window.QS_handleMaintenanceStatus === 'function') {
         window.QS_handleMaintenanceStatus(data)
       }
-      if (lastRunProgressPayload && data.status === 'running') {
-        renderRunProgress(lastRunProgressPayload)
+      if (kometaState.lastRunProgressPayload && data.status === 'running') {
+        renderRunProgress(kometaState.lastRunProgressPayload)
       }
 
       if (data.pending_start && data.status !== 'running') {
