@@ -104,17 +104,26 @@ jobs:
           # a page-scale module. If someone lands a PR that renames or
           # deletes one of these files without updating this list, CI
           # will fail loudly instead of silently producing a broken build.
+          #
+          # Filenames are hashed for cache busting (e.g. 000-base-DKccW2Od.js),
+          # so we check the manifest keys rather than filesystem entries.
           set -euo pipefail
+          MANIFEST=static/dist/.vite/manifest.json
+          if [ ! -f "$MANIFEST" ]; then
+            echo "::error::Vite manifest missing at $MANIFEST"
+            exit 1
+          fi
           MISSING=0
           for entry in 000-base 001-start 010-plex 025-libraries 900-kometa \
                        905-analytics eventHandler overlayHandler; do
-            if [ ! -f "static/dist/${entry}.js" ]; then
-              echo "::error::Vite build output missing: static/dist/${entry}.js"
+            KEY="static/local-js/${entry}.js"
+            if ! python3 -c "import json,sys; sys.exit(0 if '${KEY}' in json.load(open('${MANIFEST}')) else 1)"; then
+              echo "::error::Vite manifest missing entry: ${KEY}"
               MISSING=1
             fi
           done
           if [ "$MISSING" -eq 1 ]; then
-            echo "Discovered entries:"
-            ls static/dist/*.js || true
+            echo "Manifest keys present:"
+            python3 -c "import json; print('\n'.join(sorted(json.load(open('${MANIFEST}')).keys())))"
             exit 1
           fi

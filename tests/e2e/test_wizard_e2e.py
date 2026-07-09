@@ -1840,9 +1840,13 @@ def test_analytics_page_loads_as_module(page, live_server):
     """The Analytics page must render and its script must be loaded as type='module'."""
     page.goto(f"{live_server}/step/905-analytics", wait_until="domcontentloaded")
     page.wait_for_timeout(500)
-    state = page.evaluate("""() => {
+    # Match either the raw source path (/905-analytics.js) or the Vite-hashed
+    # build output (/905-analytics-<hash>.js under /static/dist/). The template
+    # picks between them via the asset_url() Jinja global -- see
+    # modules/helpers/_vite_manifest.py.
+    state = page.evaluate(r"""() => {
             const scripts = Array.from(document.scripts)
-            const analyticsScript = scripts.find(s => (s.src || '').endsWith('/905-analytics.js'))
+            const analyticsScript = scripts.find(s => /\/905-analytics(-[A-Za-z0-9_-]+)?\.js$/.test(s.src || ''))
             return {
                 pageMeta: !!document.querySelector('#logscan-trends-table'),
                 scriptFound: !!analyticsScript,
@@ -1850,7 +1854,7 @@ def test_analytics_page_loads_as_module(page, live_server):
             }
         }""")
     assert state["pageMeta"], "expected the Analytics page to render (precondition)"
-    assert state["scriptFound"], "expected /905-analytics.js to be referenced from the page"
+    assert state["scriptFound"], "expected 905-analytics.js (raw or hashed) to be referenced from the page"
     assert state["scriptType"] == "module", f"expected the Analytics script to load as type='module' after conversion; got type={state['scriptType']!r}"
 
 
@@ -1993,9 +1997,9 @@ def test_kometa_page_loads_as_module(page, live_server):
     """The Kometa page must render and its script must be loaded as type='module'."""
     page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     page.wait_for_timeout(500)
-    state = page.evaluate("""() => {
+    state = page.evaluate(r"""() => {
             const scripts = Array.from(document.scripts)
-            const kometaScript = scripts.find(s => (s.src || '').endsWith('/900-kometa.js'))
+            const kometaScript = scripts.find(s => /\/900-kometa(-[A-Za-z0-9_-]+)?\.js$/.test(s.src || ''))
             return {
                 pageMeta: !!document.querySelector('#stop-kometa-modal'),
                 scriptFound: !!kometaScript,
