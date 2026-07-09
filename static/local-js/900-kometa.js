@@ -51,9 +51,6 @@ import {
 } from './modules/kometa/_ui.js'
 import {
   getKometaBranchOverride,
-  getEffectiveKometaBranch,
-  getKometaVersionSourceUrlValue,
-  getKometaZipSourceUrlValue,
   loadSavedKometaBranchOverride,
   saveKometaBranchOverride,
   syncKometaSourceStatus,
@@ -67,28 +64,25 @@ import {
 } from './modules/kometa/_runControls.js'
 import {
   setKometaUpdatePhaseBadge,
-  setKometaStatusLog,
   appendKometaStatusLine
 } from './modules/kometa/_updatePhase.js'
 import {
   syncKometaRollupBadge,
   syncKometaUpdateAttention,
-  syncUpdateButtonLabel,
-  invalidateKometaUpdateStatus
+  syncUpdateButtonLabel
 } from './modules/kometa/_updateRollup.js'
 import {
   stopKometaUpdatePolling,
   pollKometaUpdateProgress
 } from './modules/kometa/_updatePolling.js'
-import { checkKometaUpdate } from './modules/kometa/_updateCheck.js'
 import {
   setRunCommandPlaceholderState,
   clearRunCommandPlaceholderState,
   hideRunCommandSectionUntilValidated,
   revealRunCommandSection
 } from './modules/kometa/_runCommandSection.js'
-import { probeKometaRoot } from './modules/kometa/_probeRoot.js'
 import { validateKometaRoot } from './modules/kometa/_validateRoot.js'
+import { runKometaStatusPass } from './modules/kometa/_statusPass.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -427,48 +421,6 @@ if (document.getElementById('run-command-output')) {
 
 initBootstrapTooltips(document, '[title]', { html: false, sanitize: true, placement: 'top', trigger: 'hover' })
 initBootstrapTooltips(document)
-
-function runKometaStatusPass (forceRefresh = false) {
-  const selection = getKometaBranchOverride()
-  const effective = getEffectiveKometaBranch()
-  const lines = [
-    '🔄 Refreshing Kometa status...',
-    `ℹ️ Selected Kometa branch mode: ${selection || 'auto'}`,
-    `ℹ️ Effective Kometa branch: ${effective}`,
-    `🌐 Remote VERSION source: ${getKometaVersionSourceUrlValue(effective)}`,
-    `📥 Kometa ZIP source: ${getKometaZipSourceUrlValue(effective)}`,
-    '',
-    '🔍 Checking Kometa path and local install state...'
-  ]
-  setKometaStatusLog(lines, 'checking')
-  invalidateKometaUpdateStatus()
-  return probeKometaRoot()
-    .then((res) => {
-      if (getConfiguredKometaInstallMode() === 'external') {
-        appendKometaStatusLine('')
-        appendKometaStatusLine('ℹ️ External Kometa mode detected. Quickstart will not perform runtime update checks in this mode.')
-        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('idle')
-        return res
-      }
-      if (!res || !res.kometa_installed) {
-        appendKometaStatusLine('')
-        appendKometaStatusLine('ℹ️ Remote update check skipped because Kometa is not installed.')
-        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('idle')
-        return res
-      }
-      appendKometaStatusLine('')
-      appendKometaStatusLine('🔎 Checking Kometa update status...')
-      return checkKometaUpdate(forceRefresh)
-    })
-    .then((result) => {
-      if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge(kometaState.kometaInstalled ? 'ready' : 'idle')
-      return result
-    })
-    .catch(() => {
-      if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
-      return null
-    })
-}
 
 if (kometaActionsCollapse) {
   kometaActionsCollapse.addEventListener('shown.bs.collapse', syncKometaUpdateAttention)
