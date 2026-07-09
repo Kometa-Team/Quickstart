@@ -80,6 +80,11 @@ import {
   clearRunProgress,
   fetchRunProgress
 } from './modules/kometa/_runProgress.js'
+import {
+  formatLocalTimestamp,
+  formatRelativeTimestamp,
+  updateValidationRow
+} from './modules/kometa/_validationDisplay.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -1087,42 +1092,6 @@ if (document.getElementById('header-style')) {
   })
 }
 
-const formatLocalTimestamp = (date) => {
-  const pad2 = (value) => String(value).padStart(2, '0')
-  return [
-    date.getFullYear(),
-    pad2(date.getMonth() + 1),
-    pad2(date.getDate())
-  ].join('-') + ' ' + [
-    pad2(date.getHours()),
-    pad2(date.getMinutes()),
-    pad2(date.getSeconds())
-  ].join(':')
-}
-
-const formatRelativeTimestamp = (date, now) => {
-  const base = now || new Date()
-  let diffMs = base - date
-  if (!Number.isFinite(diffMs) || diffMs < 0) diffMs = 0
-  const sec = Math.floor(diffMs / 1000)
-  if (sec < 60) return 'Just now'
-  const min = Math.floor(sec / 60)
-  if (min < 60) return `${min}m ago`
-  const hr = Math.floor(min / 60)
-  const minLeft = min % 60
-  if (hr < 24) return `${hr}h ${minLeft}m ago`
-  const days = Math.floor(hr / 24)
-  const hrLeft = hr % 24
-  if (days < 7) return `${days}d ${hrLeft}h ago`
-  const weeks = Math.floor(days / 7)
-  const dayLeft = days % 7
-  if (weeks < 5) return `${weeks}w ${dayLeft}d ago`
-  const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo ago`
-  const years = Math.floor(days / 365)
-  return `${years}y ago`
-}
-
 const now = new Date()
 document.querySelectorAll('[data-validation-iso]').forEach(el => {
   const raw = el.dataset.validationIso
@@ -1140,85 +1109,6 @@ document.querySelectorAll('[data-validation-iso-age]').forEach(el => {
     el.textContent = formatRelativeTimestamp(parsed, now)
   }
 })
-
-const validationReasonLabels = {
-  missing_credentials: 'Missing credentials',
-  missing_plex_validation: 'Plex not validated',
-  no_libraries: 'No libraries selected',
-  invalid_paths: 'Invalid paths',
-  missing_library_defaults: 'Missing library defaults',
-  missing_separator_placeholder: 'Missing separator placeholder',
-  invalid_fields: 'Invalid fields',
-  no_webhooks: 'No webhooks configured',
-  disabled: 'Disabled',
-  missing_settings: 'Settings missing',
-  missing_tokens: 'Missing tokens',
-  token_invalid: 'Invalid tokens',
-  account_locked: 'Account locked',
-  validation_error: 'Validation error'
-}
-
-function formatValidationResult (status, reason, details) {
-  if (!status) return ''
-  const label = status.charAt(0).toUpperCase() + status.slice(1)
-  if (!reason) return label
-  const pretty = validationReasonLabels[reason] || reason.replace(/_/g, ' ')
-  if (Array.isArray(details) && details.length) {
-    return `${label}: ${pretty}: ${details.join(', ')}`
-  }
-  if (details) {
-    return `${label}: ${pretty}: ${details}`
-  }
-  return `${label}: ${pretty}`
-}
-
-function updateValidationRow (key, result) {
-  const row = document.querySelector(`[data-validation-key="${key}"]`)
-  if (!row || !result) return
-
-  const pill = row.querySelector('.validation-status-pill')
-  const timestampEl = row.querySelector('.validation-timestamp')
-  const ageEl = row.querySelector('.validation-age')
-  const status = result.status
-  const validatedAt = result.validated_at || ''
-
-  if (pill) {
-    pill.classList.remove(
-      'rating-mapping-option-via--validated',
-      'rating-mapping-option-via--unvalidated',
-      'rating-mapping-option-via--neutral'
-    )
-    if (status === 'validated') {
-      pill.classList.add('rating-mapping-option-via--validated')
-    } else if (status === 'failed') {
-      pill.classList.add('rating-mapping-option-via--unvalidated')
-    } else if (status === 'skipped') {
-      pill.classList.add('rating-mapping-option-via--neutral')
-    }
-  }
-
-  if (validatedAt && timestampEl) {
-    timestampEl.dataset.validationIso = validatedAt
-    const parsed = new Date(validatedAt)
-    if (!Number.isNaN(parsed.getTime())) {
-      timestampEl.textContent = formatLocalTimestamp(parsed)
-    }
-  }
-
-  if (validatedAt && ageEl) {
-    ageEl.dataset.validationIsoAge = validatedAt
-    const parsed = new Date(validatedAt)
-    if (!Number.isNaN(parsed.getTime())) {
-      ageEl.textContent = formatRelativeTimestamp(parsed, new Date())
-    }
-  }
-
-  const resultEl = row.querySelector('.validation-result')
-  if (resultEl) {
-    const resultText = formatValidationResult(status, result.reason, result.details)
-    resultEl.textContent = resultText || (status ? status.charAt(0).toUpperCase() + status.slice(1) : '—')
-  }
-}
 
 const validateAllBtn = document.getElementById('validate-all-services')
 const validateAllStatus = document.getElementById('validate-all-status')
