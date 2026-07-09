@@ -1,7 +1,6 @@
 // Global flag so other handlers know an update is in progress
 import {
   computeYamlLineCount,
-  linkifyText,
   formatTimestampLocal,
   formatRunSeconds,
   applyLogFilter,
@@ -85,6 +84,9 @@ import {
   formatRelativeTimestamp,
   updateValidationRow
 } from './modules/kometa/_validationDisplay.js'
+import {
+  fetchLogscanAnalysis
+} from './modules/kometa/_logscan.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -96,9 +98,7 @@ let logFilter = ''
 let lastLogText = ''
 let lastLogStatsTotal = null
 let logStatsPollCounter = 0
-let logscanPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
-let logscanAnalyzeInFlight = false
 
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
@@ -111,11 +111,6 @@ const clearFilterBtn = document.getElementById('clear-log-filter')
 const levelButtons = Array.from(document.querySelectorAll('.log-level-btn'))
 const logStats = document.getElementById('run-log-stats')
 const logStatsFiltered = document.getElementById('run-log-stats-filtered')
-const logscanPanel = document.getElementById('logscan-panel')
-const logscanRecommendations = document.getElementById('logscan-recommendations')
-const logscanSummary = document.getElementById('logscan-summary')
-const logscanMissing = document.getElementById('logscan-missing-people')
-const logscanSections = document.getElementById('logscan-sections')
 const updateKometaBtn = document.getElementById('update-kometa-btn')
 const forceUpdateToggle = document.getElementById('force-kometa-update')
 const kometaBranchOverride = document.getElementById('kometa-branch-override')
@@ -786,157 +781,6 @@ function updateLogRecency (data) {
   syncRunStatusVisibility()
 }
 
-function renderLogscan (data) {
-  if (!logscanPanel) return
-  if (!data || data.error) {
-    logscanSummary.textContent = ''
-    logscanRecommendations.innerHTML = '<div class="text-muted">Logscan unavailable.</div>'
-    logscanMissing.classList.add('d-none')
-    logscanMissing.innerHTML = ''
-    updateLogscanHeaderBadge({ error: true })
-    return
-  }
-
-  const summary = data.summary || {}
-  const finishedAt = summary.finished_at || ''
-  const runSeconds = summary.run_time_seconds
-  let runtime = ''
-  if (typeof runSeconds === 'number' && Number.isFinite(runSeconds) && runSeconds > 0) {
-    runtime = formatRunSeconds(runSeconds)
-  } else if (runSeconds === 0 || runSeconds == null) {
-    runtime = 'n/a'
-  }
-  let summaryText = ''
-  if (finishedAt) summaryText = `Last run: ${finishedAt}`
-  if (runtime) summaryText = summaryText ? `${summaryText} • Runtime: ${runtime}` : `Runtime: ${runtime}`
-  logscanSummary.textContent = summaryText
-  const recs = Array.isArray(data.recommendations) ? data.recommendations : []
-  logscanRecommendations.innerHTML = ''
-  if (!recs.length) {
-    logscanRecommendations.innerHTML = '<div class="text-muted">No recommendations yet.</div>'
-  } else {
-    const maxRecs = 8
-    recs.slice(0, maxRecs).forEach(rec => {
-      const title = rec && rec.first_line ? rec.first_line : 'Recommendation'
-      let message = rec && rec.message ? rec.message : ''
-      if (message && title) {
-        const firstLine = message.split('\n')[0].trim()
-        const normalizedFirst = firstLine.replace(/\*/g, '').trim().toLowerCase()
-        const normalizedTitle = title.replace(/\*/g, '').trim().toLowerCase()
-        if (normalizedFirst === normalizedTitle) {
-          message = message.split('\n').slice(1).join('\n').trim()
-        }
-      }
-      const item = document.createElement('div')
-      item.className = 'border rounded p-2 mb-2 bg-body-tertiary'
-      const titleDiv = document.createElement('div')
-      titleDiv.className = 'fw-semibold mb-1'
-      titleDiv.textContent = title
-      item.appendChild(titleDiv)
-      const messageDiv = document.createElement('div')
-      messageDiv.className = 'text-muted'
-      messageDiv.style.whiteSpace = 'pre-wrap'
-      messageDiv.innerHTML = linkifyText(message)
-      item.appendChild(messageDiv)
-      logscanRecommendations.appendChild(item)
-    })
-    if (recs.length > maxRecs) {
-      const overflow = document.createElement('div')
-      overflow.className = 'text-muted'
-      overflow.textContent = `Showing ${maxRecs} of ${recs.length} recommendations.`
-      logscanRecommendations.appendChild(overflow)
-    }
-  }
-
-  logscanSections.innerHTML = ''
-  const sections = summary.section_runtimes || {}
-  const sectionTotal = summary.section_runtime_total_seconds
-  const sectionDelta = summary.section_runtime_delta_seconds
-  const runTotal = summary.run_time_seconds
-  const sectionEntries = Object.entries(sections)
-    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
-    .sort((a, b) => b[1] - a[1])
-  if (sectionEntries.length) {
-    let header = 'Section runtimes'
-    const metaParts = []
-    if (typeof sectionTotal === 'number' && Number.isFinite(sectionTotal)) {
-      metaParts.push(`sum: ${formatRunSeconds(sectionTotal)}`)
-    }
-    if (typeof runTotal === 'number' && Number.isFinite(runTotal)) {
-      metaParts.push(`run total: ${formatRunSeconds(runTotal)}`)
-    }
-    if (typeof sectionDelta === 'number' && Number.isFinite(sectionDelta)) {
-      const deltaText = formatRunSeconds(Math.abs(sectionDelta)) || '0s'
-      const sign = sectionDelta > 0 ? '+' : sectionDelta < 0 ? '-' : ''
-      metaParts.push(`delta: ${sign}${deltaText}`)
-    }
-    if (metaParts.length) {
-      header = `${header} (${metaParts.join(', ')})`
-    }
-    const headerDiv = document.createElement('div')
-    headerDiv.className = 'fw-semibold mb-1'
-    headerDiv.textContent = header
-    logscanSections.appendChild(headerDiv)
-    const listLines = sectionEntries.map(([name, seconds]) => `${name}: ${formatRunSeconds(seconds)}`)
-    const listDiv = document.createElement('div')
-    listDiv.className = 'text-muted'
-    listDiv.style.whiteSpace = 'pre-wrap'
-    listDiv.textContent = listLines.join('\n')
-    logscanSections.appendChild(listDiv)
-  } else {
-    logscanSections.innerHTML = '<div class="text-muted">No section runtimes yet.</div>'
-  }
-
-  const missing = Array.isArray(data.missing_people) ? data.missing_people : []
-  logscanMissing.innerHTML = ''
-  if (missing.length) {
-    logscanMissing.classList.remove('d-none')
-    const message = data.missing_people_message || 'Missing people posters detected.'
-    const titleDiv = document.createElement('div')
-    titleDiv.className = 'fw-semibold'
-    titleDiv.textContent = 'Missing people posters'
-    logscanMissing.appendChild(titleDiv)
-    const msgDiv = document.createElement('div')
-    msgDiv.className = 'text-muted mb-2'
-    msgDiv.style.whiteSpace = 'pre-wrap'
-    msgDiv.innerHTML = linkifyText(message)
-    logscanMissing.appendChild(msgDiv)
-    const listDiv = document.createElement('div')
-    listDiv.className = 'text-muted'
-    listDiv.style.whiteSpace = 'pre-wrap'
-    listDiv.textContent = missing.map(name => `- ${name}`).join('\n')
-    logscanMissing.appendChild(listDiv)
-  } else {
-    logscanMissing.classList.add('d-none')
-  }
-
-  updateLogscanHeaderBadge(data)
-}
-
-function fetchLogscanAnalysis (force = false) {
-  if (!logscanPanel) return
-  logscanPollCounter += 1
-  const shouldFetch = force || (logscanPollCounter % 5 === 0) || !kometaState.lastLogscanPayload
-  if (!shouldFetch || logscanAnalyzeInFlight) return
-
-  logscanAnalyzeInFlight = true
-
-  fetch('/logscan/analyze')
-    .then(res => res.json())
-    .then(data => {
-      kometaState.lastLogscanPayload = data
-      renderLogscan(data)
-    })
-    .catch(err => {
-      console.error('Error fetching logscan analysis:', err)
-      logscanRecommendations.innerHTML = '<div class="text-muted">Logscan unavailable.</div>'
-      updateLogscanHeaderBadge({ error: true })
-    })
-    .finally(() => {
-      logscanAnalyzeInFlight = false
-    })
-}
-
 function updateClearFilterButton () {
   if (!clearFilterBtn) return
   const hasValue = filterInput.value.trim().length > 0
@@ -1387,7 +1231,7 @@ function fetchKometaLog () {
       const filtered = applyLogFilter(lastLogText, logFilter)
       runLog.textContent = filtered
       renderLogStats()
-      fetchLogscanAnalysis()
+      fetchLogscanAnalysis(false, { updateHeaderBadge: updateLogscanHeaderBadge, kometaState })
       const shouldStick = autoScrollEnabled || wasAtBottom
       if (shouldStick && logEl) {
         logEl.scrollTop = logEl.scrollHeight
@@ -1510,7 +1354,7 @@ function checkKometaStatus () {
         kometaState.kometaPendingStart = false
         if (!finalLogscanAnalyzeTriggered) {
           finalLogscanAnalyzeTriggered = true
-          fetchLogscanAnalysis(true)
+          fetchLogscanAnalysis(true, { updateHeaderBadge: updateLogscanHeaderBadge, kometaState })
         }
         if (data.return_code === 0) {
           document.getElementById('run-output-log').insertAdjacentHTML('beforeend', '\n✅ Kometa finished successfully.')
