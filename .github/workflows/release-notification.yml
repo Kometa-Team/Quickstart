@@ -52,6 +52,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Build the Vite bundles BEFORE PyInstaller runs so the shipped
+      # binary includes static/dist/ (hashed, minified JS + manifest).
+      # See modules/helpers/_vite_manifest.py for how templates consume
+      # this at request time; roadmap #1334 Step 4.
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Build JS Bundles
+        run: |
+          npm ci --no-fund --no-audit
+          npm run build
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
