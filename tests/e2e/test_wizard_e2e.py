@@ -2076,20 +2076,24 @@ def test_imagehandler_module_loads_via_import(page, live_server):
 @pytest.mark.e2e
 def test_eventhandler_module_loads_via_import(page, live_server):
     """eventHandler.js is now loaded via import() by 025-libraries.js.
-    Verify window.EventHandler is available with expected methods.
+    Verify window.EventHandler is available with its expected surface.
+
+    Historical note: this test also used to assert on
+    EventHandler.updateAccordionHighlights, but that method (along with
+    the other accordion-highlight helpers) was extracted to
+    modules/accordionHighlights.js in #1346 step 2f and the compat shim
+    was removed. Direct-import verification of that module lives in
+    tests/js/modules/accordionHighlights.test.js.
     """
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     page.wait_for_timeout(2000)
     state = page.evaluate("""() => ({
             hasEventHandler: typeof window.EventHandler !== 'undefined',
             hasAttach: typeof window.EventHandler === 'object'
-                && typeof window.EventHandler.attachLibraryListeners === 'function',
-            hasHighlights: typeof window.EventHandler === 'object'
-                && typeof window.EventHandler.updateAccordionHighlights === 'function'
+                && typeof window.EventHandler.attachLibraryListeners === 'function'
         })""")
     assert state["hasEventHandler"], "window.EventHandler must exist after import()"
     assert state["hasAttach"], "EventHandler.attachLibraryListeners must be a function"
-    assert state["hasHighlights"], "EventHandler.updateAccordionHighlights must be a function"
 
 
 # ES module conversion of overlayHandler.js (chore/convert-overlayhandler-to-module).
