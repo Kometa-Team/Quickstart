@@ -19,16 +19,19 @@
 //   buildArrPreSubmit    — the "validated OR skip + collect errors"
 //                          form-submit gate builder
 //
-// BEHAVIOR NOTE — Sonarr asymmetry preserved verbatim
+// BEHAVIOR NOTE -- skipWhenUnvalidated (historical context)
 //
-//   Radarr short-circuits (`return true`) when the wizard isn't
-//   validated, letting the user skip the page without a path-check.
-//   Sonarr does NOT short-circuit; its path check runs even for
-//   unvalidated users. This pre-existing asymmetry is a known bug
-//   (#1584) that predates the Step 6 factory work. buildArrPreSubmit
-//   supports both shapes via the `skipWhenUnvalidated` option so the
-//   extract is behavior-preserving. Fix #1584 will flip Sonarr's
-//   option to true.
+//   Radarr has always short-circuited (`return true`) when the wizard
+//   isn't validated, letting the user skip the page without a path
+//   check. Sonarr USED to NOT short-circuit -- its path check ran
+//   even for unvalidated users, which stranded users with any invalid
+//   path elsewhere. That was bug #1584 (predated the Step 6 factory
+//   migration by years). Fixed by flipping Sonarr's option to true.
+//
+//   Both consumers now pass `skipWhenUnvalidated: true`. The option
+//   is kept as an escape hatch for future non-arr wizards that might
+//   want the different shape, but if it stays 100% unused it can be
+//   collapsed in a future YAGNI pass.
 
 import { populateDropdown, setStatusMessageLines } from './dropdownHelpers.js'
 
@@ -84,9 +87,8 @@ export function populateArrDropdown (elementId, data, valueField, textField, ini
  *   to check and what to say if it's empty. Order matters — errors
  *   render in the order given.
  * @param {boolean} [config.skipWhenUnvalidated=false]  When true, an
- *   unvalidated wizard skips ALL checks (dropdowns + path). Preserves
- *   the Radarr behavior. Sonarr passes false (see BEHAVIOR NOTE above);
- *   fix in issue #1584.
+ *   unvalidated wizard skips ALL checks (dropdowns + path). Both
+ *   Radarr and Sonarr now pass true; see BEHAVIOR NOTE above.
  * @param {string} [config.pathErrorMessage]  Override the path-error
  *   text. Defaults to the phrasing both wizards used verbatim.
  * @returns {() => boolean}

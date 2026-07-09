@@ -31,8 +31,8 @@
 //       - unvalidated + missing dropdowns -> returns true (skip)
 //       - validated -> proceeds with normal checks
 //
-//     skipWhenUnvalidated=false (Sonarr shape, buggy per #1584) (3):
-//       - unvalidated + invalid paths -> returns false (blocks!)
+//     skipWhenUnvalidated=false (escape-hatch shape, historically Sonarr) (3):
+//       - unvalidated + invalid paths -> returns false (blocks)
 //       - unvalidated + empty dropdowns -> returns true (dropdowns
 //         only checked when validated)
 //       - validated -> proceeds with normal checks
@@ -211,11 +211,11 @@ describe('buildArrPreSubmit -- skipWhenUnvalidated=true (Radarr shape)', () => {
   })
 })
 
-describe('buildArrPreSubmit -- skipWhenUnvalidated=false (Sonarr shape, buggy #1584)', () => {
+describe('buildArrPreSubmit -- skipWhenUnvalidated=false (escape-hatch shape)', () => {
   beforeEach(installArrFixture)
   afterEach(() => { document.body.innerHTML = ''; delete window.PathValidation })
 
-  it("returns FALSE when unvalidated + paths invalid (the bug)", () => {
+  it("returns false when unvalidated + paths invalid (path check runs)", () => {
     window.PathValidation = { validateAll: () => false }
     const gate = buildArrPreSubmit({
       validatedFieldId: 'thing_validated',
@@ -223,7 +223,7 @@ describe('buildArrPreSubmit -- skipWhenUnvalidated=false (Sonarr shape, buggy #1
       skipWhenUnvalidated: false
     })
     setValidated(false)
-    expect(gate()).toBe(false)  // <-- documents the buggy behavior
+    expect(gate()).toBe(false)  // path check runs regardless of validated flag
     expect(document.getElementById('statusMessage').style.display).toBe('block')
     expect(document.getElementById('statusMessage').textContent).toContain('path')
   })
