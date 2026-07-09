@@ -32,7 +32,6 @@ import {
 import {
   getConfiguredKometaInstallMode,
   getConfiguredKometaRootPosix,
-  getConfiguredKometaRootDisplay,
   kometaCanLaunch,
   kometaCanProbeRuntime,
   kometaCanReadLogs
@@ -86,10 +85,10 @@ import {
   setRunCommandPlaceholderState,
   clearRunCommandPlaceholderState,
   hideRunCommandSectionUntilValidated,
-  revealRunCommandSection,
-  showRunCommandSectionAfterValidated
+  revealRunCommandSection
 } from './modules/kometa/_runCommandSection.js'
 import { probeKometaRoot } from './modules/kometa/_probeRoot.js'
+import { validateKometaRoot } from './modules/kometa/_validateRoot.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -418,151 +417,6 @@ checkboxFlags.forEach(opt => {
   if (checkbox) checkbox.addEventListener('change', buildCommand)
 })
 
-function validateKometaRoot (options = {}) {
-  if (!kometaCanProbeRuntime()) {
-    appendKometaStatusLine('ℹ️ Runtime validation is not available in external Kometa mode. Quickstart can sync config and optional logs, but it cannot validate or launch the runtime directly.')
-    kometaState.kometaValidationInProgress = false
-    kometaState.kometaValidated = false
-    syncKometaRollupBadge()
-    return
-  }
-  if (kometaState.kometaValidationInProgress) return
-  kometaState.kometaValidationInProgress = true
-  setKometaUpdatePhaseBadge('validating')
-  if (typeof showNavigationLoadingOverlay === 'function') {
-    showNavigationLoadingOverlay('kometa-check')
-  }
-  syncKometaRollupBadge()
-  const logBox = document.getElementById('kometa-validation-log')
-  const spinner = document.getElementById('spinner_validate')
-  const runNow = document.getElementById('run-now')
-  const out = document.getElementById('run-command-output')
-
-  const configName = out.dataset.configFilename
-  const configuredRootPosix = getConfiguredKometaRootPosix()
-  const configuredRootDisplay = getConfiguredKometaRootDisplay()
-  const configuredInstallMode = getConfiguredKometaInstallMode()
-  const appendStatus = Boolean(options.appendStatus)
-
-  if (!configuredRootPosix) {
-    logBox.textContent = '❌ Quickstart does not have a Kometa install path selected for this config yet.\nOpen the Start page and choose whether this config uses a Quickstart-managed install or an existing install.\n'
-    if (spinner) spinner.classList.add('d-none')
-    runNow.disabled = true
-    kometaState.kometaValidationInProgress = false
-    kometaState.kometaValidated = false
-    syncKometaRollupBadge()
-    return
-  }
-
-  if (appendStatus) {
-    logBox.insertAdjacentHTML('beforeend',
-      '\n🔄 Re-validating Kometa after update...\n' +
-      'This may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n'
-    )
-  } else {
-    logBox.textContent =
-      '🔄 Please wait while we validate your Kometa installation...\n' +
-      'This may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n'
-
-  }
-  if (spinner) spinner.classList.remove('d-none')
-  runNow.disabled = true
-  const _validateSuccess = (res) => {
-      kometaState.kometaLocalCheckCompleted = true
-      if (Array.isArray(res.log)) res.log.forEach(line => logBox.insertAdjacentHTML('beforeend', `${line}\n`))
-
-      if (res.success) {
-        kometaState.kometaInstalled = true
-        logBox.insertAdjacentHTML('beforeend', '✅ Kometa root validated successfully.\n')
-        if (res.kometa_version) logBox.insertAdjacentHTML('beforeend', `📦 Local Kometa version: ${res.kometa_version}\n`)
-
-        const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || configuredRootDisplay)
-        const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
-        const kometaRootPosix = (res.kometa_root || configuredRootPosix)
-        const venvPythonPosix = (res.venv_python || venvPythonDisplay)
-
-        out.dataset.kometaRoot = kometaRootDisplay
-        out.dataset.venvPython = venvPythonDisplay
-        out.dataset.kometaRootPosix = kometaRootPosix
-        out.dataset.venvPythonPosix = venvPythonPosix
-
-        const installPathEl = document.getElementById('kometa-install-path')
-        if (installPathEl) installPathEl.textContent = kometaRootDisplay
-        const finalGate = getFinalGateState()
-        const _dv = (id, key) => {
-          const el = document.getElementById(id)
-          return el ? el.dataset[key] : ''
-        }
-        const allValid = kometaState.showYAML && (finalGate.configValid || (
-          _dv('plex_valid', 'plexValid') === 'True' &&
-          _dv('tmdb_valid', 'tmdbValid') === 'True' &&
-          _dv('libs_valid', 'libsValid') === 'True' &&
-          _dv('sett_valid', 'settValid') === 'True' &&
-          _dv('yaml_valid', 'yamlValid') === 'True'
-        ))
-
-        const outEl = document.getElementById('run-command-output')
-        if (outEl) outEl.textContent = ''
-        try { buildCommand() } catch { }
-
-        if (allValid) {
-          kometaState.kometaValidated = true
-          showRunCommandSectionAfterValidated()
-        } else {
-          kometaState.kometaValidated = false
-          hideRunCommandSectionUntilValidated()
-          runNow.disabled = true
-        }
-        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge(kometaState.kometaValidated ? 'ready' : 'idle')
-      } else {
-        kometaState.kometaInstalled = false
-        kometaState.kometaValidated = false
-        if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
-        hideRunCommandSectionUntilValidated()
-        runNow.disabled = true
-      }
-
-      if (spinner) spinner.classList.add('d-none')
-      syncUpdateButtonLabel()
-      syncKometaRollupBadge()
-    }
-  const _validateError = (msg) => {
-      kometaState.kometaLocalCheckCompleted = true
-      const errMsg = msg || 'The Kometa root path is invalid or inaccessible. Please try again.'
-      logBox.insertAdjacentHTML('beforeend', `❌ ${errMsg}\n`)
-      const lowered = String(errMsg || '').toLowerCase()
-      if (lowered.includes('kometa.py not found') || lowered.includes('requirements.txt not found')) {
-        kometaState.kometaInstalled = false
-      }
-      kometaState.kometaValidated = false
-      if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
-      hideRunCommandSectionUntilValidated()
-      runNow.disabled = true
-      if (spinner) spinner.classList.add('d-none')
-      syncKometaRollupBadge()
-    }
-  const _validateComplete = () => {
-      kometaState.kometaValidationInProgress = false
-      updateRunNowState()
-      syncUpdateButtonLabel()
-      syncKometaRollupBadge()
-      if (typeof hideNavigationLoadingOverlay === 'function') {
-        hideNavigationLoadingOverlay()
-      }
-    }
-  fetch('/validate-kometa-root', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: configuredRootPosix, config_name: configName, install_mode: configuredInstallMode })
-  })
-    .then(async (resp) => {
-      const data = await resp.json().catch(() => ({}))
-      if (resp.ok) _validateSuccess(data)
-      else _validateError(data && data.error)
-    })
-    .catch(() => _validateError(null))
-    .finally(_validateComplete)
-}
 
 if (document.getElementById('run-command-output')) {
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value
