@@ -1,209 +1,22 @@
-// Accordion-highlight surface migrated from window.EventHandler in
-// #1346 step 2f. Direct-consumer form of the accordion-highlight
-// module -- breaks the overlayHandler <-> eventHandler dependency
-// this file used to have via window.EventHandler.updateAccordionHighlights.
+// Accordion-highlight state and separator/preview cluster are now
+// owned by shared modules under ./modules/. accordionHighlights
+// (#1592) breaks the eventHandler <-> overlayHandler circular ref
+// via window.EventHandler. separatorPreview (this PR) removes the
+// last direct-object coupling on the OverlayHandler side; both
+// files import from the module instead of dispatching through
+// window.OverlayHandler.
 import { updateAccordionHighlights } from './modules/accordionHighlights.js'
+import {
+  initializeOverlays,
+  syncSeparatorPlaceholderFields,
+  updateHiddenInputs
+} from './modules/separatorPreview.js'
 
 const OverlayHandler = {
   baseDimensions: {
     default: { width: 1000, height: 1500 },
     episode: { width: 1920, height: 1080 }
   },
-  initializeOverlays: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Initializing overlays for ${libraryId} - ${isMovie ? 'Movie' : 'Show'}`)
-
-    // Attach event listener for separator dropdown
-    const fieldId = `${libraryId}-template_variables[use_separator]`
-    const separatorDropdown = document.querySelector(`[name="${fieldId}"]`)
-
-    if (separatorDropdown && !separatorDropdown.dataset.listenerAdded) {
-      separatorDropdown.addEventListener('change', () => {
-        const selectedStyle = separatorDropdown.value !== 'none'
-        OverlayHandler.updateSeparatorToggles(libraryId, selectedStyle)
-        OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
-        OverlayHandler.toggleSeparatorPlaceholder(libraryId, selectedStyle)
-        OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-        updateAccordionHighlights()
-      })
-
-      separatorDropdown.dataset.listenerAdded = true
-
-      // Apply separator logic on initial page load
-      const initialSelected = separatorDropdown.value !== 'none'
-      OverlayHandler.updateSeparatorToggles(libraryId, initialSelected)
-      OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
-      OverlayHandler.toggleSeparatorPlaceholder(libraryId, initialSelected)
-      OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-      updateAccordionHighlights()
-    }
-
-    const placeholderWrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
-    const sourceSelect = placeholderWrapper?.querySelector('.separator-placeholder-source')
-    if (sourceSelect && !sourceSelect.dataset.listenerAdded) {
-      sourceSelect.addEventListener('change', () => {
-        const separatorsEnabled = separatorDropdown ? separatorDropdown.value !== 'none' : true
-        OverlayHandler.syncSeparatorPlaceholderFields(placeholderWrapper, { show: separatorsEnabled })
-        updateAccordionHighlights()
-      })
-      sourceSelect.dataset.listenerAdded = 'true'
-    }
-  },
-
-  /**
-     * Enable/Disable Award & Chart Separator Toggles Based on Separator Style Selection
-     */
-  updateSeparatorToggles: function (libraryId, isEnabled) {
-    console.log(`[DEBUG] Updating Separator Toggles for ${libraryId} - Enabled: ${isEnabled}`)
-
-    const awardToggle = document.getElementById(`${libraryId}-collection_separator_award`)
-    const chartToggle = document.getElementById(`${libraryId}-collection_separator_chart`)
-
-    if (awardToggle) {
-      awardToggle.disabled = !isEnabled
-      awardToggle.checked = isEnabled
-      console.log(`[DEBUG] Award Separator Toggle is now ${isEnabled ? 'ENABLED' : 'DISABLED'}`)
-    }
-
-    if (chartToggle) {
-      chartToggle.disabled = !isEnabled
-      chartToggle.checked = isEnabled
-      console.log(`[DEBUG] Chart Separator Toggle is now ${isEnabled ? 'ENABLED' : 'DISABLED'}`)
-    }
-  },
-
-  updateSeparatorPreview: function (fieldId, selectedStyle) {
-    console.log(`[DEBUG] Updating Separator Preview for ${fieldId} - Style: ${selectedStyle}`)
-
-    const safeId = fieldId.replace('[', '_').replace(']', '')
-    const containerId = `${safeId}-separatorPreviewContainer`
-    const imageId = `${safeId}-separatorPreviewImage`
-
-    const separatorPreviewContainer = document.getElementById(containerId)
-    const separatorPreviewImage = document.getElementById(imageId)
-
-    if (!separatorPreviewContainer || !separatorPreviewImage) {
-      console.error(`[ERROR] Separator preview elements missing for ${fieldId}`)
-      return
-    }
-
-    if (selectedStyle && selectedStyle !== 'none') {
-      const imageUrl = `https://github.com/Kometa-Team/Default-Images/blob/master/separators/${selectedStyle}/chart.jpg?raw=true`
-      separatorPreviewImage.src = imageUrl
-      separatorPreviewContainer.style.display = 'block'
-      console.log(`[DEBUG] Separator preview updated to: ${imageUrl}`)
-    } else {
-      separatorPreviewContainer.style.display = 'none'
-    }
-  },
-
-  updateHiddenInputs: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Updating hidden inputs for Library: ${libraryId} - ${isMovie ? 'Movies' : 'Shows'}`)
-
-    const form = document.getElementById('configForm')
-    if (!form) {
-      console.error("[ERROR] Form element 'configForm' not found!")
-      return
-    }
-
-    const useSeparatorsDropdown = document.querySelector(`[name="${libraryId}-template_variables[use_separator]"]`)
-    let useSeparatorsInput = document.getElementById(`${libraryId}-template_variables_use_separator`)
-    let sepStyleInput = document.getElementById(`${libraryId}-template_variables_sep_style`)
-
-    const awardSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_award`)
-    const chartSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_chart`)
-
-    const selectedValue = useSeparatorsDropdown.value
-    const isEnabled = selectedValue !== 'none'
-
-    // Clear separator placeholder values if separator is disabled
-    if (!isEnabled) {
-      const placeholderWrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
-      OverlayHandler.syncSeparatorPlaceholderFields(placeholderWrapper, { show: false })
-    }
-
-    // Create hidden inputs dynamically if missing
-    if (!useSeparatorsInput) {
-      useSeparatorsInput = document.createElement('input')
-      useSeparatorsInput.type = 'hidden'
-      useSeparatorsInput.name = `${libraryId}-template_variables[use_separator]`
-      useSeparatorsInput.id = `${libraryId}-template_variables_use_separator`
-      form.appendChild(useSeparatorsInput)
-    }
-
-    if (!sepStyleInput) {
-      sepStyleInput = document.createElement('input')
-      sepStyleInput.type = 'hidden'
-      sepStyleInput.name = `${libraryId}-template_variables[sep_style]`
-      sepStyleInput.id = `${libraryId}-template_variables_sep_style`
-      form.appendChild(sepStyleInput)
-    }
-    sepStyleInput.value = isEnabled ? selectedValue : ''
-
-    if (awardSeparatorToggle) {
-      // Only depend on sep_style being set to enable/disable
-      awardSeparatorToggle.disabled = !isEnabled
-      awardSeparatorToggle.checked = isEnabled
-    }
-
-    if (chartSeparatorToggle) {
-      // Only depend on sep_style being set to enable/disable
-      chartSeparatorToggle.disabled = !isEnabled
-      chartSeparatorToggle.checked = isEnabled
-    }
-
-    const fieldId = `${libraryId}-template_variables[use_separator]`
-    OverlayHandler.updateSeparatorPreview(fieldId, selectedValue)
-  },
-
-  getSeparatorPlaceholderWrapper: function (libraryId) {
-    return document.querySelector(`[data-separator-placeholder-wrapper="true"][data-library-prefix="${libraryId}"]`)
-  },
-
-  syncSeparatorPlaceholderFields: function (wrapper, options = {}) {
-    if (!wrapper) return
-
-    const show = options.show !== false
-    const libraryType = String(wrapper.dataset.libraryType || '').trim().toLowerCase()
-    const allowedSources = libraryType === 'movie' ? ['imdb', 'tmdb_movie'] : ['imdb', 'tvdb_show']
-    const sourceSelect = wrapper.querySelector('.separator-placeholder-source')
-    const fieldInputs = Array.from(wrapper.querySelectorAll('[data-separator-placeholder-input]'))
-    if (!sourceSelect || !fieldInputs.length) return
-
-    const valueBySource = {}
-    fieldInputs.forEach(input => {
-      valueBySource[input.dataset.separatorPlaceholderInput] = String(input.value || '').trim()
-      input.classList.remove('is-invalid')
-    })
-
-    let activeSource = String(sourceSelect.value || '').trim()
-    if (!allowedSources.includes(activeSource)) {
-      activeSource = allowedSources.find(source => valueBySource[source]) || 'imdb'
-    }
-    sourceSelect.value = activeSource
-    sourceSelect.disabled = !show
-    sourceSelect.classList.remove('is-invalid')
-    wrapper.classList.toggle('visually-hidden', !show)
-
-    fieldInputs.forEach(input => {
-      const source = String(input.dataset.separatorPlaceholderInput || '').trim()
-      const fieldGroup = input.closest('.separator-placeholder-field')
-      const isActive = show && source === activeSource
-      if (fieldGroup) fieldGroup.classList.toggle('d-none', !isActive)
-      if (!isActive) {
-        input.value = ''
-      }
-    })
-  },
-
-  toggleSeparatorPlaceholder: function (libraryId, show) {
-    const wrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
-    if (!wrapper) {
-      console.error(`[ERROR] Separator placeholder block not found for libraryId: ${libraryId}`)
-      return
-    }
-    OverlayHandler.syncSeparatorPlaceholderFields(wrapper, { show })
-  },
-
   /**
    * Initialize drag-to-position previews for overlays.
    * Keeps offsets in sync with the form inputs.
@@ -8552,6 +8365,13 @@ const OverlayHandler = {
   }
 }
 
+// Separator/preview cluster -- extracted to modules/separatorPreview.js
+// in #1346 step 2f. We still mirror onto OverlayHandler so
+// external non-module callers keep working during the migration.
+OverlayHandler.initializeOverlays = initializeOverlays
+OverlayHandler.updateHiddenInputs = updateHiddenInputs
+OverlayHandler.syncSeparatorPlaceholderFields = syncSeparatorPlaceholderFields
+
 window.OverlayHandler = OverlayHandler
 
 function bootstrapOverlayHandler () {
@@ -8563,8 +8383,8 @@ function bootstrapOverlayHandler () {
     if (!libraryId) return
 
     // 1. Initialize overlay dropdowns and separator preview
-    OverlayHandler.initializeOverlays(libraryId, isMovie)
-    OverlayHandler.syncSeparatorPlaceholderFields(wrapper, {
+    initializeOverlays(libraryId, isMovie)
+    syncSeparatorPlaceholderFields(wrapper, {
       show: String(document.querySelector(`[name="${libraryId}-template_variables[use_separator]"]`)?.value || '').trim() !== 'none'
     })
   })

@@ -34,6 +34,21 @@
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock the separator/preview module so tests can assert against calls
+// without needing the real DOM cascade to fire. eventHandler.js
+// imports { initializeOverlays, updateHiddenInputs } from this path;
+// the mock has to use the same path resolution the module system
+// sees. window.OverlayHandler.* is ALSO stubbed below for the
+// non-attachLibraryListeners tests that may still reach through the
+// compat shim.
+vi.mock('../../static/local-js/modules/separatorPreview.js', () => ({
+  initializeOverlays: vi.fn(),
+  updateHiddenInputs: vi.fn(),
+  syncSeparatorPlaceholderFields: vi.fn()
+}))
+
+import * as separatorPreview from '../../static/local-js/modules/separatorPreview.js'
+
 beforeAll(async () => {
   // Silence chatty console output (attachLibraryListeners logs a LOT).
   vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -71,6 +86,9 @@ beforeEach(() => {
   Object.values(window.ImageHandler).forEach(fn => fn.mockClear?.())
   Object.values(window.OverlayHandler).forEach(fn => fn.mockClear?.())
   Object.values(window.ValidationHandler).forEach(fn => fn.mockClear?.())
+  separatorPreview.initializeOverlays.mockClear?.()
+  separatorPreview.updateHiddenInputs.mockClear?.()
+  separatorPreview.syncSeparatorPlaceholderFields.mockClear?.()
 })
 
 afterEach(() => {
@@ -222,7 +240,7 @@ describe('EventHandler.attachLibraryListeners: type detection (movie vs show)', 
     buildLibraryCard({ libraryId: 'sho-library_1' })
     window.EventHandler.attachLibraryListeners()
     // Two calls, one per library, isMovie flag reflects the prefix
-    const calls = window.OverlayHandler.initializeOverlays.mock.calls
+    const calls = separatorPreview.initializeOverlays.mock.calls
     const movCall = calls.find(c => c[0] === 'mov-library_1')
     const shoCall = calls.find(c => c[0] === 'sho-library_1')
     expect(movCall).toEqual(['mov-library_1', true])
@@ -438,7 +456,7 @@ describe('EventHandler.attachLibraryListeners: overlay preview trigger', () => {
 })
 
 describe('EventHandler.attachLibraryListeners: separator dropdown', () => {
-  it('wires the separator dropdown change to OverlayHandler.updateHiddenInputs', () => {
+  it('wires the separator dropdown change to updateHiddenInputs (from separatorPreview module)', () => {
     buildLibraryCard({
       libraryId: 'mov-library_1',
       innerHTML: `
@@ -450,13 +468,13 @@ describe('EventHandler.attachLibraryListeners: separator dropdown', () => {
     })
     window.EventHandler.attachLibraryListeners()
     // Clear the "run once during attach" call:
-    window.OverlayHandler.updateHiddenInputs.mockClear()
+    separatorPreview.updateHiddenInputs.mockClear()
 
     const dropdown = document.getElementById('mov-library_1-attribute_use_separator')
     dropdown.value = 'line'
     dropdown.dispatchEvent(new Event('change'))
 
-    expect(window.OverlayHandler.updateHiddenInputs)
+    expect(separatorPreview.updateHiddenInputs)
       .toHaveBeenCalledWith('mov-library_1', true)
   })
 
@@ -469,7 +487,7 @@ describe('EventHandler.attachLibraryListeners: separator dropdown', () => {
     })
     window.EventHandler.attachLibraryListeners()
     // Once for the immediate call inside attach.
-    expect(window.OverlayHandler.updateHiddenInputs)
+    expect(separatorPreview.updateHiddenInputs)
       .toHaveBeenCalledWith('mov-library_1', true)
   })
 })
