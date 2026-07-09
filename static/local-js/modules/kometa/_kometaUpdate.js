@@ -52,15 +52,6 @@
 //     #kometa-update-box       -- rollup badge box (hidden on success)
 //     #kometa-update-box-note  -- inline update note (existing mode)
 //
-// PRESERVED QUIRK:
-//
-//   The original has a latent bug: it calls `logBox[0].scrollTop`
-//   in several places, guarded by `if (logBox[0])`. But logBox is a
-//   single Element, not a jQuery-style array -- so `logBox[0]` is
-//   always undefined and those scroll-to-bottom calls never run.
-//   One place uses `logBox.scrollTop = logBox.scrollHeight` correctly
-//   (in the setup block). Behavior-preserving extraction keeps both.
-//
 // GLOBALS:
 //
 //   showToast() is a global function from 000-base.js. Declared in
@@ -244,9 +235,6 @@ export function callUpdateKometa () {
   kometaBranchOverrideSel.disabled = true
 
   logBox.insertAdjacentHTML('beforeend', '\nInitializing/Updating Kometa...\n')
-  // This one actually works because logBox IS a single element, not
-  // an array. Compare with the .scrollTop calls below that guard on
-  // `logBox[0]` and therefore never actually scroll.
   if (logBox) logBox.scrollTop = logBox.scrollHeight
 
   // ---- Heartbeat toast (every 30s) ------------------------------
@@ -319,8 +307,7 @@ export function callUpdateKometa () {
         setKometaUpdatePhaseBadge('failed')
         showToast('warning', data.error || 'Kometa is running; stop it before updating.')
         logBox.insertAdjacentHTML('beforeend', `${data.error || 'Update blocked: Kometa running.'}\n`)
-        // Preserved bug: logBox[0] is undefined, so this never runs.
-        if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
+        logBox.scrollTop = logBox.scrollHeight
         return { success: false, log: data.log || [], blocked: true }
       }
       if (!res.ok) {
@@ -396,38 +383,28 @@ export function callUpdateKometa () {
           })
       }
 
-      // ---- Synchronous success path (no job_id) ----
-      if (data.success) {
-        kometaState.kometaLocalCheckCompleted = false
-        kometaState.kometaUpdateAvailable = false
-        el('kometa-update-box').classList.add('d-none')
-        syncUpdateButtonLabel()
-        const elapsed = formatElapsed(Date.now() - startTs)
-        if (data.up_to_date) {
-          showToast('info', 'Kometa is already up to date.')
-          postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'
-          logBox.insertAdjacentHTML('beforeend', 'Kometa is already up to date.\n')
-        } else {
-          showToast('success', `Kometa update completed in ${elapsed}.`)
-          logBox.insertAdjacentHTML('beforeend', 'Kometa update completed successfully.\n')
-        }
-        // Preserved bug: logBox[0] is undefined; this never runs.
-        if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
-        validateKometaRoot({ appendStatus: true })
-      } else if (!data.blocked) {
-        // Synchronous failure that wasn't already-handled 409.
+      // ---- Synchronous failure path (success=false, not 409) ----
+      //
+      // NOTE: since we always send background=true, the endpoint's
+      // success path always includes a job_id and goes through the
+      // 'success && job_id' branch above. The `else if` here fires
+      // ONLY when data.success is false AND data.blocked isn't set --
+      // i.e. the server returned 200 with success=false (which the
+      // current endpoint doesn't do). Kept as a defensive fallback
+      // for future endpoint changes.
+      if (!data.success && !data.blocked) {
         showToast('error', data.error || 'Kometa update failed.')
         logBox.insertAdjacentHTML('beforeend', 'Kometa update failed.\n')
+        logBox.scrollTop = logBox.scrollHeight
         validateKometaRoot({ appendStatus: true })
-        if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
       }
     })
     .catch(err => {
       console.error(err)
       showToast('error', 'Error during Kometa update.')
       logBox.insertAdjacentHTML('beforeend', 'Error occurred during Kometa update.\n')
+      logBox.scrollTop = logBox.scrollHeight
       setKometaUpdatePhaseBadge('failed')
-      if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
       cleanupUI()
       syncKometaRollupBadge()
     })

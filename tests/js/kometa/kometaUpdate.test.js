@@ -28,9 +28,7 @@
 //     - heartbeat toast fires immediately + every 30s
 //     - 409 response: warning toast, phase 'failed', doesn't throw
 //     - success + job_id: kicks off polling
-//     - synchronous success with up_to_date: 'up to date' path
-//     - synchronous success without up_to_date: 'completed in Xs'
-//     - synchronous failure: error toast
+//     - synchronous failure (defensive fallback): error toast
 //     - fetch throws: catch handler
 //
 //   cleanupUI (indirectly via completion):
@@ -535,53 +533,13 @@ describe('callUpdateKometa -- 409 response (Kometa running)', () => {
 })
 
 // ---------------------------------------------------------------------
-// Path 5: Synchronous success (no job_id)
-// ---------------------------------------------------------------------
-
-describe('callUpdateKometa -- synchronous success', () => {
-  it("shows 'up to date' info when up_to_date=true", async () => {
-    // NOTE: original code has a latent bug in the sync-success path
-    // (no job_id) -- it sets `postUpdateLabel` but NEVER calls
-    // cleanupUI. In production the server always returns job_id, so
-    // this path is effectively dead. We test what the original does:
-    // toast + validateKometaRoot call. The button label doesn't get
-    // the 'Up to date' text because that only happens inside cleanupUI.
-    installFixture()
-    mockFetchWith(okJson({ success: true, up_to_date: true }))
-    callUpdateKometa()
-    await flush()
-    expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('already up to date'))).toBe(true)
-  })
-
-  it("shows success 'completed' when up_to_date=false", async () => {
-    installFixture()
-    mockFetchWith(okJson({ success: true, up_to_date: false }))
-    callUpdateKometa()
-    await flush()
-    expect(toastCalls.some(c => c[0] === 'success' && c[1].includes('completed'))).toBe(true)
-  })
-
-  it("hides kometa-update-box + clears updateAvailable", async () => {
-    installFixture()
-    kometaState.kometaUpdateAvailable = true
-    mockFetchWith(okJson({ success: true }))
-    callUpdateKometa()
-    await flush()
-    expect(document.getElementById('kometa-update-box').classList.contains('d-none')).toBe(true)
-    expect(kometaState.kometaUpdateAvailable).toBe(false)
-  })
-
-  it("calls validateKometaRoot with appendStatus=true", async () => {
-    installFixture()
-    mockFetchWith(okJson({ success: true }))
-    callUpdateKometa()
-    await flush()
-    expect(validateKometaRoot).toHaveBeenCalledWith({ appendStatus: true })
-  })
-})
-
-// ---------------------------------------------------------------------
-// Path 5: Synchronous failure
+// Path 5: Synchronous failure (defensive fallback)
+//
+// The endpoint currently never returns { success: false } with a 200
+// status when background=true -- non-success cases either return 409
+// (Kometa running) or non-2xx (which throws). The `if (!data.success
+// && !data.blocked)` branch is a defensive fallback for future
+// endpoint changes. Tests here simulate that hypothetical response.
 // ---------------------------------------------------------------------
 
 describe('callUpdateKometa -- synchronous failure', () => {
