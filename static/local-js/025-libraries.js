@@ -1,3 +1,11 @@
+// Static ES-module imports (hoisted). Migrated from window.EventHandler
+// in #1346 step 2f -- direct-consumer form of the accordion-highlight
+// surface. Both this file and the dynamically-imported modules below
+// share the same module instance (ES modules are singletons keyed by
+// URL), so importing here is the same object EventHandler.updateAccordionHighlights
+// delegates to.
+import { updateAccordionHighlights } from '/static/local-js/modules/accordionHighlights.js'
+
 // Load all helper modules in parallel. These publish their symbols
 // via window.* shims (same pattern as pathValidation.js).
 await Promise.all([
@@ -978,8 +986,8 @@ function updateCollectionFilesAccordionState (editor) {
     accordionHeader.classList.add('selected')
   } else {
     accordionHeader.classList.remove('selected')
-    if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
-      EventHandler.updateAccordionHighlights()
+    if (!hasEntries && !hasInvalid) {
+      updateAccordionHighlights()
     }
   }
 }
@@ -1516,8 +1524,8 @@ function updateOverlayFilesAccordionState (editor) {
     accordionHeader.classList.add('selected')
   } else {
     accordionHeader.classList.remove('selected')
-    if (!hasEntries && !hasInvalid && typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
-      EventHandler.updateAccordionHighlights()
+    if (!hasEntries && !hasInvalid) {
+      updateAccordionHighlights()
     }
   }
 }
@@ -6190,9 +6198,7 @@ async function runCollectionGroupReset (btn, group) {
       trigger.dispatchEvent(new Event('change', { bubbles: true }))
     }
 
-    if (typeof EventHandler !== 'undefined' && typeof EventHandler.updateAccordionHighlights === 'function') {
-      EventHandler.updateAccordionHighlights()
-    }
+    updateAccordionHighlights()
     if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
       ValidationHandler.updateValidationState()
     }
@@ -6540,7 +6546,7 @@ function setupParentChildToggleVisibility (scope) {
         wrapper.classList.remove('template-toggle-group-bordered')
       }
 
-      EventHandler.updateAccordionHighlights()
+      updateAccordionHighlights()
       ValidationHandler.updateValidationState()
       parentToggle.dataset.wasChecked = parentChecked ? 'true' : 'false'
     }
@@ -7050,9 +7056,7 @@ function wireOverlayDetailToggles (scope) {
       const isHidden = section.style.display === 'none'
       section.style.display = isHidden ? 'block' : 'none'
       btn.textContent = isHidden ? 'Hide Details' : 'Show Details'
-      if (typeof EventHandler !== 'undefined') {
-        EventHandler.updateAccordionHighlights()
-      }
+      updateAccordionHighlights()
     })
 
     btn.dataset.listenerAdded = 'true'
