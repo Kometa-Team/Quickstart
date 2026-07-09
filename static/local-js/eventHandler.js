@@ -1,4 +1,10 @@
-import * as accordionHighlights from './modules/accordionHighlights.js'
+import {
+  hasCheckedTemplateGroupToggle,
+  hasLibraryFileEntries,
+  highlightParentAccordions,
+  removeHighlightIfEmpty,
+  updateAccordionHighlights
+} from './modules/accordionHighlights.js'
 
 function callValidationHandler (methodName, ...args) {
   const handler = window.ValidationHandler
@@ -104,7 +110,7 @@ const EventHandler = {
           if (!select.dataset.listenerAdded) {
             select.addEventListener('change', () => {
               console.log(`[DEBUG] Dropdown changed: ${select.id} -> ${select.value}`)
-              EventHandler.updateAccordionHighlights()
+              updateAccordionHighlights()
               callValidationHandler('updateValidationState')
 
               // Trigger preview update if template variable
@@ -126,7 +132,7 @@ const EventHandler = {
 
             // Exclude preview overlay accordions from highlight updates
             if (!input.closest('.preview-accordion')) {
-              EventHandler.updateAccordionHighlights()
+              updateAccordionHighlights()
               callValidationHandler('updateValidationState')
             }
           })
@@ -143,7 +149,7 @@ const EventHandler = {
             console.log(`[DEBUG] Reset Overlays dropdown changed: ${this.id} -> ${this.value}`)
 
             // Ensure Highlights Update Properly
-            EventHandler.updateAccordionHighlights()
+            updateAccordionHighlights()
             callValidationHandler('updateValidationState')
           })
 
@@ -310,9 +316,7 @@ const EventHandler = {
         ) {
           return
         }
-        if (typeof EventHandler.updateAccordionHighlights === 'function') {
-          EventHandler.updateAccordionHighlights()
-        }
+        updateAccordionHighlights()
         callValidationHandler('updateValidationState')
       }
       library.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
@@ -354,11 +358,11 @@ const EventHandler = {
 // one source instead of reaching for window.EventHandler. We still
 // mirror onto EventHandler here so external non-module callers keep
 // working during the migration.
-EventHandler.hasCheckedTemplateGroupToggle = accordionHighlights.hasCheckedTemplateGroupToggle
-EventHandler.hasLibraryFileEntries = accordionHighlights.hasLibraryFileEntries
-EventHandler.highlightParentAccordions = accordionHighlights.highlightParentAccordions
-EventHandler.removeHighlightIfEmpty = accordionHighlights.removeHighlightIfEmpty
-EventHandler.updateAccordionHighlights = accordionHighlights.updateAccordionHighlights
+EventHandler.hasCheckedTemplateGroupToggle = hasCheckedTemplateGroupToggle
+EventHandler.hasLibraryFileEntries = hasLibraryFileEntries
+EventHandler.highlightParentAccordions = highlightParentAccordions
+EventHandler.removeHighlightIfEmpty = removeHighlightIfEmpty
+EventHandler.updateAccordionHighlights = updateAccordionHighlights
 
 window.EventHandler = EventHandler
 

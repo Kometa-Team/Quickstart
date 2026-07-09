@@ -1,3 +1,9 @@
+// Accordion-highlight surface migrated from window.EventHandler in
+// #1346 step 2f. Direct-consumer form of the accordion-highlight
+// module -- breaks the overlayHandler <-> eventHandler dependency
+// this file used to have via window.EventHandler.updateAccordionHighlights.
+import { updateAccordionHighlights } from './modules/accordionHighlights.js'
+
 const OverlayHandler = {
   baseDimensions: {
     default: { width: 1000, height: 1500 },
@@ -17,7 +23,7 @@ const OverlayHandler = {
         OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
         OverlayHandler.toggleSeparatorPlaceholder(libraryId, selectedStyle)
         OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-        window.EventHandler.updateAccordionHighlights()
+        updateAccordionHighlights()
       })
 
       separatorDropdown.dataset.listenerAdded = true
@@ -28,7 +34,7 @@ const OverlayHandler = {
       OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
       OverlayHandler.toggleSeparatorPlaceholder(libraryId, initialSelected)
       OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-      window.EventHandler.updateAccordionHighlights()
+      updateAccordionHighlights()
     }
 
     const placeholderWrapper = OverlayHandler.getSeparatorPlaceholderWrapper(libraryId)
@@ -37,7 +43,7 @@ const OverlayHandler = {
       sourceSelect.addEventListener('change', () => {
         const separatorsEnabled = separatorDropdown ? separatorDropdown.value !== 'none' : true
         OverlayHandler.syncSeparatorPlaceholderFields(placeholderWrapper, { show: separatorsEnabled })
-        window.EventHandler.updateAccordionHighlights()
+        updateAccordionHighlights()
       })
       sourceSelect.dataset.listenerAdded = 'true'
     }
@@ -3885,9 +3891,7 @@ const OverlayHandler = {
         emptyState.classList.toggle('d-none', rows.length > 0)
       }
 
-      if (typeof window.EventHandler !== 'undefined' && window.EventHandler.updateAccordionHighlights === 'function') {
-        window.EventHandler.updateAccordionHighlights()
-      }
+      updateAccordionHighlights()
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
         ValidationHandler.updateValidationState()
       }
