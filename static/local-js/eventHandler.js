@@ -1,3 +1,5 @@
+import * as accordionHighlights from './modules/accordionHighlights.js'
+
 function callValidationHandler (methodName, ...args) {
   const handler = window.ValidationHandler
   if (!handler || typeof handler[methodName] !== 'function') {
@@ -344,241 +346,19 @@ const EventHandler = {
 
     libraryContainer.style.display = isVisible ? 'block' : 'none'
     console.log(`[DEBUG] Library ${libraryId} is now ${isVisible ? 'VISIBLE' : 'HIDDEN'}`)
-  },
-
-  /**
-   * Returns true if an accordion body has at least one enabled collection toggle selected.
-   * Returns false when collection toggles exist but none are selected.
-   * Returns null when no collection toggles are present.
-   */
-  hasCheckedTemplateGroupToggle: function (accordionBody) {
-    if (!accordionBody) return null
-    const toggles = Array.from(accordionBody.querySelectorAll("input[type='checkbox'][data-template-group]"))
-    if (!toggles.length) return null
-    return toggles.some(toggle => toggle.checked)
-  },
-
-  hasLibraryFileEntries: function (accordionBody) {
-    if (!accordionBody) return false
-    const hidden = accordionBody.querySelector(
-      'input[type="hidden"][name$="-metadata_files"], input[type="hidden"][name$="-collection_files"], input[type="hidden"][name$="-overlay_files"]'
-    )
-    if (!hidden) return false
-    const raw = String(hidden.value || '').trim()
-    return Boolean(raw && raw !== '[]')
-  },
-
-  /**
-   * Update accordion highlights when selections change
-   */
-  updateAccordionHighlights: function () {
-    console.log('🔍 [DEBUG] Updating accordion highlights...')
-
-    document.querySelectorAll('.accordion-item').forEach((accordion) => {
-      const accordionHeader = accordion.querySelector('.accordion-header')
-      if (!accordionHeader) return
-
-      const headerText = accordionHeader.textContent.trim()
-      const isPreviewOverlay = headerText.toLowerCase().includes('preview overlays')
-      const accordionBody = accordion.querySelector('.accordion-body')
-
-      // Skip preview overlays
-      if (isPreviewOverlay) {
-        accordionHeader.classList.remove('selected')
-        return
-      }
-
-      let isCheckedOrSelected = false
-      let hasValue = false
-
-      if (accordionBody) {
-        // 1. Check for directly selected inputs (checkboxes, radios, list selections)
-        isCheckedOrSelected = accordionBody.querySelector(
-          "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
-          "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-          '.list-group li'
-        ) !== null
-
-        // 1b. Any non-empty inputs/selects also count as activity
-        // Suppress value-based highlighting for true Collection/Overlay sections,
-        // but allow it for "Delete Collections" (so its numeric field bubbles up).
-        const headerLower = headerText.toLowerCase()
-        const isLibraryFileSection = EventHandler.hasLibraryFileEntries(accordionBody)
-        const suppressValueCheck =
-          !isLibraryFileSection &&
-          (
-            headerLower.includes('overlay') ||
-            (headerLower.includes('collection') && !headerLower.includes('delete collections'))
-          )
-        if (isLibraryFileSection) {
-          hasValue = true
-        } else if (!suppressValueCheck) {
-          const textInputs = Array.from(
-            accordionBody.querySelectorAll("input[type='text'], input[type='number'], input[type='date']")
-          )
-          const selects = Array.from(accordionBody.querySelectorAll('select'))
-          hasValue = textInputs.some((input) => {
-            const v = (input.value || '').trim().toLowerCase()
-            return v && v !== 'none'
-          }) || selects.some((sel) => {
-            const v = (sel.value || '').trim().toLowerCase()
-            return v && v !== 'none'
-          })
-        }
-
-        // 2. Check for modified template selects, but only if toggle is still ON
-        if (!isCheckedOrSelected) {
-          isCheckedOrSelected = Array.from(
-            accordionBody.querySelectorAll('.template-variable-select[data-user-modified="true"]')
-          ).some((select) => {
-            const group = select.closest('.template-toggle-group')
-            const toggle = group?.querySelector('.overlay-toggle')
-            return toggle?.checked
-          })
-        }
-      }
-
-      // Collection accordions should not stay highlighted from child values/history
-      // when every parent collection toggle is off.
-      const anyTemplateGroupChecked = EventHandler.hasCheckedTemplateGroupToggle(accordionBody)
-      if (anyTemplateGroupChecked === false) {
-        isCheckedOrSelected = false
-        hasValue = false
-      }
-
-      if (isCheckedOrSelected || hasValue) {
-        accordionHeader.classList.add('selected')
-        if (accordion.dataset.qsMinimalYaml !== 'false') {
-          EventHandler.highlightParentAccordions(accordionHeader)
-        }
-      } else {
-        EventHandler.removeHighlightIfEmpty(accordionHeader)
-      }
-    })
-
-    // Special case: don't highlight parent "Overlays" if only preview overlays are selected
-    document.querySelectorAll('.accordion-item').forEach((accordion) => {
-      const accordionHeader = accordion.querySelector('.accordion-header')
-      const headerText = accordionHeader?.textContent.trim().toLowerCase()
-      if (headerText !== 'overlays') return
-
-      const childItems = accordion.querySelectorAll('.accordion-item')
-      const hasNonPreviewSelection = Array.from(childItems).some((child) => {
-        const childHeader = child.querySelector('.accordion-header')
-        const isPreview = childHeader?.textContent.trim().toLowerCase().includes('preview overlays')
-
-        if (isPreview) return false
-
-        // Only highlight if child toggle is on or has modified select tied to an enabled toggle
-        const hasActiveToggle = child.querySelector(
-          "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
-          "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-          '.list-group li'
-        )
-        if (hasActiveToggle) return true
-
-        const hasModifiedSelectWithToggle = Array.from(
-          child.querySelectorAll('.template-variable-select[data-user-modified="true"]')
-        ).some((select) => {
-          const group = select.closest('.template-toggle-group')
-          const toggle = group?.querySelector('.overlay-toggle')
-          return toggle?.checked
-        })
-
-        return hasModifiedSelectWithToggle
-      })
-
-      if (hasNonPreviewSelection) {
-        accordionHeader.classList.add('selected')
-      } else {
-        accordionHeader.classList.remove('selected')
-      }
-    })
-  },
-
-  /**
-   * Highlight parent accordions when a child section is selected
-   */
-  highlightParentAccordions: function (element) {
-    while (element) {
-      const parentAccordion = element.closest('.accordion-item')
-      if (!parentAccordion) break
-      if (parentAccordion.dataset.qsMinimalYaml === 'false') {
-        parentAccordion.querySelector('.accordion-header')?.classList.add('selected')
-        return
-      }
-
-      const parentHeader = parentAccordion.querySelector('.accordion-header')
-      const parentText = parentHeader ? parentHeader.textContent.trim() : ''
-      const isPreviewOverlay = parentText.toLowerCase().includes('preview overlays')
-      const isOverlaysSection = parentText.toLowerCase().includes('overlays')
-
-      if (isPreviewOverlay) {
-        console.log(`🚫 [DEBUG] Skipping parent highlight for Preview Overlays: ${parentText}`)
-        return
-      }
-
-      if (isOverlaysSection) {
-        const hasValidChild = Array.from(parentAccordion.querySelectorAll('.accordion-item')).some(child => {
-          const childHeader = child.querySelector('.accordion-header')
-          const childText = childHeader ? childHeader.textContent.trim() : ''
-          const isPreviewChild = childText.toLowerCase().includes('preview overlays')
-
-          return !isPreviewChild && child.querySelector('input:checked:not(.template-child-toggle)')
-        })
-
-        if (!hasValidChild) {
-          console.log(`🚫 [DEBUG] Preventing Overlays from inheriting highlight due to only Preview Overlays: ${parentText}`)
-          return
-        }
-      }
-
-      console.log(`🎯 [DEBUG] Adding highlight to parent: ${parentText}`)
-      parentHeader.classList.add('selected')
-
-      element = parentAccordion.parentElement.closest('.accordion-item')?.querySelector('.accordion-header')
-    }
-  },
-
-  /**
-   * Remove highlight if an accordion has no selections
-   */
-  removeHighlightIfEmpty: function (element) {
-    if (!element) return
-    const accordionItem = element.closest('.accordion-item')
-    if (!accordionItem) return
-
-    const accordionId = accordionItem.id || ''
-    const isPreviewOverlay = accordionId.includes('-previewOverlays')
-
-    const accordionBody = accordionItem.querySelector('.accordion-body')
-
-    if (isPreviewOverlay) {
-      console.log(`🚫 [DEBUG] Preventing highlight removal check for Preview Overlays: ${accordionId}`)
-      return
-    }
-
-    const hasSelections = accordionBody?.querySelector(
-      "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
-      "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-      "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
-      '.list-group li'
-    ) !== null
-    const hasLibraryFileEntries = EventHandler.hasLibraryFileEntries(accordionBody)
-
-    // If this accordion has collection toggles and none are enabled, force no highlight.
-    const anyTemplateGroupChecked = EventHandler.hasCheckedTemplateGroupToggle(accordionBody)
-    const effectiveSelections = (anyTemplateGroupChecked === false) ? false : (hasSelections || hasLibraryFileEntries)
-
-    if (!effectiveSelections) {
-      element.classList.remove('selected')
-    }
-
-    // Recursively check parents
-    const parentAccordionHeader = accordionItem.parentElement.closest('.accordion-item')?.querySelector('.accordion-header')
-    EventHandler.removeHighlightIfEmpty(parentAccordionHeader)
   }
 }
+
+// Accordion-highlight state -- extracted to a shared module in step 2f
+// of #1346 so overlayHandler.js and 025-libraries.js can import from
+// one source instead of reaching for window.EventHandler. We still
+// mirror onto EventHandler here so external non-module callers keep
+// working during the migration.
+EventHandler.hasCheckedTemplateGroupToggle = accordionHighlights.hasCheckedTemplateGroupToggle
+EventHandler.hasLibraryFileEntries = accordionHighlights.hasLibraryFileEntries
+EventHandler.highlightParentAccordions = accordionHighlights.highlightParentAccordions
+EventHandler.removeHighlightIfEmpty = accordionHighlights.removeHighlightIfEmpty
+EventHandler.updateAccordionHighlights = accordionHighlights.updateAccordionHighlights
 
 window.EventHandler = EventHandler
 
