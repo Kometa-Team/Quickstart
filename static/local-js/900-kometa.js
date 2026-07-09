@@ -72,6 +72,12 @@ import {
   setKometaStatusLog,
   appendKometaStatusLine
 } from './modules/kometa/_updatePhase.js'
+import {
+  syncKometaRollupBadge,
+  syncKometaUpdateAttention,
+  syncUpdateButtonLabel,
+  invalidateKometaUpdateStatus
+} from './modules/kometa/_updateRollup.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -124,7 +130,6 @@ const headerGrid = document.getElementById('header-style-grid')
 const headerGridCollapse = document.getElementById('header-style-grid-collapse')
 const headerStyleWait = document.getElementById('header-style-wait')
 const finalContentWrapper = document.getElementById('final-content-wrapper')
-const kometaActionsHeading = document.getElementById('kometa-actions-heading')
 const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
 const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
 const runCommandCollapse = document.getElementById('run-command-output-collapse')
@@ -738,29 +743,6 @@ if (document.getElementById('run-command-output')) {
 initBootstrapTooltips(document, '[title]', { html: false, sanitize: true, placement: 'top', trigger: 'hover' })
 initBootstrapTooltips(document)
 
-function syncKometaUpdateAttention () {
-  if (kometaActionsHeading && kometaActionsToggle) {
-    const isCollapsed = kometaActionsToggle.classList.contains('collapsed')
-    const needsAttention = kometaState.kometaUpdateAvailable && isCollapsed
-    kometaActionsHeading.classList.toggle('kometa-update-attention', needsAttention)
-    kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
-  }
-  syncKometaRollupBadge()
-}
-
-function invalidateKometaUpdateStatus () {
-  kometaState.kometaUpdateAvailable = false
-  kometaState.kometaUpdateCheckCompleted = false
-  kometaState.kometaUpdateCheckSkipped = false
-  kometaState.kometaRemoteVersionStatus = ''
-  kometaState.kometaRemoteVersionChecked = false
-  kometaState.kometaRemoteVersionSkipped = false
-  document.getElementById('kometa-update-box').classList.add('d-none')
-  syncKometaSourceStatus()
-  syncUpdateButtonLabel()
-  syncKometaRollupBadge()
-}
-
 function runKometaStatusPass (forceRefresh = false) {
   const selection = getKometaBranchOverride()
   const effective = getEffectiveKometaBranch()
@@ -834,33 +816,6 @@ function pollKometaUpdateProgress () {
         done: data.done
       })
     })
-}
-
-function getKometaRollupStatus () {
-  if (kometaState.kometaUpdating) return { state: 'unknown', label: 'Updating...' }
-  if (kometaState.kometaValidationInProgress) return { state: 'unknown', label: 'Checking...' }
-  if (!kometaState.kometaLocalCheckCompleted) return { state: 'unknown', label: 'Not checked' }
-  if (!kometaState.kometaInstalled) return { state: 'error', label: 'Install needed' }
-  if (!kometaState.kometaUpdateCheckCompleted) {
-    return { state: kometaState.kometaValidated ? 'ok' : 'warn', label: kometaState.kometaValidated ? 'Prepared' : 'Prepare needed' }
-  }
-  if (kometaState.kometaUpdateCheckSkipped) return { state: 'unknown', label: 'Skipped while running' }
-  if (kometaState.kometaUpdateAvailable) return { state: 'warn', label: 'Update available' }
-  return { state: 'ok', label: 'Up to date' }
-}
-
-function syncKometaRollupBadge () {
-  const badge = document.getElementById('kometa-update-rollup-badge')
-  if (!badge) return
-  const { state, label } = getKometaRollupStatus()
-  badge.textContent = label
-  badge.classList.remove(
-    'qs-validation-rollup-badge--unknown',
-    'qs-validation-rollup-badge--ok',
-    'qs-validation-rollup-badge--warn',
-    'qs-validation-rollup-badge--error'
-  )
-  badge.classList.add(`qs-validation-rollup-badge--${state}`)
 }
 
 if (kometaActionsCollapse) {
@@ -1395,27 +1350,6 @@ function fetchRunProgress (forceFull = false) {
     .finally(() => {
       runProgressInFlight = false
     })
-}
-
-function getUpdateButtonLabel () {
-  const installMode = getConfiguredKometaInstallMode()
-  if (installMode === 'existing') {
-    return `<i class="bi bi-arrow-clockwise me-1"></i> ${kometaState.kometaUpdateCheckCompleted ? 'Recheck Existing Status' : 'Check Existing Status'}`
-  }
-  const force = forceUpdateToggle.checked
-  const label = force
-    ? (kometaState.kometaInstalled ? 'Force Update Kometa' : 'Force Install Kometa')
-    : (kometaState.kometaInstalled
-        ? (kometaState.kometaUpdateAvailable ? 'Update Available' : (kometaState.kometaUpdateCheckCompleted ? 'Up to date' : 'Check for Kometa Updates'))
-        : 'Install Kometa')
-  return `<i class="bi bi-arrow-clockwise me-1"></i> ${label}`
-}
-
-function syncUpdateButtonLabel () {
-  if (updateKometaBtn) {
-    updateKometaBtn.innerHTML = getUpdateButtonLabel()
-  }
-  syncKometaUpdateAttention()
 }
 
 function callUpdateKometa () {
