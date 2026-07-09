@@ -180,6 +180,9 @@ describe('kometaState initial values', () => {
       'kometaValidated',
       'kometaValidationInProgress',
       'lastLogscanPayload',
+      'lastRunProgressPayload',
+      'latestKometaStatusPayload',
+      'runProgressInFlight',
       'showYAML'
     ])
   })
