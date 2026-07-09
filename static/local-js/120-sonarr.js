@@ -1,15 +1,14 @@
 import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
 import { populateArrDropdown, buildArrPreSubmit } from './modules/arrPageBase.js'
 
-// Sonarr wizard — uses createApiKeyValidator for the credential flow,
+// Sonarr wizard -- uses createApiKeyValidator for the credential flow,
 // arrPageBase helpers for the dropdown-populate and form-submit gate.
 //
-// NOTE: skipWhenUnvalidated is FALSE here — a pre-existing bug (#1584)
-// that predates the Step 6 factory migration. Sonarr's path-validation
-// runs unconditionally, so an unvalidated user with any invalid path
-// field elsewhere on the page cannot navigate away. Compare Radarr,
-// which correctly returns true early. Fix in #1584 will flip this
-// flag to true.
+// skipWhenUnvalidated=true matches Radarr: an unvalidated user can
+// navigate away from the Sonarr page without a path check blocking
+// them. Previously Sonarr ran the path check unconditionally, which
+// stranded users with any invalid path field elsewhere on the page
+// (bug #1584 -- pre-existed the Step 6 factory migration by years).
 
 function populateSonarrDropdowns (data) {
   populateArrDropdown('sonarr_root_folder_path', data.root_folders, 'path', 'path', 'initialSonarrRootFolderPath')
@@ -24,7 +23,7 @@ const validateSonarrPage = buildArrPreSubmit({
     { elementId: 'sonarr_quality_profile', errorMessage: 'Please select a valid Quality Profile.' },
     { elementId: 'sonarr_language_profile', errorMessage: 'Please select a valid Language Profile.' }
   ],
-  skipWhenUnvalidated: false  // Preserves buggy pre-existing behavior; see #1584.
+  skipWhenUnvalidated: true  // Matches Radarr; fixes #1584.
 })
 
 createApiKeyValidator({

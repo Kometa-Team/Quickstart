@@ -521,6 +521,58 @@ def test_radarr_revalidate_on_load_repopulates_dropdowns(page, live_server):
 
 
 @pytest.mark.e2e
+def test_sonarr_allows_skip_when_unvalidated(page, live_server):
+    """Regression test for #1584.
+
+    An unvalidated Sonarr user should be able to navigate away from
+    the page without any path or dropdown check blocking them --
+    matching Radarr's behavior.
+
+    Historically Sonarr's onPreSubmit ran the path check unconditionally,
+    so a user who had NOT validated Sonarr but had any invalid path
+    field elsewhere was stranded. The fix flips arrPageBase's
+    `skipWhenUnvalidated` to true for Sonarr, matching Radarr.
+
+    This test loads the Sonarr page WITHOUT validating, then dispatches
+    a form submit. The submit must NOT be preventDefault-blocked.
+    """
+    page.goto(f"{live_server}/step/120-sonarr", wait_until="domcontentloaded")
+
+    # Precondition: sonarr is NOT validated. Rendered value may be
+    # 'false' or 'False' depending on how Jinja stringified the bool;
+    # the wizard code lowercases before comparing, so either is fine.
+    initial_validated = page.locator("#sonarr_validated").input_value()
+    assert initial_validated.lower() != "true", f"precondition: sonarr_validated should not be true; got {initial_validated!r}"
+
+    # Force PathValidation.validateAll to return false. This is the
+    # exact condition that used to strand unvalidated Sonarr users:
+    # some path field elsewhere on the page failed validation. Stub
+    # it out to guarantee the failing branch is exercised regardless
+    # of what path fields the Sonarr template happens to render.
+    page.evaluate("""
+        () => {
+            window.PathValidation = {
+                validateAll: () => false,
+                attach: () => {}
+            }
+        }
+    """)
+
+    # Dispatch a real form submit; the gate should return true and NOT
+    # preventDefault. In the buggy pre-fix code, the path check ran and
+    # returned false because at least one path field was invalid.
+    blocked = page.evaluate("""
+        () => {
+            const form = document.getElementById('configForm');
+            const evt = new Event('submit', { cancelable: true });
+            form.dispatchEvent(evt);
+            return evt.defaultPrevented;
+        }
+    """)
+    assert blocked is False, "expected an unvalidated Sonarr page to allow navigation " "(regression #1584); form submit was blocked instead"
+
+
+@pytest.mark.e2e
 def test_plex_validator_success_populates_extra_state(page, live_server):
     """Plex's onValidationSuccess hook copies db_cache + 4 library lists
     into hidden form inputs and reveals the "hidden" section. Verify
