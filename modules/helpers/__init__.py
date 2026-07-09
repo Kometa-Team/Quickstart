@@ -55,3 +55,4 @@ from ._named_config import *  # noqa: F403
 from ._zip_update import *  # noqa: F403
 from ._logging import *  # noqa: F403
 from ._plex import *  # noqa: F403
+from ._vite_manifest import *  # noqa: F403

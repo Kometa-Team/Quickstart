@@ -86,21 +86,35 @@ export default defineConfig({
     // Don't wipe static/dist between builds; only files we own. Vite already
     // scopes cleaning to its own output, but being explicit costs nothing.
     emptyOutDir: true,
-    // No hash in filenames yet. When templates start referencing the build
-    // output (a later PR) we'll switch to manifest-based lookups and turn
-    // hashing back on for cache busting.
+    // Emit static/dist/.vite/manifest.json so Flask can look up the hashed
+    // filename for each source entry at request time. This is the
+    // production analogue of the dev server's on-the-fly resolution and
+    // is the pattern all mainstream server-side frameworks (Rails asset
+    // pipeline, Django whitenoise, Laravel Mix) use for cache busting.
+    //
+    // Format: { "static/local-js/000-base.js": { "file": "000-base-<hash>.js", ... } }
+    // See modules/vite_manifest.py for the Python-side lookup.
+    manifest: true,
     rollupOptions: {
       input: discoverModuleEntries(sourceDir),
       output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name].js',
-        assetFileNames: 'assets/[name][extname]'
+        // Hash entry and chunk filenames for cache busting. Templates
+        // reference these via the asset_url() Jinja global, which reads
+        // manifest.json and resolves the source name to the hashed name.
+        // Assets (fonts, images if we ever bundle them) keep their
+        // extension in the hash so mime-type detection stays sane.
+        entryFileNames: '[name]-[hash].js',
+        chunkFileNames: 'chunks/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]'
       }
     },
     // Modern browsers only — matches what the rest of the codebase already
     // assumes (the project already uses `<script type="module">`).
     target: 'esnext',
-    minify: false,
+    // Minify with esbuild (Vite's default) for smaller production bundles.
+    // Keeps sourcemaps enabled so stack traces in bug reports map back
+    // to the original source.
+    minify: 'esbuild',
     sourcemap: true
   },
   server: {

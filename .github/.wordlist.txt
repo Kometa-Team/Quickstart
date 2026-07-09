@@ -22,6 +22,7 @@ Homebrew
 https
 ImageMaid
 Jellyfin
+Jinja
 jQuery
 JS
 jsdom
@@ -32,6 +33,7 @@ Logscan
 MacOS
 MDBList
 meisnate
+minified
 MyAnimeList
 NAS
 OMDb
@@ -44,12 +46,13 @@ Precompiled
 prefill
 PRs
 py
+PyInstaller
 PyQt
 pytest
 quickstart
 Radarr
-reingests
 Reingest
+reingests
 repo
 RHEL
 roadmap

@@ -600,14 +600,17 @@ Notes for Playwright on Windows:
 
 ## Frontend Tooling
 
-Quickstart serves its JavaScript directly from `static/local-js/` via Flask in production and is gradually being migrated to ES modules (see roadmap issue #1334). [Vite](https://vitejs.dev/) is wired up as the future build pipeline for the modular files.
+Quickstart uses [Vite](https://vitejs.dev/) to bundle its JavaScript. Templates pick the served asset via the `asset_url()` Jinja global:
 
-**Today, the Vite build output is not consumed in production** — Flask still loads JS from `static/local-js/` exactly as before. The build pipeline exists so that future PRs (Alpine widgets for Step 6, Svelte islands for Step 9) can adopt it page-by-page.
+- If `static/dist/.vite/manifest.json` exists (i.e. someone has run `npm run build`), pages load hashed, minified bundles like `/static/dist/000-base-DKccW2Od.js`. Filenames are hashed for cache busting.
+- Otherwise, pages fall back to raw source files from `/static/local-js/`. This keeps `python quickstart.py` after a fresh clone working with zero build step.
+
+The fallback exists specifically for the source-checkout / new-contributor experience. In shipped Docker and PyInstaller builds, `npm run build` is expected to run as part of the packaging step so the manifest is baked in.
 
 Both Vitest and the Vite build itself are **enforced in CI** via `.github/workflows/lint.yml`:
 
 - `Vitest` job — runs `npm test` on every push/PR (all `tests/js/**/*.test.js`)
-- `Vite Build` job — runs `npm run build` on every push/PR and verifies that the expected page-scale entries (`000-base`, `001-start`, `010-plex`, `025-libraries`, `900-kometa`, `905-analytics`, `eventHandler`, `overlayHandler`) all produced output. Prevents the auto-discovery from silently dropping an entry.
+- `Vite Build` job — runs `npm run build` and verifies that expected page-scale entries (`000-base`, `001-start`, `010-plex`, `025-libraries`, `900-kometa`, `905-analytics`, `eventHandler`, `overlayHandler`) appear in the manifest. Prevents the auto-discovery from silently dropping an entry.
 
 Use cases for developers:
 

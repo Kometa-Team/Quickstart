@@ -1084,6 +1084,15 @@ kometa_process = None
 
 app = Flask(__name__)
 
+# Register the Vite manifest lookup as a Jinja global so templates can
+# say ``{{ asset_url('000-base') }}`` instead of ``url_for('static',
+# filename='local-js/000-base.js')``. When ``static/dist/.vite/manifest.json``
+# exists (i.e. after ``npm run build``), asset_url() returns the hashed,
+# minified build output; otherwise it falls back to the raw source file
+# so ``python quickstart.py`` after a fresh clone still works.
+# Roadmap #1334 Step 4 activation. See modules/helpers/_vite_manifest.py.
+app.jinja_env.globals["asset_url"] = helpers.asset_url
+
 app.register_blueprint(validation_routes_bp)
 app.register_blueprint(asset_routes_bp)
 app.register_blueprint(kometa_updates_bp)
