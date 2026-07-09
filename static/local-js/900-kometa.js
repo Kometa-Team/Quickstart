@@ -78,6 +78,10 @@ import {
   syncUpdateButtonLabel,
   invalidateKometaUpdateStatus
 } from './modules/kometa/_updateRollup.js'
+import {
+  stopKometaUpdatePolling,
+  pollKometaUpdateProgress
+} from './modules/kometa/_updatePolling.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -782,39 +786,6 @@ function runKometaStatusPass (forceRefresh = false) {
     .catch(() => {
       if (!kometaState.kometaUpdating) setKometaUpdatePhaseBadge('failed')
       return null
-    })
-}
-
-function stopKometaUpdatePolling () {
-  if (kometaState.kometaUpdatePollInterval) {
-    clearInterval(kometaState.kometaUpdatePollInterval)
-    kometaState.kometaUpdatePollInterval = null
-  }
-}
-
-function pollKometaUpdateProgress () {
-  if (!kometaState.kometaUpdateJobId) return Promise.resolve(null)
-  return fetch(`/background-jobs/${encodeURIComponent(kometaState.kometaUpdateJobId)}?since=${encodeURIComponent(String(kometaState.kometaUpdateLogIndex))}`)
-    .then(async res => {
-      const data = await res.json()
-      if (!res.ok || !data.success || !data.job) throw new Error(data.error || 'Failed to fetch Kometa update progress.')
-      return data
-    })
-    .then(data => {
-      const job = data.job || {}
-      if (job.phase === 'queued') setKometaUpdatePhaseBadge('queued')
-      if (job.phase === 'error') setKometaUpdatePhaseBadge('failed')
-      const lines = Array.isArray(data.lines) ? data.lines : []
-      lines.forEach(line => appendKometaStatusLine(line))
-      if (typeof data.next_index === 'number') kometaState.kometaUpdateLogIndex = data.next_index
-      if (data.done) {
-        stopKometaUpdatePolling()
-      }
-      return Object.assign({}, job, {
-        lines,
-        next_index: data.next_index,
-        done: data.done
-      })
     })
 }
 
