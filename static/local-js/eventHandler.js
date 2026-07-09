@@ -5,6 +5,7 @@ import {
   removeHighlightIfEmpty,
   updateAccordionHighlights
 } from './modules/accordionHighlights.js'
+import { initializeOverlays, updateHiddenInputs } from './modules/separatorPreview.js'
 
 function callValidationHandler (methodName, ...args) {
   const handler = window.ValidationHandler
@@ -102,7 +103,7 @@ const EventHandler = {
       })
 
       // Initialize overlays after image listeners
-      OverlayHandler.initializeOverlays(libraryId, isMovie)
+      initializeOverlays(libraryId, isMovie)
 
       // Attach overlay selection listeners (CHANGE events)
       library.querySelectorAll('.accordion input').forEach((input) => {
@@ -174,10 +175,10 @@ const EventHandler = {
       if (separatorDropdown && !separatorDropdown.dataset.listenerAdded) {
         console.log(`[DEBUG] Found separator dropdown: ${separatorDropdown.id}`)
         separatorDropdown.addEventListener('change', () => {
-          OverlayHandler.updateHiddenInputs(libraryId, isMovie)
+          updateHiddenInputs(libraryId, isMovie)
         })
         separatorDropdown.dataset.listenerAdded = true
-        OverlayHandler.updateHiddenInputs(libraryId, isMovie)
+        updateHiddenInputs(libraryId, isMovie)
       }
 
       // Attach listener for custom genre "Add" button
