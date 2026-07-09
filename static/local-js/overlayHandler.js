@@ -8,8 +8,7 @@
 import { updateAccordionHighlights } from './modules/accordionHighlights.js'
 import {
   initializeOverlays,
-  syncSeparatorPlaceholderFields,
-  updateHiddenInputs
+  syncSeparatorPlaceholderFields
 } from './modules/separatorPreview.js'
 
 const OverlayHandler = {
@@ -8364,13 +8363,6 @@ const OverlayHandler = {
     })
   }
 }
-
-// Separator/preview cluster -- extracted to modules/separatorPreview.js
-// in #1346 step 2f. We still mirror onto OverlayHandler so
-// external non-module callers keep working during the migration.
-OverlayHandler.initializeOverlays = initializeOverlays
-OverlayHandler.updateHiddenInputs = updateHiddenInputs
-OverlayHandler.syncSeparatorPlaceholderFields = syncSeparatorPlaceholderFields
 
 window.OverlayHandler = OverlayHandler
 

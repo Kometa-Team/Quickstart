@@ -1,10 +1,4 @@
-import {
-  hasCheckedTemplateGroupToggle,
-  hasLibraryFileEntries,
-  highlightParentAccordions,
-  removeHighlightIfEmpty,
-  updateAccordionHighlights
-} from './modules/accordionHighlights.js'
+import { updateAccordionHighlights } from './modules/accordionHighlights.js'
 import { initializeOverlays, updateHiddenInputs } from './modules/separatorPreview.js'
 
 function callValidationHandler (methodName, ...args) {
@@ -353,17 +347,6 @@ const EventHandler = {
     console.log(`[DEBUG] Library ${libraryId} is now ${isVisible ? 'VISIBLE' : 'HIDDEN'}`)
   }
 }
-
-// Accordion-highlight state -- extracted to a shared module in step 2f
-// of #1346 so overlayHandler.js and 025-libraries.js can import from
-// one source instead of reaching for window.EventHandler. We still
-// mirror onto EventHandler here so external non-module callers keep
-// working during the migration.
-EventHandler.hasCheckedTemplateGroupToggle = hasCheckedTemplateGroupToggle
-EventHandler.hasLibraryFileEntries = hasLibraryFileEntries
-EventHandler.highlightParentAccordions = highlightParentAccordions
-EventHandler.removeHighlightIfEmpty = removeHighlightIfEmpty
-EventHandler.updateAccordionHighlights = updateAccordionHighlights
 
 window.EventHandler = EventHandler
 
