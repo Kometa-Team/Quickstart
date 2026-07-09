@@ -89,6 +89,7 @@ import {
   revealRunCommandSection,
   showRunCommandSectionAfterValidated
 } from './modules/kometa/_runCommandSection.js'
+import { probeKometaRoot } from './modules/kometa/_probeRoot.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -561,67 +562,6 @@ function validateKometaRoot (options = {}) {
     })
     .catch(() => _validateError(null))
     .finally(_validateComplete)
-}
-
-function probeKometaRoot () {
-  const out = document.getElementById('run-command-output')
-  const configuredRootPosix = getConfiguredKometaRootPosix()
-  const configuredRootDisplay = getConfiguredKometaRootDisplay()
-  const configuredInstallMode = getConfiguredKometaInstallMode()
-  if (!configuredRootPosix) {
-    appendKometaStatusLine('❌ No Kometa install path is selected for this config yet.')
-    return Promise.resolve(null)
-  }
-
-  const _probeSuccess = (res) => {
-      kometaState.kometaLocalCheckCompleted = true
-      kometaState.kometaInstalled = !!res.kometa_installed
-      if (Array.isArray(res.log)) res.log.forEach(line => appendKometaStatusLine(line))
-
-      const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || configuredRootDisplay)
-      const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
-      const kometaRootPosix = (res.kometa_root || configuredRootPosix)
-      const venvPythonPosix = (res.venv_python || venvPythonDisplay)
-
-      out.dataset.kometaRoot = kometaRootDisplay
-      out.dataset.venvPython = venvPythonDisplay
-      out.dataset.kometaRootPosix = kometaRootPosix
-      out.dataset.venvPythonPosix = venvPythonPosix
-      const installPathEl = document.getElementById('kometa-install-path')
-      if (installPathEl) installPathEl.textContent = kometaRootDisplay
-      syncKometaSourceStatus({ localVersion: res.kometa_version || 'Unknown' })
-
-      if (!kometaState.kometaInstalled) {
-        kometaState.kometaValidated = false
-        hideRunCommandSectionUntilValidated()
-      }
-
-      syncUpdateButtonLabel()
-      syncKometaRollupBadge()
-    }
-  const _probeError = (msg) => {
-      kometaState.kometaLocalCheckCompleted = true
-      kometaState.kometaInstalled = false
-      kometaState.kometaValidated = false
-      const errMsg = msg || 'Unable to probe the Kometa path.'
-      appendKometaStatusLine(`❌ ${errMsg}`)
-      syncKometaSourceStatus({ localVersion: 'Unknown' })
-      hideRunCommandSectionUntilValidated()
-      syncUpdateButtonLabel()
-      syncKometaRollupBadge()
-    }
-  return fetch('/probe-kometa-root', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: configuredRootPosix, install_mode: configuredInstallMode })
-  })
-    .then(async (resp) => {
-      const data = await resp.json().catch(() => ({}))
-      if (resp.ok) _probeSuccess(data)
-      else _probeError(data && data.error)
-      return data
-    })
-    .catch(() => { _probeError(null); return null })
 }
 
 if (document.getElementById('run-command-output')) {
