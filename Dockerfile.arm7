@@ -1,3 +1,24 @@
+# syntax=docker/dockerfile:1
+#
+# ARM7-specific build variant. Same multi-stage layout as ./Dockerfile
+# with one runtime tweak: PyQt5 wheels don't publish for armv7, so
+# requirements.txt gets filtered before pip install.
+#
+# The jsbuild stage is identical to the main Dockerfile because Node's
+# multi-arch story is much cleaner than PyQt5's. Running on
+# $BUILDPLATFORM avoids emulation entirely.
+
+# ---- Stage 1: Build the JS bundles ---------------------------------
+FROM --platform=$BUILDPLATFORM node:22-slim AS jsbuild
+WORKDIR /jsbuild
+
+COPY package.json package-lock.json vite.config.js vite.detectModuleEntry.mjs ./
+COPY static/local-js/ ./static/local-js/
+
+RUN npm ci --no-fund --no-audit \
+ && npm run build
+
+# ---- Stage 2: Runtime image ----------------------------------------
 FROM python:3.13-slim
 ARG BRANCH_NAME=master
 ENV BRANCH_NAME=${BRANCH_NAME}
@@ -23,5 +44,6 @@ RUN echo "**** cleanup system packages ****" \
  && apt-get autoclean \
  && rm -rf /requirements.txt /tmp/* /var/tmp/* /var/lib/apt/lists/*
 COPY . /
+COPY --from=jsbuild /jsbuild/static/dist/ /static/dist/
 VOLUME /config
 ENTRYPOINT ["/tini", "-s", "python3", "quickstart.py", "--"]
