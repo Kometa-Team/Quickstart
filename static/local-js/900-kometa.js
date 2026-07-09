@@ -92,6 +92,7 @@ import {
   updateLibraryVisibility
 } from './modules/kometa/_cliFlags.js'
 import { buildRunStatusText } from './modules/kometa/_runStatusFormat.js'
+import { setKometaPrepareRunningState } from './modules/kometa/_prepareState.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -135,7 +136,6 @@ const headerGridCollapse = document.getElementById('header-style-grid-collapse')
 const headerStyleWait = document.getElementById('header-style-wait')
 const finalContentWrapper = document.getElementById('final-content-wrapper')
 const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
-const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
 const runCommandCollapse = document.getElementById('run-command-output-collapse')
 let headerStyleSubmitting = false
 
@@ -286,26 +286,6 @@ initBootstrapTooltips(document)
 if (kometaActionsCollapse) {
   kometaActionsCollapse.addEventListener('shown.bs.collapse', syncKometaUpdateAttention)
   kometaActionsCollapse.addEventListener('hidden.bs.collapse', syncKometaUpdateAttention)
-}
-
-function setKometaPrepareRunningState (isRunning) {
-  const accordion = document.getElementById('kometa-actions-accordion')
-  if (accordion) accordion.classList.toggle('opacity-50', Boolean(isRunning))
-  if (!kometaActionsCollapse || !kometaActionsToggle) return
-  if (isRunning && kometaActionsCollapse.classList.contains('show') && typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
-    bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).hide()
-  }
-  if (isRunning) {
-    kometaActionsToggle.classList.add('collapsed')
-    kometaActionsToggle.setAttribute('aria-expanded', 'false')
-    kometaActionsToggle.setAttribute('title', 'Kometa is running. Prepare Kometa is locked until the run finishes.')
-    kometaActionsToggle.disabled = true
-    kometaActionsToggle.classList.add('disabled')
-  } else {
-    kometaActionsToggle.removeAttribute('title')
-    kometaActionsToggle.disabled = false
-    kometaActionsToggle.classList.remove('disabled')
-  }
 }
 
 document.getElementById('copy-command')?.addEventListener('click', function() {
