@@ -1,7 +1,7 @@
 // callUpdateKometa: THE BOSS FIGHT.
 //
 // The main "update Kometa" entry point. Users hit this by clicking the
-// #update-kometa button. It has FIVE distinct execution paths:
+// #update-kometa-btn button. It has FIVE distinct execution paths:
 //
 //   1. External mode short-circuit
 //        Kometa lives outside Quickstart's control -- show a toast
@@ -43,8 +43,8 @@
 //   importable in test contexts where the DOM might be rebuilt
 //   between tests:
 //
-//     #update-kometa           -- main trigger button
-//     #force-update            -- checkbox (Force Update toggle)
+//     #update-kometa-btn       -- main trigger button
+//     #force-kometa-update     -- checkbox (Force Update toggle)
 //     #kometa-branch-override  -- select (branch override dropdown)
 //     #kometa-validation-log   -- <pre> for status log
 //     #run-now, #stop-now      -- run controls
@@ -91,6 +91,35 @@ function el (id) {
   return document.getElementById(id)
 }
 
+function getUpdateButton () {
+  return el('update-kometa-btn') || el('update-kometa')
+}
+
+function getForceUpdateToggle () {
+  return el('force-kometa-update') || el('force-update')
+}
+
+function getRequiredUpdateElements () {
+  const elements = {
+    btn: getUpdateButton(),
+    logBox: el('kometa-validation-log'),
+    runNow: el('run-now'),
+    stopNow: el('stop-now'),
+    runBox: el('run-command-box'),
+    forceUpdateToggle: getForceUpdateToggle(),
+    kometaBranchOverrideSel: el('kometa-branch-override')
+  }
+  const missing = Object.entries(elements)
+    .filter(([, node]) => !node)
+    .map(([key]) => key)
+
+  if (!missing.length) return elements
+
+  console.error('Missing Kometa update controls:', missing)
+  showToast('error', 'Kometa update controls are unavailable on this page. Refresh and try again.')
+  return null
+}
+
 /**
  * The 'existing' mode branch: user pointed Quickstart at their own
  * Kometa install. Check for updates via runKometaStatusPass; show
@@ -98,7 +127,12 @@ function el (id) {
  * user's job outside Quickstart).
  */
 function handleExistingModeCheck () {
-  const btn = el('update-kometa')
+  const btn = getUpdateButton()
+  if (!btn) {
+    console.error('Missing Kometa update button for existing-mode status check.')
+    showToast('error', 'Kometa update button is unavailable on this page. Refresh and try again.')
+    return
+  }
   btn.disabled = true
   btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Checking...'
   runKometaStatusPass(true)
@@ -132,9 +166,9 @@ function handleExistingModeCheck () {
  * an update -- do a status-only pass, show a toast, no install work.
  */
 function handleAlreadyInstalledNoForceCheck () {
-  const btn = el('update-kometa')
-  const forceUpdateToggle = el('force-update')
-  const kometaBranchOverrideSel = el('kometa-branch-override')
+  const required = getRequiredUpdateElements()
+  if (!required) return
+  const { btn, forceUpdateToggle, kometaBranchOverrideSel } = required
   btn.disabled = true
   btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Checking...'
   forceUpdateToggle.disabled = true
@@ -184,13 +218,17 @@ export function callUpdateKometa () {
   }
 
   // ---- Path 4: already installed, no force, no update needed ----
-  const btn = el('update-kometa')
-  const logBox = el('kometa-validation-log')
-  const runNow = el('run-now')
-  const stopNow = el('stop-now')
-  const runBox = el('run-command-box')
-  const forceUpdateToggle = el('force-update')
-  const kometaBranchOverrideSel = el('kometa-branch-override')
+  const required = getRequiredUpdateElements()
+  if (!required) return
+  const {
+    btn,
+    logBox,
+    runNow,
+    stopNow,
+    runBox,
+    forceUpdateToggle,
+    kometaBranchOverrideSel
+  } = required
   const qsBranch = btn.dataset.qsBranch || 'master'
   const branchOverride = getKometaBranchOverride()
   const configuredRootPosix = getConfiguredKometaRootPosix()
@@ -331,7 +369,8 @@ export function callUpdateKometa () {
           if (!progress || !progress.done) return false
           kometaState.kometaLocalCheckCompleted = false
           kometaState.kometaUpdateAvailable = false
-          el('kometa-update-box').classList.add('d-none')
+          const updateBox = el('kometa-update-box')
+          if (updateBox) updateBox.classList.add('d-none')
           syncUpdateButtonLabel()
           const elapsed = formatElapsed(Date.now() - startTs)
           // Server may report success under 'update_success' (newer
