@@ -65,6 +65,52 @@ def test_write_quickstart_stop_marker_writes_pending_journal_without_touching_me
     assert "reason=user_stop" in pending_text
 
 
+def test_write_quickstart_maintenance_marker_can_mirror_live_meta_log(tmp_path):
+    import modules.process_markers as process_markers
+
+    ok = process_markers.write_quickstart_maintenance_marker(
+        tmp_path,
+        "paused",
+        window="02:00-05:00",
+        mirror_to_meta_log=True,
+    )
+
+    assert ok is True
+    pending_path = process_markers.get_kometa_pending_marker_path(tmp_path)
+    meta_path = tmp_path / "config" / "logs" / "meta.log"
+    assert pending_path.exists()
+    assert meta_path.exists()
+    pending_text = pending_path.read_text(encoding="utf-8")
+    meta_text = meta_path.read_text(encoding="utf-8")
+    assert "event=paused" in pending_text
+    assert "event=paused" in meta_text
+
+
+def test_write_quickstart_imagemaid_maintenance_marker_can_mirror_live_log(tmp_path):
+    import modules.process_markers as process_markers
+
+    log_path = tmp_path / "config" / "logs" / "imagemaid.log"
+    ok = process_markers.write_quickstart_imagemaid_maintenance_marker(
+        tmp_path,
+        "paused",
+        mode="report",
+        config_name="demo",
+        window="02:00-05:00",
+        log_path=log_path,
+        mirror_to_live_log=True,
+    )
+
+    assert ok is True
+    pending_path = process_markers.get_imagemaid_pending_marker_path(tmp_path)
+    assert pending_path.exists()
+    assert log_path.exists()
+    pending_text = pending_path.read_text(encoding="utf-8")
+    log_text = log_path.read_text(encoding="utf-8")
+    assert "event=paused" in pending_text
+    assert "event=paused" in log_text
+    assert "tool=imagemaid" in log_text
+
+
 def test_flush_quickstart_pending_markers_falls_back_to_first_quickstart_line(monkeypatch, tmp_path, qs_module):
     log_dir = tmp_path / "config" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
