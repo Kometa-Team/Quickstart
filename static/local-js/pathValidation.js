@@ -1,4 +1,7 @@
-const PathValidation = (() => {
+// ES module (#1346 Step 2 finish). Also publishes `window.PathValidation`
+// for classic-script consumers that can't use `import` (e.g. 915-imagemaid.js).
+// New JS consumers should prefer the named export.
+export const PathValidation = (() => {
   let rules = []
   let meta = { platform: 'linux', is_docker: false }
   let loadPromise = null
@@ -256,3 +259,4 @@ const PathValidation = (() => {
 })()
 
 window.PathValidation = PathValidation
+export default PathValidation

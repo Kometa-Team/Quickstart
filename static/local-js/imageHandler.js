@@ -1,4 +1,7 @@
-const ImageHandler = {
+// ES module (#1346 Step 2 finish). Also publishes `window.ImageHandler`
+// for the eventHandler/overlayHandler consumers that still read from window.
+// New JS consumers should prefer the named export.
+export const ImageHandler = {
   BUILTIN_PREVIEW_IMAGES: new Set([
     'overlay_alignment_guide.png',
     'overlay_alignment_guide_episodes.png'
@@ -564,6 +567,7 @@ const ImageHandler = {
 }
 
 window.ImageHandler = ImageHandler
+export default ImageHandler
 
 // Global listener to refresh image preview only if toggle is in preview overlay section
 document.querySelectorAll('.form-check-input').forEach((input) => {
