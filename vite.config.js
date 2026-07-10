@@ -53,10 +53,15 @@ function discoverModuleEntries (dir) {
   // dependencies imported by other modules.
   //
   // Files that MODULE_PAGE_SCRIPTS lists but which don't actually use
-  // import/export (100-anidb.js, 915-imagemaid.js, imageHandler.js,
-  // validationHandler.js) are also skipped -- Vite building them
-  // would produce a byte-for-byte copy of the source, providing no
-  // value while cluttering static/dist/.
+  // import/export (100-anidb.js, 915-imagemaid.js) are skipped -- Vite
+  // building them would produce a byte-for-byte copy of the source,
+  // providing no value while cluttering static/dist/.
+  //
+  // As of #1346 finish, imageHandler.js, pathValidation.js,
+  // urlValidation.js, and validationHandler.js DO use `export` and
+  // therefore are entry points. They also keep their `window.*` shims
+  // for backward compat with classic-script consumers (see
+  // 915-imagemaid.js) and consumers not yet migrated to `import`.
   const entries = {}
   for (const name of readdirSync(dir)) {
     const fullPath = join(dir, name)

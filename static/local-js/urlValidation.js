@@ -1,4 +1,7 @@
-const URLValidation = (() => {
+// ES module (#1346 Step 2 finish). Also publishes `window.URLValidation`
+// for classic-script consumers that can't use `import`. New JS consumers
+// should prefer the named export.
+export const URLValidation = (() => {
   const urlKeyPattern = /(^|[_-])url([_-]|$)/i
   const placeholderValues = new Set(['http://', 'https://'])
 
@@ -125,6 +128,7 @@ const URLValidation = (() => {
 })()
 
 window.URLValidation = URLValidation
+export default URLValidation
 
 function isValidHostname (hostname) {
   const host = String(hostname || '').toLowerCase()

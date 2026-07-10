@@ -1,7 +1,9 @@
 // Tests for static/local-js/imageHandler.js (#1335 Step 8 - coverage push).
 //
-// imageHandler.js is a classic script (attaches ImageHandler to window)
-// with several side effects at import time:
+// imageHandler.js is an ES module (#1346 Step 2 finish) that also
+// attaches `ImageHandler` to `window` for backward compat with the
+// eventHandler/overlayHandler consumers. Several side effects run at
+// import time:
 //   - Reads `document.querySelectorAll('.form-check-input')` to attach a
 //     change listener. Empty result when the DOM has no such elements, so
 //     we're safe as long as the DOM is empty (or has none of those) at

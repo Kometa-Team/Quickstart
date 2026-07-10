@@ -1,10 +1,11 @@
 // Tests for static/local-js/validationHandler.js (#1335 Step 8 — coverage push).
 //
-// validationHandler.js is a classic script (not an ES module): it attaches
-// `ValidationHandler` to `window` and runs a few side effects at import
-// time (restoreSelectedLibraries, updateValidationState, plus document
-// change/input listeners). Same shape as pathValidation / urlValidation,
-// so we use the same side-effect-import pattern:
+// validationHandler.js is an ES module (#1346 Step 2 finish) that also
+// attaches `ValidationHandler` to `window` for classic-script consumers.
+// It runs a few side effects at import time (restoreSelectedLibraries,
+// updateValidationState, plus document change/input listeners). Same
+// shape as pathValidation / urlValidation / imageHandler, so we use
+// the same side-effect-import pattern:
 //
 //   1. Seed a minimal DOM the module's init calls can safely walk
 //   2. `await import('.../validationHandler.js')`

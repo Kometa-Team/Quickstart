@@ -143,10 +143,11 @@ class TestAssetUrlWithManifest:
     def test_returns_dist_path_for_chunk_keyed_by_source(self, fake_manifest):
         """Non-entry chunks that are still keyed with a source path resolve too.
 
-        (Vite emits entries for e.g. ``imageHandler.js`` even though it's not
-        declared as an entry, if a real entry dynamically imports it. The
-        template never references these directly, but if it ever did the
-        lookup should still work.)
+        (Vite emits entries for shared chunks under ``static/local-js/modules/``
+        keyed by their source path even though they're not declared as
+        entries -- a real entry dynamically imports them. The template never
+        references these directly, but if it ever did the lookup should
+        still work.)
         """
         fake_manifest.write_text(
             json.dumps(

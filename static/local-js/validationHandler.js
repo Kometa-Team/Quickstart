@@ -1,7 +1,14 @@
-const librariesValidatedAtInput = document.getElementById('libraries_validated_at')
+// ES module (#1346 Step 2 finish). Also publishes `window.ValidationHandler`
+// for the eventHandler/overlayHandler consumers that still read from window.
+// New JS consumers should prefer the named export.
+//
+// `export`ing the first `const` marker satisfies vite.detectModuleEntry's
+// "first non-comment token is import/export" rule; the real public API is
+// `ValidationHandler` further down.
+export const librariesValidatedAtInput = document.getElementById('libraries_validated_at')
 let librariesTouched = false
 
-const ValidationHandler = {
+export const ValidationHandler = {
   updateValidationState: function () {
     console.log('[DEBUG] Running validation state update.')
 
@@ -352,6 +359,7 @@ const ValidationHandler = {
 }
 
 window.ValidationHandler = ValidationHandler
+export default ValidationHandler
 
 // Restore previously selected libraries
 ValidationHandler.restoreSelectedLibraries()
