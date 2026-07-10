@@ -12,6 +12,7 @@ configs
 CPython
 Deduped
 deduplicated
+dev
 DOM
 else's
 Emby
@@ -33,6 +34,7 @@ Logscan
 MacOS
 MDBList
 meisnate
+minification
 minified
 MyAnimeList
 NAS
