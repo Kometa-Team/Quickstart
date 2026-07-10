@@ -240,10 +240,15 @@ def maintenance_guard_loop(app_in):
                             window_label = f" ({window_str})" if window_str else ""
                             helpers.ts_log(f"Kometa paused due to Plex maintenance window{window_label}.", level="INFO")
                             try:
-                                if not quickstart._write_quickstart_maintenance_marker(helpers.get_kometa_root_path(), "paused", window=window_str):
-                                    helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
+                                if not quickstart._write_quickstart_maintenance_marker(
+                                    helpers.get_kometa_root_path(),
+                                    "paused",
+                                    window=window_str,
+                                    mirror_to_meta_log=True,
+                                ):
+                                    helpers.ts_log("Failed to record Quickstart paused maintenance marker.", level="WARNING")
                             except Exception:
-                                helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
+                                helpers.ts_log("Failed to record Quickstart paused maintenance marker.", level="WARNING")
                             with MAINTENANCE_STATE_LOCK:
                                 MAINTENANCE_STATE["paused"] = True
                                 MAINTENANCE_STATE["paused_since"] = datetime.now(timezone.utc).isoformat()
@@ -269,10 +274,11 @@ def maintenance_guard_loop(app_in):
                                     "resumed",
                                     window=window_str,
                                     paused_seconds=paused_seconds,
+                                    mirror_to_meta_log=True,
                                 ):
-                                    helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
+                                    helpers.ts_log("Failed to record Quickstart resumed maintenance marker.", level="WARNING")
                             except Exception:
-                                helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
+                                helpers.ts_log("Failed to record Quickstart resumed maintenance marker.", level="WARNING")
                             with MAINTENANCE_STATE_LOCK:
                                 MAINTENANCE_STATE["paused"] = False
                                 MAINTENANCE_STATE["paused_since"] = None
@@ -313,10 +319,11 @@ def maintenance_guard_loop(app_in):
                             config_name=imagemaid_config_name,
                             window=window_str,
                             log_path=imagemaid_log_path,
+                            mirror_to_live_log=True,
                         ):
-                            helpers.ts_log("Failed to append Quickstart paused ImageMaid maintenance marker to the live log.", level="WARNING")
+                            helpers.ts_log("Failed to record Quickstart paused ImageMaid maintenance marker.", level="WARNING")
                     except Exception:
-                        helpers.ts_log("Failed to append Quickstart paused ImageMaid maintenance marker to the live log.", level="WARNING")
+                        helpers.ts_log("Failed to record Quickstart paused ImageMaid maintenance marker.", level="WARNING")
                     with MAINTENANCE_STATE_LOCK:
                         MAINTENANCE_STATE["imagemaid_paused"] = True
                         MAINTENANCE_STATE["imagemaid_paused_since"] = datetime.now(timezone.utc).isoformat()
@@ -346,10 +353,11 @@ def maintenance_guard_loop(app_in):
                         window=window_str,
                         log_path=imagemaid_log_path,
                         paused_seconds=imagemaid_paused_seconds,
+                        mirror_to_live_log=True,
                     ):
-                        helpers.ts_log("Failed to append Quickstart resumed ImageMaid maintenance marker to the live log.", level="WARNING")
+                        helpers.ts_log("Failed to record Quickstart resumed ImageMaid maintenance marker.", level="WARNING")
                 except Exception:
-                    helpers.ts_log("Failed to append Quickstart resumed ImageMaid maintenance marker to the live log.", level="WARNING")
+                    helpers.ts_log("Failed to record Quickstart resumed ImageMaid maintenance marker.", level="WARNING")
                 with MAINTENANCE_STATE_LOCK:
                     MAINTENANCE_STATE["imagemaid_paused"] = False
                     MAINTENANCE_STATE["imagemaid_paused_since"] = None

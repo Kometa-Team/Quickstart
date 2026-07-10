@@ -388,10 +388,10 @@ def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="curre
         return False
 
 
-def write_quickstart_maintenance_marker(kometa_root, event, window=None, paused_seconds=None):
+def _build_quickstart_maintenance_marker_line(event, window=None, paused_seconds=None):
     event_name = str(event or "").strip().lower()
     if event_name not in {"paused", "resumed"}:
-        return False
+        return None
     local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     parts = [
         "[Quickstart] Maintenance marker:",
@@ -403,8 +403,18 @@ def write_quickstart_maintenance_marker(kometa_root, event, window=None, paused_
         parts.append(f"window={str(window).strip()}")
     if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
         parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
-    line = " ".join(parts)
-    return _write_quickstart_marker_line(kometa_root, line, marker_kind="maintenance")
+    return " ".join(parts)
+
+
+def write_quickstart_maintenance_marker(kometa_root, event, window=None, paused_seconds=None, mirror_to_meta_log=False):
+    line = _build_quickstart_maintenance_marker_line(event, window=window, paused_seconds=paused_seconds)
+    if not line:
+        return False
+    pending_ok = _write_quickstart_marker_line(kometa_root, line, marker_kind="maintenance")
+    if mirror_to_meta_log:
+        meta_ok = append_quickstart_meta_log_line(kometa_root, line)
+        return bool(pending_ok and meta_ok)
+    return pending_ok
 
 
 def write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, log_path=None):
@@ -456,34 +466,59 @@ def write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, config_nam
         return False
 
 
-def write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, config_name=None, window=None, log_path=None, paused_seconds=None):
+def _build_quickstart_imagemaid_maintenance_marker_line(event, mode=None, config_name=None, window=None, paused_seconds=None, version_info=None):
     event_name = str(event or "").strip().lower()
     if event_name not in {"blocked_start", "paused", "resumed"}:
-        return False
+        return None
+    version_info = version_info if version_info is not None else _get_version_info()
+    qs_version = version_info.get("local_version") or "unknown"
+    qs_branch = version_info.get("branch") or "unknown"
+    safe_mode = (mode or "report").strip().lower() or "report"
+    safe_config = (config_name or "default").strip() or "default"
+    local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    parts = [
+        "[Quickstart] Maintenance marker:",
+        f"event={event_name}",
+        f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
+        f"local_at={local_at}",
+        f"config={safe_config}",
+        "tool=imagemaid",
+        f"mode={safe_mode}",
+        f"quickstart={qs_version}",
+        f"branch={qs_branch}",
+    ]
+    if window:
+        parts.append(f"window={str(window).strip()}")
+    if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
+        parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
+    return " ".join(parts)
+
+
+def write_quickstart_imagemaid_maintenance_marker(
+    imagemaid_root,
+    event,
+    mode=None,
+    config_name=None,
+    window=None,
+    log_path=None,
+    paused_seconds=None,
+    mirror_to_live_log=False,
+):
     try:
-        version_info = _get_version_info()
-        qs_version = version_info.get("local_version") or "unknown"
-        qs_branch = version_info.get("branch") or "unknown"
-        safe_mode = (mode or "report").strip().lower() or "report"
-        safe_config = (config_name or "default").strip() or "default"
-        local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        parts = [
-            "[Quickstart] Maintenance marker:",
-            f"event={event_name}",
-            f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
-            f"local_at={local_at}",
-            f"config={safe_config}",
-            "tool=imagemaid",
-            f"mode={safe_mode}",
-            f"quickstart={qs_version}",
-            f"branch={qs_branch}",
-        ]
-        if window:
-            parts.append(f"window={str(window).strip()}")
-        if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
-            parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
-        line = " ".join(parts)
-        return _write_imagemaid_marker_line(imagemaid_root, line, log_path=log_path, marker_kind="maintenance")
+        line = _build_quickstart_imagemaid_maintenance_marker_line(
+            event,
+            mode=mode,
+            config_name=config_name,
+            window=window,
+            paused_seconds=paused_seconds,
+        )
+        if not line:
+            return False
+        pending_ok = _write_imagemaid_marker_line(imagemaid_root, line, log_path=log_path, marker_kind="maintenance")
+        if mirror_to_live_log:
+            live_ok = append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=log_path)
+            return bool(pending_ok and live_ok)
+        return pending_ok
     except Exception:
         return False
 

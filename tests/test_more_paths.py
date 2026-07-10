@@ -135,6 +135,7 @@ def test_maintenance_guard_pauses_running_imagemaid(monkeypatch, qs_module, tmp_
         assert kwargs["mode"] == "report"
         assert kwargs["config_name"] == "demo"
         assert kwargs["window"] == "02:00-05:00"
+        assert kwargs["mirror_to_live_log"] is True
         return True
 
     monkeypatch.setattr(qs_module, "_write_quickstart_imagemaid_maintenance_marker", fake_marker)
@@ -256,6 +257,7 @@ def test_maintenance_guard_resumes_paused_imagemaid(monkeypatch, qs_module, tmp_
         assert kwargs["window"] == "02:00-05:00"
         assert isinstance(kwargs["paused_seconds"], int)
         assert kwargs["paused_seconds"] >= 60
+        assert kwargs["mirror_to_live_log"] is True
         return True
 
     monkeypatch.setattr(qs_module, "_write_quickstart_imagemaid_maintenance_marker", fake_marker)

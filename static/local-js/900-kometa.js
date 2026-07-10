@@ -170,6 +170,9 @@ document.addEventListener('qs:maintenance-status', function (event) {
 })
 
 updateValidationGate()
+document.addEventListener('DOMContentLoaded', function () {
+  syncIncompleteRunActions()
+}, { once: true })
 
 if (tailSelect) {
   tailSize = tailSelect.value || tailSize
