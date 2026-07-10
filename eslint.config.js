@@ -160,7 +160,6 @@ const retiredShimMessage = (name) =>
 module.exports = [
   {
     files: ['static/local-js/**/*.js'],
-    ignores: ['static/local-js/bootstrap.bundle.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'script',
