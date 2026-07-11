@@ -264,8 +264,8 @@
     // Publish the saved dropdown selections on window so the shared
     // arrPageBase repopulation helper can restore them on silent
     // revalidation when the user returns to this page.
-    window.initialSonarrRootFolderPath = {{ data['sonarr']['root_folder_path'] | tojson }};
-    window.initialSonarrQualityProfile = {{ data['sonarr']['quality_profile'] | tojson }};
-    window.initialSonarrLanguageProfile = {{ data['sonarr']['language_profile'] | tojson }};
+    window.initialSonarrRootFolderPath = {{ data['sonarr']['root_folder_path'] | default('', true) | tojson }};
+    window.initialSonarrQualityProfile = {{ data['sonarr']['quality_profile'] | default('', true) | tojson }};
+    window.initialSonarrLanguageProfile = {{ data['sonarr']['language_profile'] | default('', true) | tojson }};
 </script>
 {% endblock %}
