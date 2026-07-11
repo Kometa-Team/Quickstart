@@ -18,6 +18,21 @@ def _seed_config(name):
     )
 
 
+def _activate_config(page, live_server, name):
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+    page.evaluate(
+        """async (configName) => {
+          const res = await fetch('/switch-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: configName })
+          })
+          if (!res.ok) throw new Error('failed to activate config')
+        }""",
+        name,
+    )
+
+
 def _ordered_stems():
     import modules.helpers as helpers
     import quickstart
@@ -518,6 +533,102 @@ def test_radarr_revalidate_on_load_repopulates_dropdowns(page, live_server):
     dropdown_values = page.locator("#radarr_root_folder_path").evaluate("el => Array.from(el.options).map(o => o.value)")
     assert "NO_MATCH_REVAL_FOLDER" in dropdown_values, f"expected revalidateOnLoad to repopulate dropdown; got {dropdown_values}"
     assert fetch_count["n"] >= 1, f"expected at least one silent fetch; got count={fetch_count['n']}"
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize(
+    "stem, section, endpoint, saved_section, response_data, expected_values",
+    [
+        (
+            "110-radarr",
+            "radarr",
+            "validate_radarr",
+            {
+                "url": "http://radarr.local",
+                "token": "saved-radarr-token",
+                "root_folder_path": "/movies",
+                "quality_profile": "HD-1080p",
+            },
+            {
+                "valid": True,
+                "root_folders": [{"path": "/movies"}, {"path": "/four-k"}],
+                "quality_profiles": [{"name": "HD-1080p"}, {"name": "4K"}],
+            },
+            {
+                "radarr_root_folder_path": "/movies",
+                "radarr_quality_profile": "HD-1080p",
+            },
+        ),
+        (
+            "120-sonarr",
+            "sonarr",
+            "validate_sonarr",
+            {
+                "url": "http://sonarr.local",
+                "token": "saved-sonarr-token",
+                "root_folder_path": "/tv",
+                "quality_profile": "HD-720p",
+                "language_profile": "English",
+            },
+            {
+                "valid": True,
+                "root_folders": [{"path": "/tv"}, {"path": "/anime"}],
+                "quality_profiles": [{"name": "HD-720p"}, {"name": "HD-1080p"}],
+                "language_profiles": [{"name": "English"}, {"name": "Japanese"}],
+            },
+            {
+                "sonarr_root_folder_path": "/tv",
+                "sonarr_quality_profile": "HD-720p",
+                "sonarr_language_profile": "English",
+            },
+        ),
+    ],
+)
+def test_arr_page_return_restores_saved_dropdown_selection(
+    page,
+    live_server,
+    app,
+    stem,
+    section,
+    endpoint,
+    saved_section,
+    response_data,
+    expected_values,
+):
+    """Returning to a validated Arr page should silently revalidate,
+    repopulate the dynamic dropdowns, and re-select the values saved in
+    the config. The earlier regression coverage only asserted that the
+    OPTIONS reappeared, which missed the broken saved-selection restore.
+    """
+
+    import modules.database as database
+    import quickstart
+
+    config_name = f"pytest_{section}_return_persisted_dropdowns"
+    _seed_config(config_name)
+    with app.app_context():
+        database.save_section_data(
+            name=config_name,
+            section=section,
+            validated=True,
+            user_entered=True,
+            data={section: saved_section, "validated_at": quickstart.utc_now_iso()},
+        )
+
+    fetch_count = {"n": 0}
+
+    def handle_validate(route):
+        fetch_count["n"] += 1
+        route.fulfill(status=200, json=response_data)
+
+    page.route(f"**/{endpoint}", handle_validate)
+    _activate_config(page, live_server, config_name)
+    page.goto(f"{live_server}/step/{stem}", wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+
+    assert fetch_count["n"] >= 1, "expected silent revalidate on page return"
+    for element_id, expected_value in expected_values.items():
+        expect(page.locator(f"#{element_id}")).to_have_value(expected_value)
 
 
 @pytest.mark.e2e

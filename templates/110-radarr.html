@@ -208,8 +208,10 @@
 </div>
 </form>
 <script>
-    // Pass the initial values from Jinja to JavaScript
-    const initialRadarrRootFolderPath = "{{ data['radarr']['root_folder_path'] }}"
-    const initialRadarrQualityProfile = "{{ data['radarr']['quality_profile'] }}";
+    // Publish the saved dropdown selections on window so the shared
+    // arrPageBase repopulation helper can restore them on silent
+    // revalidation when the user returns to this page.
+    window.initialRadarrRootFolderPath = {{ data['radarr']['root_folder_path'] | tojson }};
+    window.initialRadarrQualityProfile = {{ data['radarr']['quality_profile'] | tojson }};
 </script>
 {% endblock %}
