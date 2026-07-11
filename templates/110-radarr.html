@@ -211,7 +211,7 @@
     // Publish the saved dropdown selections on window so the shared
     // arrPageBase repopulation helper can restore them on silent
     // revalidation when the user returns to this page.
-    window.initialRadarrRootFolderPath = {{ data['radarr']['root_folder_path'] | tojson }};
-    window.initialRadarrQualityProfile = {{ data['radarr']['quality_profile'] | tojson }};
+    window.initialRadarrRootFolderPath = {{ data['radarr']['root_folder_path'] | default('', true) | tojson }};
+    window.initialRadarrQualityProfile = {{ data['radarr']['quality_profile'] | default('', true) | tojson }};
 </script>
 {% endblock %}

@@ -1589,9 +1589,9 @@ def test_validation_handler_show_message_textcontent_by_default(page, live_serve
     # Pick a page that includes #validation-messages in its template.
     # 900-kometa has it (templates/900-kometa.html:272).
     page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
-    page.add_script_tag(path="static/local-js/validationHandler.js")
+    page.evaluate("""() => import(`/static/local-js/validationHandler.js?validation-handler-test=${Date.now()}`)""")
     page.evaluate("""
-        ValidationHandler.showValidationMessage(
+        window.ValidationHandler.showValidationMessage(
             'Plain <strong>text</strong> message', 'danger'
         )
     """)
@@ -1609,9 +1609,9 @@ def test_validation_handler_show_message_html_opt_in_renders_html(page, live_ser
     A link inside the message becomes a real anchor.
     """
     page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
-    page.add_script_tag(path="static/local-js/validationHandler.js")
+    page.evaluate("""() => import(`/static/local-js/validationHandler.js?validation-handler-test=${Date.now()}`)""")
     page.evaluate("""
-        ValidationHandler.showValidationMessage(
+        window.ValidationHandler.showValidationMessage(
             'Please <a href=\"javascript:void(0);\" data-jumpto-page=\"010-plex\">click here</a>.',
             'danger',
             { html: true }
