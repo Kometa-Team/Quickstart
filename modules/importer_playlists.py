@@ -150,14 +150,7 @@ def parse_playlist_config(config_data: dict, report: ImportReport) -> PlaylistIm
             )
             continue
         libs = tv.get("libraries")
-        if not isinstance(libs, list):
-            report.add(
-                "unmapped",
-                f"playlist_files[{idx}].template_variables.libraries",
-                "Missing playlist library entries.",
-            )
-            continue
-        entry_libs = [str(lib).strip() for lib in libs if str(lib).strip()]
+        entry_libs = _coerce_import_string_list(libs)
         if not entry_libs:
             report.add(
                 "unmapped",
