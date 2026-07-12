@@ -38,6 +38,29 @@ def test_prepare_import_payload_maps_playlist_files_to_library_toggles():
     assert any("libraries.Movies.playlist_files" in line for line in report.lines)
 
 
+def test_prepare_import_payload_accepts_comma_separated_playlist_libraries():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {"Movies": {}, "TV Shows": {}},
+            "playlist_files": [
+                {
+                    "default": "playlist",
+                    "template_variables": {"libraries": "Movies, TV Shows"},
+                }
+            ],
+        },
+        {"Movies", "TV Shows"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-library"] == "Movies"
+    assert libraries["mov-library_movies-playlist"] == "true"
+    assert libraries["mov-library_tvshows-library"] == "TV Shows"
+    assert libraries["mov-library_tvshows-playlist"] == "true"
+    assert any("playlist_files[0].template_variables.libraries" in line for line in report.lines)
+
+
 def test_prepare_import_payload_maps_playlist_template_variables_into_libraries_payload():
     payload, report = importer.prepare_import_payload(
         {
