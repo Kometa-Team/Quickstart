@@ -809,6 +809,74 @@ def test_prepare_import_payload_collapses_actor_dynamic_child_template_variables
     assert any("libraries.Movies.collection_files[0].template_variables.tmdb_person_offset_Tom Hanks" in line for line in report.lines)
 
 
+def test_prepare_import_payload_collapses_movie_person_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "director",
+                            "template_variables": {
+                                "tmdb_person_offset_Christopher Nolan": 1,
+                                "name_Christopher Nolan": "Nolan Favorites",
+                                "limit_Christopher Nolan": 50,
+                                "file_poster_Christopher Nolan": r"C:\Posters\nolan.jpg",
+                                "visible_library_Christopher Nolan": False,
+                            },
+                        },
+                        {
+                            "default": "producer",
+                            "template_variables": {
+                                "tmdb_person_offset_Kathleen Kennedy": 2,
+                                "name_Kathleen Kennedy": "Kennedy Produced",
+                                "limit_Kathleen Kennedy": 40,
+                                "file_poster_Kathleen Kennedy": r"C:\Posters\kennedy.jpg",
+                                "visible_library_Kathleen Kennedy": True,
+                            },
+                        },
+                        {
+                            "default": "writer",
+                            "template_variables": {
+                                "tmdb_person_offset_Charlie Kaufman": 3,
+                                "name_Charlie Kaufman": "Kaufman Written",
+                                "limit_Charlie Kaufman": 30,
+                                "file_poster_Charlie Kaufman": r"C:\Posters\kaufman.jpg",
+                                "visible_library_Charlie Kaufman": False,
+                            },
+                        },
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_director"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_director_child_name_overrides"]) == {"Christopher Nolan": "Nolan Favorites"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_director_child_tmdb_person_offset_overrides"]) == {"Christopher Nolan": "1"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_director_child_limit_overrides"]) == {"Christopher Nolan": "50"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_director_child_file_poster_overrides"]) == {"Christopher Nolan": r"C:\Posters\nolan.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_director_child_visible_library_overrides"]) == {"Christopher Nolan": "false"}
+    assert libraries_payload["mov-library_movies-collection_producer"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_producer_child_name_overrides"]) == {"Kathleen Kennedy": "Kennedy Produced"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_producer_child_tmdb_person_offset_overrides"]) == {"Kathleen Kennedy": "2"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_producer_child_limit_overrides"]) == {"Kathleen Kennedy": "40"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_producer_child_file_poster_overrides"]) == {"Kathleen Kennedy": r"C:\Posters\kennedy.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_producer_child_visible_library_overrides"]) == {"Kathleen Kennedy": "true"}
+    assert libraries_payload["mov-library_movies-collection_writer"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_writer_child_name_overrides"]) == {"Charlie Kaufman": "Kaufman Written"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_writer_child_tmdb_person_offset_overrides"]) == {"Charlie Kaufman": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_writer_child_limit_overrides"]) == {"Charlie Kaufman": "30"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_writer_child_file_poster_overrides"]) == {"Charlie Kaufman": r"C:\Posters\kaufman.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_writer_child_visible_library_overrides"]) == {"Charlie Kaufman": "false"}
+    assert any("libraries.Movies.collection_files[0].template_variables.tmdb_person_offset_Christopher Nolan" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[1].template_variables.tmdb_person_offset_Kathleen Kennedy" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[2].template_variables.tmdb_person_offset_Charlie Kaufman" in line for line in report.lines)
+
+
 def test_prepare_import_payload_collapses_year_dynamic_child_template_variables():
     payload, report = importer.prepare_import_payload(
         {

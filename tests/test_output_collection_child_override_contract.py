@@ -1,3 +1,5 @@
+import json
+
 from modules import output_collections
 
 
@@ -263,6 +265,30 @@ def test_apply_template_var_normalizers_expands_actor_dynamic_child_override_map
     assert template_vars["limit_Tom Hanks"] == 50
     assert template_vars["file_poster_Tom Hanks"] == r"C:\Posters\tom-hanks.jpg"
     assert template_vars["visible_library_Tom Hanks"] is False
+
+
+def test_apply_template_var_normalizers_expands_movie_person_dynamic_child_override_maps():
+    examples = [
+        ("director", "Christopher Nolan", "Nolan Favorites", "1", r"C:\Posters\nolan.jpg"),
+        ("producer", "Kathleen Kennedy", "Kennedy Produced", "2", r"C:\Posters\kennedy.jpg"),
+        ("writer", "Charlie Kaufman", "Kaufman Written", "3", r"C:\Posters\kaufman.jpg"),
+    ]
+    for default_name, person_name, name_override, offset, poster_path in examples:
+        template_vars = {
+            "child_name_overrides": json.dumps({person_name: name_override}),
+            "child_tmdb_person_offset_overrides": json.dumps({person_name: offset}),
+            "child_limit_overrides": json.dumps({person_name: "50"}),
+            "child_file_poster_overrides": json.dumps({person_name: poster_path}),
+            "child_visible_library_overrides": json.dumps({person_name: "false"}),
+        }
+
+        output_collections._apply_template_var_normalizers(template_vars, default_name)
+
+        assert template_vars[f"name_{person_name}"] == name_override
+        assert template_vars[f"tmdb_person_offset_{person_name}"] == int(offset)
+        assert template_vars[f"limit_{person_name}"] == 50
+        assert template_vars[f"file_poster_{person_name}"] == poster_path
+        assert template_vars[f"visible_library_{person_name}"] is False
 
 
 def test_apply_template_var_normalizers_expands_year_dynamic_child_override_maps():

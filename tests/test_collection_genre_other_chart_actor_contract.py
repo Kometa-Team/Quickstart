@@ -118,3 +118,28 @@ def test_actor_collection_exposes_person_specific_defaults_and_dynamic_maps():
     }
     for key, (child_prefix, value_kind, section, validation_preset, media_types) in expected_mappings.items():
         _assert_mapping(fields[key], child_prefix, value_kind, section, "name_like", validation_preset=validation_preset, media_types=media_types)
+
+
+def test_movie_person_collections_match_actor_dynamic_person_contract():
+    for collection_id in ["collection_director", "collection_producer", "collection_writer"]:
+        collection = _load_collection(collection_id, ("movie",))
+        fields = _field_map(collection)
+
+        section_ids = [section.get("id") for section in collection.get("template_variable_sections") or [] if isinstance(section, dict)]
+        assert section_ids == ["basics", "naming", "people_data", "scope", "child_override_maps", "artwork", "visibility"]
+
+        for key in ["sep_style", "translation_key", "use_all", "limit", "schedule", "tmdb_deathday", "file_poster", "url_poster"]:
+            assert key in fields
+
+        expected_mappings = {
+            "child_use_overrides": ("use_", "boolean", "child_override_maps", None, None),
+            "child_name_overrides": ("name_", "string", "child_override_maps", None, None),
+            "child_tmdb_person_offset_overrides": ("tmdb_person_offset_", "integer", "child_override_maps", None, None),
+            "child_limit_overrides": ("limit_", "integer", "child_override_maps", None, None),
+            "child_file_poster_overrides": ("file_poster_", "string", "artwork", None, None),
+            "child_url_poster_overrides": ("url_poster_", "string", "artwork", "url", None),
+            "child_visible_library_overrides": ("visible_library_", "boolean", "visibility", None, None),
+            "child_item_radarr_tag_overrides": ("item_radarr_tag_", "string_list", "visibility", None, ["movie"]),
+        }
+        for key, (child_prefix, value_kind, section, validation_preset, media_types) in expected_mappings.items():
+            _assert_mapping(fields[key], child_prefix, value_kind, section, "name_like", validation_preset=validation_preset, media_types=media_types)
