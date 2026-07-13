@@ -869,6 +869,99 @@ def test_prepare_import_payload_collapses_language_dynamic_child_template_variab
     assert any("libraries.Shows.collection_files[0].template_variables.item_sonarr_tag_fr" in line for line in report.lines)
 
 
+def test_prepare_import_payload_collapses_aspect_and_resolution_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "aspect",
+                            "template_variables": {
+                                "filter_term": "aspect",
+                                "use_1.78": False,
+                                "name_1.78": "Widescreen TV",
+                                "summary_2.35": "Cinemascope favorites",
+                                "schedule_2.35": "weekly(sunday)",
+                                "sync_mode_2.35": "append",
+                                "sort_by_1.85": "title.asc",
+                                "minimum_items_1.33": 3,
+                                "url_background_1.78": "https://example.com/aspect-bg.jpg",
+                                "item_radarr_tag_1.78": ["aspect", "widescreen"],
+                            },
+                        },
+                        {
+                            "default": "resolution",
+                            "template_variables": {
+                                "search_term": "resolution",
+                                "include": ["4k", "1080"],
+                                "name_4k": "Ultra HD",
+                                "summary_1080": "HD favorites",
+                                "order_4k": "01",
+                                "schedule_1080": "weekly(friday)",
+                                "url_poster_4k": "https://example.com/4k.jpg",
+                                "item_radarr_tag_4k": ["resolution", "4k"],
+                            },
+                        },
+                    ]
+                },
+                "Shows": {
+                    "collection_files": [
+                        {
+                            "default": "aspect",
+                            "template_variables": {
+                                "name_2.35": "Scope TV",
+                                "item_sonarr_tag_2.35": ["aspect", "scope"],
+                            },
+                        },
+                        {
+                            "default": "resolution",
+                            "template_variables": {
+                                "exclude": ["480"],
+                                "file_square_art_1080": r"C:\Square\1080.png",
+                                "item_sonarr_tag_1080": ["resolution", "1080p"],
+                            },
+                        },
+                    ]
+                },
+            }
+        },
+        {"Movies"},
+        {"Shows"},
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_aspect"] is True
+    assert libraries_payload["mov-library_movies-collection_resolution"] is True
+    assert libraries_payload["sho-library_shows-collection_aspect"] is True
+    assert libraries_payload["sho-library_shows-collection_resolution"] is True
+    assert libraries_payload["mov-library_movies-template_collection_aspect_filter_term"] == "aspect"
+    assert libraries_payload["mov-library_movies-template_collection_aspect_use_1.78"] is False
+    assert libraries_payload["mov-library_movies-template_collection_aspect_name_1.78"] == "Widescreen TV"
+    assert libraries_payload["mov-library_movies-template_collection_aspect_summary_2.35"] == "Cinemascope favorites"
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_aspect_child_schedule_overrides"]) == {"2.35": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_aspect_child_sync_mode_overrides"]) == {"2.35": "append"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_aspect_child_sort_by_overrides"]) == {"1.85": "title.asc"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_aspect_child_minimum_items_overrides"]) == {"1.33": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_aspect_child_url_background_overrides"]) == {"1.78": "https://example.com/aspect-bg.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_aspect_child_item_radarr_tag_overrides"]) == {"1.78": "aspect,widescreen"}
+    assert libraries_payload["mov-library_movies-template_collection_resolution_search_term"] == "resolution"
+    assert libraries_payload["mov-library_movies-template_collection_resolution_include"] == '["4k", "1080"]'
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_resolution_child_name_overrides"]) == {"4k": "Ultra HD"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_resolution_child_summary_overrides"]) == {"1080": "HD favorites"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_resolution_child_order_overrides"]) == {"4k": "01"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_resolution_child_schedule_overrides"]) == {"1080": "weekly(friday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_resolution_child_url_poster_overrides"]) == {"4k": "https://example.com/4k.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_resolution_child_item_radarr_tag_overrides"]) == {"4k": "resolution,4k"}
+    assert libraries_payload["sho-library_shows-template_collection_aspect_name_2.35"] == "Scope TV"
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_aspect_child_item_sonarr_tag_overrides"]) == {"2.35": "aspect,scope"}
+    assert libraries_payload["sho-library_shows-template_collection_resolution_exclude"] == '["480"]'
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_resolution_child_file_square_art_overrides"]) == {"1080": r"C:\Square\1080.png"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_resolution_child_item_sonarr_tag_overrides"]) == {"1080": "resolution,1080p"}
+    assert any("libraries.Movies.collection_files[0].template_variables.sync_mode_2.35" in line for line in report.lines)
+    assert any("libraries.Shows.collection_files[1].template_variables.file_square_art_1080" in line for line in report.lines)
+
+
 def test_prepare_import_payload_collapses_studio_dynamic_child_template_variables():
     payload, report = importer.prepare_import_payload(
         {

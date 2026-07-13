@@ -2688,6 +2688,72 @@ def test_build_libraries_section_expands_language_dynamic_child_override_maps(ap
     assert subtitle_language["template_variables"]["item_sonarr_tag_fr"] == ["subtitle", "french"]
 
 
+def test_build_libraries_section_expands_aspect_resolution_dynamic_child_override_maps(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_aspect": True,
+                    "mov-library_movies-template_collection_aspect_filter_term": "aspect",
+                    "mov-library_movies-template_collection_aspect_use_1.78": False,
+                    "mov-library_movies-template_collection_aspect_name_1.78": "Widescreen TV",
+                    "mov-library_movies-template_collection_aspect_child_schedule_overrides": '{"2.35": "weekly(sunday)"}',
+                    "mov-library_movies-template_collection_aspect_child_sync_mode_overrides": '{"2.35": "append"}',
+                    "mov-library_movies-template_collection_aspect_child_minimum_items_overrides": '{"1.33": "3"}',
+                    "mov-library_movies-template_collection_aspect_child_url_background_overrides": '{"1.78": "https://example.com/aspect-bg.jpg"}',
+                    "mov-library_movies-template_collection_aspect_child_item_radarr_tag_overrides": '{"1.78": "aspect,widescreen"}',
+                    "mov-library_movies-collection_resolution": True,
+                    "mov-library_movies-template_collection_resolution_include": '["4k", "1080"]',
+                    "mov-library_movies-template_collection_resolution_child_name_overrides": '{"4k": "Ultra HD"}',
+                    "mov-library_movies-template_collection_resolution_child_order_overrides": '{"4k": "01"}',
+                    "mov-library_movies-template_collection_resolution_child_schedule_overrides": '{"1080": "weekly(friday)"}',
+                    "mov-library_movies-template_collection_resolution_child_url_poster_overrides": '{"4k": "https://example.com/4k.jpg"}',
+                    "mov-library_movies-template_collection_resolution_child_item_radarr_tag_overrides": '{"4k": "resolution,4k"}',
+                }
+            },
+            show_collections={
+                "shows": {
+                    "sho-library_shows-collection_aspect": True,
+                    "sho-library_shows-template_collection_aspect_child_item_sonarr_tag_overrides": '{"2.35": ["aspect", "scope"]}',
+                    "sho-library_shows-collection_resolution": True,
+                    "sho-library_shows-template_collection_resolution_exclude": "480",
+                    "sho-library_shows-template_collection_resolution_child_file_square_art_overrides": '{"1080": "C:\\\\Square\\\\1080.png"}',
+                    "sho-library_shows-template_collection_resolution_child_item_sonarr_tag_overrides": '{"1080": ["resolution", "1080p"]}',
+                }
+            },
+        )
+
+    movie_entries = libraries_section["libraries"]["Movies"]["collection_files"]
+    show_entries = libraries_section["libraries"]["Shows"]["collection_files"]
+    movie_aspect = next(entry for entry in movie_entries if entry.get("default") == "aspect")
+    movie_resolution = next(entry for entry in movie_entries if entry.get("default") == "resolution")
+    show_aspect = next(entry for entry in show_entries if entry.get("default") == "aspect")
+    show_resolution = next(entry for entry in show_entries if entry.get("default") == "resolution")
+
+    assert movie_aspect["template_variables"]["filter_term"] == "aspect"
+    assert movie_aspect["template_variables"]["use_1.78"] is False
+    assert movie_aspect["template_variables"]["name_1.78"] == "Widescreen TV"
+    assert movie_aspect["template_variables"]["schedule_2.35"] == "weekly(sunday)"
+    assert movie_aspect["template_variables"]["sync_mode_2.35"] == "append"
+    assert movie_aspect["template_variables"]["minimum_items_1.33"] == 3
+    assert movie_aspect["template_variables"]["url_background_1.78"] == "https://example.com/aspect-bg.jpg"
+    assert movie_aspect["template_variables"]["item_radarr_tag_1.78"] == ["aspect", "widescreen"]
+    assert movie_resolution["template_variables"]["include"] == ["4k", "1080"]
+    assert movie_resolution["template_variables"]["name_4k"] == "Ultra HD"
+    assert movie_resolution["template_variables"]["order_4k"] == "01"
+    assert movie_resolution["template_variables"]["schedule_1080"] == "weekly(friday)"
+    assert movie_resolution["template_variables"]["url_poster_4k"] == "https://example.com/4k.jpg"
+    assert movie_resolution["template_variables"]["item_radarr_tag_4k"] == ["resolution", "4k"]
+    assert show_aspect["template_variables"]["item_sonarr_tag_2.35"] == ["aspect", "scope"]
+    assert show_resolution["template_variables"]["exclude"] == ["480"]
+    assert show_resolution["template_variables"]["file_square_art_1080"] == r"C:\Square\1080.png"
+    assert show_resolution["template_variables"]["item_sonarr_tag_1080"] == ["resolution", "1080p"]
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 
