@@ -332,9 +332,16 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
                             "template_variables": {
                                 "build_collection": False,
                                 "name_10": "Skywalker Saga",
+                                "name_mapping_10": "Star Wars Skywalker Saga",
+                                "order_10": "01",
+                                "movie_10": [1891, 1892],
                                 "sync_mode_10": "append",
                                 "collection_order_10": "custom",
                                 "url_poster_10": "https://example.com/star-wars.jpg",
+                                "file_poster_10": r"C:\Posters\star-wars.jpg",
+                                "url_background_10": "https://example.com/star-wars-bg.jpg",
+                                "url_logo_10": "https://example.com/star-wars-logo.png",
+                                "url_square_art_10": "https://example.com/star-wars-square.png",
                                 "radarr_add_missing_10": True,
                                 "radarr_folder_10": r"C:\Media\Movies",
                                 "radarr_tag_10": ["4k", "franchise"],
@@ -352,7 +359,10 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
                             "template_variables": {
                                 "build_collection": False,
                                 "summary_1399": "Dragons and dynasties",
+                                "name_mapping_1399": "Game of Thrones",
+                                "order_1399": "02",
                                 "sort_title_1399": "!350_Game of Thrones",
+                                "url_poster_1399": "https://example.com/got.jpg",
                                 "sonarr_add_missing_1399": True,
                                 "sonarr_folder_1399": r"C:\Media\Shows",
                                 "sonarr_tag_1399": ["tracked", "priority"],
@@ -374,16 +384,26 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
     assert libraries_payload["mov-library_movies-template_collection_franchise_build_collection"] is False
     assert libraries_payload["mov-library_movies-template_collection_franchise_title_override"] == {"10": "Star Wars: Skywalker Saga"}
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_name_overrides"] == '{"10": "Skywalker Saga"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_name_mapping_overrides"] == '{"10": "Star Wars Skywalker Saga"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_order_overrides"] == '{"10": "01"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_movie_overrides"] == '{"10": "1891,1892"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_sync_mode_overrides"] == '{"10": "append"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_collection_order_overrides"] == '{"10": "custom"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_url_poster_overrides"] == '{"10": "https://example.com/star-wars.jpg"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_file_poster_overrides"] == '{"10": "C:\\\\Posters\\\\star-wars.jpg"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_url_background_overrides"] == '{"10": "https://example.com/star-wars-bg.jpg"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_url_logo_overrides"] == '{"10": "https://example.com/star-wars-logo.png"}'
+    assert libraries_payload["mov-library_movies-template_collection_franchise_child_url_square_art_overrides"] == '{"10": "https://example.com/star-wars-square.png"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_radarr_add_missing_overrides"] == '{"10": "true"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_radarr_folder_overrides"] == '{"10": "C:\\\\Media\\\\Movies"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_radarr_tag_overrides"] == '{"10": "4k,franchise"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_item_radarr_tag_overrides"] == '{"10": "collection,tracked"}'
     assert libraries_payload["mov-library_movies-template_collection_franchise_child_radarr_monitor_overrides"] == '{"10": "false"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_summary_overrides"] == '{"1399": "Dragons and dynasties"}'
+    assert libraries_payload["sho-library_shows-template_collection_franchise_child_name_mapping_overrides"] == '{"1399": "Game of Thrones"}'
+    assert libraries_payload["sho-library_shows-template_collection_franchise_child_order_overrides"] == '{"1399": "02"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sort_title_overrides"] == '{"1399": "!350_Game of Thrones"}'
+    assert libraries_payload["sho-library_shows-template_collection_franchise_child_url_poster_overrides"] == '{"1399": "https://example.com/got.jpg"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_add_missing_overrides"] == '{"1399": "true"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_folder_overrides"] == '{"1399": "C:\\\\Media\\\\Shows"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_tag_overrides"] == '{"1399": "tracked,priority"}'
@@ -428,6 +448,83 @@ def test_prepare_import_payload_collapses_universe_dynamic_child_template_variab
     assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_folder_overrides"] == '{"avp": "C:\\\\Media\\\\Movies"}'
     assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_search_overrides"] == '{"avp": "false"}'
     assert any("libraries.Movies.collection_files[0].template_variables.url_poster_avp" in line for line in report.lines)
+
+
+def test_prepare_import_payload_accepts_based_and_collectionless_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "based",
+                            "template_variables": {
+                                "translation_key": "based",
+                                "schedule": "weekly(sunday)",
+                                "delete_collections_named": ["Old Based"],
+                                "keywords_books": ["based on book", "based on novel"],
+                                "image_comics": "based/comics",
+                                "limit_true_story": 25,
+                                "sort_by_video_games": "release.desc",
+                                "url_poster_true_story": "https://example.com/true-story.jpg",
+                                "radarr_folder_books": r"C:\Media\Movies",
+                                "sonarr_search_video_games": False,
+                            },
+                        },
+                        {
+                            "default": "collectionless",
+                            "template_variables": {
+                                "collection_mode": "hide",
+                                "name_collectionless": "No Collections",
+                                "summary_collectionless": "Items not in collections",
+                                "url_poster": "https://example.com/collectionless.jpg",
+                                "tmdb_movie": [603],
+                                "tmdb_show": [1399],
+                                "imdb_id": ["tt0133093"],
+                                "imdb_list": ["ls123456789"],
+                                "plex_search": {"all": {"title": "Example"}},
+                                "mdblist_list": ["https://mdblist.com/lists/example/list"],
+                                "trakt_list": ["https://trakt.tv/users/example/lists/list"],
+                                "exclude": ["Marvel Cinematic Universe"],
+                                "exclude_prefix": ["!", "~"],
+                            },
+                        },
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_based"] is True
+    assert libraries_payload["mov-library_movies-template_collection_based_translation_key"] == "based"
+    assert libraries_payload["mov-library_movies-template_collection_based_schedule"] == "weekly(sunday)"
+    assert libraries_payload["mov-library_movies-template_collection_based_delete_collections_named"] == ["Old Based"]
+    assert libraries_payload["mov-library_movies-template_collection_based_keywords_books"] == ["based on book", "based on novel"]
+    assert libraries_payload["mov-library_movies-template_collection_based_image_comics"] == "based/comics"
+    assert libraries_payload["mov-library_movies-template_collection_based_limit_true_story"] == 25
+    assert libraries_payload["mov-library_movies-template_collection_based_sort_by_video_games"] == "release.desc"
+    assert libraries_payload["mov-library_movies-template_collection_based_url_poster_true_story"] == "https://example.com/true-story.jpg"
+    assert libraries_payload["mov-library_movies-template_collection_based_radarr_folder_books"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_based_sonarr_search_video_games"] is False
+    assert libraries_payload["mov-library_movies-collection_collectionless"] is True
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_collection_mode"] == "hide"
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_name_collectionless"] == "No Collections"
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_summary_collectionless"] == "Items not in collections"
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_url_poster"] == "https://example.com/collectionless.jpg"
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_movie"] == [603]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_show"] == [1399]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_imdb_id"] == ["tt0133093"]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_imdb_list"] == ["ls123456789"]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_plex_search"] == {"all": {"title": "Example"}}
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_mdblist_list"] == ["https://mdblist.com/lists/example/list"]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_trakt_list"] == ["https://trakt.tv/users/example/lists/list"]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_exclude"] == ["Marvel Cinematic Universe"]
+    assert libraries_payload["mov-library_movies-template_collection_collectionless_exclude_prefix"] == ["!", "~"]
+    assert any("libraries.Movies.collection_files[0].template_variables.keywords_books" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[1].template_variables.plex_search" in line for line in report.lines)
 
 
 def test_prepare_import_payload_collapses_streaming_dynamic_child_template_variables():
