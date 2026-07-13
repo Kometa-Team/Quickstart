@@ -3350,7 +3350,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "César Awards",
+        "label": "C\u00e9sar Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -3522,23 +3522,23 @@
           },
           {
             "key": "use_best",
-            "label": "César Best Film Winners",
-            "tooltip": "Collection of César Award Winners.",
+            "label": "C\u00e9sar Best Film Winners",
+            "tooltip": "Collection of C\u00e9sar Award Winners.",
             "type": "toggle",
             "default": true
           },
           {
             "key": "name_best",
-            "label": "César Best Film Winners Name",
+            "label": "C\u00e9sar Best Film Winners Name",
             "type": "text_input",
-            "tooltip": "Override the collection name for the César Best Film Winners collection. Leave blank to inherit the family Name Format value.",
+            "tooltip": "Override the collection name for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Name Format value.",
             "placeholder": "Custom collection name format"
           },
           {
             "key": "summary_best",
-            "label": "César Best Film Winners Summary",
+            "label": "C\u00e9sar Best Film Winners Summary",
             "type": "text_input",
-            "tooltip": "Override the collection summary for the César Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
+            "tooltip": "Override the collection summary for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
             "placeholder": "Custom collection summary format"
           },
           {
@@ -3756,9 +3756,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "César Best Film Winners Visible Home",
+            "label": "C\u00e9sar Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3766,9 +3766,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "César Best Film Winners Visible Library",
+            "label": "C\u00e9sar Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3776,9 +3776,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "César Best Film Winners Visible Shared",
+            "label": "C\u00e9sar Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -3786,7 +3786,7 @@
           },
           {
             "key": "hub_priority_best",
-            "label": "César Best Film Winners Hub Priority",
+            "label": "C\u00e9sar Best Film Winners Hub Priority",
             "type": "text_input",
             "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
             "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
@@ -26953,35 +26953,40 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "040",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "naming"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
+            "placeholder": "Custom sort title format",
+            "section": "naming"
           },
           {
             "key": "name_format",
             "label": "Name Format",
             "type": "text_input",
             "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "naming"
           },
           {
             "key": "summary_format",
             "label": "Summary Format",
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
           },
           {
             "key": "limit",
@@ -26990,49 +26995,496 @@
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "basics"
           },
           {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "basics"
           },
           {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
+            "validation_preset": "universe_key",
+            "input_mode": "select",
             "tooltip": "Exclude specific Universes from these collections.",
-            "placeholder": "Add universe key (e.g. mcu)"
+            "placeholder": "Add universe key (e.g. mcu)",
+            "section": "scope_schedule"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Override the default schedule applied to child universe collections. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "placeholder": "e.g. weekly(sunday)",
+            "section": "scope_schedule"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the default name_mapping applied to child universe collections. Use <<key_name>> as a placeholder when needed.",
+            "placeholder": "Custom name mapping",
+            "section": "naming"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named Default",
+            "type": "string_list",
+            "tooltip": "Set default collection titles that Kometa should delete before rebuilding child universe collections.",
+            "placeholder": "Add collection title to delete",
+            "section": "scope_schedule"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default poster URL applied to child universe collections when no child-specific poster override is set.",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default background URL applied to child universe collections when no child-specific background override is set.",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default logo URL applied to child universe collections when no child-specific logo override is set.",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default square art URL applied to child universe collections when no child-specific square art override is set.",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Universe Sort Order Token Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a custom internal order token used when building sort titles. Quickstart exports these as <code>order_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "Optional order token",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Universe Schedule Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a custom schedule. Quickstart exports these as <code>schedule_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "weekly(sunday)",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_name_mapping_overrides",
+            "label": "Universe Name Mapping Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a custom name_mapping value. Quickstart exports these as <code>name_mapping_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "Custom name mapping",
+            "dynamic_child_prefix": "name_mapping_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_delete_collections_named_overrides",
+            "label": "Universe Delete Collections Named Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to collection titles that should be deleted before rebuilding. Quickstart exports these as <code>delete_collections_named_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "Title 1, Title 2",
+            "dynamic_child_prefix": "delete_collections_named_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_imdb_list_overrides",
+            "label": "Universe IMDb List Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to one or more IMDb lists. Quickstart exports these as <code>imdb_list_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://www.imdb.com/list/ls123456789/",
+            "dynamic_child_prefix": "imdb_list_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_mdblist_list_overrides",
+            "label": "Universe MDBList Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to one or more MDBList sources. Quickstart exports these as <code>mdblist_list_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://mdblist.com/lists/example/list",
+            "dynamic_child_prefix": "mdblist_list_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_trakt_list_overrides",
+            "label": "Universe Trakt List Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to one or more Trakt lists. Quickstart exports these as <code>trakt_list_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://trakt.tv/users/example/lists/universe",
+            "dynamic_child_prefix": "trakt_list_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Universe Sync Mode Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a sync mode override. Quickstart exports these as <code>sync_mode_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "append or sync",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_collection_order_overrides",
+            "label": "Universe Collection Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a collection order override. Quickstart exports these as <code>collection_order_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "custom, alpha, release, etc.",
+            "dynamic_child_prefix": "collection_order_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_cache_builders_overrides",
+            "label": "Universe Cache Builders Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a cache_builders override. Quickstart exports these as <code>cache_builders_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "0, 1, 2, etc.",
+            "dynamic_child_prefix": "cache_builders_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Universe Poster URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a custom poster URL. Quickstart exports these as <code>url_poster_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Universe Background URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a custom background URL. Quickstart exports these as <code>url_background_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Universe Logo URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a custom logo URL. Quickstart exports these as <code>url_logo_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Universe Square Art URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to custom square art. Quickstart exports these as <code>url_square_art_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork"
+          },
+          {
+            "key": "child_radarr_folder_overrides",
+            "label": "Universe Radarr Folder Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Radarr root folder override. Quickstart exports these as <code>radarr_folder_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "C:\\Media\\Movies",
+            "dynamic_child_prefix": "radarr_folder_",
+            "dynamic_child_value_kind": "string",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_radarr_tag_overrides",
+            "label": "Universe Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to comma-separated Radarr tags. Quickstart exports these as <code>radarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "4k,universe",
+            "dynamic_child_prefix": "radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Universe Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to comma-separated item Radarr tags. Quickstart exports these as <code>item_radarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "collection,tracked",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_radarr_upgrade_existing_overrides",
+            "label": "Universe Radarr Upgrade Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Radarr upgrade_existing override. Quickstart exports these as <code>radarr_upgrade_existing_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_upgrade_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_radarr_monitor_existing_overrides",
+            "label": "Universe Radarr Monitor Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Radarr monitor_existing override. Quickstart exports these as <code>radarr_monitor_existing_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_monitor_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_radarr_search_overrides",
+            "label": "Universe Radarr Search Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Radarr search override. Quickstart exports these as <code>radarr_search_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_search_",
+            "dynamic_child_value_kind": "boolean",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_sonarr_folder_overrides",
+            "label": "Universe Sonarr Folder Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Sonarr root folder override. Quickstart exports these as <code>sonarr_folder_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "C:\\Media\\Shows",
+            "dynamic_child_prefix": "sonarr_folder_",
+            "dynamic_child_value_kind": "string",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_sonarr_tag_overrides",
+            "label": "Universe Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to comma-separated Sonarr tags. Quickstart exports these as <code>sonarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "tracked,universe",
+            "dynamic_child_prefix": "sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Universe Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to comma-separated item Sonarr tags. Quickstart exports these as <code>item_sonarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "watched,tracked",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_sonarr_upgrade_existing_overrides",
+            "label": "Universe Sonarr Upgrade Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Sonarr upgrade_existing override. Quickstart exports these as <code>sonarr_upgrade_existing_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_upgrade_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_sonarr_monitor_existing_overrides",
+            "label": "Universe Sonarr Monitor Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Sonarr monitor_existing override. Quickstart exports these as <code>sonarr_monitor_existing_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_monitor_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_override_maps"
+          },
+          {
+            "key": "child_sonarr_search_overrides",
+            "label": "Universe Sonarr Search Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a universe key to a Sonarr search override. Quickstart exports these as <code>sonarr_search_&lt;&lt;key&gt;&gt;</code> template variables.",
+            "key_placeholder": "Universe key (e.g. avp)",
+            "key_validation_preset": "universe_key",
+            "key_input_mode": "select",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_search_",
+            "dynamic_child_value_kind": "boolean",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_override_maps"
           },
           {
             "key": "use_avp",
             "label": "Alien / Predator",
             "tooltip": "Collection of Movies in the Alien / Predator Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_avp"
           },
           {
             "key": "name_avp",
             "label": "Alien / Predator Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Alien / Predator collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_avp"
           },
           {
             "key": "summary_avp",
             "label": "Alien / Predator Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Alien / Predator collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_avp"
           },
           {
             "key": "minimum_items_avp",
@@ -27041,7 +27493,8 @@
             "tooltip": "Override the minimum_items value for the Alien / Predator collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_avp"
           },
           {
             "key": "radarr_add_missing_avp",
@@ -27051,7 +27504,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_avp"
           },
           {
             "key": "sonarr_add_missing_avp",
@@ -27061,28 +27515,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_avp"
           },
           {
             "key": "use_arrow",
             "label": "Arrowverse",
             "tooltip": "Collection of Movies in the The Arrow Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_arrow"
           },
           {
             "key": "name_arrow",
             "label": "Arrowverse Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Arrowverse collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_arrow"
           },
           {
             "key": "summary_arrow",
             "label": "Arrowverse Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Arrowverse collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_arrow"
           },
           {
             "key": "minimum_items_arrow",
@@ -27091,7 +27549,8 @@
             "tooltip": "Override the minimum_items value for the Arrowverse collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_arrow"
           },
           {
             "key": "radarr_add_missing_arrow",
@@ -27101,7 +27560,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_arrow"
           },
           {
             "key": "sonarr_add_missing_arrow",
@@ -27111,28 +27571,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_arrow"
           },
           {
             "key": "use_dca",
             "label": "DC Animated Universe",
             "tooltip": "Collection of Movies in the DC Animated Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_dca"
           },
           {
             "key": "name_dca",
             "label": "DC Animated Universe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the DC Animated Universe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_dca"
           },
           {
             "key": "summary_dca",
             "label": "DC Animated Universe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the DC Animated Universe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_dca"
           },
           {
             "key": "minimum_items_dca",
@@ -27141,7 +27605,8 @@
             "tooltip": "Override the minimum_items value for the DC Animated Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_dca"
           },
           {
             "key": "radarr_add_missing_dca",
@@ -27151,7 +27616,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_dca"
           },
           {
             "key": "sonarr_add_missing_dca",
@@ -27161,28 +27627,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_dca"
           },
           {
             "key": "use_dcu",
             "label": "DC Extended Universe",
             "tooltip": "Collection of Movies in the DC Extended Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_dcu"
           },
           {
             "key": "name_dcu",
             "label": "DC Extended Universe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the DC Extended Universe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_dcu"
           },
           {
             "key": "summary_dcu",
             "label": "DC Extended Universe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the DC Extended Universe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_dcu"
           },
           {
             "key": "minimum_items_dcu",
@@ -27191,7 +27661,8 @@
             "tooltip": "Override the minimum_items value for the DC Extended Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_dcu"
           },
           {
             "key": "radarr_add_missing_dcu",
@@ -27201,7 +27672,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_dcu"
           },
           {
             "key": "sonarr_add_missing_dcu",
@@ -27211,28 +27683,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_dcu"
           },
           {
             "key": "use_fast",
             "label": "Fast & Furious",
             "tooltip": "Collection of Movies in the Fast & Furious Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_fast"
           },
           {
             "key": "name_fast",
             "label": "Fast & Furious Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Fast & Furious collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_fast"
           },
           {
             "key": "summary_fast",
             "label": "Fast & Furious Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Fast & Furious collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_fast"
           },
           {
             "key": "minimum_items_fast",
@@ -27241,7 +27717,8 @@
             "tooltip": "Override the minimum_items value for the Fast & Furious collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_fast"
           },
           {
             "key": "radarr_add_missing_fast",
@@ -27251,7 +27728,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_fast"
           },
           {
             "key": "sonarr_add_missing_fast",
@@ -27261,28 +27739,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_fast"
           },
           {
             "key": "use_marvel",
             "label": "In Association with Marvel",
             "tooltip": "Collection of Movies in the Marvel Universe (but not part of MCU)",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_marvel"
           },
           {
             "key": "name_marvel",
             "label": "In Association with Marvel Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the In Association with Marvel collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_marvel"
           },
           {
             "key": "summary_marvel",
             "label": "In Association with Marvel Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the In Association with Marvel collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_marvel"
           },
           {
             "key": "minimum_items_marvel",
@@ -27291,7 +27773,8 @@
             "tooltip": "Override the minimum_items value for the In Association with Marvel collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_marvel"
           },
           {
             "key": "radarr_add_missing_marvel",
@@ -27301,7 +27784,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_marvel"
           },
           {
             "key": "sonarr_add_missing_marvel",
@@ -27311,28 +27795,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_marvel"
           },
           {
             "key": "use_mcu",
             "label": "Marvel Cinematic Universe",
             "tooltip": "Collection of Movies in the Marvel Cinematic Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_mcu"
           },
           {
             "key": "name_mcu",
             "label": "Marvel Cinematic Universe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Marvel Cinematic Universe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_mcu"
           },
           {
             "key": "summary_mcu",
             "label": "Marvel Cinematic Universe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Marvel Cinematic Universe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_mcu"
           },
           {
             "key": "minimum_items_mcu",
@@ -27341,7 +27829,8 @@
             "tooltip": "Override the minimum_items value for the Marvel Cinematic Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_mcu"
           },
           {
             "key": "radarr_add_missing_mcu",
@@ -27351,7 +27840,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_mcu"
           },
           {
             "key": "sonarr_add_missing_mcu",
@@ -27361,28 +27851,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_mcu"
           },
           {
             "key": "use_middle",
             "label": "Middle Earth",
             "tooltip": "Collection of Movies in the Middle Earth Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_middle"
           },
           {
             "key": "name_middle",
             "label": "Middle Earth Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Middle Earth collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_middle"
           },
           {
             "key": "summary_middle",
             "label": "Middle Earth Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Middle Earth collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_middle"
           },
           {
             "key": "minimum_items_middle",
@@ -27391,7 +27885,8 @@
             "tooltip": "Override the minimum_items value for the Middle Earth collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_middle"
           },
           {
             "key": "radarr_add_missing_middle",
@@ -27401,7 +27896,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_middle"
           },
           {
             "key": "sonarr_add_missing_middle",
@@ -27411,28 +27907,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_middle"
           },
           {
             "key": "use_rocky",
             "label": "Rocky / Creed",
             "tooltip": "Collection of Movies in the Rocky / Creed Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_rocky"
           },
           {
             "key": "name_rocky",
             "label": "Rocky / Creed Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Rocky / Creed collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_rocky"
           },
           {
             "key": "summary_rocky",
             "label": "Rocky / Creed Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Rocky / Creed collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_rocky"
           },
           {
             "key": "minimum_items_rocky",
@@ -27441,7 +27941,8 @@
             "tooltip": "Override the minimum_items value for the Rocky / Creed collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_rocky"
           },
           {
             "key": "radarr_add_missing_rocky",
@@ -27451,7 +27952,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_rocky"
           },
           {
             "key": "sonarr_add_missing_rocky",
@@ -27461,28 +27963,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_rocky"
           },
           {
             "key": "use_trek",
             "label": "Star Trek",
             "tooltip": "Collection of Movies in the Star Trek Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_trek"
           },
           {
             "key": "name_trek",
             "label": "Star Trek Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Star Trek collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_trek"
           },
           {
             "key": "summary_trek",
             "label": "Star Trek Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Star Trek collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_trek"
           },
           {
             "key": "minimum_items_trek",
@@ -27491,7 +27997,8 @@
             "tooltip": "Override the minimum_items value for the Star Trek collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_trek"
           },
           {
             "key": "radarr_add_missing_trek",
@@ -27501,7 +28008,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_trek"
           },
           {
             "key": "sonarr_add_missing_trek",
@@ -27511,28 +28019,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_trek"
           },
           {
             "key": "use_star",
             "label": "Star Wars Universe",
             "tooltip": "Collection of Movies in the Star Wars Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_star"
           },
           {
             "key": "name_star",
             "label": "Star Wars Universe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Star Wars Universe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_star"
           },
           {
             "key": "summary_star",
             "label": "Star Wars Universe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Star Wars Universe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_star"
           },
           {
             "key": "minimum_items_star",
@@ -27541,7 +28053,8 @@
             "tooltip": "Override the minimum_items value for the Star Wars Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_star"
           },
           {
             "key": "radarr_add_missing_star",
@@ -27551,7 +28064,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_star"
           },
           {
             "key": "sonarr_add_missing_star",
@@ -27561,28 +28075,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_star"
           },
           {
             "key": "use_mummy",
             "label": "The Mummy Universe",
             "tooltip": "Collection of Movies in the The Mummy Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_mummy"
           },
           {
             "key": "name_mummy",
             "label": "The Mummy Universe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the The Mummy Universe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_mummy"
           },
           {
             "key": "summary_mummy",
             "label": "The Mummy Universe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the The Mummy Universe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_mummy"
           },
           {
             "key": "minimum_items_mummy",
@@ -27591,7 +28109,8 @@
             "tooltip": "Override the minimum_items value for the The Mummy Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_mummy"
           },
           {
             "key": "radarr_add_missing_mummy",
@@ -27601,7 +28120,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_mummy"
           },
           {
             "key": "sonarr_add_missing_mummy",
@@ -27611,28 +28131,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_mummy"
           },
           {
             "key": "use_askew",
             "label": "View Askewverse",
             "tooltip": "Collection of Movies in the The View Askew Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_askew"
           },
           {
             "key": "name_askew",
             "label": "View Askewverse Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the View Askewverse collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_askew"
           },
           {
             "key": "summary_askew",
             "label": "View Askewverse Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the View Askewverse collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_askew"
           },
           {
             "key": "minimum_items_askew",
@@ -27641,7 +28165,8 @@
             "tooltip": "Override the minimum_items value for the View Askewverse collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_askew"
           },
           {
             "key": "radarr_add_missing_askew",
@@ -27651,7 +28176,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_askew"
           },
           {
             "key": "sonarr_add_missing_askew",
@@ -27661,28 +28187,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_askew"
           },
           {
             "key": "use_wizard",
             "label": "Wizarding World",
             "tooltip": "Collection of Movies in the Wizarding World Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_wizard"
           },
           {
             "key": "name_wizard",
             "label": "Wizarding World Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Wizarding World collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_wizard"
           },
           {
             "key": "summary_wizard",
             "label": "Wizarding World Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Wizarding World collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_wizard"
           },
           {
             "key": "minimum_items_wizard",
@@ -27691,7 +28221,8 @@
             "tooltip": "Override the minimum_items value for the Wizarding World collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_wizard"
           },
           {
             "key": "radarr_add_missing_wizard",
@@ -27701,7 +28232,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_wizard"
           },
           {
             "key": "sonarr_add_missing_wizard",
@@ -27711,28 +28243,32 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_wizard"
           },
           {
             "key": "use_xmen",
             "label": "X-Men Universe",
             "tooltip": "Collection of Movies in the X-Men Universe",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "universe_xmen"
           },
           {
             "key": "name_xmen",
             "label": "X-Men Universe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the X-Men Universe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "universe_xmen"
           },
           {
             "key": "summary_xmen",
             "label": "X-Men Universe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the X-Men Universe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "universe_xmen"
           },
           {
             "key": "minimum_items_xmen",
@@ -27741,7 +28277,8 @@
             "tooltip": "Override the minimum_items value for the X-Men Universe collection. Leave blank to inherit the family Minimum Items value. Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "universe_xmen"
           },
           {
             "key": "radarr_add_missing_xmen",
@@ -27751,7 +28288,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "universe_xmen"
           },
           {
             "key": "sonarr_add_missing_xmen",
@@ -27761,7 +28299,8 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "universe_xmen"
           },
           {
             "key": "minimum_items",
@@ -27771,7 +28310,8 @@
             "input_type": "number",
             "min": 1,
             "step": 1,
-            "default": 2
+            "default": 2,
+            "section": "basics"
           },
           {
             "key": "ignore_ids",
@@ -27779,7 +28319,8 @@
             "type": "string_list",
             "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
             "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
+            "validation_preset": "numeric_id",
+            "section": "scope_schedule"
           },
           {
             "key": "ignore_imdb_ids",
@@ -27787,7 +28328,8 @@
             "type": "string_list",
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "validation_preset": "imdb_id_plex",
+            "section": "scope_schedule"
           },
           {
             "key": "radarr_add_missing",
@@ -27797,7 +28339,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_add_missing",
@@ -27807,7 +28350,8 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "radarr_search",
@@ -27816,7 +28360,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_search",
@@ -27825,7 +28370,8 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "radarr_monitor",
@@ -27834,7 +28380,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "radarr_monitor_existing",
@@ -27843,7 +28390,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_monitor_existing",
@@ -27852,7 +28400,8 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "radarr_tag",
@@ -27862,7 +28411,8 @@
             "placeholder": "Add Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_tag",
@@ -27872,7 +28422,8 @@
             "placeholder": "Add Sonarr tag",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "item_radarr_tag",
@@ -27882,7 +28433,8 @@
             "placeholder": "Add item Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "item_sonarr_tag",
@@ -27892,7 +28444,8 @@
             "placeholder": "Add item Sonarr tag",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "radarr_folder",
@@ -27902,7 +28455,8 @@
             "placeholder": "Enter Radarr root folder path",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_folder",
@@ -27912,7 +28466,8 @@
             "placeholder": "Enter Sonarr root folder path",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_monitor",
@@ -27955,7 +28510,8 @@
             ],
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "radarr_upgrade_existing",
@@ -27964,7 +28520,8 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sonarr_upgrade_existing",
@@ -27973,7 +28530,8 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation_defaults"
           },
           {
             "key": "sync_mode",
@@ -27990,7 +28548,8 @@
                 "value": "sync",
                 "label": "Sync"
               }
-            ]
+            ],
+            "section": "child_defaults"
           },
           {
             "key": "cache_builders",
@@ -28000,7 +28559,8 @@
             "default": 1,
             "input_type": "number",
             "min": 0,
-            "step": 1
+            "step": 1,
+            "section": "child_defaults"
           },
           {
             "key": "collection_mode",
@@ -28025,28 +28585,32 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "child_defaults"
           },
           {
             "key": "visible_home",
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "child_defaults"
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "child_defaults"
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "child_defaults"
           },
           {
             "key": "hub_priority",
@@ -28063,28 +28627,32 @@
               "visible_library",
               "visible_shared"
             ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "child_defaults"
           },
           {
             "key": "visible_home_avp",
             "label": "Alien / Predator Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Alien / Predator collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_avp"
           },
           {
             "key": "visible_library_avp",
             "label": "Alien / Predator Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Alien / Predator collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_avp"
           },
           {
             "key": "visible_shared_avp",
             "label": "Alien / Predator Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Alien / Predator collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_avp"
           },
           {
             "key": "hub_priority_avp",
@@ -28101,28 +28669,32 @@
               "visible_library_avp",
               "visible_shared_avp"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_avp"
           },
           {
             "key": "visible_home_arrow",
             "label": "Arrowverse Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Arrowverse collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_arrow"
           },
           {
             "key": "visible_library_arrow",
             "label": "Arrowverse Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Arrowverse collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_arrow"
           },
           {
             "key": "visible_shared_arrow",
             "label": "Arrowverse Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Arrowverse collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_arrow"
           },
           {
             "key": "hub_priority_arrow",
@@ -28139,28 +28711,32 @@
               "visible_library_arrow",
               "visible_shared_arrow"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_arrow"
           },
           {
             "key": "visible_home_dca",
             "label": "DC Animated Universe Visible Home",
             "type": "toggle",
             "tooltip": "Changes the DC Animated Universe collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_dca"
           },
           {
             "key": "visible_library_dca",
             "label": "DC Animated Universe Visible Library",
             "type": "toggle",
             "tooltip": "Changes the DC Animated Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_dca"
           },
           {
             "key": "visible_shared_dca",
             "label": "DC Animated Universe Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the DC Animated Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_dca"
           },
           {
             "key": "hub_priority_dca",
@@ -28177,28 +28753,32 @@
               "visible_library_dca",
               "visible_shared_dca"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_dca"
           },
           {
             "key": "visible_home_dcu",
             "label": "DC Extended Universe Visible Home",
             "type": "toggle",
             "tooltip": "Changes the DC Extended Universe collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_dcu"
           },
           {
             "key": "visible_library_dcu",
             "label": "DC Extended Universe Visible Library",
             "type": "toggle",
             "tooltip": "Changes the DC Extended Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_dcu"
           },
           {
             "key": "visible_shared_dcu",
             "label": "DC Extended Universe Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the DC Extended Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_dcu"
           },
           {
             "key": "hub_priority_dcu",
@@ -28215,28 +28795,32 @@
               "visible_library_dcu",
               "visible_shared_dcu"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_dcu"
           },
           {
             "key": "visible_home_fast",
             "label": "Fast & Furious Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Fast & Furious collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_fast"
           },
           {
             "key": "visible_library_fast",
             "label": "Fast & Furious Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Fast & Furious collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_fast"
           },
           {
             "key": "visible_shared_fast",
             "label": "Fast & Furious Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Fast & Furious collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_fast"
           },
           {
             "key": "hub_priority_fast",
@@ -28253,28 +28837,32 @@
               "visible_library_fast",
               "visible_shared_fast"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_fast"
           },
           {
             "key": "visible_home_marvel",
             "label": "In Association with Marvel Visible Home",
             "type": "toggle",
             "tooltip": "Changes the In Association with Marvel collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_marvel"
           },
           {
             "key": "visible_library_marvel",
             "label": "In Association with Marvel Visible Library",
             "type": "toggle",
             "tooltip": "Changes the In Association with Marvel collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_marvel"
           },
           {
             "key": "visible_shared_marvel",
             "label": "In Association with Marvel Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the In Association with Marvel collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_marvel"
           },
           {
             "key": "hub_priority_marvel",
@@ -28291,28 +28879,32 @@
               "visible_library_marvel",
               "visible_shared_marvel"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_marvel"
           },
           {
             "key": "visible_home_mcu",
             "label": "Marvel Cinematic Universe Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Marvel Cinematic Universe collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_mcu"
           },
           {
             "key": "visible_library_mcu",
             "label": "Marvel Cinematic Universe Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Marvel Cinematic Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_mcu"
           },
           {
             "key": "visible_shared_mcu",
             "label": "Marvel Cinematic Universe Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Marvel Cinematic Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_mcu"
           },
           {
             "key": "hub_priority_mcu",
@@ -28329,28 +28921,32 @@
               "visible_library_mcu",
               "visible_shared_mcu"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_mcu"
           },
           {
             "key": "visible_home_middle",
             "label": "Middle Earth Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Middle Earth collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_middle"
           },
           {
             "key": "visible_library_middle",
             "label": "Middle Earth Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Middle Earth collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_middle"
           },
           {
             "key": "visible_shared_middle",
             "label": "Middle Earth Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Middle Earth collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_middle"
           },
           {
             "key": "hub_priority_middle",
@@ -28367,28 +28963,32 @@
               "visible_library_middle",
               "visible_shared_middle"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_middle"
           },
           {
             "key": "visible_home_rocky",
             "label": "Rocky / Creed Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Rocky / Creed collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_rocky"
           },
           {
             "key": "visible_library_rocky",
             "label": "Rocky / Creed Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Rocky / Creed collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_rocky"
           },
           {
             "key": "visible_shared_rocky",
             "label": "Rocky / Creed Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Rocky / Creed collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_rocky"
           },
           {
             "key": "hub_priority_rocky",
@@ -28405,28 +29005,32 @@
               "visible_library_rocky",
               "visible_shared_rocky"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_rocky"
           },
           {
             "key": "visible_home_trek",
             "label": "Star Trek Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Star Trek collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_trek"
           },
           {
             "key": "visible_library_trek",
             "label": "Star Trek Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Star Trek collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_trek"
           },
           {
             "key": "visible_shared_trek",
             "label": "Star Trek Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Star Trek collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_trek"
           },
           {
             "key": "hub_priority_trek",
@@ -28443,28 +29047,32 @@
               "visible_library_trek",
               "visible_shared_trek"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_trek"
           },
           {
             "key": "visible_home_star",
             "label": "Star Wars Universe Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Star Wars Universe collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_star"
           },
           {
             "key": "visible_library_star",
             "label": "Star Wars Universe Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Star Wars Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_star"
           },
           {
             "key": "visible_shared_star",
             "label": "Star Wars Universe Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Star Wars Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_star"
           },
           {
             "key": "hub_priority_star",
@@ -28481,28 +29089,32 @@
               "visible_library_star",
               "visible_shared_star"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_star"
           },
           {
             "key": "visible_home_mummy",
             "label": "The Mummy Universe Visible Home",
             "type": "toggle",
             "tooltip": "Changes the The Mummy Universe collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_mummy"
           },
           {
             "key": "visible_library_mummy",
             "label": "The Mummy Universe Visible Library",
             "type": "toggle",
             "tooltip": "Changes the The Mummy Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_mummy"
           },
           {
             "key": "visible_shared_mummy",
             "label": "The Mummy Universe Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the The Mummy Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_mummy"
           },
           {
             "key": "hub_priority_mummy",
@@ -28519,28 +29131,32 @@
               "visible_library_mummy",
               "visible_shared_mummy"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_mummy"
           },
           {
             "key": "visible_home_askew",
             "label": "View Askewverse Visible Home",
             "type": "toggle",
             "tooltip": "Changes the View Askewverse collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_askew"
           },
           {
             "key": "visible_library_askew",
             "label": "View Askewverse Visible Library",
             "type": "toggle",
             "tooltip": "Changes the View Askewverse collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_askew"
           },
           {
             "key": "visible_shared_askew",
             "label": "View Askewverse Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the View Askewverse collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_askew"
           },
           {
             "key": "hub_priority_askew",
@@ -28557,28 +29173,32 @@
               "visible_library_askew",
               "visible_shared_askew"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_askew"
           },
           {
             "key": "visible_home_wizard",
             "label": "Wizarding World Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Wizarding World collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_wizard"
           },
           {
             "key": "visible_library_wizard",
             "label": "Wizarding World Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Wizarding World collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_wizard"
           },
           {
             "key": "visible_shared_wizard",
             "label": "Wizarding World Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Wizarding World collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_wizard"
           },
           {
             "key": "hub_priority_wizard",
@@ -28595,28 +29215,32 @@
               "visible_library_wizard",
               "visible_shared_wizard"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_wizard"
           },
           {
             "key": "visible_home_xmen",
             "label": "X-Men Universe Visible Home",
             "type": "toggle",
             "tooltip": "Changes the X-Men Universe collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_xmen"
           },
           {
             "key": "visible_library_xmen",
             "label": "X-Men Universe Visible Library",
             "type": "toggle",
             "tooltip": "Changes the X-Men Universe collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_xmen"
           },
           {
             "key": "visible_shared_xmen",
             "label": "X-Men Universe Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the X-Men Universe collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "universe_xmen"
           },
           {
             "key": "hub_priority_xmen",
@@ -28633,7 +29257,8 @@
               "visible_library_xmen",
               "visible_shared_xmen"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "universe_xmen"
           },
           {
             "key": "collection_order",
@@ -28988,7 +29613,126 @@
                   "episode"
                 ]
               }
-            ]
+            ],
+            "section": "child_defaults"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics",
+            "summary": "Core defaults that affect the whole Universes family.",
+            "default_open": true
+          },
+          {
+            "id": "naming",
+            "label": "Naming",
+            "summary": "Family-level naming and sort-title templates for generated universe collections."
+          },
+          {
+            "id": "scope_schedule",
+            "label": "Scope & Schedule",
+            "summary": "Controls exclusions, ignored IDs, and when child collections run."
+          },
+          {
+            "id": "child_defaults",
+            "label": "Child Defaults",
+            "summary": "Default behavior applied to generated universe collections unless a child-specific override replaces it."
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Child Override Maps",
+            "summary": "Per-universe override tables for source lists, naming, scheduling, ordering, and rebuild behavior."
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork",
+            "summary": "Family-wide artwork plus per-universe artwork override maps."
+          },
+          {
+            "id": "automation_defaults",
+            "label": "Automation Defaults",
+            "summary": "Default Radarr and Sonarr behavior for generated universe collections."
+          },
+          {
+            "id": "automation_override_maps",
+            "label": "Automation Override Maps",
+            "summary": "Per-universe Radarr and Sonarr override tables."
+          },
+          {
+            "id": "universe_avp",
+            "label": "Alien / Predator",
+            "summary": "Child collection settings and visibility overrides for Alien / Predator."
+          },
+          {
+            "id": "universe_arrow",
+            "label": "Arrowverse",
+            "summary": "Child collection settings and visibility overrides for Arrowverse."
+          },
+          {
+            "id": "universe_dca",
+            "label": "DC Animated Universe",
+            "summary": "Child collection settings and visibility overrides for DC Animated Universe."
+          },
+          {
+            "id": "universe_dcu",
+            "label": "DC Extended Universe",
+            "summary": "Child collection settings and visibility overrides for DC Extended Universe."
+          },
+          {
+            "id": "universe_fast",
+            "label": "Fast & Furious",
+            "summary": "Child collection settings and visibility overrides for Fast & Furious."
+          },
+          {
+            "id": "universe_marvel",
+            "label": "In Association with Marvel",
+            "summary": "Child collection settings and visibility overrides for In Association with Marvel."
+          },
+          {
+            "id": "universe_mcu",
+            "label": "Marvel Cinematic Universe",
+            "summary": "Child collection settings and visibility overrides for Marvel Cinematic Universe."
+          },
+          {
+            "id": "universe_middle",
+            "label": "Middle Earth",
+            "summary": "Child collection settings and visibility overrides for Middle Earth."
+          },
+          {
+            "id": "universe_rocky",
+            "label": "Rocky / Creed",
+            "summary": "Child collection settings and visibility overrides for Rocky / Creed."
+          },
+          {
+            "id": "universe_trek",
+            "label": "Star Trek",
+            "summary": "Child collection settings and visibility overrides for Star Trek."
+          },
+          {
+            "id": "universe_star",
+            "label": "Star Wars Universe",
+            "summary": "Child collection settings and visibility overrides for Star Wars Universe."
+          },
+          {
+            "id": "universe_mummy",
+            "label": "The Mummy Universe",
+            "summary": "Child collection settings and visibility overrides for The Mummy Universe."
+          },
+          {
+            "id": "universe_askew",
+            "label": "View Askewverse",
+            "summary": "Child collection settings and visibility overrides for View Askewverse."
+          },
+          {
+            "id": "universe_wizard",
+            "label": "Wizarding World",
+            "summary": "Child collection settings and visibility overrides for Wizarding World."
+          },
+          {
+            "id": "universe_xmen",
+            "label": "X-Men Universe",
+            "summary": "Child collection settings and visibility overrides for X-Men Universe."
           }
         ]
       },

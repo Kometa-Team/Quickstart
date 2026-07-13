@@ -403,6 +403,26 @@ describe('ValidationHandler.showAccordionForField', () => {
     expect(() => window.ValidationHandler.showAccordionForField(undefined)).not.toThrow()
   })
 
+  it('opens a hidden detail section before focusing the invalid field', () => {
+    document.body.innerHTML = `
+      <button type="button" id="details-toggle" data-section-id="collection-details">Show Details</button>
+      <div id="collection-details" data-detail-section="true" style="display: none;">
+        <input class="is-invalid" id="target">
+      </div>
+    `
+    const field = document.getElementById('target')
+    const toggle = document.getElementById('details-toggle')
+    toggle.addEventListener('click', () => {
+      document.getElementById('collection-details').style.display = 'block'
+      toggle.textContent = 'Hide Details'
+    })
+
+    window.ValidationHandler.showAccordionForField(field)
+
+    expect(document.getElementById('collection-details').style.display).toBe('block')
+    expect(toggle.textContent).toBe('Hide Details')
+  })
+
   it('clicks the accordion button when the collapse is not shown', () => {
     document.body.innerHTML = `
       <div class="accordion-item">
