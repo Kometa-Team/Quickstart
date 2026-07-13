@@ -791,3 +791,49 @@ def test_prepare_import_payload_collapses_decade_dynamic_child_template_variable
     assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_visible_library_overrides"]) == {"1940": "false"}
     assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_item_sonarr_tag_overrides"]) == {"1930": "decade,1930s"}
     assert any("libraries.Shows.collection_files[0].template_variables.schedule_1990" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_award_year_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "oscars",
+                            "template_variables": {
+                                "allowed_libraries": "movie",
+                                "image": "award/oscars/winner/<<key>>",
+                                "translation_key": "oscars_year",
+                                "url_logo": "https://example.com/oscars.png",
+                                "collection_order_2024": "release",
+                                "image_2024": "award/oscars/winner/2024",
+                                "translation_key_2024": "oscars_year",
+                                "url_logo_2024": "https://example.com/oscars-2024.png",
+                                "radarr_folder_2024": r"C:\Media\Movies\Awards",
+                                "radarr_search_2024": False,
+                                "visible_home_2024": True,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_oscars"] is True
+    assert libraries_payload["mov-library_movies-template_collection_oscars_allowed_libraries"] == "movie"
+    assert libraries_payload["mov-library_movies-template_collection_oscars_image"] == "award/oscars/winner/<<key>>"
+    assert libraries_payload["mov-library_movies-template_collection_oscars_translation_key"] == "oscars_year"
+    assert libraries_payload["mov-library_movies-template_collection_oscars_url_logo"] == "https://example.com/oscars.png"
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_collection_order_overrides"]) == {"2024": "release"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_image_overrides"]) == {"2024": "award/oscars/winner/2024"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_translation_key_overrides"]) == {"2024": "oscars_year"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_url_logo_overrides"]) == {"2024": "https://example.com/oscars-2024.png"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_radarr_folder_overrides"]) == {"2024": r"C:\Media\Movies\Awards"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_radarr_search_overrides"]) == {"2024": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_oscars_child_visible_home_overrides"]) == {"2024": "true"}
+    assert any("libraries.Movies.collection_files[0].template_variables.image_2024" in line for line in report.lines)
