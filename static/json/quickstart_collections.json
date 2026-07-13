@@ -23920,201 +23920,24 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "basics"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
-          },
-          {
-            "key": "name_format",
-            "label": "Name Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_format",
-            "label": "Summary Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "limit",
-            "label": "Limit",
-            "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "use_all",
-            "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "use_commonsense",
-            "label": "Common Sense Selection",
-            "tooltip": "Collection of Common Sense Selection Movies/Shows.",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_commonsense",
-            "label": "Common Sense Selection Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the Common Sense Selection collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_commonsense",
-            "label": "Common Sense Selection Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the Common Sense Selection collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_commonsense",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_commonsense",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "use_metacritic",
-            "label": "Metacritic Must See",
-            "tooltip": "Collection of Metacritic Must See Movies/Shows.",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_metacritic",
-            "label": "Metacritic Must See Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the Metacritic Must See collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_metacritic",
-            "label": "Metacritic Must See Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the Metacritic Must See collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_metacritic",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_metacritic",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "use_stevenlu",
-            "label": "StevenLu's Popular Movies",
-            "tooltip": "Collection of StevenLu's Popular Movies.",
-            "type": "toggle",
-            "default": true,
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "name_stevenlu",
-            "label": "StevenLu's Popular Movies Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the StevenLu's Popular Movies collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_stevenlu",
-            "label": "StevenLu's Popular Movies Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the StevenLu's Popular Movies collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_stevenlu",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "use_pirated",
-            "label": "Top 10 Pirated Movies of the Week",
-            "tooltip": "Collection of the Top 10 Pirated Movies of the Week.",
-            "type": "toggle",
-            "default": true,
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "name_pirated",
-            "label": "Top 10 Pirated Movies of the Week Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the Top 10 Pirated Movies of the Week collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_pirated",
-            "label": "Top 10 Pirated Movies of the Week Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the Top 10 Pirated Movies of the Week collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_pirated",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
+            "placeholder": "Custom sort title format",
+            "section": "basics"
           },
           {
             "key": "style",
@@ -24125,235 +23948,32 @@
             "options": [
               "color",
               "white"
-            ]
-          },
-          {
-            "key": "minimum_items",
-            "label": "Minimum Items",
-            "type": "text_input",
-            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "ignore_ids",
-            "label": "Ignore IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
-            "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
-          },
-          {
-            "key": "ignore_imdb_ids",
-            "label": "Ignore IMDb IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
-            "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
-          },
-          {
-            "key": "radarr_add_missing",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "radarr_search",
-            "label": "Search media when added to Radarr",
-            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_search",
-            "label": "Search media when added to Sonarr",
-            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "radarr_monitor",
-            "label": "Monitor media when added to Radarr",
-            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "radarr_monitor_existing",
-            "label": "Set existing media from collections to monitored in Radarr",
-            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_monitor_existing",
-            "label": "Set existing media from collections to monitored in Sonarr",
-            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "radarr_tag",
-            "label": "Radarr Tag",
-            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add Radarr tag",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_tag",
-            "label": "Sonarr Tag",
-            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add Sonarr tag",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "item_radarr_tag",
-            "label": "Item Radarr Tag",
-            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add item Radarr tag",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "item_sonarr_tag",
-            "label": "Item Sonarr Tag",
-            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add item Sonarr tag",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "radarr_folder",
-            "label": "Radarr Root Folder",
-            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
-            "type": "text_input",
-            "placeholder": "Enter Radarr root folder path",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_folder",
-            "label": "Sonarr Root Folder",
-            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
-            "type": "text_input",
-            "placeholder": "Enter Sonarr root folder path",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "sonarr_monitor",
-            "label": "Sonarr Monitor",
-            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
-            "type": "select",
-            "options": [
-              {
-                "value": "all",
-                "label": "All"
-              },
-              {
-                "value": "none",
-                "label": "None"
-              },
-              {
-                "value": "future",
-                "label": "Future"
-              },
-              {
-                "value": "missing",
-                "label": "Missing"
-              },
-              {
-                "value": "existing",
-                "label": "Existing"
-              },
-              {
-                "value": "pilot",
-                "label": "Pilot"
-              },
-              {
-                "value": "first",
-                "label": "First Season"
-              },
-              {
-                "value": "latest",
-                "label": "Latest Season"
-              }
             ],
-            "media_types": [
-              "show"
-            ]
+            "section": "basics"
           },
           {
-            "key": "radarr_upgrade_existing",
-            "label": "Upgrade existing media in Radarr",
-            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format",
+            "section": "naming"
           },
           {
-            "key": "sonarr_upgrade_existing",
-            "label": "Upgrade existing media in Sonarr",
-            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the Kometa name_mapping value for generated collections in this Defaults File.",
+            "section": "naming",
+            "placeholder": "Custom name mapping"
           },
           {
-            "key": "sync_mode",
-            "label": "Sync Mode",
-            "type": "select",
-            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
-            "default": "sync",
-            "options": [
-              {
-                "value": "append",
-                "label": "Append"
-              },
-              {
-                "value": "sync",
-                "label": "Sync"
-              }
-            ]
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
           },
           {
             "key": "cache_builders",
@@ -24363,7 +23983,8 @@
             "default": 1,
             "input_type": "number",
             "min": 0,
-            "step": 1
+            "step": 1,
+            "section": "child_defaults"
           },
           {
             "key": "collection_mode",
@@ -24388,215 +24009,8 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
-          },
-          {
-            "key": "visible_home",
-            "label": "Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library",
-            "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared",
-            "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority",
-            "label": "Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home",
-              "visible_library",
-              "visible_shared"
             ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_commonsense",
-            "label": "Common Sense Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Common Sense Selection collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_commonsense",
-            "label": "Common Sense Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Common Sense Selection collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_commonsense",
-            "label": "Common Sense Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Common Sense Selection collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_commonsense",
-            "label": "Common Sense Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_commonsense",
-              "visible_library_commonsense",
-              "visible_shared_commonsense"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_metacritic",
-            "label": "Metacritic Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Metacritic Must See collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_metacritic",
-            "label": "Metacritic Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Metacritic Must See collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_metacritic",
-            "label": "Metacritic Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Metacritic Must See collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_metacritic",
-            "label": "Metacritic Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_metacritic",
-              "visible_library_metacritic",
-              "visible_shared_metacritic"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_stevenlu",
-            "label": "StevenLu Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_stevenlu",
-            "label": "StevenLu Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_stevenlu",
-            "label": "StevenLu Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "hub_priority_stevenlu",
-            "label": "StevenLu Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_stevenlu",
-              "visible_library_stevenlu",
-              "visible_shared_stevenlu"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "visible_home_pirated",
-            "label": "Pirated Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "visible_library_pirated",
-            "label": "Pirated Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "visible_shared_pirated",
-            "label": "Pirated Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "hub_priority_pirated",
-            "label": "Pirated Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_pirated",
-              "visible_library_pirated",
-              "visible_shared_pirated"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
-            "media_types": [
-              "movie"
-            ]
+            "section": "child_defaults"
           },
           {
             "key": "collection_order",
@@ -24951,7 +24365,1402 @@
                   "episode"
                 ]
               }
+            ],
+            "section": "child_defaults"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "tooltip": "Delete old collection names when these collections run.",
+            "section": "child_defaults",
+            "placeholder": "Add collection title to delete"
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id",
+            "section": "child_defaults"
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex",
+            "section": "child_defaults"
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_defaults"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_defaults"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Configure when collections in this Defaults File update by default.",
+            "section": "child_defaults"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "section": "child_defaults"
+          },
+          {
+            "key": "use_all",
+            "label": "Use All Child Collections",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting.",
+            "type": "toggle",
+            "default": true,
+            "section": "child_defaults"
+          },
+          {
+            "key": "child_cache_builders_overrides",
+            "label": "Cache Builders Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for cache builders overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "0, 1, 2, etc.",
+            "dynamic_child_prefix": "cache_builders_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_collection_order_overrides",
+            "label": "Collection Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for collection order overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "custom, alpha, release, etc.",
+            "dynamic_child_prefix": "collection_order_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_limit_overrides",
+            "label": "Limit Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for limit overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "25",
+            "dynamic_child_prefix": "limit_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Minimum Items Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for minimum items overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "2",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Name Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for name overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "Custom collection name",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Sort Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sort order overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "01, 02, etc.",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Schedule Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for schedule overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "weekly(sunday)",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_sort_by_overrides",
+            "label": "Sort By Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sort by overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "title.asc, release.desc, etc.",
+            "dynamic_child_prefix": "sort_by_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Summary Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for summary overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "Custom collection summary",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Sync Mode Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sync mode overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "append or sync",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_use_overrides",
+            "label": "Use Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for use overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "use_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Background File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for background file overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "C:\\Path\\To\\background.jpg",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Logo File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for logo file overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "C:\\Path\\To\\logo.png",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Poster File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for poster file overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "C:\\Path\\To\\poster.jpg",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Square Art File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for square art file overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "C:\\Path\\To\\square-art.png",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Background URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for background url overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "https://example.com/background.jpg",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Logo URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for logo url overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "https://example.com/logo.png",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Poster URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for poster url overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Square Art URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for square art url overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "https://example.com/square-art.png",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "validation_preset": "url"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\background.jpg"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\logo.png"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\poster.jpg"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\square-art.png"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_add_missing",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Override Radarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_search",
+            "label": "Search media when added to Radarr",
+            "tooltip": "Override Radarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_tag",
+            "label": "Radarr Tag",
+            "tooltip": "Override the Radarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Radarr tag",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_folder",
+            "label": "Sonarr Root Folder",
+            "tooltip": "Override Sonarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Sonarr root folder path",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_monitor",
+            "label": "Sonarr Monitor",
+            "tooltip": "Override Sonarr monitor for all collections in this Defaults File.<br><br>Choose how Sonarr monitors episodes when adding a show.",
+            "type": "select",
+            "options": [
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First Season"
+              },
+              {
+                "value": "latest",
+                "label": "Latest Season"
+              }
+            ],
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "sonarr_upgrade_existing",
+            "label": "Upgrade existing media in Sonarr",
+            "tooltip": "Override Sonarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Sonarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation_defaults"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for item radarr tag overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
             ]
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for item sonarr tag overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_radarr_add_missing_overrides",
+            "label": "Radarr Add Missing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr add missing overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_add_missing_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_radarr_folder_overrides",
+            "label": "Radarr Folder Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr folder overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "C:\\Media\\Movies",
+            "dynamic_child_prefix": "radarr_folder_",
+            "dynamic_child_value_kind": "string",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_radarr_monitor_existing_overrides",
+            "label": "Radarr Monitor Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr monitor existing overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_monitor_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_radarr_monitor_overrides",
+            "label": "Radarr Monitor Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr monitor overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_monitor_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_radarr_search_overrides",
+            "label": "Radarr Search Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr search overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_search_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_radarr_tag_overrides",
+            "label": "Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr tag overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_radarr_upgrade_existing_overrides",
+            "label": "Radarr Upgrade Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for radarr upgrade existing overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "radarr_upgrade_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_sonarr_add_missing_overrides",
+            "label": "Sonarr Add Missing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr add missing overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_add_missing_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_sonarr_folder_overrides",
+            "label": "Sonarr Folder Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr folder overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "C:\\Media\\Shows",
+            "dynamic_child_prefix": "sonarr_folder_",
+            "dynamic_child_value_kind": "string",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_sonarr_monitor_existing_overrides",
+            "label": "Sonarr Monitor Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr monitor existing overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_monitor_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_sonarr_monitor_overrides",
+            "label": "Sonarr Monitor Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr monitor overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "all, future, missing, etc.",
+            "dynamic_child_prefix": "sonarr_monitor_",
+            "dynamic_child_value_kind": "select",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_sonarr_search_overrides",
+            "label": "Sonarr Search Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr search overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_search_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_sonarr_tag_overrides",
+            "label": "Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr tag overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_sonarr_upgrade_existing_overrides",
+            "label": "Sonarr Upgrade Existing Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sonarr upgrade existing overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "sonarr_upgrade_existing_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "automation_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_hub_priority_overrides",
+            "label": "Hub Priority Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for hub priority overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "1, 2, etc.",
+            "dynamic_child_prefix": "hub_priority_",
+            "dynamic_child_value_kind": "string",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_visible_home_overrides",
+            "label": "Visible Home Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible home overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_home_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_visible_library_overrides",
+            "label": "Visible Library Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible library overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_library_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "child_visible_shared_overrides",
+            "label": "Visible Shared Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible shared overrides.",
+            "key_placeholder": "Chart key (e.g. commonsense)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_shared_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "other_chart_key",
+            "key_input_mode": "select"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home",
+              "visible_library",
+              "visible_shared"
+            ],
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_commonsense",
+            "label": "Common Sense Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_commonsense",
+              "visible_library_commonsense",
+              "visible_shared_commonsense"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "name_commonsense",
+            "label": "Common Sense Selection Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Common Sense Selection collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "radarr_add_missing_commonsense",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "sonarr_add_missing_commonsense",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "summary_commonsense",
+            "label": "Common Sense Selection Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Common Sense Selection collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "use_commonsense",
+            "label": "Common Sense Selection",
+            "tooltip": "Collection of Common Sense Selection Movies/Shows.",
+            "type": "toggle",
+            "default": true,
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "visible_home_commonsense",
+            "label": "Common Sense Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Common Sense Selection collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "visible_library_commonsense",
+            "label": "Common Sense Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Common Sense Selection collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "visible_shared_commonsense",
+            "label": "Common Sense Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Common Sense Selection collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_commonsense"
+          },
+          {
+            "key": "hub_priority_metacritic",
+            "label": "Metacritic Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_metacritic",
+              "visible_library_metacritic",
+              "visible_shared_metacritic"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "name_metacritic",
+            "label": "Metacritic Must See Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Metacritic Must See collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "radarr_add_missing_metacritic",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "sonarr_add_missing_metacritic",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "summary_metacritic",
+            "label": "Metacritic Must See Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Metacritic Must See collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "use_metacritic",
+            "label": "Metacritic Must See",
+            "tooltip": "Collection of Metacritic Must See Movies/Shows.",
+            "type": "toggle",
+            "default": true,
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "visible_home_metacritic",
+            "label": "Metacritic Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Metacritic Must See collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "visible_library_metacritic",
+            "label": "Metacritic Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Metacritic Must See collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "visible_shared_metacritic",
+            "label": "Metacritic Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Metacritic Must See collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_metacritic"
+          },
+          {
+            "key": "hub_priority_stevenlu",
+            "label": "StevenLu Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_stevenlu",
+              "visible_library_stevenlu",
+              "visible_shared_stevenlu"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "name_stevenlu",
+            "label": "StevenLu's Popular Movies Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the StevenLu's Popular Movies collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "radarr_add_missing_stevenlu",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "summary_stevenlu",
+            "label": "StevenLu's Popular Movies Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the StevenLu's Popular Movies collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "use_stevenlu",
+            "label": "StevenLu's Popular Movies",
+            "tooltip": "Collection of StevenLu's Popular Movies.",
+            "type": "toggle",
+            "default": true,
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "visible_home_stevenlu",
+            "label": "StevenLu Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "visible_library_stevenlu",
+            "label": "StevenLu Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "visible_shared_stevenlu",
+            "label": "StevenLu Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the StevenLu's Popular Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_stevenlu"
+          },
+          {
+            "key": "hub_priority_pirated",
+            "label": "Pirated Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_pirated",
+              "visible_library_pirated",
+              "visible_shared_pirated"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_pirated"
+          },
+          {
+            "key": "name_pirated",
+            "label": "Top 10 Pirated Movies of the Week Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Top 10 Pirated Movies of the Week collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "chart_pirated"
+          },
+          {
+            "key": "radarr_add_missing_pirated",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_pirated"
+          },
+          {
+            "key": "summary_pirated",
+            "label": "Top 10 Pirated Movies of the Week Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Top 10 Pirated Movies of the Week collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "chart_pirated"
+          },
+          {
+            "key": "use_pirated",
+            "label": "Top 10 Pirated Movies of the Week",
+            "tooltip": "Collection of the Top 10 Pirated Movies of the Week.",
+            "type": "toggle",
+            "default": true,
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_pirated"
+          },
+          {
+            "key": "visible_home_pirated",
+            "label": "Pirated Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_pirated"
+          },
+          {
+            "key": "visible_library_pirated",
+            "label": "Pirated Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_pirated"
+          },
+          {
+            "key": "visible_shared_pirated",
+            "label": "Pirated Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Top 10 Pirated Movies of the Week collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "movie"
+            ],
+            "section": "chart_pirated"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics",
+            "default_open": true
+          },
+          {
+            "id": "naming",
+            "label": "Naming"
+          },
+          {
+            "id": "child_defaults",
+            "label": "Child Defaults"
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Per-Chart Overrides"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "automation_defaults",
+            "label": "Automation Defaults"
+          },
+          {
+            "id": "automation_override_maps",
+            "label": "Automation Overrides"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
+          },
+          {
+            "id": "chart_commonsense",
+            "label": "Common Sense Selection"
+          },
+          {
+            "id": "chart_metacritic",
+            "label": "Metacritic Must See"
+          },
+          {
+            "id": "chart_stevenlu",
+            "label": "StevenLu's Popular Movies"
+          },
+          {
+            "id": "chart_pirated",
+            "label": "Top 10 Pirated Movies"
           }
         ]
       }
@@ -24977,65 +25786,72 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "060",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
+          },
+          {
+            "key": "sep_style",
+            "label": "Separator Style",
+            "type": "text_input",
+            "tooltip": "Override the separator artwork style used before this Defaults File.",
+            "section": "basics",
+            "placeholder": "orig"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "basics"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
-          },
-          {
-            "key": "name_format",
-            "label": "Name Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_format",
-            "label": "Summary Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "title_format",
-            "label": "Title Format",
-            "type": "text_input",
-            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom dynamic collection title format"
-          },
-          {
-            "key": "limit",
-            "label": "Limit",
-            "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
+            "placeholder": "Custom sort title format",
+            "section": "basics"
           },
           {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "basics"
           },
           {
-            "key": "exclude",
-            "label": "Exclude",
-            "type": "string_list",
-            "tooltip": "Exclude specific Genres from these collections.",
-            "placeholder": "Add genre name (e.g. Politics)"
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format",
+            "section": "naming"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format",
+            "section": "naming"
+          },
+          {
+            "key": "translation_key",
+            "label": "Translation Key",
+            "type": "text_input",
+            "tooltip": "Override the translation key used for generated collection names and summaries.",
+            "section": "naming",
+            "placeholder": "genre"
           },
           {
             "key": "addons",
@@ -25043,7 +25859,8 @@
             "type": "mapping_list",
             "tooltip": "Map a base value to additional genres that should be grouped into that collection.",
             "key_placeholder": "Base genre (e.g. Drama)",
-            "value_placeholder": "Add comma-separated genres (e.g. Crime, Mystery)"
+            "value_placeholder": "Add comma-separated genres (e.g. Crime, Mystery)",
+            "section": "scope"
           },
           {
             "key": "append_addons",
@@ -25051,32 +25868,8 @@
             "type": "mapping_list",
             "tooltip": "Append additional genres mappings to the default addons dictionary for this Defaults File.",
             "key_placeholder": "Base genre (e.g. Drama)",
-            "value_placeholder": "Add comma-separated genres (e.g. Crime, Mystery)"
-          },
-          {
-            "key": "minimum_items",
-            "label": "Minimum Items",
-            "type": "text_input",
-            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "ignore_ids",
-            "label": "Ignore IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
-            "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
-          },
-          {
-            "key": "ignore_imdb_ids",
-            "label": "Ignore IMDb IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
-            "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "value_placeholder": "Add comma-separated genres (e.g. Crime, Mystery)",
+            "section": "scope"
           },
           {
             "key": "collection_mode",
@@ -25101,45 +25894,77 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "scope"
           },
           {
-            "key": "visible_home",
-            "label": "Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "tooltip": "Delete old collection names when these collections run.",
+            "section": "scope",
+            "placeholder": "Add collection title to delete"
           },
           {
-            "key": "visible_library",
-            "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific Genres from these collections.",
+            "placeholder": "Add genre name (e.g. Politics)",
+            "section": "scope"
           },
           {
-            "key": "visible_shared",
-            "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id",
+            "section": "scope"
           },
           {
-            "key": "hub_priority",
-            "label": "Hub Priority",
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex",
+            "section": "scope"
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
             "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
             "input_type": "number",
             "min": 1,
             "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home",
-              "visible_library",
-              "visible_shared"
-            ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "section": "scope"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "scope"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the Kometa name_mapping value for generated collections in this Defaults File.",
+            "section": "scope",
+            "placeholder": "Custom name mapping"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Configure when collections in this Defaults File update by default.",
+            "section": "scope"
           },
           {
             "key": "sort_by",
@@ -25476,7 +26301,398 @@
                   "episode"
                 ]
               }
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "use_all",
+            "label": "Use All Child Collections",
+            "type": "toggle",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting.",
+            "default": true,
+            "section": "scope"
+          },
+          {
+            "key": "child_limit_overrides",
+            "label": "Limit Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for limit overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "25",
+            "dynamic_child_prefix": "limit_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Minimum Items Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for minimum items overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "2",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Name Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for name overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "Custom collection name",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Sort Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sort order overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "01, 02, etc.",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Schedule Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for schedule overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "weekly(sunday)",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_sort_by_overrides",
+            "label": "Sort By Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sort by overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "title.asc, release.desc, etc.",
+            "dynamic_child_prefix": "sort_by_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Summary Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for summary overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "Custom collection summary",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_use_overrides",
+            "label": "Use Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for use overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "use_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Background File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for background file overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "C:\\Path\\To\\background.jpg",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Logo File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for logo file overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "C:\\Path\\To\\logo.png",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Poster File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for poster file overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "C:\\Path\\To\\poster.jpg",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Square Art File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for square art file overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "C:\\Path\\To\\square-art.png",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Background URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for background url overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "https://example.com/background.jpg",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Logo URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for logo url overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "https://example.com/logo.png",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Poster URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for poster url overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Square Art URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for square art url overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "https://example.com/square-art.png",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\background.jpg"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\logo.png"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\poster.jpg"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\square-art.png"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_hub_priority_overrides",
+            "label": "Hub Priority Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for hub priority overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "1, 2, etc.",
+            "dynamic_child_prefix": "hub_priority_",
+            "dynamic_child_value_kind": "string",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for item radarr tag overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "media_types": [
+              "movie"
             ]
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for item sonarr tag overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_visible_home_overrides",
+            "label": "Visible Home Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible home overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_home_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_visible_library_overrides",
+            "label": "Visible Library Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible library overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_library_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_visible_shared_overrides",
+            "label": "Visible Shared Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible shared overrides.",
+            "key_placeholder": "Genre key (e.g. Action)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_shared_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home",
+              "visible_library",
+              "visible_shared"
+            ],
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
           },
           {
             "key": "item_radarr_tag",
@@ -25486,7 +26702,8 @@
             "placeholder": "Add item Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "visibility"
           },
           {
             "key": "item_sonarr_tag",
@@ -25496,7 +26713,59 @@
             "placeholder": "Add item Sonarr tag",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "visibility"
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics",
+            "default_open": true
+          },
+          {
+            "id": "naming",
+            "label": "Naming"
+          },
+          {
+            "id": "scope",
+            "label": "Scope and Filtering"
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Per-Genre Overrides"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility and Item Tags"
           }
         ]
       },
@@ -44195,49 +45464,32 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "140",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
+          },
+          {
+            "key": "sep_style",
+            "label": "Separator Style",
+            "type": "text_input",
+            "tooltip": "Override the separator artwork style used before this Defaults File.",
+            "section": "basics",
+            "placeholder": "orig"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "basics"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
-          },
-          {
-            "key": "name_format",
-            "label": "Name Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_format",
-            "label": "Summary Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "title_format",
-            "label": "Title Format",
-            "type": "text_input",
-            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom dynamic collection title format"
-          },
-          {
-            "key": "use_separator",
-            "label": "Use Separator",
-            "tooltip": "Create a separator collection before this set of collections.",
-            "type": "toggle",
-            "default": true
+            "placeholder": "Custom sort title format",
+            "section": "basics"
           },
           {
             "key": "style",
@@ -44276,7 +45528,48 @@
                 "image_url": "/static/images/people-styles/actor_diiivoycolor.webp",
                 "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
               }
-            ]
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "use_separator",
+            "label": "Use Separator",
+            "tooltip": "Create a separator collection before this set of collections.",
+            "type": "toggle",
+            "default": true,
+            "section": "basics"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format",
+            "section": "naming"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
+          },
+          {
+            "key": "title_format",
+            "label": "Title Format",
+            "type": "text_input",
+            "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom dynamic collection title format",
+            "section": "naming"
+          },
+          {
+            "key": "translation_key",
+            "label": "Translation Key",
+            "type": "text_input",
+            "tooltip": "Override the translation key used for generated collection names and summaries.",
+            "section": "naming",
+            "placeholder": "actor"
           },
           {
             "key": "data_depth",
@@ -44286,7 +45579,8 @@
             "min": 1,
             "step": 1,
             "default": "5",
-            "tooltip": "Replaces the data dynamic collection value. Controls the depth within the casting credits to search for common actors."
+            "tooltip": "Replaces the data dynamic collection value. Controls the depth within the casting credits to search for common actors.",
+            "section": "people_data"
           },
           {
             "key": "data_limit",
@@ -44296,22 +45590,8 @@
             "min": 1,
             "step": 1,
             "default": "25",
-            "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
-          },
-          {
-            "key": "tmdb_birthday",
-            "label": "TMDb Birthday",
-            "type": "text_input",
-            "tooltip": "Controls whether these TMDb person collections only run around a person's birthday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>. Examples: <code>{\"this_month\": true}</code>, <code>{\"before\": 7}</code>, or <code>{\"before\": 7, \"after\": 7}</code>.",
-            "placeholder": "{\"this_month\": true}"
-          },
-          {
-            "key": "include",
-            "label": "Include",
-            "type": "string_list",
-            "tooltip": "Only create collections for these people. Kometa code allows this with Exclude, but the wiki says not to combine them.",
-            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
-            "mutually_exclusive_with": "exclude"
+            "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create.",
+            "section": "people_data"
           },
           {
             "key": "exclude",
@@ -44319,32 +45599,33 @@
             "type": "string_list",
             "tooltip": "Exclude specific people from these collections. Kometa code allows this with Include, but the wiki says not to combine them.",
             "placeholder": "Add person name (e.g. Jeremy Kleiner)",
-            "mutually_exclusive_with": "include"
+            "mutually_exclusive_with": "include",
+            "section": "people_data"
           },
           {
-            "key": "minimum_items",
-            "label": "Minimum Items",
+            "key": "include",
+            "label": "Include",
+            "type": "string_list",
+            "tooltip": "Only create collections for these people. Kometa code allows this with Exclude, but the wiki says not to combine them.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)",
+            "mutually_exclusive_with": "exclude",
+            "section": "people_data"
+          },
+          {
+            "key": "tmdb_birthday",
+            "label": "TMDb Birthday",
             "type": "text_input",
-            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
+            "tooltip": "Controls whether these TMDb person collections only run around a person's birthday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>. Examples: <code>{\"this_month\": true}</code>, <code>{\"before\": 7}</code>, or <code>{\"before\": 7, \"after\": 7}</code>.",
+            "placeholder": "{\"this_month\": true}",
+            "section": "people_data"
           },
           {
-            "key": "ignore_ids",
-            "label": "Ignore IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
-            "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
-          },
-          {
-            "key": "ignore_imdb_ids",
-            "label": "Ignore IMDb IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
-            "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "key": "tmdb_deathday",
+            "label": "TMDb Deathday",
+            "type": "text_input",
+            "tooltip": "Controls whether these TMDb person collections only run around a person's deathday. Enter a JSON-style object with any combination of <code>this_month</code>, <code>before</code>, and <code>after</code>.",
+            "placeholder": "{\"this_month\": true}",
+            "section": "people_data"
           },
           {
             "key": "collection_mode",
@@ -44369,45 +45650,61 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "scope"
           },
           {
-            "key": "visible_home",
-            "label": "Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id",
+            "section": "scope"
           },
           {
-            "key": "visible_library",
-            "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex",
+            "section": "scope"
           },
           {
-            "key": "visible_shared",
-            "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority",
-            "label": "Hub Priority",
+            "key": "limit",
+            "label": "Limit",
             "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "tooltip": "Changes the Builder Limit for each generated actor collection.",
+            "section": "scope",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
             "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home",
-              "visible_library",
-              "visible_shared"
-            ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "section": "scope"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the Kometa name_mapping value for generated collections in this Defaults File.",
+            "section": "scope",
+            "placeholder": "Custom name mapping"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Configure when collections in this Defaults File update by default.",
+            "section": "scope"
           },
           {
             "key": "sort_by",
@@ -44744,7 +46041,411 @@
                   "episode"
                 ]
               }
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "use_all",
+            "label": "Use All Child Collections",
+            "type": "toggle",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting.",
+            "default": true,
+            "section": "scope"
+          },
+          {
+            "key": "child_limit_overrides",
+            "label": "Limit Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for limit overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "25",
+            "dynamic_child_prefix": "limit_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Minimum Items Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for minimum items overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "2",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Name Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for name overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "Custom collection name",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Sort Order Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sort order overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "01, 02, etc.",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Schedule Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for schedule overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "weekly(sunday)",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_sort_by_overrides",
+            "label": "Sort By Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for sort by overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "title.asc, release.desc, etc.",
+            "dynamic_child_prefix": "sort_by_",
+            "dynamic_child_value_kind": "select",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Summary Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for summary overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "Custom collection summary",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_tmdb_person_offset_overrides",
+            "label": "TMDb Person Offset Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for tmdb person offset overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "0, 1, 2, etc.",
+            "dynamic_child_prefix": "tmdb_person_offset_",
+            "dynamic_child_value_kind": "integer",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_use_overrides",
+            "label": "Use Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for use overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "use_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "child_override_maps",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Background File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for background file overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "C:\\Path\\To\\background.jpg",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Logo File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for logo file overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "C:\\Path\\To\\logo.png",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Poster File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for poster file overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "C:\\Path\\To\\poster.jpg",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Square Art File Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for square art file overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "C:\\Path\\To\\square-art.png",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Background URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for background url overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "https://example.com/background.jpg",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Logo URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for logo url overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "https://example.com/logo.png",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Poster URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for poster url overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Square Art URL Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for square art url overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "https://example.com/square-art.png",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "section": "artwork",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "validation_preset": "url"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\background.jpg"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\logo.png"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\poster.jpg"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "C:\\Path\\To\\square-art.png"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Override the default artwork source for all child collections in this Defaults File.",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url"
+          },
+          {
+            "key": "child_hub_priority_overrides",
+            "label": "Hub Priority Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for hub priority overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "1, 2, etc.",
+            "dynamic_child_prefix": "hub_priority_",
+            "dynamic_child_value_kind": "string",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for item radarr tag overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "media_types": [
+              "movie"
             ]
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for item sonarr tag overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "tag1, tag2",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_visible_home_overrides",
+            "label": "Visible Home Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible home overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_home_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_visible_library_overrides",
+            "label": "Visible Library Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible library overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_library_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "child_visible_shared_overrides",
+            "label": "Visible Shared Overrides",
+            "type": "mapping_list",
+            "tooltip": "Map a child key to an override for visible shared overrides.",
+            "key_placeholder": "Actor name (e.g. Tom Hanks)",
+            "value_placeholder": "true or false",
+            "dynamic_child_prefix": "visible_shared_",
+            "dynamic_child_value_kind": "boolean",
+            "section": "visibility",
+            "label_width": 320,
+            "key_validation_preset": "name_like"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home",
+              "visible_library",
+              "visible_shared"
+            ],
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
           },
           {
             "key": "item_radarr_tag",
@@ -44754,7 +46455,8 @@
             "placeholder": "Add item Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "visibility"
           },
           {
             "key": "item_sonarr_tag",
@@ -44764,7 +46466,63 @@
             "placeholder": "Add item Sonarr tag",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "visibility"
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics",
+            "default_open": true
+          },
+          {
+            "id": "naming",
+            "label": "Naming"
+          },
+          {
+            "id": "people_data",
+            "label": "People Data"
+          },
+          {
+            "id": "scope",
+            "label": "Scope and Filtering"
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Per-Actor Overrides"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility and Item Tags"
           }
         ]
       },

@@ -197,3 +197,69 @@ def test_apply_template_var_normalizers_expands_network_dynamic_child_override_m
     assert template_vars["visible_shared_Showtime"] is True
     assert template_vars["hub_priority_Disney+"] == "5"
     assert template_vars["item_sonarr_tag_Apple TV"] == ["streaming", "tv"]
+
+
+def test_apply_template_var_normalizers_expands_genre_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"Action": "false"}',
+        "child_schedule_overrides": '{"Comedy": "weekly(sunday)"}',
+        "child_sort_by_overrides": '{"Drama": "title.asc"}',
+        "child_limit_overrides": '{"Horror": "25"}',
+        "child_minimum_items_overrides": '{"Sci-Fi": "3"}',
+        "child_file_poster_overrides": '{"Action": "C:\\\\Posters\\\\action.jpg"}',
+        "child_url_poster_overrides": '{"Comedy": "https://example.com/comedy.jpg"}',
+        "child_visible_home_overrides": '{"Drama": "true"}',
+        "child_item_radarr_tag_overrides": '{"Horror": ["genre", "horror"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "genre")
+
+    assert template_vars["use_Action"] is False
+    assert template_vars["schedule_Comedy"] == "weekly(sunday)"
+    assert template_vars["sort_by_Drama"] == "title.asc"
+    assert template_vars["limit_Horror"] == 25
+    assert template_vars["minimum_items_Sci-Fi"] == 3
+    assert template_vars["file_poster_Action"] == r"C:\Posters\action.jpg"
+    assert template_vars["url_poster_Comedy"] == "https://example.com/comedy.jpg"
+    assert template_vars["visible_home_Drama"] is True
+    assert template_vars["item_radarr_tag_Horror"] == ["genre", "horror"]
+
+
+def test_apply_template_var_normalizers_expands_other_chart_dynamic_child_override_maps():
+    template_vars = {
+        "child_schedule_overrides": '{"metacritic": "weekly(friday)"}',
+        "child_sync_mode_overrides": '{"commonsense": "append"}',
+        "child_collection_order_overrides": '{"pirated": "custom"}',
+        "child_cache_builders_overrides": '{"stevenlu": "2"}',
+        "child_file_logo_overrides": '{"commonsense": "C:\\\\Logos\\\\css.png"}',
+        "child_radarr_search_overrides": '{"pirated": "false"}',
+        "child_sonarr_add_missing_overrides": '{"metacritic": "true"}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "other_chart")
+
+    assert template_vars["schedule_metacritic"] == "weekly(friday)"
+    assert template_vars["sync_mode_commonsense"] == "append"
+    assert template_vars["collection_order_pirated"] == "custom"
+    assert template_vars["cache_builders_stevenlu"] == "2"
+    assert template_vars["file_logo_commonsense"] == r"C:\Logos\css.png"
+    assert template_vars["radarr_search_pirated"] is False
+    assert template_vars["sonarr_add_missing_metacritic"] is True
+
+
+def test_apply_template_var_normalizers_expands_actor_dynamic_child_override_maps():
+    template_vars = {
+        "child_name_overrides": '{"Tom Hanks": "Hanks Favorites"}',
+        "child_tmdb_person_offset_overrides": '{"Tom Hanks": "1"}',
+        "child_limit_overrides": '{"Tom Hanks": "50"}',
+        "child_file_poster_overrides": '{"Tom Hanks": "C:\\\\Posters\\\\tom-hanks.jpg"}',
+        "child_visible_library_overrides": '{"Tom Hanks": "false"}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "actor")
+
+    assert template_vars["name_Tom Hanks"] == "Hanks Favorites"
+    assert template_vars["tmdb_person_offset_Tom Hanks"] == 1
+    assert template_vars["limit_Tom Hanks"] == 50
+    assert template_vars["file_poster_Tom Hanks"] == r"C:\Posters\tom-hanks.jpg"
+    assert template_vars["visible_library_Tom Hanks"] is False

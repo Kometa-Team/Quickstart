@@ -579,3 +579,115 @@ def test_prepare_import_payload_collapses_network_dynamic_child_template_variabl
     assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_item_sonarr_tag_overrides"]) == {"Apple TV": "streaming,tv"}
     assert any("libraries.Shows.collection_files[0].template_variables.use_Apple TV" in line for line in report.lines)
     assert any("libraries.Shows.collection_files[0].template_variables.summary_Disney+" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_genre_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "genre",
+                            "template_variables": {
+                                "use_Action": False,
+                                "schedule_Comedy": "weekly(sunday)",
+                                "sort_by_Drama": "title.asc",
+                                "limit_Horror": 25,
+                                "minimum_items_Sci-Fi": 3,
+                                "file_poster_Action": r"C:\Posters\action.jpg",
+                                "url_poster_Comedy": "https://example.com/comedy.jpg",
+                                "visible_home_Drama": True,
+                                "item_radarr_tag_Horror": ["genre", "horror"],
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_genre"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_use_overrides"]) == {"Action": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_schedule_overrides"]) == {"Comedy": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_sort_by_overrides"]) == {"Drama": "title.asc"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_limit_overrides"]) == {"Horror": "25"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_minimum_items_overrides"]) == {"Sci-Fi": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_file_poster_overrides"]) == {"Action": r"C:\Posters\action.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_url_poster_overrides"]) == {"Comedy": "https://example.com/comedy.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_visible_home_overrides"]) == {"Drama": "true"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_genre_child_item_radarr_tag_overrides"]) == {"Horror": "genre,horror"}
+    assert any("libraries.Movies.collection_files[0].template_variables.file_poster_Action" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_other_chart_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "other_chart",
+                            "template_variables": {
+                                "schedule_metacritic": "weekly(friday)",
+                                "sync_mode_commonsense": "append",
+                                "collection_order_pirated": "custom",
+                                "cache_builders_stevenlu": 2,
+                                "file_logo_commonsense": r"C:\Logos\css.png",
+                                "radarr_search_pirated": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_other_chart"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_other_chart_child_schedule_overrides"]) == {"metacritic": "weekly(friday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_other_chart_child_sync_mode_overrides"]) == {"commonsense": "append"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_other_chart_child_collection_order_overrides"]) == {"pirated": "custom"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_other_chart_child_cache_builders_overrides"]) == {"stevenlu": "2"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_other_chart_child_file_logo_overrides"]) == {"commonsense": r"C:\Logos\css.png"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_other_chart_child_radarr_search_overrides"]) == {"pirated": "false"}
+    assert any("libraries.Movies.collection_files[0].template_variables.radarr_search_pirated" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_actor_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "actor",
+                            "template_variables": {
+                                "name_Tom Hanks": "Hanks Favorites",
+                                "tmdb_person_offset_Tom Hanks": 1,
+                                "limit_Tom Hanks": 50,
+                                "file_poster_Tom Hanks": r"C:\Posters\tom-hanks.jpg",
+                                "visible_library_Tom Hanks": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_actor"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_name_overrides"]) == {"Tom Hanks": "Hanks Favorites"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_tmdb_person_offset_overrides"]) == {"Tom Hanks": "1"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_limit_overrides"]) == {"Tom Hanks": "50"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_file_poster_overrides"]) == {"Tom Hanks": r"C:\Posters\tom-hanks.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_visible_library_overrides"]) == {"Tom Hanks": "false"}
+    assert any("libraries.Movies.collection_files[0].template_variables.tmdb_person_offset_Tom Hanks" in line for line in report.lines)
