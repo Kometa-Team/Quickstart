@@ -310,3 +310,55 @@ def test_prepare_import_payload_collapses_universe_dynamic_child_template_variab
     assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_folder_overrides"] == '{"avp": "C:\\\\Media\\\\Movies"}'
     assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_search_overrides"] == '{"avp": "false"}'
     assert any("libraries.Movies.collection_files[0].template_variables.url_poster_avp" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_streaming_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "streaming",
+                            "template_variables": {
+                                "use_amc": False,
+                                "use_movistar": False,
+                                "schedule_amc": "weekly(sunday)",
+                                "sort_by_filmin": "title.asc",
+                                "delete_collections_named_appletv": ["Apple TV+ Movies", "Apple TV+ Shows"],
+                                "discover_with_atresplayer": "62|2162",
+                                "url_logo_movistar": "https://example.com/movistar.png",
+                                "radarr_folder_amc": r"C:\Media\Movies\AMC",
+                                "radarr_tag_filmin": ["filmin", "euro"],
+                                "radarr_monitor_movistar": True,
+                                "sonarr_folder_amc": r"C:\Media\Shows\AMC",
+                                "sonarr_monitor_filmin": "future",
+                                "sonarr_search_atresplayer": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_streaming"] is True
+    assert libraries_payload["mov-library_movies-template_collection_streaming_use_amc"] is False
+    assert libraries_payload["mov-library_movies-template_collection_streaming_use_movistar"] is False
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_schedule_overrides"] == '{"amc": "weekly(sunday)"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_sort_by_overrides"] == '{"filmin": "title.asc"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_delete_collections_named_overrides"] == '{"appletv": "Apple TV+ Movies,Apple TV+ Shows"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_discover_with_overrides"] == '{"atresplayer": "62|2162"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_url_logo_overrides"] == '{"movistar": "https://example.com/movistar.png"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_radarr_folder_overrides"] == '{"amc": "C:\\\\Media\\\\Movies\\\\AMC"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_radarr_tag_overrides"] == '{"filmin": "filmin,euro"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_radarr_monitor_overrides"] == '{"movistar": "true"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_sonarr_folder_overrides"] == '{"amc": "C:\\\\Media\\\\Shows\\\\AMC"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_sonarr_monitor_overrides"] == '{"filmin": "future"}'
+    assert libraries_payload["mov-library_movies-template_collection_streaming_child_sonarr_search_overrides"] == '{"atresplayer": "false"}'
+    assert any("libraries.Movies.collection_files[0].template_variables.use_amc" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[0].template_variables.schedule_amc" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[0].template_variables.url_logo_movistar" in line for line in report.lines)
