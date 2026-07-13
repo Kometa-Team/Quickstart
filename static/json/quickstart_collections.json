@@ -6414,7 +6414,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "C\u00e9sar Awards",
+        "label": "César Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -7308,25 +7308,25 @@
           },
           {
             "key": "use_best",
-            "label": "C\u00e9sar Best Film Winners",
-            "tooltip": "Collection of C\u00e9sar Award Winners.",
+            "label": "César Best Film Winners",
+            "tooltip": "Collection of César Award Winners.",
             "type": "toggle",
             "default": true,
             "section": "award_children"
           },
           {
             "key": "name_best",
-            "label": "C\u00e9sar Best Film Winners Name",
+            "label": "César Best Film Winners Name",
             "type": "text_input",
-            "tooltip": "Override the collection name for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Name Format value.",
+            "tooltip": "Override the collection name for the César Best Film Winners collection. Leave blank to inherit the family Name Format value.",
             "placeholder": "Custom collection name format",
             "section": "award_children"
           },
           {
             "key": "summary_best",
-            "label": "C\u00e9sar Best Film Winners Summary",
+            "label": "César Best Film Winners Summary",
             "type": "text_input",
-            "tooltip": "Override the collection summary for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
+            "tooltip": "Override the collection summary for the César Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
             "placeholder": "Custom collection summary format",
             "section": "award_children"
           },
@@ -7343,7 +7343,7 @@
           },
           {
             "key": "hub_priority_best",
-            "label": "C\u00e9sar Best Film Winners Hub Priority",
+            "label": "César Best Film Winners Hub Priority",
             "type": "text_input",
             "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
             "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
@@ -7364,9 +7364,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "C\u00e9sar Best Film Winners Visible Home",
+            "label": "César Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -7375,9 +7375,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "C\u00e9sar Best Film Winners Visible Library",
+            "label": "César Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -7386,9 +7386,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "C\u00e9sar Best Film Winners Visible Shared",
+            "label": "César Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -74385,42 +74385,48 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "080",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "basics"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
+            "placeholder": "Custom sort title format",
+            "section": "basics"
           },
           {
             "key": "name_format",
             "label": "Name Format",
             "type": "text_input",
             "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "defaults"
           },
           {
             "key": "summary_format",
             "label": "Summary Format",
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "defaults"
           },
           {
             "key": "title_format",
             "label": "Title Format",
             "type": "text_input",
             "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom dynamic collection title format"
+            "placeholder": "Custom dynamic collection title format",
+            "section": "basics"
           },
           {
             "key": "limit",
@@ -74429,21 +74435,24 @@
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "defaults"
           },
           {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "defaults"
           },
           {
             "key": "style",
@@ -74454,14 +74463,173 @@
             "options": [
               "color",
               "white"
-            ]
+            ],
+            "section": "defaults"
+          },
+          {
+            "key": "translation_key",
+            "label": "Translation Key",
+            "type": "text_input",
+            "tooltip": "Override the Kometa translation key used for generated names and summaries.",
+            "placeholder": "country",
+            "section": "defaults"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text_input",
+            "tooltip": "Override the Default-Images asset path used for generated posters.",
+            "placeholder": "country/white/France",
+            "section": "defaults"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Apply a default Kometa schedule to generated child collections.",
+            "section": "defaults"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the generated name_mapping value for this Defaults File.",
+            "placeholder": "Custom name mapping",
+            "section": "defaults"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "tooltip": "Collection names Kometa should delete before building this Defaults File.",
+            "placeholder": "Add collection title to delete",
+            "section": "defaults"
+          },
+          {
+            "key": "trakt_list",
+            "label": "Trakt List",
+            "type": "string_list",
+            "tooltip": "Additional Trakt lists to apply to each generated child collection.",
+            "placeholder": "https://trakt.tv/users/example/lists/list",
+            "validation_preset": "url",
+            "section": "scope"
+          },
+          {
+            "key": "search_term",
+            "label": "Search Term",
+            "type": "text_input",
+            "tooltip": "Movie geography collections use this smart-filter search term.",
+            "default": "country",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "search_term2",
+            "label": "Secondary Search Term",
+            "type": "text_input",
+            "tooltip": "Optional secondary movie smart-filter search term.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "search_value2",
+            "label": "Secondary Search Value",
+            "type": "text_input",
+            "tooltip": "Optional secondary movie smart-filter search value.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "type",
+            "label": "Smart Filter Type",
+            "type": "text_input",
+            "tooltip": "Optional movie smart-filter type override.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Default poster URL used when a child-specific poster override is not set.",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Default local poster file used when a child-specific poster override is not set.",
+            "placeholder": "C:\\Posters\\poster.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Default background URL used when a child-specific background override is not set.",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Default local background file used when a child-specific background override is not set.",
+            "placeholder": "C:\\Posters\\background.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Default logo URL used when a child-specific logo override is not set.",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Default local logo file used when a child-specific logo override is not set.",
+            "placeholder": "C:\\Posters\\logo.png",
+            "section": "artwork"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Default square-art URL used when a child-specific square-art override is not set.",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Default local square-art file used when a child-specific square-art override is not set.",
+            "placeholder": "C:\\Posters\\square-art.png",
+            "section": "artwork"
           },
           {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "defaults"
           },
           {
             "key": "name_other",
@@ -74492,21 +74660,27 @@
             "type": "string_list",
             "tooltip": "Only create collections for these countries. Kometa code allows this with Exclude, but the wiki says not to combine them.",
             "placeholder": "Add country (e.g. France)",
-            "mutually_exclusive_with": "exclude"
+            "mutually_exclusive_with": "exclude",
+            "section": "scope",
+            "validation_preset": "country_name_key"
           },
           {
             "key": "append_include",
             "label": "Append Include",
             "type": "string_list",
             "tooltip": "Append additional countries to the default include list for this Defaults File.",
-            "placeholder": "Add country (e.g. France)"
+            "placeholder": "Add country (e.g. France)",
+            "section": "scope",
+            "validation_preset": "country_name_key"
           },
           {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
-            "placeholder": "Add country name (e.g. France)"
+            "placeholder": "Add country name (e.g. France)",
+            "section": "scope",
+            "validation_preset": "country_name_key"
           },
           {
             "key": "addons",
@@ -74514,7 +74688,8 @@
             "type": "mapping_list",
             "tooltip": "Map a base value to additional countries that should be grouped into that collection.",
             "key_placeholder": "Base country (e.g. France)",
-            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)",
+            "section": "scope"
           },
           {
             "key": "append_addons",
@@ -74522,7 +74697,8 @@
             "type": "mapping_list",
             "tooltip": "Append additional countries mappings to the default addons dictionary for this Defaults File.",
             "key_placeholder": "Base country (e.g. France)",
-            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)",
+            "section": "scope"
           },
           {
             "key": "minimum_items",
@@ -74531,7 +74707,8 @@
             "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "ignore_ids",
@@ -74539,7 +74716,8 @@
             "type": "string_list",
             "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
             "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
+            "validation_preset": "numeric_id",
+            "section": "scope"
           },
           {
             "key": "ignore_imdb_ids",
@@ -74547,7 +74725,8 @@
             "type": "string_list",
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "validation_preset": "imdb_id_plex",
+            "section": "scope"
           },
           {
             "key": "item_radarr_tag",
@@ -74557,24 +74736,8 @@
             "placeholder": "Add item Radarr tag",
             "media_types": [
               "movie"
-            ]
-          },
-          {
-            "key": "sync_mode",
-            "label": "Sync Mode",
-            "type": "select",
-            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
-            "default": "sync",
-            "options": [
-              {
-                "value": "append",
-                "label": "Append"
-              },
-              {
-                "value": "sync",
-                "label": "Sync"
-              }
-            ]
+            ],
+            "section": "defaults"
           },
           {
             "key": "collection_mode",
@@ -74599,28 +74762,32 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "visible_home",
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "hub_priority",
@@ -74637,28 +74804,32 @@
               "visible_library",
               "visible_shared"
             ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
           },
           {
             "key": "visible_home_other",
             "label": "Other Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_library_other",
             "label": "Other Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_shared_other",
             "label": "Other Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "hub_priority_other",
@@ -74675,7 +74846,280 @@
               "visible_library_other",
               "visible_shared_other"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "child_use_overrides",
+            "label": "Countries Use Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "use_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Countries Name Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "Custom collection name",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Countries Summary Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "Custom collection summary",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Countries Sort Order Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "01",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Countries Schedule Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "weekly(sunday)",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_sort_by_overrides",
+            "label": "Countries Sort By Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "sort_by_",
+            "dynamic_child_value_kind": "select",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "release.desc"
+          },
+          {
+            "key": "child_limit_overrides",
+            "label": "Countries Limit Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "limit_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "25"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Countries Minimum Items Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "2"
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Countries Poster URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Countries Poster File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "C:\\Posters\\poster.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Countries Background URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Countries Background File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "C:\\Posters\\background.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Countries Logo URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Countries Logo File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "C:\\Posters\\logo.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Countries Square Art URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Countries Square Art File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "C:\\Posters\\square-art.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_visible_home_overrides",
+            "label": "Countries Visible Home Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_home_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_visible_library_overrides",
+            "label": "Countries Visible Library Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_library_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_visible_shared_overrides",
+            "label": "Countries Visible Shared Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_shared_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_hub_priority_overrides",
+            "label": "Countries Hub Priority Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "hub_priority_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "1",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Countries Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "section": "defaults",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "key_validation_preset": "country_name_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. France)",
+            "value_placeholder": "collection,tracked",
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "sort_by",
@@ -75012,7 +75456,34 @@
                   "episode"
                 ]
               }
-            ]
+            ],
+            "section": "defaults"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics"
+          },
+          {
+            "id": "scope",
+            "label": "Scope"
+          },
+          {
+            "id": "defaults",
+            "label": "Defaults"
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Child Override Maps"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           }
         ]
       },
@@ -75031,42 +75502,48 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "basics"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
+            "placeholder": "Custom sort title format",
+            "section": "basics"
           },
           {
             "key": "name_format",
             "label": "Name Format",
             "type": "text_input",
             "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "defaults"
           },
           {
             "key": "summary_format",
             "label": "Summary Format",
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "defaults"
           },
           {
             "key": "title_format",
             "label": "Title Format",
             "type": "text_input",
             "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom dynamic collection title format"
+            "placeholder": "Custom dynamic collection title format",
+            "section": "basics"
           },
           {
             "key": "limit",
@@ -75075,21 +75552,24 @@
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "defaults"
           },
           {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "defaults"
           },
           {
             "key": "style",
@@ -75100,14 +75580,163 @@
             "options": [
               "color",
               "white"
-            ]
+            ],
+            "section": "defaults"
+          },
+          {
+            "key": "translation_key",
+            "label": "Translation Key",
+            "type": "text_input",
+            "tooltip": "Override the Kometa translation key used for generated names and summaries.",
+            "placeholder": "country",
+            "section": "defaults"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text_input",
+            "tooltip": "Override the Default-Images asset path used for generated posters.",
+            "placeholder": "country/white/France",
+            "section": "defaults"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Apply a default Kometa schedule to generated child collections.",
+            "section": "defaults"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the generated name_mapping value for this Defaults File.",
+            "placeholder": "Custom name mapping",
+            "section": "defaults"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "tooltip": "Collection names Kometa should delete before building this Defaults File.",
+            "placeholder": "Add collection title to delete",
+            "section": "defaults"
+          },
+          {
+            "key": "trakt_list",
+            "label": "Trakt List",
+            "type": "string_list",
+            "tooltip": "Additional Trakt lists to apply to each generated child collection.",
+            "placeholder": "https://trakt.tv/users/example/lists/list",
+            "validation_preset": "url",
+            "section": "scope"
+          },
+          {
+            "key": "filter_term",
+            "label": "Filter Term",
+            "type": "text_input",
+            "tooltip": "Show geography collections use this filter term.",
+            "default": "origin_country",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_term2",
+            "label": "Secondary Filter Term",
+            "type": "text_input",
+            "tooltip": "Optional secondary show filter term.",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_value2",
+            "label": "Secondary Filter Value",
+            "type": "text_input",
+            "tooltip": "Optional secondary show filter value.",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Default poster URL used when a child-specific poster override is not set.",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Default local poster file used when a child-specific poster override is not set.",
+            "placeholder": "C:\\Posters\\poster.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Default background URL used when a child-specific background override is not set.",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Default local background file used when a child-specific background override is not set.",
+            "placeholder": "C:\\Posters\\background.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Default logo URL used when a child-specific logo override is not set.",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Default local logo file used when a child-specific logo override is not set.",
+            "placeholder": "C:\\Posters\\logo.png",
+            "section": "artwork"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Default square-art URL used when a child-specific square-art override is not set.",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Default local square-art file used when a child-specific square-art override is not set.",
+            "placeholder": "C:\\Posters\\square-art.png",
+            "section": "artwork"
           },
           {
             "key": "use_other",
             "label": "Other",
             "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "defaults"
           },
           {
             "key": "name_other",
@@ -75138,21 +75767,27 @@
             "type": "string_list",
             "tooltip": "Only create collections for these countries. Kometa code allows this with Exclude, but the wiki says not to combine them.",
             "placeholder": "Add country (e.g. France)",
-            "mutually_exclusive_with": "exclude"
+            "mutually_exclusive_with": "exclude",
+            "section": "scope",
+            "validation_preset": "country_code_key"
           },
           {
             "key": "append_include",
             "label": "Append Include",
             "type": "string_list",
             "tooltip": "Append additional countries to the default include list for this Defaults File.",
-            "placeholder": "Add country (e.g. France)"
+            "placeholder": "Add country (e.g. France)",
+            "section": "scope",
+            "validation_preset": "country_code_key"
           },
           {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific countries from these collections.",
-            "placeholder": "Add country name (e.g. France)"
+            "placeholder": "Add country name (e.g. France)",
+            "section": "scope",
+            "validation_preset": "country_code_key"
           },
           {
             "key": "addons",
@@ -75160,7 +75795,8 @@
             "type": "mapping_list",
             "tooltip": "Map a base value to additional countries that should be grouped into that collection.",
             "key_placeholder": "Base country (e.g. France)",
-            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)",
+            "section": "scope"
           },
           {
             "key": "append_addons",
@@ -75168,7 +75804,8 @@
             "type": "mapping_list",
             "tooltip": "Append additional countries mappings to the default addons dictionary for this Defaults File.",
             "key_placeholder": "Base country (e.g. France)",
-            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)"
+            "value_placeholder": "Add comma-separated countries (e.g. Belgium, Switzerland)",
+            "section": "scope"
           },
           {
             "key": "minimum_items",
@@ -75177,7 +75814,8 @@
             "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "ignore_ids",
@@ -75185,7 +75823,8 @@
             "type": "string_list",
             "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
             "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
+            "validation_preset": "numeric_id",
+            "section": "scope"
           },
           {
             "key": "ignore_imdb_ids",
@@ -75193,7 +75832,8 @@
             "type": "string_list",
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "validation_preset": "imdb_id_plex",
+            "section": "scope"
           },
           {
             "key": "item_sonarr_tag",
@@ -75203,7 +75843,8 @@
             "placeholder": "Add item Sonarr tag",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "defaults"
           },
           {
             "key": "sync_mode",
@@ -75220,6 +75861,10 @@
                 "value": "sync",
                 "label": "Sync"
               }
+            ],
+            "section": "basics",
+            "media_types": [
+              "show"
             ]
           },
           {
@@ -75245,28 +75890,32 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "visible_home",
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "hub_priority",
@@ -75283,28 +75932,32 @@
               "visible_library",
               "visible_shared"
             ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
           },
           {
             "key": "visible_home_other",
             "label": "Other Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Other collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_library_other",
             "label": "Other Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Other collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_shared_other",
             "label": "Other Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Other collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "hub_priority_other",
@@ -75321,7 +75974,295 @@
               "visible_library_other",
               "visible_shared_other"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "child_use_overrides",
+            "label": "Countries Use Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "use_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Countries Name Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "Custom collection name",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Countries Summary Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "Custom collection summary",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Countries Sort Order Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "01",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Countries Schedule Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "weekly(sunday)",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_sort_by_overrides",
+            "label": "Countries Sort By Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "sort_by_",
+            "dynamic_child_value_kind": "select",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "release.desc"
+          },
+          {
+            "key": "child_limit_overrides",
+            "label": "Countries Limit Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "limit_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "25"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Countries Minimum Items Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "2"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Countries Sync Mode Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "append or sync",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Countries Poster URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Countries Poster File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "C:\\Posters\\poster.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Countries Background URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Countries Background File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "C:\\Posters\\background.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Countries Logo URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Countries Logo File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "C:\\Posters\\logo.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Countries Square Art URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Countries Square Art File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "C:\\Posters\\square-art.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_visible_home_overrides",
+            "label": "Countries Visible Home Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_home_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_visible_library_overrides",
+            "label": "Countries Visible Library Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_library_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_visible_shared_overrides",
+            "label": "Countries Visible Shared Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_shared_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_hub_priority_overrides",
+            "label": "Countries Hub Priority Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "hub_priority_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "1",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Countries Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "section": "defaults",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "key_validation_preset": "country_code_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Country key (e.g. fr)",
+            "value_placeholder": "collection,tracked",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sort_by",
@@ -75658,7 +76599,34 @@
                   "episode"
                 ]
               }
-            ]
+            ],
+            "section": "defaults"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics"
+          },
+          {
+            "id": "scope",
+            "label": "Scope"
+          },
+          {
+            "id": "defaults",
+            "label": "Defaults"
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Child Override Maps"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           }
         ]
       },
@@ -75703,7 +76671,7 @@
             "type": "text_input",
             "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection name format",
-            "section": "basics"
+            "section": "defaults"
           },
           {
             "key": "summary_format",
@@ -75711,7 +76679,7 @@
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
             "placeholder": "Custom collection summary format",
-            "section": "basics"
+            "section": "defaults"
           },
           {
             "key": "title_format",
@@ -75745,7 +76713,7 @@
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
-            "section": "basics"
+            "section": "defaults"
           },
           {
             "key": "use_separator",
@@ -75753,7 +76721,7 @@
             "tooltip": "Create a separator collection before this set of collections.",
             "type": "toggle",
             "default": true,
-            "section": "basics"
+            "section": "defaults"
           },
           {
             "key": "style",
@@ -75765,7 +76733,136 @@
               "color",
               "white"
             ],
-            "section": "basics"
+            "section": "defaults"
+          },
+          {
+            "key": "translation_key",
+            "label": "Translation Key",
+            "type": "text_input",
+            "tooltip": "Override the Kometa translation key used for generated names and summaries.",
+            "placeholder": "country",
+            "section": "defaults"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text_input",
+            "tooltip": "Override the Default-Images asset path used for generated posters.",
+            "placeholder": "country/white/France",
+            "section": "defaults"
+          },
+          {
+            "key": "trakt_list",
+            "label": "Trakt List",
+            "type": "string_list",
+            "tooltip": "Additional Trakt lists to apply to each generated child collection.",
+            "placeholder": "https://trakt.tv/users/example/lists/list",
+            "validation_preset": "url",
+            "section": "scope"
+          },
+          {
+            "key": "search_term",
+            "label": "Search Term",
+            "type": "text_input",
+            "tooltip": "Movie geography collections use this smart-filter search term.",
+            "default": "country",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_term",
+            "label": "Filter Term",
+            "type": "text_input",
+            "tooltip": "Show geography collections use this filter term.",
+            "default": "origin_country",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "search_term2",
+            "label": "Secondary Search Term",
+            "type": "text_input",
+            "tooltip": "Optional secondary movie smart-filter search term.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "search_value2",
+            "label": "Secondary Search Value",
+            "type": "text_input",
+            "tooltip": "Optional secondary movie smart-filter search value.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_term2",
+            "label": "Secondary Filter Term",
+            "type": "text_input",
+            "tooltip": "Optional secondary show filter term.",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_value2",
+            "label": "Secondary Filter Value",
+            "type": "text_input",
+            "tooltip": "Optional secondary show filter value.",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "type",
+            "label": "Smart Filter Type",
+            "type": "text_input",
+            "tooltip": "Optional movie smart-filter type override.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Default local poster file used when a child-specific poster override is not set.",
+            "placeholder": "C:\\Posters\\poster.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Default local background file used when a child-specific background override is not set.",
+            "placeholder": "C:\\Posters\\background.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Default local logo file used when a child-specific logo override is not set.",
+            "placeholder": "C:\\Posters\\logo.png",
+            "section": "artwork"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Default local square-art file used when a child-specific square-art override is not set.",
+            "placeholder": "C:\\Posters\\square-art.png",
+            "section": "artwork"
           },
           {
             "key": "include",
@@ -75774,7 +76871,8 @@
             "tooltip": "Only create collections for these regions. Kometa code allows this with Exclude, but the wiki says not to combine them.",
             "placeholder": "Add region (e.g. US)",
             "mutually_exclusive_with": "exclude",
-            "section": "scope"
+            "section": "scope",
+            "validation_preset": "region_key"
           },
           {
             "key": "append_include",
@@ -75782,7 +76880,8 @@
             "type": "string_list",
             "tooltip": "Append additional regions to the default include list for this Defaults File.",
             "placeholder": "Add region (e.g. US)",
-            "section": "scope"
+            "section": "scope",
+            "validation_preset": "region_key"
           },
           {
             "key": "exclude",
@@ -75790,7 +76889,8 @@
             "type": "string_list",
             "tooltip": "Exclude specific regions from these collections.",
             "placeholder": "Add region name (e.g. Melanesia)",
-            "section": "scope"
+            "section": "scope",
+            "validation_preset": "region_key"
           },
           {
             "key": "addons",
@@ -75818,7 +76918,7 @@
             "input_type": "number",
             "min": 1,
             "step": 1,
-            "section": "scope"
+            "section": "basics"
           },
           {
             "key": "ignore_ids",
@@ -75908,7 +77008,7 @@
                 "label": "Show this Collection and its Items"
               }
             ],
-            "section": "defaults"
+            "section": "basics"
           },
           {
             "key": "visible_home",
@@ -75916,7 +77016,7 @@
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
-            "section": "defaults"
+            "section": "visibility"
           },
           {
             "key": "visible_library",
@@ -75924,7 +77024,7 @@
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
-            "section": "defaults"
+            "section": "visibility"
           },
           {
             "key": "visible_shared",
@@ -75932,7 +77032,7 @@
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
-            "section": "defaults"
+            "section": "visibility"
           },
           {
             "key": "hub_priority",
@@ -75950,7 +77050,7 @@
               "visible_shared"
             ],
             "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
-            "section": "defaults"
+            "section": "visibility"
           },
           {
             "key": "sort_by",
@@ -76292,7 +77392,7 @@
           },
           {
             "key": "child_use_overrides",
-            "label": "Region Enable Overrides",
+            "label": "Regions Use Overrides",
             "type": "mapping_list",
             "tooltip": "Map a region key to true or false. Quickstart exports these as <code>use_&lt;&lt;key&gt;&gt;</code> template variables.",
             "dynamic_child_prefix": "use_",
@@ -76300,119 +77400,112 @@
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "true or false",
-            "section": "child_override_maps"
-          },
-          {
-            "key": "child_name_mapping_overrides",
-            "label": "Streaming Name Mapping Overrides",
-            "type": "mapping_list",
-            "tooltip": "Map a streaming service key to a custom name_mapping value. Quickstart exports these as <code>name_mapping_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
-            "key_validation_preset": "region_key",
-            "key_input_mode": "select",
-            "value_placeholder": "Custom name mapping",
-            "dynamic_child_prefix": "name_mapping_",
-            "dynamic_child_value_kind": "string",
-            "section": "child_override_maps"
+            "section": "child_override_maps",
+            "key_placeholder": "Region key (e.g. Western Europe)"
           },
           {
             "key": "child_schedule_overrides",
-            "label": "Streaming Schedule Overrides",
+            "label": "Regions Schedule Overrides",
             "type": "mapping_list",
             "tooltip": "Map a streaming service key to a custom schedule. Quickstart exports these as <code>schedule_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "weekly(sunday)",
             "dynamic_child_prefix": "schedule_",
             "dynamic_child_value_kind": "string",
-            "section": "child_override_maps"
+            "section": "child_override_maps",
+            "lookup_display_mode": "inline"
           },
           {
             "key": "child_sort_by_overrides",
-            "label": "Streaming Sort By Overrides",
+            "label": "Regions Sort By Overrides",
             "type": "mapping_list",
             "tooltip": "Map a streaming service key to a smart filter sort override. Quickstart exports these as <code>sort_by_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
-            "value_placeholder": "release.desc, title.asc, random, etc.",
+            "value_placeholder": "release.desc",
             "dynamic_child_prefix": "sort_by_",
             "dynamic_child_value_kind": "select",
             "section": "child_override_maps"
           },
           {
             "key": "child_limit_overrides",
-            "label": "Region Limit Overrides",
+            "label": "Regions Limit Overrides",
             "type": "mapping_list",
             "tooltip": "Map a region key to a limit override. Quickstart exports these as <code>limit_&lt;&lt;key&gt;&gt;</code> template variables.",
             "dynamic_child_prefix": "limit_",
             "dynamic_child_value_kind": "integer",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
-            "value_placeholder": "Limit override",
-            "section": "child_override_maps"
+            "value_placeholder": "25",
+            "section": "child_override_maps",
+            "key_placeholder": "Region key (e.g. Western Europe)"
           },
           {
             "key": "child_url_poster_overrides",
-            "label": "Franchise Poster URL Overrides",
+            "label": "Regions Poster URL Overrides",
             "type": "mapping_list",
             "tooltip": "Map a franchise child key to a custom poster URL. Quickstart exports these as <code>url_poster_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Franchise key (e.g. 10)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "value_placeholder": "https://example.com/poster.jpg",
             "validation_preset": "url",
             "key_validation_preset": "region_key",
             "lookup_display_mode": "inline",
             "dynamic_child_prefix": "url_poster_",
             "dynamic_child_value_kind": "string",
-            "section": "child_override_maps",
+            "section": "artwork",
             "key_input_mode": "select"
           },
           {
             "key": "child_url_background_overrides",
-            "label": "Streaming Background URL Overrides",
+            "label": "Regions Background URL Overrides",
             "type": "mapping_list",
             "tooltip": "Map a streaming service key to a custom background URL. Quickstart exports these as <code>url_background_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "https://example.com/background.jpg",
             "dynamic_child_prefix": "url_background_",
             "dynamic_child_value_kind": "string",
-            "section": "child_override_maps",
-            "validation_preset": "url"
+            "section": "artwork",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
           },
           {
             "key": "child_url_logo_overrides",
-            "label": "Streaming Logo URL Overrides",
+            "label": "Regions Logo URL Overrides",
             "type": "mapping_list",
             "tooltip": "Map a streaming service key to a custom logo URL. Quickstart exports these as <code>url_logo_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "https://example.com/logo.png",
             "dynamic_child_prefix": "url_logo_",
             "dynamic_child_value_kind": "string",
-            "section": "child_override_maps",
-            "validation_preset": "url"
+            "section": "artwork",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
           },
           {
             "key": "child_url_square_art_overrides",
-            "label": "Streaming Square Art URL Overrides",
+            "label": "Regions Square Art URL Overrides",
             "type": "mapping_list",
             "tooltip": "Map a streaming service key to a custom square art URL. Quickstart exports these as <code>url_square_art_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "https://example.com/square-art.png",
             "dynamic_child_prefix": "url_square_art_",
             "dynamic_child_value_kind": "string",
-            "section": "child_override_maps",
-            "validation_preset": "url"
+            "section": "artwork",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
           },
           {
             "key": "child_visible_home_overrides",
-            "label": "Region Visible Home Overrides",
+            "label": "Regions Visible Home Overrides",
             "type": "mapping_list",
             "tooltip": "Map a region key to true or false. Quickstart exports these as <code>visible_home_&lt;&lt;key&gt;&gt;</code> template variables.",
             "dynamic_child_prefix": "visible_home_",
@@ -76420,11 +77513,12 @@
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "true or false",
-            "section": "child_override_maps"
+            "section": "visibility",
+            "key_placeholder": "Region key (e.g. Western Europe)"
           },
           {
             "key": "child_visible_library_overrides",
-            "label": "Region Visible Library Overrides",
+            "label": "Regions Visible Library Overrides",
             "type": "mapping_list",
             "tooltip": "Map a region key to true or false. Quickstart exports these as <code>visible_library_&lt;&lt;key&gt;&gt;</code> template variables.",
             "dynamic_child_prefix": "visible_library_",
@@ -76432,11 +77526,12 @@
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "true or false",
-            "section": "child_override_maps"
+            "section": "visibility",
+            "key_placeholder": "Region key (e.g. Western Europe)"
           },
           {
             "key": "child_visible_shared_overrides",
-            "label": "Region Visible Shared Overrides",
+            "label": "Regions Visible Shared Overrides",
             "type": "mapping_list",
             "tooltip": "Map a region key to true or false. Quickstart exports these as <code>visible_shared_&lt;&lt;key&gt;&gt;</code> template variables.",
             "dynamic_child_prefix": "visible_shared_",
@@ -76444,32 +77539,35 @@
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
             "value_placeholder": "true or false",
-            "section": "child_override_maps"
+            "section": "visibility",
+            "key_placeholder": "Region key (e.g. Western Europe)"
           },
           {
             "key": "child_hub_priority_overrides",
-            "label": "Region Hub Priority Overrides",
+            "label": "Regions Hub Priority Overrides",
             "type": "mapping_list",
             "tooltip": "Map a region key to a hub priority override. Quickstart exports these as <code>hub_priority_&lt;&lt;key&gt;&gt;</code> template variables.",
             "dynamic_child_prefix": "hub_priority_",
             "dynamic_child_value_kind": "string",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
-            "value_placeholder": "Hub priority override",
-            "section": "child_override_maps"
+            "value_placeholder": "1",
+            "section": "visibility",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "lookup_display_mode": "inline"
           },
           {
             "key": "child_item_radarr_tag_overrides",
-            "label": "Franchise Item Radarr Tag Overrides",
+            "label": "Regions Item Radarr Tag Overrides",
             "type": "mapping_list",
             "tooltip": "Map a franchise child key to comma-separated item Radarr tags. Quickstart exports these as <code>item_radarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Franchise key (e.g. 10)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "value_placeholder": "collection,tracked",
             "key_validation_preset": "region_key",
             "lookup_display_mode": "inline",
             "dynamic_child_prefix": "item_radarr_tag_",
             "dynamic_child_value_kind": "string_list",
-            "section": "child_override_maps",
+            "section": "defaults",
             "key_input_mode": "select",
             "media_types": [
               "movie"
@@ -76477,16 +77575,16 @@
           },
           {
             "key": "child_item_sonarr_tag_overrides",
-            "label": "Streaming Item Sonarr Tag Overrides",
+            "label": "Regions Item Sonarr Tag Overrides",
             "type": "mapping_list",
             "tooltip": "Map a streaming service key to Sonarr item tags. Quickstart exports these as <code>item_sonarr_tag_&lt;&lt;key&gt;&gt;</code> template variables.",
-            "key_placeholder": "Streaming service key (e.g. netflix)",
+            "key_placeholder": "Region key (e.g. Western Europe)",
             "key_validation_preset": "region_key",
             "key_input_mode": "select",
-            "value_placeholder": "tag1, tag2",
+            "value_placeholder": "collection,tracked",
             "dynamic_child_prefix": "item_sonarr_tag_",
             "dynamic_child_value_kind": "string_list",
-            "section": "child_override_maps",
+            "section": "defaults",
             "media_types": [
               "show"
             ]
@@ -77358,6 +78456,10 @@
                 "value": "sync",
                 "label": "Sync"
               }
+            ],
+            "section": "basics",
+            "media_types": [
+              "show"
             ]
           },
           {
@@ -78367,53 +79469,174 @@
             ],
             "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
             "section": "regions_polar_other"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Regions Name Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "Custom collection name",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Regions Summary Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "Custom collection summary",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Regions Sort Order Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "01",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Regions Minimum Items Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "2"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Regions Sync Mode Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "append or sync",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Regions Poster File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "C:\\Posters\\poster.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Regions Background File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "C:\\Posters\\background.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Regions Logo File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "C:\\Posters\\logo.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Regions Square Art File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "region_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Region key (e.g. Western Europe)",
+            "value_placeholder": "C:\\Posters\\square-art.png",
+            "lookup_display_mode": "inline"
           }
         ],
         "template_variable_sections": [
           {
             "id": "basics",
-            "title": "Basics",
-            "default_open": true
+            "label": "Basics"
           },
           {
             "id": "scope",
-            "title": "Scope"
+            "label": "Scope"
           },
           {
             "id": "defaults",
-            "title": "Family Defaults"
+            "label": "Defaults"
           },
           {
             "id": "child_override_maps",
-            "title": "Child Override Maps"
+            "label": "Child Override Maps"
           },
           {
             "id": "artwork",
-            "title": "Artwork"
+            "label": "Artwork"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           },
           {
             "id": "regions_africa",
-            "title": "Africa Region Fields"
+            "label": "Africa"
           },
           {
             "id": "regions_americas",
-            "title": "Americas Region Fields"
+            "label": "Americas"
           },
           {
             "id": "regions_asia",
-            "title": "Asia Region Fields"
+            "label": "Asia"
           },
           {
             "id": "regions_europe",
-            "title": "Europe Region Fields"
+            "label": "Europe"
           },
           {
             "id": "regions_oceania",
-            "title": "Oceania Region Fields"
+            "label": "Oceania"
           },
           {
             "id": "regions_polar_other",
-            "title": "Polar and Other Region Fields"
+            "label": "Polar / Other"
           }
         ]
       },
@@ -78433,42 +79656,48 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "082",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "sort_prefix",
             "label": "Sort Prefix",
             "type": "text_input",
             "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
+            "placeholder": "e.g. !",
+            "section": "basics"
           },
           {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",
             "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
+            "placeholder": "Custom sort title format",
+            "section": "basics"
           },
           {
             "key": "name_format",
             "label": "Name Format",
             "type": "text_input",
             "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_format",
             "label": "Summary Format",
             "type": "text_input",
             "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "title_format",
             "label": "Title Format",
             "type": "text_input",
             "tooltip": "Override the generated dynamic collection title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom dynamic collection title format"
+            "placeholder": "Custom dynamic collection title format",
+            "section": "basics"
           },
           {
             "key": "limit",
@@ -78477,21 +79706,24 @@
             "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "use_separator",
             "label": "Use Separator",
             "tooltip": "Create a separator collection before this set of collections.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "style",
@@ -78502,28 +79734,220 @@
             "options": [
               "color",
               "white"
-            ]
+            ],
+            "section": "defaults"
+          },
+          {
+            "key": "translation_key",
+            "label": "Translation Key",
+            "type": "text_input",
+            "tooltip": "Override the Kometa translation key used for generated names and summaries.",
+            "placeholder": "country",
+            "section": "defaults"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text_input",
+            "tooltip": "Override the Default-Images asset path used for generated posters.",
+            "placeholder": "country/white/France",
+            "section": "defaults"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule Default",
+            "type": "schedule",
+            "tooltip": "Apply a default Kometa schedule to generated child collections.",
+            "section": "defaults"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping Default",
+            "type": "text_input",
+            "tooltip": "Override the generated name_mapping value for this Defaults File.",
+            "placeholder": "Custom name mapping",
+            "section": "continents"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "tooltip": "Collection names Kometa should delete before building this Defaults File.",
+            "placeholder": "Add collection title to delete",
+            "section": "defaults"
+          },
+          {
+            "key": "trakt_list",
+            "label": "Trakt List",
+            "type": "string_list",
+            "tooltip": "Additional Trakt lists to apply to each generated child collection.",
+            "placeholder": "https://trakt.tv/users/example/lists/list",
+            "validation_preset": "url",
+            "section": "scope"
+          },
+          {
+            "key": "search_term",
+            "label": "Search Term",
+            "type": "text_input",
+            "tooltip": "Movie geography collections use this smart-filter search term.",
+            "default": "country",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_term",
+            "label": "Filter Term",
+            "type": "text_input",
+            "tooltip": "Show geography collections use this filter term.",
+            "default": "origin_country",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "search_term2",
+            "label": "Secondary Search Term",
+            "type": "text_input",
+            "tooltip": "Optional secondary movie smart-filter search term.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "search_value2",
+            "label": "Secondary Search Value",
+            "type": "text_input",
+            "tooltip": "Optional secondary movie smart-filter search value.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_term2",
+            "label": "Secondary Filter Term",
+            "type": "text_input",
+            "tooltip": "Optional secondary show filter term.",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "filter_value2",
+            "label": "Secondary Filter Value",
+            "type": "text_input",
+            "tooltip": "Optional secondary show filter value.",
+            "media_types": [
+              "show"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "type",
+            "label": "Smart Filter Type",
+            "type": "text_input",
+            "tooltip": "Optional movie smart-filter type override.",
+            "media_types": [
+              "movie"
+            ],
+            "section": "scope"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL Default",
+            "type": "text_input",
+            "tooltip": "Default poster URL used when a child-specific poster override is not set.",
+            "placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File Default",
+            "type": "text_input",
+            "tooltip": "Default local poster file used when a child-specific poster override is not set.",
+            "placeholder": "C:\\Posters\\poster.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL Default",
+            "type": "text_input",
+            "tooltip": "Default background URL used when a child-specific background override is not set.",
+            "placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File Default",
+            "type": "text_input",
+            "tooltip": "Default local background file used when a child-specific background override is not set.",
+            "placeholder": "C:\\Posters\\background.jpg",
+            "section": "artwork"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL Default",
+            "type": "text_input",
+            "tooltip": "Default logo URL used when a child-specific logo override is not set.",
+            "placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File Default",
+            "type": "text_input",
+            "tooltip": "Default local logo file used when a child-specific logo override is not set.",
+            "placeholder": "C:\\Posters\\logo.png",
+            "section": "artwork"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL Default",
+            "type": "text_input",
+            "tooltip": "Default square-art URL used when a child-specific square-art override is not set.",
+            "placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "section": "artwork"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File Default",
+            "type": "text_input",
+            "tooltip": "Default local square-art file used when a child-specific square-art override is not set.",
+            "placeholder": "C:\\Posters\\square-art.png",
+            "section": "artwork"
           },
           {
             "key": "use_Africa",
             "label": "Africa",
             "tooltip": "Collection of Movies filmed in Africa.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_Africa",
             "label": "Africa Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Africa collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_Africa",
             "label": "Africa Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Africa collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_Africa",
@@ -78532,28 +79956,32 @@
             "tooltip": "Changes the Builder Limit of the Africa collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "use_Americas",
             "label": "Americas",
             "tooltip": "Collection of Movies filmed in Americas.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_Americas",
             "label": "Americas Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Americas collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_Americas",
             "label": "Americas Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Americas collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_Americas",
@@ -78562,28 +79990,32 @@
             "tooltip": "Changes the Builder Limit of the Americas collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "use_Antarctica",
             "label": "Antarctica",
             "tooltip": "Collection of Movies filmed in Antarctica.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_Antarctica",
             "label": "Antarctica Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Antarctica collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_Antarctica",
             "label": "Antarctica Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Antarctica collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_Antarctica",
@@ -78592,28 +80024,32 @@
             "tooltip": "Changes the Builder Limit of the Antarctica collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "use_Asia",
             "label": "Asia",
             "tooltip": "Collection of Movies filmed in Asia.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_Asia",
             "label": "Asia Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Asia collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_Asia",
             "label": "Asia Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Asia collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_Asia",
@@ -78622,28 +80058,32 @@
             "tooltip": "Changes the Builder Limit of the Asia collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "use_Europe",
             "label": "Europe",
             "tooltip": "Collection of Movies filmed in Europe.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_Europe",
             "label": "Europe Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Europe collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_Europe",
             "label": "Europe Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Europe collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_Europe",
@@ -78652,28 +80092,32 @@
             "tooltip": "Changes the Builder Limit of the Europe collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "use_Oceania",
             "label": "Oceania",
             "tooltip": "Collection of Movies filmed in Oceania.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_Oceania",
             "label": "Oceania Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Oceania collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_Oceania",
             "label": "Oceania Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Oceania collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_Oceania",
@@ -78682,28 +80126,32 @@
             "tooltip": "Changes the Builder Limit of the Oceania collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "use_other",
             "label": "Other Continents",
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "continents"
           },
           {
             "key": "name_other",
             "label": "Other Continents Name",
             "type": "text_input",
             "tooltip": "Override the collection name for the Other Continents collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
+            "placeholder": "Custom collection name format",
+            "section": "continents"
           },
           {
             "key": "summary_other",
             "label": "Other Continents Summary",
             "type": "text_input",
             "tooltip": "Override the collection summary for the Other Continents collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
+            "placeholder": "Custom collection summary format",
+            "section": "continents"
           },
           {
             "key": "limit_other",
@@ -78712,7 +80160,8 @@
             "tooltip": "Changes the Builder Limit of the Other Continents collection. Valid values are numbers greater than 0. Leave blank to inherit the family Limit value.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "continents"
           },
           {
             "key": "include",
@@ -78720,21 +80169,27 @@
             "type": "string_list",
             "tooltip": "Only create collections for these continents. Kometa code allows this with Exclude, but the wiki says not to combine them.",
             "placeholder": "Add continent (e.g. Europe)",
-            "mutually_exclusive_with": "exclude"
+            "mutually_exclusive_with": "exclude",
+            "section": "scope",
+            "validation_preset": "continent_key"
           },
           {
             "key": "append_include",
             "label": "Append Include",
             "type": "string_list",
             "tooltip": "Append additional continents to the default include list for this Defaults File.",
-            "placeholder": "Add continent (e.g. Europe)"
+            "placeholder": "Add continent (e.g. Europe)",
+            "section": "scope",
+            "validation_preset": "continent_key"
           },
           {
             "key": "exclude",
             "label": "Exclude",
             "type": "string_list",
             "tooltip": "Exclude specific continents from these collections.",
-            "placeholder": "Add continent name (e.g. Europe)"
+            "placeholder": "Add continent name (e.g. Europe)",
+            "section": "scope",
+            "validation_preset": "continent_key"
           },
           {
             "key": "addons",
@@ -78742,7 +80197,8 @@
             "type": "mapping_list",
             "tooltip": "Map a base value to additional continents that should be grouped into that collection.",
             "key_placeholder": "Base continent (e.g. Europe)",
-            "value_placeholder": "Add comma-separated continents (e.g. Asia, Africa)"
+            "value_placeholder": "Add comma-separated continents (e.g. Asia, Africa)",
+            "section": "scope"
           },
           {
             "key": "append_addons",
@@ -78750,7 +80206,8 @@
             "type": "mapping_list",
             "tooltip": "Append additional continents mappings to the default addons dictionary for this Defaults File.",
             "key_placeholder": "Base continent (e.g. Europe)",
-            "value_placeholder": "Add comma-separated continents (e.g. Asia, Africa)"
+            "value_placeholder": "Add comma-separated continents (e.g. Asia, Africa)",
+            "section": "scope"
           },
           {
             "key": "minimum_items",
@@ -78759,7 +80216,8 @@
             "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "ignore_ids",
@@ -78767,7 +80225,8 @@
             "type": "string_list",
             "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
             "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
+            "validation_preset": "numeric_id",
+            "section": "scope"
           },
           {
             "key": "ignore_imdb_ids",
@@ -78775,7 +80234,8 @@
             "type": "string_list",
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "validation_preset": "imdb_id_plex",
+            "section": "scope"
           },
           {
             "key": "item_radarr_tag",
@@ -78785,7 +80245,8 @@
             "placeholder": "Add item Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "defaults"
           },
           {
             "key": "item_sonarr_tag",
@@ -78795,7 +80256,8 @@
             "placeholder": "Add item Sonarr tag",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "defaults"
           },
           {
             "key": "sync_mode",
@@ -78812,6 +80274,10 @@
                 "value": "sync",
                 "label": "Sync"
               }
+            ],
+            "section": "basics",
+            "media_types": [
+              "show"
             ]
           },
           {
@@ -78837,28 +80303,32 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "visible_home",
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "hub_priority",
@@ -78875,7 +80345,8 @@
               "visible_library",
               "visible_shared"
             ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
           },
           {
             "key": "visible_home_Africa",
@@ -79110,21 +80581,24 @@
             "label": "Other Continents Visible Home",
             "type": "toggle",
             "tooltip": "Changes the Other Continents collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_library_other",
             "label": "Other Continents Visible Library",
             "type": "toggle",
             "tooltip": "Changes the Other Continents collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "visible_shared_other",
             "label": "Other Continents Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the Other Continents collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility"
           },
           {
             "key": "hub_priority_other",
@@ -79141,7 +80615,310 @@
               "visible_library_other",
               "visible_shared_other"
             ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "child_use_overrides",
+            "label": "Continents Use Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "use_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_name_overrides",
+            "label": "Continents Name Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "name_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "Custom collection name",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_summary_overrides",
+            "label": "Continents Summary Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "summary_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "Custom collection summary",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_order_overrides",
+            "label": "Continents Sort Order Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "order_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "01",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_schedule_overrides",
+            "label": "Continents Schedule Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "schedule_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "weekly(sunday)",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_sort_by_overrides",
+            "label": "Continents Sort By Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "sort_by_",
+            "dynamic_child_value_kind": "select",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "release.desc"
+          },
+          {
+            "key": "child_limit_overrides",
+            "label": "Continents Limit Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "limit_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "25"
+          },
+          {
+            "key": "child_minimum_items_overrides",
+            "label": "Continents Minimum Items Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "minimum_items_",
+            "dynamic_child_value_kind": "integer",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "2"
+          },
+          {
+            "key": "child_sync_mode_overrides",
+            "label": "Continents Sync Mode Overrides",
+            "type": "mapping_list",
+            "section": "child_override_maps",
+            "dynamic_child_prefix": "sync_mode_",
+            "dynamic_child_value_kind": "select",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "append or sync",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "child_url_poster_overrides",
+            "label": "Continents Poster URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "https://example.com/poster.jpg",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_poster_overrides",
+            "label": "Continents Poster File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_poster_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "C:\\Posters\\poster.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_background_overrides",
+            "label": "Continents Background URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "https://example.com/background.jpg",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_background_overrides",
+            "label": "Continents Background File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_background_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "C:\\Posters\\background.jpg",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_logo_overrides",
+            "label": "Continents Logo URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "https://example.com/logo.png",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_logo_overrides",
+            "label": "Continents Logo File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_logo_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "C:\\Posters\\logo.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_url_square_art_overrides",
+            "label": "Continents Square Art URL Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "url_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "https://example.com/square-art.png",
+            "validation_preset": "url",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_file_square_art_overrides",
+            "label": "Continents Square Art File Overrides",
+            "type": "mapping_list",
+            "section": "artwork",
+            "dynamic_child_prefix": "file_square_art_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "C:\\Posters\\square-art.png",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_visible_home_overrides",
+            "label": "Continents Visible Home Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_home_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_visible_library_overrides",
+            "label": "Continents Visible Library Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_library_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_visible_shared_overrides",
+            "label": "Continents Visible Shared Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "visible_shared_",
+            "dynamic_child_value_kind": "boolean",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "true or false"
+          },
+          {
+            "key": "child_hub_priority_overrides",
+            "label": "Continents Hub Priority Overrides",
+            "type": "mapping_list",
+            "section": "visibility",
+            "dynamic_child_prefix": "hub_priority_",
+            "dynamic_child_value_kind": "string",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "1",
+            "lookup_display_mode": "inline"
+          },
+          {
+            "key": "child_item_radarr_tag_overrides",
+            "label": "Continents Item Radarr Tag Overrides",
+            "type": "mapping_list",
+            "section": "defaults",
+            "dynamic_child_prefix": "item_radarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "collection,tracked",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "child_item_sonarr_tag_overrides",
+            "label": "Continents Item Sonarr Tag Overrides",
+            "type": "mapping_list",
+            "section": "defaults",
+            "dynamic_child_prefix": "item_sonarr_tag_",
+            "dynamic_child_value_kind": "string_list",
+            "key_validation_preset": "continent_key",
+            "key_input_mode": "select",
+            "key_placeholder": "Continent key (e.g. Europe)",
+            "value_placeholder": "collection,tracked",
+            "media_types": [
+              "show"
+            ]
           },
           {
             "key": "sort_by",
@@ -79478,7 +81255,38 @@
                   "episode"
                 ]
               }
-            ]
+            ],
+            "section": "defaults"
+          }
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics"
+          },
+          {
+            "id": "scope",
+            "label": "Scope"
+          },
+          {
+            "id": "defaults",
+            "label": "Defaults"
+          },
+          {
+            "id": "child_override_maps",
+            "label": "Child Override Maps"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "continents",
+            "label": "Continents"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           }
         ]
       }
@@ -92420,7 +94228,7 @@
             "label": "Emoji Default",
             "type": "text_input",
             "tooltip": "Override the default emoji prefix applied to child seasonal collections. Leave blank to keep the default seasonal prefix behavior.",
-            "placeholder": "e.g. \ud83c\udf83",
+            "placeholder": "e.g. 🎃",
             "section": "naming"
           },
           {
@@ -92856,7 +94664,7 @@
             "key_placeholder": "Seasonal key (e.g. halloween)",
             "key_validation_preset": "seasonal_key",
             "key_input_mode": "select",
-            "value_placeholder": "\ud83c\udf83",
+            "value_placeholder": "🎃",
             "dynamic_child_prefix": "emoji_",
             "dynamic_child_value_kind": "string",
             "section": "builder_override_maps"

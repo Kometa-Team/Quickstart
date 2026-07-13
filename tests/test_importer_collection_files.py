@@ -501,8 +501,8 @@ def test_prepare_import_payload_accepts_based_and_collectionless_template_variab
     assert libraries_payload["mov-library_movies-collection_based"] is True
     assert libraries_payload["mov-library_movies-template_collection_based_translation_key"] == "based"
     assert libraries_payload["mov-library_movies-template_collection_based_schedule"] == "weekly(sunday)"
-    assert libraries_payload["mov-library_movies-template_collection_based_delete_collections_named"] == ["Old Based"]
-    assert libraries_payload["mov-library_movies-template_collection_based_keywords_books"] == ["based on book", "based on novel"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_based_delete_collections_named"]) == ["Old Based"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_based_keywords_books"]) == ["based on book", "based on novel"]
     assert libraries_payload["mov-library_movies-template_collection_based_image_comics"] == "based/comics"
     assert libraries_payload["mov-library_movies-template_collection_based_limit_true_story"] == 25
     assert libraries_payload["mov-library_movies-template_collection_based_sort_by_video_games"] == "release.desc"
@@ -514,15 +514,15 @@ def test_prepare_import_payload_accepts_based_and_collectionless_template_variab
     assert libraries_payload["mov-library_movies-template_collection_collectionless_name_collectionless"] == "No Collections"
     assert libraries_payload["mov-library_movies-template_collection_collectionless_summary_collectionless"] == "Items not in collections"
     assert libraries_payload["mov-library_movies-template_collection_collectionless_url_poster"] == "https://example.com/collectionless.jpg"
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_movie"] == [603]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_show"] == [1399]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_imdb_id"] == ["tt0133093"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_imdb_list"] == ["ls123456789"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_movie"]) == [603]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_show"]) == [1399]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_imdb_id"]) == ["tt0133093"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_imdb_list"]) == ["ls123456789"]
     assert libraries_payload["mov-library_movies-template_collection_collectionless_plex_search"] == {"all": {"title": "Example"}}
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_mdblist_list"] == ["https://mdblist.com/lists/example/list"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_trakt_list"] == ["https://trakt.tv/users/example/lists/list"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_exclude"] == ["Marvel Cinematic Universe"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_exclude_prefix"] == ["!", "~"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_mdblist_list"]) == ["https://mdblist.com/lists/example/list"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_trakt_list"]) == ["https://trakt.tv/users/example/lists/list"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_exclude"]) == ["Marvel Cinematic Universe"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_exclude_prefix"]) == ["!", "~"]
     assert any("libraries.Movies.collection_files[0].template_variables.keywords_books" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[1].template_variables.plex_search" in line for line in report.lines)
 
@@ -651,43 +651,145 @@ def test_prepare_import_payload_collapses_region_dynamic_child_template_variable
                             "default": "region",
                             "template_variables": {
                                 "use_North America": False,
+                                "name_North America": "North American Cinema",
+                                "summary_North America": "Movies from North America",
+                                "order_North America": "01",
                                 "schedule_Northern Africa": "weekly(sunday)",
-                                "name_mapping_other": "other_regions",
                                 "sort_by_Western Europe": "title.asc",
                                 "limit_Central America": 12,
+                                "minimum_items_Central America": 3,
+                                "file_poster_North America": r"C:\Posters\north-america.jpg",
                                 "url_logo_Southern Europe": "https://example.com/europe.png",
                                 "visible_home_Caribbean": True,
                                 "visible_library_Caribbean": False,
                                 "visible_shared_Caribbean": True,
                                 "hub_priority_Australia and New Zealand": 7,
                                 "item_radarr_tag_North America": ["north", "america"],
+                            },
+                        }
+                    ]
+                },
+                "Shows": {
+                    "collection_files": [
+                        {
+                            "default": "region",
+                            "template_variables": {
+                                "sync_mode_Eastern Asia": "append",
                                 "item_sonarr_tag_Eastern Asia": ["anime"],
                             },
                         }
                     ]
-                }
+                },
             }
         },
         {"Movies"},
-        set(),
+        {"Shows"},
     )
 
     libraries_payload = payload["libraries"]["libraries"]
     assert libraries_payload["mov-library_movies-collection_region"] is True
+    assert libraries_payload["sho-library_shows-collection_region"] is True
     assert libraries_payload["mov-library_movies-template_collection_region_use_North America"] is False
+    assert libraries_payload["mov-library_movies-template_collection_region_name_North America"] == "North American Cinema"
+    assert libraries_payload["mov-library_movies-template_collection_region_summary_North America"] == "Movies from North America"
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_order_overrides"]) == {"North America": "01"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_schedule_overrides"]) == {"Northern Africa": "weekly(sunday)"}
-    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_name_mapping_overrides"]) == {"other": "other_regions"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_sort_by_overrides"]) == {"Western Europe": "title.asc"}
     assert libraries_payload["mov-library_movies-template_collection_region_limit_Central America"] == 12
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_minimum_items_overrides"]) == {"Central America": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_file_poster_overrides"]) == {"North America": r"C:\Posters\north-america.jpg"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_url_logo_overrides"]) == {"Southern Europe": "https://example.com/europe.png"}
     assert libraries_payload["mov-library_movies-template_collection_region_visible_home_Caribbean"] is True
     assert libraries_payload["mov-library_movies-template_collection_region_visible_library_Caribbean"] is False
     assert libraries_payload["mov-library_movies-template_collection_region_visible_shared_Caribbean"] is True
     assert libraries_payload["mov-library_movies-template_collection_region_hub_priority_Australia and New Zealand"] == 7
     assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_item_radarr_tag_overrides"]) == {"North America": "north,america"}
-    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_item_sonarr_tag_overrides"]) == {"Eastern Asia": "anime"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_region_child_sync_mode_overrides"]) == {"Eastern Asia": "append"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_region_child_item_sonarr_tag_overrides"]) == {"Eastern Asia": "anime"}
     assert any("libraries.Movies.collection_files[0].template_variables.use_North America" in line for line in report.lines)
-    assert any("libraries.Movies.collection_files[0].template_variables.name_mapping_other" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[0].template_variables.name_North America" in line for line in report.lines)
+    assert any("libraries.Shows.collection_files[0].template_variables.sync_mode_Eastern Asia" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_country_and_continent_geography_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "country",
+                            "template_variables": {
+                                "search_term": "country",
+                                "trakt_list": ["https://trakt.tv/users/example/lists/france"],
+                                "schedule_France": "weekly(sunday)",
+                                "name_France": "French Cinema",
+                                "file_background_France": r"C:\Posters\france-bg.jpg",
+                                "item_radarr_tag_France": ["country", "france"],
+                            },
+                        },
+                        {
+                            "default": "continent",
+                            "template_variables": {
+                                "search_term": "country",
+                                "url_poster_Europe": "https://example.com/europe.jpg",
+                                "minimum_items_Europe": 5,
+                                "item_radarr_tag_Europe": ["continent", "europe"],
+                            },
+                        },
+                    ]
+                },
+                "Shows": {
+                    "collection_files": [
+                        {
+                            "default": "country",
+                            "template_variables": {
+                                "filter_term": "origin_country",
+                                "sync_mode_fr": "append",
+                                "name_fr": "French TV",
+                                "item_sonarr_tag_fr": ["country", "france"],
+                            },
+                        },
+                        {
+                            "default": "continent",
+                            "template_variables": {
+                                "filter_term": "origin_country",
+                                "sync_mode_Europe": "append",
+                                "file_logo_Europe": r"C:\Logos\europe.png",
+                                "item_sonarr_tag_Europe": ["continent", "europe"],
+                            },
+                        },
+                    ]
+                },
+            }
+        },
+        {"Movies"},
+        {"Shows"},
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_country"] is True
+    assert libraries_payload["sho-library_shows-collection_country"] is True
+    assert libraries_payload["mov-library_movies-collection_continent"] is True
+    assert libraries_payload["sho-library_shows-collection_continent"] is True
+    assert libraries_payload["mov-library_movies-template_collection_country_search_term"] == "country"
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_country_trakt_list"]) == ["https://trakt.tv/users/example/lists/france"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_schedule_overrides"]) == {"France": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_name_overrides"]) == {"France": "French Cinema"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_file_background_overrides"]) == {"France": r"C:\Posters\france-bg.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_item_radarr_tag_overrides"]) == {"France": "country,france"}
+    assert libraries_payload["sho-library_shows-template_collection_country_filter_term"] == "origin_country"
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_country_child_sync_mode_overrides"]) == {"fr": "append"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_country_child_name_overrides"]) == {"fr": "French TV"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_country_child_item_sonarr_tag_overrides"]) == {"fr": "country,france"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_continent_child_url_poster_overrides"]) == {"Europe": "https://example.com/europe.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_continent_child_minimum_items_overrides"]) == {"Europe": "5"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_continent_child_item_radarr_tag_overrides"]) == {"Europe": "continent,europe"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_continent_child_sync_mode_overrides"]) == {"Europe": "append"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_continent_child_file_logo_overrides"]) == {"Europe": r"C:\Logos\europe.png"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_continent_child_item_sonarr_tag_overrides"]) == {"Europe": "continent,europe"}
+    assert any("libraries.Movies.collection_files[0].template_variables.trakt_list" in line for line in report.lines)
+    assert any("libraries.Shows.collection_files[0].template_variables.sync_mode_fr" in line for line in report.lines)
 
 
 def test_prepare_import_payload_collapses_studio_dynamic_child_template_variables():

@@ -2424,14 +2424,23 @@ def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(a
                     "mov-library_movies-collection_franchise": True,
                     "mov-library_movies-template_collection_franchise_child_name_overrides": '{"10": "Skywalker Saga"}',
                     "mov-library_movies-template_collection_franchise_child_sync_mode_overrides": '{"10": "append"}',
+                    "mov-library_movies-template_collection_franchise_child_name_mapping_overrides": '{"10": "Star Wars Skywalker Saga"}',
+                    "mov-library_movies-template_collection_franchise_child_order_overrides": '{"10": "01"}',
+                    "mov-library_movies-template_collection_franchise_child_movie_overrides": '{"10": ["1891", "1892"]}',
                     "mov-library_movies-template_collection_franchise_child_radarr_tag_overrides": '{"10": "4k,franchise"}',
                     "mov-library_movies-template_collection_franchise_child_radarr_add_missing_overrides": '{"10": "true"}',
+                    "mov-library_movies-template_collection_franchise_child_file_poster_overrides": '{"10": "C:\\\\Posters\\\\star-wars.jpg"}',
+                    "mov-library_movies-template_collection_franchise_child_url_background_overrides": '{"10": "https://example.com/star-wars-bg.jpg"}',
+                    "mov-library_movies-template_collection_franchise_child_url_logo_overrides": '{"10": "https://example.com/star-wars-logo.png"}',
                 }
             },
             show_collections={
                 "shows": {
                     "sho-library_shows-collection_franchise": True,
                     "sho-library_shows-template_collection_franchise_child_summary_overrides": '{"1399": "Dragons and dynasties"}',
+                    "sho-library_shows-template_collection_franchise_child_name_mapping_overrides": '{"1399": "Game of Thrones"}',
+                    "sho-library_shows-template_collection_franchise_child_order_overrides": '{"1399": "02"}',
+                    "sho-library_shows-template_collection_franchise_child_url_poster_overrides": '{"1399": "https://example.com/got.jpg"}',
                     "sho-library_shows-template_collection_franchise_child_collection_order_overrides": '{"1399": "custom"}',
                     "sho-library_shows-template_collection_franchise_child_sonarr_monitor_overrides": '{"1399": "future"}',
                     "sho-library_shows-template_collection_franchise_child_item_sonarr_tag_overrides": '{"1399": "tracked,priority"}',
@@ -2452,12 +2461,169 @@ def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(a
     assert show_entry is not None
     assert movie_entry["template_variables"]["name_10"] == "Skywalker Saga"
     assert movie_entry["template_variables"]["sync_mode_10"] == "append"
+    assert movie_entry["template_variables"]["name_mapping_10"] == "Star Wars Skywalker Saga"
+    assert movie_entry["template_variables"]["order_10"] == "01"
+    assert movie_entry["template_variables"]["movie_10"] == ["1891", "1892"]
     assert movie_entry["template_variables"]["radarr_tag_10"] == ["4k", "franchise"]
     assert movie_entry["template_variables"]["radarr_add_missing_10"] is True
+    assert movie_entry["template_variables"]["file_poster_10"] == r"C:\Posters\star-wars.jpg"
+    assert movie_entry["template_variables"]["url_background_10"] == "https://example.com/star-wars-bg.jpg"
+    assert movie_entry["template_variables"]["url_logo_10"] == "https://example.com/star-wars-logo.png"
     assert show_entry["template_variables"]["summary_1399"] == "Dragons and dynasties"
+    assert show_entry["template_variables"]["name_mapping_1399"] == "Game of Thrones"
+    assert show_entry["template_variables"]["order_1399"] == "02"
+    assert show_entry["template_variables"]["url_poster_1399"] == "https://example.com/got.jpg"
     assert show_entry["template_variables"]["collection_order_1399"] == "custom"
     assert show_entry["template_variables"]["sonarr_monitor_1399"] == "future"
     assert show_entry["template_variables"]["item_sonarr_tag_1399"] == ["tracked", "priority"]
+
+
+def test_build_libraries_section_preserves_based_template_variables(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_based": True,
+                    "mov-library_movies-template_collection_based_translation_key": "based",
+                    "mov-library_movies-template_collection_based_schedule": "weekly(sunday)",
+                    "mov-library_movies-template_collection_based_delete_collections_named": '["Old Based Collection"]',
+                    "mov-library_movies-template_collection_based_keywords_books": '["based on book", "based on novel"]',
+                    "mov-library_movies-template_collection_based_image_comics": "based/comics",
+                    "mov-library_movies-template_collection_based_limit_true_story": "25",
+                    "mov-library_movies-template_collection_based_sort_by_video_games": "release.desc",
+                    "mov-library_movies-template_collection_based_url_poster_true_story": "https://example.com/true-story.jpg",
+                    "mov-library_movies-template_collection_based_radarr_folder_books": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_based_sonarr_search_video_games": "false",
+                }
+            },
+        )
+
+    based_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "based"),
+        None,
+    )
+
+    assert based_entry is not None
+    template_vars = based_entry["template_variables"]
+    assert template_vars["translation_key"] == "based"
+    assert template_vars["schedule"] == "weekly(sunday)"
+    assert template_vars["delete_collections_named"] == ["Old Based Collection"]
+    assert template_vars["keywords_books"] == ["based on book", "based on novel"]
+    assert template_vars["image_comics"] == "based/comics"
+    assert template_vars["limit_true_story"] == "25"
+    assert template_vars["sort_by_video_games"] == "release.desc"
+    assert template_vars["url_poster_true_story"] == "https://example.com/true-story.jpg"
+    assert template_vars["radarr_folder_books"] == r"C:\Media\Movies"
+    assert template_vars["sonarr_search_video_games"] is False
+
+
+def test_build_libraries_section_preserves_collectionless_template_variables(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_collectionless": True,
+                    "mov-library_movies-template_collection_collectionless_collection_mode": "hide",
+                    "mov-library_movies-template_collection_collectionless_name_collectionless": "No Collections",
+                    "mov-library_movies-template_collection_collectionless_summary_collectionless": "Items not assigned to a collection.",
+                    "mov-library_movies-template_collection_collectionless_url_poster": "https://example.com/collectionless.jpg",
+                    "mov-library_movies-template_collection_collectionless_tmdb_movie": "603, 604",
+                    "mov-library_movies-template_collection_collectionless_tmdb_show": '["1399"]',
+                    "mov-library_movies-template_collection_collectionless_imdb_id": "tt1234567, tt7654321",
+                    "mov-library_movies-template_collection_collectionless_imdb_list": "ls123456789",
+                    "mov-library_movies-template_collection_collectionless_plex_search": '{"all": {"title": "Example"}}',
+                    "mov-library_movies-template_collection_collectionless_mdblist_list": "https://mdblist.com/lists/example/list",
+                    "mov-library_movies-template_collection_collectionless_trakt_list": "https://trakt.tv/users/example/lists/list",
+                    "mov-library_movies-template_collection_collectionless_exclude": "Marvel Cinematic Universe",
+                    "mov-library_movies-template_collection_collectionless_exclude_prefix": '["!", "~"]',
+                }
+            },
+        )
+
+    collectionless_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "collectionless"),
+        None,
+    )
+
+    assert collectionless_entry is not None
+    template_vars = collectionless_entry["template_variables"]
+    assert template_vars["collection_mode"] == "hide"
+    assert template_vars["name_collectionless"] == "No Collections"
+    assert template_vars["summary_collectionless"] == "Items not assigned to a collection."
+    assert template_vars["url_poster"] == "https://example.com/collectionless.jpg"
+    assert template_vars["tmdb_movie"] == ["603", "604"]
+    assert template_vars["tmdb_show"] == ["1399"]
+    assert template_vars["imdb_id"] == ["tt1234567", "tt7654321"]
+    assert template_vars["imdb_list"] == ["ls123456789"]
+    assert template_vars["plex_search"] == {"all": {"title": "Example"}}
+    assert template_vars["mdblist_list"] == ["https://mdblist.com/lists/example/list"]
+    assert template_vars["trakt_list"] == ["https://trakt.tv/users/example/lists/list"]
+    assert template_vars["exclude"] == ["Marvel Cinematic Universe"]
+    assert template_vars["exclude_prefix"] == ["!", "~"]
+
+
+def test_build_libraries_section_expands_geography_dynamic_child_override_maps(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_country": True,
+                    "mov-library_movies-template_collection_country_trakt_list": '["https://trakt.tv/users/example/lists/france"]',
+                    "mov-library_movies-template_collection_country_child_name_overrides": '{"France": "French Cinema"}',
+                    "mov-library_movies-template_collection_country_child_schedule_overrides": '{"France": "weekly(sunday)"}',
+                    "mov-library_movies-template_collection_country_child_file_background_overrides": '{"France": "C:\\\\Posters\\\\france-bg.jpg"}',
+                    "mov-library_movies-template_collection_country_child_item_radarr_tag_overrides": '{"France": "country,france"}',
+                    "mov-library_movies-collection_continent": True,
+                    "mov-library_movies-template_collection_continent_child_url_poster_overrides": '{"Europe": "https://example.com/europe.jpg"}',
+                    "mov-library_movies-template_collection_continent_child_minimum_items_overrides": '{"Europe": "5"}',
+                    "mov-library_movies-template_collection_continent_child_item_radarr_tag_overrides": '{"Europe": ["continent", "europe"]}',
+                }
+            },
+            show_collections={
+                "shows": {
+                    "sho-library_shows-collection_country": True,
+                    "sho-library_shows-template_collection_country_child_sync_mode_overrides": '{"fr": "append"}',
+                    "sho-library_shows-template_collection_country_child_name_overrides": '{"fr": "French TV"}',
+                    "sho-library_shows-template_collection_country_child_item_sonarr_tag_overrides": '{"fr": "country,france"}',
+                    "sho-library_shows-collection_region": True,
+                    "sho-library_shows-template_collection_region_child_sync_mode_overrides": '{"Eastern Asia": "append"}',
+                    "sho-library_shows-template_collection_region_child_file_logo_overrides": '{"Eastern Asia": "C:\\\\Logos\\\\asia.png"}',
+                    "sho-library_shows-template_collection_region_child_item_sonarr_tag_overrides": '{"Eastern Asia": ["region", "asia"]}',
+                }
+            },
+        )
+
+    movie_entries = libraries_section["libraries"]["Movies"]["collection_files"]
+    show_entries = libraries_section["libraries"]["Shows"]["collection_files"]
+    movie_country = next(entry for entry in movie_entries if entry.get("default") == "country")
+    movie_continent = next(entry for entry in movie_entries if entry.get("default") == "continent")
+    show_country = next(entry for entry in show_entries if entry.get("default") == "country")
+    show_region = next(entry for entry in show_entries if entry.get("default") == "region")
+
+    assert movie_country["template_variables"]["trakt_list"] == ["https://trakt.tv/users/example/lists/france"]
+    assert movie_country["template_variables"]["name_France"] == "French Cinema"
+    assert movie_country["template_variables"]["schedule_France"] == "weekly(sunday)"
+    assert movie_country["template_variables"]["file_background_France"] == r"C:\Posters\france-bg.jpg"
+    assert movie_country["template_variables"]["item_radarr_tag_France"] == ["country", "france"]
+    assert movie_continent["template_variables"]["url_poster_Europe"] == "https://example.com/europe.jpg"
+    assert movie_continent["template_variables"]["minimum_items_Europe"] == 5
+    assert movie_continent["template_variables"]["item_radarr_tag_Europe"] == ["continent", "europe"]
+    assert show_country["template_variables"]["sync_mode_fr"] == "append"
+    assert show_country["template_variables"]["name_fr"] == "French TV"
+    assert show_country["template_variables"]["item_sonarr_tag_fr"] == ["country", "france"]
+    assert show_region["template_variables"]["sync_mode_Eastern Asia"] == "append"
+    assert show_region["template_variables"]["file_logo_Eastern Asia"] == r"C:\Logos\asia.png"
+    assert show_region["template_variables"]["item_sonarr_tag_Eastern Asia"] == ["region", "asia"]
 
 
 def test_build_libraries_section_emits_library_arr_overrides(app):
