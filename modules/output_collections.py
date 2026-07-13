@@ -67,6 +67,7 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_sort_by_overrides": ("sort_by_", "select"),
     "child_delete_collections_named_overrides": ("delete_collections_named_", "string_list"),
     "child_discover_with_overrides": ("discover_with_", "string"),
+    "child_movie_overrides": ("movie_", "string_list"),
     "child_tmdb_collection_overrides": ("tmdb_collection_", "string_list"),
     "child_tmdb_movie_overrides": ("tmdb_movie_", "string_list"),
     "child_imdb_list_overrides": ("imdb_list_", "string_list"),
@@ -231,8 +232,37 @@ def _normalize_collection_template_var_value(key, value):
     if key == "remove_suffix":
         list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
-    if key in {"delete_collections_named", "trakt_list", "imdb_list", "mdblist_list", "letterboxd_list", "tmdb_collection", "tmdb_movie"} or key.startswith(
-        ("delete_collections_named_", "trakt_list_", "imdb_list_", "mdblist_list_", "letterboxd_list_", "tmdb_collection_", "tmdb_movie_")
+    if key in {
+        "delete_collections_named",
+        "trakt_list",
+        "imdb_list",
+        "imdb_id",
+        "mdblist_list",
+        "letterboxd_list",
+        "tmdb_collection",
+        "tmdb_movie",
+        "tmdb_show",
+        "tmdb_list",
+        "tvdb_movie",
+        "tvdb_show",
+        "tvdb_list",
+    } or key.startswith(
+        (
+            "delete_collections_named_",
+            "trakt_list_",
+            "imdb_list_",
+            "imdb_id_",
+            "mdblist_list_",
+            "letterboxd_list_",
+            "tmdb_collection_",
+            "tmdb_movie_",
+            "tmdb_show_",
+            "tmdb_list_",
+            "tvdb_movie_",
+            "tvdb_show_",
+            "tvdb_list_",
+            "keywords_",
+        )
     ):
         list_values = _parse_string_list(value)
         return list_values if list_values else None

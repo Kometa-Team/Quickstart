@@ -25,6 +25,29 @@ def test_apply_template_var_normalizers_expands_universe_dynamic_child_override_
     assert "child_schedule_overrides" not in template_vars
 
 
+def test_apply_template_var_normalizers_expands_franchise_collection_template_maps():
+    template_vars = {
+        "child_movie_overrides": '{"10": ["1891", "1892"]}',
+        "child_name_mapping_overrides": '{"10": "Star Wars Skywalker Saga"}',
+        "child_order_overrides": '{"10": "01"}',
+        "child_url_background_overrides": '{"10": "https://example.com/star-wars-bg.jpg"}',
+        "child_file_poster_overrides": '{"10": "C:\\\\Posters\\\\star-wars.jpg"}',
+        "child_url_logo_overrides": '{"10": "https://example.com/star-wars-logo.png"}',
+        "child_url_square_art_overrides": '{"10": "https://example.com/star-wars-square.png"}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "franchise")
+
+    assert template_vars["movie_10"] == ["1891", "1892"]
+    assert template_vars["name_mapping_10"] == "Star Wars Skywalker Saga"
+    assert template_vars["order_10"] == "01"
+    assert template_vars["url_background_10"] == "https://example.com/star-wars-bg.jpg"
+    assert template_vars["file_poster_10"] == r"C:\Posters\star-wars.jpg"
+    assert template_vars["url_logo_10"] == "https://example.com/star-wars-logo.png"
+    assert template_vars["url_square_art_10"] == "https://example.com/star-wars-square.png"
+    assert "child_movie_overrides" not in template_vars
+
+
 def test_apply_template_var_normalizers_expands_streaming_dynamic_child_override_maps():
     template_vars = {
         "child_schedule_overrides": '{"amc": "weekly(sunday)"}',
