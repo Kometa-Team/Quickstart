@@ -209,6 +209,10 @@ def _serialize_dynamic_child_mapping_value(value: Any, value_kind: str) -> str:
         return str(value or "").strip()
     if kind == "boolean":
         return _coerce_import_bool_text(value)
+    if kind == "json":
+        if isinstance(value, (dict, list)):
+            return json.dumps(value, ensure_ascii=True)
+        return str(value or "").strip()
     return str(value or "").strip()
 
 

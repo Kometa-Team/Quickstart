@@ -62,11 +62,16 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_order_overrides": ("order_", "string"),
     "child_schedule_overrides": ("schedule_", "string"),
     "child_name_mapping_overrides": ("name_mapping_", "string"),
+    "child_emoji_overrides": ("emoji_", "string"),
     "child_sort_by_overrides": ("sort_by_", "select"),
     "child_delete_collections_named_overrides": ("delete_collections_named_", "string_list"),
     "child_discover_with_overrides": ("discover_with_", "string"),
+    "child_tmdb_collection_overrides": ("tmdb_collection_", "string_list"),
+    "child_tmdb_movie_overrides": ("tmdb_movie_", "string_list"),
     "child_imdb_list_overrides": ("imdb_list_", "string_list"),
+    "child_imdb_search_overrides": ("imdb_search_", "json"),
     "child_mdblist_list_overrides": ("mdblist_list_", "string_list"),
+    "child_letterboxd_list_overrides": ("letterboxd_list_", "string_list"),
     "child_trakt_list_overrides": ("trakt_list_", "string_list"),
     "child_sync_mode_overrides": ("sync_mode_", "select"),
     "child_collection_order_overrides": ("collection_order_", "select"),
@@ -166,6 +171,29 @@ def _parse_tmdb_person_window(value):
     return normalized or (raw_text if raw_text is not None else value)
 
 
+def _parse_json_object_value(value):
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    if not isinstance(value, str):
+        return value
+
+    raw_text = value.strip()
+    if not raw_text:
+        return None
+
+    try:
+        parsed = json.loads(raw_text)
+    except Exception:
+        try:
+            parsed = ast.literal_eval(raw_text)
+        except Exception:
+            return value
+
+    return parsed if isinstance(parsed, (dict, list)) else value
+
+
 # --- collection template var normalization --------------------------------
 
 
@@ -182,13 +210,15 @@ def _normalize_collection_template_var_value(key, value):
     if key == "title_override":
         mapping_values = _parse_string_mapping(value)
         return mapping_values if mapping_values else None
+    if key == "imdb_search" or key.startswith("imdb_search_"):
+        return _parse_json_object_value(value)
     if key in {"tmdb_birthday", "tmdb_deathday"}:
         return _parse_tmdb_person_window(value)
     if key == "remove_suffix":
         list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
-    if key in {"delete_collections_named", "trakt_list", "imdb_list", "mdblist_list"} or key.startswith(
-        ("delete_collections_named_", "trakt_list_", "imdb_list_", "mdblist_list_")
+    if key in {"delete_collections_named", "trakt_list", "imdb_list", "mdblist_list", "letterboxd_list", "tmdb_collection", "tmdb_movie"} or key.startswith(
+        ("delete_collections_named_", "trakt_list_", "imdb_list_", "mdblist_list_", "letterboxd_list_", "tmdb_collection_", "tmdb_movie_")
     ):
         list_values = _parse_string_list(value)
         return list_values if list_values else None
@@ -212,6 +242,8 @@ def _normalize_dynamic_child_override_value(value_kind, raw_value):
     if kind == "boolean":
         bool_value = _coerce_bool(raw_value)
         return bool_value if bool_value is not None else raw_value
+    if kind == "json":
+        return _parse_json_object_value(raw_value)
     return raw_value
 
 

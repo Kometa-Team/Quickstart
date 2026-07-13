@@ -1,3 +1,5 @@
+import json
+
 from modules import importer
 
 
@@ -362,3 +364,65 @@ def test_prepare_import_payload_collapses_streaming_dynamic_child_template_varia
     assert any("libraries.Movies.collection_files[0].template_variables.use_amc" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[0].template_variables.schedule_amc" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[0].template_variables.url_logo_movistar" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_seasonal_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "seasonal",
+                            "template_variables": {
+                                "name_mapping_halloween": "Spooky Season",
+                                "emoji_halloween": "🎃",
+                                "delete_collections_named_halloween": ["Old Halloween Movies"],
+                                "tmdb_collection_halloween": [185103, 11716],
+                                "tmdb_movie_halloween": [23437],
+                                "imdb_list_years": ["ls066838460"],
+                                "imdb_search_halloween": {"list.any": ["ls546214737"], "limit": 500},
+                                "trakt_list_halloween": ["https://trakt.tv/users/example/lists/halloween"],
+                                "mdblist_list_christmas": ["https://mdblist.com/lists/k0meta/christmas-extravaganza"],
+                                "letterboxd_list_black_history": ["https://letterboxd.com/mardarrius/list/black-is-beautiful/"],
+                                "url_logo_women": "https://example.com/women.png",
+                                "radarr_folder_halloween": r"C:\Media\Movies\Halloween",
+                                "radarr_tag_christmas": ["holiday", "christmas"],
+                                "item_radarr_tag_women": ["history"],
+                                "radarr_search_halloween": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_seasonal"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_name_mapping_overrides"]) == {"halloween": "Spooky Season"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_emoji_overrides"]) == {"halloween": "🎃"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_delete_collections_named_overrides"]) == {"halloween": "Old Halloween Movies"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_tmdb_collection_overrides"]) == {"halloween": "185103,11716"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_tmdb_movie_overrides"]) == {"halloween": "23437"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_imdb_list_overrides"]) == {"years": "ls066838460"}
+    imdb_search_mapping = json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_imdb_search_overrides"])
+    assert json.loads(imdb_search_mapping["halloween"]) == {"list.any": ["ls546214737"], "limit": 500}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_trakt_list_overrides"]) == {
+        "halloween": "https://trakt.tv/users/example/lists/halloween"
+    }
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_mdblist_list_overrides"]) == {
+        "christmas": "https://mdblist.com/lists/k0meta/christmas-extravaganza"
+    }
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_letterboxd_list_overrides"]) == {
+        "black_history": "https://letterboxd.com/mardarrius/list/black-is-beautiful/"
+    }
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_url_logo_overrides"]) == {"women": "https://example.com/women.png"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_radarr_folder_overrides"]) == {"halloween": r"C:\Media\Movies\Halloween"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_radarr_tag_overrides"]) == {"christmas": "holiday,christmas"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_item_radarr_tag_overrides"]) == {"women": "history"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_radarr_search_overrides"]) == {"halloween": "false"}
+    assert any("libraries.Movies.collection_files[0].template_variables.imdb_search_halloween" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[0].template_variables.letterboxd_list_black_history" in line for line in report.lines)
