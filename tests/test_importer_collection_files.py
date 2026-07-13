@@ -61,6 +61,13 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "limit": 75,
                                 "limit_popular": 50,
                                 "limit_recommended": 30,
+                                "image": "chart/color/trakt",
+                                "url_logo_collected": "https://example.com/trakt-collected.png",
+                                "sync_mode_recommended": "append",
+                                "cache_builders_trending": 0,
+                                "collection_order_watched": "custom",
+                                "radarr_folder_collected": r"C:\Media\Movies",
+                                "sonarr_search_watched": "false",
                             },
                         },
                         {
@@ -69,13 +76,25 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "limit": 60,
                                 "limit_airing": 20,
                                 "limit_trending": 40,
+                                "allowed_libraries": "show",
+                                "image": "chart/color/tmdb",
+                                "url_logo_airing": "https://example.com/tmdb-airing.png",
+                                "collection_order_air": "custom",
+                                "radarr_folder_top": r"C:\Media\Movies",
+                                "sonarr_search_air": "false",
                             },
                         },
                         {
                             "default": "simkl",
                             "template_variables": {
+                                "period": "week",
                                 "limit_trending_today": 15,
                                 "limit_dvd": 10,
+                                "image": "chart/color/simkl",
+                                "url_logo_trending_week": "https://example.com/simkl-week.png",
+                                "collection_order_dvd": "custom",
+                                "radarr_folder_dvd": r"C:\Media\Movies",
+                                "sonarr_search_trending_week": "false",
                             },
                         },
                         {
@@ -181,11 +200,30 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_trakt_limit"] == 75
     assert libraries_payload["mov-library_movies-template_collection_trakt_limit_popular"] == 50
     assert libraries_payload["mov-library_movies-template_collection_trakt_limit_recommended"] == 30
+    assert libraries_payload["mov-library_movies-template_collection_trakt_image"] == "chart/color/trakt"
+    assert libraries_payload["mov-library_movies-template_collection_trakt_url_logo_collected"] == "https://example.com/trakt-collected.png"
+    assert libraries_payload["mov-library_movies-template_collection_trakt_sync_mode_recommended"] == "append"
+    assert libraries_payload["mov-library_movies-template_collection_trakt_cache_builders_trending"] == 0
+    assert libraries_payload["mov-library_movies-template_collection_trakt_collection_order_watched"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_trakt_radarr_folder_collected"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_trakt_sonarr_search_watched"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_tmdb_limit"] == 60
     assert libraries_payload["mov-library_movies-template_collection_tmdb_limit_airing"] == 20
     assert libraries_payload["mov-library_movies-template_collection_tmdb_limit_trending"] == 40
+    assert libraries_payload["mov-library_movies-template_collection_tmdb_allowed_libraries"] == "show"
+    assert libraries_payload["mov-library_movies-template_collection_tmdb_image"] == "chart/color/tmdb"
+    assert libraries_payload["mov-library_movies-template_collection_tmdb_url_logo_airing"] == "https://example.com/tmdb-airing.png"
+    assert libraries_payload["mov-library_movies-template_collection_tmdb_collection_order_air"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_tmdb_radarr_folder_top"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_tmdb_sonarr_search_air"] == "false"
+    assert libraries_payload["mov-library_movies-template_collection_simkl_period"] == "week"
     assert libraries_payload["mov-library_movies-template_collection_simkl_limit_trending_today"] == 15
     assert libraries_payload["mov-library_movies-template_collection_simkl_limit_dvd"] == 10
+    assert libraries_payload["mov-library_movies-template_collection_simkl_image"] == "chart/color/simkl"
+    assert libraries_payload["mov-library_movies-template_collection_simkl_url_logo_trending_week"] == "https://example.com/simkl-week.png"
+    assert libraries_payload["mov-library_movies-template_collection_simkl_collection_order_dvd"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_simkl_radarr_folder_dvd"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_simkl_sonarr_search_trending_week"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_anilist_limit"] == 80
     assert libraries_payload["mov-library_movies-template_collection_anilist_limit_popular"] == 40
     assert libraries_payload["mov-library_movies-template_collection_anilist_limit_season"] == 25
