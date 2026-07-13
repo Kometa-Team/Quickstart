@@ -6414,7 +6414,7 @@
       },
       {
         "id": "collection_cesar",
-        "label": "César Awards",
+        "label": "C\u00e9sar Awards",
         "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
         "media_types": [
@@ -7308,25 +7308,25 @@
           },
           {
             "key": "use_best",
-            "label": "César Best Film Winners",
-            "tooltip": "Collection of César Award Winners.",
+            "label": "C\u00e9sar Best Film Winners",
+            "tooltip": "Collection of C\u00e9sar Award Winners.",
             "type": "toggle",
             "default": true,
             "section": "award_children"
           },
           {
             "key": "name_best",
-            "label": "César Best Film Winners Name",
+            "label": "C\u00e9sar Best Film Winners Name",
             "type": "text_input",
-            "tooltip": "Override the collection name for the César Best Film Winners collection. Leave blank to inherit the family Name Format value.",
+            "tooltip": "Override the collection name for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Name Format value.",
             "placeholder": "Custom collection name format",
             "section": "award_children"
           },
           {
             "key": "summary_best",
-            "label": "César Best Film Winners Summary",
+            "label": "C\u00e9sar Best Film Winners Summary",
             "type": "text_input",
-            "tooltip": "Override the collection summary for the César Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
+            "tooltip": "Override the collection summary for the C\u00e9sar Best Film Winners collection. Leave blank to inherit the family Summary Format value.",
             "placeholder": "Custom collection summary format",
             "section": "award_children"
           },
@@ -7343,7 +7343,7 @@
           },
           {
             "key": "hub_priority_best",
-            "label": "César Best Film Winners Hub Priority",
+            "label": "C\u00e9sar Best Film Winners Hub Priority",
             "type": "text_input",
             "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
             "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
@@ -7364,9 +7364,9 @@
           },
           {
             "key": "visible_home_best",
-            "label": "César Best Film Winners Visible Home",
+            "label": "C\u00e9sar Best Film Winners Visible Home",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -7375,9 +7375,9 @@
           },
           {
             "key": "visible_library_best",
-            "label": "César Best Film Winners Visible Library",
+            "label": "C\u00e9sar Best Film Winners Visible Library",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Library Recommended Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -7386,9 +7386,9 @@
           },
           {
             "key": "visible_shared_best",
-            "label": "César Best Film Winners Visible Shared",
+            "label": "C\u00e9sar Best Film Winners Visible Shared",
             "type": "toggle",
-            "tooltip": "Changes the César Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "tooltip": "Changes the C\u00e9sar Best Film Winners collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
             "default": false,
             "media_types": [
               "movie"
@@ -25882,151 +25882,35 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "010",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
-          },
-          {
-            "key": "sort_prefix",
-            "label": "Sort Prefix",
-            "type": "text_input",
-            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
-          },
-          {
-            "key": "sort_title",
-            "label": "Sort Title",
-            "type": "text_input",
-            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
-          },
-          {
-            "key": "name_format",
-            "label": "Name Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_format",
-            "label": "Summary Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "limit",
-            "label": "Limit",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
-            "type": "text_input",
-            "default": 100,
-            "input_type": "number",
-            "min": 1,
-            "step": 1
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "use_episodes",
-            "label": "New Episodes",
-            "tooltip": "Collection of Episodes released in the last 7 days.",
-            "tooltip_variant": "info",
-            "type": "toggle",
             "default": true,
-            "media_types": [
-              "show"
-            ]
+            "section": "children"
           },
           {
-            "key": "name_episodes",
-            "label": "New Episodes Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the New Episodes collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_episodes",
-            "label": "New Episodes Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the New Episodes collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "limit_episodes",
-            "label": "New Episodes Limit",
-            "tooltip": "Changes the Builder Limit of the New Episodes collection.",
-            "type": "text_input",
-            "default": "limit",
-            "media_types": [
-              "show"
-            ],
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "sonarr_add_missing_episodes",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "use_released",
-            "label": "Newly Released",
-            "tooltip": "Media released in the last 90 days.",
-            "tooltip_variant": "info",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_released",
-            "label": "Newly Released Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the Newly Released collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_released",
-            "label": "Newly Released Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the Newly Released collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "limit_released",
-            "label": "Newly Released Limit",
-            "tooltip": "Changes the Builder Limit of the Newly Released collection.",
-            "type": "text_input",
-            "default": "limit",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "radarr_add_missing_released",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_released",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
+            "key": "allowed_libraries",
+            "label": "Allowed Libraries",
+            "type": "select",
+            "section": "basics",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "movie",
+                "label": "Movie"
+              },
+              {
+                "value": "show",
+                "label": "Show"
+              }
             ]
           },
           {
@@ -26038,7 +25922,8 @@
             "options": [
               "color",
               "white"
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "minimum_items",
@@ -26047,23 +25932,8 @@
             "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
-          },
-          {
-            "key": "ignore_ids",
-            "label": "Ignore IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
-            "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
-          },
-          {
-            "key": "ignore_imdb_ids",
-            "label": "Ignore IMDb IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
-            "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "collection_mode",
@@ -26088,133 +25958,72 @@
                 "value": "show_items",
                 "label": "Show this Collection and its Items"
               }
-            ]
+            ],
+            "section": "basics"
           },
           {
-            "key": "visible_home",
-            "label": "Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "key": "schedule",
+            "label": "Schedule",
+            "type": "text",
+            "section": "basics",
+            "placeholder": "weekly(sunday)"
           },
           {
-            "key": "visible_library",
-            "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared",
-            "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority",
-            "label": "Hub Priority",
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
             "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !",
+            "section": "naming"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format",
+            "section": "naming"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format",
+            "section": "naming"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping",
+            "type": "text",
+            "section": "naming",
+            "placeholder": "Custom collection mapping name"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "section": "naming",
+            "placeholder": "Title 1, Title 2"
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File.",
+            "type": "text_input",
+            "default": 100,
             "input_type": "number",
             "min": 1,
             "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home",
-              "visible_library",
-              "visible_shared"
-            ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_episodes",
-            "label": "New Episodes Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the New Episodes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "visible_library_episodes",
-            "label": "New Episodes Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the New Episodes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "visible_shared_episodes",
-            "label": "New Episodes Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the New Episodes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false,
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "hub_priority_episodes",
-            "label": "New Episodes Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_episodes",
-              "visible_library_episodes",
-              "visible_shared_episodes"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "visible_home_released",
-            "label": "Newly Released Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Newly Released collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_released",
-            "label": "Newly Released Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Newly Released collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_released",
-            "label": "Newly Released Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Newly Released collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_released",
-            "label": "Newly Released Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_released",
-              "visible_library_released",
-              "visible_shared_released"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "section": "builder"
           },
           {
             "key": "sort_by",
@@ -26551,7 +26360,358 @@
                   "episode"
                 ]
               }
+            ],
+            "section": "builder"
+          },
+          {
+            "key": "limit_released",
+            "label": "Newly Released Limit",
+            "tooltip": "Changes the Builder Limit of the Newly Released collection.",
+            "type": "text_input",
+            "default": "limit",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "sort_by_released",
+            "label": "Newly Released Sort By",
+            "type": "select",
+            "section": "builder",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "release.desc",
+                "label": "Release Descending"
+              },
+              {
+                "value": "release.asc",
+                "label": "Release Ascending"
+              },
+              {
+                "value": "episode_air_date.desc",
+                "label": "Episode Air Date Descending"
+              },
+              {
+                "value": "episode_air_date.asc",
+                "label": "Episode Air Date Ascending"
+              },
+              {
+                "value": "random",
+                "label": "Random"
+              }
             ]
+          },
+          {
+            "key": "limit_episodes",
+            "label": "New Episodes Limit",
+            "tooltip": "Changes the Builder Limit of the New Episodes collection.",
+            "type": "text_input",
+            "default": "limit",
+            "media_types": [
+              "show"
+            ],
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "sort_by_episodes",
+            "label": "New Episodes Sort By",
+            "type": "select",
+            "section": "builder",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "release.desc",
+                "label": "Release Descending"
+              },
+              {
+                "value": "release.asc",
+                "label": "Release Ascending"
+              },
+              {
+                "value": "episode_air_date.desc",
+                "label": "Episode Air Date Descending"
+              },
+              {
+                "value": "episode_air_date.asc",
+                "label": "Episode Air Date Ascending"
+              },
+              {
+                "value": "random",
+                "label": "Random"
+              }
+            ]
+          },
+          {
+            "key": "use_released",
+            "label": "Newly Released",
+            "tooltip": "Media released in the last 90 days.",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "section": "children"
+          },
+          {
+            "key": "name_released",
+            "label": "Newly Released Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Newly Released collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_released",
+            "label": "Newly Released Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Newly Released collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "schedule_released",
+            "label": "Newly Released Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "use_episodes",
+            "label": "New Episodes",
+            "tooltip": "Collection of Episodes released in the last 7 days.",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "media_types": [
+              "show"
+            ],
+            "section": "children"
+          },
+          {
+            "key": "name_episodes",
+            "label": "New Episodes Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the New Episodes collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_episodes",
+            "label": "New Episodes Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the New Episodes collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "schedule_episodes",
+            "label": "New Episodes Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "chart/<<style>>/<<mapping_name_encoded>>"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_background_episodes",
+            "label": "New Episodes Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_background_released",
+            "label": "Newly Released Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_logo_episodes",
+            "label": "New Episodes Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_logo_released",
+            "label": "Newly Released Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_poster_episodes",
+            "label": "New Episodes Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_poster_released",
+            "label": "Newly Released Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_square_art_episodes",
+            "label": "New Episodes Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_square_art_released",
+            "label": "Newly Released Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home",
+              "visible_library",
+              "visible_shared"
+            ],
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_episodes",
+            "label": "New Episodes Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_episodes",
+              "visible_library_episodes",
+              "visible_shared_episodes"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "media_types": [
+              "show"
+            ],
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_released",
+            "label": "Newly Released Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_released",
+              "visible_library_released",
+              "visible_shared_released"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id",
+            "section": "basics"
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex",
+            "section": "basics"
           },
           {
             "key": "item_radarr_tag",
@@ -26561,7 +26721,8 @@
             "placeholder": "Add item Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation"
           },
           {
             "key": "item_sonarr_tag",
@@ -26571,7 +26732,334 @@
             "placeholder": "Add item Sonarr tag",
             "media_types": [
               "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_add_missing_released",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_add_missing_episodes",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_add_missing_released",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "url_background_episodes",
+            "label": "New Episodes Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_background_released",
+            "label": "Newly Released Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_logo_episodes",
+            "label": "New Episodes Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_logo_released",
+            "label": "Newly Released Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_poster_episodes",
+            "label": "New Episodes Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_poster_released",
+            "label": "Newly Released Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_square_art_episodes",
+            "label": "New Episodes Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "url_square_art_released",
+            "label": "Newly Released Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
             ]
+          },
+          {
+            "key": "visible_home_episodes",
+            "label": "New Episodes Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the New Episodes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "show"
+            ],
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_home_released",
+            "label": "Newly Released Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Newly Released collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library_episodes",
+            "label": "New Episodes Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the New Episodes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "show"
+            ],
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library_released",
+            "label": "Newly Released Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Newly Released collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared_episodes",
+            "label": "New Episodes Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the New Episodes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "media_types": [
+              "show"
+            ],
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared_released",
+            "label": "Newly Released Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Newly Released collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "id": "basics",
+            "label": "Basics"
+          },
+          {
+            "id": "naming",
+            "label": "Naming"
+          },
+          {
+            "id": "builder",
+            "label": "Builder Controls"
+          },
+          {
+            "id": "children",
+            "label": "Chart Collections"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "automation",
+            "label": "Automation"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           }
         ]
       },
@@ -26593,142 +27081,36 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
-          },
-          {
-            "key": "sort_prefix",
-            "label": "Sort Prefix",
-            "type": "text_input",
-            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
-          },
-          {
-            "key": "sort_title",
-            "label": "Sort Title",
-            "type": "text_input",
-            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
-          },
-          {
-            "key": "name_format",
-            "label": "Name Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_format",
-            "label": "Summary Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "list_days",
-            "label": "List Days",
-            "type": "text_input",
-            "default": "30",
-            "tooltip": "Changes the list_days attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "list_size",
-            "label": "List Size",
-            "type": "text_input",
-            "default": "20",
-            "tooltip": "Changes the list_size attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "children"
           },
           {
-            "key": "use_popular",
-            "label": "Plex Popular",
-            "tooltip": "Enable the most Popular Movies/Shows on Plex",
-            "tooltip_variant": "info",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_popular",
-            "label": "Plex Popular Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the Plex Popular collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_popular",
-            "label": "Plex Popular Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the Plex Popular collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "list_days_popular",
-            "label": "Plex Popular List Days",
-            "type": "text_input",
-            "tooltip": "Changes the list_days attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "list_size_popular",
-            "label": "Plex Popular List Size",
-            "type": "text_input",
-            "tooltip": "Changes the list_size attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "use_watched",
-            "label": "Plex Watched",
-            "tooltip": "Enable the most Watched Movies/Shows on Plex",
-            "tooltip_variant": "info",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_watched",
-            "label": "Plex Watched Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the Plex Watched collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_watched",
-            "label": "Plex Watched Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the Plex Watched collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "list_days_watched",
-            "label": "Plex Watched List Days",
-            "type": "text_input",
-            "tooltip": "Changes the list_days attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
-          },
-          {
-            "key": "list_size_watched",
-            "label": "Plex Watched List Size",
-            "type": "text_input",
-            "tooltip": "Changes the list_size attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
+            "key": "allowed_libraries",
+            "label": "Allowed Libraries",
+            "type": "select",
+            "section": "basics",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "movie",
+                "label": "Movie"
+              },
+              {
+                "value": "show",
+                "label": "Show"
+              }
+            ]
           },
           {
             "key": "style",
@@ -26739,7 +27121,8 @@
             "options": [
               "color",
               "white"
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "minimum_items",
@@ -26748,43 +27131,8 @@
             "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
-          },
-          {
-            "key": "ignore_ids",
-            "label": "Ignore IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
-            "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
-          },
-          {
-            "key": "ignore_imdb_ids",
-            "label": "Ignore IMDb IDs",
-            "type": "string_list",
-            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
-            "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
-          },
-          {
-            "key": "item_radarr_tag",
-            "label": "Item Radarr Tag",
-            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add item Radarr tag",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "item_sonarr_tag",
-            "label": "Item Sonarr Tag",
-            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add item Sonarr tag",
-            "media_types": [
-              "show"
-            ]
+            "step": 1,
+            "section": "basics"
           },
           {
             "key": "sync_mode",
@@ -26801,7 +27149,8 @@
                 "value": "sync",
                 "label": "Sync"
               }
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "cache_builders",
@@ -26811,146 +27160,8 @@
             "default": 0,
             "input_type": "number",
             "min": 0,
-            "step": 1
-          },
-          {
-            "key": "collection_mode",
-            "label": "Collection Mode",
-            "type": "select",
-            "tooltip": "Controls the collection mode of all collections in a Defaults File.<br><br> Default is <b>Library Default</b> ",
-            "default": "default",
-            "options": [
-              {
-                "value": "default",
-                "label": "Library Default"
-              },
-              {
-                "value": "hide",
-                "label": "Hide Collection"
-              },
-              {
-                "value": "hide_items",
-                "label": "Hide Items in this Collection"
-              },
-              {
-                "value": "show_items",
-                "label": "Show this Collection and its Items"
-              }
-            ]
-          },
-          {
-            "key": "visible_home",
-            "label": "Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library",
-            "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared",
-            "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority",
-            "label": "Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
             "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home",
-              "visible_library",
-              "visible_shared"
-            ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_popular",
-            "label": "Plex Popular Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Plex Popular collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_popular",
-            "label": "Plex Popular Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Plex Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_popular",
-            "label": "Plex Popular Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Plex Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_popular",
-            "label": "Plex Popular Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_popular",
-              "visible_library_popular",
-              "visible_shared_popular"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_watched",
-            "label": "Plex Watched Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Plex Watched collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_watched",
-            "label": "Plex Watched Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Plex Watched collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_watched",
-            "label": "Plex Watched Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Plex Watched collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_watched",
-            "label": "Plex Watched Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_watched",
-              "visible_library_watched",
-              "visible_shared_watched"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "section": "basics"
           },
           {
             "key": "collection_order",
@@ -27305,7 +27516,820 @@
                   "episode"
                 ]
               }
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.<br><br> Default is <b>Library Default</b> ",
+            "default": "default",
+            "options": [
+              {
+                "value": "default",
+                "label": "Library Default"
+              },
+              {
+                "value": "hide",
+                "label": "Hide Collection"
+              },
+              {
+                "value": "hide_items",
+                "label": "Hide Items in this Collection"
+              },
+              {
+                "value": "show_items",
+                "label": "Show this Collection and its Items"
+              }
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule",
+            "type": "text",
+            "section": "basics",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !",
+            "section": "naming"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format",
+            "section": "naming"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format",
+            "section": "naming"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping",
+            "type": "text",
+            "section": "naming",
+            "placeholder": "Custom collection mapping name"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "section": "naming",
+            "placeholder": "Title 1, Title 2"
+          },
+          {
+            "key": "list_days",
+            "label": "List Days",
+            "type": "text_input",
+            "default": "30",
+            "tooltip": "Changes the list_days attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "list_size",
+            "label": "List Size",
+            "type": "text_input",
+            "default": "20",
+            "tooltip": "Changes the list_size attribute of the Builder for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "use_popular",
+            "label": "Plex Popular",
+            "tooltip": "Enable the most Popular Movies/Shows on Plex",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "section": "children"
+          },
+          {
+            "key": "name_popular",
+            "label": "Plex Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Plex Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_popular",
+            "label": "Plex Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Plex Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "list_days_popular",
+            "label": "Plex Popular List Days",
+            "type": "text_input",
+            "tooltip": "Changes the list_days attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "list_size_popular",
+            "label": "Plex Popular List Size",
+            "type": "text_input",
+            "tooltip": "Changes the list_size attribute of the Plex Popular collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "sync_mode_popular",
+            "label": "Plex Popular Sync Mode",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
             ]
+          },
+          {
+            "key": "cache_builders_popular",
+            "label": "Plex Popular Cache Builders",
+            "type": "number",
+            "section": "children",
+            "placeholder": "0"
+          },
+          {
+            "key": "collection_order_popular",
+            "label": "Plex Popular Collection Order",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "custom",
+                "label": "Custom"
+              },
+              {
+                "value": "alpha",
+                "label": "Alpha"
+              },
+              {
+                "value": "release",
+                "label": "Release"
+              },
+              {
+                "value": "added",
+                "label": "Added"
+              }
+            ]
+          },
+          {
+            "key": "schedule_popular",
+            "label": "Plex Popular Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "use_watched",
+            "label": "Plex Watched",
+            "tooltip": "Enable the most Watched Movies/Shows on Plex",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "section": "children"
+          },
+          {
+            "key": "name_watched",
+            "label": "Plex Watched Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the Plex Watched collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_watched",
+            "label": "Plex Watched Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the Plex Watched collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "list_days_watched",
+            "label": "Plex Watched List Days",
+            "type": "text_input",
+            "tooltip": "Changes the list_days attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Days value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "list_size_watched",
+            "label": "Plex Watched List Size",
+            "type": "text_input",
+            "tooltip": "Changes the list_size attribute of the Plex Watched collection. Valid values are numbers greater than 0. Leave blank to inherit the family List Size value.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "sync_mode_watched",
+            "label": "Plex Watched Sync Mode",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
+            "key": "cache_builders_watched",
+            "label": "Plex Watched Cache Builders",
+            "type": "number",
+            "section": "children",
+            "placeholder": "0"
+          },
+          {
+            "key": "collection_order_watched",
+            "label": "Plex Watched Collection Order",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "custom",
+                "label": "Custom"
+              },
+              {
+                "value": "alpha",
+                "label": "Alpha"
+              },
+              {
+                "value": "release",
+                "label": "Release"
+              },
+              {
+                "value": "added",
+                "label": "Added"
+              }
+            ]
+          },
+          {
+            "key": "schedule_watched",
+            "label": "Plex Watched Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "chart/<<style>>/<<mapping_name_encoded>>"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_background_popular",
+            "label": "Plex Popular Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_background_watched",
+            "label": "Plex Watched Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_logo_popular",
+            "label": "Plex Popular Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_logo_watched",
+            "label": "Plex Watched Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_poster_popular",
+            "label": "Plex Popular Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_poster_watched",
+            "label": "Plex Watched Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_square_art_popular",
+            "label": "Plex Popular Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_square_art_watched",
+            "label": "Plex Watched Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home",
+              "visible_library",
+              "visible_shared"
+            ],
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_popular",
+            "label": "Plex Popular Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_popular",
+              "visible_library_popular",
+              "visible_shared_popular"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_watched",
+            "label": "Plex Watched Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_watched",
+              "visible_library_watched",
+              "visible_shared_watched"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "validation_preset": "numeric_id",
+            "section": "basics"
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "type": "string_list",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "validation_preset": "imdb_id_plex",
+            "section": "basics"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "url_background_popular",
+            "label": "Plex Popular Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_background_watched",
+            "label": "Plex Watched Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_logo_popular",
+            "label": "Plex Popular Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_logo_watched",
+            "label": "Plex Watched Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_poster_popular",
+            "label": "Plex Popular Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_poster_watched",
+            "label": "Plex Watched Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_square_art_popular",
+            "label": "Plex Popular Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "url_square_art_watched",
+            "label": "Plex Watched Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "Plex Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_home_watched",
+            "label": "Plex Watched Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Watched collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "Plex Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library_watched",
+            "label": "Plex Watched Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Watched collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "Plex Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared_watched",
+            "label": "Plex Watched Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the Plex Watched collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "id": "basics",
+            "label": "Basics"
+          },
+          {
+            "id": "naming",
+            "label": "Naming"
+          },
+          {
+            "id": "builder",
+            "label": "Builder Controls"
+          },
+          {
+            "id": "children",
+            "label": "Chart Collections"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "automation",
+            "label": "Automation"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           }
         ]
       },
@@ -27325,176 +28349,35 @@
             "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
-          },
-          {
-            "key": "sort_prefix",
-            "label": "Sort Prefix",
-            "type": "text_input",
-            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
-            "placeholder": "e.g. !"
-          },
-          {
-            "key": "sort_title",
-            "label": "Sort Title",
-            "type": "text_input",
-            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom sort title format"
-          },
-          {
-            "key": "name_format",
-            "label": "Name Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_format",
-            "label": "Summary Format",
-            "type": "text_input",
-            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "limit",
-            "label": "Limit",
-            "type": "text_input",
-            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
           },
           {
             "key": "use_all",
             "label": "Use All Child Collections",
             "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "section": "children"
           },
           {
-            "key": "use_top",
-            "label": "IMDb Top 250",
-            "tooltip": "Collection of Top 250 Movies/Shows on IMDb.",
-            "tooltip_variant": "info",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_top",
-            "label": "IMDb Top 250 Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the IMDb Top 250 collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_top",
-            "label": "IMDb Top 250 Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the IMDb Top 250 collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_top",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_top",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "use_popular",
-            "label": "IMDb Popular",
-            "tooltip": "Collection of the most Popular Movies/Shows on IMDb",
-            "tooltip_variant": "info",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_popular",
-            "label": "IMDb Popular Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the IMDb Popular collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_popular",
-            "label": "IMDb Popular Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the IMDb Popular collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_popular",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_popular",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "use_lowest",
-            "label": "IMDb Lowest Rated",
-            "tooltip": "Collection of the lowest Rated Movies on IMDb.",
-            "tooltip_variant": "info",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "name_lowest",
-            "label": "IMDb Lowest Rated Name",
-            "type": "text_input",
-            "tooltip": "Override the collection name for the IMDb Lowest Rated collection. Leave blank to inherit the family Name Format value.",
-            "placeholder": "Custom collection name format"
-          },
-          {
-            "key": "summary_lowest",
-            "label": "IMDb Lowest Rated Summary",
-            "type": "text_input",
-            "tooltip": "Override the collection summary for the IMDb Lowest Rated collection. Leave blank to inherit the family Summary Format value.",
-            "placeholder": "Custom collection summary format"
-          },
-          {
-            "key": "radarr_add_missing_lowest",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_lowest",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
+            "key": "allowed_libraries",
+            "label": "Allowed Libraries",
+            "type": "select",
+            "section": "basics",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "movie",
+                "label": "Movie"
+              },
+              {
+                "value": "show",
+                "label": "Show"
+              }
             ]
           },
           {
@@ -27506,7 +28389,8 @@
             "options": [
               "color",
               "white"
-            ]
+            ],
+            "section": "basics"
           },
           {
             "key": "minimum_items",
@@ -27515,7 +28399,962 @@
             "tooltip": "Changes the minimum_items for all collections in a Defaults File.<br><br>Allowed values: number greater than 0.",
             "input_type": "number",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "section": "basics"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
+            "default": "sync",
+            "options": [
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
+            "default": 1,
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "basics"
+          },
+          {
+            "key": "collection_order",
+            "label": "Collection Order",
+            "type": "select",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
+            "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "title.asc",
+                "label": "Title Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "title.desc",
+                "label": "Title Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "season.asc",
+                "label": "Season Ascending",
+                "media_types": [
+                  "season"
+                ]
+              },
+              {
+                "value": "season.desc",
+                "label": "Season Descending",
+                "media_types": [
+                  "season"
+                ]
+              },
+              {
+                "value": "show.asc",
+                "label": "Show Ascending",
+                "media_types": [
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "show.desc",
+                "label": "Show Descending",
+                "media_types": [
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "year.asc",
+                "label": "Year Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "year.desc",
+                "label": "Year Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "release.asc",
+                "label": "Release Date (Originally Available) Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "release.desc",
+                "label": "Release Date (Originally Available) Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "episode_release.asc",
+                "label": "Episode Release Date Ascending",
+                "media_types": [
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              },
+              {
+                "value": "episode_release.desc",
+                "label": "Episode Release Date Descending",
+                "media_types": [
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              },
+              {
+                "value": "critic_rating.asc",
+                "label": "Critic Rating Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "critic_rating.desc",
+                "label": "Critic Rating Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "audience_rating.asc",
+                "label": "Audience Rating Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "audience_rating.desc",
+                "label": "Audience Rating Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "user_rating.asc",
+                "label": "User Rating Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              },
+              {
+                "value": "user_rating.desc",
+                "label": "User Rating Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              },
+              {
+                "value": "content_rating.asc",
+                "label": "Content Rating Ascending",
+                "media_types": [
+                  "movie",
+                  "show"
+                ]
+              },
+              {
+                "value": "content_rating.desc",
+                "label": "Content Rating Descending",
+                "media_types": [
+                  "movie",
+                  "show"
+                ]
+              },
+              {
+                "value": "duration.asc",
+                "label": "Duration Ascending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "duration.desc",
+                "label": "Duration Descending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "progress.asc",
+                "label": "Progress Ascending",
+                "media_types": [
+                  "episode"
+                ]
+              },
+              {
+                "value": "progress.desc",
+                "label": "Progress Descending",
+                "media_types": [
+                  "episode"
+                ]
+              },
+              {
+                "value": "plays.asc",
+                "label": "Number of Plays Ascending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "plays.desc",
+                "label": "Number of Plays Descending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "unplayed.asc",
+                "label": "Unplayed Ascending",
+                "media_types": [
+                  "show"
+                ]
+              },
+              {
+                "value": "unplayed.desc",
+                "label": "Unplayed Descending",
+                "media_types": [
+                  "show"
+                ]
+              },
+              {
+                "value": "episode_added.asc",
+                "label": "Last Episode Date Added Ascending",
+                "media_types": [
+                  "show"
+                ]
+              },
+              {
+                "value": "episode_added.desc",
+                "label": "Last Episode Date Added Descending",
+                "media_types": [
+                  "show"
+                ]
+              },
+              {
+                "value": "added.asc",
+                "label": "Date Added Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              },
+              {
+                "value": "added.desc",
+                "label": "Date Added Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              },
+              {
+                "value": "viewed.asc",
+                "label": "Date Last Viewed Ascending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "viewed.desc",
+                "label": "Date Last Viewed Descending",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "resolution.asc",
+                "label": "Resolution Ascending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "resolution.desc",
+                "label": "Resolution Descending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "bitrate.asc",
+                "label": "Bitrate Ascending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "bitrate.desc",
+                "label": "Bitrate Descending",
+                "media_types": [
+                  "movie",
+                  "episode"
+                ]
+              },
+              {
+                "value": "random",
+                "label": "Random",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "season",
+                  "episode"
+                ]
+              }
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.<br><br> Default is <b>Library Default</b> ",
+            "default": "default",
+            "options": [
+              {
+                "value": "default",
+                "label": "Library Default"
+              },
+              {
+                "value": "hide",
+                "label": "Hide Collection"
+              },
+              {
+                "value": "hide_items",
+                "label": "Hide Items in this Collection"
+              },
+              {
+                "value": "show_items",
+                "label": "Show this Collection and its Items"
+              }
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule",
+            "type": "text",
+            "section": "basics",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "tooltip": "Override the prefix prepended to generated sort titles for this Defaults File. Leave blank to inherit the Kometa default.",
+            "placeholder": "e.g. !",
+            "section": "naming"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "tooltip": "Override the generated Plex sort title format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom sort title format",
+            "section": "naming"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection name format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection name format",
+            "section": "naming"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "tooltip": "Override the generated collection summary format for this Defaults File. Leave blank to inherit the Kometa default behavior.",
+            "placeholder": "Custom collection summary format",
+            "section": "naming"
+          },
+          {
+            "key": "name_mapping",
+            "label": "Name Mapping",
+            "type": "text",
+            "section": "naming",
+            "placeholder": "Custom collection mapping name"
+          },
+          {
+            "key": "delete_collections_named",
+            "label": "Delete Collections Named",
+            "type": "string_list",
+            "section": "naming",
+            "placeholder": "Title 1, Title 2"
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "tooltip": "Changes the Builder Limit for all collections in this Defaults File. Valid values are numbers greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "builder"
+          },
+          {
+            "key": "use_popular",
+            "label": "IMDb Popular",
+            "tooltip": "Collection of the most Popular Movies/Shows on IMDb",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "section": "children"
+          },
+          {
+            "key": "name_popular",
+            "label": "IMDb Popular Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Popular collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_popular",
+            "label": "IMDb Popular Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Popular collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "sync_mode_popular",
+            "label": "IMDb Popular Sync Mode",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
+            "key": "cache_builders_popular",
+            "label": "IMDb Popular Cache Builders",
+            "type": "number",
+            "section": "children",
+            "placeholder": "0"
+          },
+          {
+            "key": "collection_order_popular",
+            "label": "IMDb Popular Collection Order",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "custom",
+                "label": "Custom"
+              },
+              {
+                "value": "alpha",
+                "label": "Alpha"
+              },
+              {
+                "value": "release",
+                "label": "Release"
+              },
+              {
+                "value": "added",
+                "label": "Added"
+              }
+            ]
+          },
+          {
+            "key": "schedule_popular",
+            "label": "IMDb Popular Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "use_top",
+            "label": "IMDb Top 250",
+            "tooltip": "Collection of Top 250 Movies/Shows on IMDb.",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "section": "children"
+          },
+          {
+            "key": "name_top",
+            "label": "IMDb Top 250 Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Top 250 collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_top",
+            "label": "IMDb Top 250 Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Top 250 collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "sync_mode_top",
+            "label": "IMDb Top 250 Sync Mode",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
+            "key": "cache_builders_top",
+            "label": "IMDb Top 250 Cache Builders",
+            "type": "number",
+            "section": "children",
+            "placeholder": "0"
+          },
+          {
+            "key": "collection_order_top",
+            "label": "IMDb Top 250 Collection Order",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "custom",
+                "label": "Custom"
+              },
+              {
+                "value": "alpha",
+                "label": "Alpha"
+              },
+              {
+                "value": "release",
+                "label": "Release"
+              },
+              {
+                "value": "added",
+                "label": "Added"
+              }
+            ]
+          },
+          {
+            "key": "schedule_top",
+            "label": "IMDb Top 250 Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "use_lowest",
+            "label": "IMDb Lowest Rated",
+            "tooltip": "Collection of the lowest Rated Movies on IMDb.",
+            "tooltip_variant": "info",
+            "type": "toggle",
+            "default": true,
+            "section": "children"
+          },
+          {
+            "key": "name_lowest",
+            "label": "IMDb Lowest Rated Name",
+            "type": "text_input",
+            "tooltip": "Override the collection name for the IMDb Lowest Rated collection. Leave blank to inherit the family Name Format value.",
+            "placeholder": "Custom collection name format",
+            "section": "children"
+          },
+          {
+            "key": "summary_lowest",
+            "label": "IMDb Lowest Rated Summary",
+            "type": "text_input",
+            "tooltip": "Override the collection summary for the IMDb Lowest Rated collection. Leave blank to inherit the family Summary Format value.",
+            "placeholder": "Custom collection summary format",
+            "section": "children"
+          },
+          {
+            "key": "sync_mode_lowest",
+            "label": "IMDb Lowest Rated Sync Mode",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "append",
+                "label": "Append"
+              },
+              {
+                "value": "sync",
+                "label": "Sync"
+              }
+            ]
+          },
+          {
+            "key": "cache_builders_lowest",
+            "label": "IMDb Lowest Rated Cache Builders",
+            "type": "number",
+            "section": "children",
+            "placeholder": "0"
+          },
+          {
+            "key": "collection_order_lowest",
+            "label": "IMDb Lowest Rated Collection Order",
+            "type": "select",
+            "section": "children",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "custom",
+                "label": "Custom"
+              },
+              {
+                "value": "alpha",
+                "label": "Alpha"
+              },
+              {
+                "value": "release",
+                "label": "Release"
+              },
+              {
+                "value": "added",
+                "label": "Added"
+              }
+            ]
+          },
+          {
+            "key": "schedule_lowest",
+            "label": "IMDb Lowest Rated Schedule",
+            "type": "text",
+            "section": "children",
+            "placeholder": "weekly(sunday)"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "chart/<<style>>/<<mapping_name_encoded>>"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "file_poster",
+            "label": "Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "file_background",
+            "label": "Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "file_logo",
+            "label": "Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "url_square_art",
+            "label": "Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "file_square_art",
+            "label": "Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_background_lowest",
+            "label": "IMDb Lowest Rated Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_background_popular",
+            "label": "IMDb Popular Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_background_top",
+            "label": "IMDb Top 250 Background File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/background.jpg"
+          },
+          {
+            "key": "file_logo_lowest",
+            "label": "IMDb Lowest Rated Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_logo_popular",
+            "label": "IMDb Popular Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_logo_top",
+            "label": "IMDb Top 250 Logo File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/logo.png"
+          },
+          {
+            "key": "file_poster_lowest",
+            "label": "IMDb Lowest Rated Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_poster_popular",
+            "label": "IMDb Popular Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_poster_top",
+            "label": "IMDb Top 250 Poster File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/poster.jpg"
+          },
+          {
+            "key": "file_square_art_lowest",
+            "label": "IMDb Lowest Rated Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_square_art_popular",
+            "label": "IMDb Popular Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "file_square_art_top",
+            "label": "IMDb Top 250 Square Art File",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "/config/assets/square-art.png"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home",
+              "visible_library",
+              "visible_shared"
+            ],
+            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_lowest",
+            "label": "IMDb Lowest Rated Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_lowest",
+              "visible_library_lowest",
+              "visible_shared_lowest"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_popular",
+            "label": "IMDb Popular Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_popular",
+              "visible_library_popular",
+              "visible_shared_popular"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority_top",
+            "label": "IMDb Top 250 Hub Priority",
+            "type": "text_input",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_top",
+              "visible_library_top",
+              "visible_shared_top"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
+            "section": "visibility"
           },
           {
             "key": "ignore_ids",
@@ -27523,7 +29362,8 @@
             "type": "string_list",
             "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
             "placeholder": "Add numeric ID (e.g. 603)",
-            "validation_preset": "numeric_id"
+            "validation_preset": "numeric_id",
+            "section": "basics"
           },
           {
             "key": "ignore_imdb_ids",
@@ -27531,7 +29371,90 @@
             "type": "string_list",
             "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
             "placeholder": "Add IMDb ID (e.g. tt1234567)",
-            "validation_preset": "imdb_id_plex"
+            "validation_preset": "imdb_id_plex",
+            "section": "basics"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Radarr tag",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "item_radarr_tag_lowest",
+            "label": "IMDb Lowest Rated Item Radarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "collection,tracked"
+          },
+          {
+            "key": "item_radarr_tag_popular",
+            "label": "IMDb Popular Item Radarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "collection,tracked"
+          },
+          {
+            "key": "item_radarr_tag_top",
+            "label": "IMDb Top 250 Item Radarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "collection,tracked"
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add item Sonarr tag",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "item_sonarr_tag_lowest",
+            "label": "IMDb Lowest Rated Item Sonarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "collection,tracked"
+          },
+          {
+            "key": "item_sonarr_tag_popular",
+            "label": "IMDb Popular Item Sonarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "collection,tracked"
+          },
+          {
+            "key": "item_sonarr_tag_top",
+            "label": "IMDb Top 250 Item Sonarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "collection,tracked"
           },
           {
             "key": "radarr_add_missing",
@@ -27541,16 +29464,239 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation"
           },
           {
-            "key": "sonarr_add_missing",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "key": "radarr_add_missing_lowest",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
             "tooltip_variant": "danger",
             "type": "toggle",
             "media_types": [
-              "show"
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_add_missing_popular",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_add_missing_top",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_folder",
+            "label": "Radarr Root Folder",
+            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
+            "type": "text_input",
+            "placeholder": "Enter Radarr root folder path",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_folder_lowest",
+            "label": "IMDb Lowest Rated Radarr Folder",
+            "type": "text",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "C:\\Media\\Movies"
+          },
+          {
+            "key": "radarr_folder_popular",
+            "label": "IMDb Popular Radarr Folder",
+            "type": "text",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "C:\\Media\\Movies"
+          },
+          {
+            "key": "radarr_folder_top",
+            "label": "IMDb Top 250 Radarr Folder",
+            "type": "text",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "C:\\Media\\Movies"
+          },
+          {
+            "key": "radarr_monitor",
+            "label": "Monitor media when added to Radarr",
+            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Radarr",
+            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_monitor_existing_lowest",
+            "label": "IMDb Lowest Rated Radarr Monitor Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing_popular",
+            "label": "IMDb Popular Radarr Monitor Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "radarr_monitor_existing_top",
+            "label": "IMDb Top 250 Radarr Monitor Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "radarr_monitor_lowest",
+            "label": "IMDb Lowest Rated Radarr Monitor",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "radarr_monitor_popular",
+            "label": "IMDb Popular Radarr Monitor",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "radarr_monitor_top",
+            "label": "IMDb Top 250 Radarr Monitor",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
           },
           {
@@ -27560,42 +29706,76 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation"
           },
           {
-            "key": "sonarr_search",
-            "label": "Search media when added to Sonarr",
-            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "radarr_monitor",
-            "label": "Monitor media when added to Radarr",
-            "tooltip": "Override Radarr monitor for all collections in this Defaults File.<br><br>Enables monitoring of newly added media in Radarr.",
-            "type": "toggle",
+            "key": "radarr_search_lowest",
+            "label": "IMDb Lowest Rated Radarr Search",
+            "type": "select",
+            "section": "automation",
             "media_types": [
               "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
           },
           {
-            "key": "radarr_monitor_existing",
-            "label": "Set existing media from collections to monitored in Radarr",
-            "tooltip": "Override Radarr monitor_existing for all collections in this Defaults File.<br><br>Changes all existing media from collections to 'monitored' in Radarr.",
-            "type": "toggle",
+            "key": "radarr_search_popular",
+            "label": "IMDb Popular Radarr Search",
+            "type": "select",
+            "section": "automation",
             "media_types": [
               "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
           },
           {
-            "key": "sonarr_monitor_existing",
-            "label": "Set existing media from collections to monitored in Sonarr",
-            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
-            "type": "toggle",
+            "key": "radarr_search_top",
+            "label": "IMDb Top 250 Radarr Search",
+            "type": "select",
+            "section": "automation",
             "media_types": [
-              "show"
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
           },
           {
@@ -27606,47 +29786,161 @@
             "placeholder": "Add Radarr tag",
             "media_types": [
               "movie"
-            ]
+            ],
+            "section": "automation"
           },
           {
-            "key": "sonarr_tag",
-            "label": "Sonarr Tag",
-            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "key": "radarr_tag_lowest",
+            "label": "IMDb Lowest Rated Radarr Tags",
             "type": "string_list",
-            "placeholder": "Add Sonarr tag",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "item_radarr_tag",
-            "label": "Item Radarr Tag",
-            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
-            "type": "string_list",
-            "placeholder": "Add item Radarr tag",
+            "section": "automation",
             "media_types": [
               "movie"
-            ]
+            ],
+            "placeholder": "4k,chart"
           },
           {
-            "key": "item_sonarr_tag",
-            "label": "Item Sonarr Tag",
-            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "key": "radarr_tag_popular",
+            "label": "IMDb Popular Radarr Tags",
             "type": "string_list",
-            "placeholder": "Add item Sonarr tag",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "key": "radarr_folder",
-            "label": "Radarr Root Folder",
-            "tooltip": "Override Radarr root_folder_path for all collections in this Defaults File.",
-            "type": "text_input",
-            "placeholder": "Enter Radarr root folder path",
+            "section": "automation",
             "media_types": [
               "movie"
+            ],
+            "placeholder": "4k,chart"
+          },
+          {
+            "key": "radarr_tag_top",
+            "label": "IMDb Top 250 Radarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "placeholder": "4k,chart"
+          },
+          {
+            "key": "radarr_upgrade_existing",
+            "label": "Upgrade existing media in Radarr",
+            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "radarr_upgrade_existing_lowest",
+            "label": "IMDb Lowest Rated Radarr Upgrade Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
+          },
+          {
+            "key": "radarr_upgrade_existing_popular",
+            "label": "IMDb Popular Radarr Upgrade Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "radarr_upgrade_existing_top",
+            "label": "IMDb Top 250 Radarr Upgrade Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "movie"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_add_missing",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Override Sonarr add_missing for all collections in this Defaults File.<br><br>Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b>",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_add_missing_lowest",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_add_missing_popular",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_add_missing_top",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
           },
           {
             "key": "sonarr_folder",
@@ -27656,7 +29950,38 @@
             "placeholder": "Enter Sonarr root folder path",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_folder_lowest",
+            "label": "IMDb Lowest Rated Sonarr Folder",
+            "type": "text",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "C:\\Media\\Shows"
+          },
+          {
+            "key": "sonarr_folder_popular",
+            "label": "IMDb Popular Sonarr Folder",
+            "type": "text",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "C:\\Media\\Shows"
+          },
+          {
+            "key": "sonarr_folder_top",
+            "label": "IMDb Top 250 Sonarr Folder",
+            "type": "text",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "C:\\Media\\Shows"
           },
           {
             "key": "sonarr_monitor",
@@ -27699,16 +30024,348 @@
             ],
             "media_types": [
               "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_monitor_existing",
+            "label": "Set existing media from collections to monitored in Sonarr",
+            "tooltip": "Override Sonarr monitor_existing for all collections in this Defaults File.<br><br>Marks all existing media from collections as 'monitored' in Sonarr.",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_monitor_existing_lowest",
+            "label": "IMDb Lowest Rated Sonarr Monitor Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
           },
           {
-            "key": "radarr_upgrade_existing",
-            "label": "Upgrade existing media in Radarr",
-            "tooltip": "Override Radarr upgrade_existing for all collections in this Defaults File.<br><br>Upgrades existing media from collections to the current Radarr quality profile.",
+            "key": "sonarr_monitor_existing_popular",
+            "label": "IMDb Popular Sonarr Monitor Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_monitor_existing_top",
+            "label": "IMDb Top 250 Sonarr Monitor Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_monitor_lowest",
+            "label": "IMDb Lowest Rated Sonarr Monitor",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First"
+              },
+              {
+                "value": "latest",
+                "label": "Latest"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_monitor_popular",
+            "label": "IMDb Popular Sonarr Monitor",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First"
+              },
+              {
+                "value": "latest",
+                "label": "Latest"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_monitor_top",
+            "label": "IMDb Top 250 Sonarr Monitor",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "all",
+                "label": "All"
+              },
+              {
+                "value": "future",
+                "label": "Future"
+              },
+              {
+                "value": "missing",
+                "label": "Missing"
+              },
+              {
+                "value": "existing",
+                "label": "Existing"
+              },
+              {
+                "value": "pilot",
+                "label": "Pilot"
+              },
+              {
+                "value": "first",
+                "label": "First"
+              },
+              {
+                "value": "latest",
+                "label": "Latest"
+              },
+              {
+                "value": "none",
+                "label": "None"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_search",
+            "label": "Search media when added to Sonarr",
+            "tooltip": "Override Sonarr search for all collections in this Defaults File.<br><br>Automatically searches for media when added.",
             "type": "toggle",
             "media_types": [
-              "movie"
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_search_lowest",
+            "label": "IMDb Lowest Rated Sonarr Search",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
             ]
+          },
+          {
+            "key": "sonarr_search_popular",
+            "label": "IMDb Popular Sonarr Search",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_search_top",
+            "label": "IMDb Top 250 Sonarr Search",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "sonarr_tag",
+            "label": "Sonarr Tag",
+            "tooltip": "Override the Sonarr tag for all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list",
+            "placeholder": "Add Sonarr tag",
+            "media_types": [
+              "show"
+            ],
+            "section": "automation"
+          },
+          {
+            "key": "sonarr_tag_lowest",
+            "label": "IMDb Lowest Rated Sonarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "4k,chart"
+          },
+          {
+            "key": "sonarr_tag_popular",
+            "label": "IMDb Popular Sonarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "4k,chart"
+          },
+          {
+            "key": "sonarr_tag_top",
+            "label": "IMDb Top 250 Sonarr Tags",
+            "type": "string_list",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "placeholder": "4k,chart"
           },
           {
             "key": "sonarr_upgrade_existing",
@@ -27717,566 +30374,455 @@
             "type": "toggle",
             "media_types": [
               "show"
-            ]
+            ],
+            "section": "automation"
           },
           {
-            "key": "sync_mode",
-            "label": "Sync Mode",
+            "key": "sonarr_upgrade_existing_lowest",
+            "label": "IMDb Lowest Rated Sonarr Upgrade Existing",
             "type": "select",
-            "tooltip": "Changes the sync_mode for all collections in a Defaults File.<br><br> Default is <b>Sync</b> ",
-            "default": "sync",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
             "options": [
               {
-                "value": "append",
-                "label": "Append"
+                "value": "",
+                "label": "Default"
               },
               {
-                "value": "sync",
-                "label": "Sync"
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
               }
             ]
           },
           {
-            "key": "cache_builders",
-            "label": "Cache Builders",
-            "type": "text_input",
-            "tooltip": "Changes the Builder Cache for all collections in a Defaults File.<br><br>Allowed values: number 0 or greater.",
-            "default": 1,
-            "input_type": "number",
-            "min": 0,
-            "step": 1
-          },
-          {
-            "key": "collection_mode",
-            "label": "Collection Mode",
+            "key": "sonarr_upgrade_existing_popular",
+            "label": "IMDb Popular Sonarr Upgrade Existing",
             "type": "select",
-            "tooltip": "Controls the collection mode of all collections in a Defaults File.<br><br> Default is <b>Library Default</b> ",
-            "default": "default",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
             "options": [
               {
-                "value": "default",
-                "label": "Library Default"
+                "value": "",
+                "label": "Default"
               },
               {
-                "value": "hide",
-                "label": "Hide Collection"
+                "value": "true",
+                "label": "True"
               },
               {
-                "value": "hide_items",
-                "label": "Hide Items in this Collection"
-              },
-              {
-                "value": "show_items",
-                "label": "Show this Collection and its Items"
+                "value": "false",
+                "label": "False"
               }
             ]
+          },
+          {
+            "key": "sonarr_upgrade_existing_top",
+            "label": "IMDb Top 250 Sonarr Upgrade Existing",
+            "type": "select",
+            "section": "automation",
+            "media_types": [
+              "show"
+            ],
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "True"
+              },
+              {
+                "value": "false",
+                "label": "False"
+              }
+            ]
+          },
+          {
+            "key": "url_background_lowest",
+            "label": "IMDb Lowest Rated Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_background_popular",
+            "label": "IMDb Popular Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_background_top",
+            "label": "IMDb Top 250 Background URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/background.jpg"
+          },
+          {
+            "key": "url_logo_lowest",
+            "label": "IMDb Lowest Rated Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_logo_popular",
+            "label": "IMDb Popular Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_logo_top",
+            "label": "IMDb Top 250 Logo URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/logo.png"
+          },
+          {
+            "key": "url_poster_lowest",
+            "label": "IMDb Lowest Rated Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_poster_popular",
+            "label": "IMDb Popular Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_poster_top",
+            "label": "IMDb Top 250 Poster URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/poster.jpg"
+          },
+          {
+            "key": "url_square_art_lowest",
+            "label": "IMDb Lowest Rated Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "url_square_art_popular",
+            "label": "IMDb Popular Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
+          },
+          {
+            "key": "url_square_art_top",
+            "label": "IMDb Top 250 Square Art URL",
+            "type": "text",
+            "section": "artwork",
+            "placeholder": "https://example.com/square-art.png"
           },
           {
             "key": "visible_home",
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library",
-            "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared",
-            "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority",
-            "label": "Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one hub visibility toggle and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home",
-              "visible_library",
-              "visible_shared"
-            ],
-            "requirement_hint": "Enable Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_top",
-            "label": "IMDb Top 250 Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the IMDb Top 250 collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_top",
-            "label": "IMDb Top 250 Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the IMDb Top 250 collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_top",
-            "label": "IMDb Top 250 Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the IMDb Top 250 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_top",
-            "label": "IMDb Top 250 Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_top",
-              "visible_library_top",
-              "visible_shared_top"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "visible_home_popular",
-            "label": "IMDb Popular Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the IMDb Popular collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_library_popular",
-            "label": "IMDb Popular Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the IMDb Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "visible_shared_popular",
-            "label": "IMDb Popular Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the IMDb Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_popular",
-            "label": "IMDb Popular Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_popular",
-              "visible_library_popular",
-              "visible_shared_popular"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
           },
           {
             "key": "visible_home_lowest",
             "label": "IMDb Lowest Rated Visible Home",
             "type": "toggle",
             "tooltip": "Changes the IMDb Lowest Rated collection visible on Home Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_home_popular",
+            "label": "IMDb Popular Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Popular collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_home_top",
+            "label": "IMDb Top 250 Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
           },
           {
             "key": "visible_library_lowest",
             "label": "IMDb Lowest Rated Visible Library",
             "type": "toggle",
             "tooltip": "Changes the IMDb Lowest Rated collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": false
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library_popular",
+            "label": "IMDb Popular Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Popular collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_library_top",
+            "label": "IMDb Top 250 Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
           },
           {
             "key": "visible_shared_lowest",
             "label": "IMDb Lowest Rated Visible Shared",
             "type": "toggle",
             "tooltip": "Changes the IMDb Lowest Rated collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": false
-          },
-          {
-            "key": "hub_priority_lowest",
-            "label": "IMDb Lowest Rated Hub Priority",
-            "type": "text_input",
-            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
-            "tooltip": "Sets the priority for this collection's Recommendation Hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
-            "input_type": "number",
-            "min": 1,
-            "step": 1,
-            "requires_plex_pass": true,
-            "requires_any_of_template_keys": [
-              "visible_home_lowest",
-              "visible_library_lowest",
-              "visible_shared_lowest"
-            ],
-            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority."
-          },
-          {
-            "key": "collection_order",
-            "label": "Collection Order",
-            "type": "select",
-            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
-            "default": "custom",
+            "default": false,
+            "section": "visibility",
             "options": [
               {
-                "value": "custom",
-                "label": "Custom Order",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
+                "value": "",
+                "label": "Default"
               },
               {
-                "value": "alpha",
-                "label": "Alphabetical Order",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
+                "value": "true",
+                "label": "Visible"
               },
               {
-                "value": "title.asc",
-                "label": "Title Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "title.desc",
-                "label": "Title Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "season.asc",
-                "label": "Season Ascending",
-                "media_types": [
-                  "season"
-                ]
-              },
-              {
-                "value": "season.desc",
-                "label": "Season Descending",
-                "media_types": [
-                  "season"
-                ]
-              },
-              {
-                "value": "show.asc",
-                "label": "Show Ascending",
-                "media_types": [
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "show.desc",
-                "label": "Show Descending",
-                "media_types": [
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "year.asc",
-                "label": "Year Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "year.desc",
-                "label": "Year Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "release.asc",
-                "label": "Release Date (Originally Available) Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "release.desc",
-                "label": "Release Date (Originally Available) Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "episode_release.asc",
-                "label": "Episode Release Date Ascending",
-                "media_types": [
-                  "show",
-                  "season",
-                  "episode"
-                ]
-              },
-              {
-                "value": "episode_release.desc",
-                "label": "Episode Release Date Descending",
-                "media_types": [
-                  "show",
-                  "season",
-                  "episode"
-                ]
-              },
-              {
-                "value": "critic_rating.asc",
-                "label": "Critic Rating Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "critic_rating.desc",
-                "label": "Critic Rating Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "audience_rating.asc",
-                "label": "Audience Rating Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "audience_rating.desc",
-                "label": "Audience Rating Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "user_rating.asc",
-                "label": "User Rating Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "season",
-                  "episode"
-                ]
-              },
-              {
-                "value": "user_rating.desc",
-                "label": "User Rating Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "season",
-                  "episode"
-                ]
-              },
-              {
-                "value": "content_rating.asc",
-                "label": "Content Rating Ascending",
-                "media_types": [
-                  "movie",
-                  "show"
-                ]
-              },
-              {
-                "value": "content_rating.desc",
-                "label": "Content Rating Descending",
-                "media_types": [
-                  "movie",
-                  "show"
-                ]
-              },
-              {
-                "value": "duration.asc",
-                "label": "Duration Ascending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "duration.desc",
-                "label": "Duration Descending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "progress.asc",
-                "label": "Progress Ascending",
-                "media_types": [
-                  "episode"
-                ]
-              },
-              {
-                "value": "progress.desc",
-                "label": "Progress Descending",
-                "media_types": [
-                  "episode"
-                ]
-              },
-              {
-                "value": "plays.asc",
-                "label": "Number of Plays Ascending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "plays.desc",
-                "label": "Number of Plays Descending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "unplayed.asc",
-                "label": "Unplayed Ascending",
-                "media_types": [
-                  "show"
-                ]
-              },
-              {
-                "value": "unplayed.desc",
-                "label": "Unplayed Descending",
-                "media_types": [
-                  "show"
-                ]
-              },
-              {
-                "value": "episode_added.asc",
-                "label": "Last Episode Date Added Ascending",
-                "media_types": [
-                  "show"
-                ]
-              },
-              {
-                "value": "episode_added.desc",
-                "label": "Last Episode Date Added Descending",
-                "media_types": [
-                  "show"
-                ]
-              },
-              {
-                "value": "added.asc",
-                "label": "Date Added Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "season",
-                  "episode"
-                ]
-              },
-              {
-                "value": "added.desc",
-                "label": "Date Added Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "season",
-                  "episode"
-                ]
-              },
-              {
-                "value": "viewed.asc",
-                "label": "Date Last Viewed Ascending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "viewed.desc",
-                "label": "Date Last Viewed Descending",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "episode"
-                ]
-              },
-              {
-                "value": "resolution.asc",
-                "label": "Resolution Ascending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "resolution.desc",
-                "label": "Resolution Descending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "bitrate.asc",
-                "label": "Bitrate Ascending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "bitrate.desc",
-                "label": "Bitrate Descending",
-                "media_types": [
-                  "movie",
-                  "episode"
-                ]
-              },
-              {
-                "value": "random",
-                "label": "Random",
-                "media_types": [
-                  "movie",
-                  "show",
-                  "season",
-                  "episode"
-                ]
+                "value": "false",
+                "label": "Hidden"
               }
             ]
+          },
+          {
+            "key": "visible_shared_popular",
+            "label": "IMDb Popular Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Popular collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          },
+          {
+            "key": "visible_shared_top",
+            "label": "IMDb Top 250 Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes the IMDb Top 250 collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false,
+            "section": "visibility",
+            "options": [
+              {
+                "value": "",
+                "label": "Default"
+              },
+              {
+                "value": "true",
+                "label": "Visible"
+              },
+              {
+                "value": "false",
+                "label": "Hidden"
+              }
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "id": "basics",
+            "label": "Basics"
+          },
+          {
+            "id": "naming",
+            "label": "Naming"
+          },
+          {
+            "id": "builder",
+            "label": "Builder Controls"
+          },
+          {
+            "id": "children",
+            "label": "Chart Collections"
+          },
+          {
+            "id": "artwork",
+            "label": "Artwork"
+          },
+          {
+            "id": "automation",
+            "label": "Automation"
+          },
+          {
+            "id": "visibility",
+            "label": "Visibility"
           }
         ]
       },
@@ -66260,7 +68806,7 @@
             "label": "Emoji Default",
             "type": "text_input",
             "tooltip": "Override the default emoji prefix applied to child seasonal collections. Leave blank to keep the default seasonal prefix behavior.",
-            "placeholder": "e.g. 🎃",
+            "placeholder": "e.g. \ud83c\udf83",
             "section": "naming"
           },
           {
@@ -66696,7 +69242,7 @@
             "key_placeholder": "Seasonal key (e.g. halloween)",
             "key_validation_preset": "seasonal_key",
             "key_input_mode": "select",
-            "value_placeholder": "🎃",
+            "value_placeholder": "\ud83c\udf83",
             "dynamic_child_prefix": "emoji_",
             "dynamic_child_value_kind": "string",
             "section": "builder_override_maps"
