@@ -3456,6 +3456,15 @@ const templateStringListPresetConfigs = {
       ? { valid: true }
       : { valid: false, message: 'Enter a supported streaming service key like netflix, disney, or amazon.' }
   },
+  other_chart_key: {
+    duplicateInsensitive: true,
+    normalize: value => value.toLowerCase(),
+    suggestions: ['commonsense', 'metacritic', 'stevenlu', 'pirated'],
+    allowedValues: new Set(['commonsense', 'metacritic', 'stevenlu', 'pirated']),
+    validate: value => templateStringListPresetConfigs.other_chart_key.allowedValues.has(value)
+      ? { valid: true }
+      : { valid: false, message: 'Select a supported Other Charts key like commonsense, metacritic, stevenlu, or pirated.' }
+  },
   universe_key: {
     duplicateInsensitive: true,
     normalize: value => value.toLowerCase(),
