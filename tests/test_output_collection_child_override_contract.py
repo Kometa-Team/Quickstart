@@ -404,6 +404,62 @@ def test_apply_template_var_normalizers_expands_language_dynamic_child_override_
     assert template_vars["item_sonarr_tag_fr"] == ["subtitle", "french"]
 
 
+def test_apply_template_var_normalizers_expands_aspect_dynamic_child_override_maps():
+    template_vars = {
+        "child_schedule_overrides": '{"2.35": "weekly(sunday)"}',
+        "child_sync_mode_overrides": '{"2.35": "append"}',
+        "child_sort_by_overrides": '{"1.85": "title.asc"}',
+        "child_minimum_items_overrides": '{"1.33": "3"}',
+        "child_url_background_overrides": '{"1.78": "https://example.com/aspect-bg.jpg"}',
+        "child_file_logo_overrides": '{"2.35": "C:\\\\Logos\\\\scope.png"}',
+        "child_item_radarr_tag_overrides": '{"1.78": ["aspect", "widescreen"]}',
+        "child_item_sonarr_tag_overrides": '{"2.35": "aspect,scope"}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "aspect")
+
+    assert template_vars["schedule_2.35"] == "weekly(sunday)"
+    assert template_vars["sync_mode_2.35"] == "append"
+    assert template_vars["sort_by_1.85"] == "title.asc"
+    assert template_vars["minimum_items_1.33"] == 3
+    assert template_vars["url_background_1.78"] == "https://example.com/aspect-bg.jpg"
+    assert template_vars["file_logo_2.35"] == r"C:\Logos\scope.png"
+    assert template_vars["item_radarr_tag_1.78"] == ["aspect", "widescreen"]
+    assert template_vars["item_sonarr_tag_2.35"] == ["aspect", "scope"]
+
+
+def test_apply_template_var_normalizers_expands_resolution_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"4k": "false"}',
+        "child_name_overrides": '{"4k": "Ultra HD"}',
+        "child_summary_overrides": '{"1080": "HD favorites"}',
+        "child_order_overrides": '{"4k": "01"}',
+        "child_schedule_overrides": '{"1080": "weekly(friday)"}',
+        "child_sort_by_overrides": '{"720": "title.asc"}',
+        "child_limit_overrides": '{"480": "12"}',
+        "child_url_poster_overrides": '{"4k": "https://example.com/4k.jpg"}',
+        "child_file_square_art_overrides": '{"1080": "C:\\\\Square\\\\1080.png"}',
+        "child_visible_library_overrides": '{"4k": "false"}',
+        "child_item_radarr_tag_overrides": '{"4k": "resolution,4k"}',
+        "child_item_sonarr_tag_overrides": '{"1080": ["resolution", "1080p"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "resolution")
+
+    assert template_vars["use_4k"] is False
+    assert template_vars["name_4k"] == "Ultra HD"
+    assert template_vars["summary_1080"] == "HD favorites"
+    assert template_vars["order_4k"] == "01"
+    assert template_vars["schedule_1080"] == "weekly(friday)"
+    assert template_vars["sort_by_720"] == "title.asc"
+    assert template_vars["limit_480"] == 12
+    assert template_vars["url_poster_4k"] == "https://example.com/4k.jpg"
+    assert template_vars["file_square_art_1080"] == r"C:\Square\1080.png"
+    assert template_vars["visible_library_4k"] is False
+    assert template_vars["item_radarr_tag_4k"] == ["resolution", "4k"]
+    assert template_vars["item_sonarr_tag_1080"] == ["resolution", "1080p"]
+
+
 def test_apply_template_var_normalizers_expands_award_year_override_maps():
     template_vars = {
         "child_collection_order_overrides": '{"2024": "release"}',
