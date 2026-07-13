@@ -2098,10 +2098,26 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_anilist_limit": "80",
                     "mov-library_movies-template_collection_anilist_limit_popular": "40",
                     "mov-library_movies-template_collection_anilist_limit_season": "25",
+                    "mov-library_movies-template_collection_anilist_image": "chart/color/anilist",
+                    "mov-library_movies-template_collection_anilist_url_logo_season": "https://example.com/anilist-season.png",
+                    "mov-library_movies-template_collection_anilist_sync_mode_trending": "append",
+                    "mov-library_movies-template_collection_anilist_cache_builders_season": "0",
+                    "mov-library_movies-template_collection_anilist_collection_order_top": "custom",
+                    "mov-library_movies-template_collection_anilist_radarr_folder_popular": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_anilist_sonarr_search_season": "false",
                     "mov-library_movies-collection_myanimelist": True,
                     "mov-library_movies-template_collection_myanimelist_limit": "90",
                     "mov-library_movies-template_collection_myanimelist_limit_favorited": "45",
                     "mov-library_movies-template_collection_myanimelist_limit_airing": "12",
+                    "mov-library_movies-template_collection_myanimelist_starting_only": "true",
+                    "mov-library_movies-template_collection_myanimelist_starting_only_season": "false",
+                    "mov-library_movies-template_collection_myanimelist_image": "chart/color/mal",
+                    "mov-library_movies-template_collection_myanimelist_url_logo_favorited": "https://example.com/mal-favorited.png",
+                    "mov-library_movies-template_collection_myanimelist_sync_mode_season": "append",
+                    "mov-library_movies-template_collection_myanimelist_cache_builders_airing": "0",
+                    "mov-library_movies-template_collection_myanimelist_collection_order_top": "custom",
+                    "mov-library_movies-template_collection_myanimelist_radarr_folder_favorited": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_myanimelist_sonarr_search_season": "false",
                     "mov-library_movies-collection_basic": True,
                     "mov-library_movies-template_collection_basic_limit": "20",
                     "mov-library_movies-template_collection_basic_limit_released": "10",
@@ -2115,6 +2131,15 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_letterboxd_limit_1001_movies": "80",
                     "mov-library_movies-template_collection_letterboxd_limit_top_500": "60",
                     "mov-library_movies-template_collection_letterboxd_limit_women_directors": "40",
+                    "mov-library_movies-template_collection_letterboxd_allowed_libraries": "movie",
+                    "mov-library_movies-template_collection_letterboxd_image": "chart/color/letterboxd",
+                    "mov-library_movies-template_collection_letterboxd_url_logo_top_500": "https://example.com/letterboxd-top-500.png",
+                    "mov-library_movies-template_collection_letterboxd_url_logo_cannes": "https://example.com/letterboxd-cannes.png",
+                    "mov-library_movies-template_collection_letterboxd_sync_mode_oscars": "append",
+                    "mov-library_movies-template_collection_letterboxd_cache_builders_black_directors": "0",
+                    "mov-library_movies-template_collection_letterboxd_collection_order_cannes": "custom",
+                    "mov-library_movies-template_collection_letterboxd_radarr_folder_women_directors": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_letterboxd_sonarr_search_imdb_top_250": "false",
                     "mov-library_movies-collection_imdb": True,
                     "mov-library_movies-template_collection_imdb_limit": "250",
                     "mov-library_movies-template_collection_imdb_allowed_libraries": "movie",
@@ -2195,9 +2220,25 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert anilist_entry["template_variables"]["limit"] == "80"
     assert anilist_entry["template_variables"]["limit_popular"] == "40"
     assert anilist_entry["template_variables"]["limit_season"] == "25"
+    assert anilist_entry["template_variables"]["image"] == "chart/color/anilist"
+    assert anilist_entry["template_variables"]["url_logo_season"] == "https://example.com/anilist-season.png"
+    assert anilist_entry["template_variables"]["sync_mode_trending"] == "append"
+    assert anilist_entry["template_variables"]["cache_builders_season"] == "0"
+    assert anilist_entry["template_variables"]["collection_order_top"] == "custom"
+    assert anilist_entry["template_variables"]["radarr_folder_popular"] == r"C:\Media\Movies"
+    assert anilist_entry["template_variables"]["sonarr_search_season"] is False
     assert myanimelist_entry["template_variables"]["limit"] == "90"
     assert myanimelist_entry["template_variables"]["limit_favorited"] == "45"
     assert myanimelist_entry["template_variables"]["limit_airing"] == "12"
+    assert myanimelist_entry["template_variables"]["starting_only"] is True
+    assert myanimelist_entry["template_variables"]["starting_only_season"] is False
+    assert myanimelist_entry["template_variables"]["image"] == "chart/color/mal"
+    assert myanimelist_entry["template_variables"]["url_logo_favorited"] == "https://example.com/mal-favorited.png"
+    assert myanimelist_entry["template_variables"]["sync_mode_season"] == "append"
+    assert myanimelist_entry["template_variables"]["cache_builders_airing"] == "0"
+    assert myanimelist_entry["template_variables"]["collection_order_top"] == "custom"
+    assert myanimelist_entry["template_variables"]["radarr_folder_favorited"] == r"C:\Media\Movies"
+    assert myanimelist_entry["template_variables"]["sonarr_search_season"] is False
     assert basic_entry["template_variables"]["limit"] == "20"
     assert basic_entry["template_variables"]["limit_released"] == "10"
     assert basic_entry["template_variables"]["limit_episodes"] == "5"
@@ -2209,6 +2250,15 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert letterboxd_entry["template_variables"]["limit_1001_movies"] == "80"
     assert letterboxd_entry["template_variables"]["limit_top_500"] == "60"
     assert letterboxd_entry["template_variables"]["limit_women_directors"] == "40"
+    assert letterboxd_entry["template_variables"]["allowed_libraries"] == "movie"
+    assert letterboxd_entry["template_variables"]["image"] == "chart/color/letterboxd"
+    assert letterboxd_entry["template_variables"]["url_logo_top_500"] == "https://example.com/letterboxd-top-500.png"
+    assert letterboxd_entry["template_variables"]["url_logo_cannes"] == "https://example.com/letterboxd-cannes.png"
+    assert letterboxd_entry["template_variables"]["sync_mode_oscars"] == "append"
+    assert letterboxd_entry["template_variables"]["cache_builders_black_directors"] == "0"
+    assert letterboxd_entry["template_variables"]["collection_order_cannes"] == "custom"
+    assert letterboxd_entry["template_variables"]["radarr_folder_women_directors"] == r"C:\Media\Movies"
+    assert letterboxd_entry["template_variables"]["sonarr_search_imdb_top_250"] is False
     assert imdb_entry["template_variables"]["limit"] == "250"
     assert imdb_entry["template_variables"]["allowed_libraries"] == "movie"
     assert imdb_entry["template_variables"]["url_logo_lowest"] == "https://example.com/lowest.png"

@@ -103,6 +103,13 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "limit": 80,
                                 "limit_popular": 40,
                                 "limit_season": 25,
+                                "image": "chart/color/anilist",
+                                "url_logo_season": "https://example.com/anilist-season.png",
+                                "sync_mode_trending": "append",
+                                "cache_builders_season": 0,
+                                "collection_order_top": "custom",
+                                "radarr_folder_popular": r"C:\Media\Movies",
+                                "sonarr_search_season": "false",
                             },
                         },
                         {
@@ -111,6 +118,15 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "limit": 90,
                                 "limit_favorited": 45,
                                 "limit_airing": 12,
+                                "starting_only": True,
+                                "starting_only_season": False,
+                                "image": "chart/color/mal",
+                                "url_logo_favorited": "https://example.com/mal-favorited.png",
+                                "sync_mode_season": "append",
+                                "cache_builders_airing": 0,
+                                "collection_order_top": "custom",
+                                "radarr_folder_favorited": r"C:\Media\Movies",
+                                "sonarr_search_season": "false",
                             },
                         },
                         {
@@ -132,6 +148,15 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "limit_1001_movies": 80,
                                 "limit_top_500": 60,
                                 "limit_women_directors": 40,
+                                "allowed_libraries": "movie",
+                                "image": "chart/color/letterboxd",
+                                "url_logo_top_500": "https://example.com/letterboxd-top-500.png",
+                                "url_logo_cannes": "https://example.com/letterboxd-cannes.png",
+                                "sync_mode_oscars": "append",
+                                "cache_builders_black_directors": 0,
+                                "collection_order_cannes": "custom",
+                                "radarr_folder_women_directors": r"C:\Media\Movies",
+                                "sonarr_search_imdb_top_250": "false",
                             },
                         },
                         {
@@ -227,9 +252,25 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_anilist_limit"] == 80
     assert libraries_payload["mov-library_movies-template_collection_anilist_limit_popular"] == 40
     assert libraries_payload["mov-library_movies-template_collection_anilist_limit_season"] == 25
+    assert libraries_payload["mov-library_movies-template_collection_anilist_image"] == "chart/color/anilist"
+    assert libraries_payload["mov-library_movies-template_collection_anilist_url_logo_season"] == "https://example.com/anilist-season.png"
+    assert libraries_payload["mov-library_movies-template_collection_anilist_sync_mode_trending"] == "append"
+    assert libraries_payload["mov-library_movies-template_collection_anilist_cache_builders_season"] == 0
+    assert libraries_payload["mov-library_movies-template_collection_anilist_collection_order_top"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_anilist_radarr_folder_popular"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_anilist_sonarr_search_season"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_myanimelist_limit"] == 90
     assert libraries_payload["mov-library_movies-template_collection_myanimelist_limit_favorited"] == 45
     assert libraries_payload["mov-library_movies-template_collection_myanimelist_limit_airing"] == 12
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_starting_only"] is True
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_starting_only_season"] is False
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_image"] == "chart/color/mal"
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_url_logo_favorited"] == "https://example.com/mal-favorited.png"
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_sync_mode_season"] == "append"
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_cache_builders_airing"] == 0
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_collection_order_top"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_radarr_folder_favorited"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_myanimelist_sonarr_search_season"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_basic_limit"] == 20
     assert libraries_payload["mov-library_movies-template_collection_basic_limit_released"] == 10
     assert libraries_payload["mov-library_movies-template_collection_basic_limit_episodes"] == 5
@@ -241,6 +282,15 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit_1001_movies"] == 80
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit_top_500"] == 60
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit_women_directors"] == 40
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_allowed_libraries"] == "movie"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_image"] == "chart/color/letterboxd"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_url_logo_top_500"] == "https://example.com/letterboxd-top-500.png"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_url_logo_cannes"] == "https://example.com/letterboxd-cannes.png"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_sync_mode_oscars"] == "append"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_cache_builders_black_directors"] == 0
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_collection_order_cannes"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_radarr_folder_women_directors"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_letterboxd_sonarr_search_imdb_top_250"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_imdb_limit"] == 250
     assert libraries_payload["mov-library_movies-template_collection_imdb_allowed_libraries"] == "movie"
     assert libraries_payload["mov-library_movies-template_collection_imdb_url_logo_lowest"] == "https://example.com/lowest.png"
