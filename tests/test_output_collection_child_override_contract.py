@@ -370,6 +370,40 @@ def test_apply_template_var_normalizers_expands_decade_dynamic_child_override_ma
     assert template_vars["item_sonarr_tag_1930"] == ["decade", "1930s"]
 
 
+def test_apply_template_var_normalizers_expands_language_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"en": "false"}',
+        "child_name_overrides": '{"en": "English Audio"}',
+        "child_summary_overrides": '{"en": "Movies with English audio"}',
+        "child_schedule_overrides": '{"fr": "weekly(sunday)"}',
+        "child_sort_by_overrides": '{"fr": "title.asc"}',
+        "child_limit_overrides": '{"fr": "25"}',
+        "child_minimum_items_overrides": '{"fr": "3"}',
+        "child_url_background_overrides": '{"en": "https://example.com/en-bg.jpg"}',
+        "child_file_logo_overrides": '{"fr": "C:\\\\Logos\\\\fr-audio.png"}',
+        "child_visible_home_overrides": '{"en": "true"}',
+        "child_hub_priority_overrides": '{"fr": "4"}',
+        "child_item_radarr_tag_overrides": '{"en": "audio,english"}',
+        "child_item_sonarr_tag_overrides": '{"fr": ["subtitle", "french"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "audio_language")
+
+    assert template_vars["use_en"] is False
+    assert template_vars["name_en"] == "English Audio"
+    assert template_vars["summary_en"] == "Movies with English audio"
+    assert template_vars["schedule_fr"] == "weekly(sunday)"
+    assert template_vars["sort_by_fr"] == "title.asc"
+    assert template_vars["limit_fr"] == 25
+    assert template_vars["minimum_items_fr"] == 3
+    assert template_vars["url_background_en"] == "https://example.com/en-bg.jpg"
+    assert template_vars["file_logo_fr"] == r"C:\Logos\fr-audio.png"
+    assert template_vars["visible_home_en"] is True
+    assert template_vars["hub_priority_fr"] == "4"
+    assert template_vars["item_radarr_tag_en"] == ["audio", "english"]
+    assert template_vars["item_sonarr_tag_fr"] == ["subtitle", "french"]
+
+
 def test_apply_template_var_normalizers_expands_award_year_override_maps():
     template_vars = {
         "child_collection_order_overrides": '{"2024": "release"}',

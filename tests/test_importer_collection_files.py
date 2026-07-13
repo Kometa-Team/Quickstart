@@ -792,6 +792,83 @@ def test_prepare_import_payload_collapses_country_and_continent_geography_templa
     assert any("libraries.Shows.collection_files[0].template_variables.sync_mode_fr" in line for line in report.lines)
 
 
+def test_prepare_import_payload_collapses_language_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "audio_language",
+                            "template_variables": {
+                                "search_term": "audio_language",
+                                "include": ["en", "fr"],
+                                "use_en": False,
+                                "name_en": "English Audio",
+                                "summary_en": "Movies with English audio",
+                                "schedule_fr": "weekly(sunday)",
+                                "sort_by_fr": "title.asc",
+                                "limit_fr": 25,
+                                "minimum_items_fr": 3,
+                                "url_background_en": "https://example.com/en-bg.jpg",
+                                "file_logo_fr": r"C:\Logos\fr-audio.png",
+                                "visible_home_en": True,
+                                "hub_priority_fr": 4,
+                                "item_radarr_tag_en": ["audio", "english"],
+                            },
+                        }
+                    ]
+                },
+                "Shows": {
+                    "collection_files": [
+                        {
+                            "default": "subtitle_language",
+                            "template_variables": {
+                                "search_term": "subtitle_language",
+                                "exclude": ["ja"],
+                                "use_fr": False,
+                                "name_fr": "French Subtitles",
+                                "file_poster_fr": r"C:\Posters\fr-subtitles.jpg",
+                                "visible_library_fr": False,
+                                "item_sonarr_tag_fr": ["subtitle", "french"],
+                            },
+                        }
+                    ]
+                },
+            }
+        },
+        {"Movies"},
+        {"Shows"},
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_audio_language"] is True
+    assert libraries_payload["sho-library_shows-collection_subtitle_language"] is True
+    assert libraries_payload["mov-library_movies-template_collection_audio_language_search_term"] == "audio_language"
+    assert libraries_payload["mov-library_movies-template_collection_audio_language_include"] == '["en", "fr"]'
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_use_overrides"]) == {"en": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_name_overrides"]) == {"en": "English Audio"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_summary_overrides"]) == {"en": "Movies with English audio"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_schedule_overrides"]) == {"fr": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_sort_by_overrides"]) == {"fr": "title.asc"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_limit_overrides"]) == {"fr": "25"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_minimum_items_overrides"]) == {"fr": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_url_background_overrides"]) == {"en": "https://example.com/en-bg.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_file_logo_overrides"]) == {"fr": r"C:\Logos\fr-audio.png"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_visible_home_overrides"]) == {"en": "true"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_hub_priority_overrides"]) == {"fr": "4"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_audio_language_child_item_radarr_tag_overrides"]) == {"en": "audio,english"}
+    assert libraries_payload["sho-library_shows-template_collection_subtitle_language_search_term"] == "subtitle_language"
+    assert libraries_payload["sho-library_shows-template_collection_subtitle_language_exclude"] == '["ja"]'
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_subtitle_language_child_use_overrides"]) == {"fr": "false"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_subtitle_language_child_name_overrides"]) == {"fr": "French Subtitles"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_subtitle_language_child_file_poster_overrides"]) == {"fr": r"C:\Posters\fr-subtitles.jpg"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_subtitle_language_child_visible_library_overrides"]) == {"fr": "false"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_subtitle_language_child_item_sonarr_tag_overrides"]) == {"fr": "subtitle,french"}
+    assert any("libraries.Movies.collection_files[0].template_variables.use_en" in line for line in report.lines)
+    assert any("libraries.Shows.collection_files[0].template_variables.item_sonarr_tag_fr" in line for line in report.lines)
+
+
 def test_prepare_import_payload_collapses_studio_dynamic_child_template_variables():
     payload, report = importer.prepare_import_payload(
         {
