@@ -460,6 +460,38 @@ def test_apply_template_var_normalizers_expands_resolution_dynamic_child_overrid
     assert template_vars["item_sonarr_tag_1080"] == ["resolution", "1080p"]
 
 
+def test_apply_template_var_normalizers_expands_content_rating_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"PG-13": "false"}',
+        "child_name_overrides": '{"PG-13": "Teen Ratings"}',
+        "child_schedule_overrides": '{"12A": "weekly(sunday)"}',
+        "child_sort_by_overrides": '{"R": "title.asc"}',
+        "child_limit_overrides": '{"R": "25"}',
+        "child_minimum_items_overrides": '{"NC-17": "3"}',
+        "child_image_overrides": '{"PG-13": "content_rating/us/PG-13-custom"}',
+        "child_translation_key_overrides": '{"PG-13": "content_rating_pg13"}',
+        "child_visible_home_overrides": '{"12A": "true"}',
+        "child_hub_priority_overrides": '{"12A": "1"}',
+        "child_item_radarr_tag_overrides": '{"R": ["rating", "r"]}',
+        "child_item_sonarr_tag_overrides": '{"TV-MA": "rating,tvma"}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "content_rating_uk")
+
+    assert template_vars["use_PG-13"] is False
+    assert template_vars["name_PG-13"] == "Teen Ratings"
+    assert template_vars["schedule_12A"] == "weekly(sunday)"
+    assert template_vars["sort_by_R"] == "title.asc"
+    assert template_vars["limit_R"] == 25
+    assert template_vars["minimum_items_NC-17"] == 3
+    assert template_vars["image_PG-13"] == "content_rating/us/PG-13-custom"
+    assert template_vars["translation_key_PG-13"] == "content_rating_pg13"
+    assert template_vars["visible_home_12A"] is True
+    assert template_vars["hub_priority_12A"] == "1"
+    assert template_vars["item_radarr_tag_R"] == ["rating", "r"]
+    assert template_vars["item_sonarr_tag_TV-MA"] == ["rating", "tvma"]
+
+
 def test_apply_template_var_normalizers_expands_award_year_override_maps():
     template_vars = {
         "child_collection_order_overrides": '{"2024": "release"}',
