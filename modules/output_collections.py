@@ -77,6 +77,8 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_sync_mode_overrides": ("sync_mode_", "select"),
     "child_collection_order_overrides": ("collection_order_", "select"),
     "child_cache_builders_overrides": ("cache_builders_", "string"),
+    "child_image_overrides": ("image_", "string"),
+    "child_translation_key_overrides": ("translation_key_", "string"),
     "child_url_poster_overrides": ("url_poster_", "string"),
     "child_file_poster_overrides": ("file_poster_", "string"),
     "child_url_background_overrides": ("url_background_", "string"),

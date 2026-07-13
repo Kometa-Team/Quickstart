@@ -319,3 +319,25 @@ def test_apply_template_var_normalizers_expands_decade_dynamic_child_override_ma
     assert template_vars["file_background_1950"] == r"C:\Backgrounds\1950.jpg"
     assert template_vars["visible_library_1940"] is False
     assert template_vars["item_sonarr_tag_1930"] == ["decade", "1930s"]
+
+
+def test_apply_template_var_normalizers_expands_award_year_override_maps():
+    template_vars = {
+        "child_collection_order_overrides": '{"2024": "release"}',
+        "child_image_overrides": '{"2024": "award/oscars/winner/2024"}',
+        "child_translation_key_overrides": '{"2024": "oscars_year"}',
+        "child_url_logo_overrides": '{"2024": "https://example.com/oscars.png"}',
+        "child_radarr_folder_overrides": '{"2024": "C:\\\\Media\\\\Movies\\\\Awards"}',
+        "child_radarr_search_overrides": '{"2024": "false"}',
+        "child_visible_home_overrides": '{"2024": "true"}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "oscars")
+
+    assert template_vars["collection_order_2024"] == "release"
+    assert template_vars["image_2024"] == "award/oscars/winner/2024"
+    assert template_vars["translation_key_2024"] == "oscars_year"
+    assert template_vars["url_logo_2024"] == "https://example.com/oscars.png"
+    assert template_vars["radarr_folder_2024"] == r"C:\Media\Movies\Awards"
+    assert template_vars["radarr_search_2024"] is False
+    assert template_vars["visible_home_2024"] is True
