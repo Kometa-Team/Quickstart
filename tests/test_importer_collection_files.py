@@ -48,6 +48,11 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "list_size": 50,
                                 "list_days_popular": 7,
                                 "list_size_watched": 25,
+                                "image": "chart/color/plex",
+                                "url_logo_popular": "https://example.com/plex-popular.png",
+                                "sync_mode_watched": "append",
+                                "cache_builders_popular": 0,
+                                "collection_order_popular": "custom",
                             },
                         },
                         {
@@ -95,6 +100,10 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                                 "limit": 20,
                                 "limit_released": 10,
                                 "limit_episodes": 5,
+                                "allowed_libraries": "show",
+                                "schedule": "weekly(sunday)",
+                                "url_logo_released": "https://example.com/released.png",
+                                "sort_by_episodes": "episode_air_date.asc",
                             },
                         },
                         {
@@ -110,6 +119,11 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                             "default": "imdb",
                             "template_variables": {
                                 "limit": 250,
+                                "allowed_libraries": "movie",
+                                "url_logo_lowest": "https://example.com/lowest.png",
+                                "collection_order_top": "custom",
+                                "radarr_folder_top": r"C:\Media\Movies",
+                                "sonarr_search_popular": "false",
                             },
                         },
                         {
@@ -159,6 +173,11 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_tautulli_list_size"] == 50
     assert libraries_payload["mov-library_movies-template_collection_tautulli_list_days_popular"] == 7
     assert libraries_payload["mov-library_movies-template_collection_tautulli_list_size_watched"] == 25
+    assert libraries_payload["mov-library_movies-template_collection_tautulli_image"] == "chart/color/plex"
+    assert libraries_payload["mov-library_movies-template_collection_tautulli_url_logo_popular"] == "https://example.com/plex-popular.png"
+    assert libraries_payload["mov-library_movies-template_collection_tautulli_sync_mode_watched"] == "append"
+    assert libraries_payload["mov-library_movies-template_collection_tautulli_cache_builders_popular"] == 0
+    assert libraries_payload["mov-library_movies-template_collection_tautulli_collection_order_popular"] == "custom"
     assert libraries_payload["mov-library_movies-template_collection_trakt_limit"] == 75
     assert libraries_payload["mov-library_movies-template_collection_trakt_limit_popular"] == 50
     assert libraries_payload["mov-library_movies-template_collection_trakt_limit_recommended"] == 30
@@ -176,11 +195,20 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_basic_limit"] == 20
     assert libraries_payload["mov-library_movies-template_collection_basic_limit_released"] == 10
     assert libraries_payload["mov-library_movies-template_collection_basic_limit_episodes"] == 5
+    assert libraries_payload["mov-library_movies-template_collection_basic_allowed_libraries"] == "show"
+    assert libraries_payload["mov-library_movies-template_collection_basic_schedule"] == "weekly(sunday)"
+    assert libraries_payload["mov-library_movies-template_collection_basic_url_logo_released"] == "https://example.com/released.png"
+    assert libraries_payload["mov-library_movies-template_collection_basic_sort_by_episodes"] == "episode_air_date.asc"
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit"] == 120
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit_1001_movies"] == 80
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit_top_500"] == 60
     assert libraries_payload["mov-library_movies-template_collection_letterboxd_limit_women_directors"] == 40
     assert libraries_payload["mov-library_movies-template_collection_imdb_limit"] == 250
+    assert libraries_payload["mov-library_movies-template_collection_imdb_allowed_libraries"] == "movie"
+    assert libraries_payload["mov-library_movies-template_collection_imdb_url_logo_lowest"] == "https://example.com/lowest.png"
+    assert libraries_payload["mov-library_movies-template_collection_imdb_collection_order_top"] == "custom"
+    assert libraries_payload["mov-library_movies-template_collection_imdb_radarr_folder_top"] == r"C:\Media\Movies"
+    assert libraries_payload["mov-library_movies-template_collection_imdb_sonarr_search_popular"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_other_chart_limit"] == 125
     assert libraries_payload["mov-library_movies-template_collection_streaming_limit"] == 500
     assert libraries_payload["mov-library_movies-template_collection_streaming_discover_limit"] == 150

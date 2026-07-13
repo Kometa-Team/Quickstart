@@ -2059,6 +2059,11 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_tautulli_list_size": "50",
                     "mov-library_movies-template_collection_tautulli_list_days_popular": "7",
                     "mov-library_movies-template_collection_tautulli_list_size_watched": "25",
+                    "mov-library_movies-template_collection_tautulli_image": "chart/color/plex",
+                    "mov-library_movies-template_collection_tautulli_url_logo_popular": "https://example.com/plex-popular.png",
+                    "mov-library_movies-template_collection_tautulli_sync_mode_watched": "append",
+                    "mov-library_movies-template_collection_tautulli_cache_builders_popular": "0",
+                    "mov-library_movies-template_collection_tautulli_collection_order_popular": "custom",
                     "mov-library_movies-collection_trakt": True,
                     "mov-library_movies-template_collection_trakt_limit": "75",
                     "mov-library_movies-template_collection_trakt_limit_popular": "50",
@@ -2082,6 +2087,10 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_basic_limit": "20",
                     "mov-library_movies-template_collection_basic_limit_released": "10",
                     "mov-library_movies-template_collection_basic_limit_episodes": "5",
+                    "mov-library_movies-template_collection_basic_allowed_libraries": "show",
+                    "mov-library_movies-template_collection_basic_schedule": "weekly(sunday)",
+                    "mov-library_movies-template_collection_basic_url_logo_released": "https://example.com/released.png",
+                    "mov-library_movies-template_collection_basic_sort_by_episodes": "episode_air_date.asc",
                     "mov-library_movies-collection_letterboxd": True,
                     "mov-library_movies-template_collection_letterboxd_limit": "120",
                     "mov-library_movies-template_collection_letterboxd_limit_1001_movies": "80",
@@ -2089,6 +2098,11 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_letterboxd_limit_women_directors": "40",
                     "mov-library_movies-collection_imdb": True,
                     "mov-library_movies-template_collection_imdb_limit": "250",
+                    "mov-library_movies-template_collection_imdb_allowed_libraries": "movie",
+                    "mov-library_movies-template_collection_imdb_url_logo_lowest": "https://example.com/lowest.png",
+                    "mov-library_movies-template_collection_imdb_collection_order_top": "custom",
+                    "mov-library_movies-template_collection_imdb_radarr_folder_top": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_imdb_sonarr_search_popular": "false",
                     "mov-library_movies-collection_other_chart": True,
                     "mov-library_movies-template_collection_other_chart_limit": "125",
                     "mov-library_movies-collection_streaming": True,
@@ -2127,6 +2141,11 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert tautulli_entry["template_variables"]["list_size"] == "50"
     assert tautulli_entry["template_variables"]["list_days_popular"] == "7"
     assert tautulli_entry["template_variables"]["list_size_watched"] == "25"
+    assert tautulli_entry["template_variables"]["image"] == "chart/color/plex"
+    assert tautulli_entry["template_variables"]["url_logo_popular"] == "https://example.com/plex-popular.png"
+    assert tautulli_entry["template_variables"]["sync_mode_watched"] == "append"
+    assert tautulli_entry["template_variables"]["cache_builders_popular"] == "0"
+    assert tautulli_entry["template_variables"]["collection_order_popular"] == "custom"
     assert trakt_entry["template_variables"]["limit"] == "75"
     assert trakt_entry["template_variables"]["limit_popular"] == "50"
     assert trakt_entry["template_variables"]["limit_recommended"] == "30"
@@ -2144,11 +2163,20 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert basic_entry["template_variables"]["limit"] == "20"
     assert basic_entry["template_variables"]["limit_released"] == "10"
     assert basic_entry["template_variables"]["limit_episodes"] == "5"
+    assert basic_entry["template_variables"]["allowed_libraries"] == "show"
+    assert basic_entry["template_variables"]["schedule"] == "weekly(sunday)"
+    assert basic_entry["template_variables"]["url_logo_released"] == "https://example.com/released.png"
+    assert basic_entry["template_variables"]["sort_by_episodes"] == "episode_air_date.asc"
     assert letterboxd_entry["template_variables"]["limit"] == "120"
     assert letterboxd_entry["template_variables"]["limit_1001_movies"] == "80"
     assert letterboxd_entry["template_variables"]["limit_top_500"] == "60"
     assert letterboxd_entry["template_variables"]["limit_women_directors"] == "40"
     assert imdb_entry["template_variables"]["limit"] == "250"
+    assert imdb_entry["template_variables"]["allowed_libraries"] == "movie"
+    assert imdb_entry["template_variables"]["url_logo_lowest"] == "https://example.com/lowest.png"
+    assert imdb_entry["template_variables"]["collection_order_top"] == "custom"
+    assert imdb_entry["template_variables"]["radarr_folder_top"] == r"C:\Media\Movies"
+    assert imdb_entry["template_variables"]["sonarr_search_popular"] is False
     assert other_chart_entry["template_variables"]["limit"] == "125"
     assert streaming_entry["template_variables"]["limit"] == "500"
     assert streaming_entry["template_variables"]["discover_limit"] == "150"
