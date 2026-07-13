@@ -274,3 +274,39 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
     assert libraries_payload["sho-library_shows-template_collection_franchise_build_collection"] is False
     assert any("libraries.Movies.collection_files[0].template_variables.name_10" in line for line in report.lines)
     assert any("libraries.Shows.collection_files[0].template_variables.sonarr_monitor_1399" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_universe_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "universe",
+                            "template_variables": {
+                                "url_poster_avp": "https://example.com/avp.jpg",
+                                "schedule_arrow": "weekly(sunday)",
+                                "trakt_list_trek": ["https://trakt.tv/users/example/lists/star-trek"],
+                                "delete_collections_named_mummy": ["The Mummy Universe"],
+                                "radarr_folder_avp": r"C:\Media\Movies",
+                                "radarr_search_avp": False,
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_universe"] is True
+    assert libraries_payload["mov-library_movies-template_collection_universe_child_url_poster_overrides"] == '{"avp": "https://example.com/avp.jpg"}'
+    assert libraries_payload["mov-library_movies-template_collection_universe_child_schedule_overrides"] == '{"arrow": "weekly(sunday)"}'
+    assert libraries_payload["mov-library_movies-template_collection_universe_child_trakt_list_overrides"] == '{"trek": "https://trakt.tv/users/example/lists/star-trek"}'
+    assert libraries_payload["mov-library_movies-template_collection_universe_child_delete_collections_named_overrides"] == '{"mummy": "The Mummy Universe"}'
+    assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_folder_overrides"] == '{"avp": "C:\\\\Media\\\\Movies"}'
+    assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_search_overrides"] == '{"avp": "false"}'
+    assert any("libraries.Movies.collection_files[0].template_variables.url_poster_avp" in line for line in report.lines)

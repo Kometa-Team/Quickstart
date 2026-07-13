@@ -3518,8 +3518,9 @@ function inferTemplateStringListPreset (wrapper, input) {
   return 'generic_text'
 }
 
-function ensureTemplateStringListDatalist (wrapper, input, presetConfig, presetName) {
+function ensureTemplatePresetDatalist (wrapper, input, presetConfig, presetName) {
   if (!wrapper || !input || !presetConfig || !Array.isArray(presetConfig.suggestions) || !presetConfig.suggestions.length) return
+  if (String(input.tagName || '').toUpperCase() === 'SELECT') return
   if (presetConfig.suggestions.length > 50) return
   const existingListId = input.getAttribute('list')
   if (existingListId && document.getElementById(existingListId)) return
@@ -3537,6 +3538,69 @@ function ensureTemplateStringListDatalist (wrapper, input, presetConfig, presetN
     wrapper.appendChild(datalist)
   }
   input.setAttribute('list', datalistId)
+}
+
+function getTemplatePresetSelectableOptions (presetConfig) {
+  if (!presetConfig) return []
+  if (Array.isArray(presetConfig.selectOptions) && presetConfig.selectOptions.length) {
+    return presetConfig.selectOptions
+  }
+  if (presetConfig.allowedValues instanceof Set && presetConfig.allowedValues.size) {
+    return Array.from(presetConfig.allowedValues)
+  }
+  if (Array.isArray(presetConfig.allowedValues) && presetConfig.allowedValues.length) {
+    return presetConfig.allowedValues
+  }
+  if (Array.isArray(presetConfig.suggestions) && presetConfig.suggestions.length) {
+    return presetConfig.suggestions
+  }
+  return []
+}
+
+function parseTemplateSelectableOptions (wrapper, presetConfig, datasetKey = 'keyOptions') {
+  const raw = String(wrapper?.dataset?.[datasetKey] || '').trim()
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map(option => {
+            if (option && typeof option === 'object') {
+              const value = String(option.value || '').trim()
+              const label = String(option.label || value).trim()
+              return value ? { value, label } : null
+            }
+            const value = String(option || '').trim()
+            return value ? { value, label: value } : null
+          })
+          .filter(Boolean)
+      }
+    } catch {}
+  }
+
+  return getTemplatePresetSelectableOptions(presetConfig)
+    .map(option => {
+      const value = String(option || '').trim()
+      return value ? { value, label: value } : null
+    })
+    .filter(Boolean)
+}
+
+function ensureTemplateSelectOptions (wrapper, selectInput, presetConfig, datasetKey = 'keyOptions') {
+  if (!wrapper || !selectInput || String(selectInput.tagName || '').toUpperCase() !== 'SELECT') return
+  const options = parseTemplateSelectableOptions(wrapper, presetConfig, datasetKey)
+  if (!options.length) return
+
+  const currentValue = String(selectInput.value || '').trim()
+  selectInput.querySelectorAll('option[data-template-generated-option="true"]').forEach(option => option.remove())
+  options.forEach(({ value, label }) => {
+    const option = document.createElement('option')
+    option.value = value
+    option.textContent = label
+    option.dataset.templateGeneratedOption = 'true'
+    selectInput.appendChild(option)
+  })
+  selectInput.value = currentValue
 }
 
 function setupTemplateStringListHandlers (scope) {
@@ -3695,12 +3759,13 @@ function setupTemplateStringListHandlers (scope) {
     if (wrapper.dataset.listenerAdded) return
     const hiddenId = wrapper.dataset.hiddenInput
     const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
-    const input = wrapper.querySelector('input[type="text"]')
+    const input = wrapper.querySelector('[data-template-string-input]')
     const addBtn = wrapper.querySelector('[data-template-string-add]')
     const list = wrapper.querySelector('[data-template-string-items]')
     const feedback = wrapper.querySelector('[data-template-string-feedback]')
     const templateVariableKey = String(wrapper.dataset.templateVariableKey || '').trim()
     const mutuallyExclusiveWith = String(wrapper.dataset.mutuallyExclusiveWith || '').trim()
+    const inputMode = String(wrapper.dataset.inputMode || 'text').trim().toLowerCase()
 
     if (!hidden || !input || !addBtn || !list) return
 
@@ -3708,7 +3773,10 @@ function setupTemplateStringListHandlers (scope) {
     const presetConfig = templateStringListPresetConfigs[presetName] || templateStringListPresetConfigs.generic_text
     const libraryName = String(wrapper.dataset.libraryName || '').trim()
     const mediaType = String(wrapper.dataset.mediaType || '').trim()
-    ensureTemplateStringListDatalist(wrapper, input, presetConfig, presetName)
+    ensureTemplatePresetDatalist(wrapper, input, presetConfig, presetName)
+    if (inputMode === 'select') {
+      ensureTemplateSelectOptions(wrapper, input, presetConfig, 'selectOptions')
+    }
 
     function parseStoredStringList (rawValue) {
       const raw = String(rawValue || '').trim()
@@ -3920,12 +3988,15 @@ function setupTemplateStringListHandlers (scope) {
       syncState(parseValues())
     })
     input.addEventListener('input', clearTransientFeedback)
-    input.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        addValue()
-      }
-    })
+    input.addEventListener('change', clearTransientFeedback)
+    if (String(input.tagName || '').toUpperCase() !== 'SELECT') {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          addValue()
+        }
+      })
+    }
 
     wrapper.dataset.listenerAdded = 'true'
   })
@@ -3947,6 +4018,7 @@ function setupTemplateMappingListHandlers (scope) {
     const feedback = wrapper.querySelector('[data-template-mapping-feedback]')
     const validationPreset = String(wrapper.dataset.validationPreset || '').trim().toLowerCase()
     const keyValidationPreset = String(wrapper.dataset.keyValidationPreset || '').trim().toLowerCase()
+    const keyInputMode = String(wrapper.dataset.keyInputMode || 'text').trim().toLowerCase()
     const lookupDisplayMode = String(wrapper.dataset.lookupDisplayMode || 'stacked').trim().toLowerCase()
     const valueDisplayLabel = String(wrapper.dataset.valueDisplayLabel || '').trim()
     const valueKind = String(wrapper.dataset.mappingValueKind || 'string_list').trim().toLowerCase()
@@ -3957,6 +4029,10 @@ function setupTemplateMappingListHandlers (scope) {
       : null
 
     if (!hidden || !keyInput || !valueInput || !addBtn || !list) return
+    ensureTemplatePresetDatalist(wrapper, keyInput, keyPresetConfig, keyValidationPreset || 'mapping-key')
+    if (keyInputMode === 'select') {
+      ensureTemplateSelectOptions(wrapper, keyInput, keyPresetConfig, 'keyOptions')
+    }
 
     function getServiceValidationState (serviceName) {
       const el = document.getElementById(`qs-validate-${serviceName}`)
@@ -4326,20 +4402,24 @@ function setupTemplateMappingListHandlers (scope) {
     hidden.addEventListener('change', () => {
       syncState(parseStoredMapping(hidden.value))
     })
-    keyInput.addEventListener('input', () => {
+    const clearKeyFeedback = () => {
       setFeedback('')
       setKeyInputValidity({ valid: true })
-    })
+    }
+    keyInput.addEventListener('input', clearKeyFeedback)
+    keyInput.addEventListener('change', clearKeyFeedback)
     valueInput.addEventListener('input', () => {
       setFeedback('')
       setValueInputValidity({ valid: true })
     })
-    keyInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        addEntry()
-      }
-    })
+    if (String(keyInput.tagName || '').toUpperCase() !== 'SELECT') {
+      keyInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          addEntry()
+        }
+      })
+    }
     valueInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault()
@@ -4997,12 +5077,16 @@ function mountCard (card, libraryId) {
   setupMappingListHandlers('genre_mapper', card)
   setupMappingListHandlers('content_rating_mapper', card)
   wireOverlayDetailToggles(card)
+  wireCollectionDetailToggles(card)
+  wireCollectionVariableSectionToggles(card)
   setupParentChildToggleVisibility(card)
   if (typeof setupParentChildToggleSync === 'function') {
     setupParentChildToggleSync()
   }
   setupAddMissingDependencies(card)
   wireOverlayTemplateSections(card)
+  wireCollectionTemplateSections(card)
+  wireCollectionVariableSections(card)
   if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
     OverlayHandler.initializeOverlayBoards(card)
   }
@@ -5512,7 +5596,11 @@ document.querySelectorAll('.overlay-template-section').forEach((el) => {
 })
 
 wireOverlayDetailToggles()
+wireCollectionDetailToggles()
+wireCollectionVariableSectionToggles()
 wireOverlayTemplateSections()
+wireCollectionTemplateSections()
+wireCollectionVariableSections()
 wireRatingsOffsetSync()
 
 document.addEventListener('click', (e) => {
@@ -5903,23 +5991,34 @@ function toggleOverlayTemplateSection (checkbox) {
 
   if (templateSection) {
     if (checkbox.checked) {
-      templateSection.style.display = 'none'
+      setDetailSectionExpanded(templateSection, detailsToggle, false)
       if (detailActions) {
         detailActions.classList.remove('d-none')
       }
-      if (detailsToggle) {
-        detailsToggle.textContent = 'Show Details'
-      }
     } else {
-      templateSection.style.display = 'none'
+      setDetailSectionExpanded(templateSection, detailsToggle, false)
       if (detailActions) {
         detailActions.classList.add('d-none')
       }
-      if (detailsToggle) {
-        detailsToggle.textContent = 'Show Details'
-      }
     }
   }
+}
+
+function toggleCollectionTemplateSection (parentToggle) {
+  const groupContainer = parentToggle?.closest('.template-toggle-group[data-collection-config="true"]')
+  const templateSection = groupContainer?.querySelector('.collection-template-section')
+  const detailsToggle = groupContainer?.querySelector('.collection-details-toggle')
+  const detailActions = groupContainer?.querySelector('.collection-detail-actions')
+
+  if (!templateSection) return
+
+  setDetailSectionExpanded(templateSection, detailsToggle, false)
+  if (detailActions) {
+    detailActions.classList.toggle('d-none', !parentToggle?.checked)
+  }
+  groupContainer?.querySelectorAll('[data-collection-variable-section="true"]').forEach(section => {
+    updateCollectionVariableSectionSummary(section)
+  })
 }
 
 function setupCustomStringListHandlers (prefix, scope) {
@@ -7044,9 +7143,20 @@ function setupAddMissingDependencies (scope) {
   })
 }
 
-function wireOverlayDetailToggles (scope) {
+function setDetailSectionExpanded (section, toggle, expanded) {
+  if (!section) return
+  section.style.display = expanded ? 'block' : 'none'
+  section.dataset.detailVisible = expanded ? 'true' : 'false'
+  if (!toggle) return
+  const showLabel = String(toggle.dataset.showLabel || 'Show Details')
+  const hideLabel = String(toggle.dataset.hideLabel || 'Hide Details')
+  toggle.textContent = expanded ? hideLabel : showLabel
+  toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false')
+}
+
+function wireDetailToggles (selector, scope) {
   const root = scope || document
-  root.querySelectorAll('.overlay-details-toggle').forEach(btn => {
+  root.querySelectorAll(selector).forEach(btn => {
     if (btn.dataset.listenerAdded === 'true') return
     const targetId = btn.dataset.sectionId
     const section = targetId ? document.getElementById(targetId) : null
@@ -7054,12 +7164,137 @@ function wireOverlayDetailToggles (scope) {
 
     btn.addEventListener('click', () => {
       const isHidden = section.style.display === 'none'
-      section.style.display = isHidden ? 'block' : 'none'
-      btn.textContent = isHidden ? 'Hide Details' : 'Show Details'
+      setDetailSectionExpanded(section, btn, isHidden)
       updateAccordionHighlights()
     })
 
+    const defaultOpen = section.dataset.detailVisible === 'true' || section.dataset.defaultOpen === 'true'
+    setDetailSectionExpanded(section, btn, defaultOpen)
     btn.dataset.listenerAdded = 'true'
+  })
+}
+
+function wireOverlayDetailToggles (scope) {
+  wireDetailToggles('.overlay-details-toggle', scope)
+}
+
+function wireCollectionDetailToggles (scope) {
+  wireDetailToggles('.collection-details-toggle', scope)
+}
+
+function wireCollectionVariableSectionToggles (scope) {
+  wireDetailToggles('.collection-variable-section-toggle', scope)
+}
+
+function parseCollectionSectionStoredStringList (rawValue) {
+  const raw = String(rawValue || '').trim()
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed.map(item => String(item).trim()).filter(Boolean)
+    }
+  } catch {
+    // fall back to single-value handling
+  }
+  return [raw]
+}
+
+function parseCollectionSectionStoredMapping (rawValue) {
+  const raw = String(rawValue || '').trim()
+  if (!raw) return {}
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed
+    }
+  } catch {
+    // fall through to empty mapping
+  }
+  return {}
+}
+
+function isCollectionSectionFieldConfigured (fields) {
+  const enabledFields = Array.from(fields || []).filter(field => field && !field.disabled)
+  if (!enabledFields.length) return false
+
+  const visibleFields = enabledFields.filter(field => field.type !== 'hidden')
+  const checkboxField = visibleFields.find(field => field.type === 'checkbox')
+  if (checkboxField) {
+    const defaultRaw = String(checkboxField.dataset.default || '').trim().toLowerCase()
+    const currentChecked = checkboxField.checked
+    if (defaultRaw) {
+      const normalizedValue = String(checkboxField.value || 'true').trim().toLowerCase()
+      const defaultChecked = defaultRaw === 'true' || defaultRaw === normalizedValue
+      return currentChecked !== defaultChecked
+    }
+    return currentChecked
+  }
+
+  const radioFields = visibleFields.filter(field => field.type === 'radio')
+  if (radioFields.length) {
+    return radioFields.some(field => field.checked)
+  }
+
+  const primaryField = visibleFields[0] || enabledFields[0]
+  if (!primaryField) return false
+
+  if (primaryField.closest('[data-template-string-list]')) {
+    const values = parseCollectionSectionStoredStringList(primaryField.value)
+    const defaults = parseCollectionSectionStoredStringList(primaryField.dataset.default || '[]')
+    return JSON.stringify(values) !== JSON.stringify(defaults)
+  }
+
+  if (primaryField.closest('[data-template-mapping-list]')) {
+    const values = parseCollectionSectionStoredMapping(primaryField.value)
+    const defaults = parseCollectionSectionStoredMapping(primaryField.dataset.default || '{}')
+    return JSON.stringify(values) !== JSON.stringify(defaults)
+  }
+
+  const value = String(primaryField.value ?? '').trim()
+  const defaultValue = String(primaryField.dataset.default || '').trim()
+  if (!value) return false
+  return defaultValue ? value !== defaultValue : true
+}
+
+function updateCollectionVariableSectionSummary (section) {
+  if (!section) return
+  const summary = section.querySelector('[data-collection-section-summary]')
+  const body = section.querySelector('.collection-variable-section-body')
+  if (!summary || !body) return
+
+  const fieldsByName = new Map()
+  body.querySelectorAll('[name]').forEach(field => {
+    if (!field || field.disabled) return
+    const name = String(field.name || '').trim()
+    if (!name) return
+    if (!fieldsByName.has(name)) fieldsByName.set(name, [])
+    fieldsByName.get(name).push(field)
+  })
+
+  let configuredCount = 0
+  fieldsByName.forEach(fields => {
+    if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
+  })
+
+  summary.textContent = configuredCount === 0
+    ? 'Defaults'
+    : configuredCount === 1
+      ? '1 override'
+      : `${configuredCount} overrides`
+}
+
+function wireCollectionVariableSections (scope) {
+  const root = scope || document
+  root.querySelectorAll('[data-collection-variable-section="true"]').forEach(section => {
+    if (section.dataset.summaryBound === 'true') return
+
+    const refresh = () => updateCollectionVariableSectionSummary(section)
+    section.addEventListener('input', refresh)
+    section.addEventListener('change', refresh)
+    refresh()
+
+    section.dataset.summaryBound = 'true'
   })
 }
 
@@ -7077,6 +7312,20 @@ function wireOverlayTemplateSections (scope) {
   if (typeof setupParentChildToggleSync === 'function') {
     setupParentChildToggleSync()
   }
+}
+
+function wireCollectionTemplateSections (scope) {
+  const root = scope || document
+  root.querySelectorAll('.template-toggle-group[data-collection-config="true"]').forEach(group => {
+    if (group.dataset.collectionTemplateBound === 'true') return
+    const parentToggle = group.querySelector('[data-template-group]')
+    if (!parentToggle) return
+    parentToggle.addEventListener('change', function () {
+      toggleCollectionTemplateSection(this)
+    })
+    toggleCollectionTemplateSection(parentToggle)
+    group.dataset.collectionTemplateBound = 'true'
+  })
 }
 
 function showZoomPreviewModal (imageSrc) {

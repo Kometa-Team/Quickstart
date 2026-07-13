@@ -1220,19 +1220,112 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                     {% endfor %}
                     {% set ordered_collection_items = prioritized_collection_items.priority + prioritized_collection_items.remaining %}
                     {% endif %}
-                    {% set season = namespace(open=false) %}
+                    {% set clean_id = collection.id.replace('collection_', '') %}
+                    {% set collection_details_id = library.id ~ '-template_collection_' ~ clean_id ~ '-details' %}
                     {% set has_plex_pass = telemetry is mapping and telemetry.get("plex_pass") is sameas true %}
+                    {% set visible_collection_items = [] %}
+                    {% for item in ordered_collection_items
+                        if (not item.media_types or library.type in item.media_types)
+                        and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
+                    {% set _ = visible_collection_items.append(item) %}
+                    {% endfor %}
+                    {% set section_defs = collection.template_variable_sections if collection.template_variable_sections is defined else [] %}
+                    {% set render_groups = namespace(items=[]) %}
+                    {% if section_defs %}
+                    {% set known_section_ids = [] %}
+                    {% for section_def in section_defs if section_def.id is defined %}
+                    {% set _ = known_section_ids.append(section_def.id) %}
+                    {% set section_items = [] %}
+                    {% for item in visible_collection_items if item.section is defined and item.section == section_def.id %}
+                    {% set _ = section_items.append(item) %}
+                    {% endfor %}
+                    {% if section_items %}
+                    {% set _ = render_groups.items.append({
+                        'id': section_def.id,
+                        'label': section_def.label | default(section_def.id | replace('_', ' ') | title),
+                        'summary': section_def.summary | default(''),
+                        'default_open': section_def.default_open is sameas true,
+                        'fields': section_items,
+                        'flat': false
+                    }) %}
+                    {% endif %}
+                    {% endfor %}
+                    {% set unsectioned_items = [] %}
+                    {% for item in visible_collection_items %}
+                    {% if item.section is not defined or item.section not in known_section_ids %}
+                    {% set _ = unsectioned_items.append(item) %}
+                    {% endif %}
+                    {% endfor %}
+                    {% if unsectioned_items %}
+                    {% set _ = render_groups.items.append({
+                        'id': 'other',
+                        'label': 'Other',
+                        'summary': '',
+                        'default_open': false,
+                        'fields': unsectioned_items,
+                        'flat': false
+                    }) %}
+                    {% endif %}
+                    {% endif %}
+                    {% if not render_groups.items %}
+                    {% set _ = render_groups.items.append({
+                        'id': 'all',
+                        'label': 'Details',
+                        'summary': '',
+                        'default_open': true,
+                        'fields': visible_collection_items,
+                        'flat': true
+                    }) %}
+                    {% endif %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
-                        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-2 collection-detail-actions">
+                            <button type="button"
+                                class="btn btn-sm btn-outline-secondary btn-overlay collection-details-toggle"
+                                data-section-id="{{ collection_details_id }}"
+                                data-show-label="Show Details"
+                                data-hide-label="Hide Details"
+                                aria-expanded="false">
+                                Show Details
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn">
                                 Reset to Defaults
                             </button>
                         </div>
-                        {% for item in ordered_collection_items
-                        if (not item.media_types or library.type in item.media_types)
-                        and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
-                        {% set clean_id = collection.id.replace('collection_', '') %}
+                        <div class="collection-template-section mt-2"
+                            id="{{ collection_details_id }}"
+                            data-detail-section="true"
+                            style="display: none;">
+                        {% for render_group in render_groups.items %}
+                        {% if not render_group.flat %}
+                        {% set section_body_id = collection_details_id ~ '-section-' ~ render_group.id %}
+                        <div class="border rounded p-2 mb-3 collection-variable-section" data-collection-variable-section="true"
+                            data-section-id="{{ render_group.id }}">
+                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+                                <div class="fw-semibold">{{ render_group.label }}</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small text-muted" data-collection-section-summary>Defaults</span>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-overlay collection-variable-section-toggle"
+                                        data-section-id="{{ section_body_id }}"
+                                        data-show-label="Show"
+                                        data-hide-label="Hide"
+                                        aria-expanded="{{ 'true' if render_group.default_open else 'false' }}">
+                                        {{ 'Hide' if render_group.default_open else 'Show' }}
+                                    </button>
+                                </div>
+                            </div>
+                            {% if render_group.summary %}
+                            <div class="form-text mb-2">{{ render_group.summary }}</div>
+                            {% endif %}
+                            <div class="collection-variable-section-body"
+                                id="{{ section_body_id }}"
+                                data-detail-section="true"
+                                data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
+                                style="display: {{ 'block' if render_group.default_open else 'none' }};">
+                        {% endif %}
+                        {% set season = namespace(open=false) %}
+                        {% for item in render_group.fields %}
                         {% set input_name = (library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key) if item.key is defined else '' %}
                         {% set field_requires_plex_pass = item.requires_plex_pass is defined and item.requires_plex_pass %}
                         {% set field_disabled = disable_toggle or (field_requires_plex_pass and not has_plex_pass) %}
@@ -1368,6 +1461,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% else %}
                         {% set list_default_json = '[]' %}
                         {% endif %}
+                        {% set string_input_mode = item.input_mode | default('text') %}
+                        {% if item.options is defined %}
+                        {% set string_options_json = item.options | tojson %}
+                        {% else %}
+                        {% set string_options_json = '' %}
+                        {% endif %}
                         <div class="mb-2" data-template-string-list data-hidden-input="{{ input_name }}"
                             data-library-name="{{ library.name }}"
                             data-media-type="{{ library.type }}"
@@ -1375,7 +1474,9 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
                             {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
                             {% if item.validation_mode %}data-validation-mode="{{ item.validation_mode }}"{% endif %}
-                            {% if item.validation_normalize %}data-validation-normalize="{{ item.validation_normalize }}"{% endif %}>
+                            {% if item.validation_normalize %}data-validation-normalize="{{ item.validation_normalize }}"{% endif %}
+                            data-input-mode="{{ string_input_mode }}"
+                            data-select-options='{{ string_options_json }}'>
                             <div class="input-group">
                                 <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
                                     {{ item.label }}
@@ -1387,11 +1488,20 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     </span>
                                     {% endif %}
                                 </span>
+                                {% if string_input_mode == 'select' %}
+                                <select class="form-select" id="{{ input_name }}_input" data-template-string-input
+                                    aria-describedby="{{ input_name }}_text"
+                                    {% if disable_toggle %}disabled{% endif %}>
+                                    <option value="">{{ item.placeholder | default('Select a value') }}</option>
+                                </select>
+                                {% else %}
                                 <input type="text" class="form-control" id="{{ input_name }}_input"
+                                    data-template-string-input
                                     aria-describedby="{{ input_name }}_text"
                                     placeholder="{{ item.placeholder | default('Add value') }}"
                                     {% if item.validation_preset %}data-validation-preset="{{ item.validation_preset }}"{% endif %}
                                     {% if disable_toggle %}disabled{% endif %}>
+                                {% endif %}
                                 <button class="btn nav-button" type="button" data-template-string-add
                                     {% if disable_toggle %}disabled{% endif %}>Add</button>
                             </div>
@@ -1417,11 +1527,19 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% set map_default_json = '{}' %}
                         {% endif %}
                         {% set label_width = item.label_width if item.label_width is defined else (320 if item.label|length > 24 else 170) %}
+                        {% set key_input_mode = item.key_input_mode | default('text') %}
+                        {% if item.key_options is defined %}
+                        {% set key_options_json = item.key_options | tojson %}
+                        {% else %}
+                        {% set key_options_json = '' %}
+                        {% endif %}
                         <div class="mb-2" data-template-mapping-list data-hidden-input="{{ input_name }}"
                             data-library-name="{{ library.name }}"
                             data-media-type="{{ library.type }}"
                             data-validation-preset="{{ item.validation_preset | default('') }}"
                             data-key-validation-preset="{{ item.key_validation_preset | default('') }}"
+                            data-key-input-mode="{{ key_input_mode }}"
+                            data-key-options='{{ key_options_json }}'
                             data-lookup-display-mode="{{ item.lookup_display_mode | default('stacked') }}"
                             data-value-display-label="{{ item.value_display_label | default('') }}"
                             data-mapping-value-kind="{{ item.dynamic_child_value_kind | default('string_list') }}">
@@ -1437,10 +1555,18 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     </span>
                                     {% endif %}
                                 </span>
+                                {% if key_input_mode == 'select' %}
+                                <select class="form-select" data-template-mapping-key
+                                    aria-describedby="{{ input_name }}_text"
+                                    {% if disable_toggle %}disabled{% endif %}>
+                                    <option value="">{{ item.key_placeholder | default('Select a key') }}</option>
+                                </select>
+                                {% else %}
                                 <input type="text" class="form-control" data-template-mapping-key
                                     aria-describedby="{{ input_name }}_text"
                                     placeholder="{{ item.key_placeholder | default('Add key') }}"
                                     {% if disable_toggle %}disabled{% endif %}>
+                                {% endif %}
                                 <input type="text" class="form-control" data-template-mapping-value
                                     aria-describedby="{{ input_name }}_text"
                                     placeholder="{{ item.value_placeholder | default('Add comma-separated values') }}"
@@ -1503,7 +1629,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}"
                                 data-default="{{ item.default | default('', true) }}">
                         </div>
-                        {% elif item.key is defined and item.key.startswith('schedule_') %}
+                        {% elif item.type == 'schedule' or (item.key is defined and item.key.startswith('schedule_')) %}
                         {% set schedule_label = 'Schedule' %}
                         {% set schedule_tooltip = "Configure when this collection updates." %}
                         {% set label_width = 140 %}
@@ -1677,6 +1803,12 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% if is_seasonal and season.open %}
                     </div>
                         {% endif %}
+                        {% if not render_group.flat %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -1920,6 +2052,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                     {% endif %}
                                                 </div>
                                                 <div class="overlay-template-section mt-2" id="{{ details_id }}"
+                                                    data-detail-section="true"
                                                     style="display: none;">
                                                 {% set is_mapping = overlay.template_variables is mapping %}
                                                 {% set raw_tv_items = overlay.template_variables.items() if is_mapping else overlay.template_variables %}

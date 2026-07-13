@@ -16,13 +16,12 @@ variables (mirroring what ``output_playlists.py`` does for playlists):
    normalized dict.  Handles the ``this_month`` boolean and
    ``before`` / ``after`` numeric windows.
 
-3. **Franchise 'dynamic child override' expansion** --
+3. **Dynamic child override expansion** --
    ``_expand_franchise_dynamic_child_overrides`` walks a template_vars
-   dict, finds the ``child_*_overrides`` mapping keys declared in
-   ``FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS``, and expands each mapping
-   into flat ``<prefix><suffix>`` keys on the parent dict.
-   ``_normalize_dynamic_child_override_value`` handles the per-kind
-   value coercion.
+   dict, finds the supported ``child_*_overrides`` mapping keys, and
+   expands each mapping into flat ``<prefix><suffix>`` keys on the
+   parent dict. ``_normalize_dynamic_child_override_value`` handles
+   the per-kind value coercion.
 
 4. **Settings-block ignore-list normalization** --
    ``_normalize_settings_section_value`` handles ignore_ids /
@@ -60,19 +59,36 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_name_overrides": ("name_", "string"),
     "child_summary_overrides": ("summary_", "string"),
     "child_sort_title_overrides": ("sort_title_", "string"),
+    "child_order_overrides": ("order_", "string"),
+    "child_schedule_overrides": ("schedule_", "string"),
+    "child_name_mapping_overrides": ("name_mapping_", "string"),
+    "child_delete_collections_named_overrides": ("delete_collections_named_", "string_list"),
+    "child_imdb_list_overrides": ("imdb_list_", "string_list"),
+    "child_mdblist_list_overrides": ("mdblist_list_", "string_list"),
+    "child_trakt_list_overrides": ("trakt_list_", "string_list"),
     "child_sync_mode_overrides": ("sync_mode_", "select"),
     "child_collection_order_overrides": ("collection_order_", "select"),
+    "child_cache_builders_overrides": ("cache_builders_", "string"),
     "child_url_poster_overrides": ("url_poster_", "string"),
+    "child_url_background_overrides": ("url_background_", "string"),
+    "child_url_logo_overrides": ("url_logo_", "string"),
+    "child_url_square_art_overrides": ("url_square_art_", "string"),
     "child_radarr_add_missing_overrides": ("radarr_add_missing_", "boolean"),
     "child_radarr_folder_overrides": ("radarr_folder_", "string"),
     "child_radarr_tag_overrides": ("radarr_tag_", "string_list"),
     "child_item_radarr_tag_overrides": ("item_radarr_tag_", "string_list"),
     "child_radarr_monitor_overrides": ("radarr_monitor_", "boolean"),
+    "child_radarr_upgrade_existing_overrides": ("radarr_upgrade_existing_", "boolean"),
+    "child_radarr_monitor_existing_overrides": ("radarr_monitor_existing_", "boolean"),
+    "child_radarr_search_overrides": ("radarr_search_", "boolean"),
     "child_sonarr_add_missing_overrides": ("sonarr_add_missing_", "boolean"),
     "child_sonarr_folder_overrides": ("sonarr_folder_", "string"),
     "child_sonarr_tag_overrides": ("sonarr_tag_", "string_list"),
     "child_item_sonarr_tag_overrides": ("item_sonarr_tag_", "string_list"),
     "child_sonarr_monitor_overrides": ("sonarr_monitor_", "select"),
+    "child_sonarr_upgrade_existing_overrides": ("sonarr_upgrade_existing_", "boolean"),
+    "child_sonarr_monitor_existing_overrides": ("sonarr_monitor_existing_", "boolean"),
+    "child_sonarr_search_overrides": ("sonarr_search_", "boolean"),
 }
 
 
@@ -169,6 +185,11 @@ def _normalize_collection_template_var_value(key, value):
     if key == "remove_suffix":
         list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
+    if key in {"delete_collections_named", "trakt_list", "imdb_list", "mdblist_list"} or key.startswith(
+        ("delete_collections_named_", "trakt_list_", "imdb_list_", "mdblist_list_")
+    ):
+        list_values = _parse_string_list(value)
+        return list_values if list_values else None
     if key in {"radarr_tag", "sonarr_tag", "item_radarr_tag", "item_sonarr_tag"} or key.startswith(("radarr_tag_", "sonarr_tag_", "item_radarr_tag_", "item_sonarr_tag_")):
         list_values = _parse_string_list(value)
         return list_values if list_values else None
@@ -384,13 +405,12 @@ def _normalize_list_template_vars(template_vars):
 def _apply_template_var_normalizers(template_vars, raw_id):
     """Full normalization pass for a collection's template_variables dict.
 
-    Franchise collections receive an extra dynamic-child-override expansion
-    pass; every collection receives the legacy region key migration, list
-    normalization, and per-value normalization via
+    Collections with supported ``child_*_overrides`` mappings receive a
+    dynamic-child-override expansion pass; every collection receives the
+    legacy region key migration, list normalization, and per-value normalization via
     ``_normalize_collection_template_var_value``.
     """
-    if raw_id == "franchise":
-        _expand_franchise_dynamic_child_overrides(template_vars)
+    _expand_franchise_dynamic_child_overrides(template_vars)
     _migrate_legacy_region_keys(template_vars)
     _normalize_list_template_vars(template_vars)
     for template_key in list(template_vars.keys()):

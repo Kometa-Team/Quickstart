@@ -79,6 +79,24 @@ export const ValidationHandler = {
 
   showAccordionForField: function (field) {
     if (!field) return
+    let detailSection = field.closest('[data-detail-section="true"]')
+    while (detailSection) {
+      const isHidden = detailSection.style.display === 'none' || detailSection.classList.contains('d-none') || detailSection.hidden
+      if (isHidden) {
+        const sectionId = detailSection.id
+        const toggle = sectionId
+          ? Array.from(document.querySelectorAll('[data-section-id]')).find(btn => btn.dataset.sectionId === sectionId)
+          : null
+        if (toggle && typeof toggle.click === 'function') {
+          toggle.click()
+        } else {
+          detailSection.style.display = 'block'
+          detailSection.hidden = false
+          detailSection.classList.remove('d-none')
+        }
+      }
+      detailSection = detailSection.parentElement?.closest('[data-detail-section="true"]')
+    }
     let collapse = field.closest('.accordion-collapse')
     while (collapse) {
       if (!collapse.classList.contains('show')) {
