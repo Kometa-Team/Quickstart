@@ -2626,6 +2626,68 @@ def test_build_libraries_section_expands_geography_dynamic_child_override_maps(a
     assert show_region["template_variables"]["item_sonarr_tag_Eastern Asia"] == ["region", "asia"]
 
 
+def test_build_libraries_section_expands_language_dynamic_child_override_maps(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_audio_language": True,
+                    "mov-library_movies-template_collection_audio_language_include": '["en", "fr"]',
+                    "mov-library_movies-template_collection_audio_language_child_use_overrides": '{"en": "false"}',
+                    "mov-library_movies-template_collection_audio_language_child_name_overrides": '{"en": "English Audio"}',
+                    "mov-library_movies-template_collection_audio_language_child_summary_overrides": '{"en": "Movies with English audio"}',
+                    "mov-library_movies-template_collection_audio_language_child_schedule_overrides": '{"fr": "weekly(sunday)"}',
+                    "mov-library_movies-template_collection_audio_language_child_sort_by_overrides": '{"fr": "title.asc"}',
+                    "mov-library_movies-template_collection_audio_language_child_limit_overrides": '{"fr": "25"}',
+                    "mov-library_movies-template_collection_audio_language_child_minimum_items_overrides": '{"fr": "3"}',
+                    "mov-library_movies-template_collection_audio_language_child_url_background_overrides": '{"en": "https://example.com/en-bg.jpg"}',
+                    "mov-library_movies-template_collection_audio_language_child_file_logo_overrides": '{"fr": "C:\\\\Logos\\\\fr-audio.png"}',
+                    "mov-library_movies-template_collection_audio_language_child_visible_home_overrides": '{"en": "true"}',
+                    "mov-library_movies-template_collection_audio_language_child_hub_priority_overrides": '{"fr": "4"}',
+                    "mov-library_movies-template_collection_audio_language_child_item_radarr_tag_overrides": '{"en": "audio,english"}',
+                }
+            },
+            show_collections={
+                "shows": {
+                    "sho-library_shows-collection_subtitle_language": True,
+                    "sho-library_shows-template_collection_subtitle_language_exclude": "ja",
+                    "sho-library_shows-template_collection_subtitle_language_child_name_overrides": '{"fr": "French Subtitles"}',
+                    "sho-library_shows-template_collection_subtitle_language_child_file_poster_overrides": '{"fr": "C:\\\\Posters\\\\fr-subtitles.jpg"}',
+                    "sho-library_shows-template_collection_subtitle_language_child_visible_library_overrides": '{"fr": "false"}',
+                    "sho-library_shows-template_collection_subtitle_language_child_item_sonarr_tag_overrides": '{"fr": ["subtitle", "french"]}',
+                }
+            },
+        )
+
+    movie_entries = libraries_section["libraries"]["Movies"]["collection_files"]
+    show_entries = libraries_section["libraries"]["Shows"]["collection_files"]
+    audio_language = next(entry for entry in movie_entries if entry.get("default") == "audio_language")
+    subtitle_language = next(entry for entry in show_entries if entry.get("default") == "subtitle_language")
+
+    assert audio_language["template_variables"]["include"] == ["en", "fr"]
+    assert audio_language["template_variables"]["use_en"] is False
+    assert audio_language["template_variables"]["name_en"] == "English Audio"
+    assert audio_language["template_variables"]["summary_en"] == "Movies with English audio"
+    assert audio_language["template_variables"]["schedule_fr"] == "weekly(sunday)"
+    assert audio_language["template_variables"]["sort_by_fr"] == "title.asc"
+    assert audio_language["template_variables"]["limit_fr"] == 25
+    assert audio_language["template_variables"]["minimum_items_fr"] == 3
+    assert audio_language["template_variables"]["url_background_en"] == "https://example.com/en-bg.jpg"
+    assert audio_language["template_variables"]["file_logo_fr"] == r"C:\Logos\fr-audio.png"
+    assert audio_language["template_variables"]["visible_home_en"] is True
+    assert audio_language["template_variables"]["hub_priority_fr"] == "4"
+    assert audio_language["template_variables"]["item_radarr_tag_en"] == ["audio", "english"]
+    assert subtitle_language["template_variables"]["exclude"] == ["ja"]
+    assert subtitle_language["template_variables"]["name_fr"] == "French Subtitles"
+    assert subtitle_language["template_variables"]["file_poster_fr"] == r"C:\Posters\fr-subtitles.jpg"
+    assert subtitle_language["template_variables"]["visible_library_fr"] is False
+    assert subtitle_language["template_variables"]["item_sonarr_tag_fr"] == ["subtitle", "french"]
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 
