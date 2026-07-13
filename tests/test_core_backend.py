@@ -2158,8 +2158,15 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-collection_year": True,
                     "mov-library_movies-template_collection_year_limit": "8",
                     "mov-library_movies-collection_content_rating_us": True,
+                    "mov-library_movies-template_collection_content_rating_us_search_term": "content_rating",
+                    "mov-library_movies-template_collection_content_rating_us_image": "content_rating/us/<<key_name>>",
+                    "mov-library_movies-template_collection_content_rating_us_translation_key": "content_rating",
                     "mov-library_movies-template_collection_content_rating_us_limit": "40",
                     "mov-library_movies-template_collection_content_rating_us_limit_other": "5",
+                    "mov-library_movies-template_collection_content_rating_us_child_visible_home_overrides": '{"PG-13": "true"}',
+                    "mov-library_movies-template_collection_content_rating_us_child_hub_priority_overrides": '{"PG-13": "1"}',
+                    "mov-library_movies-template_collection_content_rating_us_child_image_overrides": '{"PG-13": "content_rating/us/PG-13-custom"}',
+                    "mov-library_movies-template_collection_content_rating_us_child_item_radarr_tag_overrides": '{"R": "rating,r"}',
                 }
             },
         )
@@ -2271,8 +2278,15 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert seasonal_entry["template_variables"]["limit"] == "30"
     assert seasonal_entry["template_variables"]["limit_halloween"] == "12"
     assert year_entry["template_variables"]["limit"] == "8"
+    assert content_rating_us_entry["template_variables"]["search_term"] == "content_rating"
+    assert content_rating_us_entry["template_variables"]["image"] == "content_rating/us/<<key_name>>"
+    assert content_rating_us_entry["template_variables"]["translation_key"] == "content_rating"
     assert content_rating_us_entry["template_variables"]["limit"] == "40"
     assert content_rating_us_entry["template_variables"]["limit_other"] == "5"
+    assert content_rating_us_entry["template_variables"]["visible_home_PG-13"] is True
+    assert content_rating_us_entry["template_variables"]["hub_priority_PG-13"] == "1"
+    assert content_rating_us_entry["template_variables"]["image_PG-13"] == "content_rating/us/PG-13-custom"
+    assert content_rating_us_entry["template_variables"]["item_radarr_tag_R"] == ["rating", "r"]
 
 
 def test_build_libraries_section_normalizes_collection_arr_tag_lists(app):

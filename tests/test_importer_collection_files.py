@@ -199,8 +199,15 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
                         {
                             "default": "content_rating_us",
                             "template_variables": {
+                                "search_term": "content_rating",
+                                "image": "content_rating/us/<<key_name>>",
+                                "translation_key": "content_rating",
                                 "limit": 40,
                                 "limit_other": 5,
+                                "visible_home_PG-13": True,
+                                "hub_priority_PG-13": 1,
+                                "image_PG-13": "content_rating/us/PG-13-custom",
+                                "item_radarr_tag_R": ["rating", "r"],
                             },
                         },
                     ]
@@ -303,8 +310,15 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_seasonal_limit"] == 30
     assert libraries_payload["mov-library_movies-template_collection_seasonal_limit_halloween"] == 12
     assert libraries_payload["mov-library_movies-template_collection_year_limit"] == 8
+    assert libraries_payload["mov-library_movies-template_collection_content_rating_us_search_term"] == "content_rating"
+    assert libraries_payload["mov-library_movies-template_collection_content_rating_us_image"] == "content_rating/us/<<key_name>>"
+    assert libraries_payload["mov-library_movies-template_collection_content_rating_us_translation_key"] == "content_rating"
     assert libraries_payload["mov-library_movies-template_collection_content_rating_us_limit"] == 40
     assert libraries_payload["mov-library_movies-template_collection_content_rating_us_limit_other"] == 5
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_content_rating_us_child_visible_home_overrides"]) == {"PG-13": "true"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_content_rating_us_child_hub_priority_overrides"]) == {"PG-13": "1"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_content_rating_us_child_image_overrides"]) == {"PG-13": "content_rating/us/PG-13-custom"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_content_rating_us_child_item_radarr_tag_overrides"]) == {"R": "rating,r"}
     assert any("libraries.Movies.collection_files[0].template_variables.list_days" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[1].template_variables.limit_popular" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[2].template_variables.limit_airing" in line for line in report.lines)
@@ -319,6 +333,7 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert any("libraries.Movies.collection_files[11].template_variables.limit_halloween" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[12].template_variables.limit" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[13].template_variables.limit_other" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[13].template_variables.visible_home_PG-13" in line for line in report.lines)
 
 
 def test_prepare_import_payload_collapses_franchise_dynamic_child_template_variables():
