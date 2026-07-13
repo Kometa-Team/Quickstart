@@ -263,3 +263,59 @@ def test_apply_template_var_normalizers_expands_actor_dynamic_child_override_map
     assert template_vars["limit_Tom Hanks"] == 50
     assert template_vars["file_poster_Tom Hanks"] == r"C:\Posters\tom-hanks.jpg"
     assert template_vars["visible_library_Tom Hanks"] is False
+
+
+def test_apply_template_var_normalizers_expands_year_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"2024": "false"}',
+        "child_name_overrides": '{"2024": "Best of This Year"}',
+        "child_schedule_overrides": '{"2023": "weekly(sunday)"}',
+        "child_sort_by_overrides": '{"2022": "title.asc"}',
+        "child_limit_overrides": '{"2021": "12"}',
+        "child_minimum_items_overrides": '{"2020": "3"}',
+        "child_url_background_overrides": '{"2019": "https://example.com/2019-bg.jpg"}',
+        "child_file_logo_overrides": '{"2018": "C:\\\\Logos\\\\2018.png"}',
+        "child_visible_home_overrides": '{"2017": "true"}',
+        "child_item_radarr_tag_overrides": '{"2016": ["year", "2016"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "year")
+
+    assert template_vars["use_2024"] is False
+    assert template_vars["name_2024"] == "Best of This Year"
+    assert template_vars["schedule_2023"] == "weekly(sunday)"
+    assert template_vars["sort_by_2022"] == "title.asc"
+    assert template_vars["limit_2021"] == 12
+    assert template_vars["minimum_items_2020"] == 3
+    assert template_vars["url_background_2019"] == "https://example.com/2019-bg.jpg"
+    assert template_vars["file_logo_2018"] == r"C:\Logos\2018.png"
+    assert template_vars["visible_home_2017"] is True
+    assert template_vars["item_radarr_tag_2016"] == ["year", "2016"]
+
+
+def test_apply_template_var_normalizers_expands_decade_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"2020": "false"}',
+        "child_summary_overrides": '{"2010": "2010s favorites"}',
+        "child_order_overrides": '{"2000": "03"}',
+        "child_schedule_overrides": '{"1990": "weekly(friday)"}',
+        "child_sort_by_overrides": '{"1980": "critic_rating.desc"}',
+        "child_limit_overrides": '{"1970": "25"}',
+        "child_url_square_art_overrides": '{"1960": "https://example.com/1960-square.png"}',
+        "child_file_background_overrides": '{"1950": "C:\\\\Backgrounds\\\\1950.jpg"}',
+        "child_visible_library_overrides": '{"1940": "false"}',
+        "child_item_sonarr_tag_overrides": '{"1930": ["decade", "1930s"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "decade")
+
+    assert template_vars["use_2020"] is False
+    assert template_vars["summary_2010"] == "2010s favorites"
+    assert template_vars["order_2000"] == "03"
+    assert template_vars["schedule_1990"] == "weekly(friday)"
+    assert template_vars["sort_by_1980"] == "critic_rating.desc"
+    assert template_vars["limit_1970"] == 25
+    assert template_vars["url_square_art_1960"] == "https://example.com/1960-square.png"
+    assert template_vars["file_background_1950"] == r"C:\Backgrounds\1950.jpg"
+    assert template_vars["visible_library_1940"] is False
+    assert template_vars["item_sonarr_tag_1930"] == ["decade", "1930s"]

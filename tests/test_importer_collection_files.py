@@ -691,3 +691,103 @@ def test_prepare_import_payload_collapses_actor_dynamic_child_template_variables
     assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_file_poster_overrides"]) == {"Tom Hanks": r"C:\Posters\tom-hanks.jpg"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_actor_child_visible_library_overrides"]) == {"Tom Hanks": "false"}
     assert any("libraries.Movies.collection_files[0].template_variables.tmdb_person_offset_Tom Hanks" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_year_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "year",
+                            "template_variables": {
+                                "search_term": "year",
+                                "image": "year/best/<<key>>",
+                                "translation_key": "year",
+                                "use_2024": False,
+                                "name_2024": "Best of This Year",
+                                "schedule_2023": "weekly(sunday)",
+                                "sort_by_2022": "title.asc",
+                                "limit_2021": 12,
+                                "minimum_items_2020": 3,
+                                "url_background_2019": "https://example.com/2019-bg.jpg",
+                                "file_logo_2018": r"C:\Logos\2018.png",
+                                "visible_home_2017": True,
+                                "item_radarr_tag_2016": ["year", "2016"],
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_year"] is True
+    assert libraries_payload["mov-library_movies-template_collection_year_search_term"] == "year"
+    assert libraries_payload["mov-library_movies-template_collection_year_image"] == "year/best/<<key>>"
+    assert libraries_payload["mov-library_movies-template_collection_year_translation_key"] == "year"
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_use_overrides"]) == {"2024": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_name_overrides"]) == {"2024": "Best of This Year"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_schedule_overrides"]) == {"2023": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_sort_by_overrides"]) == {"2022": "title.asc"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_limit_overrides"]) == {"2021": "12"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_minimum_items_overrides"]) == {"2020": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_url_background_overrides"]) == {"2019": "https://example.com/2019-bg.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_file_logo_overrides"]) == {"2018": r"C:\Logos\2018.png"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_visible_home_overrides"]) == {"2017": "true"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_year_child_item_radarr_tag_overrides"]) == {"2016": "year,2016"}
+    assert any("libraries.Movies.collection_files[0].template_variables.schedule_2023" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_decade_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Shows": {
+                    "collection_files": [
+                        {
+                            "default": "decade",
+                            "template_variables": {
+                                "search_term": "year",
+                                "image": "decade/best/<<key>>",
+                                "translation_key": "decade",
+                                "use_2020": False,
+                                "summary_2010": "2010s favorites",
+                                "order_2000": "03",
+                                "schedule_1990": "weekly(friday)",
+                                "sort_by_1980": "critic_rating.desc",
+                                "limit_1970": 25,
+                                "url_square_art_1960": "https://example.com/1960-square.png",
+                                "file_background_1950": r"C:\Backgrounds\1950.jpg",
+                                "visible_library_1940": False,
+                                "item_sonarr_tag_1930": ["decade", "1930s"],
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Shows"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_shows-collection_decade"] is True
+    assert libraries_payload["mov-library_shows-template_collection_decade_search_term"] == "year"
+    assert libraries_payload["mov-library_shows-template_collection_decade_image"] == "decade/best/<<key>>"
+    assert libraries_payload["mov-library_shows-template_collection_decade_translation_key"] == "decade"
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_use_overrides"]) == {"2020": "false"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_summary_overrides"]) == {"2010": "2010s favorites"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_order_overrides"]) == {"2000": "03"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_schedule_overrides"]) == {"1990": "weekly(friday)"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_sort_by_overrides"]) == {"1980": "critic_rating.desc"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_limit_overrides"]) == {"1970": "25"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_url_square_art_overrides"]) == {"1960": "https://example.com/1960-square.png"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_file_background_overrides"]) == {"1950": r"C:\Backgrounds\1950.jpg"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_visible_library_overrides"]) == {"1940": "false"}
+    assert json.loads(libraries_payload["mov-library_shows-template_collection_decade_child_item_sonarr_tag_overrides"]) == {"1930": "decade,1930s"}
+    assert any("libraries.Shows.collection_files[0].template_variables.schedule_1990" in line for line in report.lines)
