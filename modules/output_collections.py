@@ -56,6 +56,7 @@ from modules.output_values import (
 # --- franchise dynamic-child override specs -------------------------------
 
 FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
+    "child_use_overrides": ("use_", "boolean"),
     "child_name_overrides": ("name_", "string"),
     "child_summary_overrides": ("summary_", "string"),
     "child_sort_title_overrides": ("sort_title_", "string"),
@@ -80,6 +81,11 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_url_background_overrides": ("url_background_", "string"),
     "child_url_logo_overrides": ("url_logo_", "string"),
     "child_url_square_art_overrides": ("url_square_art_", "string"),
+    "child_limit_overrides": ("limit_", "integer"),
+    "child_visible_home_overrides": ("visible_home_", "boolean"),
+    "child_visible_library_overrides": ("visible_library_", "boolean"),
+    "child_visible_shared_overrides": ("visible_shared_", "boolean"),
+    "child_hub_priority_overrides": ("hub_priority_", "string"),
     "child_radarr_add_missing_overrides": ("radarr_add_missing_", "boolean"),
     "child_radarr_folder_overrides": ("radarr_folder_", "string"),
     "child_radarr_tag_overrides": ("radarr_tag_", "string_list"),
@@ -242,6 +248,11 @@ def _normalize_dynamic_child_override_value(value_kind, raw_value):
     if kind == "boolean":
         bool_value = _coerce_bool(raw_value)
         return bool_value if bool_value is not None else raw_value
+    if kind == "integer":
+        number = _to_number(raw_value)
+        if number is None:
+            return raw_value
+        return int(number) if float(number).is_integer() else number
     if kind == "json":
         return _parse_json_object_value(raw_value)
     return raw_value
