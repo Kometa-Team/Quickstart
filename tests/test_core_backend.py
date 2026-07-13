@@ -2068,13 +2068,32 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
                     "mov-library_movies-template_collection_trakt_limit": "75",
                     "mov-library_movies-template_collection_trakt_limit_popular": "50",
                     "mov-library_movies-template_collection_trakt_limit_recommended": "30",
+                    "mov-library_movies-template_collection_trakt_image": "chart/color/trakt",
+                    "mov-library_movies-template_collection_trakt_url_logo_collected": "https://example.com/trakt-collected.png",
+                    "mov-library_movies-template_collection_trakt_sync_mode_recommended": "append",
+                    "mov-library_movies-template_collection_trakt_cache_builders_trending": "0",
+                    "mov-library_movies-template_collection_trakt_collection_order_watched": "custom",
+                    "mov-library_movies-template_collection_trakt_radarr_folder_collected": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_trakt_sonarr_search_watched": "false",
                     "mov-library_movies-collection_tmdb": True,
                     "mov-library_movies-template_collection_tmdb_limit": "60",
                     "mov-library_movies-template_collection_tmdb_limit_airing": "20",
                     "mov-library_movies-template_collection_tmdb_limit_trending": "40",
+                    "mov-library_movies-template_collection_tmdb_allowed_libraries": "show",
+                    "mov-library_movies-template_collection_tmdb_image": "chart/color/tmdb",
+                    "mov-library_movies-template_collection_tmdb_url_logo_airing": "https://example.com/tmdb-airing.png",
+                    "mov-library_movies-template_collection_tmdb_collection_order_air": "custom",
+                    "mov-library_movies-template_collection_tmdb_radarr_folder_top": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_tmdb_sonarr_search_air": "false",
                     "mov-library_movies-collection_simkl": True,
+                    "mov-library_movies-template_collection_simkl_period": "week",
                     "mov-library_movies-template_collection_simkl_limit_trending_today": "15",
                     "mov-library_movies-template_collection_simkl_limit_dvd": "10",
+                    "mov-library_movies-template_collection_simkl_image": "chart/color/simkl",
+                    "mov-library_movies-template_collection_simkl_url_logo_trending_week": "https://example.com/simkl-week.png",
+                    "mov-library_movies-template_collection_simkl_collection_order_dvd": "custom",
+                    "mov-library_movies-template_collection_simkl_radarr_folder_dvd": r"C:\Media\Movies",
+                    "mov-library_movies-template_collection_simkl_sonarr_search_trending_week": "false",
                     "mov-library_movies-collection_anilist": True,
                     "mov-library_movies-template_collection_anilist_limit": "80",
                     "mov-library_movies-template_collection_anilist_limit_popular": "40",
@@ -2149,11 +2168,30 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert trakt_entry["template_variables"]["limit"] == "75"
     assert trakt_entry["template_variables"]["limit_popular"] == "50"
     assert trakt_entry["template_variables"]["limit_recommended"] == "30"
+    assert trakt_entry["template_variables"]["image"] == "chart/color/trakt"
+    assert trakt_entry["template_variables"]["url_logo_collected"] == "https://example.com/trakt-collected.png"
+    assert trakt_entry["template_variables"]["sync_mode_recommended"] == "append"
+    assert trakt_entry["template_variables"]["cache_builders_trending"] == "0"
+    assert trakt_entry["template_variables"]["collection_order_watched"] == "custom"
+    assert trakt_entry["template_variables"]["radarr_folder_collected"] == r"C:\Media\Movies"
+    assert trakt_entry["template_variables"]["sonarr_search_watched"] is False
     assert tmdb_entry["template_variables"]["limit"] == "60"
     assert tmdb_entry["template_variables"]["limit_airing"] == "20"
     assert tmdb_entry["template_variables"]["limit_trending"] == "40"
+    assert tmdb_entry["template_variables"]["allowed_libraries"] == "show"
+    assert tmdb_entry["template_variables"]["image"] == "chart/color/tmdb"
+    assert tmdb_entry["template_variables"]["url_logo_airing"] == "https://example.com/tmdb-airing.png"
+    assert tmdb_entry["template_variables"]["collection_order_air"] == "custom"
+    assert tmdb_entry["template_variables"]["radarr_folder_top"] == r"C:\Media\Movies"
+    assert tmdb_entry["template_variables"]["sonarr_search_air"] is False
+    assert simkl_entry["template_variables"]["period"] == "week"
     assert simkl_entry["template_variables"]["limit_trending_today"] == "15"
     assert simkl_entry["template_variables"]["limit_dvd"] == "10"
+    assert simkl_entry["template_variables"]["image"] == "chart/color/simkl"
+    assert simkl_entry["template_variables"]["url_logo_trending_week"] == "https://example.com/simkl-week.png"
+    assert simkl_entry["template_variables"]["collection_order_dvd"] == "custom"
+    assert simkl_entry["template_variables"]["radarr_folder_dvd"] == r"C:\Media\Movies"
+    assert simkl_entry["template_variables"]["sonarr_search_trending_week"] is False
     assert anilist_entry["template_variables"]["limit"] == "80"
     assert anilist_entry["template_variables"]["limit_popular"] == "40"
     assert anilist_entry["template_variables"]["limit_season"] == "25"
