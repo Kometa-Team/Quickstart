@@ -2568,6 +2568,64 @@ def test_build_libraries_section_preserves_collectionless_template_variables(app
     assert template_vars["exclude_prefix"] == ["!", "~"]
 
 
+def test_build_libraries_section_expands_geography_dynamic_child_override_maps(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            show_libraries={"sho-library_shows-library": "Shows"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_country": True,
+                    "mov-library_movies-template_collection_country_trakt_list": '["https://trakt.tv/users/example/lists/france"]',
+                    "mov-library_movies-template_collection_country_child_name_overrides": '{"France": "French Cinema"}',
+                    "mov-library_movies-template_collection_country_child_schedule_overrides": '{"France": "weekly(sunday)"}',
+                    "mov-library_movies-template_collection_country_child_file_background_overrides": '{"France": "C:\\\\Posters\\\\france-bg.jpg"}',
+                    "mov-library_movies-template_collection_country_child_item_radarr_tag_overrides": '{"France": "country,france"}',
+                    "mov-library_movies-collection_continent": True,
+                    "mov-library_movies-template_collection_continent_child_url_poster_overrides": '{"Europe": "https://example.com/europe.jpg"}',
+                    "mov-library_movies-template_collection_continent_child_minimum_items_overrides": '{"Europe": "5"}',
+                    "mov-library_movies-template_collection_continent_child_item_radarr_tag_overrides": '{"Europe": ["continent", "europe"]}',
+                }
+            },
+            show_collections={
+                "shows": {
+                    "sho-library_shows-collection_country": True,
+                    "sho-library_shows-template_collection_country_child_sync_mode_overrides": '{"fr": "append"}',
+                    "sho-library_shows-template_collection_country_child_name_overrides": '{"fr": "French TV"}',
+                    "sho-library_shows-template_collection_country_child_item_sonarr_tag_overrides": '{"fr": "country,france"}',
+                    "sho-library_shows-collection_region": True,
+                    "sho-library_shows-template_collection_region_child_sync_mode_overrides": '{"Eastern Asia": "append"}',
+                    "sho-library_shows-template_collection_region_child_file_logo_overrides": '{"Eastern Asia": "C:\\\\Logos\\\\asia.png"}',
+                    "sho-library_shows-template_collection_region_child_item_sonarr_tag_overrides": '{"Eastern Asia": ["region", "asia"]}',
+                }
+            },
+        )
+
+    movie_entries = libraries_section["libraries"]["Movies"]["collection_files"]
+    show_entries = libraries_section["libraries"]["Shows"]["collection_files"]
+    movie_country = next(entry for entry in movie_entries if entry.get("default") == "country")
+    movie_continent = next(entry for entry in movie_entries if entry.get("default") == "continent")
+    show_country = next(entry for entry in show_entries if entry.get("default") == "country")
+    show_region = next(entry for entry in show_entries if entry.get("default") == "region")
+
+    assert movie_country["template_variables"]["trakt_list"] == ["https://trakt.tv/users/example/lists/france"]
+    assert movie_country["template_variables"]["name_France"] == "French Cinema"
+    assert movie_country["template_variables"]["schedule_France"] == "weekly(sunday)"
+    assert movie_country["template_variables"]["file_background_France"] == r"C:\Posters\france-bg.jpg"
+    assert movie_country["template_variables"]["item_radarr_tag_France"] == ["country", "france"]
+    assert movie_continent["template_variables"]["url_poster_Europe"] == "https://example.com/europe.jpg"
+    assert movie_continent["template_variables"]["minimum_items_Europe"] == 5
+    assert movie_continent["template_variables"]["item_radarr_tag_Europe"] == ["continent", "europe"]
+    assert show_country["template_variables"]["sync_mode_fr"] == "append"
+    assert show_country["template_variables"]["name_fr"] == "French TV"
+    assert show_country["template_variables"]["item_sonarr_tag_fr"] == ["country", "france"]
+    assert show_region["template_variables"]["sync_mode_Eastern Asia"] == "append"
+    assert show_region["template_variables"]["file_logo_Eastern Asia"] == r"C:\Logos\asia.png"
+    assert show_region["template_variables"]["item_sonarr_tag_Eastern Asia"] == ["region", "asia"]
+
+
 def test_build_libraries_section_emits_library_arr_overrides(app):
     from modules import output
 
