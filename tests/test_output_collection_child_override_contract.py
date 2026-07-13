@@ -95,3 +95,105 @@ def test_apply_template_var_normalizers_expands_seasonal_dynamic_child_override_
     assert template_vars["radarr_search_halloween"] is False
     assert "child_name_mapping_overrides" not in template_vars
     assert "child_imdb_search_overrides" not in template_vars
+
+
+def test_apply_template_var_normalizers_expands_region_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"North America": "false"}',
+        "child_schedule_overrides": '{"Northern Africa": "weekly(sunday)"}',
+        "child_name_mapping_overrides": '{"other": "other_regions"}',
+        "child_sort_by_overrides": '{"Western Europe": "title.asc"}',
+        "child_limit_overrides": '{"Central America": "12"}',
+        "child_url_logo_overrides": '{"Southern Europe": "https://example.com/europe.png"}',
+        "child_visible_home_overrides": '{"Caribbean": "true"}',
+        "child_visible_library_overrides": '{"Caribbean": "false"}',
+        "child_visible_shared_overrides": '{"Caribbean": "true"}',
+        "child_hub_priority_overrides": '{"Australia and New Zealand": "7"}',
+        "child_item_radarr_tag_overrides": '{"North America": ["north", "america"]}',
+        "child_item_sonarr_tag_overrides": '{"Eastern Asia": ["anime"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "region")
+
+    assert template_vars["use_North America"] is False
+    assert template_vars["schedule_Northern Africa"] == "weekly(sunday)"
+    assert template_vars["name_mapping_other"] == "other_regions"
+    assert template_vars["sort_by_Western Europe"] == "title.asc"
+    assert template_vars["limit_Central America"] == 12
+    assert template_vars["url_logo_Southern Europe"] == "https://example.com/europe.png"
+    assert template_vars["visible_home_Caribbean"] is True
+    assert template_vars["visible_library_Caribbean"] is False
+    assert template_vars["visible_shared_Caribbean"] is True
+    assert template_vars["hub_priority_Australia and New Zealand"] == "7"
+    assert template_vars["item_radarr_tag_North America"] == ["north", "america"]
+    assert template_vars["item_sonarr_tag_Eastern Asia"] == ["anime"]
+
+
+def test_apply_template_var_normalizers_expands_studio_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"A24": "false"}',
+        "child_name_overrides": '{"Marvel Studios": "Marvel Films"}',
+        "child_summary_overrides": '{"Warner Bros. Pictures": "Warner favorites"}',
+        "child_schedule_overrides": '{"Studio Ghibli": "weekly(sunday)"}',
+        "child_name_mapping_overrides": '{"Lucasfilm Ltd": "lucasfilm"}',
+        "child_sort_by_overrides": '{"Marvel Studios": "title.asc"}',
+        "child_limit_overrides": '{"A24": "10"}',
+        "child_url_poster_overrides": '{"A24": "https://example.com/a24.jpg"}',
+        "child_visible_home_overrides": '{"Pixar": "false"}',
+        "child_visible_library_overrides": '{"Pixar": "true"}',
+        "child_visible_shared_overrides": '{"Pixar": "false"}',
+        "child_hub_priority_overrides": '{"DreamWorks Studios": "3"}',
+        "child_item_radarr_tag_overrides": '{"Lucasfilm Ltd": ["space", "saga"]}',
+        "child_item_sonarr_tag_overrides": '{"Warner Bros. Pictures": ["prestige"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "studio")
+
+    assert template_vars["use_A24"] is False
+    assert template_vars["name_Marvel Studios"] == "Marvel Films"
+    assert template_vars["summary_Warner Bros. Pictures"] == "Warner favorites"
+    assert template_vars["schedule_Studio Ghibli"] == "weekly(sunday)"
+    assert template_vars["name_mapping_Lucasfilm Ltd"] == "lucasfilm"
+    assert template_vars["sort_by_Marvel Studios"] == "title.asc"
+    assert template_vars["limit_A24"] == 10
+    assert template_vars["url_poster_A24"] == "https://example.com/a24.jpg"
+    assert template_vars["visible_home_Pixar"] is False
+    assert template_vars["visible_library_Pixar"] is True
+    assert template_vars["visible_shared_Pixar"] is False
+    assert template_vars["hub_priority_DreamWorks Studios"] == "3"
+    assert template_vars["item_radarr_tag_Lucasfilm Ltd"] == ["space", "saga"]
+    assert template_vars["item_sonarr_tag_Warner Bros. Pictures"] == ["prestige"]
+
+
+def test_apply_template_var_normalizers_expands_network_dynamic_child_override_maps():
+    template_vars = {
+        "child_use_overrides": '{"Apple TV": "false"}',
+        "child_name_overrides": '{"HBO Max": "Max Originals"}',
+        "child_summary_overrides": '{"Disney+": "Disney network picks"}',
+        "child_schedule_overrides": '{"Netflix": "weekly(friday)"}',
+        "child_name_mapping_overrides": '{"Apple TV": "apple_tv"}',
+        "child_sort_by_overrides": '{"Netflix": "release.desc"}',
+        "child_limit_overrides": '{"HBO": "15"}',
+        "child_url_background_overrides": '{"HBO": "https://example.com/hbo-bg.jpg"}',
+        "child_visible_home_overrides": '{"Showtime": "true"}',
+        "child_visible_library_overrides": '{"Showtime": "false"}',
+        "child_visible_shared_overrides": '{"Showtime": "true"}',
+        "child_hub_priority_overrides": '{"Disney+": "5"}',
+        "child_item_sonarr_tag_overrides": '{"Apple TV": ["streaming", "tv"]}',
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "network")
+
+    assert template_vars["use_Apple TV"] is False
+    assert template_vars["name_HBO Max"] == "Max Originals"
+    assert template_vars["summary_Disney+"] == "Disney network picks"
+    assert template_vars["schedule_Netflix"] == "weekly(friday)"
+    assert template_vars["name_mapping_Apple TV"] == "apple_tv"
+    assert template_vars["sort_by_Netflix"] == "release.desc"
+    assert template_vars["limit_HBO"] == 15
+    assert template_vars["url_background_HBO"] == "https://example.com/hbo-bg.jpg"
+    assert template_vars["visible_home_Showtime"] is True
+    assert template_vars["visible_library_Showtime"] is False
+    assert template_vars["visible_shared_Showtime"] is True
+    assert template_vars["hub_priority_Disney+"] == "5"
+    assert template_vars["item_sonarr_tag_Apple TV"] == ["streaming", "tv"]

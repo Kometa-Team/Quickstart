@@ -96,7 +96,7 @@ def _collect_dynamic_child_field_specs(template_vars: Any) -> list[dict[str, str
                 "value_kind": str(item.get("dynamic_child_value_kind") or "string").strip().lower(),
             }
         )
-    return specs
+    return sorted(specs, key=lambda spec: len(spec["child_prefix"]), reverse=True)
 
 
 def _coerce_import_int(value: Any) -> int | None:
@@ -209,6 +209,9 @@ def _serialize_dynamic_child_mapping_value(value: Any, value_kind: str) -> str:
         return str(value or "").strip()
     if kind == "boolean":
         return _coerce_import_bool_text(value)
+    if kind == "integer":
+        int_value = _coerce_import_int(value)
+        return "" if int_value is None else str(int_value)
     if kind == "json":
         if isinstance(value, (dict, list)):
             return json.dumps(value, ensure_ascii=True)

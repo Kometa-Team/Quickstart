@@ -426,3 +426,156 @@ def test_prepare_import_payload_collapses_seasonal_dynamic_child_template_variab
     assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_radarr_search_overrides"]) == {"halloween": "false"}
     assert any("libraries.Movies.collection_files[0].template_variables.imdb_search_halloween" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[0].template_variables.letterboxd_list_black_history" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_region_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "region",
+                            "template_variables": {
+                                "use_North America": False,
+                                "schedule_Northern Africa": "weekly(sunday)",
+                                "name_mapping_other": "other_regions",
+                                "sort_by_Western Europe": "title.asc",
+                                "limit_Central America": 12,
+                                "url_logo_Southern Europe": "https://example.com/europe.png",
+                                "visible_home_Caribbean": True,
+                                "visible_library_Caribbean": False,
+                                "visible_shared_Caribbean": True,
+                                "hub_priority_Australia and New Zealand": 7,
+                                "item_radarr_tag_North America": ["north", "america"],
+                                "item_sonarr_tag_Eastern Asia": ["anime"],
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_region"] is True
+    assert libraries_payload["mov-library_movies-template_collection_region_use_North America"] is False
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_schedule_overrides"]) == {"Northern Africa": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_name_mapping_overrides"]) == {"other": "other_regions"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_sort_by_overrides"]) == {"Western Europe": "title.asc"}
+    assert libraries_payload["mov-library_movies-template_collection_region_limit_Central America"] == 12
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_url_logo_overrides"]) == {"Southern Europe": "https://example.com/europe.png"}
+    assert libraries_payload["mov-library_movies-template_collection_region_visible_home_Caribbean"] is True
+    assert libraries_payload["mov-library_movies-template_collection_region_visible_library_Caribbean"] is False
+    assert libraries_payload["mov-library_movies-template_collection_region_visible_shared_Caribbean"] is True
+    assert libraries_payload["mov-library_movies-template_collection_region_hub_priority_Australia and New Zealand"] == 7
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_item_radarr_tag_overrides"]) == {"North America": "north,america"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_region_child_item_sonarr_tag_overrides"]) == {"Eastern Asia": "anime"}
+    assert any("libraries.Movies.collection_files[0].template_variables.use_North America" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[0].template_variables.name_mapping_other" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_studio_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Movies": {
+                    "collection_files": [
+                        {
+                            "default": "studio",
+                            "template_variables": {
+                                "use_A24": False,
+                                "name_Marvel Studios": "Marvel Films",
+                                "summary_Warner Bros. Pictures": "Warner favorites",
+                                "schedule_Studio Ghibli": "weekly(sunday)",
+                                "name_mapping_Lucasfilm Ltd": "lucasfilm",
+                                "sort_by_Marvel Studios": "title.asc",
+                                "limit_A24": 10,
+                                "url_poster_A24": "https://example.com/a24.jpg",
+                                "visible_home_Pixar": False,
+                                "visible_library_Pixar": True,
+                                "visible_shared_Pixar": False,
+                                "hub_priority_DreamWorks Studios": 3,
+                                "item_radarr_tag_Lucasfilm Ltd": ["space", "saga"],
+                                "item_sonarr_tag_Warner Bros. Pictures": ["prestige"],
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        {"Movies"},
+        set(),
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["mov-library_movies-collection_studio"] is True
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_use_overrides"]) == {"A24": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_name_overrides"]) == {"Marvel Studios": "Marvel Films"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_summary_overrides"]) == {"Warner Bros. Pictures": "Warner favorites"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_schedule_overrides"]) == {"Studio Ghibli": "weekly(sunday)"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_name_mapping_overrides"]) == {"Lucasfilm Ltd": "lucasfilm"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_sort_by_overrides"]) == {"Marvel Studios": "title.asc"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_limit_overrides"]) == {"A24": "10"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_url_poster_overrides"]) == {"A24": "https://example.com/a24.jpg"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_visible_home_overrides"]) == {"Pixar": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_visible_library_overrides"]) == {"Pixar": "true"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_visible_shared_overrides"]) == {"Pixar": "false"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_hub_priority_overrides"]) == {"DreamWorks Studios": "3"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_item_radarr_tag_overrides"]) == {"Lucasfilm Ltd": "space,saga"}
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_studio_child_item_sonarr_tag_overrides"]) == {"Warner Bros. Pictures": "prestige"}
+    assert any("libraries.Movies.collection_files[0].template_variables.use_A24" in line for line in report.lines)
+    assert any("libraries.Movies.collection_files[0].template_variables.summary_Warner Bros. Pictures" in line for line in report.lines)
+
+
+def test_prepare_import_payload_collapses_network_dynamic_child_template_variables():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {
+                "Shows": {
+                    "collection_files": [
+                        {
+                            "default": "network",
+                            "template_variables": {
+                                "use_Apple TV": False,
+                                "name_HBO Max": "Max Originals",
+                                "summary_Disney+": "Disney network picks",
+                                "schedule_Netflix": "weekly(friday)",
+                                "name_mapping_Apple TV": "apple_tv",
+                                "sort_by_Netflix": "release.desc",
+                                "limit_HBO": 15,
+                                "url_background_HBO": "https://example.com/hbo-bg.jpg",
+                                "visible_home_Showtime": True,
+                                "visible_library_Showtime": False,
+                                "visible_shared_Showtime": True,
+                                "hub_priority_Disney+": 5,
+                                "item_sonarr_tag_Apple TV": ["streaming", "tv"],
+                            },
+                        }
+                    ]
+                }
+            }
+        },
+        set(),
+        {"Shows"},
+    )
+
+    libraries_payload = payload["libraries"]["libraries"]
+    assert libraries_payload["sho-library_shows-collection_network"] is True
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_use_overrides"]) == {"Apple TV": "false"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_name_overrides"]) == {"HBO Max": "Max Originals"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_summary_overrides"]) == {"Disney+": "Disney network picks"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_schedule_overrides"]) == {"Netflix": "weekly(friday)"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_name_mapping_overrides"]) == {"Apple TV": "apple_tv"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_sort_by_overrides"]) == {"Netflix": "release.desc"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_limit_overrides"]) == {"HBO": "15"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_url_background_overrides"]) == {"HBO": "https://example.com/hbo-bg.jpg"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_visible_home_overrides"]) == {"Showtime": "true"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_visible_library_overrides"]) == {"Showtime": "false"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_visible_shared_overrides"]) == {"Showtime": "true"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_hub_priority_overrides"]) == {"Disney+": "5"}
+    assert json.loads(libraries_payload["sho-library_shows-template_collection_network_child_item_sonarr_tag_overrides"]) == {"Apple TV": "streaming,tv"}
+    assert any("libraries.Shows.collection_files[0].template_variables.use_Apple TV" in line for line in report.lines)
+    assert any("libraries.Shows.collection_files[0].template_variables.summary_Disney+" in line for line in report.lines)
