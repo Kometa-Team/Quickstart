@@ -362,9 +362,7 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
                                 "name_mapping_1399": "Game of Thrones",
                                 "order_1399": "02",
                                 "sort_title_1399": "!350_Game of Thrones",
-                                "url_background_1399": "https://example.com/got-bg.jpg",
-                                "url_logo_1399": "https://example.com/got-logo.png",
-                                "url_square_art_1399": "https://example.com/got-square.png",
+                                "url_poster_1399": "https://example.com/got.jpg",
                                 "sonarr_add_missing_1399": True,
                                 "sonarr_folder_1399": r"C:\Media\Shows",
                                 "sonarr_tag_1399": ["tracked", "priority"],
@@ -405,9 +403,7 @@ def test_prepare_import_payload_collapses_franchise_dynamic_child_template_varia
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_name_mapping_overrides"] == '{"1399": "Game of Thrones"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_order_overrides"] == '{"1399": "02"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sort_title_overrides"] == '{"1399": "!350_Game of Thrones"}'
-    assert libraries_payload["sho-library_shows-template_collection_franchise_child_url_background_overrides"] == '{"1399": "https://example.com/got-bg.jpg"}'
-    assert libraries_payload["sho-library_shows-template_collection_franchise_child_url_logo_overrides"] == '{"1399": "https://example.com/got-logo.png"}'
-    assert libraries_payload["sho-library_shows-template_collection_franchise_child_url_square_art_overrides"] == '{"1399": "https://example.com/got-square.png"}'
+    assert libraries_payload["sho-library_shows-template_collection_franchise_child_url_poster_overrides"] == '{"1399": "https://example.com/got.jpg"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_add_missing_overrides"] == '{"1399": "true"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_folder_overrides"] == '{"1399": "C:\\\\Media\\\\Shows"}'
     assert libraries_payload["sho-library_shows-template_collection_franchise_child_sonarr_tag_overrides"] == '{"1399": "tracked,priority"}'
