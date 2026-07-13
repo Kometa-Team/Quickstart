@@ -225,15 +225,17 @@ def _normalize_collection_template_var_value(key, value):
     if key == "title_override":
         mapping_values = _parse_string_mapping(value)
         return mapping_values if mapping_values else None
-    if key == "imdb_search" or key.startswith("imdb_search_"):
+    if key in {"imdb_search", "plex_search"} or key.startswith(("imdb_search_", "plex_search_")):
         return _parse_json_object_value(value)
     if key in {"tmdb_birthday", "tmdb_deathday"}:
         return _parse_tmdb_person_window(value)
     if key == "remove_suffix":
         list_values = _parse_comma_string_list(value)
         return ",".join(list_values) if list_values else None
+    if key in {"delete_collections_named"} or key.startswith(("delete_collections_named_", "keywords_")):
+        list_values = _parse_string_list(value)
+        return list_values if list_values else None
     if key in {
-        "delete_collections_named",
         "trakt_list",
         "imdb_list",
         "imdb_id",
@@ -248,7 +250,6 @@ def _normalize_collection_template_var_value(key, value):
         "tvdb_list",
     } or key.startswith(
         (
-            "delete_collections_named_",
             "trakt_list_",
             "imdb_list_",
             "imdb_id_",
@@ -261,10 +262,9 @@ def _normalize_collection_template_var_value(key, value):
             "tvdb_movie_",
             "tvdb_show_",
             "tvdb_list_",
-            "keywords_",
         )
     ):
-        list_values = _parse_string_list(value)
+        list_values = _parse_comma_string_list(value)
         return list_values if list_values else None
     if key in {"radarr_tag", "sonarr_tag", "item_radarr_tag", "item_sonarr_tag"} or key.startswith(("radarr_tag_", "sonarr_tag_", "item_radarr_tag_", "item_sonarr_tag_")):
         list_values = _parse_string_list(value)

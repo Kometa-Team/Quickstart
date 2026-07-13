@@ -501,8 +501,8 @@ def test_prepare_import_payload_accepts_based_and_collectionless_template_variab
     assert libraries_payload["mov-library_movies-collection_based"] is True
     assert libraries_payload["mov-library_movies-template_collection_based_translation_key"] == "based"
     assert libraries_payload["mov-library_movies-template_collection_based_schedule"] == "weekly(sunday)"
-    assert libraries_payload["mov-library_movies-template_collection_based_delete_collections_named"] == ["Old Based"]
-    assert libraries_payload["mov-library_movies-template_collection_based_keywords_books"] == ["based on book", "based on novel"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_based_delete_collections_named"]) == ["Old Based"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_based_keywords_books"]) == ["based on book", "based on novel"]
     assert libraries_payload["mov-library_movies-template_collection_based_image_comics"] == "based/comics"
     assert libraries_payload["mov-library_movies-template_collection_based_limit_true_story"] == 25
     assert libraries_payload["mov-library_movies-template_collection_based_sort_by_video_games"] == "release.desc"
@@ -514,15 +514,15 @@ def test_prepare_import_payload_accepts_based_and_collectionless_template_variab
     assert libraries_payload["mov-library_movies-template_collection_collectionless_name_collectionless"] == "No Collections"
     assert libraries_payload["mov-library_movies-template_collection_collectionless_summary_collectionless"] == "Items not in collections"
     assert libraries_payload["mov-library_movies-template_collection_collectionless_url_poster"] == "https://example.com/collectionless.jpg"
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_movie"] == [603]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_show"] == [1399]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_imdb_id"] == ["tt0133093"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_imdb_list"] == ["ls123456789"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_movie"]) == [603]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_tmdb_show"]) == [1399]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_imdb_id"]) == ["tt0133093"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_imdb_list"]) == ["ls123456789"]
     assert libraries_payload["mov-library_movies-template_collection_collectionless_plex_search"] == {"all": {"title": "Example"}}
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_mdblist_list"] == ["https://mdblist.com/lists/example/list"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_trakt_list"] == ["https://trakt.tv/users/example/lists/list"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_exclude"] == ["Marvel Cinematic Universe"]
-    assert libraries_payload["mov-library_movies-template_collection_collectionless_exclude_prefix"] == ["!", "~"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_mdblist_list"]) == ["https://mdblist.com/lists/example/list"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_trakt_list"]) == ["https://trakt.tv/users/example/lists/list"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_exclude"]) == ["Marvel Cinematic Universe"]
+    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_exclude_prefix"]) == ["!", "~"]
     assert any("libraries.Movies.collection_files[0].template_variables.keywords_books" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[1].template_variables.plex_search" in line for line in report.lines)
 
