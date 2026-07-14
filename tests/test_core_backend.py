@@ -326,7 +326,7 @@ def test_validate_yamtrack_returns_version_from_about_page(client, monkeypatch, 
 
         def get(self, url, timeout=10):
             if url.endswith("/accounts/login/"):
-                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="username"><input name="password">')
+                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="login"><input name="password">')
             if url.endswith("/settings/about/"):
                 return _Resp(
                     200,
@@ -338,7 +338,10 @@ def test_validate_yamtrack_returns_version_from_about_page(client, monkeypatch, 
                 )
             return _Resp(404, "")
 
-        def post(self, *_args, **_kwargs):
+        def post(self, *_args, **kwargs):
+            data = kwargs.get("data") or {}
+            if data.get("login") != "kometa" or data.get("password") != "secret":
+                return _Resp(200, '<form><input name="login"><input name="password"></form>')
             return _Resp(200, "<html><body>Dashboard</body></html>")
 
     monkeypatch.setattr(qs_module.validations.requests, "Session", _Session)
@@ -371,7 +374,7 @@ def test_validate_yamtrack_rejects_public_about_with_failed_login(client, monkey
 
         def get(self, url, timeout=10):
             if url.endswith("/accounts/login/"):
-                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="username"><input name="password">')
+                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="login"><input name="password">')
             if url.endswith("/settings/about/"):
                 return _Resp(
                     200,
@@ -384,7 +387,7 @@ def test_validate_yamtrack_rejects_public_about_with_failed_login(client, monkey
             return _Resp(404, "")
 
         def post(self, *_args, **_kwargs):
-            return _Resp(200, '<form><input name="username"><input name="password"></form><p>Please enter a correct username and password.</p>')
+            return _Resp(200, '<form><input name="login"><input name="password"></form><p>Please enter a correct username and password.</p>')
 
     monkeypatch.setattr(qs_module.validations.requests, "Session", _Session)
 
@@ -416,7 +419,7 @@ def test_validate_yamtrack_rejects_login_without_about_version(client, monkeypat
 
         def get(self, url, timeout=10):
             if url.endswith("/accounts/login/"):
-                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="username"><input name="password">')
+                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="login"><input name="password">')
             if url.endswith("/settings/about/"):
                 return _Resp(200, "<html><body>About Yamtrack</body></html>")
             return _Resp(404, "")

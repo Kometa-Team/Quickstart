@@ -377,7 +377,7 @@ def _is_yamtrack_login_page(html):
     if not html:
         return False
     lowered = html.lower()
-    return "password" in lowered and ("username" in lowered or "csrfmiddlewaretoken" in lowered)
+    return "password" in lowered and ("login" in lowered or "username" in lowered or "csrfmiddlewaretoken" in lowered)
 
 
 def _is_yamtrack_login_failure(response):
@@ -451,7 +451,12 @@ def validate_yamtrack_server(data):
                 headers["X-CSRFToken"] = csrf_token
             login_response = session.post(
                 f"{yamtrack_url}{path}",
-                data={"username": yamtrack_username, "password": yamtrack_password},
+                data={
+                    "login": yamtrack_username,
+                    "password": yamtrack_password,
+                    "csrfmiddlewaretoken": csrf_token,
+                    "next": "",
+                },
                 headers=headers,
                 timeout=10,
                 allow_redirects=True,
