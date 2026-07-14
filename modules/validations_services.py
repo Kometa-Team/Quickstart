@@ -380,6 +380,25 @@ def _is_yamtrack_login_page(html):
     return "password" in lowered and ("username" in lowered or "csrfmiddlewaretoken" in lowered)
 
 
+def _is_yamtrack_login_failure(response):
+    if response is None:
+        return False
+    if response.status_code in {401, 403}:
+        return True
+    text = response.text or ""
+    lowered = text.lower()
+    failure_markers = (
+        "please enter a correct username",
+        "invalid username",
+        "invalid password",
+        "invalid login",
+        "incorrect username",
+        "incorrect password",
+        "unable to log in",
+    )
+    return _is_yamtrack_login_page(text) or any(marker in lowered for marker in failure_markers)
+
+
 def validate_yamtrack_server(data):
     yamtrack_url = str(data.get("yamtrack_url") or "").strip()
     yamtrack_username = str(data.get("yamtrack_username") or "").strip()
@@ -395,20 +414,23 @@ def validate_yamtrack_server(data):
 
     yamtrack_url = yamtrack_url.rstrip("#").rstrip("/")
     session = requests.Session()
-    about_paths = ("/settings/about/", "/settings/about")
+    about_paths = ("/settings/about/", "/settings/about", "/about/settings/", "/about/settings")
     login_paths = ("/accounts/login/", "/accounts/login", "/login/", "/login")
 
     def about_response():
         last_response = None
+        authenticated_response = None
         for path in about_paths:
             response = session.get(f"{yamtrack_url}{path}", timeout=10)
             last_response = response
             if response.status_code == 200 and not _is_yamtrack_login_page(response.text):
-                return response
-        return last_response
+                authenticated_response = authenticated_response or response
+                version = _extract_yamtrack_version(response.text)
+                if version:
+                    return response, version
+        return authenticated_response or last_response, ""
 
-    def success_payload(response):
-        version = _extract_yamtrack_version(response.text)
+    def success_payload(version):
         return {
             "valid": True,
             "version": version,
@@ -416,14 +438,12 @@ def validate_yamtrack_server(data):
         }
 
     try:
-        response = about_response()
-        if response is not None and response.status_code == 200:
-            return jsonify(success_payload(response))
-
         login_response = None
+        response = None
+        saw_authenticated_response = False
         for path in login_paths:
             login_page = session.get(f"{yamtrack_url}{path}", timeout=10)
-            if login_page.status_code >= 500:
+            if login_page.status_code >= 400:
                 continue
             csrf_token = session.cookies.get("csrftoken") or _extract_yamtrack_csrf_token(login_page.text)
             headers = {"Referer": f"{yamtrack_url}{path}"}
@@ -436,13 +456,17 @@ def validate_yamtrack_server(data):
                 timeout=10,
                 allow_redirects=True,
             )
-            if login_response.status_code >= 400:
+            if login_response.status_code >= 400 or _is_yamtrack_login_failure(login_response):
                 continue
-            response = about_response()
+            response, version = about_response()
             if response is not None and response.status_code == 200:
-                return jsonify(success_payload(response))
+                saw_authenticated_response = True
+                if version:
+                    return jsonify(success_payload(version))
 
         status = login_response.status_code if login_response is not None else (response.status_code if response is not None else "unknown")
+        if saw_authenticated_response:
+            return jsonify({"valid": False, "error": "Unable to validate Yamtrack credentials: settings/about did not return a version."})
         return jsonify({"valid": False, "error": f"Unable to validate Yamtrack credentials (status {status})."})
     except requests.RequestException as exc:
         return jsonify({"valid": False, "error": f"Yamtrack connection error: {exc}"})
