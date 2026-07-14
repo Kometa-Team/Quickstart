@@ -54,6 +54,15 @@ def validate_apprise():
     return validations.validate_apprise_server(data)
 
 
+@bp.route("/validate_yamtrack", methods=["POST"])
+def validate_yamtrack():
+    data = request.get_json(silent=True) or {}
+    valid, message = url_validation.validate_url(data.get("yamtrack_url"), allow_local=True)
+    if not valid:
+        return jsonify({"valid": False, "error": f"Yamtrack URL: {message}"}), 400
+    return validations.validate_yamtrack_server(data)
+
+
 @bp.route("/validate_overlay_source_override", methods=["POST"])
 def validate_overlay_source_override():
     data = request.get_json(silent=True) or {}

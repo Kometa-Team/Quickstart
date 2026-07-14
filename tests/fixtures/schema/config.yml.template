@@ -131,6 +131,10 @@ ntfy:
   topic:                           # Enter ntfy Topic (Optional)
 apprise:
   config:                          # Enter path or URL to Apprise config file (Optional)
+yamtrack:
+  url: http://192.168.1.12:8000    # Enter Yamtrack server URL (Optional)
+  username:                        # Enter Yamtrack username (Optional)
+  password:                        # Enter Yamtrack password (Optional)
 anidb:
   cache_expiration: 60
   language: en

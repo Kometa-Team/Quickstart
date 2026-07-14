@@ -172,6 +172,7 @@ ORDERED_CONFIG_SECTIONS = (
     ("gotify", "080-gotify"),
     ("ntfy", "085-ntfy"),
     ("apprise", "087-apprise"),
+    ("yamtrack", "088-yamtrack"),
     ("anidb", "090-anidb"),
     ("radarr", "100-radarr"),
     ("sonarr", "110-sonarr"),

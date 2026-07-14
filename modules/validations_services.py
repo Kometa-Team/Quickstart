@@ -337,6 +337,107 @@ def validate_apprise_server(data):
     return jsonify({"valid": True})
 
 
+def _extract_yamtrack_csrf_token(html):
+    if not html:
+        return ""
+    match = re.search(r'name=["\']csrfmiddlewaretoken["\'][^>]*value=["\']([^"\']+)["\']', html, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    match = re.search(r'value=["\']([^"\']+)["\'][^>]*name=["\']csrfmiddlewaretoken["\']', html, re.IGNORECASE)
+    return match.group(1) if match else ""
+
+
+def _extract_yamtrack_version(html):
+    if not html:
+        return ""
+    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"\s+", " ", text)
+    patterns = (
+        r"\bVersion\s*[:\-]?\s*v?([0-9][A-Za-z0-9._+\-]*)",
+        r"\bYamtrack\s+v?([0-9][A-Za-z0-9._+\-]*)",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return ""
+
+
+def _is_yamtrack_login_page(html):
+    if not html:
+        return False
+    lowered = html.lower()
+    return "password" in lowered and ("username" in lowered or "csrfmiddlewaretoken" in lowered)
+
+
+def validate_yamtrack_server(data):
+    yamtrack_url = str(data.get("yamtrack_url") or "").strip()
+    yamtrack_username = str(data.get("yamtrack_username") or "").strip()
+    yamtrack_password = str(data.get("yamtrack_password") or "").strip()
+
+    ok, msg = _validate_service_url(yamtrack_url, "Yamtrack", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
+    if not yamtrack_username:
+        return jsonify({"valid": False, "error": "Yamtrack username is required."}), 400
+    if not yamtrack_password:
+        return jsonify({"valid": False, "error": "Yamtrack password is required."}), 400
+
+    yamtrack_url = yamtrack_url.rstrip("#").rstrip("/")
+    session = requests.Session()
+    about_paths = ("/settings/about/", "/settings/about")
+    login_paths = ("/accounts/login/", "/accounts/login", "/login/", "/login")
+
+    def about_response():
+        last_response = None
+        for path in about_paths:
+            response = session.get(f"{yamtrack_url}{path}", timeout=10)
+            last_response = response
+            if response.status_code == 200 and not _is_yamtrack_login_page(response.text):
+                return response
+        return last_response
+
+    def success_payload(response):
+        version = _extract_yamtrack_version(response.text)
+        return {
+            "valid": True,
+            "version": version,
+            "message": f"Yamtrack connection validated{f' (version {version})' if version else ''}.",
+        }
+
+    try:
+        response = about_response()
+        if response is not None and response.status_code == 200:
+            return jsonify(success_payload(response))
+
+        login_response = None
+        for path in login_paths:
+            login_page = session.get(f"{yamtrack_url}{path}", timeout=10)
+            if login_page.status_code >= 500:
+                continue
+            csrf_token = session.cookies.get("csrftoken") or _extract_yamtrack_csrf_token(login_page.text)
+            headers = {"Referer": f"{yamtrack_url}{path}"}
+            if csrf_token:
+                headers["X-CSRFToken"] = csrf_token
+            login_response = session.post(
+                f"{yamtrack_url}{path}",
+                data={"username": yamtrack_username, "password": yamtrack_password},
+                headers=headers,
+                timeout=10,
+                allow_redirects=True,
+            )
+            if login_response.status_code >= 400:
+                continue
+            response = about_response()
+            if response is not None and response.status_code == 200:
+                return jsonify(success_payload(response))
+
+        status = login_response.status_code if login_response is not None else (response.status_code if response is not None else "unknown")
+        return jsonify({"valid": False, "error": f"Unable to validate Yamtrack credentials (status {status})."})
+    except requests.RequestException as exc:
+        return jsonify({"valid": False, "error": f"Yamtrack connection error: {exc}"})
+
+
 def validate_webhook_server(data):
     webhook_url = data.get("webhook_url")
     message = data.get("message")

@@ -41,6 +41,7 @@ SIMPLE_SECTIONS: frozenset[str] = frozenset(
         "gotify",
         "ntfy",
         "apprise",
+        "yamtrack",
         "github",
         "radarr",
         "sonarr",
