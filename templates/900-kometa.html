@@ -727,15 +727,14 @@
                 <label class="form-check-label" for="opt-validate-dir">--validate-dir</label>
               </div>
 
-              <div id="validate-config-options" class="mt-3 d-none">
+              <div id="validate-config-options" class="mt-3">
                 <label class="form-label" for="opt-validate-level">--validate-level</label>
                 <select class="form-select" id="opt-validate-level">
-                  <option value="">Default (structure)</option>
                   <option value="syntax">syntax</option>
-                  <option value="structure">structure</option>
+                  <option value="structure" selected>structure</option>
                   <option value="full">full</option>
                 </select>
-                <div class="form-text">Controls how deep validation goes when validating the generated config.</div>
+                <div class="form-text">Controls how deep validation goes when validating the generated config. Default is <code>structure</code>.</div>
 
                 <div class="form-check mt-3">
                   <input class="form-check-input" type="checkbox" id="opt-validate-schema" value="--validate-schema">

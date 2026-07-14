@@ -252,8 +252,8 @@ export function buildCommand () {
     clearValidationErrors()
     if (validateMode === '--validate') {
       cli += ' --validate'
-      const validateLevel = (document.getElementById('opt-validate-level') || {}).value?.trim?.() || ''
-      if (validateLevel) cli += ` --validate-level ${validateLevel}`
+      const validateLevel = (document.getElementById('opt-validate-level') || {}).value?.trim?.() || 'structure'
+      cli += ` --validate-level ${validateLevel}`
       const validateSchema = document.getElementById('opt-validate-schema')
       if (validateSchema && validateSchema.checked) cli += ' --validate-schema'
       const schemaPath = (document.getElementById('opt-schema-path') || {}).value?.trim?.() || ''

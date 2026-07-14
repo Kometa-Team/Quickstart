@@ -101,9 +101,8 @@ function installRunCommandDom (opts = {}) {
     <input type="radio" name="validate-mode" value="--validate-file">
     <input type="radio" name="validate-mode" value="--validate-dir">
     <select id="opt-validate-level">
-      <option value="">Default</option>
       <option value="syntax">syntax</option>
-      <option value="structure">structure</option>
+      <option value="structure" selected>structure</option>
       <option value="full">full</option>
     </select>
     <input type="checkbox" id="opt-validate-schema">
@@ -483,6 +482,15 @@ describe('buildCommand validation modes', () => {
     expect(out).toContain('--config /opt/kometa/config/config.yml')
     expect(out).not.toContain('--collections-only')
     expect(out).not.toContain('--delete-collections')
+  })
+
+  it('uses structure as the default validate level for generated-config validation', () => {
+    installRunCommandDom()
+    selectValidateMode('--validate')
+
+    expect(buildCommand()).toBe(true)
+    const out = document.getElementById('run-command-output').dataset.builtCommand
+    expect(out).toContain('--validate --validate-level structure')
   })
 
   it('builds a validate-file command and quotes paths with spaces', () => {

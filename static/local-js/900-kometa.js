@@ -267,7 +267,10 @@ document.querySelectorAll('input[name="log-flag"]').forEach(el => el.addEventLis
 function syncValidationCommandOptions () {
   const validateMode = (document.querySelector('input[name="validate-mode"]:checked') || {}).value || ''
   const schemaChecked = Boolean(document.getElementById('opt-validate-schema')?.checked)
-  document.getElementById('validate-config-options')?.classList.toggle('d-none', validateMode !== '--validate')
+  const validateLevel = document.getElementById('opt-validate-level')
+  const validateSchema = document.getElementById('opt-validate-schema')
+  if (validateLevel) validateLevel.disabled = validateMode !== '--validate'
+  if (validateSchema) validateSchema.disabled = validateMode !== '--validate'
   document.getElementById('validate-file-options')?.classList.toggle('d-none', validateMode !== '--validate-file')
   document.getElementById('validate-dir-options')?.classList.toggle('d-none', validateMode !== '--validate-dir')
   document.getElementById('validate-schema-path-options')?.classList.toggle(
