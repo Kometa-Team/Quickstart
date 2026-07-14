@@ -50,6 +50,7 @@ are consistent.
 from __future__ import annotations
 
 import re
+from html import unescape
 from json import JSONDecodeError
 
 import requests
@@ -350,11 +351,20 @@ def _extract_yamtrack_csrf_token(html):
 def _extract_yamtrack_version(html):
     if not html:
         return ""
+
+    markup_match = re.search(
+        r"\bVersion\s*[:\-]?\s*<[^>]*>\s*(v?[0-9][A-Za-z0-9._+\-]*)\s*<",
+        html,
+        re.IGNORECASE,
+    )
+    if markup_match:
+        return unescape(markup_match.group(1))
+
     text = re.sub(r"<[^>]+>", " ", html)
     text = re.sub(r"\s+", " ", text)
     patterns = (
-        r"\bVersion\s*[:\-]?\s*v?([0-9][A-Za-z0-9._+\-]*)",
-        r"\bYamtrack\s+v?([0-9][A-Za-z0-9._+\-]*)",
+        r"\bVersion\s*[:\-]?\s*(v?[0-9][A-Za-z0-9._+\-]*)",
+        r"\bYamtrack\s+(v?[0-9][A-Za-z0-9._+\-]*)",
     )
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)

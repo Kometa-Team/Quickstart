@@ -326,7 +326,14 @@ def test_validate_yamtrack_returns_version_from_about_page(client, monkeypatch, 
 
         def get(self, url, timeout=10):
             if url.endswith("/settings/about/"):
-                return _Resp(200, "<html><body>Yamtrack Version: 1.2.3</body></html>")
+                return _Resp(
+                    200,
+                    """
+                    <p class="text-gray-400 text-sm">
+                      Version: <span class="font-mono">v0.25.3-15-g6a240cc2</span>
+                    </p>
+                    """,
+                )
             return _Resp(404, "")
 
         def post(self, *_args, **_kwargs):
@@ -346,7 +353,7 @@ def test_validate_yamtrack_returns_version_from_about_page(client, monkeypatch, 
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["valid"] is True
-    assert payload["version"] == "1.2.3"
+    assert payload["version"] == "v0.25.3-15-g6a240cc2"
 
 
 def test_validate_metadata_file_accepts_existing_local_file(client, tmp_path):
