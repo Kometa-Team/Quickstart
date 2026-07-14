@@ -96,6 +96,23 @@ function installRunCommandDom (opts = {}) {
     <input type="radio" name="log-flag" value="" ${logFlag === '' ? 'checked' : ''}>
     <input type="radio" name="log-flag" value="--debug" ${logFlag === '--debug' ? 'checked' : ''}>
 
+    <input type="radio" name="validate-mode" value="" checked>
+    <input type="radio" name="validate-mode" value="--validate">
+    <input type="radio" name="validate-mode" value="--validate-file">
+    <input type="radio" name="validate-mode" value="--validate-dir">
+    <select id="opt-validate-level">
+      <option value="">Default</option>
+      <option value="syntax">syntax</option>
+      <option value="structure">structure</option>
+      <option value="full">full</option>
+    </select>
+    <input type="checkbox" id="opt-validate-schema">
+    <input id="opt-validate-file-val" value="">
+    <div id="validate-file-error" class="d-none"></div>
+    <input id="opt-validate-dir-val" value="">
+    <div id="validate-dir-error" class="d-none"></div>
+    <input id="opt-schema-path" value="">
+
     <input type="checkbox" id="opt-delete-collections">
     <input type="checkbox" id="opt-delete-labels">
     <input type="checkbox" id="opt-read-only-config">
@@ -441,6 +458,73 @@ describe('buildCommand no-value checkboxes', () => {
     installRunCommandDom()
     document.getElementById('opt-tests').remove()
     expect(() => buildCommand()).not.toThrow()
+  })
+})
+
+describe('buildCommand validation modes', () => {
+  function selectValidateMode (value) {
+    document.querySelectorAll('input[name="validate-mode"]').forEach(el => {
+      el.checked = el.value === value
+    })
+  }
+
+  it('builds a generated-config validation command with level and schema options', () => {
+    installRunCommandDom()
+    selectValidateMode('--validate')
+    document.getElementById('opt-validate-level').value = 'syntax'
+    document.getElementById('opt-validate-schema').checked = true
+    document.getElementById('opt-schema-path').value = '/schemas/json-schema'
+    document.querySelector('input[name="run-option"][value="--collections-only"]').checked = true
+    document.getElementById('opt-delete-collections').checked = true
+
+    expect(buildCommand()).toBe(true)
+    const out = document.getElementById('run-command-output').dataset.builtCommand
+    expect(out).toContain('--validate --validate-level syntax --validate-schema --schema-path /schemas/json-schema')
+    expect(out).toContain('--config /opt/kometa/config/config.yml')
+    expect(out).not.toContain('--collections-only')
+    expect(out).not.toContain('--delete-collections')
+  })
+
+  it('builds a validate-file command and quotes paths with spaces', () => {
+    installRunCommandDom()
+    selectValidateMode('--validate-file')
+    document.getElementById('opt-validate-file-val').value = '/data/my collections.yml'
+    document.getElementById('opt-schema-path').value = '/data/json schema'
+
+    expect(buildCommand()).toBe(true)
+    const out = document.getElementById('run-command-output').dataset.builtCommand
+    expect(out).toContain('--validate-file "/data/my collections.yml"')
+    expect(out).toContain('--schema-path "/data/json schema"')
+    expect(out).not.toContain('--config')
+  })
+
+  it('rejects validate-file without a file path', () => {
+    installRunCommandDom()
+    selectValidateMode('--validate-file')
+
+    expect(buildCommand()).toBe(false)
+    expect(document.getElementById('validate-file-error').classList.contains('d-none')).toBe(false)
+    expect(document.getElementById('run-command-output').textContent).toContain('YAML file path')
+  })
+
+  it('builds a validate-dir command', () => {
+    installRunCommandDom()
+    selectValidateMode('--validate-dir')
+    document.getElementById('opt-validate-dir-val').value = '/data/configs'
+
+    expect(buildCommand()).toBe(true)
+    const out = document.getElementById('run-command-output').dataset.builtCommand
+    expect(out).toContain('--validate-dir /data/configs')
+    expect(out).not.toContain('--config')
+  })
+
+  it('rejects validate-dir without a directory path', () => {
+    installRunCommandDom()
+    selectValidateMode('--validate-dir')
+
+    expect(buildCommand()).toBe(false)
+    expect(document.getElementById('validate-dir-error').classList.contains('d-none')).toBe(false)
+    expect(document.getElementById('run-command-output').textContent).toContain('YAML directory path')
   })
 })
 

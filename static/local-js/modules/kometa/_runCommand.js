@@ -242,6 +242,59 @@ export function buildCommand () {
 
   let cli = `${quoteIfNeeded(finalPythonBin)} ${quoteIfNeeded(finalKometaPy)}`
 
+  // ---- Validation modes: validate and exit, not a normal run -------
+  const validateMode = (document.querySelector('input[name="validate-mode"]:checked') || {}).value || ''
+  const clearValidationErrors = () => {
+    document.getElementById('validate-file-error')?.classList.add('d-none')
+    document.getElementById('validate-dir-error')?.classList.add('d-none')
+  }
+  if (validateMode) {
+    clearValidationErrors()
+    if (validateMode === '--validate') {
+      cli += ' --validate'
+      const validateLevel = (document.getElementById('opt-validate-level') || {}).value?.trim?.() || ''
+      if (validateLevel) cli += ` --validate-level ${validateLevel}`
+      const validateSchema = document.getElementById('opt-validate-schema')
+      if (validateSchema && validateSchema.checked) cli += ' --validate-schema'
+      const schemaPath = (document.getElementById('opt-schema-path') || {}).value?.trim?.() || ''
+      if (schemaPath) cli += ` --schema-path ${quoteIfNeeded(schemaPath)}`
+      cli += ` --config ${quoteIfNeeded(finalConfigPath)}`
+    } else if (validateMode === '--validate-file') {
+      const validateFile = (document.getElementById('opt-validate-file-val') || {}).value?.trim?.() || ''
+      if (!validateFile) {
+        document.getElementById('validate-file-error')?.classList.remove('d-none')
+        const errorEl = document.getElementById('validate-file-error')
+        if (errorEl) errorEl.textContent = 'Please enter a YAML file path.'
+        runCmdOutput.textContent = '⚠️ Please enter a YAML file path for --validate-file.'
+        notify()
+        return false
+      }
+      cli += ` --validate-file ${quoteIfNeeded(validateFile)}`
+      const schemaPath = (document.getElementById('opt-schema-path') || {}).value?.trim?.() || ''
+      if (schemaPath) cli += ` --schema-path ${quoteIfNeeded(schemaPath)}`
+    } else if (validateMode === '--validate-dir') {
+      const validateDir = (document.getElementById('opt-validate-dir-val') || {}).value?.trim?.() || ''
+      if (!validateDir) {
+        document.getElementById('validate-dir-error')?.classList.remove('d-none')
+        const errorEl = document.getElementById('validate-dir-error')
+        if (errorEl) errorEl.textContent = 'Please enter a YAML directory path.'
+        runCmdOutput.textContent = '⚠️ Please enter a YAML directory path for --validate-dir.'
+        notify()
+        return false
+      }
+      cli += ` --validate-dir ${quoteIfNeeded(validateDir)}`
+      const schemaPath = (document.getElementById('opt-schema-path') || {}).value?.trim?.() || ''
+      if (schemaPath) cli += ` --schema-path ${quoteIfNeeded(schemaPath)}`
+    }
+
+    runCmdOutput.dataset.builtCommand = cli
+    if (!kometaState.activeRunCommandOverride) {
+      runCmdOutput.textContent = cli
+    }
+    notify()
+    return true
+  }
+
   // ---- Primary run option (one radio in run-option group) ---------
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value || ''
   const libSelectEl = document.getElementById('library-multiselect')

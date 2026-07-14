@@ -25,6 +25,9 @@
 //   updateModeFlagsHeaderBadge / updateLogFlagsHeaderBadge -- radio
 //                            selected vs none, various flag values
 //
+//   updateValidationFlagsHeaderBadge -- validation mode selected vs
+//                            missing dependent file/directory paths
+//
 //   updateOtherFlagsHeaderBadge -- 0/some/all core flags, extras
 //                            (timeout/divider/width) counted separately
 
@@ -37,6 +40,7 @@ import {
   updateRunOptionHeaderBadge,
   updateModeFlagsHeaderBadge,
   updateLogFlagsHeaderBadge,
+  updateValidationFlagsHeaderBadge,
   updateOtherFlagsHeaderBadge,
   updateConfigOutputHeaderBadges,
   updateRunCommandHeaderBadge,
@@ -363,6 +367,56 @@ describe('updateLogFlagsHeaderBadge', () => {
 })
 
 // ---------------------------------------------------------------------
+// updateValidationFlagsHeaderBadge
+// ---------------------------------------------------------------------
+
+describe('updateValidationFlagsHeaderBadge', () => {
+  function installValidationFlagsDom (mode = '', filePath = '', dirPath = '') {
+    document.body.innerHTML = `
+      <input type="radio" name="validate-mode" value="" ${mode === '' ? 'checked' : ''}>
+      <input type="radio" name="validate-mode" value="--validate" ${mode === '--validate' ? 'checked' : ''}>
+      <input type="radio" name="validate-mode" value="--validate-file" ${mode === '--validate-file' ? 'checked' : ''}>
+      <input type="radio" name="validate-mode" value="--validate-dir" ${mode === '--validate-dir' ? 'checked' : ''}>
+      <input id="opt-validate-file-val" value="${filePath}">
+      <input id="opt-validate-dir-val" value="${dirPath}">
+    `
+    installBadge('heading-validationflags-rollup-badge')
+  }
+
+  it('shows Default when no validation mode is selected', () => {
+    installValidationFlagsDom('')
+    updateValidationFlagsHeaderBadge()
+    const badge = document.getElementById('heading-validationflags-rollup-badge')
+    expect(badge.textContent).toBe('Default')
+    expect(badge.classList.contains('qs-validation-rollup-badge--unknown')).toBe(true)
+  })
+
+  it('shows Validate Config when config validation is selected', () => {
+    installValidationFlagsDom('--validate')
+    updateValidationFlagsHeaderBadge()
+    const badge = document.getElementById('heading-validationflags-rollup-badge')
+    expect(badge.textContent).toBe('Validate Config')
+    expect(badge.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+
+  it('warns when validate-file is selected without a path', () => {
+    installValidationFlagsDom('--validate-file')
+    updateValidationFlagsHeaderBadge()
+    const badge = document.getElementById('heading-validationflags-rollup-badge')
+    expect(badge.textContent).toBe('File needed')
+    expect(badge.classList.contains('qs-validation-rollup-badge--warn')).toBe(true)
+  })
+
+  it('shows Validate Directory when validate-dir has a path', () => {
+    installValidationFlagsDom('--validate-dir', '', '/data/configs')
+    updateValidationFlagsHeaderBadge()
+    const badge = document.getElementById('heading-validationflags-rollup-badge')
+    expect(badge.textContent).toBe('Validate Directory')
+    expect(badge.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------
 // updateOtherFlagsHeaderBadge
 // ---------------------------------------------------------------------
 
@@ -651,6 +705,7 @@ describe('syncFinalAccordionRollups', () => {
     installBadge('heading-runopt-rollup-badge')
     installBadge('heading-modeflags-rollup-badge')
     installBadge('heading-logflags-rollup-badge')
+    installBadge('heading-validationflags-rollup-badge')
     installBadge('heading-otherflags-rollup-badge')
     installBadge('config-output-lines-badge')
     installBadge('config-output-rollup-badge')
@@ -680,7 +735,7 @@ describe('syncFinalAccordionRollups', () => {
     expect(() => syncFinalAccordionRollups()).not.toThrow()
   })
 
-  it('refreshes every rollup badge on the page (touches all 10 ids)', () => {
+  it('refreshes every rollup badge on the page (touches all 11 ids)', () => {
     // Pre-mark every badge with a sentinel string. After the call,
     // every badge must have been rewritten (i.e. not equal to the
     // sentinel).
@@ -689,6 +744,7 @@ describe('syncFinalAccordionRollups', () => {
       'heading-runopt-rollup-badge',
       'heading-modeflags-rollup-badge',
       'heading-logflags-rollup-badge',
+      'heading-validationflags-rollup-badge',
       'heading-otherflags-rollup-badge',
       'config-output-lines-badge',
       'config-output-rollup-badge',

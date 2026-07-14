@@ -264,6 +264,39 @@ document.getElementById('library-multiselect')?.addEventListener('change', build
 document.querySelectorAll('input[name="mode-flag"]').forEach(el => el.addEventListener('change', buildCommand))
 document.querySelectorAll('input[name="log-flag"]').forEach(el => el.addEventListener('change', buildCommand))
 
+function syncValidationCommandOptions () {
+  const validateMode = (document.querySelector('input[name="validate-mode"]:checked') || {}).value || ''
+  const schemaChecked = Boolean(document.getElementById('opt-validate-schema')?.checked)
+  document.getElementById('validate-config-options')?.classList.toggle('d-none', validateMode !== '--validate')
+  document.getElementById('validate-file-options')?.classList.toggle('d-none', validateMode !== '--validate-file')
+  document.getElementById('validate-dir-options')?.classList.toggle('d-none', validateMode !== '--validate-dir')
+  document.getElementById('validate-schema-path-options')?.classList.toggle(
+    'd-none',
+    !(validateMode === '--validate-file' || validateMode === '--validate-dir' || (validateMode === '--validate' && schemaChecked))
+  )
+  if (validateMode !== '--validate-file') {
+    document.getElementById('validate-file-error')?.classList.add('d-none')
+  }
+  if (validateMode !== '--validate-dir') {
+    document.getElementById('validate-dir-error')?.classList.add('d-none')
+  }
+}
+
+document.querySelectorAll('input[name="validate-mode"]').forEach(el => {
+  el.addEventListener('change', function () {
+    syncValidationCommandOptions()
+    buildCommand()
+  })
+})
+document.getElementById('opt-validate-level')?.addEventListener('change', buildCommand)
+document.getElementById('opt-validate-schema')?.addEventListener('change', function () {
+  syncValidationCommandOptions()
+  buildCommand()
+})
+document.getElementById('opt-validate-file-val')?.addEventListener('input', buildCommand)
+document.getElementById('opt-validate-dir-val')?.addEventListener('input', buildCommand)
+document.getElementById('opt-schema-path')?.addEventListener('input', buildCommand)
+
 const checkboxFlags = [
   'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
   'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
@@ -280,6 +313,7 @@ if (document.getElementById('run-command-output')) {
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value
   checkMaintenanceWarning(mainOption)
   updateLibraryVisibility(mainOption)
+  syncValidationCommandOptions()
   buildCommand()
 }
 
