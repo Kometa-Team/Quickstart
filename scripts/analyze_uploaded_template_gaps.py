@@ -109,6 +109,7 @@ KOMETA_TOP_LEVEL_MARKERS = (
     "gotify",
     "ntfy",
     "apprise",
+    "yamtrack",
     "github",
     "radarr",
     "sonarr",

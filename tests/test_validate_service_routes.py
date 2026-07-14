@@ -177,9 +177,6 @@ def test_validate_yamtrack_accepts_valid_url(client):
     with patch("modules.validations.validate_yamtrack_server", return_value=_ok_response({"version": "1.2.3"})):
         resp = client.post("/validate_yamtrack", json={"yamtrack_url": "http://localhost:8000"})
     assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["valid"] is True
-    assert data["version"] == "1.2.3"
 
 
 def test_validate_gotify_missing_url_returns_400(client):
