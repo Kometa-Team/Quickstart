@@ -34,6 +34,7 @@ def _template_list():
         ("050-omdb.html", "OMDb"),
         ("060-mdblist.html", "MDBList"),
         ("087-apprise.html", "Apprise"),
+        ("088-yamtrack.html", "Yamtrack"),
         ("100-anidb.html", "AniDB"),
         ("110-radarr.html", "Radarr"),
         ("120-sonarr.html", "Sonarr"),
@@ -1111,6 +1112,47 @@ def test_apprise_optional_without_location_stays_unknown(qs_module):
     }
 
     state = qs_module._derive_step_status("087-apprise", "optional", section_rows, config_exists=True)
+    assert state == "unknown"
+
+
+def test_yamtrack_optional_with_validated_credentials_is_ok(qs_module):
+    section_rows = {
+        "yamtrack": {
+            "validated": True,
+            "user_entered": True,
+            "data": {
+                "validation_status": "validated",
+                "yamtrack": {
+                    "url": "http://yamtrack.local:8000",
+                    "username": "kometa",
+                    "password": "secret",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("088-yamtrack", "optional", section_rows, config_exists=True)
+    assert state == "ok"
+
+
+def test_yamtrack_optional_without_credentials_stays_unknown(qs_module):
+    section_rows = {
+        "yamtrack": {
+            "validated": False,
+            "user_entered": False,
+            "data": {
+                "validation_status": "skipped",
+                "validation_reason": "missing_credentials",
+                "yamtrack": {
+                    "url": "",
+                    "username": "",
+                    "password": "",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("088-yamtrack", "optional", section_rows, config_exists=True)
     assert state == "unknown"
 
 

@@ -85435,7 +85435,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Child use_* settings override this default.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -86407,7 +86407,18 @@
             "key": "hub_priority_other",
             "label": "Other Hub Priority",
             "type": "text_input",
-            "tooltip": "Sets the priority for the Other collection recommendation hub row.",
+            "url": "https://kometa.wiki/en/nightly/config/settings/?h=hub_priority#hub-priority",
+            "tooltip": "Sets the priority for the Other collection recommendation hub row. Lower numbers appear first. Requires at least one of this child collection's hub visibility toggles and Plex Pass.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": [
+              "visible_home_other",
+              "visible_library_other",
+              "visible_shared_other"
+            ],
+            "requirement_hint": "Enable this child collection on Visible Home, Visible Library, or Visible Shared before setting Hub Priority.",
             "section": "visibility",
             "placeholder": "1"
           },

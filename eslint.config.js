@@ -106,6 +106,7 @@ const moduleFiles = [
   'static/local-js/080-gotify.js',
   'static/local-js/085-ntfy.js',
   'static/local-js/087-apprise.js',
+  'static/local-js/088-yamtrack.js',
   'static/local-js/090-webhooks.js',
   'static/local-js/100-anidb.js',
   'static/local-js/110-radarr.js',

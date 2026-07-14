@@ -123,6 +123,7 @@ from modules.validations_services import (  # noqa: F401
     validate_tautulli_server,
     validate_tmdb_server,
     validate_trakt_server,
+    validate_yamtrack_server,
     validate_webhook_server,
 )
 

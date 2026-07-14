@@ -164,6 +164,27 @@ def test_prepare_import_payload_maps_apprise_config_to_location():
     assert report.counts["imported"] >= 1
 
 
+def test_prepare_import_payload_maps_yamtrack_credentials():
+    payload, report = importer.prepare_import_payload(
+        {
+            "yamtrack": {
+                "url": "http://yamtrack.local:8000",
+                "username": "kometa",
+                "password": "secret",
+            }
+        },
+        set(),
+        set(),
+    )
+
+    assert payload["yamtrack"]["yamtrack"] == {
+        "url": "http://yamtrack.local:8000",
+        "username": "kometa",
+        "password": "secret",
+    }
+    assert any("yamtrack.url" in line for line in report.lines)
+
+
 def test_coerce_import_bool_accepts_yaml_wide_truthy_and_falsy_values():
     """Regression guard for the duplicate `_coerce_import_bool` bug.
 

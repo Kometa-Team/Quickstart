@@ -1,0 +1,58 @@
+{% extends "000-base.html" %} {% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+<div class="input-group mb-2">
+  <span class="input-group-text" id="yamtrack_url_text" style="width: 190px; justify-content: space-between;">
+    Yamtrack URL
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Yamtrack server URL to allow Quickstart to communicate with Yamtrack.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" id="yamtrack_url" name="yamtrack_url"
+    value="{{ data['yamtrack']['url'] | string if data['yamtrack']['url'] and 'http://192.168.1.12:80' not in data['yamtrack']['url'] | string else '' }}"
+    title="Yamtrack URL" aria-describedby="yamtrack_url_text">
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="yamtrack_username_text" style="width: 190px; justify-content: space-between;">
+    Yamtrack Username
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Yamtrack username to allow Quickstart to authenticate with Yamtrack.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" id="yamtrack_username" name="yamtrack_username"
+    value="{{ data['yamtrack']['username'] | string if data['yamtrack']['username'] and 'Enter Yamtrack Username' not in data['yamtrack']['username'] | string else '' }}"
+    title="Yamtrack Username" aria-describedby="yamtrack_username_text">
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="yamtrack_password_text" style="width: 190px; justify-content: space-between;">
+    Yamtrack Password
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Yamtrack password to allow Quickstart to authenticate with Yamtrack.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="password" class="form-control" id="yamtrack_password" name="yamtrack_password"
+    value="{{ data['yamtrack']['password'] | string if data['yamtrack']['password'] and 'Enter Yamtrack Password' not in data['yamtrack']['password'] | string else '' }}"
+    title="Yamtrack Password" aria-describedby="yamtrack_password_text">
+  <button class="btn btn-secondary" id="togglePasswordVisibility" type="button">
+    <i class="fas fa-eye"></i>
+  </button>
+  <button class="btn btn-success" id="validateButton" type="button">
+    Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
+
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="yamtrack_validated" name="yamtrack_validated" value="{{ data['validated'] }}"
+    title="">
+  <label for="yamtrack_validated">Yamtrack Validated</label>
+</div>
+<input type="hidden" id="yamtrack_validated_at" name="yamtrack_validated_at" value="{{ data['validated_at'] or '' }}">
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
+</form>
+{% endblock %}

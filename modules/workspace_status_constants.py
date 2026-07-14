@@ -40,6 +40,7 @@ QS_VALIDATION_STEP_KEYS = {
     "080-gotify",
     "085-ntfy",
     "087-apprise",
+    "088-yamtrack",
     "090-webhooks",
     "100-anidb",
     "110-radarr",

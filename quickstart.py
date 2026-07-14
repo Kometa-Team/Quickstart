@@ -450,6 +450,7 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "080-gotify",
         "085-ntfy",
         "087-apprise",
+        "088-yamtrack",
         "090-webhooks",
         "100-anidb",
         "110-radarr",
@@ -480,6 +481,7 @@ VALIDATION_DOCS = {
     "gotify": f"{VALIDATION_DOC_BASE}080-gotify",
     "ntfy": f"{VALIDATION_DOC_BASE}085-ntfy",
     "apprise": f"{VALIDATION_DOC_BASE}087-apprise",
+    "yamtrack": f"{VALIDATION_DOC_BASE}088-yamtrack",
     "mal": f"{VALIDATION_DOC_BASE}140-mal",
     "anidb": f"{VALIDATION_DOC_BASE}100-anidb",
     "webhooks": f"{VALIDATION_DOC_BASE}090-webhooks",
@@ -2968,6 +2970,17 @@ def validate_all_services():
             validations.validate_apprise_server,
             lambda s: {"apprise_location": s.get("apprise", {}).get("location")},
             ["apprise_location"],
+        ),
+        (
+            "088-yamtrack",
+            "yamtrack",
+            validations.validate_yamtrack_server,
+            lambda s: {
+                "yamtrack_url": s.get("yamtrack", {}).get("url"),
+                "yamtrack_username": s.get("yamtrack", {}).get("username"),
+                "yamtrack_password": s.get("yamtrack", {}).get("password"),
+            },
+            ["yamtrack_url", "yamtrack_username", "yamtrack_password"],
         ),
         (
             "110-radarr",

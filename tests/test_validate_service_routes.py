@@ -166,6 +166,19 @@ def test_validate_ntfy_accepts_valid_url(client):
     assert resp.status_code == 200
 
 
+def test_validate_yamtrack_rejects_bad_url(client):
+    resp = client.post("/validate_yamtrack", json={"yamtrack_url": "not-a-url"})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data["valid"] is False
+
+
+def test_validate_yamtrack_accepts_valid_url(client):
+    with patch("modules.validations.validate_yamtrack_server", return_value=_ok_response({"version": "1.2.3"})):
+        resp = client.post("/validate_yamtrack", json={"yamtrack_url": "http://localhost:8000"})
+    assert resp.status_code == 200
+
+
 def test_validate_gotify_missing_url_returns_400(client):
     resp = client.post("/validate_gotify", json={})
     assert resp.status_code == 400
@@ -173,6 +186,11 @@ def test_validate_gotify_missing_url_returns_400(client):
 
 def test_validate_ntfy_missing_url_returns_400(client):
     resp = client.post("/validate_ntfy", json={})
+    assert resp.status_code == 400
+
+
+def test_validate_yamtrack_missing_url_returns_400(client):
+    resp = client.post("/validate_yamtrack", json={})
     assert resp.status_code == 400
 
 

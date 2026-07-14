@@ -97,6 +97,7 @@ def _has_meaningful_optional_input(template_key, payload):
         "070-notifiarr": ("notifiarr", ("apikey",)),
         "080-gotify": ("gotify", ("url", "token")),
         "085-ntfy": ("ntfy", ("url", "token", "topic")),
+        "088-yamtrack": ("yamtrack", ("url", "username", "password")),
         "090-webhooks": ("webhooks", ("notifiarr", "gotify", "ntfy", "slack", "discord", "webhook", "url")),
         "110-radarr": ("radarr", ("url", "token")),
         "120-sonarr": ("sonarr", ("url", "token")),

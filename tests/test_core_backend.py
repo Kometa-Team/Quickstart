@@ -313,6 +313,137 @@ def test_validate_apprise_rejects_empty_remote_yaml(client, monkeypatch, qs_modu
     assert "must not be empty" in payload["error"]
 
 
+def test_validate_yamtrack_returns_version_from_about_page(client, monkeypatch, qs_module):
+    class _Resp:
+        def __init__(self, status_code=200, text=""):
+            self.status_code = status_code
+            self.reason = "OK"
+            self.text = text
+
+    class _Session:
+        def __init__(self):
+            self.cookies = {}
+
+        def get(self, url, timeout=10):
+            if url.endswith("/accounts/login/"):
+                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="login"><input name="password">')
+            if url.endswith("/settings/about/"):
+                return _Resp(
+                    200,
+                    """
+                    <p class="text-gray-400 text-sm">
+                      Version: <span class="font-mono">v0.25.3-15-g6a240cc2</span>
+                    </p>
+                    """,
+                )
+            return _Resp(404, "")
+
+        def post(self, *_args, **kwargs):
+            data = kwargs.get("data") or {}
+            if data.get("login") != "kometa" or data.get("password") != "secret":
+                return _Resp(200, '<form><input name="login"><input name="password"></form>')
+            return _Resp(200, "<html><body>Dashboard</body></html>")
+
+    monkeypatch.setattr(qs_module.validations.requests, "Session", _Session)
+
+    resp = client.post(
+        "/validate_yamtrack",
+        json={
+            "yamtrack_url": "http://yamtrack.local:8000",
+            "yamtrack_username": "kometa",
+            "yamtrack_password": "secret",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["version"] == "v0.25.3-15-g6a240cc2"
+
+
+def test_validate_yamtrack_rejects_public_about_with_failed_login(client, monkeypatch, qs_module):
+    class _Resp:
+        def __init__(self, status_code=200, text=""):
+            self.status_code = status_code
+            self.reason = "OK"
+            self.text = text
+
+    class _Session:
+        def __init__(self):
+            self.cookies = {}
+
+        def get(self, url, timeout=10):
+            if url.endswith("/accounts/login/"):
+                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="login"><input name="password">')
+            if url.endswith("/settings/about/"):
+                return _Resp(
+                    200,
+                    """
+                    <p class="text-gray-400 text-sm">
+                      Version: <span class="font-mono">v0.25.3-15-g6a240cc2</span>
+                    </p>
+                    """,
+                )
+            return _Resp(404, "")
+
+        def post(self, *_args, **_kwargs):
+            return _Resp(200, '<form><input name="login"><input name="password"></form><p>Please enter a correct username and password.</p>')
+
+    monkeypatch.setattr(qs_module.validations.requests, "Session", _Session)
+
+    resp = client.post(
+        "/validate_yamtrack",
+        json={
+            "yamtrack_url": "http://yamtrack.local:8000",
+            "yamtrack_username": "fake-user",
+            "yamtrack_password": "wrong",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "Unable to validate Yamtrack credentials" in payload["error"]
+
+
+def test_validate_yamtrack_rejects_login_without_about_version(client, monkeypatch, qs_module):
+    class _Resp:
+        def __init__(self, status_code=200, text=""):
+            self.status_code = status_code
+            self.reason = "OK"
+            self.text = text
+
+    class _Session:
+        def __init__(self):
+            self.cookies = {}
+
+        def get(self, url, timeout=10):
+            if url.endswith("/accounts/login/"):
+                return _Resp(200, '<input name="csrfmiddlewaretoken" value="token"><input name="login"><input name="password">')
+            if url.endswith("/settings/about/"):
+                return _Resp(200, "<html><body>About Yamtrack</body></html>")
+            return _Resp(404, "")
+
+        def post(self, *_args, **_kwargs):
+            return _Resp(200, "<html><body>Dashboard</body></html>")
+
+    monkeypatch.setattr(qs_module.validations.requests, "Session", _Session)
+
+    resp = client.post(
+        "/validate_yamtrack",
+        json={
+            "yamtrack_url": "http://yamtrack.local:8000",
+            "yamtrack_username": "kometa",
+            "yamtrack_password": "secret",
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["valid"] is False
+    assert "settings/about did not return a version" in payload["error"]
+
+
 def test_validate_metadata_file_accepts_existing_local_file(client, tmp_path):
     metadata_file = tmp_path / "metadata.yml"
     metadata_file.write_text("metadata:\n  test:\n    title: Example\n", encoding="utf-8")
