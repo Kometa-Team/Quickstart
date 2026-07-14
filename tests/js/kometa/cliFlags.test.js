@@ -8,7 +8,7 @@
 // COVERAGE:
 //
 //   KOMETA_CLI_FLAGS (4):
-//     - contains all 24 documented flags
+//     - contains all documented flags
 //     - each entry has label + description
 //     - labels are non-empty strings
 //     - object is frozen (immutability guard)
@@ -44,12 +44,14 @@ import {
 // ---------------------------------------------------------------------
 
 describe('KOMETA_CLI_FLAGS', () => {
-  it('contains all 24 documented flags', () => {
+  it('contains all documented flags', () => {
     const expected = [
       '--run', '--run-libraries', '--times',
       '--operations-only', '--metadata-only', '--collections-only',
       '--playlists-only', '--overlays-only',
       '--debug', '--trace', '--log-requests',
+      '--validate', '--validate-file', '--validate-dir',
+      '--validate-level', '--validate-schema', '--schema-path',
       '--delete-collections', '--delete-labels', '--read-only-config',
       '--low-priority', '--no-report', '--no-missing', '--no-countdown',
       '--ignore-ghost', '--ignore-schedules', '--no-verify-ssl',
@@ -89,6 +91,7 @@ describe('updateFlagLabels', () => {
       <label for="opt-run-libraries">placeholder</label>
       <label for="opt-debug">placeholder</label>
       <label for="opt-operations-only">placeholder</label>
+      <label for="opt-validate">placeholder</label>
       <label for="opt-no-verify-ssl">placeholder</label>
     `
   })
@@ -148,13 +151,15 @@ describe('updateFlagLabels', () => {
     expect(() => updateFlagLabels(true)).not.toThrow()
   })
 
-  it('renders labels across all four flag groups', () => {
+  it('renders labels across all five flag groups', () => {
     // Verify that opt-run (RUN_OPTION), opt-operations-only (MODE),
-    // opt-debug (LOG), and opt-no-verify-ssl (OTHER) all get rendered.
+    // opt-debug (LOG), opt-validate (VALIDATION), and
+    // opt-no-verify-ssl (OTHER) all get rendered.
     updateFlagLabels(false)
     expect(document.querySelector('label[for="opt-run"]').textContent).toContain('Run Immediately')
     expect(document.querySelector('label[for="opt-operations-only"]').textContent).toContain('Operations Only')
     expect(document.querySelector('label[for="opt-debug"]').textContent).toContain('Debug Logging')
+    expect(document.querySelector('label[for="opt-validate"]').textContent).toContain('Validate Generated Config')
     expect(document.querySelector('label[for="opt-no-verify-ssl"]').textContent).toContain('No Verify SSL')
   })
 

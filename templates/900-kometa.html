@@ -691,6 +691,79 @@
         </div>
       </div>
 
+      <!-- Validation Options -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-validationflags">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#collapse-validationflags" aria-expanded="false" aria-controls="collapse-validationflags">
+            Validation / Schema Checks
+            <span id="heading-validationflags-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Default
+            </span>
+          </button>
+        </h2>
+        <div id="collapse-validationflags" class="accordion-collapse collapse" aria-labelledby="heading-validationflags"
+          data-bs-parent="#run-command-accordion">
+          <div class="accordion-body">
+            <div class="alert alert-secondary small mb-3">
+              Validation modes make Kometa validate and exit instead of running collections, overlays, operations, or schedules.
+              Normal run options are ignored while a validation mode is selected.
+            </div>
+            <fieldset>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="validate-mode" id="opt-validate-none" value="" checked>
+                <label class="form-check-label" for="opt-validate-none">Default</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="validate-mode" id="opt-validate" value="--validate">
+                <label class="form-check-label" for="opt-validate">--validate</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="validate-mode" id="opt-validate-file" value="--validate-file">
+                <label class="form-check-label" for="opt-validate-file">--validate-file</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="validate-mode" id="opt-validate-dir" value="--validate-dir">
+                <label class="form-check-label" for="opt-validate-dir">--validate-dir</label>
+              </div>
+
+              <div id="validate-config-options" class="mt-3">
+                <label class="form-label" for="opt-validate-level">--validate-level</label>
+                <select class="form-select" id="opt-validate-level">
+                  <option value="syntax">syntax</option>
+                  <option value="structure" selected>structure</option>
+                  <option value="full">full</option>
+                </select>
+                <div class="form-text">Controls how deep validation goes when validating the generated config. Default is <code>structure</code>.</div>
+
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" id="opt-validate-schema" value="--validate-schema">
+                  <label class="form-check-label" for="opt-validate-schema">--validate-schema</label>
+                </div>
+              </div>
+
+              <div id="validate-file-options" class="mt-3 d-none">
+                <label class="form-label" for="opt-validate-file-val">YAML File Path</label>
+                <input type="text" class="form-control" id="opt-validate-file-val" placeholder="/path/to/collections.yml">
+                <div id="validate-file-error" class="text-danger small d-none mt-1"></div>
+              </div>
+
+              <div id="validate-dir-options" class="mt-3 d-none">
+                <label class="form-label" for="opt-validate-dir-val">YAML Directory Path</label>
+                <input type="text" class="form-control" id="opt-validate-dir-val" placeholder="/path/to/configs">
+                <div id="validate-dir-error" class="text-danger small d-none mt-1"></div>
+              </div>
+
+              <div id="validate-schema-path-options" class="mt-3 d-none">
+                <label class="form-label" for="opt-schema-path">--schema-path</label>
+                <input type="text" class="form-control" id="opt-schema-path" placeholder="/path/to/json-schema">
+                <div class="form-text">Optional path to the json-schema directory.</div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
       <!-- Other Flags -->
       <div class="accordion-item">
         <h2 class="accordion-header" id="heading-otherflags">

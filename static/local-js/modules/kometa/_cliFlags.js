@@ -88,6 +88,30 @@ export const KOMETA_CLI_FLAGS = Object.freeze({
     label: 'Log Requests Logging',
     description: 'Most verbose logging. If you enable this, every external network request made by Kometa will be logged, along with the data that is returned. This will add a lot of data to the logs, and will probably contain things like tokens, since the auto-redaction of such things is not generalized enough to catch any token that may be in any URL.<br><strong>WARNING</strong>:<br><code>This can potentially have personal information in it.</code>'
   },
+  '--validate': {
+    label: 'Validate Generated Config',
+    description: 'Parse and validate the generated config.yml and linked YAML files, print a structured report, then exit without performing a normal run. Environment variable: <code>KOMETA_VALIDATE</code>.'
+  },
+  '--validate-file': {
+    label: 'Validate File',
+    description: 'Validate one YAML file against its auto-detected JSON schema and print any errors or schema gaps. Environment variable: <code>KOMETA_VALIDATE_FILE</code>.'
+  },
+  '--validate-dir': {
+    label: 'Validate Directory',
+    description: 'Recursively validate YAML files in a directory and print a combined schema-gap report. Environment variable: <code>KOMETA_VALIDATE_DIR</code>.'
+  },
+  '--validate-level': {
+    label: 'Validate Level',
+    description: 'Controls how deep config validation goes. Accepted values: <code>syntax</code>, <code>structure</code>, or <code>full</code>. Environment variable: <code>KOMETA_VALIDATE_LEVEL</code>.'
+  },
+  '--validate-schema': {
+    label: 'Validate Schema',
+    description: 'When set with config validation, also check YAML files against JSON schemas. Environment variable: <code>KOMETA_VALIDATE_SCHEMA</code>.'
+  },
+  '--schema-path': {
+    label: 'Schema Path',
+    description: 'Override the path to the json-schema directory used by schema validation. Environment variable: <code>KOMETA_SCHEMA_PATH</code>.'
+  },
   '--delete-collections': {
     label: 'Delete Collections',
     description: 'Delete all collections in each library as the first step in the run.<br><strong>WARNING</strong>:<br><code>You will lose all collections in the library - this will delete all collections, including ones not created or maintained by Kometa.</code>'
@@ -157,6 +181,10 @@ const MODE_FLAGS = [
   '--overlays-only', '--playlists-only'
 ]
 const LOG_FLAGS = ['--debug', '--trace', '--log-requests']
+const VALIDATION_FLAGS = [
+  '--validate', '--validate-file', '--validate-dir',
+  '--validate-level', '--validate-schema', '--schema-path'
+]
 const OTHER_FLAGS = [
   '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
   '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
@@ -203,6 +231,7 @@ export function updateFlagLabels (showCli, opts = {}) {
   updateLabels(RUN_OPTION_FLAGS, 'opt-')
   updateLabels(MODE_FLAGS, 'opt-')
   updateLabels(LOG_FLAGS, 'opt-')
+  updateLabels(VALIDATION_FLAGS, 'opt-')
   updateLabels(OTHER_FLAGS, 'opt-')
 
   if (onInitTooltips) onInitTooltips(document)

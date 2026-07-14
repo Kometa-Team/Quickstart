@@ -499,15 +499,27 @@ def _load_library_with_ratings(page, builder_level=None, library_type=None):
             try:
                 page.select_option("#libraryPicker", library_id)
                 page.wait_for_function(
-                    """(libraryId) => {
-                      return !!document.querySelector(
+                    """([libraryId, builderLevel]) => {
+                      const card = document.querySelector(
                         `#library-form-container .library-settings-card[data-library-id="${libraryId}"]`
                       );
+                      if (!card) return false;
+                      const groups = Array.from(card.querySelectorAll('.template-toggle-group[data-overlay-id="overlay_ratings"]'));
+                      if (!groups.length) return false;
+                      const wantedLevel = (builderLevel || '').toString().toLowerCase();
+                      return groups.some(group => {
+                        const templateName = group?.dataset?.overlayTemplate || '';
+                        if (!templateName) return false;
+                        const builder = group.querySelector('[name$="[builder_level]"]');
+                        if (!wantedLevel) return !builder;
+                        if (!builder) return false;
+                        const raw = (builder.value || builder.dataset.default || '').toString().toLowerCase();
+                        return raw === wantedLevel;
+                      });
                     }""",
-                    arg=library_id,
+                    arg=[library_id, builder_level],
                     timeout=per_attempt_timeout_ms,
                 )
-                page.wait_for_timeout(200)
                 ctx = _ratings_context(page, library_id, builder_level)
                 if ctx:
                     ctx["libraryId"] = library_id
@@ -521,6 +533,20 @@ def _load_library_with_ratings(page, builder_level=None, library_type=None):
             # Context can still be missing right after the card appears; brief settle before retry.
             if attempt < LIBRARY_LOAD_RETRIES:
                 page.wait_for_timeout(250)
+    active_library = page.evaluate(
+        """(wantedType) => {
+          const card = document.querySelector('#library-form-container .library-settings-card');
+          if (!card) return null;
+          if (wantedType && (card.dataset.libraryType || '') !== wantedType) return null;
+          return card.dataset.libraryId || null;
+        }""",
+        library_type,
+    )
+    if active_library:
+        ctx = _ratings_context(page, active_library, builder_level)
+        if ctx:
+            ctx["libraryId"] = active_library
+            return ctx
     return None
 
 

@@ -176,6 +176,30 @@ export function updateLogFlagsHeaderBadge () {
 }
 
 /**
+ * "Validation / Schema Checks" selects a validate-and-exit command
+ * instead of a normal Kometa run. Badge state mirrors the selected
+ * validation mode and dependent path fields.
+ */
+export function updateValidationFlagsHeaderBadge () {
+  const validateMode = (document.querySelector('input[name="validate-mode"]:checked') || {}).value || ''
+  if (!validateMode) {
+    setHeaderRollupBadge('heading-validationflags-rollup-badge', 'unknown', 'Default')
+    return
+  }
+  if (validateMode === '--validate-file') {
+    const filePath = (document.getElementById('opt-validate-file-val') || {}).value?.trim?.() || ''
+    setHeaderRollupBadge('heading-validationflags-rollup-badge', filePath ? 'ok' : 'warn', filePath ? 'Validate File' : 'File needed')
+    return
+  }
+  if (validateMode === '--validate-dir') {
+    const dirPath = (document.getElementById('opt-validate-dir-val') || {}).value?.trim?.() || ''
+    setHeaderRollupBadge('heading-validationflags-rollup-badge', dirPath ? 'ok' : 'warn', dirPath ? 'Validate Directory' : 'Directory needed')
+    return
+  }
+  setHeaderRollupBadge('heading-validationflags-rollup-badge', 'ok', 'Validate Config')
+}
+
+/**
  * "Other flags" == the checkbox grid of boolean CLI flags plus the
  * three "with-value" extras (timeout, divider, width). Badge shows
  * a count of enabled flags.
@@ -320,6 +344,7 @@ export function syncFinalAccordionRollups () {
   updateRunOptionHeaderBadge()
   updateModeFlagsHeaderBadge()
   updateLogFlagsHeaderBadge()
+  updateValidationFlagsHeaderBadge()
   updateOtherFlagsHeaderBadge()
   updateConfigOutputHeaderBadges()
   updateRunCommandHeaderBadge()
