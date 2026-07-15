@@ -1323,6 +1323,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 data-detail-section="true"
                                 data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
                                 style="display: {{ 'block' if render_group.default_open else 'none' }};">
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
+                                        data-collection-variable-section-reset="true">
+                                        Reset {{ render_group.label }}
+                                    </button>
+                                </div>
                         {% endif %}
                         {% set season = namespace(open=false) %}
                         {% for item in render_group.fields %}

@@ -6504,7 +6504,23 @@ function wireOffsetReset (scope) {
   const root = scope || document
   root.querySelectorAll('.reset-offset-btn').forEach(btn => {
     if (btn.dataset.listenerAdded) return
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      if (btn.dataset.collectionVariableSectionReset === 'true') {
+        const section = btn.closest('[data-collection-variable-section="true"]')
+        const sectionBody = section?.querySelector('.collection-variable-section-body') || section
+        if (sectionBody) {
+          runCollectionGroupReset(btn, sectionBody).then(() => {
+            updateCollectionVariableSectionSummary(section)
+          }).catch(error => {
+            console.error('[collection section reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Section reset to defaults failed.')
+            }
+          })
+          return
+        }
+      }
+
       const group = btn.closest('.template-toggle-group')
       if (group?.dataset?.collectionId) {
         runCollectionGroupReset(btn, group).catch(error => {
@@ -6516,6 +6532,8 @@ function wireOffsetReset (scope) {
         return
       }
       setLibrariesButtonPersistentBusy(btn, true, 'Resetting...')
+      await new Promise(resolve => requestAnimationFrame(() => resolve()))
+      await new Promise(resolve => window.setTimeout(resolve, 0))
       const finishOverlayReset = () => {
         setLibrariesButtonPersistentBusy(btn, false)
       }
