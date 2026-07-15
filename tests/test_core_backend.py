@@ -3073,6 +3073,13 @@ def test_collapse_collection_data_template_vars_handles_actor_style_data_blocks(
     }
 
 
+def test_collection_section_blank_normalizes_to_none():
+    from modules import output
+
+    assert output._normalize_collection_template_var_value("collection_section", "") is None
+    assert output._normalize_collection_template_var_value("collection_section", None) is None
+
+
 def test_collapse_collection_data_template_vars_removes_flat_data_keys_from_all_collection_entries():
     from modules import output
 

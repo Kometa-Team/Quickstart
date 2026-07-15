@@ -213,6 +213,8 @@ def _parse_json_object_value(value):
 
 
 def _normalize_collection_template_var_value(key, value):
+    if key == "collection_section" and value in (None, ""):
+        return None
     if key in {"ignore_ids", "ignore_imdb_ids"}:
         list_values = _parse_string_list(value)
         return ",".join(list_values) if list_values else None

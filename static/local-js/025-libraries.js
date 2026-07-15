@@ -36,6 +36,64 @@ const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
 let activeLibraryId = null
 let loadRequestId = 0
 let allowNextStepNavigation = false
+
+function setLibrariesButtonBusy (button, busy, label = 'Working...') {
+  if (!button) return
+  if (!button.dataset.librariesBusyOriginalHtml) {
+    button.dataset.librariesBusyOriginalHtml = button.innerHTML
+  }
+  if (!button.dataset.librariesBusyOriginalWidth) {
+    const width = button.getBoundingClientRect ? button.getBoundingClientRect().width : 0
+    if (width > 0) {
+      button.dataset.librariesBusyOriginalWidth = `${Math.ceil(width)}px`
+      button.style.minWidth = button.dataset.librariesBusyOriginalWidth
+    }
+  }
+  button.disabled = !!busy
+  button.setAttribute('aria-busy', busy ? 'true' : 'false')
+  if (busy) {
+    button.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>${label}`
+  } else {
+    button.innerHTML = button.dataset.librariesBusyOriginalHtml || button.innerHTML
+    button.removeAttribute('aria-busy')
+  }
+}
+
+function shouldShowLibrariesButtonSpinner (button) {
+  if (!button || button.disabled || button.getAttribute('aria-busy') === 'true') return false
+  if (!button.classList.contains('btn')) return false
+  if (button.classList.contains('accordion-button') || button.classList.contains('btn-close')) return false
+  if (button.matches('[data-bs-dismiss], [data-bs-toggle="collapse"], [data-bs-toggle="dropdown"], [data-bs-toggle="modal"]')) return false
+  if (button.matches('[data-toggle-secret-visibility], [data-collection-section-move], [data-section-id]')) return false
+  if (button.matches('.style-preview-card, .font-picker-card, .overlay-details-toggle')) return false
+  if (button.closest('.btn-group') && button.querySelector('.bi-chevron-up, .bi-chevron-down')) return false
+  return true
+}
+
+function showLibrariesButtonClickSpinner (button, label = 'Working...') {
+  if (!shouldShowLibrariesButtonSpinner(button)) return
+  const token = String(Date.now())
+  button.dataset.librariesClickBusyToken = token
+  setLibrariesButtonBusy(button, true, label)
+  window.setTimeout(() => {
+    if (button.dataset.librariesClickBusyToken !== token) return
+    delete button.dataset.librariesClickBusyToken
+    setLibrariesButtonBusy(button, false)
+  }, 450)
+}
+
+function setLibrariesButtonPersistentBusy (button, busy, label = 'Working...') {
+  if (busy && button?.dataset?.librariesClickBusyToken) {
+    delete button.dataset.librariesClickBusyToken
+  }
+  setLibrariesButtonBusy(button, busy, label)
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('button')
+  if (!button || !document.body.contains(button)) return
+  showLibrariesButtonClickSpinner(button)
+}, true)
 const dependencyHintConfigs = {
   tautulli: {
     stepKey: '030-tautulli',
@@ -5726,11 +5784,12 @@ function getCollectionSectionEntries (libraryId) {
       inputId: input.id,
       defaultValue: String(input.dataset.default || '').trim(),
       currentValue: String(input.value || '').trim(),
+      effectiveValue: String(input.value || input.dataset.default || '').trim(),
       domIndex: index
     })
   })
   entries.sort((left, right) => {
-    const byValue = compareCollectionSectionValues(left.currentValue, right.currentValue)
+    const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)
     if (byValue !== 0) return byValue
     return left.domIndex - right.domIndex
   })
@@ -5761,8 +5820,8 @@ function buildCollectionSectionListItem (entry, position) {
       </div>
     </div>
     <div class="text-end">
-      <div class="small text-muted">Current</div>
-      <span class="badge bg-secondary" data-collection-section-current>${entry.currentValue || 'blank'}</span>
+      <div class="small text-muted">${entry.currentValue ? 'Current' : 'Default'}</div>
+      <span class="badge bg-secondary" data-collection-section-current>${entry.currentValue || entry.defaultValue || 'blank'}</span>
       <div class="small text-muted mt-1">New: <span data-collection-section-next>${String(position * 10).padStart(3, '0')}</span></div>
     </div>
   `
@@ -5775,6 +5834,17 @@ function refreshCollectionSectionPreviewNumbers (list) {
     const next = item.querySelector('[data-collection-section-next]')
     if (next) next.textContent = String((index + 1) * 10).padStart(3, '0')
   })
+}
+
+function setCollectionSectionActionBusy (button, busy) {
+  setLibrariesButtonPersistentBusy(button, busy)
+}
+
+function markCollectionSectionModalCustomOrder (modalEl) {
+  if (!modalEl) return
+  modalEl.dataset.collectionSectionResetMode = 'false'
+  const status = modalEl.querySelector('[data-collection-section-modal-status]')
+  if (status) status.textContent = 'Custom order pending. Save Order will write collection_section overrides.'
 }
 
 function ensureCollectionSectionModalRoot (modalEl) {
@@ -5848,6 +5918,7 @@ function renderCollectionSectionModalList (modalEl) {
     return entries
   }
   entries.forEach((entry, index) => list.appendChild(buildCollectionSectionListItem(entry, index + 1)))
+  modalEl.dataset.collectionSectionResetMode = 'false'
   if (status) status.textContent = `${entries.length} enabled collection default${entries.length === 1 ? '' : 's'} ready to reorder.`
   if (saveButton) saveButton.disabled = false
   refreshCollectionSectionPreviewNumbers(list)
@@ -5861,6 +5932,7 @@ function renderCollectionSectionModalList (modalEl) {
     delay: 180,
     touchStartThreshold: 6,
     onSort: function () {
+      markCollectionSectionModalCustomOrder(modalEl)
       refreshCollectionSectionPreviewNumbers(list)
     }
   })
@@ -5870,43 +5942,62 @@ function renderCollectionSectionModalList (modalEl) {
 function saveCollectionSectionModalOrder (modalEl) {
   if (!modalEl) return
   modalEl = prepareCollectionSectionModal(modalEl)
+  const saveButton = modalEl.querySelector('[data-collection-section-save]')
+  setCollectionSectionActionBusy(saveButton, true)
   const list = modalEl.querySelector('[data-collection-section-sortable]')
   const items = Array.from(list ? list.children : [])
-  if (!items.length) return
-  items.forEach((item, index) => {
-    const inputId = item.dataset.inputId
-    const input = inputId ? document.getElementById(inputId) : null
-    if (!input) return
-    const nextValue = String((index + 1) * 10).padStart(3, '0')
-    input.value = nextValue
-    input.dispatchEvent(new Event('input', { bubbles: true }))
-    input.dispatchEvent(new Event('change', { bubbles: true }))
-    const current = item.querySelector('[data-collection-section-current]')
-    if (current) current.textContent = nextValue
-  })
-  if (typeof showToast === 'function') {
-    showToast('success', 'Collection section order updated.')
-  }
-  refreshCollectionSectionPreviewNumbers(list)
-  const modal = typeof bootstrap !== 'undefined' && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalEl) : null
-  if (modal) modal.hide()
+  const resetMode = modalEl.dataset.collectionSectionResetMode === 'true'
+  window.setTimeout(() => {
+    if (!items.length) {
+      setCollectionSectionActionBusy(saveButton, false)
+      return
+    }
+    if (!resetMode) {
+      items.forEach((item, index) => {
+        const inputId = item.dataset.inputId
+        const input = inputId ? document.getElementById(inputId) : null
+        if (!input) return
+        const nextValue = String((index + 1) * 10).padStart(3, '0')
+        input.value = nextValue
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+        const current = item.querySelector('[data-collection-section-current]')
+        if (current) current.textContent = nextValue
+      })
+    }
+    if (typeof showToast === 'function') {
+      showToast(resetMode ? 'info' : 'success', resetMode ? 'Collection section overrides cleared. JSON defaults will be used.' : 'Collection section order updated.')
+    }
+    refreshCollectionSectionPreviewNumbers(list)
+    const modal = typeof bootstrap !== 'undefined' && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalEl) : null
+    if (modal) modal.hide()
+    setCollectionSectionActionBusy(saveButton, false)
+  }, 120)
 }
 
 function resetCollectionSectionModalOrder (modalEl) {
   if (!modalEl) return
   modalEl = prepareCollectionSectionModal(modalEl)
+  const resetButton = modalEl.querySelector('[data-collection-section-reset]')
+  setCollectionSectionActionBusy(resetButton, true)
   const entries = getCollectionSectionEntries(modalEl.dataset.libraryId)
-  entries.forEach(entry => {
-    const input = entry.inputId ? document.getElementById(entry.inputId) : null
-    if (!input) return
-    input.value = entry.defaultValue
-    input.dispatchEvent(new Event('input', { bubbles: true }))
-    input.dispatchEvent(new Event('change', { bubbles: true }))
-  })
-  renderCollectionSectionModalList(modalEl)
-  if (typeof showToast === 'function') {
-    showToast('info', 'Collection section order reset to defaults.')
-  }
+  window.setTimeout(() => {
+    entries.forEach(entry => {
+      const input = entry.inputId ? document.getElementById(entry.inputId) : null
+      if (!input) return
+      input.value = ''
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    renderCollectionSectionModalList(modalEl)
+    modalEl.dataset.collectionSectionResetMode = 'true'
+    const status = modalEl.querySelector('[data-collection-section-modal-status]')
+    if (status) status.textContent = 'Defaults pending. Save Order will clear collection_section overrides and use JSON defaults.'
+    if (typeof showToast === 'function') {
+      showToast('info', 'Collection section overrides cleared. Save Order to use JSON defaults.')
+    }
+    setCollectionSectionActionBusy(resetButton, false)
+  }, 120)
 }
 
 document.addEventListener('click', (event) => {
@@ -5946,6 +6037,7 @@ document.addEventListener('click', (event) => {
     } else if (direction === 'down' && item.nextElementSibling) {
       list.insertBefore(item.nextElementSibling, item)
     }
+    markCollectionSectionModalCustomOrder(moveButton.closest('[data-collection-section-modal]'))
     refreshCollectionSectionPreviewNumbers(list)
   }
 })
@@ -6258,9 +6350,7 @@ async function runCollectionGroupReset (btn, group) {
   const idleLabel = btn.dataset.resetIdleLabel || btn.textContent.trim() || 'Reset to Defaults'
   btn.dataset.resetIdleLabel = idleLabel
   btn.dataset.resetBusy = 'true'
-  btn.disabled = true
-  btn.setAttribute('aria-busy', 'true')
-  btn.textContent = 'Resetting...'
+  setLibrariesButtonPersistentBusy(btn, true, 'Resetting...')
 
   const pauseForPaint = async () => {
     await new Promise(resolve => requestAnimationFrame(() => resolve()))
@@ -6405,10 +6495,8 @@ async function runCollectionGroupReset (btn, group) {
     finalizeToast(changes)
   } finally {
     delete group.dataset.resetting
-    btn.disabled = false
-    btn.removeAttribute('aria-busy')
     btn.dataset.resetBusy = 'false'
-    btn.textContent = idleLabel
+    setLibrariesButtonPersistentBusy(btn, false)
   }
 }
 
@@ -6427,13 +6515,18 @@ function wireOffsetReset (scope) {
         })
         return
       }
-      if (group) {
-        group.dataset.resetting = 'true'
+      setLibrariesButtonPersistentBusy(btn, true, 'Resetting...')
+      const finishOverlayReset = () => {
+        setLibrariesButtonPersistentBusy(btn, false)
       }
-      const changes = []
-      const touched = new Set()
-      const isRatingsOverlay = group?.dataset?.overlayId === 'overlay_ratings'
-      const escapeHtml = (value) => String(value ?? '')
+      try {
+        if (group) {
+          group.dataset.resetting = 'true'
+        }
+        const changes = []
+        const touched = new Set()
+        const isRatingsOverlay = group?.dataset?.overlayId === 'overlay_ratings'
+        const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -6619,24 +6712,34 @@ function wireOffsetReset (scope) {
         }
       }
 
-      if (isRatingsOverlay && group) {
-        group.dataset.ratingFontForce = 'true'
-        const ratingImageInputs = group.querySelectorAll('[name$="[rating1_image]"], [name$="[rating2_image]"], [name$="[rating3_image]"]')
-        ratingImageInputs.forEach(input => {
-          input.dispatchEvent(new Event('change', { bubbles: true }))
-        })
-        window.setTimeout(() => {
-          ratingFontInputs.forEach(input => {
-            const from = ratingFontBefore.get(input) || ''
-            const to = getDisplayValue(input)
-            if (from !== to) {
-              changes.push({ label: getInputLabel(input), from, to })
-            }
+        if (isRatingsOverlay && group) {
+          group.dataset.ratingFontForce = 'true'
+          const ratingImageInputs = group.querySelectorAll('[name$="[rating1_image]"], [name$="[rating2_image]"], [name$="[rating3_image]"]')
+          ratingImageInputs.forEach(input => {
+            input.dispatchEvent(new Event('change', { bubbles: true }))
           })
+          window.setTimeout(() => {
+            ratingFontInputs.forEach(input => {
+              const from = ratingFontBefore.get(input) || ''
+              const to = getDisplayValue(input)
+              if (from !== to) {
+                changes.push({ label: getInputLabel(input), from, to })
+              }
+            })
+            finalizeToast()
+            finishOverlayReset()
+          }, 0)
+        } else {
           finalizeToast()
-        }, 0)
-      } else {
-        finalizeToast()
+          finishOverlayReset()
+        }
+      } catch (error) {
+        console.error('[overlay reset failed]', error)
+        if (group) delete group.dataset.resetting
+        if (typeof showToast === 'function') {
+          showToast('error', 'Reset to defaults failed.')
+        }
+        finishOverlayReset()
       }
     })
     btn.dataset.listenerAdded = 'true'
