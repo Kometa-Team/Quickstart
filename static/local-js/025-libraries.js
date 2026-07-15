@@ -5724,6 +5724,7 @@ function getCollectionSectionEntries (libraryId) {
       collectionId,
       label,
       inputId: input.id,
+      defaultValue: String(input.dataset.default || '').trim(),
       currentValue: String(input.value || '').trim(),
       domIndex: index
     })
@@ -5868,6 +5869,7 @@ function renderCollectionSectionModalList (modalEl) {
 
 function saveCollectionSectionModalOrder (modalEl) {
   if (!modalEl) return
+  modalEl = prepareCollectionSectionModal(modalEl)
   const list = modalEl.querySelector('[data-collection-section-sortable]')
   const items = Array.from(list ? list.children : [])
   if (!items.length) return
@@ -5886,8 +5888,25 @@ function saveCollectionSectionModalOrder (modalEl) {
     showToast('success', 'Collection section order updated.')
   }
   refreshCollectionSectionPreviewNumbers(list)
-  const modal = bootstrap && bootstrap.Modal ? bootstrap.Modal.getInstance(modalEl) : null
+  const modal = typeof bootstrap !== 'undefined' && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalEl) : null
   if (modal) modal.hide()
+}
+
+function resetCollectionSectionModalOrder (modalEl) {
+  if (!modalEl) return
+  modalEl = prepareCollectionSectionModal(modalEl)
+  const entries = getCollectionSectionEntries(modalEl.dataset.libraryId)
+  entries.forEach(entry => {
+    const input = entry.inputId ? document.getElementById(entry.inputId) : null
+    if (!input) return
+    input.value = entry.defaultValue
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  renderCollectionSectionModalList(modalEl)
+  if (typeof showToast === 'function') {
+    showToast('info', 'Collection section order reset to defaults.')
+  }
 }
 
 document.addEventListener('click', (event) => {
@@ -5905,7 +5924,7 @@ document.addEventListener('click', (event) => {
   const resetButton = event.target.closest('[data-collection-section-reset]')
   if (resetButton) {
     const modalEl = resetButton.closest('[data-collection-section-modal]')
-    renderCollectionSectionModalList(modalEl)
+    resetCollectionSectionModalOrder(modalEl)
     return
   }
 

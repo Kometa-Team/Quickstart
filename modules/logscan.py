@@ -522,6 +522,8 @@ class LogscanAnalyzer:
         if summary:
             summary["analysis_counts"] = analysis_counts
             summary["quickstart_run_marker"] = bool(quickstart_marker)
+            summary["quickstart_version"] = quickstart_marker_fields.get("quickstart") or None
+            summary["quickstart_branch"] = quickstart_marker_fields.get("branch") or None
             summary["start_mode"] = quickstart_marker_fields.get("start_mode") or None
             summary["library_counts"] = library_counts
             summary["maintenance_summary"] = maintenance_summary
