@@ -551,8 +551,10 @@ def copy_library_settings():
                     merged.pop(existing_key, None)
 
             for key, value in source_items.items():
-                # Do not mirror the include toggle; require explicit include after mirroring
                 if target_id != source_prefix and key.endswith("-library"):
+                    # Do not opt target libraries into YAML automatically.
+                    # Mirrored settings remain saved and become active if the
+                    # user explicitly includes the target later.
                     merged[f"{target_id}-library"] = ""
                     continue
                 new_key = key.replace(source_prefix, target_id, 1)

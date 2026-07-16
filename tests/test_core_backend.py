@@ -5067,6 +5067,80 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     assert target_file.read_text(encoding="utf-8") == managed_file.read_text(encoding="utf-8")
 
 
+def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_rating(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+    from modules import database
+    from flask import session
+
+    config_name = "pytest_copy_playlist_content_rating"
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-playlist": "true",
+                "mov-library_movies-collection_content_rating_us": True,
+                "mov-library_movies-template_collection_content_rating_us_limit": "40",
+                "mov-library_movies-movie-overlay_content_rating": "uk",
+                "mov-library_movies-movie-template_overlay_content_rating_uk[color]": "white",
+                "mov-library_target-library": "Other Movies",
+                "mov-library_target-collection_collectionless": True,
+                "libraries": "Movies,Other Movies",
+            },
+            "validated": False,
+        },
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: (
+            [
+                {"id": "mov-library_movies", "name": "Movies"},
+                {"id": "mov-library_target", "name": "Other Movies"},
+            ],
+            [],
+            {},
+        ),
+    )
+
+    with app.test_request_context("/copy_library_settings"):
+        session["config_name"] = config_name
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/copy_library_settings",
+        json={
+            "source_library_id": "mov-library_movies",
+            "target_library_ids": ["mov-library_target"],
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-playlist": "true",
+                "mov-library_movies-collection_content_rating_us": True,
+                "mov-library_movies-template_collection_content_rating_us_limit": "40",
+                "mov-library_movies-movie-overlay_content_rating": "uk",
+                "mov-library_movies-movie-template_overlay_content_rating_uk[color]": "white",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    libraries = stored["libraries"]
+    assert libraries["mov-library_target-library"] == ""
+    assert libraries["mov-library_target-playlist"] is True
+    assert libraries["mov-library_target-collection_content_rating_us"] is True
+    assert libraries["mov-library_target-template_collection_content_rating_us_limit"] == 40
+    assert libraries["mov-library_target-movie-overlay_content_rating"] == "uk"
+    assert libraries["mov-library_target-movie-template_overlay_content_rating_uk[color]"] == "white"
+
+
 def test_sync_managed_library_artifacts_to_kometa_copies_and_prunes(isolated_config_dir, app):
     from pathlib import Path
 

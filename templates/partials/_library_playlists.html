@@ -18,7 +18,7 @@
       <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
         <input class="form-check-input playlist-library-toggle" type="checkbox" id="{{ library.id }}-playlist"
           name="{{ library.id }}-playlist" value="true" data-include-toggle="{{ library.id }}-include"
-          {% if playlist_checked and include_checked %}checked{% endif %}>
+          {% if playlist_checked %}checked{% endif %}>
         <label class="form-check-label mb-0" for="{{ library.id }}-playlist">
           Include {{ library.name }}
         </label>

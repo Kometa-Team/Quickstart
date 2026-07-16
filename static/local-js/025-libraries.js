@@ -5039,9 +5039,6 @@ function wireIncludeToggle (card, libraryId) {
     status.classList.toggle('bg-success', included)
     status.classList.toggle('bg-secondary', !included)
     if (playlistToggle) {
-      if (!included) {
-        playlistToggle.checked = false
-      }
       playlistToggle.disabled = !included
       playlistToggle.closest('.form-check')?.classList.toggle('opacity-50', !included)
     }
@@ -5757,9 +5754,8 @@ function openCopyModal (sourceId, sourceName, sourceType) {
       })
   }
 
-  // Ensure we don't accumulate handlers across openings
-  copyConfirmBtn.onclick = null
-  copyConfirmBtn.addEventListener('click', onConfirm)
+  // Replace the previous modal source/target closure each time this opens.
+  copyConfirmBtn.onclick = onConfirm
 }
 
 function loadLibrary (libraryId, context = 'switch') {

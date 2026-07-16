@@ -274,7 +274,7 @@ def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs
     assert template_vars["radarr_add_missing"] is True
     assert template_vars["radarr_folder"] == "/data/media/movies"
     assert template_vars["radarr_tag"] == "playlist-default"
-    assert template_vars["sonarr_add_missing"] is False
+    assert "sonarr_add_missing" not in template_vars
     assert template_vars["sonarr_folder"] == "/data/media/shows"
     assert template_vars["sonarr_tag"] == "playlist-show"
     assert template_vars["trakt_list"] == "https://trakt.tv/users/example/lists/default"
@@ -288,6 +288,29 @@ def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs
     assert template_vars["sonarr_tag_mcu"] == "mcu-show"
     assert template_vars["trakt_list_mcu"] == "https://trakt.tv/users/example/lists/mcu"
     assert template_vars["exclude_users_mcu"] == "guest"
+
+
+def test_playlist_files_prune_default_false_shared_template_variables(monkeypatch, qs_module):
+    payload = {
+        "validated": True,
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-playlist": "true",
+            "mov-library_movies-collection_collectionless": True,
+            "playlist-template_variables[delete_playlist]": False,
+            "playlist-template_variables[radarr_add_missing]": "false",
+            "playlist-template_variables[sonarr_add_missing]": "false",
+            "playlist-template_variables[use_]": '{"mcu": "false"}',
+        },
+    }
+
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+    template_vars = parsed["playlist_files"][0]["template_variables"]
+
+    assert "delete_playlist" not in template_vars
+    assert "radarr_add_missing" not in template_vars
+    assert "sonarr_add_missing" not in template_vars
+    assert template_vars["use_mcu"] is False
 
 
 def test_playlist_files_emit_direct_file_and_repo_entries(monkeypatch, qs_module):

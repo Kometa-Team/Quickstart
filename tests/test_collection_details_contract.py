@@ -7,6 +7,8 @@ STYLES_PATH = ROOT / "static" / "css" / "styles.css"
 LIBRARIES_JS_PATH = ROOT / "static" / "local-js" / "025-libraries.js"
 VALIDATION_JS_PATH = ROOT / "static" / "local-js" / "validationHandler.js"
 OVERLAYS_PATH = ROOT / "static" / "json" / "quickstart_overlays.json"
+LIBRARIES_TEMPLATE_PATH = ROOT / "templates" / "025-libraries.html"
+PLAYLIST_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_playlists.html"
 
 
 def test_collection_macros_render_collapsible_detail_section():
@@ -76,6 +78,30 @@ def test_libraries_script_wires_overlay_variable_sections():
     assert "data-accordion-override-summary" in script
     assert "findTemplateVariableFieldRow(field)" in script
     assert "refreshTemplateOverrideState(group)" in script
+
+
+def test_libraries_script_replaces_mirror_confirm_handler():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "copyConfirmBtn.onclick = onConfirm" in script
+    assert "copyConfirmBtn.addEventListener('click', onConfirm)" not in script
+
+
+def test_mirror_modal_explains_targets_stay_excluded():
+    template = LIBRARIES_TEMPLATE_PATH.read_text(encoding="utf-8")
+
+    assert "does not include target libraries in the final YAML automatically" in template
+    assert "runs the normal library validation flow" in template
+    assert "placeholder IDs" in template
+    assert "enable <strong>Include in YAML</strong>" in template
+
+
+def test_playlist_toggle_preserves_mirrored_state_when_excluded():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    partial = PLAYLIST_PARTIAL_PATH.read_text(encoding="utf-8")
+
+    assert "{% if playlist_checked %}checked{% endif %}" in partial
+    assert "playlistToggle.checked = false" not in script
 
 
 def test_template_variable_sections_show_override_rail():
