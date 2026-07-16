@@ -39,9 +39,12 @@ def test_libraries_script_wires_collection_detail_toggles():
 def test_overlay_macros_render_collapsible_variable_sections():
     macros = MACROS_PATH.read_text(encoding="utf-8")
 
+    assert 'class="border rounded p-2 mb-3 collection-variable-section overlay-variable-section"' in macros
     assert 'data-overlay-variable-section="true"' in macros
     assert "overlay-variable-section-toggle" in macros
     assert "data-overlay-section-summary" in macros
+    assert 'data-show-label="Show"' in macros
+    assert 'data-hide-label="Hide"' in macros
     assert 'data-overlay-variable-section-reset="true"' in macros
     assert "Reset {{ render_group.label }}" in macros
     assert "overlay.id != 'overlay_ratings'" in macros
