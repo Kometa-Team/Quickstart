@@ -36,6 +36,7 @@ const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
 let activeLibraryId = null
 let loadRequestId = 0
 let allowNextStepNavigation = false
+let lookupLabelAutosaveTimer = null
 
 function setLibrariesButtonBusy (button, busy, label = 'Working...') {
   if (!button) return
@@ -3991,6 +3992,7 @@ function applyLookupState (target, presetConfig, presetName, value, context = {}
       if (!key || !normalizedLabel || labels[key] === normalizedLabel) return
       labels[key] = normalizedLabel
       writeLookupLabels(labels)
+      scheduleLookupLabelAutosave()
     }
 
     function getCounterpartHiddenId () {
@@ -5435,10 +5437,26 @@ function initLibraryAssetDirectoryInputs (card) {
   })
 }
 
-function autosaveActiveLibrary () {
+function scheduleLookupLabelAutosave (delayMs = 900) {
+  if (lookupLabelAutosaveTimer) {
+    clearTimeout(lookupLabelAutosaveTimer)
+    lookupLabelAutosaveTimer = null
+  }
+  lookupLabelAutosaveTimer = setTimeout(() => {
+    lookupLabelAutosaveTimer = null
+    if (!activeLibraryId || window.QS_SWITCHING_CONFIG) return
+    autosaveActiveLibrary({ quiet: true })
+      .catch(err => {
+        console.warn('[Autosave] Failed to persist lookup labels', err)
+      })
+  }, Math.max(0, Number(delayMs) || 0))
+}
+
+function autosaveActiveLibrary (options = {}) {
   const card = libraryContainer.firstElementChild
   if (!activeLibraryId || !card) return Promise.resolve()
   if (window.QS_SWITCHING_CONFIG) return Promise.resolve()
+  const quiet = Boolean(options && options.quiet)
 
   if (typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
     const pathValid = PathValidation.validateAll(card)
@@ -5446,7 +5464,7 @@ function autosaveActiveLibrary () {
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.focusFirstInvalidField === 'function') {
         ValidationHandler.focusFirstInvalidField(card)
       }
-      if (typeof showToast === 'function') {
+      if (!quiet && typeof showToast === 'function') {
         showToast('error', 'Please fix invalid path fields before saving.')
       }
       return Promise.reject(new Error('Invalid path fields'))
@@ -5459,7 +5477,7 @@ function autosaveActiveLibrary () {
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.focusFirstInvalidField === 'function') {
         ValidationHandler.focusFirstInvalidField(card)
       }
-      if (typeof showToast === 'function') {
+      if (!quiet && typeof showToast === 'function') {
         showToast('error', 'Please fix invalid URL fields before saving.')
       }
       return Promise.reject(new Error('Invalid URL fields'))
@@ -5498,7 +5516,7 @@ function autosaveActiveLibrary () {
       return res.json().catch(() => ({}))
     })
     .then(data => {
-      if (data && data.success && typeof showToast === 'function') {
+      if (data && data.success && !quiet && typeof showToast === 'function') {
         showToast('success', `Autosaved ${friendlyName}.`)
       }
       if (data && data.success) {
@@ -5509,7 +5527,7 @@ function autosaveActiveLibrary () {
     })
     .catch(err => {
       console.error('[Autosave] Failed to save library', activeLibraryId, err)
-      if (typeof showToast === 'function') {
+      if (!quiet && typeof showToast === 'function') {
         showToast('error', err.message || `Autosave failed for ${friendlyName}.`)
       }
       throw err
