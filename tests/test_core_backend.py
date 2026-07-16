@@ -5067,7 +5067,7 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     assert target_file.read_text(encoding="utf-8") == managed_file.read_text(encoding="utf-8")
 
 
-def test_copy_library_settings_preserves_target_include_for_playlist_and_content_rating(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_rating(client, isolated_config_dir, monkeypatch, app, library_routes_module):
     from modules import database
     from flask import session
 
@@ -5133,7 +5133,7 @@ def test_copy_library_settings_preserves_target_include_for_playlist_and_content
 
     _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
     libraries = stored["libraries"]
-    assert libraries["mov-library_target-library"] == "Other Movies"
+    assert libraries["mov-library_target-library"] == ""
     assert libraries["mov-library_target-playlist"] is True
     assert libraries["mov-library_target-collection_content_rating_us"] is True
     assert libraries["mov-library_target-template_collection_content_rating_us_limit"] == 40

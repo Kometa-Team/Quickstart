@@ -5039,9 +5039,6 @@ function wireIncludeToggle (card, libraryId) {
     status.classList.toggle('bg-success', included)
     status.classList.toggle('bg-secondary', !included)
     if (playlistToggle) {
-      if (!included) {
-        playlistToggle.checked = false
-      }
       playlistToggle.disabled = !included
       playlistToggle.closest('.form-check')?.classList.toggle('opacity-50', !included)
     }
