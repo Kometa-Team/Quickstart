@@ -7516,6 +7516,37 @@ function setOverrideSummaryBadge (badge, count) {
   badge.classList.toggle('d-none', count <= 0)
 }
 
+function findTemplateVariableFieldRow (field) {
+  if (!field || field.type === 'hidden') return null
+  return field.closest(
+    '[data-template-string-list], ' +
+    '[data-template-mapping-list], ' +
+    '[data-overlay-language-weight-builder], ' +
+    '.rgba-group, ' +
+    '.font-row, ' +
+    '.input-group, ' +
+    '.form-check'
+  )
+}
+
+function updateTemplateVariableFieldOverrideStates (body, fieldsByName) {
+  if (!body) return
+  body.querySelectorAll('.template-variable-field-has-override').forEach(row => {
+    row.classList.remove('template-variable-field-has-override')
+    row.removeAttribute('data-template-variable-field-override')
+  })
+
+  fieldsByName.forEach(fields => {
+    if (!isCollectionSectionFieldConfigured(fields)) return
+    fields.forEach(field => {
+      const row = findTemplateVariableFieldRow(field)
+      if (!row) return
+      row.classList.add('template-variable-field-has-override')
+      row.dataset.templateVariableFieldOverride = 'true'
+    })
+  })
+}
+
 function getOrCreateTemplateOverrideBadge (group) {
   if (!group) return null
   let badge = group.querySelector('[data-template-group-override-summary]')
@@ -7600,6 +7631,8 @@ function updateCollectionVariableSectionSummary (section) {
     if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
   })
 
+  updateTemplateVariableFieldOverrideStates(body, fieldsByName)
+
   summary.textContent = configuredCount === 0
     ? 'Defaults'
     : configuredCount === 1
@@ -7629,6 +7662,8 @@ function updateOverlayVariableSectionSummary (section) {
   fieldsByName.forEach(fields => {
     if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
   })
+
+  updateTemplateVariableFieldOverrideStates(body, fieldsByName)
 
   summary.textContent = configuredCount === 0
     ? 'Defaults'

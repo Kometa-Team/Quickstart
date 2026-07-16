@@ -2081,6 +2081,19 @@ fieldset:disabled .btn {
     white-space: nowrap;
 }
 
+.template-variable-field-has-override {
+    position: relative;
+    border-left: 4px solid var(--theme-primary) !important;
+    box-shadow: inset 7px 0 0 rgba(var(--accent-color), 0.08);
+}
+
+.input-group.template-variable-field-has-override > .input-group-text:first-child,
+.font-row.template-variable-field-has-override .input-group-text:first-child,
+.rgba-group.template-variable-field-has-override .input-group-text:first-child {
+    color: var(--theme-primary-hover);
+    font-weight: 700;
+}
+
 /* -------------------- */
 /* INPUT STYLES         */
 /* -------------------- */

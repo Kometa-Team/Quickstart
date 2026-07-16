@@ -39,6 +39,8 @@ def test_libraries_script_wires_collection_detail_toggles():
     assert "configuredCount > 0" in script
     assert "updateTemplateGroupOverrideSummary(section)" in script
     assert "updateAncestorOverrideSummaries(group)" in script
+    assert "function updateTemplateVariableFieldOverrideStates" in script
+    assert "data-template-variable-field-override" in script
 
 
 def test_overlay_macros_render_collapsible_variable_sections():
@@ -68,6 +70,7 @@ def test_libraries_script_wires_overlay_variable_sections():
     assert "configuredCount > 0" in script
     assert "data-template-group-override-summary" in script
     assert "data-accordion-override-summary" in script
+    assert "findTemplateVariableFieldRow(field)" in script
 
 
 def test_template_variable_sections_show_override_rail():
@@ -77,6 +80,7 @@ def test_template_variable_sections_show_override_rail():
     assert ".overlay-variable-section.template-variable-section-has-overrides" in styles
     assert ".template-toggle-group.template-variable-section-has-overrides" in styles
     assert ".accordion-header.template-variable-section-has-overrides" in styles
+    assert ".template-variable-field-has-override" in styles
     assert "background: var(--theme-primary);" in styles
 
 
