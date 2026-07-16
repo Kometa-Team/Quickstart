@@ -7506,6 +7506,80 @@ function isCollectionSectionFieldConfigured (fields) {
   return defaultValue ? value !== defaultValue : true
 }
 
+function formatTemplateOverrideCount (count) {
+  return count === 1 ? '1 override' : `${count} overrides`
+}
+
+function setOverrideSummaryBadge (badge, count) {
+  if (!badge) return
+  badge.textContent = count > 0 ? formatTemplateOverrideCount(count) : ''
+  badge.classList.toggle('d-none', count <= 0)
+}
+
+function getOrCreateTemplateOverrideBadge (group) {
+  if (!group) return null
+  let badge = group.querySelector('[data-template-group-override-summary]')
+  if (badge) return badge
+
+  badge = document.createElement('span')
+  badge.className = 'small template-override-summary ms-2 d-none'
+  badge.dataset.templateGroupOverrideSummary = 'true'
+
+  const target = group.querySelector('.overlay-toggle-row') || group.querySelector('.form-check > .d-flex') || group.querySelector('.form-check')
+  target?.appendChild(badge)
+  return badge
+}
+
+function getOrCreateAccordionOverrideBadge (header) {
+  if (!header) return null
+  let badge = header.querySelector('[data-accordion-override-summary]')
+  if (badge) return badge
+
+  const button = header.querySelector('.accordion-button')
+  if (!button) return null
+
+  badge = document.createElement('span')
+  badge.className = 'small accordion-override-summary ms-3 d-none'
+  badge.dataset.accordionOverrideSummary = 'true'
+  button.appendChild(badge)
+  return badge
+}
+
+function updateAncestorOverrideSummaries (element) {
+  let collapse = element?.closest('.accordion-collapse')
+  const seen = new Set()
+
+  while (collapse && !seen.has(collapse)) {
+    seen.add(collapse)
+    const accordionItem = collapse.closest('.accordion-item')
+    const header = accordionItem?.querySelector('.accordion-header')
+    const count = Array.from(collapse.querySelectorAll('.template-toggle-group')).reduce((total, group) => {
+      return total + (Number(group.dataset.overrideCount || '0') || 0)
+    }, 0)
+
+    accordionItem?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
+
+    collapse = accordionItem?.parentElement?.closest('.accordion-collapse')
+  }
+}
+
+function updateTemplateGroupOverrideSummary (section) {
+  const group = section?.closest('.template-toggle-group')
+  if (!group) return
+
+  const sections = group.querySelectorAll('[data-collection-variable-section="true"], [data-overlay-variable-section="true"]')
+  const count = Array.from(sections).reduce((total, item) => {
+    return total + (Number(item.dataset.overrideCount || '0') || 0)
+  }, 0)
+
+  group.dataset.overrideCount = String(count)
+  group.classList.toggle('template-variable-section-has-overrides', count > 0)
+  setOverrideSummaryBadge(getOrCreateTemplateOverrideBadge(group), count)
+  updateAncestorOverrideSummaries(group)
+}
+
 function updateCollectionVariableSectionSummary (section) {
   if (!section) return
   const summary = section.querySelector('[data-collection-section-summary]')
@@ -7532,6 +7606,8 @@ function updateCollectionVariableSectionSummary (section) {
       ? '1 override'
       : `${configuredCount} overrides`
   section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
+  section.dataset.overrideCount = String(configuredCount)
+  updateTemplateGroupOverrideSummary(section)
 }
 
 function updateOverlayVariableSectionSummary (section) {
@@ -7560,6 +7636,8 @@ function updateOverlayVariableSectionSummary (section) {
       ? '1 override'
       : `${configuredCount} overrides`
   section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
+  section.dataset.overrideCount = String(configuredCount)
+  updateTemplateGroupOverrideSummary(section)
 }
 
 function wireOverlayVariableSections (scope) {

@@ -37,6 +37,8 @@ def test_libraries_script_wires_collection_detail_toggles():
     assert "section.dataset.defaultOpen === 'true'" in script
     assert "template-variable-section-has-overrides" in script
     assert "configuredCount > 0" in script
+    assert "updateTemplateGroupOverrideSummary(section)" in script
+    assert "updateAncestorOverrideSummaries(group)" in script
 
 
 def test_overlay_macros_render_collapsible_variable_sections():
@@ -64,6 +66,8 @@ def test_libraries_script_wires_overlay_variable_sections():
     assert "btn.dataset.overlayVariableSectionReset === 'true'" in script
     assert "template-variable-section-has-overrides" in script
     assert "configuredCount > 0" in script
+    assert "data-template-group-override-summary" in script
+    assert "data-accordion-override-summary" in script
 
 
 def test_template_variable_sections_show_override_rail():
@@ -71,6 +75,8 @@ def test_template_variable_sections_show_override_rail():
 
     assert ".collection-variable-section.template-variable-section-has-overrides" in styles
     assert ".overlay-variable-section.template-variable-section-has-overrides" in styles
+    assert ".template-toggle-group.template-variable-section-has-overrides" in styles
+    assert ".accordion-header.template-variable-section-has-overrides" in styles
     assert "background: var(--theme-primary);" in styles
 
 
@@ -88,6 +94,7 @@ def test_common_overlay_template_variables_have_sections_except_ratings():
             continue
 
         assert {section["id"] for section in overlay["template_variable_sections"]} == section_ids
+        assert all(section.get("default_open") is False for section in overlay["template_variable_sections"])
         values = template_variables.values() if isinstance(template_variables, dict) else [item for item in template_variables if isinstance(item, dict)]
         for details in values:
             assert details.get("section") in section_ids

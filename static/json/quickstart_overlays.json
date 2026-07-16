@@ -206,27 +206,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       }
@@ -340,27 +344,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -549,27 +557,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -770,27 +782,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -1726,27 +1742,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -1920,27 +1940,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -2127,27 +2151,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -2328,27 +2356,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -2529,27 +2561,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -2760,27 +2796,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -3211,27 +3251,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       }
@@ -3517,27 +3561,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -3774,27 +3822,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -3954,27 +4006,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -5026,27 +5082,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -6103,27 +6163,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -7070,27 +7134,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -7250,27 +7318,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -7426,27 +7498,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -7709,27 +7785,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       }
@@ -8027,27 +8107,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -8186,27 +8270,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       },
@@ -8344,27 +8432,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       }
@@ -8507,27 +8599,31 @@
             "id": "basics",
             "label": "Basics",
             "summary": "Core overlay behavior and style.",
-            "default_open": true
+            "default_open": false
           },
           {
             "id": "included_items",
             "label": "Included Items",
-            "summary": "Choose which generated overlay items are active."
+            "summary": "Choose which generated overlay items are active.",
+            "default_open": false
           },
           {
             "id": "font",
             "label": "Font",
-            "summary": "Text font, size, color, and stroke."
+            "summary": "Text font, size, color, and stroke.",
+            "default_open": false
           },
           {
             "id": "background",
             "label": "Background",
-            "summary": "Background fill, outline, dimensions, and padding."
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
           },
           {
             "id": "placement",
             "label": "Placement",
-            "summary": "Overlay alignment and offsets."
+            "summary": "Overlay alignment and offsets.",
+            "default_open": false
           }
         ]
       }
