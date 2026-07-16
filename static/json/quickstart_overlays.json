@@ -841,6 +841,38 @@
           "movie",
           "show"
         ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics",
+            "summary": "Core ratings overlay behavior.",
+            "default_open": false
+          },
+          {
+            "id": "rating_slots",
+            "label": "Rating Slots",
+            "summary": "Choose rating sources and icon images for each slot.",
+            "default_open": false
+          },
+          {
+            "id": "font",
+            "label": "Font",
+            "summary": "Per-slot font, color, and stroke settings.",
+            "default_open": false
+          },
+          {
+            "id": "background",
+            "label": "Background",
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
+          },
+          {
+            "id": "placement",
+            "label": "Placement",
+            "summary": "Overlay alignment, slot offsets, and position controls.",
+            "default_open": false
+          }
+        ],
         "template_variables": {
           "rating1": {
             "input_type": "select",
@@ -1311,6 +1343,38 @@
         },
         "media_types": [
           "episode"
+        ],
+        "template_variable_sections": [
+          {
+            "id": "basics",
+            "label": "Basics",
+            "summary": "Core ratings overlay behavior.",
+            "default_open": false
+          },
+          {
+            "id": "rating_slots",
+            "label": "Rating Slots",
+            "summary": "Choose rating sources and icon images for each slot.",
+            "default_open": false
+          },
+          {
+            "id": "font",
+            "label": "Font",
+            "summary": "Per-slot font, color, and stroke settings.",
+            "default_open": false
+          },
+          {
+            "id": "background",
+            "label": "Background",
+            "summary": "Background fill, outline, dimensions, and padding.",
+            "default_open": false
+          },
+          {
+            "id": "placement",
+            "label": "Placement",
+            "summary": "Overlay alignment, slot offsets, and position controls.",
+            "default_open": false
+          }
         ],
         "template_variables": {
           "rating1": {
