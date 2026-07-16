@@ -1516,6 +1516,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         <ul class="list-group mt-2" data-template-string-items></ul>
                         <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}"
                             data-default='{{ list_default_json }}'>
+                        <input type="hidden" id="{{ input_name }}__lookup_labels" name="{{ input_name }}__lookup_labels"
+                            value="{{ data['libraries'].get(input_name ~ '__lookup_labels', '{}') | default('{}', true) }}">
                         </div>
                         {% elif item.type == 'mapping_list' %}
                         {% set stored_map = data['libraries'].get(input_name) %}

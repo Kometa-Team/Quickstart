@@ -3773,7 +3773,7 @@ function setupTemplateStringListHandlers (scope) {
     }
   }
 
-  function applyLookupState (target, presetConfig, presetName, value, context = {}) {
+function applyLookupState (target, presetConfig, presetName, value, context = {}, onResolvedLabel = null) {
     if (!target || !presetConfig?.lookupService || !value) return
 
     if (presetConfig.lookupService === 'tmdb') {
@@ -3793,8 +3793,11 @@ function setupTemplateStringListHandlers (scope) {
       })
       lookupTemplateStringValue(presetName, value, context).then(result => {
         if (!target.isConnected) return
-        if (result.valid && result.verified && result.label) {
-          const successMessage = result.message || `TMDb: ${result.label}`
+      if (result.valid && result.verified && result.label) {
+        if (typeof onResolvedLabel === 'function') {
+          onResolvedLabel(value, result.label)
+        }
+        const successMessage = result.message || `TMDb: ${result.label}`
           setLookupState(target, {
             valid: true,
             verified: true,
@@ -3837,8 +3840,11 @@ function setupTemplateStringListHandlers (scope) {
       })
       lookupTemplateStringValue(presetName, value, context).then(result => {
         if (!target.isConnected) return
-        if (result.valid && result.verified && result.label) {
-          const successMessage = result.message || `Plex: ${result.label}`
+      if (result.valid && result.verified && result.label) {
+        if (typeof onResolvedLabel === 'function') {
+          onResolvedLabel(value, result.label)
+        }
+        const successMessage = result.message || `Plex: ${result.label}`
           setLookupState(target, {
             valid: true,
             verified: true,
@@ -3899,6 +3905,7 @@ function setupTemplateStringListHandlers (scope) {
     if (wrapper.dataset.listenerAdded) return
     const hiddenId = wrapper.dataset.hiddenInput
     const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
+    const lookupLabelsHidden = hiddenId ? document.getElementById(`${hiddenId}__lookup_labels`) : null
     const input = wrapper.querySelector('[data-template-string-input]')
     const addBtn = wrapper.querySelector('[data-template-string-add]')
     const list = wrapper.querySelector('[data-template-string-items]')
@@ -3930,6 +3937,60 @@ function setupTemplateStringListHandlers (scope) {
         // fall through to treat as single value
       }
       return [raw]
+    }
+
+    function parseLookupLabels () {
+      if (!lookupLabelsHidden) return {}
+      const raw = String(lookupLabelsHidden.value || '').trim()
+      if (!raw) return {}
+      try {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return Object.fromEntries(
+            Object.entries(parsed)
+              .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+              .filter(([key, value]) => key && value)
+          )
+        }
+      } catch {
+        return {}
+      }
+      return {}
+    }
+
+    function writeLookupLabels (labels) {
+      if (!lookupLabelsHidden) return
+      const cleanLabels = Object.fromEntries(
+        Object.entries(labels || {})
+          .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+          .filter(([key, value]) => key && value)
+      )
+      lookupLabelsHidden.value = JSON.stringify(cleanLabels)
+      lookupLabelsHidden.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    function pruneLookupLabels (values) {
+      if (!lookupLabelsHidden) return
+      const allowed = new Set((values || []).map(value => String(value || '').trim()).filter(Boolean))
+      const labels = parseLookupLabels()
+      let changed = false
+      Object.keys(labels).forEach(key => {
+        if (!allowed.has(key)) {
+          delete labels[key]
+          changed = true
+        }
+      })
+      if (changed) writeLookupLabels(labels)
+    }
+
+    function storeLookupLabel (value, label) {
+      if (!lookupLabelsHidden || !value || !label) return
+      const labels = parseLookupLabels()
+      const key = String(value).trim()
+      const normalizedLabel = String(label).trim()
+      if (!key || !normalizedLabel || labels[key] === normalizedLabel) return
+      labels[key] = normalizedLabel
+      writeLookupLabels(labels)
     }
 
     function getCounterpartHiddenId () {
@@ -4061,7 +4122,7 @@ function setupTemplateStringListHandlers (scope) {
         })
 
         if (item.valid && presetConfig.lookupService) {
-          applyLookupState(lookupMeta, presetConfig, presetName, item.value, { libraryName, mediaType })
+          applyLookupState(lookupMeta, presetConfig, presetName, item.value, { libraryName, mediaType }, storeLookupLabel)
         }
       })
     }
@@ -4083,6 +4144,7 @@ function setupTemplateStringListHandlers (scope) {
       }
 
       hidden.value = JSON.stringify(normalizedValues)
+      pruneLookupLabels(normalizedValues)
       renderList(analyzed)
 
       const invalidItems = analyzed.filter(item => !item.valid)

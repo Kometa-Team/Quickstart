@@ -143,11 +143,40 @@ def _reorder_ratings_template_vars(entry):
 
 
 _NATURAL_SORT_RE = re.compile(r"(\d+)")
+_ID_TOKEN_RE = re.compile(r"^(?:\d+|tt\d+)$", re.IGNORECASE)
 
 
 def _natural_sort_key(value):
     parts = _NATURAL_SORT_RE.split(str(value or ""))
     return tuple((0, int(part)) if part.isdigit() else (1, part.lower()) for part in parts)
+
+
+def _id_sort_key(value):
+    text = str(value or "").strip()
+    if text.isdigit():
+        return (0, int(text), text)
+    imdb_match = re.fullmatch(r"tt(\d+)", text, flags=re.IGNORECASE)
+    if imdb_match:
+        return (1, int(imdb_match.group(1)), text.lower())
+    return (2, _natural_sort_key(text))
+
+
+def _is_sortable_id_list(value):
+    if not isinstance(value, list) or len(value) < 2:
+        return False
+    for item in value:
+        text = str(item or "").strip()
+        if not _ID_TOKEN_RE.fullmatch(text):
+            return False
+    return True
+
+
+def _sort_id_list_template_values(template_vars):
+    if not isinstance(template_vars, dict):
+        return
+    for key, value in list(template_vars.items()):
+        if _is_sortable_id_list(value):
+            template_vars[key] = sorted(value, key=_id_sort_key)
 
 
 def _build_collection_template_orders():
@@ -252,6 +281,8 @@ def _reorder_collection_template_vars(entry, collection_orders, library_type):
     tv = entry.get("template_variables")
     if not isinstance(tv, dict) or not tv:
         return
+
+    _sort_id_list_template_values(tv)
 
     order_spec = _pick_collection_template_order(collection_orders, library_type, entry.get("default"))
     if not order_spec:

@@ -444,6 +444,8 @@ _LEGACY_REGION_KEYS = {
 
 # Template-var keys that hold delimited lists.  Empty parses drop the key.
 _LIST_KEYS = ("include", "exclude", "exclude_prefix")
+_LOOKUP_LABELS_SUFFIX = "__lookup_labels"
+_TEMPLATE_VARIABLE_COMMENTS_KEY = "__template_variable_comments"
 
 
 def _coerce_bool_like_string(value):
@@ -485,6 +487,38 @@ def _normalize_list_template_vars(template_vars):
             template_vars[list_key] = list_values
         else:
             template_vars.pop(list_key, None)
+
+
+def _parse_template_lookup_labels(value):
+    if isinstance(value, dict):
+        return {str(k).strip(): str(v).strip() for k, v in value.items() if str(k).strip() and str(v).strip()}
+    if not isinstance(value, str):
+        return {}
+    raw = value.strip()
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+    return {str(k).strip(): str(v).strip() for k, v in parsed.items() if str(k).strip() and str(v).strip()}
+
+
+def _split_template_lookup_labels(children):
+    template_values = {}
+    lookup_labels = {}
+    for key, value in children.items():
+        key_text = str(key or "")
+        if key_text.endswith(_LOOKUP_LABELS_SUFFIX):
+            template_key = key_text[: -len(_LOOKUP_LABELS_SUFFIX)]
+            labels = _parse_template_lookup_labels(value)
+            if template_key and labels:
+                lookup_labels[template_key] = labels
+            continue
+        template_values[key] = value
+    return template_values, lookup_labels
 
 
 def _apply_template_var_normalizers(template_vars, raw_id):
@@ -602,10 +636,13 @@ def build_collection_files(
             )
 
         if all_children:
-            template_vars = {k: _coerce_bool_like_string(v) for k, v in all_children.items()}
+            template_values, lookup_labels = _split_template_lookup_labels(all_children)
+            template_vars = {k: _coerce_bool_like_string(v) for k, v in template_values.items()}
             _apply_template_var_normalizers(template_vars, raw_id)
             if template_vars:
                 file_entry["template_variables"] = template_vars
+                if lookup_labels:
+                    file_entry[_TEMPLATE_VARIABLE_COMMENTS_KEY] = lookup_labels
 
         collection_files.append(file_entry)
 
