@@ -7551,8 +7551,16 @@ function parseCollectionSectionStoredMapping (rawValue) {
   return {}
 }
 
+function isInternalTemplateMetadataField (field) {
+  if (!field) return false
+  const name = String(field.name || '').trim()
+  return field.dataset?.skipOverrideCount === 'true' ||
+    field.dataset?.templateMetadata === 'lookup-labels' ||
+    name.endsWith('__lookup_labels')
+}
+
 function isCollectionSectionFieldConfigured (fields) {
-  const enabledFields = Array.from(fields || []).filter(field => field && !field.disabled)
+  const enabledFields = Array.from(fields || []).filter(field => field && !field.disabled && !isInternalTemplateMetadataField(field))
   if (!enabledFields.length) return false
 
   const visibleFields = enabledFields.filter(field => field.type !== 'hidden')
@@ -7628,6 +7636,7 @@ function updateTemplateVariableFieldOverrideStates (body, fieldsByName) {
   fieldsByName.forEach(fields => {
     if (!isCollectionSectionFieldConfigured(fields)) return
     fields.forEach(field => {
+      if (isInternalTemplateMetadataField(field)) return
       const row = findTemplateVariableFieldRow(field)
       if (!row) return
       row.classList.add('template-variable-field-has-override')
@@ -7719,6 +7728,7 @@ function updateCollectionVariableSectionSummary (section) {
   const fieldsByName = new Map()
   body.querySelectorAll('[name]').forEach(field => {
     if (!field || field.disabled) return
+    if (isInternalTemplateMetadataField(field)) return
     const name = String(field.name || '').trim()
     if (!name) return
     if (!fieldsByName.has(name)) fieldsByName.set(name, [])
@@ -7751,6 +7761,7 @@ function updateOverlayVariableSectionSummary (section) {
   const fieldsByName = new Map()
   body.querySelectorAll('[name]').forEach(field => {
     if (!field || field.disabled) return
+    if (isInternalTemplateMetadataField(field)) return
     const name = String(field.name || '').trim()
     if (!name) return
     if (!fieldsByName.has(name)) fieldsByName.set(name, [])
