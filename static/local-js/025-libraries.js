@@ -6495,6 +6495,7 @@ async function runCollectionGroupReset (btn, group) {
       trigger.dispatchEvent(new Event('change', { bubbles: true }))
     }
 
+    refreshTemplateOverrideState(group.closest('.template-toggle-group') || group)
     updateAccordionHighlights()
     if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
       ValidationHandler.updateValidationState()
@@ -6517,7 +6518,7 @@ function wireOffsetReset (scope) {
         const sectionBody = section?.querySelector('.collection-variable-section-body') || section
         if (sectionBody) {
           runCollectionGroupReset(btn, sectionBody).then(() => {
-            updateCollectionVariableSectionSummary(section)
+            refreshTemplateOverrideState(section.closest('.template-toggle-group') || section)
           }).catch(error => {
             console.error('[collection section reset failed]', error)
             if (typeof showToast === 'function') {
@@ -6533,7 +6534,7 @@ function wireOffsetReset (scope) {
         const sectionBody = section?.querySelector('.overlay-variable-section-body') || section
         if (sectionBody) {
           runCollectionGroupReset(btn, sectionBody).then(() => {
-            updateOverlayVariableSectionSummary(section)
+            refreshTemplateOverrideState(section.closest('.template-toggle-group') || section)
           }).catch(error => {
             console.error('[overlay section reset failed]', error)
             if (typeof showToast === 'function') {
@@ -6558,6 +6559,13 @@ function wireOffsetReset (scope) {
       await new Promise(resolve => requestAnimationFrame(() => resolve()))
       await new Promise(resolve => window.setTimeout(resolve, 0))
       const finishOverlayReset = () => {
+        if (group) {
+          refreshTemplateOverrideState(group)
+          updateAccordionHighlights()
+          if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
+            ValidationHandler.updateValidationState()
+          }
+        }
         setLibrariesButtonPersistentBusy(btn, false)
       }
       try {
@@ -7517,11 +7525,12 @@ function setOverrideSummaryBadge (badge, count) {
 }
 
 function findTemplateVariableFieldRow (field) {
-  if (!field || field.type === 'hidden') return null
+  if (!field) return null
   return field.closest(
     '[data-template-string-list], ' +
     '[data-template-mapping-list], ' +
     '[data-overlay-language-weight-builder], ' +
+    '[data-collection-field-wrapper], ' +
     '.rgba-group, ' +
     '.font-row, ' +
     '.input-group, ' +
@@ -7609,6 +7618,16 @@ function updateTemplateGroupOverrideSummary (section) {
   group.classList.toggle('template-variable-section-has-overrides', count > 0)
   setOverrideSummaryBadge(getOrCreateTemplateOverrideBadge(group), count)
   updateAncestorOverrideSummaries(group)
+}
+
+function refreshTemplateOverrideState (scope) {
+  const root = scope || document
+  root.querySelectorAll('[data-collection-variable-section="true"]').forEach(section => {
+    updateCollectionVariableSectionSummary(section)
+  })
+  root.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
+    updateOverlayVariableSectionSummary(section)
+  })
 }
 
 function updateCollectionVariableSectionSummary (section) {
