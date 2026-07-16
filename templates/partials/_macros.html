@@ -2078,8 +2078,103 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 {% else %}
                                                 {% set tv_items = raw_tv_items %}
                                                 {% endif %}
+                                                {% set overlay_sections = overlay.template_variable_sections if overlay.template_variable_sections is defined else [] %}
+                                                {% set overlay_render_groups = [] %}
+                                                {% if overlay_sections and overlay.id != 'overlay_ratings' %}
+                                                {% set grouped_vars = [] %}
+                                                {% for section_def in overlay_sections %}
+                                                    {% set section_items = [] %}
+                                                    {% for tv_item in tv_items %}
+                                                        {% if is_mapping %}
+                                                            {% set tv_var_name = tv_item[0] %}
+                                                            {% set tv_var_details = tv_item[1] %}
+                                                        {% else %}
+                                                            {% set tv_var_details = tv_item %}
+                                                            {% set tv_var_name = tv_var_details.key or ('var' ~ loop.index0) %}
+                                                        {% endif %}
+                                                        {% set tv_section = tv_var_details.section if tv_var_details.section is defined else 'basics' %}
+                                                        {% if tv_section == section_def.id %}
+                                                            {% set _ = section_items.append(tv_item) %}
+                                                            {% set _ = grouped_vars.append(tv_var_name) %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% if section_items %}
+                                                        {% set _ = overlay_render_groups.append({
+                                                            'id': section_def.id,
+                                                            'label': section_def.label,
+                                                            'summary': section_def.summary if section_def.summary is defined else '',
+                                                            'default_open': section_def.default_open if section_def.default_open is defined else false,
+                                                            'fields': section_items,
+                                                            'flat': false
+                                                        }) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% set ungrouped_items = [] %}
+                                                {% for tv_item in tv_items %}
+                                                    {% if is_mapping %}
+                                                        {% set tv_var_name = tv_item[0] %}
+                                                    {% else %}
+                                                        {% set tv_var_details = tv_item %}
+                                                        {% set tv_var_name = tv_var_details.key or ('var' ~ loop.index0) %}
+                                                    {% endif %}
+                                                    {% if tv_var_name not in grouped_vars %}
+                                                        {% set _ = ungrouped_items.append(tv_item) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if ungrouped_items %}
+                                                    {% set _ = overlay_render_groups.append({
+                                                        'id': 'other',
+                                                        'label': 'Other',
+                                                        'summary': 'Additional overlay settings.',
+                                                        'default_open': false,
+                                                        'fields': ungrouped_items,
+                                                        'flat': false
+                                                    }) %}
+                                                {% endif %}
+                                                {% endif %}
+                                                {% if not overlay_render_groups %}
+                                                    {% set _ = overlay_render_groups.append({
+                                                        'id': 'all',
+                                                        'label': 'Details',
+                                                        'summary': '',
+                                                        'default_open': true,
+                                                        'fields': tv_items,
+                                                        'flat': true
+                                                    }) %}
+                                                {% endif %}
                                                 {% set seen_vars = [] %}
-                                                {% for item in tv_items %}
+                                                {% for render_group in overlay_render_groups %}
+                                                {% if not render_group.flat %}
+                                                {% set render_group_body_id = template_name ~ '-' ~ render_group.id ~ '-section-body' %}
+                                                <div class="collection-variable-section overlay-variable-section mb-3"
+                                                    data-overlay-variable-section="true"
+                                                    data-overlay-variable-section-id="{{ render_group.id }}">
+                                                    <button type="button"
+                                                        class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-between collection-variable-section-toggle overlay-variable-section-toggle"
+                                                        data-section-id="{{ render_group_body_id }}"
+                                                        data-show-label="Show {{ render_group.label }}"
+                                                        data-hide-label="Hide {{ render_group.label }}"
+                                                        aria-expanded="{{ 'true' if render_group.default_open else 'false' }}">
+                                                        <span class="fw-semibold">{{ render_group.label }}</span>
+                                                        <span class="small text-muted ms-auto me-2" data-overlay-section-summary>Defaults</span>
+                                                    </button>
+                                                    {% if render_group.summary %}
+                                                    <div class="form-text mt-1">{{ render_group.summary }}</div>
+                                                    {% endif %}
+                                                    <div class="overlay-variable-section-body mt-2"
+                                                        id="{{ render_group_body_id }}"
+                                                        data-detail-section="true"
+                                                        data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
+                                                        style="display: {{ 'block' if render_group.default_open else 'none' }};">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
+                                                                data-overlay-variable-section-reset="true">
+                                                                Reset {{ render_group.label }}
+                                                            </button>
+                                                        </div>
+                                                {% endif %}
+                                                {% for item in render_group.fields %}
                                                 {% if is_mapping %}
                                                 {% set var_name = item[0] %}
                                                 {% set var_details = item[1] %}
@@ -2426,6 +2521,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                     {% endif %}
                                                     {% endif %}
                                                     {% endfor %}
+                                                {% if not render_group.flat %}
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% endfor %}
 
                                                 {% if not ns.has_offsets and effective_offsets is mapping %}
                                                 {% set h_default = effective_offsets.get('horizontal', 0) %}

@@ -5217,6 +5217,7 @@ function mountCard (card, libraryId) {
   setupMappingListHandlers('genre_mapper', card)
   setupMappingListHandlers('content_rating_mapper', card)
   wireOverlayDetailToggles(card)
+  wireOverlayVariableSectionToggles(card)
   wireCollectionDetailToggles(card)
   wireCollectionVariableSectionToggles(card)
   setupParentChildToggleVisibility(card)
@@ -5226,6 +5227,7 @@ function mountCard (card, libraryId) {
   setupAddMissingDependencies(card)
   wireOverlayTemplateSections(card)
   wireCollectionTemplateSections(card)
+  wireOverlayVariableSections(card)
   wireCollectionVariableSections(card)
   if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
     OverlayHandler.initializeOverlayBoards(card)
@@ -5736,10 +5738,12 @@ document.querySelectorAll('.overlay-template-section').forEach((el) => {
 })
 
 wireOverlayDetailToggles()
+wireOverlayVariableSectionToggles()
 wireCollectionDetailToggles()
 wireCollectionVariableSectionToggles()
 wireOverlayTemplateSections()
 wireCollectionTemplateSections()
+wireOverlayVariableSections()
 wireCollectionVariableSections()
 wireRatingsOffsetSync()
 
@@ -6195,6 +6199,9 @@ function toggleOverlayTemplateSection (checkbox) {
       }
     }
   }
+  groupContainer?.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
+    updateOverlayVariableSectionSummary(section)
+  })
 }
 
 function toggleCollectionTemplateSection (parentToggle) {
@@ -6515,6 +6522,22 @@ function wireOffsetReset (scope) {
             console.error('[collection section reset failed]', error)
             if (typeof showToast === 'function') {
               showToast('error', 'Section reset to defaults failed.')
+            }
+          })
+          return
+        }
+      }
+
+      if (btn.dataset.overlayVariableSectionReset === 'true') {
+        const section = btn.closest('[data-overlay-variable-section="true"]')
+        const sectionBody = section?.querySelector('.overlay-variable-section-body') || section
+        if (sectionBody) {
+          runCollectionGroupReset(btn, sectionBody).then(() => {
+            updateOverlayVariableSectionSummary(section)
+          }).catch(error => {
+            console.error('[overlay section reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Overlay section reset to defaults failed.')
             }
           })
           return
@@ -7400,6 +7423,10 @@ function wireOverlayDetailToggles (scope) {
   wireDetailToggles('.overlay-details-toggle', scope)
 }
 
+function wireOverlayVariableSectionToggles (scope) {
+  wireDetailToggles('.overlay-variable-section-toggle', scope)
+}
+
 function wireCollectionDetailToggles (scope) {
   wireDetailToggles('.collection-details-toggle', scope)
 }
@@ -7504,6 +7531,47 @@ function updateCollectionVariableSectionSummary (section) {
     : configuredCount === 1
       ? '1 override'
       : `${configuredCount} overrides`
+}
+
+function updateOverlayVariableSectionSummary (section) {
+  if (!section) return
+  const summary = section.querySelector('[data-overlay-section-summary]')
+  const body = section.querySelector('.overlay-variable-section-body')
+  if (!summary || !body) return
+
+  const fieldsByName = new Map()
+  body.querySelectorAll('[name]').forEach(field => {
+    if (!field || field.disabled) return
+    const name = String(field.name || '').trim()
+    if (!name) return
+    if (!fieldsByName.has(name)) fieldsByName.set(name, [])
+    fieldsByName.get(name).push(field)
+  })
+
+  let configuredCount = 0
+  fieldsByName.forEach(fields => {
+    if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
+  })
+
+  summary.textContent = configuredCount === 0
+    ? 'Defaults'
+    : configuredCount === 1
+      ? '1 override'
+      : `${configuredCount} overrides`
+}
+
+function wireOverlayVariableSections (scope) {
+  const root = scope || document
+  root.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
+    if (section.dataset.summaryBound === 'true') return
+
+    const refresh = () => updateOverlayVariableSectionSummary(section)
+    section.addEventListener('input', refresh)
+    section.addEventListener('change', refresh)
+    refresh()
+
+    section.dataset.summaryBound = 'true'
+  })
 }
 
 function wireCollectionVariableSections (scope) {
