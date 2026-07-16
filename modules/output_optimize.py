@@ -35,6 +35,9 @@ just a plain re-import.
 
 from __future__ import annotations
 
+import re
+
+from modules import helpers
 from modules.output_defaults import (
     _build_attribute_defaults,
     _build_collection_defaults,
@@ -137,6 +140,155 @@ def _reorder_ratings_template_vars(entry):
         if key not in ordered:
             ordered[key] = tv[key]
     entry["template_variables"] = ordered
+
+
+_NATURAL_SORT_RE = re.compile(r"(\d+)")
+_ID_TOKEN_RE = re.compile(r"^(?:\d+|tt\d+)$", re.IGNORECASE)
+
+
+def _natural_sort_key(value):
+    parts = _NATURAL_SORT_RE.split(str(value or ""))
+    return tuple((0, int(part)) if part.isdigit() else (1, part.lower()) for part in parts)
+
+
+def _id_sort_key(value):
+    text = str(value or "").strip()
+    if text.isdigit():
+        return (0, int(text), text)
+    imdb_match = re.fullmatch(r"tt(\d+)", text, flags=re.IGNORECASE)
+    if imdb_match:
+        return (1, int(imdb_match.group(1)), text.lower())
+    return (2, _natural_sort_key(text))
+
+
+def _is_sortable_id_list(value):
+    if not isinstance(value, list) or len(value) < 2:
+        return False
+    for item in value:
+        text = str(item or "").strip()
+        if not _ID_TOKEN_RE.fullmatch(text):
+            return False
+    return True
+
+
+def _sort_id_list_template_values(template_vars):
+    if not isinstance(template_vars, dict):
+        return
+    for key, value in list(template_vars.items()):
+        if _is_sortable_id_list(value):
+            template_vars[key] = sorted(value, key=_id_sort_key)
+
+
+def _build_collection_template_orders():
+    """Build canonical template-variable key order from quickstart_collections.json."""
+    orders = {"movie": {}, "show": {}, "all": {}}
+    try:
+        data = helpers.load_quickstart_config("quickstart_collections.json")
+    except Exception as exc:
+        helpers.ts_log(f"Failed to load quickstart_collections.json for template variable ordering: {exc}", level="ERROR")
+        return orders
+
+    for group in data or []:
+        for collection in group.get("collections", []):
+            collection_id = collection.get("id")
+            if not collection_id:
+                continue
+            default_key = collection_id.replace("collection_", "", 1)
+            exact_order = {}
+            dynamic_prefixes = []
+            exact_keys = []
+
+            for index, item in enumerate(collection.get("template_variables") or []):
+                if not isinstance(item, dict):
+                    continue
+                key = item.get("key")
+                if key:
+                    exact_order[key] = index
+                    exact_keys.append(str(key))
+                dynamic_prefix = item.get("dynamic_child_prefix")
+                if dynamic_prefix:
+                    dynamic_prefixes.append((str(dynamic_prefix), index))
+
+            child_suffixes = {key.removeprefix("use_") for key in exact_keys if key.startswith("use_") and key not in {"use_all", "use_separator"}}
+            sibling_prefixes = {}
+            for key in exact_keys:
+                for suffix in sorted(child_suffixes, key=len, reverse=True):
+                    if not suffix or not key.endswith(f"_{suffix}"):
+                        continue
+                    prefix = key[: -len(suffix)]
+                    if not prefix:
+                        continue
+                    sibling_prefixes.setdefault(prefix, []).append((key, exact_order[key], suffix))
+                    break
+
+            sortable_sibling_prefixes = [(prefix, min(index for _key, index, _suffix in members)) for prefix, members in sibling_prefixes.items() if len(members) > 1]
+
+            order_spec = {
+                "exact": exact_order,
+                "dynamic": sorted(dynamic_prefixes, key=lambda pair: (-len(pair[0]), pair[1])),
+                "siblings": sorted(sortable_sibling_prefixes, key=lambda pair: (-len(pair[0]), pair[1])),
+            }
+            media_types = [mt for mt in (collection.get("media_types") or []) if mt in ("movie", "show")]
+            if not media_types:
+                orders["all"][default_key] = order_spec
+                continue
+            for media_type in media_types:
+                orders[media_type][default_key] = order_spec
+            if len(media_types) > 1:
+                orders["all"][default_key] = order_spec
+    return orders
+
+
+def _pick_collection_template_order(collection_orders, library_type, default_name):
+    if not default_name:
+        return None
+    library_type = library_type if library_type in ("movie", "show") else None
+    if library_type:
+        order_spec = collection_orders.get(library_type, {}).get(default_name)
+        if order_spec:
+            return order_spec
+    order_spec = collection_orders.get("all", {}).get(default_name)
+    if order_spec:
+        return order_spec
+    for fallback_type in ("movie", "show"):
+        order_spec = collection_orders.get(fallback_type, {}).get(default_name)
+        if order_spec:
+            return order_spec
+    return None
+
+
+def _collection_template_sort_key(key, order_spec):
+    key_text = str(key or "")
+    exact_order = (order_spec or {}).get("exact") or {}
+    for sibling_prefix, index in (order_spec or {}).get("siblings") or []:
+        if key_text.startswith(sibling_prefix) and key_text != sibling_prefix:
+            return (0, index, _natural_sort_key(key_text[len(sibling_prefix) :]))
+
+    if key_text in exact_order:
+        return (0, exact_order[key_text], ())
+
+    for dynamic_prefix, index in (order_spec or {}).get("dynamic") or []:
+        if key_text.startswith(dynamic_prefix) and key_text != dynamic_prefix:
+            return (0, index, _natural_sort_key(key_text[len(dynamic_prefix) :]))
+
+    return (1, len(exact_order), _natural_sort_key(key_text))
+
+
+def _reorder_collection_template_vars(entry, collection_orders, library_type):
+    """Reorder collection template_variables into Quickstart's canonical order."""
+    if not isinstance(entry, dict):
+        return
+    tv = entry.get("template_variables")
+    if not isinstance(tv, dict) or not tv:
+        return
+
+    _sort_id_list_template_values(tv)
+
+    order_spec = _pick_collection_template_order(collection_orders, library_type, entry.get("default"))
+    if not order_spec:
+        return
+
+    entry["template_variables"] = {key: tv[key] for key in sorted(tv.keys(), key=lambda item: _collection_template_sort_key(item, order_spec))}
 
 
 # --- ratings offset math --------------------------------------------------
@@ -463,7 +615,7 @@ def _optimize_library_level(library_data, attribute_defaults):
         library_data.pop("template_variables", None)
 
 
-def _optimize_collection_files(library_data, collection_defaults, library_type):
+def _optimize_collection_files(library_data, collection_defaults, collection_orders, library_type):
     """Prune per-collection-file template_variables in place."""
     collection_files = library_data.get("collection_files")
     if not isinstance(collection_files, list):
@@ -484,6 +636,7 @@ def _optimize_collection_files(library_data, collection_defaults, library_type):
             pruned["data_ending"] = tv.get("data_ending")
         if pruned:
             entry["template_variables"] = pruned
+            _reorder_collection_template_vars(entry, collection_orders, library_type)
         else:
             entry.pop("template_variables", None)
 
@@ -538,6 +691,7 @@ def optimize_template_variables(config_data, library_types=None):
         return config_data
 
     collection_defaults = _build_collection_defaults()
+    collection_orders = _build_collection_template_orders()
     overlay_defaults = _build_overlay_defaults()
     attribute_defaults = _build_attribute_defaults()
 
@@ -550,7 +704,7 @@ def optimize_template_variables(config_data, library_types=None):
             library_type = library_types.get(library_name)
 
         _optimize_library_level(library_data, attribute_defaults)
-        _optimize_collection_files(library_data, collection_defaults, library_type)
+        _optimize_collection_files(library_data, collection_defaults, collection_orders, library_type)
         _optimize_overlay_files(library_data, overlay_defaults, library_type)
 
     return config_data

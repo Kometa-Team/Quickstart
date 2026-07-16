@@ -25,6 +25,7 @@ import json
 from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers
+from modules.output_collections import _LOOKUP_LABELS_SUFFIX, _TEMPLATE_VARIABLE_COMMENTS_KEY, _parse_template_lookup_labels
 from modules.output_values import _coerce_bool, _normalize_asset_directory_values
 
 # Values that we treat as "no override provided" for the numeric-ish
@@ -353,14 +354,20 @@ def _discover_template_variables(template_data, library_type, template_key):
     """
     prefix = f"{library_type}-library_{template_key}"
     discovered = {}
+    lookup_labels = {}
     for key, value in template_data.items():
         if not key.startswith(prefix):
             continue
         for suffix, output_name in _TEMPLATE_VAR_SUFFIXES.items():
+            if key.endswith(f"{suffix}{_LOOKUP_LABELS_SUFFIX}"):
+                labels = _parse_template_lookup_labels(value)
+                if labels:
+                    lookup_labels[output_name] = labels
+                break
             if key.endswith(suffix):
                 discovered[output_name] = value
                 break
-    return discovered
+    return discovered, lookup_labels
 
 
 def build_template_variables(templates, library_type, library_key, has_collectionless):
@@ -386,7 +393,7 @@ def build_template_variables(templates, library_type, library_key, has_collectio
     """
     template_key = helpers.extract_library_name(library_key)
     template_data = templates.get(template_key, {})
-    discovered = _discover_template_variables(template_data, library_type, template_key)
+    discovered, lookup_labels = _discover_template_variables(template_data, library_type, template_key)
 
     sep_color = discovered.get("use_separator")
     template_vars = {"use_separator": bool(sep_color)}
@@ -414,6 +421,9 @@ def build_template_variables(templates, library_type, library_key, has_collectio
 
     if has_collectionless:
         template_vars["collection_mode"] = "hide"
+
+    if lookup_labels:
+        template_vars[_TEMPLATE_VARIABLE_COMMENTS_KEY] = lookup_labels
 
     return template_vars
 

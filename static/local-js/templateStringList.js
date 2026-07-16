@@ -252,6 +252,7 @@
       if (wrapper.dataset.listenerAdded) return
       const hiddenId = wrapper.dataset.hiddenInput
       const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
+      const lookupLabelsHidden = hiddenId ? document.getElementById(`${hiddenId}__lookup_labels`) : null
       const input = wrapper.querySelector('input[type="text"]')
       const addBtn = wrapper.querySelector('[data-template-string-add]')
       const list = wrapper.querySelector('[data-template-string-items]')
@@ -280,6 +281,60 @@
         }
         if (raw.toLowerCase() === 'none') return []
         return raw.split(',').map(item => item.trim()).filter(Boolean)
+      }
+
+      function parseLookupLabels () {
+        if (!lookupLabelsHidden) return {}
+        const raw = String(lookupLabelsHidden.value || '').trim()
+        if (!raw) return {}
+        try {
+          const parsed = JSON.parse(raw)
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return Object.fromEntries(
+              Object.entries(parsed)
+                .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+                .filter(([key, value]) => key && value)
+            )
+          }
+        } catch {
+          return {}
+        }
+        return {}
+      }
+
+      function writeLookupLabels (labels) {
+        if (!lookupLabelsHidden) return
+        const cleanLabels = Object.fromEntries(
+          Object.entries(labels || {})
+            .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+            .filter(([key, value]) => key && value)
+        )
+        lookupLabelsHidden.value = JSON.stringify(cleanLabels)
+        lookupLabelsHidden.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+
+      function pruneLookupLabels (values) {
+        if (!lookupLabelsHidden) return
+        const allowed = new Set((values || []).map(value => String(value || '').trim()).filter(Boolean))
+        const labels = parseLookupLabels()
+        let changed = false
+        Object.keys(labels).forEach(key => {
+          if (!allowed.has(key)) {
+            delete labels[key]
+            changed = true
+          }
+        })
+        if (changed) writeLookupLabels(labels)
+      }
+
+      function storeLookupLabel (value, label) {
+        if (!lookupLabelsHidden || !value || !label) return
+        const labels = parseLookupLabels()
+        const key = String(value).trim()
+        const normalizedLabel = String(label).trim()
+        if (!key || !normalizedLabel || labels[key] === normalizedLabel) return
+        labels[key] = normalizedLabel
+        writeLookupLabels(labels)
       }
 
       function getCounterpartHiddenId () {
@@ -441,6 +496,7 @@
               lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
                 if (!lookupMeta.isConnected) return
                 if (result.valid && result.verified && result.label) {
+                  storeLookupLabel(item.value, result.label)
                   const successMessage = result.message || `TMDb: ${result.label}`
                   setLookupState(lookupMeta, {
                     valid: true,
@@ -480,6 +536,7 @@
               lookupTemplateStringValue(presetName, item.value, { libraryName, mediaType }).then(result => {
                 if (!lookupMeta.isConnected) return
                 if (result.valid && result.verified && result.label) {
+                  storeLookupLabel(item.value, result.label)
                   const successMessage = result.message || `Plex: ${result.label}`
                   setLookupState(lookupMeta, {
                     valid: true,
@@ -517,6 +574,7 @@
         }
 
         hidden.value = JSON.stringify(normalizedValues)
+        pruneLookupLabels(normalizedValues)
         renderList(analyzed)
 
         const invalidItems = analyzed.filter(item => !item.valid)

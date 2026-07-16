@@ -2040,6 +2040,65 @@ fieldset:disabled .btn {
     transition: background-color 0.2s ease;
 }
 
+.collection-variable-section,
+.overlay-variable-section,
+.template-toggle-group {
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.collection-variable-section.template-variable-section-has-overrides,
+.overlay-variable-section.template-variable-section-has-overrides,
+.template-toggle-group.template-variable-section-has-overrides {
+    border-color: rgba(var(--accent-color), 0.55) !important;
+    background: linear-gradient(90deg, rgba(var(--accent-color), 0.08), transparent 38%);
+    padding-left: 1rem !important;
+}
+
+.collection-variable-section.template-variable-section-has-overrides::before,
+.overlay-variable-section.template-variable-section-has-overrides::before,
+.template-toggle-group.template-variable-section-has-overrides::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45rem;
+    bottom: 0.45rem;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--theme-primary);
+    box-shadow: 0 0 10px rgba(var(--accent-color), 0.35);
+}
+
+.accordion-header.template-variable-section-has-overrides {
+    border-left: 4px solid var(--theme-primary) !important;
+    padding-left: 10px !important;
+}
+
+.template-override-summary,
+.accordion-override-summary {
+    color: var(--theme-primary-hover) !important;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.template-variable-field-has-override {
+    position: relative;
+    border-left: 4px solid var(--theme-primary) !important;
+    box-shadow: inset 7px 0 0 rgba(var(--accent-color), 0.08);
+    background: linear-gradient(90deg, rgba(var(--accent-color), 0.08), transparent 34%);
+    padding-left: 0.45rem;
+}
+
+.input-group.template-variable-field-has-override > .input-group-text:first-child,
+.font-row.template-variable-field-has-override .input-group-text:first-child,
+.rgba-group.template-variable-field-has-override .input-group-text:first-child,
+[data-collection-field-wrapper].template-variable-field-has-override > .input-group-text:first-child,
+[data-template-string-list].template-variable-field-has-override .input-group-text:first-child,
+[data-template-mapping-list].template-variable-field-has-override .input-group-text:first-child {
+    color: var(--theme-primary-hover);
+    font-weight: 700;
+}
+
 /* -------------------- */
 /* INPUT STYLES         */
 /* -------------------- */

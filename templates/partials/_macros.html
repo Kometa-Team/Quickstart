@@ -400,6 +400,10 @@ prefix if yml_location == "top_level" else
                 value="{{ imdb_data | default('', true) }}"
                 data-default=""
                 data-separator-placeholder-input="imdb"
+                data-template-scalar-lookup="true"
+                data-validation-preset="imdb_id_tmdb"
+                data-library-name="{{ library.name }}"
+                data-media-type="{{ library_media_type }}"
                 aria-describedby="{{ imdb_id }}_text"
                 placeholder="tt1234567"
                 pattern="tt\d{7,8}"
@@ -407,6 +411,9 @@ prefix if yml_location == "top_level" else
                 inputmode="text"
                 autocapitalize="off">
         </div>
+        <input type="hidden" id="{{ imdb_id }}__lookup_labels" name="{{ imdb_name }}__lookup_labels"
+            value="{{ data['libraries'].get(imdb_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+            data-template-metadata="lookup-labels" data-skip-override-count="true">
         {% if library_media_type == 'movie' %}
         <div class="input-group mb-2 separator-placeholder-field d-none" data-placeholder-source="tmdb_movie">
             <span class="input-group-text" id="{{ tmdb_id }}_text">
@@ -417,6 +424,10 @@ prefix if yml_location == "top_level" else
                 value="{{ tmdb_data | default('', true) }}"
                 data-default=""
                 data-separator-placeholder-input="tmdb_movie"
+                data-template-scalar-lookup="true"
+                data-validation-preset="numeric_id"
+                data-library-name="{{ library.name }}"
+                data-media-type="{{ library_media_type }}"
                 aria-describedby="{{ tmdb_id }}_text"
                 placeholder="603"
                 pattern="\d+"
@@ -424,6 +435,9 @@ prefix if yml_location == "top_level" else
                 inputmode="numeric"
                 data-numeric-only="true">
         </div>
+        <input type="hidden" id="{{ tmdb_id }}__lookup_labels" name="{{ tmdb_name }}__lookup_labels"
+            value="{{ data['libraries'].get(tmdb_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+            data-template-metadata="lookup-labels" data-skip-override-count="true">
         {% else %}
         <div class="input-group mb-2 separator-placeholder-field d-none" data-placeholder-source="tvdb_show">
             <span class="input-group-text" id="{{ tvdb_id }}_text">
@@ -1323,6 +1337,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 data-detail-section="true"
                                 data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
                                 style="display: {{ 'block' if render_group.default_open else 'none' }};">
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
+                                        data-collection-variable-section-reset="true">
+                                        Reset {{ render_group.label }}
+                                    </button>
+                                </div>
                         {% endif %}
                         {% set season = namespace(open=false) %}
                         {% for item in render_group.fields %}
@@ -1509,6 +1530,9 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         <ul class="list-group mt-2" data-template-string-items></ul>
                         <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}"
                             data-default='{{ list_default_json }}'>
+                        <input type="hidden" id="{{ input_name }}__lookup_labels" name="{{ input_name }}__lookup_labels"
+                            value="{{ data['libraries'].get(input_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+                            data-template-metadata="lookup-labels" data-skip-override-count="true">
                         </div>
                         {% elif item.type == 'mapping_list' %}
                         {% set stored_map = data['libraries'].get(input_name) %}
@@ -1771,6 +1795,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
                                 data-default="{{ item.default | default('', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                {% if item.validation_preset %}data-template-scalar-lookup="true" data-library-name="{{ library.name }}" data-media-type="{{ library.type }}"{% endif %}
                                 {% if field_requires_plex_pass %}data-requires-plex-pass="true" data-plex-pass-available="{{ 'true' if has_plex_pass else 'false' }}"{% endif %}
                                 {% if item.requires_any_of_template_keys is defined and item.requires_any_of_template_keys %}data-requires-any-of-template-keys="{{ item.requires_any_of_template_keys | join(',') }}" data-requirement-hint="{{ item.requirement_hint | default('', true) }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
@@ -1789,6 +1814,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 {% endif %}
                                 {% if field_disabled %}disabled{% endif %}>
                         </div>
+                        {% if item.validation_preset %}
+                        <input type="hidden" id="{{ input_name }}__lookup_labels" name="{{ input_name }}__lookup_labels"
+                            value="{{ data['libraries'].get(input_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+                            data-template-metadata="lookup-labels" data-skip-override-count="true">
+                        {% endif %}
                         {% if field_requires_plex_pass and not has_plex_pass %}
                         <input type="hidden" name="{{ input_name }}" value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}">
                         <div class="form-text text-warning mb-2">Requires Plex Pass. Validate Plex first if this should be available.</div>
@@ -2071,8 +2101,108 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 {% else %}
                                                 {% set tv_items = raw_tv_items %}
                                                 {% endif %}
+                                                {% set overlay_sections = overlay.template_variable_sections if overlay.template_variable_sections is defined else [] %}
+                                                {% set overlay_render_groups = [] %}
+                                                {% if overlay_sections and overlay.id != 'overlay_ratings' %}
+                                                {% set grouped_vars = [] %}
+                                                {% for section_def in overlay_sections %}
+                                                    {% set section_items = [] %}
+                                                    {% for tv_item in tv_items %}
+                                                        {% if is_mapping %}
+                                                            {% set tv_var_name = tv_item[0] %}
+                                                            {% set tv_var_details = tv_item[1] %}
+                                                        {% else %}
+                                                            {% set tv_var_details = tv_item %}
+                                                            {% set tv_var_name = tv_var_details.key or ('var' ~ loop.index0) %}
+                                                        {% endif %}
+                                                        {% set tv_section = tv_var_details.section if tv_var_details.section is defined else 'basics' %}
+                                                        {% if tv_section == section_def.id %}
+                                                            {% set _ = section_items.append(tv_item) %}
+                                                            {% set _ = grouped_vars.append(tv_var_name) %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% if section_items %}
+                                                        {% set _ = overlay_render_groups.append({
+                                                            'id': section_def.id,
+                                                            'label': section_def.label,
+                                                            'summary': section_def.summary if section_def.summary is defined else '',
+                                                            'default_open': section_def.default_open if section_def.default_open is defined else false,
+                                                            'fields': section_items,
+                                                            'flat': false
+                                                        }) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% set ungrouped_items = [] %}
+                                                {% for tv_item in tv_items %}
+                                                    {% if is_mapping %}
+                                                        {% set tv_var_name = tv_item[0] %}
+                                                    {% else %}
+                                                        {% set tv_var_details = tv_item %}
+                                                        {% set tv_var_name = tv_var_details.key or ('var' ~ loop.index0) %}
+                                                    {% endif %}
+                                                    {% if tv_var_name not in grouped_vars %}
+                                                        {% set _ = ungrouped_items.append(tv_item) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if ungrouped_items %}
+                                                    {% set _ = overlay_render_groups.append({
+                                                        'id': 'other',
+                                                        'label': 'Other',
+                                                        'summary': 'Additional overlay settings.',
+                                                        'default_open': false,
+                                                        'fields': ungrouped_items,
+                                                        'flat': false
+                                                    }) %}
+                                                {% endif %}
+                                                {% endif %}
+                                                {% if not overlay_render_groups %}
+                                                    {% set _ = overlay_render_groups.append({
+                                                        'id': 'all',
+                                                        'label': 'Details',
+                                                        'summary': '',
+                                                        'default_open': true,
+                                                        'fields': tv_items,
+                                                        'flat': true
+                                                    }) %}
+                                                {% endif %}
                                                 {% set seen_vars = [] %}
-                                                {% for item in tv_items %}
+                                                {% for render_group in overlay_render_groups %}
+                                                {% if not render_group.flat %}
+                                                {% set render_group_body_id = template_name ~ '-' ~ render_group.id ~ '-section-body' %}
+                                                <div class="border rounded p-2 mb-3 collection-variable-section overlay-variable-section"
+                                                    data-overlay-variable-section="true"
+                                                    data-overlay-variable-section-id="{{ render_group.id }}">
+                                                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+                                                        <div class="fw-semibold">{{ render_group.label }}</div>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="small text-muted" data-overlay-section-summary>Defaults</span>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary btn-overlay overlay-variable-section-toggle"
+                                                                data-section-id="{{ render_group_body_id }}"
+                                                                data-show-label="Show"
+                                                                data-hide-label="Hide"
+                                                                aria-expanded="{{ 'true' if render_group.default_open else 'false' }}">
+                                                                {{ 'Hide' if render_group.default_open else 'Show' }}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    {% if render_group.summary %}
+                                                    <div class="form-text mb-2">{{ render_group.summary }}</div>
+                                                    {% endif %}
+                                                    <div class="overlay-variable-section-body"
+                                                        id="{{ render_group_body_id }}"
+                                                        data-detail-section="true"
+                                                        data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
+                                                        style="display: {{ 'block' if render_group.default_open else 'none' }};">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
+                                                                data-overlay-variable-section-reset="true">
+                                                                Reset {{ render_group.label }}
+                                                            </button>
+                                                        </div>
+                                                {% endif %}
+                                                {% for item in render_group.fields %}
                                                 {% if is_mapping %}
                                                 {% set var_name = item[0] %}
                                                 {% set var_details = item[1] %}
@@ -2419,6 +2549,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                     {% endif %}
                                                     {% endif %}
                                                     {% endfor %}
+                                                {% if not render_group.flat %}
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% endfor %}
 
                                                 {% if not ns.has_offsets and effective_offsets is mapping %}
                                                 {% set h_default = effective_offsets.get('horizontal', 0) %}

@@ -88,6 +88,12 @@ class TestExtractQuickstartMarkerFields:
         assert fields["mode"] == "analyze"
         assert fields["foo"] == "bar"
 
+    def test_extracts_quickstart_version_fields(self):
+        content = "[Quickstart] Run marker: quickstart=0.10.4-build302 branch=develop start_mode=current"
+        fields = extract_quickstart_marker_fields(content)
+        assert fields["quickstart"] == "0.10.4-build302"
+        assert fields["branch"] == "develop"
+
     def test_valid_start_mode_kept(self):
         for mode in ("current", "recovery", "logged"):
             content = f"[Quickstart] Run marker: start_mode={mode}"

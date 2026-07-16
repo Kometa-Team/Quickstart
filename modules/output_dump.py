@@ -34,10 +34,11 @@ import io
 from datetime import datetime, timezone
 
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import PlainScalarString
 
 from modules import database, helpers
-from modules.output_collections import _normalize_settings_section_value
+from modules.output_collections import _LOOKUP_LABELS_SUFFIX, _normalize_settings_section_value, _TEMPLATE_VARIABLE_COMMENTS_KEY, _parse_template_lookup_labels
 from modules.output_headers import render_section_header
 from modules.output_values import _normalize_asset_directory_values
 
@@ -194,6 +195,118 @@ def _plainify_strings(obj):
     if isinstance(obj, str):
         return PlainScalarString(obj)
     return obj
+
+
+def _format_inline_comment(value):
+    text = " ".join(str(value or "").replace("\r", " ").replace("\n", " ").split())
+    return text.strip()
+
+
+def _split_comment_values(value):
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text:
+        return []
+    return [item.strip() for item in text.split(",") if item.strip()]
+
+
+def _format_value_comment(value, labels):
+    values = _split_comment_values(value)
+    if len(values) == 1:
+        return _format_inline_comment(labels.get(values[0]))
+    comments = []
+    for item in values:
+        label = _format_inline_comment(labels.get(str(item).strip()))
+        if label:
+            comments.append(f"{item}: {label}")
+    return "; ".join(comments)
+
+
+def _apply_comment_map_to_template_vars(template_vars, comment_map):
+    if not isinstance(template_vars, dict) or not isinstance(comment_map, dict):
+        return template_vars
+
+    commented_template_vars = template_vars if isinstance(template_vars, CommentedMap) else CommentedMap(template_vars)
+    for template_key, labels in comment_map.items():
+        if not isinstance(labels, dict) or template_key not in commented_template_vars:
+            continue
+        values = commented_template_vars.get(template_key)
+        if isinstance(values, list):
+            commented_values = CommentedSeq(values)
+            for index, item in enumerate(commented_values):
+                comment = _format_inline_comment(labels.get(str(item).strip()))
+                if comment:
+                    commented_values.yaml_add_eol_comment(comment, index)
+            commented_template_vars[template_key] = commented_values
+            continue
+        comment = _format_value_comment(values, labels)
+        if comment:
+            commented_template_vars.yaml_add_eol_comment(comment, key=template_key)
+    return commented_template_vars
+
+
+def _pop_lookup_label_sidecars(container):
+    if not isinstance(container, dict):
+        return {}
+
+    comment_map = {}
+    for key in list(container.keys()):
+        key_text = str(key or "")
+        if not key_text.endswith(_LOOKUP_LABELS_SUFFIX):
+            continue
+        template_key = key_text[: -len(_LOOKUP_LABELS_SUFFIX)]
+        labels = _parse_template_lookup_labels(container.pop(key, None))
+        if template_key and labels:
+            comment_map[template_key] = labels
+    return comment_map
+
+
+def _apply_settings_lookup_comments(cleaned_data):
+    settings_block = cleaned_data.get("settings") if isinstance(cleaned_data, dict) else None
+    if not isinstance(settings_block, dict):
+        return
+
+    comment_map = _pop_lookup_label_sidecars(settings_block)
+    if not comment_map:
+        return
+
+    cleaned_data["settings"] = _apply_comment_map_to_template_vars(settings_block, comment_map)
+
+
+def _apply_template_variable_comments(cleaned_data):
+    """Attach saved lookup labels as YAML end-of-line comments.
+
+    The UI persists label metadata beside template string-list fields under
+    ``__template_variable_comments``.  That key is internal to Quickstart: it
+    must be consumed before dumping so Kometa never sees it.
+    """
+    libraries = cleaned_data.get("libraries") if isinstance(cleaned_data, dict) else None
+    if not isinstance(libraries, dict):
+        return
+
+    for library_data in libraries.values():
+        if not isinstance(library_data, dict):
+            continue
+        library_comment_map = library_data.pop(_TEMPLATE_VARIABLE_COMMENTS_KEY, None)
+        if isinstance(library_comment_map, dict) and isinstance(library_data.get("template_variables"), dict):
+            library_data["template_variables"] = _apply_comment_map_to_template_vars(library_data["template_variables"], library_comment_map)
+
+        collection_files = library_data.get("collection_files")
+        if not isinstance(collection_files, list):
+            continue
+
+        for entry in collection_files:
+            if not isinstance(entry, dict):
+                continue
+            comment_map = entry.pop(_TEMPLATE_VARIABLE_COMMENTS_KEY, None)
+            if not isinstance(comment_map, dict):
+                continue
+            template_vars = entry.get("template_variables")
+            if not isinstance(template_vars, dict):
+                continue
+
+            entry["template_variables"] = _apply_comment_map_to_template_vars(template_vars, comment_map)
 
 
 # --- per-section post-cleaning tweaks -------------------------------------
@@ -381,6 +494,10 @@ def dump_section(title, dump_name, data, header_style, config_name):
 
     if dump_name == "settings":
         _apply_settings_normalization(cleaned_data)
+        _apply_settings_lookup_comments(cleaned_data)
+
+    if dump_name == "libraries":
+        _apply_template_variable_comments(cleaned_data)
 
     dump_yaml = _build_dump_yaml()
     with io.StringIO() as stream:

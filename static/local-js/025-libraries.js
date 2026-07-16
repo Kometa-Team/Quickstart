@@ -36,6 +36,65 @@ const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
 let activeLibraryId = null
 let loadRequestId = 0
 let allowNextStepNavigation = false
+let lookupLabelAutosaveTimer = null
+
+function setLibrariesButtonBusy (button, busy, label = 'Working...') {
+  if (!button) return
+  if (!button.dataset.librariesBusyOriginalHtml) {
+    button.dataset.librariesBusyOriginalHtml = button.innerHTML
+  }
+  if (!button.dataset.librariesBusyOriginalWidth) {
+    const width = button.getBoundingClientRect ? button.getBoundingClientRect().width : 0
+    if (width > 0) {
+      button.dataset.librariesBusyOriginalWidth = `${Math.ceil(width)}px`
+      button.style.minWidth = button.dataset.librariesBusyOriginalWidth
+    }
+  }
+  button.disabled = !!busy
+  button.setAttribute('aria-busy', busy ? 'true' : 'false')
+  if (busy) {
+    button.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>${label}`
+  } else {
+    button.innerHTML = button.dataset.librariesBusyOriginalHtml || button.innerHTML
+    button.removeAttribute('aria-busy')
+  }
+}
+
+function shouldShowLibrariesButtonSpinner (button) {
+  if (!button || button.disabled || button.getAttribute('aria-busy') === 'true') return false
+  if (!button.classList.contains('btn')) return false
+  if (button.classList.contains('accordion-button') || button.classList.contains('btn-close')) return false
+  if (button.matches('[data-bs-dismiss], [data-bs-toggle="collapse"], [data-bs-toggle="dropdown"], [data-bs-toggle="modal"]')) return false
+  if (button.matches('[data-toggle-secret-visibility], [data-collection-section-move], [data-section-id]')) return false
+  if (button.matches('.style-preview-card, .font-picker-card, .overlay-details-toggle')) return false
+  if (button.closest('.btn-group') && button.querySelector('.bi-chevron-up, .bi-chevron-down')) return false
+  return true
+}
+
+function showLibrariesButtonClickSpinner (button, label = 'Working...') {
+  if (!shouldShowLibrariesButtonSpinner(button)) return
+  const token = String(Date.now())
+  button.dataset.librariesClickBusyToken = token
+  setLibrariesButtonBusy(button, true, label)
+  window.setTimeout(() => {
+    if (button.dataset.librariesClickBusyToken !== token) return
+    delete button.dataset.librariesClickBusyToken
+    setLibrariesButtonBusy(button, false)
+  }, 450)
+}
+
+function setLibrariesButtonPersistentBusy (button, busy, label = 'Working...') {
+  if (busy && button?.dataset?.librariesClickBusyToken) {
+    delete button.dataset.librariesClickBusyToken
+  }
+  setLibrariesButtonBusy(button, busy, label)
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('button')
+  if (!button || !document.body.contains(button)) return
+  showLibrariesButtonClickSpinner(button)
+}, true)
 const dependencyHintConfigs = {
   tautulli: {
     stepKey: '030-tautulli',
@@ -3402,6 +3461,14 @@ const templateStringListPresetConfigs = {
       ? { valid: true }
       : { valid: false, message: 'Enter a numeric ID like 603 or 1399.' }
   },
+  imdb_id_tmdb: {
+    duplicateInsensitive: true,
+    normalize: value => value.toLowerCase(),
+    lookupService: 'tmdb',
+    validate: value => /^tt\d{7,8}$/i.test(value)
+      ? { valid: true }
+      : { valid: false, message: 'Enter an IMDb ID like tt1234567 or tt12345678.' }
+  },
   imdb_id_plex: {
     duplicateInsensitive: true,
     normalize: value => value.toLowerCase(),
@@ -3715,7 +3782,7 @@ function setupTemplateStringListHandlers (scope) {
     }
   }
 
-  function applyLookupState (target, presetConfig, presetName, value, context = {}) {
+function applyLookupState (target, presetConfig, presetName, value, context = {}, onResolvedLabel = null) {
     if (!target || !presetConfig?.lookupService || !value) return
 
     if (presetConfig.lookupService === 'tmdb') {
@@ -3735,8 +3802,11 @@ function setupTemplateStringListHandlers (scope) {
       })
       lookupTemplateStringValue(presetName, value, context).then(result => {
         if (!target.isConnected) return
-        if (result.valid && result.verified && result.label) {
-          const successMessage = result.message || `TMDb: ${result.label}`
+      if (result.valid && result.verified && result.label) {
+        if (typeof onResolvedLabel === 'function') {
+          onResolvedLabel(value, result.label)
+        }
+        const successMessage = result.message || `TMDb: ${result.label}`
           setLookupState(target, {
             valid: true,
             verified: true,
@@ -3779,8 +3849,11 @@ function setupTemplateStringListHandlers (scope) {
       })
       lookupTemplateStringValue(presetName, value, context).then(result => {
         if (!target.isConnected) return
-        if (result.valid && result.verified && result.label) {
-          const successMessage = result.message || `Plex: ${result.label}`
+      if (result.valid && result.verified && result.label) {
+        if (typeof onResolvedLabel === 'function') {
+          onResolvedLabel(value, result.label)
+        }
+        const successMessage = result.message || `Plex: ${result.label}`
           setLookupState(target, {
             valid: true,
             verified: true,
@@ -3837,10 +3910,90 @@ function setupTemplateStringListHandlers (scope) {
   }
 
   const root = scope || document
+  root.querySelectorAll('[data-template-scalar-lookup="true"]').forEach(input => {
+    if (input.dataset.templateScalarLookupBound === 'true') return
+
+    const presetName = String(input.dataset.validationPreset || '').trim()
+    const presetConfig = templateStringListPresetConfigs[presetName]
+    if (!presetConfig?.lookupService) return
+
+    const lookupLabelsHidden = input.id ? document.getElementById(`${input.id}__lookup_labels`) : null
+    const libraryName = String(input.dataset.libraryName || '').trim()
+    const mediaType = String(input.dataset.mediaType || '').trim()
+    const lookupMeta = document.createElement('div')
+    lookupMeta.className = 'small mt-1 d-none'
+
+    const wrapper = input.closest('[data-collection-field-wrapper="true"], .input-group') || input
+    wrapper.insertAdjacentElement('afterend', lookupMeta)
+
+    function writeLookupLabels (labels) {
+      if (!lookupLabelsHidden) return
+      const cleanLabels = Object.fromEntries(
+        Object.entries(labels || {})
+          .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+          .filter(([key, value]) => key && value)
+      )
+      lookupLabelsHidden.value = JSON.stringify(cleanLabels)
+      lookupLabelsHidden.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    function validateScalarValue () {
+      const rawValue = String(input.value || '').trim()
+      const normalized = presetConfig.normalize ? presetConfig.normalize(rawValue) : rawValue
+      const result = presetConfig.validate ? presetConfig.validate(normalized) : { valid: Boolean(normalized) }
+      return {
+        value: normalized,
+        valid: Boolean(result.valid),
+        message: result.message || 'Enter a valid value.'
+      }
+    }
+
+    function storeLookupLabel (value, label) {
+      if (!lookupLabelsHidden || !value || !label) return
+      const key = String(value).trim()
+      const normalizedLabel = String(label).trim()
+      if (!key || !normalizedLabel) return
+      writeLookupLabels({ [key]: normalizedLabel })
+      scheduleLookupLabelAutosave()
+    }
+
+    function runLookup () {
+      const checked = validateScalarValue()
+      if (!checked.value) {
+        setLookupState(lookupMeta, { message: '' })
+        writeLookupLabels({})
+        return
+      }
+      if (!checked.valid) {
+        setLookupState(lookupMeta, {
+          valid: false,
+          verified: true,
+          message: checked.message
+        })
+        writeLookupLabels({})
+        return
+      }
+      if (input.value !== checked.value) {
+        input.value = checked.value
+      }
+      applyLookupState(lookupMeta, presetConfig, presetName, checked.value, { libraryName, mediaType }, storeLookupLabel)
+    }
+
+    input.addEventListener('input', () => {
+      writeLookupLabels({})
+      setLookupState(lookupMeta, { message: '' })
+    })
+    input.addEventListener('change', runLookup)
+    input.addEventListener('blur', runLookup)
+    runLookup()
+    input.dataset.templateScalarLookupBound = 'true'
+  })
+
   root.querySelectorAll('[data-template-string-list]').forEach(wrapper => {
     if (wrapper.dataset.listenerAdded) return
     const hiddenId = wrapper.dataset.hiddenInput
     const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
+    const lookupLabelsHidden = hiddenId ? document.getElementById(`${hiddenId}__lookup_labels`) : null
     const input = wrapper.querySelector('[data-template-string-input]')
     const addBtn = wrapper.querySelector('[data-template-string-add]')
     const list = wrapper.querySelector('[data-template-string-items]')
@@ -3872,6 +4025,61 @@ function setupTemplateStringListHandlers (scope) {
         // fall through to treat as single value
       }
       return [raw]
+    }
+
+    function parseLookupLabels () {
+      if (!lookupLabelsHidden) return {}
+      const raw = String(lookupLabelsHidden.value || '').trim()
+      if (!raw) return {}
+      try {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return Object.fromEntries(
+            Object.entries(parsed)
+              .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+              .filter(([key, value]) => key && value)
+          )
+        }
+      } catch {
+        return {}
+      }
+      return {}
+    }
+
+    function writeLookupLabels (labels) {
+      if (!lookupLabelsHidden) return
+      const cleanLabels = Object.fromEntries(
+        Object.entries(labels || {})
+          .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+          .filter(([key, value]) => key && value)
+      )
+      lookupLabelsHidden.value = JSON.stringify(cleanLabels)
+      lookupLabelsHidden.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    function pruneLookupLabels (values) {
+      if (!lookupLabelsHidden) return
+      const allowed = new Set((values || []).map(value => String(value || '').trim()).filter(Boolean))
+      const labels = parseLookupLabels()
+      let changed = false
+      Object.keys(labels).forEach(key => {
+        if (!allowed.has(key)) {
+          delete labels[key]
+          changed = true
+        }
+      })
+      if (changed) writeLookupLabels(labels)
+    }
+
+    function storeLookupLabel (value, label) {
+      if (!lookupLabelsHidden || !value || !label) return
+      const labels = parseLookupLabels()
+      const key = String(value).trim()
+      const normalizedLabel = String(label).trim()
+      if (!key || !normalizedLabel || labels[key] === normalizedLabel) return
+      labels[key] = normalizedLabel
+      writeLookupLabels(labels)
+      scheduleLookupLabelAutosave()
     }
 
     function getCounterpartHiddenId () {
@@ -4003,7 +4211,7 @@ function setupTemplateStringListHandlers (scope) {
         })
 
         if (item.valid && presetConfig.lookupService) {
-          applyLookupState(lookupMeta, presetConfig, presetName, item.value, { libraryName, mediaType })
+          applyLookupState(lookupMeta, presetConfig, presetName, item.value, { libraryName, mediaType }, storeLookupLabel)
         }
       })
     }
@@ -4025,6 +4233,7 @@ function setupTemplateStringListHandlers (scope) {
       }
 
       hidden.value = JSON.stringify(normalizedValues)
+      pruneLookupLabels(normalizedValues)
       renderList(analyzed)
 
       const invalidItems = analyzed.filter(item => !item.valid)
@@ -5159,6 +5368,7 @@ function mountCard (card, libraryId) {
   setupMappingListHandlers('genre_mapper', card)
   setupMappingListHandlers('content_rating_mapper', card)
   wireOverlayDetailToggles(card)
+  wireOverlayVariableSectionToggles(card)
   wireCollectionDetailToggles(card)
   wireCollectionVariableSectionToggles(card)
   setupParentChildToggleVisibility(card)
@@ -5168,6 +5378,7 @@ function mountCard (card, libraryId) {
   setupAddMissingDependencies(card)
   wireOverlayTemplateSections(card)
   wireCollectionTemplateSections(card)
+  wireOverlayVariableSections(card)
   wireCollectionVariableSections(card)
   if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
     OverlayHandler.initializeOverlayBoards(card)
@@ -5313,10 +5524,26 @@ function initLibraryAssetDirectoryInputs (card) {
   })
 }
 
-function autosaveActiveLibrary () {
+function scheduleLookupLabelAutosave (delayMs = 900) {
+  if (lookupLabelAutosaveTimer) {
+    clearTimeout(lookupLabelAutosaveTimer)
+    lookupLabelAutosaveTimer = null
+  }
+  lookupLabelAutosaveTimer = setTimeout(() => {
+    lookupLabelAutosaveTimer = null
+    if (!activeLibraryId || window.QS_SWITCHING_CONFIG) return
+    autosaveActiveLibrary({ quiet: true })
+      .catch(err => {
+        console.warn('[Autosave] Failed to persist lookup labels', err)
+      })
+  }, Math.max(0, Number(delayMs) || 0))
+}
+
+function autosaveActiveLibrary (options = {}) {
   const card = libraryContainer.firstElementChild
   if (!activeLibraryId || !card) return Promise.resolve()
   if (window.QS_SWITCHING_CONFIG) return Promise.resolve()
+  const quiet = Boolean(options && options.quiet)
 
   if (typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
     const pathValid = PathValidation.validateAll(card)
@@ -5324,7 +5551,7 @@ function autosaveActiveLibrary () {
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.focusFirstInvalidField === 'function') {
         ValidationHandler.focusFirstInvalidField(card)
       }
-      if (typeof showToast === 'function') {
+      if (!quiet && typeof showToast === 'function') {
         showToast('error', 'Please fix invalid path fields before saving.')
       }
       return Promise.reject(new Error('Invalid path fields'))
@@ -5337,7 +5564,7 @@ function autosaveActiveLibrary () {
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.focusFirstInvalidField === 'function') {
         ValidationHandler.focusFirstInvalidField(card)
       }
-      if (typeof showToast === 'function') {
+      if (!quiet && typeof showToast === 'function') {
         showToast('error', 'Please fix invalid URL fields before saving.')
       }
       return Promise.reject(new Error('Invalid URL fields'))
@@ -5376,7 +5603,7 @@ function autosaveActiveLibrary () {
       return res.json().catch(() => ({}))
     })
     .then(data => {
-      if (data && data.success && typeof showToast === 'function') {
+      if (data && data.success && !quiet && typeof showToast === 'function') {
         showToast('success', `Autosaved ${friendlyName}.`)
       }
       if (data && data.success) {
@@ -5387,7 +5614,7 @@ function autosaveActiveLibrary () {
     })
     .catch(err => {
       console.error('[Autosave] Failed to save library', activeLibraryId, err)
-      if (typeof showToast === 'function') {
+      if (!quiet && typeof showToast === 'function') {
         showToast('error', err.message || `Autosave failed for ${friendlyName}.`)
       }
       throw err
@@ -5678,10 +5905,12 @@ document.querySelectorAll('.overlay-template-section').forEach((el) => {
 })
 
 wireOverlayDetailToggles()
+wireOverlayVariableSectionToggles()
 wireCollectionDetailToggles()
 wireCollectionVariableSectionToggles()
 wireOverlayTemplateSections()
 wireCollectionTemplateSections()
+wireOverlayVariableSections()
 wireCollectionVariableSections()
 wireRatingsOffsetSync()
 
@@ -5724,12 +5953,14 @@ function getCollectionSectionEntries (libraryId) {
       collectionId,
       label,
       inputId: input.id,
+      defaultValue: String(input.dataset.default || '').trim(),
       currentValue: String(input.value || '').trim(),
+      effectiveValue: String(input.value || input.dataset.default || '').trim(),
       domIndex: index
     })
   })
   entries.sort((left, right) => {
-    const byValue = compareCollectionSectionValues(left.currentValue, right.currentValue)
+    const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)
     if (byValue !== 0) return byValue
     return left.domIndex - right.domIndex
   })
@@ -5760,8 +5991,8 @@ function buildCollectionSectionListItem (entry, position) {
       </div>
     </div>
     <div class="text-end">
-      <div class="small text-muted">Current</div>
-      <span class="badge bg-secondary" data-collection-section-current>${entry.currentValue || 'blank'}</span>
+      <div class="small text-muted">${entry.currentValue ? 'Current' : 'Default'}</div>
+      <span class="badge bg-secondary" data-collection-section-current>${entry.currentValue || entry.defaultValue || 'blank'}</span>
       <div class="small text-muted mt-1">New: <span data-collection-section-next>${String(position * 10).padStart(3, '0')}</span></div>
     </div>
   `
@@ -5774,6 +6005,17 @@ function refreshCollectionSectionPreviewNumbers (list) {
     const next = item.querySelector('[data-collection-section-next]')
     if (next) next.textContent = String((index + 1) * 10).padStart(3, '0')
   })
+}
+
+function setCollectionSectionActionBusy (button, busy) {
+  setLibrariesButtonPersistentBusy(button, busy)
+}
+
+function markCollectionSectionModalCustomOrder (modalEl) {
+  if (!modalEl) return
+  modalEl.dataset.collectionSectionResetMode = 'false'
+  const status = modalEl.querySelector('[data-collection-section-modal-status]')
+  if (status) status.textContent = 'Custom order pending. Save Order will write collection_section overrides.'
 }
 
 function ensureCollectionSectionModalRoot (modalEl) {
@@ -5847,6 +6089,7 @@ function renderCollectionSectionModalList (modalEl) {
     return entries
   }
   entries.forEach((entry, index) => list.appendChild(buildCollectionSectionListItem(entry, index + 1)))
+  modalEl.dataset.collectionSectionResetMode = 'false'
   if (status) status.textContent = `${entries.length} enabled collection default${entries.length === 1 ? '' : 's'} ready to reorder.`
   if (saveButton) saveButton.disabled = false
   refreshCollectionSectionPreviewNumbers(list)
@@ -5860,6 +6103,7 @@ function renderCollectionSectionModalList (modalEl) {
     delay: 180,
     touchStartThreshold: 6,
     onSort: function () {
+      markCollectionSectionModalCustomOrder(modalEl)
       refreshCollectionSectionPreviewNumbers(list)
     }
   })
@@ -5868,26 +6112,63 @@ function renderCollectionSectionModalList (modalEl) {
 
 function saveCollectionSectionModalOrder (modalEl) {
   if (!modalEl) return
+  modalEl = prepareCollectionSectionModal(modalEl)
+  const saveButton = modalEl.querySelector('[data-collection-section-save]')
+  setCollectionSectionActionBusy(saveButton, true)
   const list = modalEl.querySelector('[data-collection-section-sortable]')
   const items = Array.from(list ? list.children : [])
-  if (!items.length) return
-  items.forEach((item, index) => {
-    const inputId = item.dataset.inputId
-    const input = inputId ? document.getElementById(inputId) : null
-    if (!input) return
-    const nextValue = String((index + 1) * 10).padStart(3, '0')
-    input.value = nextValue
-    input.dispatchEvent(new Event('input', { bubbles: true }))
-    input.dispatchEvent(new Event('change', { bubbles: true }))
-    const current = item.querySelector('[data-collection-section-current]')
-    if (current) current.textContent = nextValue
-  })
-  if (typeof showToast === 'function') {
-    showToast('success', 'Collection section order updated.')
-  }
-  refreshCollectionSectionPreviewNumbers(list)
-  const modal = bootstrap && bootstrap.Modal ? bootstrap.Modal.getInstance(modalEl) : null
-  if (modal) modal.hide()
+  const resetMode = modalEl.dataset.collectionSectionResetMode === 'true'
+  window.setTimeout(() => {
+    if (!items.length) {
+      setCollectionSectionActionBusy(saveButton, false)
+      return
+    }
+    if (!resetMode) {
+      items.forEach((item, index) => {
+        const inputId = item.dataset.inputId
+        const input = inputId ? document.getElementById(inputId) : null
+        if (!input) return
+        const nextValue = String((index + 1) * 10).padStart(3, '0')
+        input.value = nextValue
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+        const current = item.querySelector('[data-collection-section-current]')
+        if (current) current.textContent = nextValue
+      })
+    }
+    if (typeof showToast === 'function') {
+      showToast(resetMode ? 'info' : 'success', resetMode ? 'Collection section overrides cleared. JSON defaults will be used.' : 'Collection section order updated.')
+    }
+    refreshCollectionSectionPreviewNumbers(list)
+    const modal = typeof bootstrap !== 'undefined' && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalEl) : null
+    if (modal) modal.hide()
+    setCollectionSectionActionBusy(saveButton, false)
+  }, 120)
+}
+
+function resetCollectionSectionModalOrder (modalEl) {
+  if (!modalEl) return
+  modalEl = prepareCollectionSectionModal(modalEl)
+  const resetButton = modalEl.querySelector('[data-collection-section-reset]')
+  setCollectionSectionActionBusy(resetButton, true)
+  const entries = getCollectionSectionEntries(modalEl.dataset.libraryId)
+  window.setTimeout(() => {
+    entries.forEach(entry => {
+      const input = entry.inputId ? document.getElementById(entry.inputId) : null
+      if (!input) return
+      input.value = ''
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    renderCollectionSectionModalList(modalEl)
+    modalEl.dataset.collectionSectionResetMode = 'true'
+    const status = modalEl.querySelector('[data-collection-section-modal-status]')
+    if (status) status.textContent = 'Defaults pending. Save Order will clear collection_section overrides and use JSON defaults.'
+    if (typeof showToast === 'function') {
+      showToast('info', 'Collection section overrides cleared. Save Order to use JSON defaults.')
+    }
+    setCollectionSectionActionBusy(resetButton, false)
+  }, 120)
 }
 
 document.addEventListener('click', (event) => {
@@ -5905,7 +6186,7 @@ document.addEventListener('click', (event) => {
   const resetButton = event.target.closest('[data-collection-section-reset]')
   if (resetButton) {
     const modalEl = resetButton.closest('[data-collection-section-modal]')
-    renderCollectionSectionModalList(modalEl)
+    resetCollectionSectionModalOrder(modalEl)
     return
   }
 
@@ -5927,6 +6208,7 @@ document.addEventListener('click', (event) => {
     } else if (direction === 'down' && item.nextElementSibling) {
       list.insertBefore(item.nextElementSibling, item)
     }
+    markCollectionSectionModalCustomOrder(moveButton.closest('[data-collection-section-modal]'))
     refreshCollectionSectionPreviewNumbers(list)
   }
 })
@@ -6084,6 +6366,9 @@ function toggleOverlayTemplateSection (checkbox) {
       }
     }
   }
+  groupContainer?.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
+    updateOverlayVariableSectionSummary(section)
+  })
 }
 
 function toggleCollectionTemplateSection (parentToggle) {
@@ -6239,9 +6524,7 @@ async function runCollectionGroupReset (btn, group) {
   const idleLabel = btn.dataset.resetIdleLabel || btn.textContent.trim() || 'Reset to Defaults'
   btn.dataset.resetIdleLabel = idleLabel
   btn.dataset.resetBusy = 'true'
-  btn.disabled = true
-  btn.setAttribute('aria-busy', 'true')
-  btn.textContent = 'Resetting...'
+  setLibrariesButtonPersistentBusy(btn, true, 'Resetting...')
 
   const pauseForPaint = async () => {
     await new Promise(resolve => requestAnimationFrame(() => resolve()))
@@ -6379,6 +6662,7 @@ async function runCollectionGroupReset (btn, group) {
       trigger.dispatchEvent(new Event('change', { bubbles: true }))
     }
 
+    refreshTemplateOverrideState(group.closest('.template-toggle-group') || group)
     updateAccordionHighlights()
     if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
       ValidationHandler.updateValidationState()
@@ -6386,10 +6670,8 @@ async function runCollectionGroupReset (btn, group) {
     finalizeToast(changes)
   } finally {
     delete group.dataset.resetting
-    btn.disabled = false
-    btn.removeAttribute('aria-busy')
     btn.dataset.resetBusy = 'false'
-    btn.textContent = idleLabel
+    setLibrariesButtonPersistentBusy(btn, false)
   }
 }
 
@@ -6397,7 +6679,39 @@ function wireOffsetReset (scope) {
   const root = scope || document
   root.querySelectorAll('.reset-offset-btn').forEach(btn => {
     if (btn.dataset.listenerAdded) return
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      if (btn.dataset.collectionVariableSectionReset === 'true') {
+        const section = btn.closest('[data-collection-variable-section="true"]')
+        const sectionBody = section?.querySelector('.collection-variable-section-body') || section
+        if (sectionBody) {
+          runCollectionGroupReset(btn, sectionBody).then(() => {
+            refreshTemplateOverrideState(section.closest('.template-toggle-group') || section)
+          }).catch(error => {
+            console.error('[collection section reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Section reset to defaults failed.')
+            }
+          })
+          return
+        }
+      }
+
+      if (btn.dataset.overlayVariableSectionReset === 'true') {
+        const section = btn.closest('[data-overlay-variable-section="true"]')
+        const sectionBody = section?.querySelector('.overlay-variable-section-body') || section
+        if (sectionBody) {
+          runCollectionGroupReset(btn, sectionBody).then(() => {
+            refreshTemplateOverrideState(section.closest('.template-toggle-group') || section)
+          }).catch(error => {
+            console.error('[overlay section reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Overlay section reset to defaults failed.')
+            }
+          })
+          return
+        }
+      }
+
       const group = btn.closest('.template-toggle-group')
       if (group?.dataset?.collectionId) {
         runCollectionGroupReset(btn, group).catch(error => {
@@ -6408,13 +6722,27 @@ function wireOffsetReset (scope) {
         })
         return
       }
-      if (group) {
-        group.dataset.resetting = 'true'
+      setLibrariesButtonPersistentBusy(btn, true, 'Resetting...')
+      await new Promise(resolve => requestAnimationFrame(() => resolve()))
+      await new Promise(resolve => window.setTimeout(resolve, 0))
+      const finishOverlayReset = () => {
+        if (group) {
+          refreshTemplateOverrideState(group)
+          updateAccordionHighlights()
+          if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
+            ValidationHandler.updateValidationState()
+          }
+        }
+        setLibrariesButtonPersistentBusy(btn, false)
       }
-      const changes = []
-      const touched = new Set()
-      const isRatingsOverlay = group?.dataset?.overlayId === 'overlay_ratings'
-      const escapeHtml = (value) => String(value ?? '')
+      try {
+        if (group) {
+          group.dataset.resetting = 'true'
+        }
+        const changes = []
+        const touched = new Set()
+        const isRatingsOverlay = group?.dataset?.overlayId === 'overlay_ratings'
+        const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -6600,24 +6928,34 @@ function wireOffsetReset (scope) {
         }
       }
 
-      if (isRatingsOverlay && group) {
-        group.dataset.ratingFontForce = 'true'
-        const ratingImageInputs = group.querySelectorAll('[name$="[rating1_image]"], [name$="[rating2_image]"], [name$="[rating3_image]"]')
-        ratingImageInputs.forEach(input => {
-          input.dispatchEvent(new Event('change', { bubbles: true }))
-        })
-        window.setTimeout(() => {
-          ratingFontInputs.forEach(input => {
-            const from = ratingFontBefore.get(input) || ''
-            const to = getDisplayValue(input)
-            if (from !== to) {
-              changes.push({ label: getInputLabel(input), from, to })
-            }
+        if (isRatingsOverlay && group) {
+          group.dataset.ratingFontForce = 'true'
+          const ratingImageInputs = group.querySelectorAll('[name$="[rating1_image]"], [name$="[rating2_image]"], [name$="[rating3_image]"]')
+          ratingImageInputs.forEach(input => {
+            input.dispatchEvent(new Event('change', { bubbles: true }))
           })
+          window.setTimeout(() => {
+            ratingFontInputs.forEach(input => {
+              const from = ratingFontBefore.get(input) || ''
+              const to = getDisplayValue(input)
+              if (from !== to) {
+                changes.push({ label: getInputLabel(input), from, to })
+              }
+            })
+            finalizeToast()
+            finishOverlayReset()
+          }, 0)
+        } else {
           finalizeToast()
-        }, 0)
-      } else {
-        finalizeToast()
+          finishOverlayReset()
+        }
+      } catch (error) {
+        console.error('[overlay reset failed]', error)
+        if (group) delete group.dataset.resetting
+        if (typeof showToast === 'function') {
+          showToast('error', 'Reset to defaults failed.')
+        }
+        finishOverlayReset()
       }
     })
     btn.dataset.listenerAdded = 'true'
@@ -7260,6 +7598,10 @@ function wireOverlayDetailToggles (scope) {
   wireDetailToggles('.overlay-details-toggle', scope)
 }
 
+function wireOverlayVariableSectionToggles (scope) {
+  wireDetailToggles('.overlay-variable-section-toggle', scope)
+}
+
 function wireCollectionDetailToggles (scope) {
   wireDetailToggles('.collection-details-toggle', scope)
 }
@@ -7296,8 +7638,16 @@ function parseCollectionSectionStoredMapping (rawValue) {
   return {}
 }
 
+function isInternalTemplateMetadataField (field) {
+  if (!field) return false
+  const name = String(field.name || '').trim()
+  return field.dataset?.skipOverrideCount === 'true' ||
+    field.dataset?.templateMetadata === 'lookup-labels' ||
+    name.endsWith('__lookup_labels')
+}
+
 function isCollectionSectionFieldConfigured (fields) {
-  const enabledFields = Array.from(fields || []).filter(field => field && !field.disabled)
+  const enabledFields = Array.from(fields || []).filter(field => field && !field.disabled && !isInternalTemplateMetadataField(field))
   if (!enabledFields.length) return false
 
   const visibleFields = enabledFields.filter(field => field.type !== 'hidden')
@@ -7339,6 +7689,123 @@ function isCollectionSectionFieldConfigured (fields) {
   return defaultValue ? value !== defaultValue : true
 }
 
+function formatTemplateOverrideCount (count) {
+  return count === 1 ? '1 override' : `${count} overrides`
+}
+
+function setOverrideSummaryBadge (badge, count) {
+  if (!badge) return
+  badge.textContent = count > 0 ? formatTemplateOverrideCount(count) : ''
+  badge.classList.toggle('d-none', count <= 0)
+}
+
+function findTemplateVariableFieldRow (field) {
+  if (!field) return null
+  return field.closest(
+    '[data-template-string-list], ' +
+    '[data-template-mapping-list], ' +
+    '[data-overlay-language-weight-builder], ' +
+    '[data-collection-field-wrapper], ' +
+    '.rgba-group, ' +
+    '.font-row, ' +
+    '.input-group, ' +
+    '.form-check'
+  )
+}
+
+function updateTemplateVariableFieldOverrideStates (body, fieldsByName) {
+  if (!body) return
+  body.querySelectorAll('.template-variable-field-has-override').forEach(row => {
+    row.classList.remove('template-variable-field-has-override')
+    row.removeAttribute('data-template-variable-field-override')
+  })
+
+  fieldsByName.forEach(fields => {
+    if (!isCollectionSectionFieldConfigured(fields)) return
+    fields.forEach(field => {
+      if (isInternalTemplateMetadataField(field)) return
+      const row = findTemplateVariableFieldRow(field)
+      if (!row) return
+      row.classList.add('template-variable-field-has-override')
+      row.dataset.templateVariableFieldOverride = 'true'
+    })
+  })
+}
+
+function getOrCreateTemplateOverrideBadge (group) {
+  if (!group) return null
+  let badge = group.querySelector('[data-template-group-override-summary]')
+  if (badge) return badge
+
+  badge = document.createElement('span')
+  badge.className = 'small template-override-summary ms-2 d-none'
+  badge.dataset.templateGroupOverrideSummary = 'true'
+
+  const target = group.querySelector('.overlay-toggle-row') || group.querySelector('.form-check > .d-flex') || group.querySelector('.form-check')
+  target?.appendChild(badge)
+  return badge
+}
+
+function getOrCreateAccordionOverrideBadge (header) {
+  if (!header) return null
+  let badge = header.querySelector('[data-accordion-override-summary]')
+  if (badge) return badge
+
+  const button = header.querySelector('.accordion-button')
+  if (!button) return null
+
+  badge = document.createElement('span')
+  badge.className = 'small accordion-override-summary ms-3 d-none'
+  badge.dataset.accordionOverrideSummary = 'true'
+  button.appendChild(badge)
+  return badge
+}
+
+function updateAncestorOverrideSummaries (element) {
+  let collapse = element?.closest('.accordion-collapse')
+  const seen = new Set()
+
+  while (collapse && !seen.has(collapse)) {
+    seen.add(collapse)
+    const accordionItem = collapse.closest('.accordion-item')
+    const header = accordionItem?.querySelector('.accordion-header')
+    const count = Array.from(collapse.querySelectorAll('.template-toggle-group')).reduce((total, group) => {
+      return total + (Number(group.dataset.overrideCount || '0') || 0)
+    }, 0)
+
+    accordionItem?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
+
+    collapse = accordionItem?.parentElement?.closest('.accordion-collapse')
+  }
+}
+
+function updateTemplateGroupOverrideSummary (section) {
+  const group = section?.closest('.template-toggle-group')
+  if (!group) return
+
+  const sections = group.querySelectorAll('[data-collection-variable-section="true"], [data-overlay-variable-section="true"]')
+  const count = Array.from(sections).reduce((total, item) => {
+    return total + (Number(item.dataset.overrideCount || '0') || 0)
+  }, 0)
+
+  group.dataset.overrideCount = String(count)
+  group.classList.toggle('template-variable-section-has-overrides', count > 0)
+  setOverrideSummaryBadge(getOrCreateTemplateOverrideBadge(group), count)
+  updateAncestorOverrideSummaries(group)
+}
+
+function refreshTemplateOverrideState (scope) {
+  const root = scope || document
+  root.querySelectorAll('[data-collection-variable-section="true"]').forEach(section => {
+    updateCollectionVariableSectionSummary(section)
+  })
+  root.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
+    updateOverlayVariableSectionSummary(section)
+  })
+}
+
 function updateCollectionVariableSectionSummary (section) {
   if (!section) return
   const summary = section.querySelector('[data-collection-section-summary]')
@@ -7348,6 +7815,7 @@ function updateCollectionVariableSectionSummary (section) {
   const fieldsByName = new Map()
   body.querySelectorAll('[name]').forEach(field => {
     if (!field || field.disabled) return
+    if (isInternalTemplateMetadataField(field)) return
     const name = String(field.name || '').trim()
     if (!name) return
     if (!fieldsByName.has(name)) fieldsByName.set(name, [])
@@ -7359,11 +7827,63 @@ function updateCollectionVariableSectionSummary (section) {
     if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
   })
 
+  updateTemplateVariableFieldOverrideStates(body, fieldsByName)
+
   summary.textContent = configuredCount === 0
     ? 'Defaults'
     : configuredCount === 1
       ? '1 override'
       : `${configuredCount} overrides`
+  section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
+  section.dataset.overrideCount = String(configuredCount)
+  updateTemplateGroupOverrideSummary(section)
+}
+
+function updateOverlayVariableSectionSummary (section) {
+  if (!section) return
+  const summary = section.querySelector('[data-overlay-section-summary]')
+  const body = section.querySelector('.overlay-variable-section-body')
+  if (!summary || !body) return
+
+  const fieldsByName = new Map()
+  body.querySelectorAll('[name]').forEach(field => {
+    if (!field || field.disabled) return
+    if (isInternalTemplateMetadataField(field)) return
+    const name = String(field.name || '').trim()
+    if (!name) return
+    if (!fieldsByName.has(name)) fieldsByName.set(name, [])
+    fieldsByName.get(name).push(field)
+  })
+
+  let configuredCount = 0
+  fieldsByName.forEach(fields => {
+    if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
+  })
+
+  updateTemplateVariableFieldOverrideStates(body, fieldsByName)
+
+  summary.textContent = configuredCount === 0
+    ? 'Defaults'
+    : configuredCount === 1
+      ? '1 override'
+      : `${configuredCount} overrides`
+  section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
+  section.dataset.overrideCount = String(configuredCount)
+  updateTemplateGroupOverrideSummary(section)
+}
+
+function wireOverlayVariableSections (scope) {
+  const root = scope || document
+  root.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
+    if (section.dataset.summaryBound === 'true') return
+
+    const refresh = () => updateOverlayVariableSectionSummary(section)
+    section.addEventListener('input', refresh)
+    section.addEventListener('change', refresh)
+    refresh()
+
+    section.dataset.summaryBound = 'true'
+  })
 }
 
 function wireCollectionVariableSections (scope) {

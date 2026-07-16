@@ -2048,6 +2048,30 @@ def test_logscan_trends_returns_kometa_start_mode(client, isolated_config_dir, m
     assert payload["runs"][0]["start_mode"] == "recovery"
 
 
+def test_logscan_trends_returns_quickstart_version_fields(client, isolated_config_dir, qs_module):
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-quickstart-version-1",
+            "tool_name": "kometa",
+            "finished_at": "2026-05-05T20:17:00Z",
+            "config_name": "demo",
+            "created_at": "2026-05-05T20:17:00Z",
+            "quickstart_run_marker": True,
+            "quickstart_version": "0.10.4-build302",
+            "quickstart_branch": "develop",
+            "kometa_version": "2.3.1",
+        }
+    )
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["runs"]
+    assert payload["runs"][0]["quickstart_run_marker"] is True
+    assert payload["runs"][0]["quickstart_version"] == "0.10.4-build302"
+    assert payload["runs"][0]["quickstart_branch"] == "develop"
+
+
 def test_logscan_startup_migration_defers_without_logs(isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)

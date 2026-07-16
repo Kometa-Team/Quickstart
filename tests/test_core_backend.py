@@ -3073,6 +3073,47 @@ def test_collapse_collection_data_template_vars_handles_actor_style_data_blocks(
     }
 
 
+def test_collection_section_blank_normalizes_to_none():
+    from modules import output
+
+    assert output._normalize_collection_template_var_value("collection_section", "") is None
+    assert output._normalize_collection_template_var_value("collection_section", None) is None
+
+
+def test_collection_template_variable_sibling_groups_emit_in_stable_sorted_order(app):
+    from modules.output_optimize import optimize_template_variables
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "default": "seasonal",
+                        "template_variables": {
+                            "schedule_women": "daily",
+                            "schedule_black_history": "daily",
+                            "schedule_aapi": "daily",
+                            "schedule_valentine": "daily",
+                            "schedule_years": "daily",
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    optimized = optimize_template_variables(config_data, {"Movies": "movie"})
+    template_variables = optimized["libraries"]["Movies"]["collection_files"][0]["template_variables"]
+
+    assert list(template_variables) == [
+        "schedule_aapi",
+        "schedule_black_history",
+        "schedule_valentine",
+        "schedule_women",
+        "schedule_years",
+    ]
+
+
 def test_collapse_collection_data_template_vars_removes_flat_data_keys_from_all_collection_entries():
     from modules import output
 

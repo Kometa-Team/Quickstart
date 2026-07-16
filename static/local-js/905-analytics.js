@@ -1,3 +1,4 @@
+/* global bootstrap */
 import { elementGroup } from './modules/elementGroup.js'
 
 const tableBody = document.querySelector('#logscan-trends-table tbody')
@@ -41,6 +42,8 @@ const limit = elementGroup('#logscan-trends-limit', '#logscan-trends-limit-botto
 const configFilter = elementGroup('#logscan-trends-config-filter', '#logscan-trends-config-filter-bottom')
 const toolFilter = elementGroup('#logscan-trends-tool-filter', '#logscan-trends-tool-filter-bottom')
 const timeRange = elementGroup('#logscan-trends-time-range', '#logscan-trends-time-range-bottom')
+const toolVersionFilter = elementGroup('#logscan-trends-tool-version-filter', '#logscan-trends-tool-version-filter-bottom')
+const quickstartVersionFilter = elementGroup('#logscan-trends-quickstart-version-filter', '#logscan-trends-quickstart-version-filter-bottom')
 const commandFilter = elementGroup('#logscan-trends-command-filter', '#logscan-trends-command-filter-bottom')
 const resetFilters = elementGroup('#logscan-trends-reset-filters', '#logscan-trends-reset-filters-bottom')
 const dateStart = elementGroup('#logscan-trends-date-start', '#logscan-trends-date-start-bottom')
@@ -333,6 +336,14 @@ function getRunCommandValue (run) {
   return ''
 }
 
+function getRunToolVersionValue (run) {
+  return String(run && run.kometa_version ? run.kometa_version : '').trim()
+}
+
+function getRunQuickstartVersionValue (run) {
+  return String(run && run.quickstart_version ? run.quickstart_version : '').trim()
+}
+
 function getRunToolName (run) {
   if (!run) return 'kometa'
   return String(run.tool_name || 'kometa').trim().toLowerCase() || 'kometa'
@@ -377,6 +388,23 @@ function renderKometaStartModeBadge (run) {
   const label = getKometaStartModeLabel(run)
   if (!label) return ''
   return `<span class="badge text-bg-secondary ms-2">Start: ${escapeHtml(label)}</span>`
+}
+
+function renderRunVersionCell (run) {
+  let toolDisplay = run && run.kometa_version ? run.kometa_version : 'n/a'
+  if (run && run.kometa_version && run.kometa_newest_version && run.kometa_version !== run.kometa_newest_version) {
+    toolDisplay = `${run.kometa_version} -> ${run.kometa_newest_version}`
+  }
+  const quickstartVersion = run && run.quickstart_version ? String(run.quickstart_version).trim() : ''
+  const quickstartBranch = run && run.quickstart_branch ? String(run.quickstart_branch).trim() : ''
+  const quickstartDisplay = quickstartVersion
+    ? `${quickstartVersion}${quickstartBranch ? ` (${quickstartBranch})` : ''}`
+    : ''
+  if (!quickstartDisplay) return escapeHtml(toolDisplay)
+  return `
+    <div><span class="text-muted">Tool:</span> ${escapeHtml(toolDisplay)}</div>
+    <div><span class="text-muted">QS:</span> ${escapeHtml(quickstartDisplay)}</div>
+  `
 }
 
 function getImagemaidMode (run) {
@@ -1192,7 +1220,7 @@ function getSelectedCountSeries () {
 }
 
 function renderCountsSeriesSelector () {
-  if (!countsSeries.length) return
+  if (!countsSeries) return
   const html = LOG_LEVEL_SERIES.map(series => {
     const active = Boolean(countsSeriesSelection && countsSeriesSelection[series.key])
     return `
@@ -1639,7 +1667,7 @@ function renderImagemaidModeMix (runs) {
 }
 
 function renderArchiveStorageSummary (storage) {
-  if (!tablePolicy.length) return
+  if (!tablePolicy) return
   const kometaKeepLimit = storage && Number.isFinite(storage.kometa_keep_limit)
     ? storage.kometa_keep_limit
     : (parseInt((window.QS_AppConfig && window.QS_AppConfig.QS_KOMETA_LOG_KEEP) || '0', 10) || 0)
@@ -1673,7 +1701,7 @@ function renderDaily (runs) {
   const days = Object.keys(buckets).sort().slice(-14)
   if (!days.length) {
     daily.textContent = 'No daily totals yet.'
-    if (dailyRuntime.length) {
+    if (dailyRuntime) {
       dailyRuntime.textContent = 'No runtime averages yet.'
     }
     return
@@ -1759,7 +1787,7 @@ function renderDaily (runs) {
 }
 
 function renderDailyRuntimeAverages (runs, days) {
-  if (!dailyRuntime.length) return
+  if (!dailyRuntime) return
   const buckets = {}
   runs.forEach(run => {
     const key = getRunDateKey(run)
@@ -1840,7 +1868,7 @@ function pruneSelectedRunKeys () {
 }
 
 function updateSelectionSummary () {
-  if (!tableSelectionSummary.length) return
+  if (!tableSelectionSummary) return
   const selectedCount = selectedRunKeys.size
   const visibleSelectable = getSelectableRuns(currentTableRuns).length
   const visibleCompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, false).length
@@ -1851,23 +1879,23 @@ function updateSelectionSummary () {
   } else {
     tableSelectionSummary.textContent = `${selectedCount} selected. ${selectedCompressibleCount} compressible. ${visibleSelectable} deletable in current view.`
   }
-  if (tableCompressSelected.length) {
+  if (tableCompressSelected) {
     tableCompressSelected.disabled = selectedCompressibleCount === 0
   }
-  if (tableDeleteSelected.length) {
+  if (tableDeleteSelected) {
     tableDeleteSelected.disabled = selectedCount === 0
   }
-  if (tableClearSelection.length) {
+  if (tableClearSelection) {
     tableClearSelection.disabled = selectedCount === 0
   }
-  if (tableSelectAll.length) {
+  if (tableSelectAll) {
     tableSelectAll.disabled = visibleSelectable === 0
   }
-  if (tableSelectComplete.length) {
+  if (tableSelectComplete) {
     tableSelectComplete.disabled = visibleCompleteSelectable === 0
     tableSelectComplete.classList.toggle('is-active', tableStatusFilter === 'complete')
   }
-  if (tableSelectIncomplete.length) {
+  if (tableSelectIncomplete) {
     tableSelectIncomplete.disabled = visibleIncompleteSelectable === 0
     tableSelectIncomplete.classList.toggle('is-active', tableStatusFilter === 'incomplete')
   }
@@ -1889,21 +1917,21 @@ function updateTableSummary (total, pageSize, pageCount) {
   const totalIncomplete = Number.isFinite(allIncompleteRunsTotal) ? allIncompleteRunsTotal : allIncompleteRuns.length
   const loaded = allTableRuns.length
   const grandTotal = totalComplete + totalIncomplete
-  if (tableSummary.length) {
+  if (tableSummary) {
     if (!total) {
       tableSummary.textContent = 'No runs match the current filters.'
     } else {
       tableSummary.textContent = `Ingested: ${totalComplete}. Incomplete: ${totalIncomplete}. Showing: ${total}. Page size: ${pageSize}.`
     }
   }
-  if (tableFilterCount.length) {
+  if (tableFilterCount) {
     let filterText = `Filtered: ${total} of ${loaded} loaded`
     if (grandTotal > loaded) {
       filterText += ` (${grandTotal} total)`
     }
     tableFilterCount.textContent = filterText
   }
-  if (!tablePageInfo.length) return
+  if (!tablePageInfo) return
   if (!total) {
     tablePageInfo.textContent = 'No rows'
     updateSelectionSummary()
@@ -1970,10 +1998,7 @@ function renderTable (runs) {
     const progressHelpText = getRunToolName(run) === 'imagemaid'
       ? 'Stored ImageMaid operation matrix for this run, including observed scan/action timings, item counts, and outcomes.'
       : 'Inline final progress snapshot for this run, including preparation, maintenance context, and per-library phase status.'
-    let kometaDisplay = run.kometa_version || 'n/a'
-    if (run.kometa_version && run.kometa_newest_version && run.kometa_version !== run.kometa_newest_version) {
-      kometaDisplay = `${run.kometa_version} -> ${run.kometa_newest_version}`
-    }
+    const versionDisplay = renderRunVersionCell(run)
     const runKey = run.run_key || rowKey
     const isProgressExpanded = expandedProgressRunKeys.has(runKey)
     const isSelectable = isRunSelectable(run)
@@ -2048,7 +2073,7 @@ function renderTable (runs) {
         ${isImageMaidRun ? '' : renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
         ${renderRunCardCell('Command', 'Sanitized command line captured for the run.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
         ${renderRunCardCell('Counts', 'Kometa: C cache, D debug, I info, W warnings, E errors, Cr critical, T tracebacks, plus M movies, S shows, Ep episodes, and Items total. ImageMaid: C D I W E Cr T plus Items total.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
-        ${renderRunCardCell('Version', 'Detected tool version for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
+        ${renderRunCardCell('Version', 'Detected tool version and Quickstart version from the run marker when available.', versionDisplay)}
         ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
         ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
         ${renderRunCardCell(progressLabel, progressHelpText, renderProgressSnapshotCell(run, runKey), 'class="logscan-progress-cell"')}
@@ -2547,6 +2572,8 @@ function getSortValue (run, key) {
       return getDisplayedItemsTotal(run)
     case 'kometa_version':
       return run.kometa_version || ''
+    case 'quickstart_version':
+      return `${run.quickstart_version || ''} ${run.quickstart_branch || ''}`.trim()
     case 'maintenance':
       return getMaintenanceSortValue(run)
     case 'quiet_periods':
@@ -2735,6 +2762,8 @@ function getFilterState () {
   return {
     config: configFilter.value || '',
     tool: toolFilter.value || '',
+    toolVersion: toolVersionFilter.value || '',
+    quickstartVersion: quickstartVersionFilter.value || '',
     timeRange: timeRange.value || 'all',
     command: commandFilter.value || '',
     library: libraryFilter.value || '',
@@ -2757,6 +2786,8 @@ function filterRuns (runs, state) {
   return runs.filter(run => {
     if (state.config && normalizeConfigName(run.config_name) !== state.config) return false
     if (state.tool && getRunToolName(run) !== state.tool) return false
+    if (state.toolVersion && getRunToolVersionValue(run) !== state.toolVersion) return false
+    if (state.quickstartVersion && getRunQuickstartVersionValue(run) !== state.quickstartVersion) return false
     if (state.command && getRunCommandValue(run) !== state.command) return false
     if (rangeStart || rangeEnd) {
       const dateKey = getRunDateKey(run)
@@ -2770,6 +2801,8 @@ function updateFilterOptions (state) {
   let changed = false
   changed = updateConfigFilter(filterRuns(allTableRuns, { ...state, config: '' })) || changed
   changed = updateToolFilter(filterRuns(allTableRuns, { ...state, tool: '' })) || changed
+  changed = updateToolVersionFilter(filterRuns(allTableRuns, { ...state, toolVersion: '' })) || changed
+  changed = updateQuickstartVersionFilter(filterRuns(allTableRuns, { ...state, quickstartVersion: '' })) || changed
   changed = updateCommandFilter(filterRuns(allTableRuns, { ...state, command: '' })) || changed
   changed = updateDateRangeInputs(filterRuns(allTableRuns, { ...state, start: '', end: '', timeRange: 'all' }), state) || changed
   changed = updateLibraryFilter(filterRuns(allRuns, { ...state, library: '' })) || changed
@@ -2788,6 +2821,46 @@ function updateToolFilter (runs) {
   toolFilter.setHTML(options.join(''))
   const nextValue = selected && tools.includes(selected) ? selected : getDefaultToolFilterValue(tools)
   toolFilter.setValue(nextValue)
+  return nextValue !== selected
+}
+
+function updateToolVersionFilter (runs) {
+  if (!toolVersionFilter.length) return false
+  const selected = toolVersionFilter.value || ''
+  const counts = new Map()
+  runs.forEach(run => {
+    const version = getRunToolVersionValue(run)
+    if (!version) return
+    counts.set(version, (counts.get(version) || 0) + 1)
+  })
+  const versions = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  const options = ['<option value="">All tool versions</option>']
+  versions.forEach(version => {
+    options.push(`<option value="${escapeHtml(version)}">${escapeHtml(version)}</option>`)
+  })
+  toolVersionFilter.setHTML(options.join(''))
+  const nextValue = selected && counts.has(selected) ? selected : ''
+  toolVersionFilter.setValue(nextValue)
+  return nextValue !== selected
+}
+
+function updateQuickstartVersionFilter (runs) {
+  if (!quickstartVersionFilter.length) return false
+  const selected = quickstartVersionFilter.value || ''
+  const counts = new Map()
+  runs.forEach(run => {
+    const version = getRunQuickstartVersionValue(run)
+    if (!version) return
+    counts.set(version, (counts.get(version) || 0) + 1)
+  })
+  const versions = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  const options = ['<option value="">All QS versions</option>']
+  versions.forEach(version => {
+    options.push(`<option value="${escapeHtml(version)}">${escapeHtml(version)}</option>`)
+  })
+  quickstartVersionFilter.setHTML(options.join(''))
+  const nextValue = selected && counts.has(selected) ? selected : ''
+  quickstartVersionFilter.setValue(nextValue)
   return nextValue !== selected
 }
 
@@ -3460,7 +3533,7 @@ function fetchRuns (options = {}) {
       if (!suppressStatus) updateStatus('Failed to load trends.')
       summaryEl.textContent = 'Unable to load summary.'
       daily.textContent = 'Unable to load daily totals.'
-      if (dailyRuntime.length) {
+      if (dailyRuntime) {
         dailyRuntime.textContent = 'Unable to load runtime averages.'
       }
       runtimeEl.textContent = 'Unable to load runtime distribution.'
@@ -3790,6 +3863,16 @@ toolFilter.on('change', function () {
   clearDateFilters()
   applyFiltersAndRender()
 })
+toolVersionFilter.on('change', function () {
+  syncMirroredControlValue(toolVersionFilter, this)
+  tablePage = 1
+  applyFiltersAndRender()
+})
+quickstartVersionFilter.on('change', function () {
+  syncMirroredControlValue(quickstartVersionFilter, this)
+  tablePage = 1
+  applyFiltersAndRender()
+})
 timeRange.on('change', function () {
   syncMirroredControlValue(timeRange, this)
   tablePage = 1
@@ -3833,6 +3916,8 @@ resetFilters.on('click', function () {
   tableStatusFilter = 'all'
   configFilter.setValue('')
   toolFilter.setValue('')
+  toolVersionFilter.setValue('')
+  quickstartVersionFilter.setValue('')
   timeRange.setValue('all')
   commandFilter.setValue('')
   libraryFilter.setValue('')

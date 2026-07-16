@@ -75,6 +75,14 @@
           <div id="logscan-trends-date-hint" class="small text-muted logscan-date-hint"></div>
         </div>
         <div class="logscan-filter-row logscan-filter-row-secondary">
+          <select id="logscan-trends-tool-version-filter" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter visuals by Kometa or ImageMaid version. Pair with App to isolate one tool.">
+            <option value="">All tool versions</option>
+          </select>
+          <select id="logscan-trends-quickstart-version-filter" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter visuals by Quickstart version from the run marker.">
+            <option value="">All QS versions</option>
+          </select>
           <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto logscan-control-field"
             title="Filter visuals by run command.">
             <option value="">All commands</option>
@@ -266,6 +274,14 @@
           <div id="logscan-trends-date-hint-bottom" class="small text-muted logscan-date-hint"></div>
         </div>
         <div class="logscan-filter-row logscan-filter-row-secondary">
+          <select id="logscan-trends-tool-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter visuals by Kometa or ImageMaid version. Pair with App to isolate one tool.">
+            <option value="">All tool versions</option>
+          </select>
+          <select id="logscan-trends-quickstart-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
+            title="Filter visuals by Quickstart version from the run marker.">
+            <option value="">All QS versions</option>
+          </select>
           <select id="logscan-trends-command-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
             title="Filter visuals by run command.">
             <option value="">All commands</option>
@@ -322,7 +338,8 @@
             <option value="status">Status</option>
             <option value="tool_name">Tool</option>
             <option value="trace_count">Tracebacks</option>
-            <option value="kometa_version">Version</option>
+            <option value="kometa_version">Tool version</option>
+            <option value="quickstart_version">Quickstart version</option>
             <option value="warning_count">Warnings</option>
           </select>
         <select id="logscan-table-sort-dir" class="form-select form-select-sm w-auto" aria-label="Sort direction">
@@ -434,7 +451,7 @@
               </th>
               <th>
                 <button type="button" class="logscan-sort-button" data-sort="kometa_version"
-                  title="Sort by detected version" aria-label="Sort by detected version">
+                  title="Sort by detected tool version" aria-label="Sort by detected tool version">
                   Version
                   <span class="logscan-sort-icons" aria-hidden="true">
                     <span class="logscan-sort-up"></span>

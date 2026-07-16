@@ -816,6 +816,9 @@
                 <div class="invalid-feedback d-none" data-template-string-feedback></div>
                 <ul class="list-group mt-2" data-template-string-items></ul>
                 <input type="hidden" id="ignore_ids" name="ignore_ids" value="{{ ignore_ids_json }}">
+                <input type="hidden" id="ignore_ids__lookup_labels" name="ignore_ids__lookup_labels"
+                  value="{{ data['settings'].get('ignore_ids__lookup_labels', '{}') | default('{}', true) }}"
+                  data-template-metadata="lookup-labels" data-skip-override-count="true">
               </div>
             </div>
 
@@ -853,6 +856,9 @@
                 <div class="invalid-feedback d-none" data-template-string-feedback></div>
                 <ul class="list-group mt-2" data-template-string-items></ul>
                 <input type="hidden" id="ignore_imdb_ids" name="ignore_imdb_ids" value="{{ ignore_imdb_ids_json }}">
+                <input type="hidden" id="ignore_imdb_ids__lookup_labels" name="ignore_imdb_ids__lookup_labels"
+                  value="{{ data['settings'].get('ignore_imdb_ids__lookup_labels', '{}') | default('{}', true) }}"
+                  data-template-metadata="lookup-labels" data-skip-override-count="true">
               </div>
             </div>
           </div>

@@ -62946,12 +62946,21 @@
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Release Date Order</b> ",
             "default": "release",
             "options": [
-              {
-                "value": "custom",
-                "label": "Custom Order",
+                {
+                    "value": "release",
+                    "label": "Release Date Order",
+                    "media_types": [
+                        "movie",
+                        "show",
+                        "episode"
+                    ]
+                },
+                {
+                    "value": "custom",
+                    "label": "Custom Order",
                 "media_types": [
                   "movie",
                   "show",
@@ -63858,12 +63867,21 @@
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Release Date Order</b> ",
             "default": "release",
             "options": [
-              {
-                "value": "custom",
-                "label": "Custom Order",
+                {
+                    "value": "release",
+                    "label": "Release Date Order",
+                    "media_types": [
+                        "movie",
+                        "show",
+                        "episode"
+                    ]
+                },
+                {
+                    "value": "custom",
+                    "label": "Custom Order",
                 "media_types": [
                   "movie",
                   "show",
