@@ -324,6 +324,8 @@ def _collect_playlist_template_variables_from_libraries_data(nested_libraries_da
             continue
 
         normalized_value = _normalize_playlist_template_var_value(field_key, raw_value)
+        if field_key in {"delete_playlist", "radarr_add_missing", "sonarr_add_missing"} and normalized_value is False:
+            continue
         if normalized_value is not None:
             template_vars[field_key] = normalized_value
 

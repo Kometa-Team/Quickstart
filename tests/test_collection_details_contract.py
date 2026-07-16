@@ -78,6 +78,13 @@ def test_libraries_script_wires_overlay_variable_sections():
     assert "refreshTemplateOverrideState(group)" in script
 
 
+def test_libraries_script_replaces_mirror_confirm_handler():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "copyConfirmBtn.onclick = onConfirm" in script
+    assert "copyConfirmBtn.addEventListener('click', onConfirm)" not in script
+
+
 def test_template_variable_sections_show_override_rail():
     styles = STYLES_PATH.read_text(encoding="utf-8")
 

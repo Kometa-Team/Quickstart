@@ -542,6 +542,7 @@ def copy_library_settings():
         merged = libraries_data.copy()
         targets_to_process = [source_prefix] + [tid for tid in filtered_targets if tid != source_prefix]
         config_name = session.get("config_name") or source_payload.get("config_name") or namesgenerator.get_random_name()
+        target_library_values = {tid: libraries_data.get(f"{tid}-library") for tid in filtered_targets}
 
         for target_id in targets_to_process:
             target_name = name_map.get(target_id, "")
@@ -551,9 +552,11 @@ def copy_library_settings():
                     merged.pop(existing_key, None)
 
             for key, value in source_items.items():
-                # Do not mirror the include toggle; require explicit include after mirroring
                 if target_id != source_prefix and key.endswith("-library"):
-                    merged[f"{target_id}-library"] = ""
+                    # Do not enable new target libraries automatically, but preserve
+                    # targets that were already included so mirrored playlist and
+                    # overlay settings remain active.
+                    merged[f"{target_id}-library"] = target_library_values.get(target_id) or ""
                     continue
                 new_key = key.replace(source_prefix, target_id, 1)
                 new_value = value

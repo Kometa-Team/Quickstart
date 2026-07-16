@@ -5757,9 +5757,8 @@ function openCopyModal (sourceId, sourceName, sourceType) {
       })
   }
 
-  // Ensure we don't accumulate handlers across openings
-  copyConfirmBtn.onclick = null
-  copyConfirmBtn.addEventListener('click', onConfirm)
+  // Replace the previous modal source/target closure each time this opens.
+  copyConfirmBtn.onclick = onConfirm
 }
 
 function loadLibrary (libraryId, context = 'switch') {
