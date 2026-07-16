@@ -2102,8 +2102,17 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 {% set tv_items = raw_tv_items %}
                                                 {% endif %}
                                                 {% set overlay_sections = overlay.template_variable_sections if overlay.template_variable_sections is defined else [] %}
+                                                {% if overlay.id == 'overlay_ratings' and not overlay_sections %}
+                                                {% set overlay_sections = [
+                                                    {'id': 'basics', 'label': 'Basics', 'summary': 'Core ratings overlay behavior.', 'default_open': false},
+                                                    {'id': 'rating_slots', 'label': 'Rating Slots', 'summary': 'Choose rating sources and icon images for each slot.', 'default_open': false},
+                                                    {'id': 'font', 'label': 'Font', 'summary': 'Per-slot font, color, and stroke settings.', 'default_open': false},
+                                                    {'id': 'background', 'label': 'Background', 'summary': 'Background fill, outline, dimensions, and padding.', 'default_open': false},
+                                                    {'id': 'placement', 'label': 'Placement', 'summary': 'Overlay alignment, slot offsets, and position controls.', 'default_open': false}
+                                                ] %}
+                                                {% endif %}
                                                 {% set overlay_render_groups = [] %}
-                                                {% if overlay_sections and overlay.id != 'overlay_ratings' %}
+                                                {% if overlay_sections %}
                                                 {% set grouped_vars = [] %}
                                                 {% for section_def in overlay_sections %}
                                                     {% set section_items = [] %}
@@ -2115,8 +2124,21 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             {% set tv_var_details = tv_item %}
                                                             {% set tv_var_name = tv_var_details.key or ('var' ~ loop.index0) %}
                                                         {% endif %}
-                                                        {% set tv_section = tv_var_details.section if tv_var_details.section is defined else 'basics' %}
-                                                        {% if tv_section == section_def.id %}
+                                                        {% set tv_section = namespace(value=(tv_var_details.section if tv_var_details.section is defined else 'basics')) %}
+                                                        {% if overlay.id == 'overlay_ratings' %}
+                                                            {% if tv_var_name in ['rating1', 'rating1_image', 'rating2', 'rating2_image', 'rating3', 'rating3_image'] %}
+                                                                {% set tv_section.value = 'rating_slots' %}
+                                                            {% elif tv_var_name.endswith('_font') or tv_var_name.endswith('_font_size') or tv_var_name.endswith('_font_color') or tv_var_name.endswith('_stroke_width') or tv_var_name.endswith('_stroke_color') %}
+                                                                {% set tv_section.value = 'font' %}
+                                                            {% elif tv_var_name.startswith('back_') or tv_var_name.startswith('addon_') %}
+                                                                {% set tv_section.value = 'background' %}
+                                                            {% elif tv_var_name in ['horizontal_position', 'vertical_position', 'rating_alignment', 'horizontal_offset', 'vertical_offset'] or tv_var_name.endswith('_horizontal_offset') or tv_var_name.endswith('_vertical_offset') %}
+                                                                {% set tv_section.value = 'placement' %}
+                                                            {% else %}
+                                                                {% set tv_section.value = 'basics' %}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        {% if tv_section.value == section_def.id %}
                                                             {% set _ = section_items.append(tv_item) %}
                                                             {% set _ = grouped_vars.append(tv_var_name) %}
                                                         {% endif %}

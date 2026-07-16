@@ -57,7 +57,8 @@ def test_overlay_macros_render_collapsible_variable_sections():
     assert 'data-hide-label="Hide"' in macros
     assert 'data-overlay-variable-section-reset="true"' in macros
     assert "Reset {{ render_group.label }}" in macros
-    assert "overlay.id != 'overlay_ratings'" in macros
+    assert "overlay.id == 'overlay_ratings'" in macros
+    assert "'rating_slots'" in macros
 
 
 def test_libraries_script_wires_overlay_variable_sections():
@@ -90,17 +91,19 @@ def test_template_variable_sections_show_override_rail():
     assert "background: var(--theme-primary);" in styles
 
 
-def test_common_overlay_template_variables_have_sections_except_ratings():
+def test_common_overlay_template_variables_have_sections():
     overlay_config = json.loads(OVERLAYS_PATH.read_text(encoding="utf-8"))
     overlays = [overlay for group in overlay_config for overlay in group.get("overlays", [])]
     section_ids = {"basics", "included_items", "font", "background", "placement"}
+    rating_section_ids = {"basics", "rating_slots", "font", "background", "placement"}
 
     for overlay in overlays:
         template_variables = overlay.get("template_variables")
         if not template_variables:
             continue
         if overlay.get("id") == "overlay_ratings":
-            assert "template_variable_sections" not in overlay
+            assert {section["id"] for section in overlay["template_variable_sections"]} == rating_section_ids
+            assert all(section.get("default_open") is False for section in overlay["template_variable_sections"])
             continue
 
         assert {section["id"] for section in overlay["template_variable_sections"]} == section_ids
