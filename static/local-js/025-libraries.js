@@ -7531,6 +7531,7 @@ function updateCollectionVariableSectionSummary (section) {
     : configuredCount === 1
       ? '1 override'
       : `${configuredCount} overrides`
+  section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
 }
 
 function updateOverlayVariableSectionSummary (section) {
@@ -7558,6 +7559,7 @@ function updateOverlayVariableSectionSummary (section) {
     : configuredCount === 1
       ? '1 override'
       : `${configuredCount} overrides`
+  section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
 }
 
 function wireOverlayVariableSections (scope) {

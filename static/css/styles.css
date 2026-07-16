@@ -2040,6 +2040,32 @@ fieldset:disabled .btn {
     transition: background-color 0.2s ease;
 }
 
+.collection-variable-section,
+.overlay-variable-section {
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.collection-variable-section.template-variable-section-has-overrides,
+.overlay-variable-section.template-variable-section-has-overrides {
+    border-color: rgba(var(--accent-color), 0.55) !important;
+    background: linear-gradient(90deg, rgba(var(--accent-color), 0.08), transparent 38%);
+    padding-left: 1rem !important;
+}
+
+.collection-variable-section.template-variable-section-has-overrides::before,
+.overlay-variable-section.template-variable-section-has-overrides::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45rem;
+    bottom: 0.45rem;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--theme-primary);
+    box-shadow: 0 0 10px rgba(var(--accent-color), 0.35);
+}
+
 /* -------------------- */
 /* INPUT STYLES         */
 /* -------------------- */

@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MACROS_PATH = ROOT / "templates" / "partials" / "_macros.html"
+STYLES_PATH = ROOT / "static" / "css" / "styles.css"
 LIBRARIES_JS_PATH = ROOT / "static" / "local-js" / "025-libraries.js"
 VALIDATION_JS_PATH = ROOT / "static" / "local-js" / "validationHandler.js"
 OVERLAYS_PATH = ROOT / "static" / "json" / "quickstart_overlays.json"
@@ -34,6 +35,8 @@ def test_libraries_script_wires_collection_detail_toggles():
     assert "wireCollectionVariableSectionToggles(card)" in script
     assert "wireCollectionVariableSections(card)" in script
     assert "section.dataset.defaultOpen === 'true'" in script
+    assert "template-variable-section-has-overrides" in script
+    assert "configuredCount > 0" in script
 
 
 def test_overlay_macros_render_collapsible_variable_sections():
@@ -59,6 +62,16 @@ def test_libraries_script_wires_overlay_variable_sections():
     assert "wireOverlayVariableSectionToggles(card)" in script
     assert "wireOverlayVariableSections(card)" in script
     assert "btn.dataset.overlayVariableSectionReset === 'true'" in script
+    assert "template-variable-section-has-overrides" in script
+    assert "configuredCount > 0" in script
+
+
+def test_template_variable_sections_show_override_rail():
+    styles = STYLES_PATH.read_text(encoding="utf-8")
+
+    assert ".collection-variable-section.template-variable-section-has-overrides" in styles
+    assert ".overlay-variable-section.template-variable-section-has-overrides" in styles
+    assert "background: var(--theme-primary);" in styles
 
 
 def test_common_overlay_template_variables_have_sections_except_ratings():
