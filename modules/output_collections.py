@@ -212,12 +212,22 @@ def _parse_json_object_value(value):
 # --- collection template var normalization --------------------------------
 
 
+def _sort_id_values(values):
+    def sort_key(item):
+        text = str(item).strip()
+        if text.isdigit():
+            return (0, int(text), text)
+        return (1, text.lower(), text)
+
+    return sorted(values, key=sort_key)
+
+
 def _normalize_collection_template_var_value(key, value):
     if key == "collection_section" and value in (None, ""):
         return None
     if key in {"ignore_ids", "ignore_imdb_ids"}:
         list_values = _parse_string_list(value)
-        return ",".join(list_values) if list_values else None
+        return _sort_id_values(list_values) if list_values else None
     if key in {"append_include"}:
         list_values = _parse_string_list(value)
         return list_values if list_values else None
@@ -325,9 +335,18 @@ def _expand_franchise_dynamic_child_overrides(template_vars):
 
 
 def _normalize_settings_section_value(key, value):
-    if key in {"ignore_ids", "ignore_imdb_ids"}:
+    if key == "ignore_ids":
         list_values = _parse_string_list(value)
-        return ",".join(list_values) if list_values else None
+        normalized = []
+        for item in list_values:
+            try:
+                normalized.append(int(str(item).strip()))
+            except Exception:
+                normalized.append(str(item).strip())
+        return _sort_id_values(normalized) if normalized else None
+    if key == "ignore_imdb_ids":
+        list_values = _parse_string_list(value)
+        return _sort_id_values(list_values) if list_values else None
     return value
 
 

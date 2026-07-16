@@ -3461,6 +3461,14 @@ const templateStringListPresetConfigs = {
       ? { valid: true }
       : { valid: false, message: 'Enter a numeric ID like 603 or 1399.' }
   },
+  imdb_id_tmdb: {
+    duplicateInsensitive: true,
+    normalize: value => value.toLowerCase(),
+    lookupService: 'tmdb',
+    validate: value => /^tt\d{7,8}$/i.test(value)
+      ? { valid: true }
+      : { valid: false, message: 'Enter an IMDb ID like tt1234567 or tt12345678.' }
+  },
   imdb_id_plex: {
     duplicateInsensitive: true,
     normalize: value => value.toLowerCase(),
@@ -3902,6 +3910,85 @@ function applyLookupState (target, presetConfig, presetName, value, context = {}
   }
 
   const root = scope || document
+  root.querySelectorAll('[data-template-scalar-lookup="true"]').forEach(input => {
+    if (input.dataset.templateScalarLookupBound === 'true') return
+
+    const presetName = String(input.dataset.validationPreset || '').trim()
+    const presetConfig = templateStringListPresetConfigs[presetName]
+    if (!presetConfig?.lookupService) return
+
+    const lookupLabelsHidden = input.id ? document.getElementById(`${input.id}__lookup_labels`) : null
+    const libraryName = String(input.dataset.libraryName || '').trim()
+    const mediaType = String(input.dataset.mediaType || '').trim()
+    const lookupMeta = document.createElement('div')
+    lookupMeta.className = 'small mt-1 d-none'
+
+    const wrapper = input.closest('[data-collection-field-wrapper="true"], .input-group') || input
+    wrapper.insertAdjacentElement('afterend', lookupMeta)
+
+    function writeLookupLabels (labels) {
+      if (!lookupLabelsHidden) return
+      const cleanLabels = Object.fromEntries(
+        Object.entries(labels || {})
+          .map(([key, value]) => [String(key || '').trim(), String(value || '').trim()])
+          .filter(([key, value]) => key && value)
+      )
+      lookupLabelsHidden.value = JSON.stringify(cleanLabels)
+      lookupLabelsHidden.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    function validateScalarValue () {
+      const rawValue = String(input.value || '').trim()
+      const normalized = presetConfig.normalize ? presetConfig.normalize(rawValue) : rawValue
+      const result = presetConfig.validate ? presetConfig.validate(normalized) : { valid: Boolean(normalized) }
+      return {
+        value: normalized,
+        valid: Boolean(result.valid),
+        message: result.message || 'Enter a valid value.'
+      }
+    }
+
+    function storeLookupLabel (value, label) {
+      if (!lookupLabelsHidden || !value || !label) return
+      const key = String(value).trim()
+      const normalizedLabel = String(label).trim()
+      if (!key || !normalizedLabel) return
+      writeLookupLabels({ [key]: normalizedLabel })
+      scheduleLookupLabelAutosave()
+    }
+
+    function runLookup () {
+      const checked = validateScalarValue()
+      if (!checked.value) {
+        setLookupState(lookupMeta, { message: '' })
+        writeLookupLabels({})
+        return
+      }
+      if (!checked.valid) {
+        setLookupState(lookupMeta, {
+          valid: false,
+          verified: true,
+          message: checked.message
+        })
+        writeLookupLabels({})
+        return
+      }
+      if (input.value !== checked.value) {
+        input.value = checked.value
+      }
+      applyLookupState(lookupMeta, presetConfig, presetName, checked.value, { libraryName, mediaType }, storeLookupLabel)
+    }
+
+    input.addEventListener('input', () => {
+      writeLookupLabels({})
+      setLookupState(lookupMeta, { message: '' })
+    })
+    input.addEventListener('change', runLookup)
+    input.addEventListener('blur', runLookup)
+    runLookup()
+    input.dataset.templateScalarLookupBound = 'true'
+  })
+
   root.querySelectorAll('[data-template-string-list]').forEach(wrapper => {
     if (wrapper.dataset.listenerAdded) return
     const hiddenId = wrapper.dataset.hiddenInput

@@ -400,6 +400,10 @@ prefix if yml_location == "top_level" else
                 value="{{ imdb_data | default('', true) }}"
                 data-default=""
                 data-separator-placeholder-input="imdb"
+                data-template-scalar-lookup="true"
+                data-validation-preset="imdb_id_tmdb"
+                data-library-name="{{ library.name }}"
+                data-media-type="{{ library_media_type }}"
                 aria-describedby="{{ imdb_id }}_text"
                 placeholder="tt1234567"
                 pattern="tt\d{7,8}"
@@ -407,6 +411,9 @@ prefix if yml_location == "top_level" else
                 inputmode="text"
                 autocapitalize="off">
         </div>
+        <input type="hidden" id="{{ imdb_id }}__lookup_labels" name="{{ imdb_name }}__lookup_labels"
+            value="{{ data['libraries'].get(imdb_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+            data-template-metadata="lookup-labels" data-skip-override-count="true">
         {% if library_media_type == 'movie' %}
         <div class="input-group mb-2 separator-placeholder-field d-none" data-placeholder-source="tmdb_movie">
             <span class="input-group-text" id="{{ tmdb_id }}_text">
@@ -417,6 +424,10 @@ prefix if yml_location == "top_level" else
                 value="{{ tmdb_data | default('', true) }}"
                 data-default=""
                 data-separator-placeholder-input="tmdb_movie"
+                data-template-scalar-lookup="true"
+                data-validation-preset="numeric_id"
+                data-library-name="{{ library.name }}"
+                data-media-type="{{ library_media_type }}"
                 aria-describedby="{{ tmdb_id }}_text"
                 placeholder="603"
                 pattern="\d+"
@@ -424,6 +435,9 @@ prefix if yml_location == "top_level" else
                 inputmode="numeric"
                 data-numeric-only="true">
         </div>
+        <input type="hidden" id="{{ tmdb_id }}__lookup_labels" name="{{ tmdb_name }}__lookup_labels"
+            value="{{ data['libraries'].get(tmdb_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+            data-template-metadata="lookup-labels" data-skip-override-count="true">
         {% else %}
         <div class="input-group mb-2 separator-placeholder-field d-none" data-placeholder-source="tvdb_show">
             <span class="input-group-text" id="{{ tvdb_id }}_text">
@@ -1781,6 +1795,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
                                 data-default="{{ item.default | default('', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                {% if item.validation_preset %}data-template-scalar-lookup="true" data-library-name="{{ library.name }}" data-media-type="{{ library.type }}"{% endif %}
                                 {% if field_requires_plex_pass %}data-requires-plex-pass="true" data-plex-pass-available="{{ 'true' if has_plex_pass else 'false' }}"{% endif %}
                                 {% if item.requires_any_of_template_keys is defined and item.requires_any_of_template_keys %}data-requires-any-of-template-keys="{{ item.requires_any_of_template_keys | join(',') }}" data-requirement-hint="{{ item.requirement_hint | default('', true) }}"{% endif %}
                                 {% if item.mutually_exclusive_with %}data-mutually-exclusive-with="{{ item.mutually_exclusive_with }}"{% endif %}
@@ -1799,6 +1814,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 {% endif %}
                                 {% if field_disabled %}disabled{% endif %}>
                         </div>
+                        {% if item.validation_preset %}
+                        <input type="hidden" id="{{ input_name }}__lookup_labels" name="{{ input_name }}__lookup_labels"
+                            value="{{ data['libraries'].get(input_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+                            data-template-metadata="lookup-labels" data-skip-override-count="true">
+                        {% endif %}
                         {% if field_requires_plex_pass and not has_plex_pass %}
                         <input type="hidden" name="{{ input_name }}" value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}">
                         <div class="form-text text-warning mb-2">Requires Plex Pass. Validate Plex first if this should be available.</div>

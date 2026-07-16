@@ -30,6 +30,7 @@ from flask import current_app as app
 from ruamel.yaml import YAML
 
 from modules import helpers
+from modules.output_collections import _TEMPLATE_VARIABLE_COMMENTS_KEY
 from modules.output_collections import build_collection_files
 from modules.output_file_entries import _parse_metadata_file_entries
 from modules.output_library_ops import (
@@ -191,7 +192,11 @@ def build_libraries_section(
             entry["metadata_files"] = metadata_entries
 
         # Template variables
-        entry["template_variables"] = build_template_variables(templates, library_type, library_key, has_collectionless)
+        template_variables = build_template_variables(templates, library_type, library_key, has_collectionless)
+        template_variable_comments = template_variables.pop(_TEMPLATE_VARIABLE_COMMENTS_KEY, None) if isinstance(template_variables, dict) else None
+        entry["template_variables"] = template_variables
+        if template_variable_comments:
+            entry[_TEMPLATE_VARIABLE_COMMENTS_KEY] = template_variable_comments
 
         # Grouped mass update operations (mass_genre_update handled above)
         operations.update(build_grouped_mass_update_operations(attr_group, library_type, lib_id))
