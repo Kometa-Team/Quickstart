@@ -6,7 +6,7 @@
     <div class="playlist-files-editor" data-playlist-files-editor data-library-id="{{ library.id }}">
         <div class="alert small mb-4" role="alert" data-playlist-custom-repo-status></div>
         <input type="hidden" name="playlist_files_entries" id="{{ library.id }}-playlist_files_entries"
-            value="{{ data['libraries'].get('playlist_files_entries', '[]') }}">
+            value="{{ data['libraries'].get('playlist_files_entries', '[]') }}" data-default="[]">
         <div class="playlist-files-list d-flex flex-column gap-3 mt-1" data-playlist-files-list></div>
         <div class="d-flex justify-content-between align-items-center mt-3">
             <button type="button" class="btn btn-outline-secondary btn-sm" data-add-playlist-file>

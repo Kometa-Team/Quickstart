@@ -26,7 +26,8 @@ container_class="border rounded p-3 mb-2", number_input=None
             </button>
         </h2>
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
-            aria-labelledby="{{ library.id }}-{{ prefix }}-header">
+            aria-labelledby="{{ library.id }}-{{ prefix }}-header"
+            data-library-override-scope="true" data-library-override-label="{{ title }}">
             <div class="accordion-body">
                 {% else %}
                 <div class="{{ container_class }}">
@@ -46,7 +47,8 @@ container_class="border rounded p-3 mb-2", number_input=None
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox"
                                     id="{{ library.id }}-attribute_{{ prefix }}_{{ source }}"
-                                    name="{{ library.id }}-attribute_{{ prefix }}_{{ source }}" value="true" {% if
+                                    name="{{ library.id }}-attribute_{{ prefix }}_{{ source }}" value="true"
+                                    data-default="false" {% if
                                     data['libraries'][library.id ~ '-attribute_' ~ prefix ~ '_' ~
                                     source]|string|lower=='true' %}checked{% endif %}>
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_{{ source }}"
@@ -86,7 +88,7 @@ container_class="border rounded p-3 mb-2", number_input=None
                                     min="{{ number_input.min | default(1) }}" {% set
                                     raw_number=data.libraries[library.id ~ '-attribute_' ~ number_input.key] %} {% set
                                     safe_number='' if raw_number in [None, 'None' ] else raw_number %}
-                                    value="{{ safe_number }}">
+                                    value="{{ safe_number }}" data-default="">
                             </div>
                         </div>
                     </div>
@@ -116,7 +118,8 @@ container_class="border rounded p-3 mb-2", number_input=None
                             <ul class="list-group mb-2" id="{{ library.id }}-attribute_{{ prefix }}_custom_list"></ul>
                             <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_custom"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_hidden"
-                                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom', '[]') }}">
+                                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom', '[]') }}"
+                                data-default="[]">
                         </div>
                     </div>
                     {% else %}
@@ -140,12 +143,14 @@ container_class="border rounded p-3 mb-2", number_input=None
                             <input type="date" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" value="{{ safe_val }}"
+                                data-default=""
                                 placeholder="{{ custom_string_placeholder | default('YYYY-MM-DD') }}">
                             {% elif val_type == "rating" %}
                             <input type="number" class="form-control rating-range"
                                 data-validate="rating"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" min="0" max="10" step="0.1"
+                                data-default=""
                                 value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('Enter rating between 0.0 and 10.0') }}">
                             <div class="invalid-feedback">
@@ -155,12 +160,14 @@ container_class="border rounded p-3 mb-2", number_input=None
                             <input type="number" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" min="1" step="1"
+                                data-default=""
                                 value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('Enter number greater than 0') }}">
                             {% else %}
                             <input type="text" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" value="{{ safe_val }}"
+                                data-default=""
                                 placeholder="{{ custom_string_placeholder | default('Enter custom string') }}">
                             {% endif %}
                         </div>
@@ -178,7 +185,8 @@ container_class="border rounded p-3 mb-2", number_input=None
                             </ul>
                             <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_order"
                                 id="{{ library.id }}-attribute_{{ prefix }}_order"
-                                value='{{ data["libraries"].get(library.id ~ "-attribute_" ~ prefix ~ "_order", "[]") }}'>
+                                value='{{ data["libraries"].get(library.id ~ "-attribute_" ~ prefix ~ "_order", "[]") }}'
+                                data-default="[]">
                         </div>
                     </div>
                     {% endif %}
@@ -210,7 +218,8 @@ prefix if yml_location == "top_level" else
 %}
 <div class="{{ container_class }}">
     <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="{{ full_id }}" name="{{ full_name }}" value="true" {% if
+        <input class="form-check-input" type="checkbox" id="{{ full_id }}" name="{{ full_name }}" value="true"
+            data-default="false" {% if
             data.libraries[full_name]|string|lower=='true' %}checked{% endif %}>
         <input type="hidden" name="{{ full_name }}_hidden" value="false">
         <label class="form-check-label" for="{{ full_id }}">
@@ -237,7 +246,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
         </button>
     </h2>
     <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
-        aria-labelledby="{{ library.id }}-{{ prefix }}-header">
+        aria-labelledby="{{ library.id }}-{{ prefix }}-header"
+        data-library-override-scope="true" data-library-override-label="{{ title }}">
         <div class="accordion-body">
             {% else %}
             <div class="{{ container_class }}">
@@ -257,7 +267,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox"
                                 id="{{ library.id }}-attribute_{{ toggle_id }}"
-                                name="{{ library.id }}-attribute_{{ toggle_id }}" value="true" {% if
+                                name="{{ library.id }}-attribute_{{ toggle_id }}" value="true" data-default="false" {% if
                                 data['libraries'][library.id ~ '-attribute_' ~ toggle_id]|string|lower=='true'
                                 %}checked{% endif %}>
                             <input type="hidden" name="{{ library.id }}-attribute_{{ toggle_id }}" value="false">
@@ -315,6 +325,7 @@ prefix if yml_location == "top_level" else
                     </span>
                 </span>
                 <select class="form-select" id="{{ field_id }}" {% if not disable_for_plex_pass %}name="{{ field_name }}"{% endif %}
+                    data-default=""
                     aria-describedby="{{ field_id }}_text" {% if preview_image %}data-preview="true" {% endif %}{% if disable_for_plex_pass %} disabled aria-disabled="true"{% endif %}>
                     {% for value, label in options %}
                     <option value="{{ value }}" {% if selected==value %}selected{% endif %}>{{ label }}</option>
@@ -480,7 +491,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
         <div class="col-md-6 mb-2">
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ toggle.key }}"
-                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if data.libraries[library.id
+                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" data-default="false" {% if data.libraries[library.id
                     ~ '-attribute_' ~ toggle.key]|string|lower=='true' %}checked{% endif %}>
                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
                 <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
@@ -512,7 +523,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                 <input type="number" class="form-control" id="{{ library.id }}-attribute_{{ number_input.key }}"
                     name="{{ library.id }}-attribute_{{ number_input.key }}" min="{{ number_input.min | default(1) }}"
                     {% set raw_number=data.libraries[library.id ~ '-attribute_' ~ number_input.key] %} {% set
-                    safe_number='' if raw_number in [None, 'None' ] else raw_number %} value="{{ safe_number }}">
+                    safe_number='' if raw_number in [None, 'None' ] else raw_number %} value="{{ safe_number }}"
+                    data-default="">
             </div>
         </div>
     </div>
@@ -544,7 +556,8 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
             </button>
         </h2>
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
-            aria-labelledby="{{ library.id }}-{{ prefix }}-header">
+            aria-labelledby="{{ library.id }}-{{ prefix }}-header"
+            data-library-override-scope="true" data-library-override-label="{{ title }}">
             <div class="accordion-body">
                 {% else %}
                 <div class="{{ container_class }}">
@@ -564,7 +577,8 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox"
                                     id="{{ library.id }}-attribute_{{ toggle.key }}"
-                                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if
+                                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true"
+                                    data-default="false" {% if
                                     data.libraries[library.id ~ '-attribute_' ~ toggle.key]|string|lower=='true'
                                     %}checked{% endif %}>
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
@@ -599,7 +613,7 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                                     min="{{ number_input.min | default(1) }}" {% set
                                     raw_number=data.libraries[library.id ~ '-attribute_' ~ number_input.key] %} {% set
                                     safe_number='' if raw_number in [None, 'None' ] else raw_number %}
-                                    value="{{ safe_number }}"
+                                    value="{{ safe_number }}" data-default=""
                                     aria-describedby="{{ library.id }}-attribute_{{ number_input.key }}_text">
                             </div>
                         </div>
@@ -610,7 +624,8 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox"
                                     id="{{ library.id }}-attribute_{{ toggle.key }}"
-                                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if
+                                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true"
+                                    data-default="false" {% if
                                     data.libraries[library.id ~ '-attribute_' ~ toggle.key]|string|lower=='true'
                                     %}checked{% endif %}>
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
@@ -674,7 +689,8 @@ select_input.key if yml_location == "top_level" else
             </button>
         </h2>
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
-            aria-labelledby="{{ library.id }}-{{ prefix }}-header">
+            aria-labelledby="{{ library.id }}-{{ prefix }}-header"
+            data-library-override-scope="true" data-library-override-label="{{ title }}">
             <div class="accordion-body">
                 {% else %}
                 <div class="{{ container_class }}">
@@ -702,7 +718,7 @@ select_input.key if yml_location == "top_level" else
                         <div class="col-md-6 mb-2">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="{{ toggle_id }}"
-                                    name="{{ toggle_name }}" value="true" {% if
+                                    name="{{ toggle_name }}" value="true" data-default="false" {% if
                                     data.libraries[toggle_name]|string|lower=='true' %}checked{% endif %}>
                                 <input type="hidden" name="{{ toggle_name }}" value="false">
                                 <label class="form-check-label" for="{{ toggle_id }}">
@@ -731,6 +747,7 @@ select_input.key if yml_location == "top_level" else
                                     </span>
                                 </span>
                                 <select class="form-select" id="{{ select_id }}" name="{{ select_name }}"
+                                    data-default=""
                                     aria-describedby="{{ select_id }}_label">
                                     {% set selected = data.libraries.get(select_name, '') %}
                                     {% for value, label in select_input.options %}
@@ -777,7 +794,8 @@ select_input.key if yml_location == "top_level" else
             </button>
         </h2>
         <div id="{{ library.id }}-{{ section.prefix }}-body" class="accordion-collapse collapse"
-            aria-labelledby="{{ library.id }}-{{ section.prefix }}-header">
+            aria-labelledby="{{ library.id }}-{{ section.prefix }}-header"
+            data-library-override-scope="true" data-library-override-label="{{ section.title }}">
             <div class="accordion-body">
                 {% else %}
                 <div class="{{ section.container_class }}">
@@ -798,6 +816,7 @@ select_input.key if yml_location == "top_level" else
                                 id="{{ library.id }}-attribute_{{ section.prefix }}_path"
                                 name="{{ library.id }}-attribute_{{ section.prefix }}_path"
                                 value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_path'] | default('') }}"
+                                data-default=""
                                 placeholder="{{ section.text_input.placeholder }}">
                         </div>
                     </div>
@@ -823,7 +842,8 @@ select_input.key if yml_location == "top_level" else
                             <ul class="list-group mb-2" id="{{ library.id }}-{{ section.prefix }}_custom_list"></ul>
                             <input type="hidden" name="{{ library.id }}-attribute_{{ section.prefix }}_exclude"
                                 id="{{ library.id }}-{{ section.prefix }}_custom_hidden"
-                                value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_exclude'] | default('[]') }}">
+                                value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_exclude'] | default('[]') }}"
+                                data-default="[]">
                         </div>
                     </div>
 
@@ -834,7 +854,8 @@ select_input.key if yml_location == "top_level" else
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox"
                                     id="{{ library.id }}-attribute_{{ toggle.key }}"
-                                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if
+                                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true"
+                                    data-default="false" {% if
                                     data.libraries[library.id ~ '-attribute_' ~ toggle.key]|string|lower=='true'
                                     %}checked{% endif %}>
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
@@ -886,7 +907,8 @@ select_input.key if yml_location == "top_level" else
             </button>
         </h2>
         <div id="{{ library.id }}-{{ section.prefix }}-body" class="accordion-collapse collapse"
-            aria-labelledby="{{ library.id }}-{{ section.prefix }}-header">
+            aria-labelledby="{{ library.id }}-{{ section.prefix }}-header"
+            data-library-override-scope="true" data-library-override-label="{{ section.title }}">
             <div class="accordion-body">
                 {% else %}
                 <div class="{{ section.container_class }}">
@@ -912,7 +934,8 @@ select_input.key if yml_location == "top_level" else
                     <ul class="list-group mb-2" id="{{ library.id }}-attribute_{{ section.prefix }}_list"></ul>
                     <input type="hidden" name="{{ library.id }}-attribute_{{ section.prefix }}"
                         id="{{ library.id }}-attribute_{{ section.prefix }}_hidden"
-                        value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix] | default('{}') }}">
+                        value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix] | default('{}') }}"
+                        data-default="{}">
 
                     {% if "accordion" in section.container_class %}
                 </div> {# .accordion-body #}
@@ -1025,7 +1048,7 @@ field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
             <input type="text" class="form-control" id="{{ full_id }}_schedule_raw" data-schedule-raw
                 placeholder="{{ placeholder }}" value="{{ field_value }}">
         </details>
-        <input type="hidden" id="{{ full_id }}" name="{{ full_name }}" value="{{ field_value }}">
+        <input type="hidden" id="{{ full_id }}" name="{{ full_name }}" value="{{ field_value }}" data-default="">
     </div>
 </div>
 {% else %}
@@ -1040,10 +1063,10 @@ field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
             </span>
         </span>
         {% if multiline %}
-        <textarea class="form-control" id="{{ full_id }}" name="{{ full_name }}"
+        <textarea class="form-control" id="{{ full_id }}" name="{{ full_name }}" data-default=""
             placeholder="{{ placeholder }}" rows="{{ rows }}">{{ field_value }}</textarea>
         {% else %}
-        <input type="text" class="form-control" id="{{ full_id }}" name="{{ full_name }}"
+        <input type="text" class="form-control" id="{{ full_id }}" name="{{ full_name }}" data-default=""
             placeholder="{{ placeholder }}" value="{{ field_value }}">
         {% endif %}
     </div>
