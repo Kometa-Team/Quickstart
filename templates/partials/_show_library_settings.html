@@ -40,7 +40,8 @@
                     Attributes
                 </button>
             </h2>
-            <div id="{{ library.id }}-attributes" class="accordion-collapse collapse">
+            <div id="{{ library.id }}-attributes" class="accordion-collapse collapse"
+                data-library-override-scope="true" data-library-override-label="Attributes">
                 <div class="accordion-body">
                     {% include "partials/_show_attributes.html" %}
                 </div>

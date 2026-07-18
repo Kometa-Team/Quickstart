@@ -5,7 +5,8 @@
       Playlists
     </button>
   </h2>
-  <div id="{{ library.id }}-playlists" class="accordion-collapse collapse">
+  <div id="{{ library.id }}-playlists" class="accordion-collapse collapse"
+    data-library-override-scope="true" data-library-override-label="Playlists">
     <div class="accordion-body">
       <div class="alert alert-info mb-3" role="alert">
         <h6><b>Playlist files</b></h6>
@@ -18,7 +19,7 @@
       <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
         <input class="form-check-input playlist-library-toggle" type="checkbox" id="{{ library.id }}-playlist"
           name="{{ library.id }}-playlist" value="true" data-include-toggle="{{ library.id }}-include"
-          {% if playlist_checked %}checked{% endif %}>
+          data-default="false" {% if playlist_checked %}checked{% endif %}>
         <label class="form-check-label mb-0" for="{{ library.id }}-playlist">
           Include {{ library.name }}
         </label>

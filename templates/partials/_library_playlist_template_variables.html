@@ -44,7 +44,7 @@ playlist-template_variables[{{ field_key }}]
 {% set is_checked = stored_val|string|lower == 'true' %}
 <div class="form-check form-switch d-flex align-items-center mb-2">
   <input class="form-check-input template-child-toggle me-2" type="checkbox" id="{{ input_id }}"
-    name="{{ input_name }}" value="true" {% if is_checked %}checked{% endif %}>
+    name="{{ input_name }}" value="true" data-default="false" {% if is_checked %}checked{% endif %}>
   <input type="hidden" name="{{ input_name }}" value="false">
   <label class="form-check-label me-2 mb-0" for="{{ input_id }}">{{ label }}</label>
   {% if tooltip %}
@@ -90,6 +90,7 @@ playlist-template_variables[{{ field_key }}]
       {% endif %}
     </span>
     <input type="text" class="form-control" id="{{ input_id }}" name="{{ input_name }}" aria-describedby="{{ input_id }}_text"
+      data-default=""
       value="{{ playlist_text_value(field_key) }}" placeholder="{{ placeholder }}" {% if validation_preset %}data-validation-preset="{{ validation_preset }}"{% endif %}>
   </div>
 </div>
@@ -170,6 +171,7 @@ playlist-template_variables[{{ field_key }}]
       {% endif %}
     </span>
     <input type="text" class="form-control" id="{{ input_id }}" name="{{ input_name }}" aria-describedby="{{ input_id }}_text"
+      data-default=""
       value="{{ playlist_csv_value(field_key) }}" placeholder="{{ input_placeholder }}" readonly data-playlist-user-input>
     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#{{ modal_id }}"
       {% if not user_list %}disabled{% endif %}>Select</button>

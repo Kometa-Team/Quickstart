@@ -5837,6 +5837,27 @@ def test_build_libraries_section_emits_schedule(app):
     assert list(movies.keys())[:2] == ["schedule", "template_variables"]
 
 
+def test_build_libraries_section_omits_blank_top_level_schedules(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_top_level={
+                "movies": {
+                    "mov-library_movies-top_level_schedule": "",
+                    "mov-library_movies-top_level_schedule_overlays": "",
+                }
+            },
+            movie_templates={"movies": {"mov-library_movies-template_variables[use_separator]": "gray"}},
+        )
+
+    movies = libraries_section["libraries"]["Movies"]
+    assert "schedule" not in movies
+    assert "schedule_overlays" not in movies
+    assert movies["template_variables"]["sep_style"] == "gray"
+
+
 def test_save_kometa_install_mode_persists_existing_root(client, tmp_path):
     from modules import database
 

@@ -3326,7 +3326,7 @@ function initScheduleBuilders (scope) {
       if (mode === 'custom') {
         nextValue = String(rawInput?.value || '').trim()
       } else {
-        nextValue = buildValueFromInputs(mode) || defaultValue || ''
+        nextValue = buildValueFromInputs(mode) || ''
       }
       hidden.value = nextValue
       updatePreview(nextValue)
@@ -3392,7 +3392,7 @@ function initScheduleBuilders (scope) {
     }
 
     hidden.addEventListener('change', () => {
-      const nextRaw = String(hidden.value || defaultValue || '').trim()
+      const nextRaw = String(hidden.value || '').trim()
       const nextParsed = parseSchedule(nextRaw)
       applyParsed(nextParsed)
       updateFromBuilder()
@@ -3402,7 +3402,6 @@ function initScheduleBuilders (scope) {
   })
 }
 
-/* eslint-disable quotes */
 const languageCollectionKeys = JSON.parse(`["ab", "aa", "af", "ak", "sq", "am", "ar", "an", "hy", "as", "av", "ae", "ay", "az", "bm", "ba", "eu", "be", "bn", "bi", "bs", "br", "bg", "my", "ca", "km", "ch", "ce", "ny", "zh", "cu", "cv", "kw", "co", "cr", "hr", "cs", "da", "dv", "nl", "dz", "en", "eo", "et", "ee", "fo", "fj", "fil", "fi", "fr", "ff", "gd", "gl", "lg", "ka", "de", "el", "gn", "gu", "ht", "ha", "he", "hz", "hi", "ho", "hu", "is", "io", "ig", "id", "ia", "ie", "iu", "ik", "ga", "it", "ja", "jv", "kl", "kn", "kr", "ks", "kk", "ki", "rw", "ky", "kv", "kg", "ko", "kj", "ku", "lo", "la", "lv", "li", "ln", "lt", "lu", "lb", "mk", "mg", "ms", "ml", "mt", "gv", "mi", "mr", "mh", "myn", "mn", "na", "nv", "ng", "ne", "nd", "se", "no", "nb", "nn", "oc", "oj", "or", "om", "os", "pi", "ps", "fa", "pl", "pt", "pa", "qu", "ro", "rm", "rom", "rn", "ru", "sm", "sg", "sa", "sc", "sr", "sn", "ii", "sd", "si", "sk", "sl", "so", "nr", "st", "es", "su", "sw", "ss", "sv", "tl", "ty", "tai", "tg", "ta", "tt", "te", "th", "bo", "ti", "to", "ts", "tn", "tr", "tk", "tw", "ug", "uk", "ur", "uz", "ve", "vi", "vo", "wa", "cy", "fy", "wo", "xh", "yi", "yo", "za", "zu", "other"]`).map(value => String(value))
 const countryNameCollectionKeys = JSON.parse(`["Algeria", "Egypt", "Libya", "Morocco", "Sudan", "Tunisia", "Western Sahara", "British Indian Ocean Territory", "Burundi", "Comoros", "Djibouti", "Eritrea", "Ethiopia", "French Southern Territories", "Kenya", "Madagascar", "Malawi", "Mauritius", "Mayotte", "Mozambique", "R\u00e9union", "Rwanda", "Seychelles", "Somalia", "South Sudan", "Uganda", "Tanzania", "Zambia", "Zimbabwe", "Angola", "Cameroon", "Central African Republic", "Chad", "Republic of the Congo", "Democratic Republic of the Congo", "Equatorial Guinea", "Gabon", "S\u00e3o Tom\u00e9 and Pr\u00edncipe", "Botswana", "Eswatini", "Lesotho", "Namibia", "South Africa", "Benin", "Burkina Faso", "Cape Verde", "C\u00f4te d'Ivoire", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Mauritania", "Niger", "Nigeria", "Saint Helena, Ascension and Tristan da Cunha", "Senegal", "Sierra Leone", "Togo", "Anguilla", "Antigua and Barbuda", "Aruba", "Bahamas", "Barbados", "Bonaire, Sint Eustatius and Saba", "Netherlands Antilles", "British Virgin Islands", "Cayman Islands", "Cuba", "Cura\u00e7ao", "Dominica", "Dominican Republic", "Grenada", "Guadeloupe", "Haiti", "Jamaica", "Martinique", "Montserrat", "Puerto Rico", "Saint Barth\u00e9lemy", "Saint Kitts and Nevis", "Saint Lucia", "Saint Martin", "Saint Vincent and the Grenadines", "Sint Maarten", "Trinidad and Tobago", "Turks and Caicos Islands", "US Virgin Islands", "Belize", "Costa Rica", "El Salvador", "Guatemala", "Honduras", "Mexico", "Nicaragua", "Panama", "Argentina", "Bolivia", "Bouvet Island", "Brazil", "Chile", "Colombia", "Ecuador", "Falkland Islands", "French Guiana", "Guyana", "Paraguay", "Peru", "South Georgia and the South Sandwich Islands", "Suriname", "Uruguay", "Venezuela", "Bermuda", "Canada", "Greenland", "Saint Pierre and Miquelon", "United States", "Antarctica", "Kazakhstan", "Kyrgyzstan", "Tajikistan", "Turkmenistan", "Uzbekistan", "China", "Hong Kong", "Macao", "North Korea", "Japan", "Mongolia", "South Korea", "Taiwan", "Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "East Timor", "Vietnam", "Afghanistan", "Bangladesh", "Bhutan", "India", "Iran", "Maldives", "Nepal", "Pakistan", "Sri Lanka", "Armenia", "Azerbaijan", "Bahrain", "Cyprus", "Georgia", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Qatar", "Saudi Arabia", "Palestine", "Syria", "Turkey", "United Arab Emirates", "Yemen", "Belarus", "Bulgaria", "Czech Republic", "Hungary", "Poland", "Moldova", "Romania", "Russia", "Slovakia", "Ukraine", "\u00c5land Islands", "Guernsey", "Jersey", "Sark", "Denmark", "Estonia", "Faroe Islands", "Finland", "Iceland", "Ireland", "Northern Ireland", "Isle of Man", "Latvia", "Lithuania", "Norway", "Svalbard and Jan Mayen Islands", "Sweden", "United Kingdom", "Albania", "Andorra", "Bosnia and Herzegovina", "Croatia", "Gibraltar", "Greece", "Kosovo", "Vatican City", "Italy", "Malta", "Montenegro", "North Macedonia", "Portugal", "San Marino", "Serbia", "Serbia and Montenegro", "Slovenia", "Spain", "Yugoslavia", "Austria", "Belgium", "France", "Germany", "Liechtenstein", "Luxembourg", "Monaco", "Netherlands", "Switzerland", "Australia", "Christmas Island", "Cocos (Keeling) Islands", "Heard Island and McDonald Islands", "New Zealand", "Norfolk Island", "Fiji", "New Caledonia", "Papua New Guinea", "Solomon Islands", "Vanuatu", "Guam", "Kiribati", "Marshall Islands", "Micronesia", "Nauru", "Northern Mariana Islands", "Palau", "US Minor Outlying Islands", "American Samoa", "Cook Islands", "French Polynesia", "Niue", "Pitcairn Islands", "Samoa", "Tokelau", "Tonga", "Tuvalu", "Wallis and Futuna Islands", "other"]`).map(value => String(value))
 const countryCodeCollectionKeys = JSON.parse(`["dz", "eg", "ly", "ma", "sd", "tn", "eh", "io", "bi", "km", "dj", "er", "et", "tf", "ke", "mg", "mw", "mu", "yt", "mz", "re", "rw", "sc", "so", "ss", "ug", "tz", "zm", "zw", "ao", "cm", "cf", "td", "cg", "cd", "gq", "ga", "st", "bw", "sz", "ls", "na", "za", "bj", "bf", "cv", "ci", "gm", "gh", "gn", "gw", "lr", "ml", "mr", "ne", "ng", "sh", "sn", "sl", "tg", "ai", "ag", "aw", "bs", "bb", "bq", "an", "vg", "ky", "cu", "cw", "dm", "do", "gd", "gp", "ht", "jm", "mq", "ms", "pr", "bl", "kn", "lc", "mf", "vc", "sx", "tt", "tc", "vi", "bz", "cr", "sv", "gt", "hn", "mx", "ni", "pa", "ar", "bo", "bv", "br", "cl", "co", "ec", "fk", "gf", "gy", "py", "pe", "gs", "sr", "uy", "ve", "bm", "ca", "gl", "pm", "us", "aq", "kz", "kg", "tj", "tm", "uz", "cn", "hk", "mo", "kp", "jp", "mn", "kr", "tw", "bn", "kh", "id", "la", "my", "mm", "ph", "sg", "th", "tp", "vn", "af", "bd", "bt", "in", "ir", "mv", "np", "pk", "lk", "am", "az", "bh", "cy", "ge", "iq", "il", "jo", "kw", "lb", "om", "qa", "sa", "ps", "sy", "tr", "ae", "ye", "by", "bg", "cz", "hu", "pl", "md", "ro", "ru", "sk", "ua", "ax", "gg", "je", "cq", "dk", "ee", "fo", "fi", "is", "ie", "im", "lv", "lt", "no", "sj", "se", "gb", "al", "ad", "ba", "hr", "gi", "gr", "xk", "va", "it", "mt", "me", "mk", "pt", "sm", "rs", "si", "es", "yu", "at", "be", "fr", "de", "li", "lu", "mc", "nl", "ch", "au", "cx", "cc", "hm", "nz", "nf", "fj", "nc", "pg", "sb", "vu", "gu", "ki", "mh", "fm", "nr", "mp", "pw", "um", "as", "ck", "pf", "nu", "pn", "ws", "tk", "to", "tv", "wf", "other"]`).map(value => String(value))
@@ -3410,8 +3409,6 @@ const continentCollectionKeys = JSON.parse(`["Africa", "Americas", "Antarctica",
 const regionCollectionKeys = JSON.parse(`["Northern Africa", "Eastern Africa", "Central Africa", "Southern Africa", "Western Africa", "Caribbean", "Central America", "South America", "North America", "Antarctica", "Central Asia", "Eastern Asia", "South-Eastern Asia", "Southern Asia", "Western Asia", "Eastern Europe", "Northern Europe", "Southern Europe", "Western Europe", "Australia and New Zealand", "Melanesia", "Micronesia", "Polynesia", "other"]`).map(value => String(value))
 const studioCollectionKeys = JSON.parse(`["8bit", "A-1 Pictures", "A.C.G.T.", "Acca effe", "Actas", "AIC", "Ajia-Do", "Akatsuki", "Animation Do", "Ankama", "APPP", "Arms", "Artland", "Artmic", "Arvo Animation", "Asahi Production", "Ashi Productions", "asread.", "AtelierPontdarc", "B.CMAY PICTURES", "Bandai Namco Pictures", "Bee Train", "Berlanti Productions", "Bibury Animation Studios", "bilibili", "Bones", "Brain's Base", "Bridge", "BUG FILMS", "C-Station", "C2C", "Children's Playground Entertainment", "Cloud Hearts", "CloverWorks", "Colored Pencil Animation", "CoMix Wave Films", "Connect", "Craftar Studios", "Creators in Pack", "CygamesPictures", "David Production", "Diomed\\u00e9a", "DLE", "Doga Kobo", "domerica", "Drive", "EMT Squared", "Encourage Films", "ENGI", "feel.", "Felix Film", "Fenz", "GAINAX", "Gallop", "Geek Toys", "Gekkou", "Gemba", "GENCO", "Geno Studio", "GoHands", "Gonzo", "Graphinica", "Group Tac", "Hal Film Maker", "Haoliners Animation League", "Hoods Entertainment", "Hotline", "J.C.Staff", "Jumondou", "Kadokawa", "Khara", "Kinema Citrus", "Kyoto Animation", "Lan Studio", "LandQ Studio", "Lay-duce", "Lerche", "LIDENFILMS", "M.S.C", "Madhouse", "Magic Bus", "Maho Film", "Manglobe", "MAPPA", "Millepensee", "Namu Animation", "NAZ", "Nexus", "Nippon Animation", "Nomad", "Nut", "Okuruto Noboru", "OLM", "Orange", "Ordet", "OZ", "P.A. Works", "P.I.C.S.", "Passione", "Pb Animation Co. Ltd", "Pierrot", "Pine Jam", "Platinum Vision", "Polygon Pictures", "Pony Canyon", "Production +h.", "Production I.G", "Production IMS", "Production Reed", "Project No.9", "Quad", "Radix", "Revoroot", "Saetta", "SANZIGEN", "Satelight", "Science SARU", "Sentai Filmworks", "Seven Arcs", "Shaft", "Shin-Ei Animation", "Shogakukan", "Shuka", "Signal.MD", "Silver", "SILVER LINK.", "Square Enix", "Staple Entertainment", "Studio 3Hz", "Studio A-CAT", "Studio Bind", "Studio Blanc.", "Studio Chizu", "Studio Comet", "Studio Deen", "Studio Elle", "Studio Ghibli", "Studio Flad", "Studio Gokumi", "Studio Guts", "Studio Hibari", "Studio Kafka", "Studio Kai", "Studio Mir", "studio MOTHER", "Studio Palette", "Studio Rikka", "Studio Signpost", "Studio VOLN", "STUDIO4\\u00b0C", "Sunrise Beyond", "Sunrise", "SynergySP", "Tatsunoko Production", "Telecom Animation Film", "Tezuka Productions", "TMS Entertainment", "TNK", "Toei Animation", "Topcraft", "Triangle Staff", "Trigger", "TROYCA", "TYO Animations", "Typhoon Graphics", "ufotable", "V1 Studio", "W-Toon Studio", "Wawayu Animation", "White Fox", "Wit Studio", "Wolfsbane", "Xebec", "Yokohama Animation Lab", "Yostar Pictures", "Yumeta Company", "Zero-G", "Zexcs", "3 Arts Entertainment", "6th & Idaho", "20th Century Animation", "20th Century Studios", "20th Century Fox Television", "21 Laps Entertainment", "87Eleven", "87North Productions", "101 Studios", "1492 Pictures", "A Bigger Boat", "A+E Studios", "A24", "Aardman", "Aamir Khan Productions", "ABC Signature", "ABC Studios", "Ace Entertainment", "AGBO", "Amazon Studios", "Amblin Entertainment", "AMC Studios", "Anima Sola Productions", "Annapurna Pictures", "Ardustry Entertainment", "Artisan Entertainment", "Artists First", "Atlas Entertainment", "Atresmedia", "Bad Hat Harry Productions", "Bad Robot", "Bad Wolf", "Barunson E&A", "Bakken Record", "Bardel Entertainment", "BBC Studios", "Bill Melendez Productions", "Blade", "Bleecker Street", "Blown Deadline Productions", "Blue Ice Pictures", "Blue Sky Studios", "Bluegrass Films", "Blueprint Pictures", "Blumhouse Productions", "Blur Studio", "Bold Films", "Bona Film Group", "Bonanza Productions", "Boo Pictures", "Bosque Ranch Productions", "Box to Box Films", "Brandywine Productions", "Broken Lizard Industries", "Broken Road Productions", "Calt Production", "Canal+", "Carnival Films", "Carolco", "Cartoon Saloon", "Carsey-Werner Company", "Castle Rock Entertainment", "CBS Productions", "CBS Studios", "CBS Television Studios", "Centropolis Entertainment", "Chernin Entertainment", "Chimp Television", "Chris Morgan Productions", "Cinergi Pictures Entertainment", "Codeblack Entertainment", "Columbia Pictures", "Constantin Film", "Cowboy Films", "Cross Creek Pictures", "Dark Horse Entertainment", "Davis Entertainment", "DC Comics", "Dimension Films", "Dino De Laurentiis Company", "Disney Television Animation", "DisneyToon Studios", "Don Simpson Jerry Bruckheimer Films", "Doozer", "Dreams Salon Entertainment Culture", "DreamWorks Studios", "DreamWorks Pictures", "Dropout", "Dynamic Planning", "Eleventh Hour Films", "EMJAG Productions", "Endeavor Content", "Entertainment 360", "Entertainment One", "Eon Productions", "Everest Entertainment", "Expectation Entertainment", "Exposure Labs", "Fandango", "Fields Entertainment", "Film4 Productions", "FilmDistrict", "FilmNation Entertainment", "Flynn Picture Company", "Focus Features", "Food Network", "Fortiche Production", "Fox Television Studios", "Freckle Films", "Frederator Studios", "FremantleMedia", "Fuqua Films", "Gallagher Films Ltd", "Gary Sanchez Productions", "Gaumont", "Generator Entertainment", "Golden Harvest", "Gracie Films", "Green Hat Films", "Grindstone Entertainment Group", "Hallmark", "HandMade Films", "Happy Madison Productions", "HartBeat Productions", "Hartswood Films", "Hasbro", "HBO", "Heyday Films", "Hughes Entertainment", "Hungry Man", "Hurwitz & Schlossberg Productions", "Hyperobject Industries", "Icon Entertainment International", "IFC Films", "Illumination Entertainment", "Imagin", "Imperative Entertainment", "Impossible Factual", "Ingenious Media", "Irwin Entertainment", "Jerry Bruckheimer Films", "Jessie Films", "Jinks-Cohen Company", "Kazak Productions", "Kennedy Miller Productions", "Kilter Films", "Kjam Media", "Kudos", "Kurtzman Orci", "Laika Entertainment", "Landscape Entertainment", "Laura Ziskin Productions", "Leftfield Pictures", "Legendary Pictures", "Let's Not Turn This Into a Whole Big Production", "Lifetime", "Levity Entertainment Group", "Lightstorm Entertainment", "Likely Story", "Lionsgate", "Live Entertainment", "Lord Miller Productions", "Lucasfilm Ltd", "Magic Light Pictures", "Magnolia Pictures", "Malevolent Films", "Mandalay Entertainment", "Mandarin", "Mandarin Motion Pictures Limited", "Marv Films", "Marvel Animation", "Marvel Studios", "Matt Tolmach Productions", "Maximum Effort", "Media Res", "Metro-Goldwyn-Mayer", "Michael Patrick King Productions", "Millennium Films", "Miramax", "NEON", "Netflix", "New Line Cinema", "Nickelodeon Animation Studio", "NorthSouth Productions", "Nu Boyana Film Studios", "O2 Filmes", "Open Road Films", "Original Film", "Orion Pictures", "Palomar", "Paramount Animation", "Paramount Pictures", "Paramount Television Studios", "Participant", "Phoenix Pictures", "Piki Films", "Pixar", "Plan B Entertainment", "PlayStation Productions", "Playtone", "Plum Pictures", "Powerhouse Animation Studios", "PRA", "Prescience", "Prospect Park", "Pulse Films", "Radar Pictures", "RadicalMedia", "Railsplitter Pictures", "Rankin Bass Productions", "RatPac Entertainment", "Red Dog Culture House", "Regency Pictures", "Reveille Productions", "Rip Cord Productions", "RocketScience", "Savoy Pictures", "Scenic Labs", "Scion Films", "Scott Free Productions", "Sculptor Media", "Screen Gems", "Sean Daniel Company", "Searchlight Pictures", "Secret Hideout", "See-Saw Films", "Serendipity Pictures", "Shaw Brothers", "Show East", "Showtime Networks", "Sil-Metropole Organisation", "Silverback Films", "Siren Pictures", "SISTER", "Sixteen String Jack Productions", "SKA Films", "Sky studios", "Skydance", "Sony Pictures Animation", "Sony Pictures", "Sph\\u00e8re M\\u00e9dia Plus", "Spyglass Entertainment", "St\\u00f6\\u00f0 2", "Star Thrower Entertainment", "Stark Raving Black Productions", "StudioCanal", "Studio 8", "Studio Babelsberg", "Studio Dragon", "Studio Live", "STX Entertainment", "Summit Entertainment", "Syfy", "Syncopy", "T-Street Productions", "Tall Ship Productions", "Team Downey", "Temple Street Productions", "The Cat in the Hat Productions", "The Donners' Company", "The Jim Henson Company", "The Kennedy-Marshall Company", "The Linson Company", "The Littlefield Company", "The Mark Gordon Company", "The Sea Change Project", "The Stone Quarry", "The Weinstein Company", "Tim Burton Productions", "TOHO", "Thunder Road", "Titmouse", "Tomorrow Studios", "Touchstone Pictures", "Touchstone Television", "Trademark Films", "Triage Entertainment", "Tribeca Productions", "TriStar Pictures", "TSG Entertainment", "Twisted Pictures", "UCP", "United Artists", "Universal Animation Studios", "Universal Pictures", "Universal Television", "Vancouver Media", "Vertigo Entertainment", "Village Roadshow Pictures", "W. Chump and Sons", "Walden Media", "Walt Disney Animation Studios", "Walt Disney Pictures", "Walt Disney Productions", "Warner Animation Group", "Warner Bros. Pictures", "Warner Bros. Television", "Warner Premiere", "warparty", "Waverly Films", "Wayfare Entertainment", "Williams Street", "Whitaker Entertainment", "Wiedemann & Berg Television", "Winkler Films", "Wolf Entertainment", "Working Title Films"]`).map(value => String(value))
 const networkCollectionKeys = JSON.parse(`["#0", 5, "7mate", "ABC", "ABC Family", "ABC Kids", "ABC TV", "ABS-CBN", "Acorn TV", "Adult Swim", "AHC", "ALTBalaji", "Amazon Kids+", "AMC", "AMC+", "Animal Planet", "ANIMAX", "Angel Studios", "Antena 3", "Apple TV", "ARD", "Arte", "Atresplayer Premium", "Atres Player", "AT-X", "Audience", "AXN", "Azteca Uno", "A&E", "BBC America", "BBC Four", "BBC iPlayer", "BBC One", "BBC Scotland", "BBC Three", "BBC Two", "BET", "BET+", "bilibili", "Binge", "BluTV", "Boomerang", "Bravo", "BritBox", "C More", "Canale 5", "Canal+", "Cartoon Network", "Cartoonito", "CBC", "CBC Television", "Cbeebies", "CBS", "Channel 3", "Channel 4", "CHCH-DT", "Cinemax", "Citytv", "CNN", "Comedy Central", "Cooking Channel", "Crackle", "Crave", "Criterion Channel", "Crunchyroll", "CTV", "Cuatro", "Curiosity Stream", "DC Universe", "Discovery", "Discovery Kids", "discovery+", "Disney Channel", "Disney Junior", "Disney XD", "Disney+", "DR1", "Dropout", "Elisa Viihde", "Elisa Viihde Viaplay", "ENA", "Epix", "ESPN", "EXXEN", "E!", "E4", "Facebook Watch", "Family Channel", "Ficci\\u00f3n Producciones", "Flooxer", "Food Network", "FOX", "Fox Kids", "France 2", "Freeform", "Freevee", "Fuji TV", "funnyordie.com", "FX", "FXX", "GA\\u0130N", "Game Show Network", "Global TV", "Globoplay", "GMA Network", "Hallmark", "HBO", "HBO Max", "HGTV", "History", "HOT3", "Hulu", "ICTV", "IFC", "IMDb TV", "Investigation Discovery", "ION Television", "iQiyi", "ITV", "ITV Encore", "ITV1", "ITV2", "ITV3", "ITV4", "ITVBe", "ITVX", "JioCinema", "joyn", "JTBC", "Kan 11", "Kanal 5", "KBS2", "Kids WB", "La 1", "La Une", "Las Estrellas", "Lifetime", "Lionsgate+", "Logo", "Magnolia Network", "MasterClass", "MBC", "MBN", "MGM+", "mitele", "Movistar Plus+", "MTV", "M-Net", "National Geographic", "NBC", "Netflix", "Network 10", "NFL Network", "NHK", "Nick", "Nick Jr", "Nickelodeon", "Nicktoons", "Nine Network", "Nippon TV", "NRK1", "OCS City", "OCS Max", "ORF", "Oxygen", "Pantaya", "Paramount Network", "Paramount+", "PBS", "PBS Kids", "Peacock", "Plan\\u00e8te+ A&E", "Prime Video", "Quibi", "Rai 1", "Reelz", "RT\\u00c9 One", "RTL", "RTL T\\u00e9l\\u00e9", "RTP1", "R\\u00daV", "S4C", "SAT.1", "SBS", "Science", "Seeso", "Seven Network", "Shahid", "Showcase", "Showmax", "Showtime", "Shudder", "Sky", "Smithsonian", "Space", "Spectrum", "Spike", "St\\u00f6\\u00f0 2", "Stan", "Starz", "STAR+", "Sundance TV", "SVT", "SVT Play", "SVT1", "Syfy", "Syndication", "TBS", "Telecinco", "Telefe", "Telemundo", "Televisi\\u00f3n de Galicia", "Televisi\\u00f3n P\\u00fablica Argentina", "Tencent Video", "TF1", "The CW", "The Daily Wire", "The Roku Channel", "The WB", "TLC", "TNT", "Tokyo MX", "Travel Channel", "truTV", "tubi", "Turner Classic Movies", "TV 2", "tv asahi", "TV Globo", "TV Land", "TV Tokyo", "TV3", "TV4", "TV4 Play", "TVB Jade", "tving", "tvN", "TVNZ 1", "TVNZ 2", "TVP1", "U", "U&Alibi", "U&Dave", "U&Drama", "U&Eden", "U&Gold", "U&W", "U&Yesterday", "UniM\\u00e1s", "Universal Kids", "Universal TV", "Univision", "UPN", "USA Network", "U+ Mobile TV", "VH1", "Viaplay", "Vice", "Virgin Media One", "ViuTV", "ViX+", "VRT 1", "VRT Max", "VTM", "W", "WE tv", "Xbox Live", "YLE", "Youku", "YouTube", "ZDF", "ZEE5"]`).map(value => String(value))
-/* eslint-enable quotes */
-
 const templateStringListPresetConfigs = {
   generic_text: {
     duplicateInsensitive: false,
@@ -5377,6 +5374,8 @@ function mountCard (card, libraryId) {
   wireCollectionTemplateSections(card)
   wireOverlayVariableSections(card)
   wireCollectionVariableSections(card)
+  wireLibraryOverrideScopes(card)
+  wireOffsetReset(card)
   if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
     OverlayHandler.initializeOverlayBoards(card)
   }
@@ -5403,6 +5402,37 @@ function mountCard (card, libraryId) {
   wireFontPickerButtons(card)
   bindDependencyRequirementHintLiveRefresh(card)
   scheduleDependencyRequirementHintRefresh(0)
+}
+
+function fetchLibraryFragment (libraryId, attempt = 0) {
+  return fetch(`/library_fragment/${encodeURIComponent(libraryId)}`, {
+    credentials: 'same-origin'
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`Failed to load library ${libraryId} (${res.status})`)
+      }
+      return res.text()
+    })
+    .catch(err => {
+      if (attempt < 1) {
+        return new Promise(resolve => window.setTimeout(resolve, 250))
+          .then(() => fetchLibraryFragment(libraryId, attempt + 1))
+      }
+      throw err
+    })
+}
+
+function restorePreviousLibrarySelection (previousLibraryId) {
+  if (libraryPicker && previousLibraryId) {
+    libraryPicker.value = previousLibraryId
+  }
+  if (!libraryContainer.firstElementChild && previousLibraryId) {
+    const previousCard = libraryCache.querySelector(`[data-library-id="${previousLibraryId}"]`)
+    if (previousCard) {
+      mountCard(previousCard, previousLibraryId)
+    }
+  }
 }
 
 wireFontPickerModal()
@@ -5458,7 +5488,7 @@ function buildPayloadFromCard (card) {
     })
   }
   card.querySelectorAll('input.playlist-library-toggle[type="checkbox"][name]:disabled').forEach(el => {
-    payload[el.name] = 'false'
+    payload[el.name] = el.checked ? (el.value || 'true') : 'false'
   })
   return payload
 }
@@ -5784,28 +5814,23 @@ function loadLibrary (libraryId, context = 'switch') {
       if (requestId !== loadRequestId) return
 
       if (!libraryId) {
+        moveCurrentToCache()
         libraryContainer.replaceChildren()
         activeLibraryId = null
         setLoading(false)
         return
       }
 
-      // Move currently active card to cache (to preserve state/inputs)
-      moveCurrentToCache()
-
       const cached = libraryCache.querySelector(`[data-library-id="${libraryId}"]`)
       if (cached) {
         if (requestId !== loadRequestId) return
+        moveCurrentToCache()
         mountCard(cached, libraryId)
         setLoading(false)
         return
       }
 
-      fetch(`/library_fragment/${encodeURIComponent(libraryId)}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Failed to load library ${libraryId}`)
-          return res.text()
-        })
+      fetchLibraryFragment(libraryId)
         .then(html => {
           if (requestId !== loadRequestId) return
           const parser = new DOMParser()
@@ -5813,19 +5838,23 @@ function loadLibrary (libraryId, context = 'switch') {
           const parsedCard = doc.body.firstElementChild
           const card = parsedCard ? document.importNode(parsedCard, true) : null
           if (!card) throw new Error('Empty fragment response')
+          moveCurrentToCache()
           mountCard(card, libraryId)
           setLoading(false)
         })
         .catch(err => {
-          console.error(err)
+          if (requestId !== loadRequestId) return
+          console.error('[Libraries] Failed to load library fragment', err)
+          restorePreviousLibrarySelection(previousLibraryId)
+          if (typeof showToast === 'function') {
+            showToast('error', 'Unable to load that library. Your current library stayed open; try again.')
+          }
           setLoading(false)
         })
     })
     .catch(() => {
       if (requestId !== loadRequestId) return
-      if (libraryPicker && previousLibraryId) {
-        libraryPicker.value = previousLibraryId
-      }
+      restorePreviousLibrarySelection(previousLibraryId)
       setLoading(false)
     })
 }
@@ -6638,8 +6667,11 @@ async function runCollectionGroupReset (btn, group) {
         if (changed) input.value = defaultValue
       }
 
-      if (changed && shouldDispatchCollectionChange(input)) {
-        pendingChangeInputs.add(input)
+      if (changed) {
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        if (shouldDispatchCollectionChange(input)) {
+          pendingChangeInputs.add(input)
+        }
       }
 
       if (index > 0 && index % 30 === 0) {
@@ -6702,6 +6734,22 @@ function wireOffsetReset (scope) {
             console.error('[overlay section reset failed]', error)
             if (typeof showToast === 'function') {
               showToast('error', 'Overlay section reset to defaults failed.')
+            }
+          })
+          return
+        }
+      }
+
+      if (btn.dataset.libraryOverrideReset === 'true') {
+        const section = btn.closest('[data-library-override-scope="true"]')
+        const sectionBody = getDirectAccordionBody(section)
+        if (sectionBody) {
+          runCollectionGroupReset(btn, sectionBody).then(() => {
+            refreshTemplateOverrideState(section.closest('.library-settings-card') || section)
+          }).catch(error => {
+            console.error('[library override reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Section reset to defaults failed.')
             }
           })
           return
@@ -6991,23 +7039,9 @@ function setupParentChildToggleVisibility (scope) {
         }
       })
       let parentChecked = parentToggle.checked
-      const wasChecked = parentToggle.dataset.wasChecked === 'true'
 
       if (!parentChecked) {
-        childrenToggles.forEach(child => {
-          child.dataset.lastChecked = child.checked ? 'true' : 'false'
-          child.checked = false
-          syncChildHidden(child)
-        })
-      } else if (parentChecked && !wasChecked) {
-        childrenToggles.forEach(child => {
-          if (child.dataset.lastChecked !== undefined) {
-            child.checked = child.dataset.lastChecked === 'true'
-          } else {
-            child.checked = child.dataset.initialChecked === 'true'
-          }
-          syncChildHidden(child)
-        })
+        childrenToggles.forEach(child => syncChildHidden(child))
       } else {
         childrenToggles.forEach(child => syncChildHidden(child))
       }
@@ -7639,6 +7673,7 @@ function isInternalTemplateMetadataField (field) {
   const name = String(field.name || '').trim()
   return field.dataset?.skipOverrideCount === 'true' ||
     field.dataset?.templateMetadata === 'lookup-labels' ||
+    name.endsWith('_hidden') ||
     name.endsWith('__lookup_labels')
 }
 
@@ -7704,17 +7739,13 @@ function findTemplateVariableFieldRow (field) {
     '[data-collection-field-wrapper], ' +
     '.rgba-group, ' +
     '.font-row, ' +
-    '.input-group, ' +
-    '.form-check'
+    '.input-group'
   )
 }
 
 function updateTemplateVariableFieldOverrideStates (body, fieldsByName) {
   if (!body) return
-  body.querySelectorAll('.template-variable-field-has-override').forEach(row => {
-    row.classList.remove('template-variable-field-has-override')
-    row.removeAttribute('data-template-variable-field-override')
-  })
+  clearTemplateVariableFieldOverrideStates(body)
 
   fieldsByName.forEach(fields => {
     if (!isCollectionSectionFieldConfigured(fields)) return
@@ -7725,6 +7756,21 @@ function updateTemplateVariableFieldOverrideStates (body, fieldsByName) {
       row.classList.add('template-variable-field-has-override')
       row.dataset.templateVariableFieldOverride = 'true'
     })
+  })
+}
+
+function clearTemplateVariableFieldOverrideStates (scope) {
+  if (!scope) return
+  const rows = []
+  if (scope.classList?.contains('template-variable-field-has-override')) {
+    rows.push(scope)
+  }
+  scope.querySelectorAll?.('.template-variable-field-has-override').forEach(row => {
+    rows.push(row)
+  })
+  rows.forEach(row => {
+    row.classList.remove('template-variable-field-has-override')
+    row.removeAttribute('data-template-variable-field-override')
   })
 }
 
@@ -7794,11 +7840,101 @@ function updateTemplateGroupOverrideSummary (section) {
 
 function refreshTemplateOverrideState (scope) {
   const root = scope || document
+  clearTemplateVariableFieldOverrideStates(root)
   root.querySelectorAll('[data-collection-variable-section="true"]').forEach(section => {
     updateCollectionVariableSectionSummary(section)
   })
   root.querySelectorAll('[data-overlay-variable-section="true"]').forEach(section => {
     updateOverlayVariableSectionSummary(section)
+  })
+  getLibraryOverrideScopes(root).forEach(section => {
+    updateLibraryOverrideScopeSummary(section)
+  })
+}
+
+function getLibraryOverrideScopes (root) {
+  if (!root) return []
+  const scopes = []
+  if (root.matches?.('[data-library-override-scope="true"]')) {
+    scopes.push(root)
+  }
+  root.querySelectorAll?.('[data-library-override-scope="true"]').forEach(section => {
+    scopes.push(section)
+  })
+  return scopes
+}
+
+function getDirectAccordionHeader (scope) {
+  const item = scope?.closest('.accordion-item')
+  if (!item) return null
+  return Array.from(item.children).find(child => child.classList?.contains('accordion-header')) || item.querySelector(':scope > .accordion-header')
+}
+
+function getDirectAccordionBody (scope) {
+  if (!scope) return null
+  return Array.from(scope.children).find(child => child.classList?.contains('accordion-body')) || scope.querySelector(':scope > .accordion-body') || scope
+}
+
+function getLibraryOverrideScopeFields (scope) {
+  const body = getDirectAccordionBody(scope)
+  const fieldsByName = new Map()
+  if (!body) return fieldsByName
+  body.querySelectorAll('[name]').forEach(field => {
+    if (!field || field.disabled) return
+    if (isInternalTemplateMetadataField(field)) return
+    const name = String(field.name || '').trim()
+    if (!name) return
+    if (!fieldsByName.has(name)) fieldsByName.set(name, [])
+    fieldsByName.get(name).push(field)
+  })
+  return fieldsByName
+}
+
+function ensureLibraryOverrideResetButton (scope) {
+  const body = getDirectAccordionBody(scope)
+  if (!body || body.dataset.libraryOverrideResetPrepared === 'true') return
+  const label = scope.dataset.libraryOverrideLabel || getDirectAccordionHeader(scope)?.textContent?.trim() || 'Section'
+  const actions = document.createElement('div')
+  actions.className = 'd-flex justify-content-end mb-2'
+  actions.dataset.libraryOverrideResetActions = 'true'
+  actions.innerHTML = `
+    <button type="button" class="btn btn-outline-secondary btn-sm reset-offset-btn" data-library-override-reset="true">
+      Reset ${label}
+    </button>
+  `
+  body.prepend(actions)
+  body.dataset.libraryOverrideResetPrepared = 'true'
+}
+
+function updateLibraryOverrideScopeSummary (scope) {
+  if (!scope) return
+  const fieldsByName = getLibraryOverrideScopeFields(scope)
+  let configuredCount = 0
+  fieldsByName.forEach(fields => {
+    if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
+  })
+
+  const body = getDirectAccordionBody(scope)
+  updateTemplateVariableFieldOverrideStates(body, fieldsByName)
+
+  scope.dataset.overrideCount = String(configuredCount)
+  const item = scope.closest('.accordion-item')
+  const header = getDirectAccordionHeader(scope)
+  item?.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
+  header?.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
+  setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), configuredCount)
+}
+
+function wireLibraryOverrideScopes (scope) {
+  const root = scope || document
+  getLibraryOverrideScopes(root).forEach(section => {
+    if (section.dataset.libraryOverrideScopeBound === 'true') return
+    ensureLibraryOverrideResetButton(section)
+    const refresh = () => updateLibraryOverrideScopeSummary(section)
+    section.addEventListener('input', refresh)
+    section.addEventListener('change', refresh)
+    refresh()
+    section.dataset.libraryOverrideScopeBound = 'true'
   })
 }
 

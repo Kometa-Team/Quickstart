@@ -3115,10 +3115,10 @@ function stopReingestPolling () {
 
 function fetchReingestStatus (jobId) {
   const query = jobId ? `?job=${encodeURIComponent(jobId)}` : ''
-  fetch(`/logscan/trends/reingest/status${query}`)
+  return fetch(`/logscan/trends/reingest/status${query}`)
     .then(res => res.json().then(data => ({ ok: res.ok, data })))
     .then(({ ok, data }) => {
-      if (!ok || !data) return
+      if (!ok || !data) return data
       if (typeof window.QS_handleLogscanReingestStatus === 'function') {
         window.QS_handleLogscanReingestStatus(data)
       }
@@ -3138,12 +3138,12 @@ function fetchReingestStatus (jobId) {
           setControlsDisabled(true)
           reingestPollTimer = setInterval(() => fetchReingestStatus(reingestJobId), 1500)
         }
-        return
+        return data
       }
       if (data.status === 'complete') {
         stopReingestPolling()
         applyReingestSummary(data)
-        return
+        return data
       }
       if (data.status === 'error') {
         stopReingestPolling()
@@ -3152,9 +3152,11 @@ function fetchReingestStatus (jobId) {
         setControlsDisabled(false)
         setReingestButtonLabel(defaultReingestButtonLabel)
       }
+      return data
     })
     .catch(err => {
       console.error(err)
+      return null
     })
 }
 
@@ -3345,6 +3347,76 @@ function maybeStartAutoReingest (ingestHealth) {
     })
 }
 
+function handleRunningTrendsPayload (data) {
+  if (!data || !data.reingest_running) return false
+  const state = data.reingest || data.ingest_health || {}
+  updateProgressFromState(state)
+  startReingestPolling(state.job_id || null)
+  updateStatus('Reingest is running. Analytics will refresh when it finishes.')
+  return true
+}
+
+function fetchIngestHealth () {
+  return fetch('/logscan/trends/ingest-health')
+    .then(res => res.json().then(data => ({ ok: res.ok, status: res.status, data })))
+    .then(({ ok, status, data }) => {
+      if (!ok && status !== 202) return null
+      if (data && data.status === 'running') {
+        updateProgressFromState(data)
+        startReingestPolling(data.job_id || null)
+        return data
+      }
+      if (data && (!lastIngestState || lastIngestState.status !== 'running')) {
+        lastIngestState = data
+        renderIngestHealth(lastIngestState)
+        maybeStartAutoReingest(data)
+      }
+      return data
+    })
+    .catch(err => {
+      console.error(err)
+      return null
+    })
+}
+
+function fetchArchiveStorage () {
+  return fetch('/logscan/trends/archive-storage')
+    .then(res => res.json().then(data => ({ ok: res.ok, status: res.status, data })))
+    .then(({ ok, status, data }) => {
+      if (status === 202) return data
+      if (!ok || !data || !data.archive_storage) return data
+      latestArchiveStorage = data.archive_storage
+      renderArchiveStorageSummary(latestArchiveStorage)
+      return data
+    })
+    .catch(err => {
+      console.error(err)
+      return null
+    })
+}
+
+function fetchIncompleteRuns (safeLimit) {
+  return fetch(`/logscan/trends/incomplete-runs?limit=${encodeURIComponent(safeLimit)}`)
+    .then(res => res.json().then(data => ({ ok: res.ok, status: res.status, data })))
+    .then(({ ok, status, data }) => {
+      if (status === 202) return data
+      if (!ok || !data) return null
+      allIncompleteRuns = Array.isArray(data.incomplete_runs) ? data.incomplete_runs : []
+      allIncompleteRunsTotal = Number.isFinite(data.total_incomplete_runs) ? data.total_incomplete_runs : allIncompleteRuns.length
+      allTableRuns = allRuns.concat(allIncompleteRuns)
+      pruneSelectedRunKeys()
+      updateConfigFilter(allTableRuns)
+      updateCommandFilter(allTableRuns)
+      updateDateRangeInputs(allTableRuns, getFilterState())
+      applyFiltersAndRender()
+      return data
+    })
+    .catch(err => {
+      console.error(err)
+      return null
+    })
+}
+
 function showSectionDetails (runKey) {
   const payload = sectionDetailsByRunKey.get(runKey)
   if (!payload) return
@@ -3502,20 +3574,16 @@ function fetchRuns (options = {}) {
   const rawLimit = String(limit.value || '500').toLowerCase()
   const safeLimit = rawLimit === 'all' ? 'all' : (Number.isFinite(parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 500)
   if (!suppressStatus) updateStatus('Loading trends...')
-  fetch(`/logscan/trends?limit=${safeLimit}`)
+  fetch(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0`)
     .then(res => res.json())
     .then(data => {
+      if (handleRunningTrendsPayload(data)) return
       allRuns = Array.isArray(data.runs) ? data.runs : []
-      allIncompleteRuns = Array.isArray(data.incomplete_runs) ? data.incomplete_runs : []
-      allTableRuns = allRuns.concat(allIncompleteRuns)
+      allIncompleteRuns = []
+      allTableRuns = allRuns
       pruneSelectedRunKeys()
       allRunsTotal = Number.isFinite(data.total_runs) ? data.total_runs : allRuns.length
-      allIncompleteRunsTotal = Number.isFinite(data.total_incomplete_runs) ? data.total_incomplete_runs : allIncompleteRuns.length
-      latestArchiveStorage = data && data.archive_storage ? data.archive_storage : null
-      renderArchiveStorageSummary(latestArchiveStorage)
-      if (data && data.ingest_health && (!lastIngestState || lastIngestState.status !== 'running')) {
-        lastIngestState = data.ingest_health
-      }
+      allIncompleteRunsTotal = 0
       updateConfigFilter(allTableRuns)
       updateCommandFilter(allTableRuns)
       updateDateRangeInputs(allTableRuns, getFilterState())
@@ -3525,7 +3593,9 @@ function fetchRuns (options = {}) {
           if (!suppressStatus && (!lastIngestState || lastIngestState.status !== 'running')) {
             updateStatus(`Last updated: ${formatTimestamp(new Date().toISOString())}`)
           }
-          maybeStartAutoReingest(data && data.ingest_health)
+          fetchIncompleteRuns(safeLimit)
+          fetchArchiveStorage()
+          fetchIngestHealth()
         })
     })
     .catch(err => {
@@ -3553,8 +3623,11 @@ function fetchRuns (options = {}) {
 function refreshAnalyticsPage (options = {}) {
   const suppressStatus = Boolean(options && options.suppressStatus)
   checkMissingDownload()
-  fetchRuns({ suppressStatus })
   fetchReingestStatus()
+    .then(data => {
+      if (data && (data.status === 'running' || data.status === 'complete')) return
+      fetchRuns({ suppressStatus })
+    })
 }
 
 function getSelectedRuns () {

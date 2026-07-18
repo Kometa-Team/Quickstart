@@ -13,7 +13,8 @@
       </button>
     </h2>
     <div id="{{ library.id }}-collapseSeparators" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-separatorsAccordion">
+      data-bs-parent="#{{ library.id }}-separatorsAccordion"
+      data-library-override-scope="true" data-library-override-label="Separators">
       <div class="accordion-body">
         {% for section in attribute_config.sections if section.media_types and 'show' in section.media_types and
         section.accordion == 'separators' %}
@@ -49,7 +50,8 @@
       </button>
     </h2>
     <div id="{{ library.id }}-collapseOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-overlayOperationsAccordion">
+      data-bs-parent="#{{ library.id }}-overlayOperationsAccordion"
+      data-library-override-scope="true" data-library-override-label="Overlay Operations">
       <div class="accordion-body">
         {% for section in attribute_config.sections if section.media_types and 'show' in section.media_types and
         section.accordion == 'overlays' %}
@@ -126,7 +128,8 @@
       </button>
     </h2>
     <div id="{{ library.id }}-collapseLibrary" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-libraryOperationsAccordion">
+      data-bs-parent="#{{ library.id }}-libraryOperationsAccordion"
+      data-library-override-scope="true" data-library-override-label="Library Operations">
       <div class="accordion-body">
         {% for section in attribute_config.sections if section.media_types and 'show' in section.media_types and
         section.accordion == 'library' %}
@@ -269,7 +272,8 @@
       </button>
     </h2>
     <div id="{{ library.id }}-collapseMiscellaneous" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-miscellaneousAccordion">
+      data-bs-parent="#{{ library.id }}-miscellaneousAccordion"
+      data-library-override-scope="true" data-library-override-label="Miscellaneous">
       <div class="accordion-body">
         {% for section in attribute_config.sections if section.media_types and 'show' in section.media_types and section.accordion == 'miscellaneous' %}
           {% if section.type == 'select' %}

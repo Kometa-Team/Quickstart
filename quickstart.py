@@ -1279,6 +1279,7 @@ logscan_reingest_state = {
     "status": "idle",
     "job_id": None,
 }
+LOGSCAN_INGEST_CACHE_FLUSH_INTERVAL = 10
 
 # Bump this integer when a release needs a one-time Analytics reset + log reingest
 # on startup. Quickstart persists the highest successful level to config/.env so
@@ -4278,6 +4279,39 @@ def logscan_progress():
 
 @app.route("/logscan/trends", methods=["GET"])
 def logscan_trends():
+    snapshot = _logscan_reingest_snapshot()
+    if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
+        total_runs = database.get_log_runs_count()
+        running_health = {
+            "source": "running",
+            "status": snapshot.get("status") or "running",
+            "job_id": snapshot.get("job_id"),
+            "trigger": snapshot.get("trigger"),
+            "migration_level": snapshot.get("migration_level"),
+            "total": snapshot.get("total", 0),
+            "scanned": snapshot.get("scanned", 0),
+            "ingested": snapshot.get("ingested", 0),
+            "duplicates": snapshot.get("duplicates", 0),
+            "skipped_incomplete": snapshot.get("skipped_incomplete", 0),
+            "skipped_invalid": snapshot.get("skipped_invalid", 0),
+            "errors": snapshot.get("errors", 0),
+            "current_file": snapshot.get("current_file"),
+            "needs_reingest": True,
+            "pending_active": True,
+        }
+        return jsonify(
+            {
+                "runs": [],
+                "incomplete_runs": [],
+                "total_runs": total_runs,
+                "total_incomplete_runs": 0,
+                "ingest_health": running_health,
+                "archive_storage": None,
+                "reingest_running": True,
+                "reingest": snapshot,
+            }
+        )
+
     try:
         _ingest_completed_live_logs("imagemaid")
         _archive_finished_live_meta_log_if_idle()
@@ -4292,20 +4326,73 @@ def logscan_trends():
         except Exception:
             limit = 50
         limit = max(1, min(limit, 500))
+    include_ingest_health = str(request.args.get("include_ingest_health", "1")).strip().lower() not in {"0", "false", "no", "off"}
+    include_archive_storage = str(request.args.get("include_archive_storage", "1")).strip().lower() not in {"0", "false", "no", "off"}
+    include_incomplete = str(request.args.get("include_incomplete", "1")).strip().lower() not in {"0", "false", "no", "off"}
     total_runs = database.get_log_runs_count()
-    ingest_health = _logscan_ingest_health()
     resolution_context = _build_logscan_resolution_context()
     runs = _annotate_logscan_runs(database.get_log_runs(limit=limit), context=resolution_context)
-    incomplete_runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
-    all_runs = database.get_log_runs(limit=None) if total_runs else []
+    incomplete_runs = []
+    all_incomplete_runs = []
+    if include_incomplete:
+        incomplete_runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
+        all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
+    payload = {
+        "runs": runs,
+        "incomplete_runs": incomplete_runs,
+        "total_runs": total_runs,
+        "total_incomplete_runs": len(all_incomplete_runs),
+        "ingest_health": _logscan_ingest_health() if include_ingest_health else None,
+        "archive_storage": None,
+        "reingest_running": False,
+    }
+    if include_archive_storage:
+        all_runs = database.get_log_runs(limit=None) if total_runs else []
+        payload["archive_storage"] = _get_logscan_archive_storage_summary(
+            all_runs=all_runs,
+            incomplete_runs=all_incomplete_runs,
+            context=resolution_context,
+        )
+    return jsonify(payload)
+
+
+@app.route("/logscan/trends/ingest-health", methods=["GET"])
+def logscan_trends_ingest_health():
+    snapshot = _logscan_reingest_snapshot()
+    if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
+        return jsonify(
+            {
+                "source": "running",
+                "status": snapshot.get("status") or "running",
+                "job_id": snapshot.get("job_id"),
+                "trigger": snapshot.get("trigger"),
+                "migration_level": snapshot.get("migration_level"),
+                "total": snapshot.get("total", 0),
+                "scanned": snapshot.get("scanned", 0),
+                "ingested": snapshot.get("ingested", 0),
+                "duplicates": snapshot.get("duplicates", 0),
+                "skipped_incomplete": snapshot.get("skipped_incomplete", 0),
+                "skipped_invalid": snapshot.get("skipped_invalid", 0),
+                "errors": snapshot.get("errors", 0),
+                "current_file": snapshot.get("current_file"),
+                "needs_reingest": True,
+                "pending_active": True,
+            }
+        )
+    return jsonify(_logscan_ingest_health())
+
+
+@app.route("/logscan/trends/archive-storage", methods=["GET"])
+def logscan_trends_archive_storage():
+    snapshot = _logscan_reingest_snapshot()
+    if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
+        return jsonify({"status": "running", "archive_storage": None, "reingest": snapshot}), 202
+    resolution_context = _build_logscan_resolution_context()
+    all_runs = database.get_log_runs(limit=None) if database.get_log_runs_count() else []
     all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
     return jsonify(
         {
-            "runs": runs,
-            "incomplete_runs": incomplete_runs,
-            "total_runs": total_runs,
-            "total_incomplete_runs": len(all_incomplete_runs),
-            "ingest_health": ingest_health,
+            "status": "idle",
             "archive_storage": _get_logscan_archive_storage_summary(
                 all_runs=all_runs,
                 incomplete_runs=all_incomplete_runs,
@@ -4313,6 +4400,26 @@ def logscan_trends():
             ),
         }
     )
+
+
+@app.route("/logscan/trends/incomplete-runs", methods=["GET"])
+def logscan_trends_incomplete_runs():
+    snapshot = _logscan_reingest_snapshot()
+    if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
+        return jsonify({"status": "running", "incomplete_runs": [], "total_incomplete_runs": 0, "reingest": snapshot}), 202
+    raw_limit = str(request.args.get("limit", "50")).strip().lower()
+    if raw_limit == "all":
+        limit = None
+    else:
+        try:
+            limit = int(raw_limit)
+        except Exception:
+            limit = 50
+        limit = max(1, min(limit, 500))
+    resolution_context = _build_logscan_resolution_context()
+    runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
+    all_runs = _get_logscan_incomplete_runs(limit=None)
+    return jsonify({"status": "idle", "incomplete_runs": runs, "total_incomplete_runs": len(all_runs)})
 
 
 @app.route("/logscan/trends/recommendations", methods=["GET"])
@@ -5105,6 +5212,15 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         sample_incomplete = []
         sample_errors = []
 
+        def _flush_ingest_cache_progress(force=False):
+            nonlocal cache_dirty
+            if not cache_dirty:
+                return
+            if force:
+                ingest_cache["logs"] = cache_logs
+                _save_logscan_ingest_cache(ingest_cache)
+                cache_dirty = False
+
         for idx, path in enumerate(log_files, start=1):
             if update_state:
                 _update_logscan_reingest_state(current_file=path.name, scanned=max(0, idx - 1))
@@ -5295,6 +5411,8 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     sample_incomplete=sample_incomplete,
                     sample_errors=sample_errors,
                 )
+            if idx % LOGSCAN_INGEST_CACHE_FLUSH_INTERVAL == 0:
+                _flush_ingest_cache_progress(force=True)
 
         cache_dir = _get_logscan_cache_dir()
         missing_people_log = cache_dir / "meta_people_missing.log"
@@ -5362,8 +5480,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 current_file=None,
                 **result,
             )
-        if cache_dirty:
-            _save_logscan_ingest_cache(ingest_cache)
+        _flush_ingest_cache_progress(force=True)
         return result
     finally:
         logscan_ingest_lock.release()
