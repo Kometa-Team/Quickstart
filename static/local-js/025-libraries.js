@@ -5317,9 +5317,23 @@ function wireLibraryServiceValidationButtons (card) {
   card.dataset.libraryServiceValidationBound = 'true'
 }
 
+function setCachedCardFormSubmission (card, cached) {
+  if (!card) return
+  card.querySelectorAll('input, select, textarea').forEach(el => {
+    if (cached) {
+      el.dataset.qsCachedDisabled = el.disabled ? 'true' : 'false'
+      el.disabled = true
+    } else if (el.dataset.qsCachedDisabled !== undefined) {
+      el.disabled = el.dataset.qsCachedDisabled === 'true'
+      delete el.dataset.qsCachedDisabled
+    }
+  })
+}
+
 function moveCurrentToCache () {
   const current = libraryContainer.firstElementChild
   if (current) {
+    setCachedCardFormSubmission(current, true)
     current.style.display = 'none'
     libraryCache.appendChild(current)
   }
@@ -5327,6 +5341,7 @@ function moveCurrentToCache () {
 
 function mountCard (card, libraryId) {
   libraryContainer.replaceChildren()
+  setCachedCardFormSubmission(card, false)
   card.style.display = ''
   libraryContainer.appendChild(card)
   activeLibraryId = libraryId
