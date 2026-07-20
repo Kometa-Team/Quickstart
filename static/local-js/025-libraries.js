@@ -5317,9 +5317,23 @@ function wireLibraryServiceValidationButtons (card) {
   card.dataset.libraryServiceValidationBound = 'true'
 }
 
+function setCachedCardFormSubmission (card, cached) {
+  if (!card) return
+  card.querySelectorAll('input, select, textarea').forEach(el => {
+    if (cached) {
+      el.dataset.qsCachedDisabled = el.disabled ? 'true' : 'false'
+      el.disabled = true
+    } else if (el.dataset.qsCachedDisabled !== undefined) {
+      el.disabled = el.dataset.qsCachedDisabled === 'true'
+      delete el.dataset.qsCachedDisabled
+    }
+  })
+}
+
 function moveCurrentToCache () {
   const current = libraryContainer.firstElementChild
   if (current) {
+    setCachedCardFormSubmission(current, true)
     current.style.display = 'none'
     libraryCache.appendChild(current)
   }
@@ -5327,6 +5341,7 @@ function moveCurrentToCache () {
 
 function mountCard (card, libraryId) {
   libraryContainer.replaceChildren()
+  setCachedCardFormSubmission(card, false)
   card.style.display = ''
   libraryContainer.appendChild(card)
   activeLibraryId = libraryId
@@ -5445,6 +5460,17 @@ function buildPayloadFromCard (card) {
       .map(el => String(el.name || '').trim())
       .filter(Boolean)
   )
+  const radioCheckboxValues = new Map()
+  card.querySelectorAll('input[type="checkbox"][name][data-radio-group="true"]').forEach(el => {
+    const name = String(el.name || '').trim()
+    if (!name || el.disabled) return
+    if (!radioCheckboxValues.has(name)) {
+      radioCheckboxValues.set(name, '')
+    }
+    if (el.checked) {
+      radioCheckboxValues.set(name, el.value || 'true')
+    }
+  })
   card.querySelectorAll('input, select, textarea').forEach(el => {
     if (!el.name || el.disabled) return
     if (el.dataset && el.dataset.skipYaml === 'true') return
@@ -5460,6 +5486,12 @@ function buildPayloadFromCard (card) {
     }
 
     if (el.type === 'checkbox') {
+      if (el.dataset && el.dataset.radioGroup === 'true') {
+        if (!Object.prototype.hasOwnProperty.call(payload, el.name)) {
+          payload[el.name] = radioCheckboxValues.get(el.name) || ''
+        }
+        return
+      }
       payload[el.name] = el.checked ? (el.value || 'true') : 'false'
       return
     }

@@ -142,6 +142,17 @@ def test_library_fragment_load_failure_preserves_current_card():
     assert "Your current library stayed open" in load_body
 
 
+def test_cached_library_cards_do_not_submit_stale_form_fields():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function setCachedCardFormSubmission" in script
+    assert "el.dataset.qsCachedDisabled = el.disabled ? 'true' : 'false'" in script
+    assert "el.disabled = true" in script
+    assert "el.disabled = el.dataset.qsCachedDisabled === 'true'" in script
+    assert "setCachedCardFormSubmission(current, true)" in script
+    assert "setCachedCardFormSubmission(card, false)" in script
+
+
 def test_schedule_builder_allows_clearing_weekly_days():
     script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
 
