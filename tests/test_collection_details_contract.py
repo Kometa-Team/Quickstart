@@ -5,7 +5,9 @@ ROOT = Path(__file__).resolve().parents[1]
 MACROS_PATH = ROOT / "templates" / "partials" / "_macros.html"
 STYLES_PATH = ROOT / "static" / "css" / "styles.css"
 LIBRARIES_JS_PATH = ROOT / "static" / "local-js" / "025-libraries.js"
+EVENT_HANDLER_JS_PATH = ROOT / "static" / "local-js" / "eventHandler.js"
 VALIDATION_JS_PATH = ROOT / "static" / "local-js" / "validationHandler.js"
+START_JS_PATH = ROOT / "static" / "local-js" / "001-start.js"
 OVERLAYS_PATH = ROOT / "static" / "json" / "quickstart_overlays.json"
 LIBRARIES_TEMPLATE_PATH = ROOT / "templates" / "025-libraries.html"
 PLAYLIST_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_playlists.html"
@@ -48,6 +50,19 @@ def test_libraries_script_wires_collection_detail_toggles():
     assert "[data-collection-field-wrapper]" in script
 
 
+def test_event_handler_does_not_scan_selects_inside_input_loop():
+    script = EVENT_HANDLER_JS_PATH.read_text(encoding="utf-8")
+    attach_section = script.split("initializeOverlays(libraryId, isMovie)", 1)[1]
+    attach_section = attach_section.split("// Attach attribute_reset_overlays listeners", 1)[0]
+
+    assert "function queryScopedElements" in script
+    assert "attachLibraryListeners: function (scope = document)" in script
+    assert "reattachmentScopes.forEach(scope => EventHandler.attachLibraryListeners(scope))" in script
+    assert attach_section.index("library.querySelectorAll('.accordion select')") < attach_section.index("library.querySelectorAll('.accordion input')")
+    input_loop = attach_section.split("library.querySelectorAll('.accordion input')", 1)[1]
+    assert "library.querySelectorAll('.accordion select')" not in input_loop
+
+
 def test_overlay_macros_render_collapsible_variable_sections():
     macros = MACROS_PATH.read_text(encoding="utf-8")
 
@@ -85,6 +100,26 @@ def test_libraries_script_replaces_mirror_confirm_handler():
 
     assert "copyConfirmBtn.onclick = onConfirm" in script
     assert "copyConfirmBtn.addEventListener('click', onConfirm)" not in script
+
+
+def test_start_import_confirm_is_single_bound_and_in_flight_guarded():
+    script = START_JS_PATH.read_text(encoding="utf-8")
+
+    assert "let importConfirmInFlight = false" in script
+    assert "confirmImportButton.dataset.importConfirmBound !== 'true'" in script
+    assert "confirmImportButton.dataset.importConfirmBound = 'true'" in script
+    assert "if (importConfirmInFlight) return" in script
+    assert "importConfirmInFlight = true" in script
+    assert "importConfirmInFlight = false" in script
+
+
+def test_libraries_lookup_label_autosave_uses_narrow_payload():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function buildLookupLabelPayloadFromCard" in script
+    assert "__lookup_labels_only: true" in script
+    assert "autosaveActiveLibrary({ quiet: true, lookupLabelsOnly: true })" in script
+    assert "lookupLabelsOnly ? buildLookupLabelPayloadFromCard(card) : buildPayloadFromCard(card)" in script
 
 
 def test_mirror_modal_explains_targets_stay_excluded():
@@ -140,6 +175,58 @@ def test_library_fragment_load_failure_preserves_current_card():
         "if (!card) throw new Error('Empty fragment response')\n" "          moveCurrentToCache()\n" "          mountCard(card, libraryId)"
     )
     assert "Your current library stayed open" in load_body
+
+
+def test_libraries_page_does_not_auto_load_first_library():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    picker_init = script.split("if (libraryPicker) {", 1)[1].split(
+        "document.addEventListener('qs:before-step-navigation'",
+        1,
+    )[0]
+
+    assert "refreshPickerLabels()" in picker_init
+    assert "libraryPicker.value = ''" in picker_init
+    assert "loadLibrary(configuredFirst.value, 'initial')" not in picker_init
+    assert "loadLibrary(firstLibrary, 'initial')" not in picker_init
+
+
+def test_library_card_mount_scopes_event_handler_to_current_card():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    initializer_body = script.split("function initializeLibraryCardControls (card, libraryId) {", 1)[1].split(
+        "function wireLazyLibrarySections",
+        1,
+    )[0]
+    mount_body = script.split("function mountCard (card, libraryId) {", 1)[1].split(
+        "function fetchLibraryFragment",
+        1,
+    )[0]
+
+    assert "EventHandler.attachLibraryListeners(card)" in initializer_body
+    assert "initializeLibraryCardControls(card, libraryId)" in mount_body
+    assert "EventHandler.attachLibraryListeners()" not in mount_body
+
+
+def test_libraries_lazy_loads_heavy_collection_and_overlay_sections():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    movie_settings = (ROOT / "templates" / "partials" / "_movie_library_settings.html").read_text(encoding="utf-8")
+    show_settings = (ROOT / "templates" / "partials" / "_show_library_settings.html").read_text(encoding="utf-8")
+    routes = (ROOT / "blueprints" / "library_routes.py").read_text(encoding="utf-8")
+
+    assert "function wireLazyLibrarySections" in script
+    assert "function updateLazySectionOverrideSummaries" in script
+    assert "shown.bs.collapse" in script
+    assert "/section/${encodeURIComponent(sectionName)}" in script
+    assert "initializeLibraryCardControls(card, libraryId)" in script
+    assert "wireLazyLibrarySections(card)" in script
+    assert "updateLazySectionOverrideSummaries(card)" in script
+    assert "data-lazy-override-count" in movie_settings
+    assert "data-lazy-override-count" in show_settings
+    assert 'data-library-lazy-section="collections"' in movie_settings
+    assert 'data-library-lazy-section="overlays"' in movie_settings
+    assert 'data-library-lazy-section="collections"' in show_settings
+    assert 'data-library-lazy-section="overlays"' in show_settings
+    assert "defer_heavy_sections=True" in routes
+    assert '@bp.route("/library_fragment/<library_id>/section/<section_name>")' in routes
 
 
 def test_cached_library_cards_do_not_submit_stale_form_fields():

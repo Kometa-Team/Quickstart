@@ -161,7 +161,19 @@ def test_prepare_import_payload_maps_apprise_config_to_location():
     payload, report = importer.prepare_import_payload({"apprise": {"config": "/config/apprise.yml"}}, set(), set())
 
     assert payload["apprise"]["apprise"]["location"] == "/config/apprise.yml"
+    assert any(line == "imported: apprise.config" for line in report.lines)
     assert report.counts["imported"] >= 1
+
+
+def test_annotate_yaml_marks_apprise_config_as_imported():
+    raw = "apprise:\n  config: /config/apprise.yml\n"
+    _, report = importer.prepare_import_payload({"apprise": {"config": "/config/apprise.yml"}}, set(), set())
+
+    annotated = importer.annotate_yaml_with_report(raw, report.lines)
+
+    assert "apprise:  # mapped" in annotated
+    assert "config: /config/apprise.yml  # mapped" in annotated
+    assert "No matching Quickstart mapping" not in annotated
 
 
 def test_prepare_import_payload_maps_yamtrack_credentials():

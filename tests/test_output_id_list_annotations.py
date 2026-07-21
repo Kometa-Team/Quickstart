@@ -93,6 +93,22 @@ def test_settings_ignore_ids_emit_as_commented_sorted_rows(app):
     assert "__lookup_labels" not in yaml_content
 
 
+def test_settings_warning_defaults_emit_as_blank_keys(app):
+    settings = {
+        "settings": {
+            "cache": True,
+            "auto_sort_hubs": None,
+            "playlist_exclude_users": None,
+        }
+    }
+
+    with app.app_context():
+        yaml_content = dump_section("", "settings", settings, "none", None)
+
+    assert re.search(r"^  auto_sort_hubs:\s*$", yaml_content, re.MULTILINE)
+    assert re.search(r"^  playlist_exclude_users:\s*$", yaml_content, re.MULTILINE)
+
+
 def test_library_placeholder_id_emits_saved_lookup_comment(app):
     config_data = {
         "libraries": {

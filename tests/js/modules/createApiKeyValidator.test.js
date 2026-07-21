@@ -148,6 +148,12 @@ describe('createApiKeyValidator initial field state', () => {
     expect(document.getElementById('test_apikey').getAttribute('type')).toBe('password')
   })
 
+  it('keeps a populated primary field visible when maskPrimaryField=false', () => {
+    document.body.innerHTML = buildBaseHTML({ keyValue: '/config/apprise.yml' })
+    createApiKeyValidator(defaultConfig({ maskPrimaryField: false }))
+    expect(document.getElementById('test_apikey').getAttribute('type')).toBe('text')
+  })
+
   it('treats whitespace-only credential as empty (still password initially, then text)', () => {
     document.body.innerHTML = buildBaseHTML({ keyValue: '   ' })
     createApiKeyValidator(defaultConfig())

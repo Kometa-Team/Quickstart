@@ -7,11 +7,22 @@ import re
 
 from modules.helpers._constants import JSON_SETTINGS
 
+_QUICKSTART_CONFIG_CACHE: dict[str, tuple[float, int, object]] = {}
+_QUICKSTART_OVERLAY_CONFIG_CACHE: tuple[float, int, object] | None = None
+
 
 def load_quickstart_config(filename: str):
     json_path = os.path.join(JSON_SETTINGS, filename)
+    stat = os.stat(json_path)
+    cache_key = os.path.abspath(json_path)
+    cached = _QUICKSTART_CONFIG_CACHE.get(cache_key)
+    if cached and cached[0] == stat.st_mtime and cached[1] == stat.st_size:
+        return copy.deepcopy(cached[2])
+
     with open(json_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    _QUICKSTART_CONFIG_CACHE[cache_key] = (stat.st_mtime, stat.st_size, data)
+    return copy.deepcopy(data)
 
 
 def _overlay_origin_alignment_defaults(origin):
@@ -261,4 +272,14 @@ def enrich_quickstart_overlay_config(config):
 
 
 def load_quickstart_overlay_config():
-    return enrich_quickstart_overlay_config(load_quickstart_config("quickstart_overlays.json"))
+    global _QUICKSTART_OVERLAY_CONFIG_CACHE
+
+    json_path = os.path.join(JSON_SETTINGS, "quickstart_overlays.json")
+    stat = os.stat(json_path)
+    cached = _QUICKSTART_OVERLAY_CONFIG_CACHE
+    if cached and cached[0] == stat.st_mtime and cached[1] == stat.st_size:
+        return copy.deepcopy(cached[2])
+
+    enriched = enrich_quickstart_overlay_config(load_quickstart_config("quickstart_overlays.json"))
+    _QUICKSTART_OVERLAY_CONFIG_CACHE = (stat.st_mtime, stat.st_size, enriched)
+    return copy.deepcopy(enriched)

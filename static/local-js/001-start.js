@@ -176,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let importReportFilter = 'all'
   let importNeedsPlexCredentials = false
   let importNeedsTmdbCredentials = false
+  let importConfirmInFlight = false
 
   if (importPlexTokenToggle && importPlexToken) {
     if (!importPlexToken.value.trim()) {
@@ -2001,12 +2002,15 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   }
 
-  if (confirmImportButton) {
+  if (confirmImportButton && confirmImportButton.dataset.importConfirmBound !== 'true') {
+    confirmImportButton.dataset.importConfirmBound = 'true'
     confirmImportButton.addEventListener('click', async () => {
+      if (importConfirmInFlight) return
       if (!importToken) {
         setImportError('Preview the import before confirming.')
         return
       }
+      importConfirmInFlight = true
       confirmImportButton.disabled = true
       confirmImportButton.textContent = 'Importing...'
 
@@ -2242,6 +2246,7 @@ document.addEventListener('DOMContentLoaded', function () {
           setImportError(message)
         }
       } finally {
+        importConfirmInFlight = false
         confirmImportButton.disabled = false
         confirmImportButton.textContent = 'Import'
       }

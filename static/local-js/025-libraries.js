@@ -5339,12 +5339,7 @@ function moveCurrentToCache () {
   }
 }
 
-function mountCard (card, libraryId) {
-  libraryContainer.replaceChildren()
-  setCachedCardFormSubmission(card, false)
-  card.style.display = ''
-  libraryContainer.appendChild(card)
-  activeLibraryId = libraryId
+function initializeLibraryCardControls (card, libraryId) {
   initPlaylistKeyToggleGroups(card)
   initPlaylistUserPickers(card)
   initPlaylistFilesEditors(card)
@@ -5390,6 +5385,7 @@ function mountCard (card, libraryId) {
   wireOverlayVariableSections(card)
   wireCollectionVariableSections(card)
   wireLibraryOverrideScopes(card)
+  updateLazySectionOverrideSummaries(card)
   wireOffsetReset(card)
   if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
     OverlayHandler.initializeOverlayBoards(card)
@@ -5401,7 +5397,7 @@ function mountCard (card, libraryId) {
     OverlayHandler.initializeJumpButtons(card)
   }
   if (typeof EventHandler !== 'undefined') {
-    EventHandler.attachLibraryListeners()
+    EventHandler.attachLibraryListeners(card)
   }
   if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
     PathValidation.attach(card)
@@ -5417,6 +5413,63 @@ function mountCard (card, libraryId) {
   wireFontPickerButtons(card)
   bindDependencyRequirementHintLiveRefresh(card)
   scheduleDependencyRequirementHintRefresh(0)
+}
+
+function wireLazyLibrarySections (card) {
+  if (!card || card.dataset.lazyLibrarySectionsBound === 'true') return
+
+  card.addEventListener('shown.bs.collapse', event => {
+    const collapse = event.target
+    if (!collapse || !collapse.querySelector) return
+    const placeholder = collapse.querySelector('[data-library-lazy-section][data-library-id]')
+    if (!placeholder || placeholder.dataset.lazyState === 'loaded' || placeholder.dataset.lazyState === 'loading') return
+
+    const sectionName = placeholder.dataset.libraryLazySection
+    const libraryId = placeholder.dataset.libraryId
+    if (!sectionName || !libraryId) return
+
+    const spinner = placeholder.querySelector('.spinner-border')
+    const status = placeholder.querySelector('span')
+    placeholder.dataset.lazyState = 'loading'
+    spinner?.classList.remove('d-none')
+    if (status) status.textContent = `Loading ${sectionName} settings...`
+
+    fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/${encodeURIComponent(sectionName)}`, {
+      credentials: 'same-origin'
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to load ${sectionName} (${res.status})`)
+        return res.text()
+      })
+      .then(html => {
+        const body = placeholder.closest('.accordion-body')
+        if (!body) return
+        body.innerHTML = html
+        placeholder.dataset.lazyState = 'loaded'
+        initializeLibraryCardControls(card, libraryId)
+      })
+      .catch(err => {
+        console.error('[Libraries] Failed to load lazy library section', err)
+        placeholder.dataset.lazyState = 'error'
+        spinner?.classList.add('d-none')
+        if (status) status.textContent = `Unable to load ${sectionName} settings. Close and reopen this section to retry.`
+        if (typeof showToast === 'function') {
+          showToast('error', `Unable to load ${sectionName} settings. Try again.`)
+        }
+      })
+  })
+
+  card.dataset.lazyLibrarySectionsBound = 'true'
+}
+
+function mountCard (card, libraryId) {
+  libraryContainer.replaceChildren()
+  setCachedCardFormSubmission(card, false)
+  card.style.display = ''
+  libraryContainer.appendChild(card)
+  activeLibraryId = libraryId
+  wireLazyLibrarySections(card)
+  initializeLibraryCardControls(card, libraryId)
 }
 
 function fetchLibraryFragment (libraryId, attempt = 0) {
@@ -5455,6 +5508,15 @@ wireFontPickerModal()
 function buildPayloadFromCard (card) {
   const payload = {}
   const libraryId = activeLibraryId || String(card?.querySelector('[name]')?.name || '').split('-')[0]
+  const loadedLazySections = []
+  ;['collections', 'overlays'].forEach(sectionName => {
+    const section = document.getElementById(`${libraryId}-${sectionName}`)
+    const placeholder = card.querySelector(`[data-library-lazy-section="${sectionName}"][data-library-id="${libraryId}"]`)
+    if (section && !placeholder) {
+      loadedLazySections.push(sectionName)
+    }
+  })
+  payload.__loaded_sections = loadedLazySections
   const checkboxNames = new Set(
     Array.from(card.querySelectorAll('input[type="checkbox"][name]'))
       .map(el => String(el.name || '').trim())
@@ -5591,11 +5653,21 @@ function scheduleLookupLabelAutosave (delayMs = 900) {
   lookupLabelAutosaveTimer = setTimeout(() => {
     lookupLabelAutosaveTimer = null
     if (!activeLibraryId || window.QS_SWITCHING_CONFIG) return
-    autosaveActiveLibrary({ quiet: true })
+    autosaveActiveLibrary({ quiet: true, lookupLabelsOnly: true })
       .catch(err => {
         console.warn('[Autosave] Failed to persist lookup labels', err)
       })
   }, Math.max(0, Number(delayMs) || 0))
+}
+
+function buildLookupLabelPayloadFromCard (card) {
+  const payload = { __lookup_labels_only: true }
+  if (!card) return payload
+  card.querySelectorAll('input[type="hidden"][name$="__lookup_labels"]').forEach(el => {
+    if (!el.name || el.disabled) return
+    payload[el.name] = el.value ?? '{}'
+  })
+  return payload
 }
 
 function autosaveActiveLibrary (options = {}) {
@@ -5603,8 +5675,9 @@ function autosaveActiveLibrary (options = {}) {
   if (!activeLibraryId || !card) return Promise.resolve()
   if (window.QS_SWITCHING_CONFIG) return Promise.resolve()
   const quiet = Boolean(options && options.quiet)
+  const lookupLabelsOnly = Boolean(options && options.lookupLabelsOnly)
 
-  if (typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
+  if (!lookupLabelsOnly && typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
     const pathValid = PathValidation.validateAll(card)
     if (!pathValid) {
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.focusFirstInvalidField === 'function') {
@@ -5617,7 +5690,7 @@ function autosaveActiveLibrary (options = {}) {
     }
   }
 
-  if (typeof URLValidation !== 'undefined' && URLValidation.validateAll) {
+  if (!lookupLabelsOnly && typeof URLValidation !== 'undefined' && URLValidation.validateAll) {
     const urlValid = URLValidation.validateAll(card)
     if (!urlValid) {
       if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.focusFirstInvalidField === 'function') {
@@ -5630,7 +5703,7 @@ function autosaveActiveLibrary (options = {}) {
     }
   }
 
-  const payload = buildPayloadFromCard(card)
+  const payload = lookupLabelsOnly ? buildLookupLabelPayloadFromCard(card) : buildPayloadFromCard(card)
   const collectionEditor = card.querySelector('[data-collection-files-editor]')
   const metadataEditor = card.querySelector('[data-metadata-files-editor]')
   const overlayEditor = card.querySelector('[data-overlay-files-editor]')
@@ -5897,18 +5970,7 @@ if (libraryPicker) {
   })
 
   refreshPickerLabels()
-  const configuredFirst = libraryPicker.querySelector('option[data-configured="true"]')
-  const firstLibrary = libraryPicker.value ||
-    configuredFirst?.value ||
-    libraryPicker.querySelector('option[value]:not([value=""])')?.value
-  if (configuredFirst) {
-    libraryPicker.value = configuredFirst.value
-    loadLibrary(configuredFirst.value, 'initial')
-  } else if (firstLibrary) {
-    loadLibrary(firstLibrary, 'initial')
-  } else {
-    libraryPicker.value = ''
-  }
+  libraryPicker.value = ''
 }
 
 document.addEventListener('qs:before-step-navigation', (event) => {
@@ -7855,6 +7917,20 @@ function updateAncestorOverrideSummaries (element) {
   }
 }
 
+function updateLazySectionOverrideSummaries (scope) {
+  const root = scope || document
+  root.querySelectorAll?.('[data-library-lazy-section][data-lazy-override-count]').forEach(placeholder => {
+    const count = Number(placeholder.dataset.lazyOverrideCount || '0') || 0
+    const collapse = placeholder.closest('.accordion-collapse')
+    const item = collapse?.closest('.accordion-item')
+    const header = item?.querySelector(':scope > .accordion-header') || item?.querySelector('.accordion-header')
+
+    item?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
+  })
+}
+
 function updateTemplateGroupOverrideSummary (section) {
   const group = section?.closest('.template-toggle-group')
   if (!group) return
@@ -7873,6 +7949,7 @@ function updateTemplateGroupOverrideSummary (section) {
 function refreshTemplateOverrideState (scope) {
   const root = scope || document
   clearTemplateVariableFieldOverrideStates(root)
+  updateLazySectionOverrideSummaries(root)
   root.querySelectorAll('[data-collection-variable-section="true"]').forEach(section => {
     updateCollectionVariableSectionSummary(section)
   })

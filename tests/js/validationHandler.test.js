@@ -187,6 +187,28 @@ describe('ValidationHandler.getSelectedLibraryIds', () => {
     expect(window.ValidationHandler.getSelectedLibraryIds('mov')).toEqual([])
   })
 
+  it('uses configured picker options when lazy library cards are not loaded', () => {
+    document.body.innerHTML = `
+      <select id="libraryPicker">
+        <option value="mov-library_movies" data-library-type="movie" data-configured="true" data-label="Movies">Movies (configured)</option>
+        <option value="mov-library_anime" data-library-type="movie" data-configured="false" data-label="Anime">Anime</option>
+        <option value="sho-library_shows" data-library-type="show" data-configured="true" data-label="Shows">Shows (configured)</option>
+      </select>
+    `
+    expect(window.ValidationHandler.getSelectedLibraryIds('mov')).toEqual(['mov-library_movies'])
+    expect(window.ValidationHandler.getSelectedLibraryIds('sho')).toEqual(['sho-library_shows'])
+  })
+
+  it('does not let stale hidden inputs reselect picker options marked unconfigured', () => {
+    document.body.innerHTML = `
+      <select id="libraryPicker">
+        <option value="mov-library_movies" data-library-type="movie" data-configured="false" data-label="Movies">Movies</option>
+      </select>
+      <input id="mov-library_movies-library-value" value="Movies">
+    `
+    expect(window.ValidationHandler.getSelectedLibraryIds('mov')).toEqual([])
+  })
+
   it('returns [] when all matching inputs are empty', () => {
     document.body.innerHTML = `
       <input id="mov-library_1-library-value" value="">
@@ -221,6 +243,26 @@ describe('ValidationHandler.getSelectedLibraryNames', () => {
   })
 
   it('returns [] when no matches', () => {
+    expect(window.ValidationHandler.getSelectedLibraryNames('mov')).toEqual([])
+  })
+
+  it('uses configured picker option labels when lazy library cards are not loaded', () => {
+    document.body.innerHTML = `
+      <select id="libraryPicker">
+        <option value="mov-library_movies" data-library-type="movie" data-configured="true" data-label="Movies">Movies (configured)</option>
+        <option value="mov-library_anime" data-library-type="movie" data-configured="false" data-label="Anime">Anime</option>
+      </select>
+    `
+    expect(window.ValidationHandler.getSelectedLibraryNames('mov')).toEqual(['Movies'])
+  })
+
+  it('does not let stale hidden input names reselect picker options marked unconfigured', () => {
+    document.body.innerHTML = `
+      <select id="libraryPicker">
+        <option value="mov-library_movies" data-library-type="movie" data-configured="false" data-label="Movies">Movies</option>
+      </select>
+      <input id="mov-library_movies-library-value" value="Movies">
+    `
     expect(window.ValidationHandler.getSelectedLibraryNames('mov')).toEqual([])
   })
 })
@@ -627,6 +669,19 @@ describe('ValidationHandler.validateForm (integration surface)', () => {
     `
     const result = window.ValidationHandler.validateForm()
     expect(result).toBe(true)
+  })
+
+  it('stays valid for configured lazy libraries before their cards are loaded', () => {
+    document.body.innerHTML += `
+      <select id="libraryPicker">
+        <option value="mov-library_movies" data-library-type="movie" data-configured="true" data-label="Movies">Movies (configured)</option>
+        <option value="sho-library_shows" data-library-type="show" data-configured="true" data-label="Shows">Shows (configured)</option>
+      </select>
+    `
+    const result = window.ValidationHandler.validateForm()
+    expect(result).toBe(true)
+    const box = document.getElementById('validation-messages')
+    expect(box.classList.contains('alert-success')).toBe(true)
   })
 
   it('ignores .accordion-header.selected nested under data-qs-minimal-yaml="false"', () => {

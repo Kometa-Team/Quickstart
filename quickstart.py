@@ -2352,7 +2352,11 @@ def step(name):
 
     start_time = time.perf_counter()
 
-    needs_library_payload = name == "025-libraries"
+    # The Libraries page lazy-loads the actual library card via
+    # /library_fragment/<id>. Avoid loading the multi-MB collection/overlay
+    # payload during the initial picker-only render; the fragment route still
+    # loads the full payload when a card is requested.
+    needs_library_payload = False
     attribute_config = {}
     collection_config = []
     overlay_config = []

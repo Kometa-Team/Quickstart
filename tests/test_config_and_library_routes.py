@@ -169,6 +169,57 @@ def test_autosave_library_returns_400_on_collection_file_errors(client, isolated
     assert "collection" in data["error"].lower()
 
 
+def test_autosave_library_lookup_labels_only_skips_file_validation(client, isolated_config_dir, qs_module, monkeypatch):
+    from modules import database
+
+    config_name = "pytest_lookup_label_only_autosave"
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_files": '[{"type":"url","location":"https://example.com/missing.yml"}]',
+                "mov-library_movies-template_collection_franchise_exclude": '["893731"]',
+            },
+            "validated": True,
+        },
+    )
+
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError("lookup-label-only autosave must not run library file validators")
+
+    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", fail_if_called)
+    monkeypatch.setattr(qs_module, "_validate_library_collection_files", fail_if_called)
+    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", fail_if_called)
+    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", fail_if_called)
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", fail_if_called)
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__lookup_labels_only": True,
+            "mov-library_movies-template_collection_franchise_exclude__lookup_labels": '{"893731":"PAW Patrol"}',
+            "mov-library_other-template_collection_franchise_exclude__lookup_labels": '{"230161":"Wrong library"}',
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["lookup_labels_only"] is True
+    assert payload["updated"] == 1
+    _validated, _user_entered, saved = database.retrieve_section_data(config_name, "libraries")
+    libraries = saved["libraries"]
+    assert libraries["mov-library_movies-collection_files"] == '[{"type":"url","location":"https://example.com/missing.yml"}]'
+    assert libraries["mov-library_movies-template_collection_franchise_exclude"] == '["893731"]'
+    assert libraries["mov-library_movies-template_collection_franchise_exclude__lookup_labels"] == '{"893731":"PAW Patrol"}'
+    assert "mov-library_other-template_collection_franchise_exclude__lookup_labels" not in libraries
+
+
 def test_autosave_library_returns_400_on_overlay_file_errors(client, isolated_config_dir, qs_module, monkeypatch):
     monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: set())
     monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
@@ -225,6 +276,117 @@ def test_autosave_library_reports_normalized_flag(client, isolated_config_dir, q
     data = resp.get_json()
     assert data["success"] is True
     assert data["normalized"] is True
+
+
+def test_autosave_library_preserves_unloaded_lazy_collection_and_overlay_values(client, isolated_config_dir, qs_module, monkeypatch):
+    from modules import database
+
+    config_name = "pytest_lazy_autosave"
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_language": "English",
+                "mov-library_movies-collection_award": "true",
+                "mov-library_movies-template_collection_award_style": "signature",
+                "mov-library_movies-collection_files": '[{"type":"folder","location":"config/test/collection_files/movies"}]',
+                "mov-library_movies-overlay_resolution": "true",
+                "mov-library_movies-movie-template_overlay_resolution[style]": "compact",
+                "mov-library_movies-overlay_files": '[{"type":"folder","location":"config/test/overlay_files/movies"}]',
+                "mov-library_movies-template_variables[style]": "signature",
+            },
+            "validated": True,
+        },
+    )
+
+    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: {"mov-library_movies"})
+    monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda libs, ids: [])
+    monkeypatch.setattr(
+        qs_module,
+        "_normalize_library_file_entries_payload",
+        lambda libs, config_name, **kw: (libs, [], False),
+    )
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__loaded_sections": [],
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_language": "French",
+        },
+    )
+
+    assert resp.status_code == 200
+    _validated, _user_entered, saved = database.retrieve_section_data(config_name, "libraries")
+    libraries = saved["libraries"]
+    assert libraries["mov-library_movies-attribute_language"] == "French"
+    assert libraries["mov-library_movies-collection_award"] is True
+    assert libraries["mov-library_movies-template_collection_award_style"] == "signature"
+    assert libraries["mov-library_movies-collection_files"] == '[{"type":"folder","location":"config/test/collection_files/movies"}]'
+    assert libraries["mov-library_movies-overlay_resolution"] is True
+    assert libraries["mov-library_movies-movie-template_overlay_resolution[style]"] == "compact"
+    assert libraries["mov-library_movies-overlay_files"] == '[{"type":"folder","location":"config/test/overlay_files/movies"}]'
+    assert libraries["mov-library_movies-template_variables[style]"] == "signature"
+
+
+def test_autosave_library_ignores_lazy_loaded_marker_without_collection_payload(client, isolated_config_dir, qs_module, monkeypatch):
+    from modules import database
+
+    config_name = "pytest_lazy_autosave_false_loaded_marker"
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_language": "English",
+                "mov-library_movies-collection_oscars": "true",
+                "mov-library_movies-template_collection_oscars_data_starting": "first",
+                "mov-library_movies-collection_files": '[{"type":"folder","location":"config/test/collection_files/movies"}]',
+            },
+            "validated": True,
+        },
+    )
+
+    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: {"mov-library_movies"})
+    monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda libs, ids: [])
+    monkeypatch.setattr(
+        qs_module,
+        "_normalize_library_file_entries_payload",
+        lambda libs, config_name, **kw: (libs, [], False),
+    )
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__loaded_sections": ["collections"],
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_language": "French",
+            "mov-library_movies-collection_files": '[{"type":"folder","location":"config/test/collection_files/movies"}]',
+        },
+    )
+
+    assert resp.status_code == 200
+    _validated, _user_entered, saved = database.retrieve_section_data(config_name, "libraries")
+    libraries = saved["libraries"]
+    assert libraries["mov-library_movies-attribute_language"] == "French"
+    assert libraries["mov-library_movies-collection_oscars"] is True
+    assert libraries["mov-library_movies-template_collection_oscars_data_starting"] == "first"
+    assert libraries["mov-library_movies-collection_files"] == '[{"type":"folder","location":"config/test/collection_files/movies"}]'
 
 
 # ===========================================================================

@@ -21,6 +21,10 @@ from pathlib import Path
 from modules import helpers, persistence
 
 
+def _config_dir_path() -> Path:
+    return Path(helpers.CONFIG_DIR).resolve()
+
+
 def _resolve_managed_library_path(location: str | None) -> str:
     """Resolve a managed-library path token into an absolute filesystem path.
 
@@ -40,18 +44,18 @@ def _resolve_managed_library_path(location: str | None) -> str:
         return raw
     expanded = Path(os.path.expandvars(os.path.expanduser(raw)))
     if expanded.is_absolute():
-        return str(expanded)
+        return str(expanded.resolve())
     normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
     if normalized_parts and normalized_parts[0] == "config":
-        return str(Path(helpers.CONFIG_DIR) / Path(*normalized_parts[1:]))
+        return str((_config_dir_path() / Path(*normalized_parts[1:])).resolve())
     if len(normalized_parts) >= 3 and normalized_parts[1] in helpers.MANAGED_LIBRARY_FILE_DIRS:
-        return str(Path(helpers.CONFIG_DIR) / Path(*normalized_parts))
+        return str((_config_dir_path() / Path(*normalized_parts)).resolve())
     if len(normalized_parts) >= 3 and normalized_parts[1] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
-        return str(Path(helpers.CONFIG_DIR) / Path(*normalized_parts))
+        return str((_config_dir_path() / Path(*normalized_parts)).resolve())
     if normalized_parts and normalized_parts[0] in helpers.MANAGED_LIBRARY_FILE_DIRS:
-        return str(Path(helpers.CONFIG_DIR) / expanded)
+        return str((_config_dir_path() / expanded).resolve())
     if normalized_parts and normalized_parts[0] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
-        return str(Path(helpers.CONFIG_DIR) / expanded)
+        return str((_config_dir_path() / expanded).resolve())
     return raw
 
 
