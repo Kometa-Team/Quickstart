@@ -31,9 +31,6 @@
     "ntfy": {
       "$ref": "#/definitions/ntfy-api"
     },
-    "yamtrack": {
-      "$ref": "#/definitions/yamtrack-api"
-    },
     "anidb": {
       "$ref": "#/definitions/anidb-api"
     },
@@ -52,6 +49,9 @@
     "trakt": {
       "$ref": "#/definitions/trakt-api"
     },
+    "yamtrack": {
+      "$ref": "#/definitions/yamtrack-api"
+    },
     "github": {
       "$ref": "#/definitions/github-api"
     },
@@ -64,6 +64,178 @@
     "tmdb"
   ],
   "definitions": {
+    "mass-metadata-source": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "mass-metadata-scheduled-source": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/mass-metadata-source"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schedule": {
+              "type": "string"
+            },
+            "source": {
+              "$ref": "#/definitions/mass-metadata-source"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "mass-metadata-scheduled-collection-mode": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "default",
+            "hide",
+            "hide_items",
+            "show_items"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schedule": {
+              "type": "string"
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "default",
+                "hide",
+                "hide_items",
+                "show_items"
+              ]
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "mass-metadata-scheduled-labels": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "none",
+            "mild",
+            "moderate",
+            "severe"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schedule": {
+              "type": "string"
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "none",
+                "mild",
+                "moderate",
+                "severe"
+              ]
+            }
+          },
+          "required": [
+            "severity"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "metadata-mapping": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": [
+            "string",
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "mass-metadata-image": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schedule": {
+              "type": "string"
+            },
+            "source": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "language": {
+              "type": "string"
+            },
+            "seasons": {
+              "type": "boolean"
+            },
+            "episodes": {
+              "type": "boolean"
+            },
+            "ignore_locked": {
+              "type": "boolean"
+            },
+            "ignore_overlays": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "plex-server": {
       "description": "Describes the primary Plex server to which Kometa can connect.\nThis attribute is REQUIRED.  It can be overridden at the library level.",
       "type": "object",
@@ -1751,8 +1923,11 @@
         },
         "auto_sort_hubs": {
           "description": "Used to sort Recommendation Hub rows after all collections are processed.\nSorts the library Recommendation Hub rows on the Plex home screen and/or library Recommended tab.",
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "run_again_delay": {
           "description": "Used to control the number of minutes to delay running run_again collections.\nSet the number of minutes to delay running run_again collections after daily run is finished. For example, if a collection adds items to Sonarr/Radarr, the library can automatically re-run 'X' amount of time later so that any downloaded items are processed.",
@@ -4227,7 +4402,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^(?!plex|tmdb|tautulli|webhooks|omdb|mdblist|notifiarr|gotify|ntfy|yamtrack|anidb|radarr|sonarr|trakt|mal).+$": {
+        "^(?!plex|tmdb|tautulli|webhooks|omdb|mdblist|notifiarr|gotify|ntfy|anidb|radarr|sonarr|trakt|yamtrack|mal).+$": {
           "additionalProperties": false,
           "properties": {
             "metadata_files": {
@@ -4619,6 +4794,145 @@
             },
             "sonarr_add_all": {
               "type": "boolean"
+            },
+            "mass_metadata_update": {
+              "type": "object",
+              "properties": {
+                "genre": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/definitions/mass-metadata-source"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "schedule": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "$ref": "#/definitions/mass-metadata-source"
+                        },
+                        "mappings": {
+                          "$ref": "#/definitions/metadata-mapping"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "content_rating": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/definitions/mass-metadata-source"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "schedule": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "$ref": "#/definitions/mass-metadata-source"
+                        },
+                        "mappings": {
+                          "$ref": "#/definitions/metadata-mapping"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "collections": {
+                  "$ref": "#/definitions/mass-metadata-scheduled-collection-mode"
+                },
+                "labels": {
+                  "$ref": "#/definitions/mass-metadata-scheduled-labels"
+                },
+                "original_title": {
+                  "$ref": "#/definitions/mass-metadata-scheduled-source"
+                },
+                "studio": {
+                  "$ref": "#/definitions/mass-metadata-scheduled-source"
+                },
+                "originally_available": {
+                  "$ref": "#/definitions/mass-metadata-scheduled-source"
+                },
+                "added_at": {
+                  "$ref": "#/definitions/mass-metadata-scheduled-source"
+                },
+                "ratings": {
+                  "type": "object",
+                  "properties": {
+                    "schedule": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/definitions/mass-metadata-scheduled-source"
+                    },
+                    "critic": {
+                      "$ref": "#/definitions/mass-metadata-scheduled-source"
+                    },
+                    "audience": {
+                      "$ref": "#/definitions/mass-metadata-scheduled-source"
+                    },
+                    "episode_user": {
+                      "$ref": "#/definitions/mass-metadata-scheduled-source"
+                    },
+                    "episode_critic": {
+                      "$ref": "#/definitions/mass-metadata-scheduled-source"
+                    },
+                    "episode_audience": {
+                      "$ref": "#/definitions/mass-metadata-scheduled-source"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "poster": {
+                  "$ref": "#/definitions/mass-metadata-image"
+                },
+                "background": {
+                  "$ref": "#/definitions/mass-metadata-image"
+                },
+                "logo": {
+                  "$ref": "#/definitions/mass-metadata-image"
+                },
+                "square_art": {
+                  "$ref": "#/definitions/mass-metadata-image"
+                },
+                "backup": {
+                  "type": "object",
+                  "properties": {
+                    "schedule": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "exclude": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "uniqueItems": true,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "sync_tags": {
+                      "type": "boolean"
+                    },
+                    "add_blank_entries": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
             },
             "mass_genre_update": {
               "anyOf": [
@@ -5422,12 +5736,18 @@
               "type": "object",
               "properties": {
                 "source": {
-                  "type": "string",
-                  "enum": [
-                    "tmdb",
-                    "plex",
-                    "lock",
-                    "unlock"
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                      }
+                    }
                   ]
                 },
                 "language": {
@@ -5452,12 +5772,18 @@
               "type": "object",
               "properties": {
                 "source": {
-                  "type": "string",
-                  "enum": [
-                    "tmdb",
-                    "plex",
-                    "lock",
-                    "unlock"
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                      }
+                    }
                   ]
                 },
                 "language": {
@@ -5471,6 +5797,196 @@
                 },
                 "ignore_locked": {
                   "type": "boolean"
+                },
+                "ignore_overlays": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
+            "mass_image_update": {
+              "type": "object",
+              "properties": {
+                "poster": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "tmdb",
+                        "trakt",
+                        "tvdb",
+                        "plex",
+                        "lock",
+                        "unlock"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                              }
+                            }
+                          ]
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "seasons": {
+                          "type": "boolean"
+                        },
+                        "episodes": {
+                          "type": "boolean"
+                        },
+                        "ignore_locked": {
+                          "type": "boolean"
+                        },
+                        "ignore_overlays": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "background": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "tmdb",
+                        "trakt",
+                        "tvdb",
+                        "plex",
+                        "lock",
+                        "unlock"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                              }
+                            }
+                          ]
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "seasons": {
+                          "type": "boolean"
+                        },
+                        "episodes": {
+                          "type": "boolean"
+                        },
+                        "ignore_locked": {
+                          "type": "boolean"
+                        },
+                        "ignore_overlays": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "logo": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "tmdb",
+                        "trakt",
+                        "tvdb",
+                        "plex",
+                        "lock",
+                        "unlock"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": ["tmdb", "trakt", "tvdb", "plex", "lock", "unlock"]
+                              }
+                            }
+                          ]
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "ignore_locked": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "square_art": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "tvdb",
+                        "plex",
+                        "lock",
+                        "unlock"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "enum": ["tvdb", "plex", "lock", "unlock"]
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": ["tvdb", "plex", "lock", "unlock"]
+                              }
+                            }
+                          ]
+                        },
+                        "ignore_locked": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
                 }
               },
               "additionalProperties": false
@@ -6523,6 +7039,20 @@
         "file_background": {
           "type": "string"
         },
+        "url_logo": {
+          "type": "string",
+          "format": "uri"
+        },
+        "file_logo": {
+          "type": "string"
+        },
+        "url_square_art": {
+          "type": "string",
+          "format": "uri"
+        },
+        "file_square_art": {
+          "type": "string"
+        },
         "minimum_items": {
           "type": "integer",
           "minimum": 1
@@ -6539,8 +7069,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -7012,6 +7545,24 @@
           "description": "Override the background filepath for a specific collection by key.",
           "type": "string"
         },
+        "^url_logo_.+$": {
+          "description": "Override the logo URL for a specific collection by key.",
+          "type": "string",
+          "format": "uri"
+        },
+        "^file_logo_.+$": {
+          "description": "Override the logo filepath for a specific collection by key.",
+          "type": "string"
+        },
+        "^url_square_art_.+$": {
+          "description": "Override the square art URL for a specific collection by key.",
+          "type": "string",
+          "format": "uri"
+        },
+        "^file_square_art_.+$": {
+          "description": "Override the square art filepath for a specific collection by key.",
+          "type": "string"
+        },
         "^visible_home_.+$": {
           "description": "Override Home Tab visibility for a specific collection by key.",
           "oneOf": [
@@ -7272,8 +7823,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -7929,8 +8483,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -8537,8 +9094,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -9142,8 +9702,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -9803,8 +10366,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -10480,8 +11046,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -11094,8 +11663,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -11705,8 +12277,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -12412,8 +12987,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -12682,8 +13260,11 @@
           "type": "boolean"
         },
         "auto_sort_hubs": {
-          "type": "string",
-          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": ["sort_title", "sort_title.desc", "alpha", "alpha.desc", "configured", "configured.desc", "random", null]
         },
         "ignore_ids": {
           "oneOf": [
@@ -13980,7 +14561,7 @@
           ]
         },
         "libraries": {
-          "description": "Libraries to pull items from for all playlists in this defaults file.",
+          "description": "Libraries to pull items from for all playlists in this defaults file. When omitted, playlists use every library processed as part of the run.",
           "oneOf": [
             {
               "type": "string"

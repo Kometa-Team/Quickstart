@@ -93,19 +93,26 @@ def test_settings_ignore_ids_emit_as_commented_sorted_rows(app):
     assert "__lookup_labels" not in yaml_content
 
 
-def test_settings_warning_defaults_emit_as_blank_keys(app):
+def test_settings_kometa_warning_keys_emit_as_sorted_blank_keys(app):
     settings = {
         "settings": {
             "cache": True,
-            "auto_sort_hubs": None,
-            "playlist_exclude_users": None,
         }
     }
 
     with app.app_context():
         yaml_content = dump_section("", "settings", settings, "none", None)
 
+    auto_sort_hubs_index = yaml_content.index("  auto_sort_hubs:")
+    cache_index = yaml_content.index("  cache: true")
+    ignore_ids_index = yaml_content.index("  ignore_ids:")
+    ignore_imdb_ids_index = yaml_content.index("  ignore_imdb_ids:")
+    playlist_exclude_users_index = yaml_content.index("  playlist_exclude_users:")
+
+    assert auto_sort_hubs_index < cache_index < ignore_ids_index < ignore_imdb_ids_index < playlist_exclude_users_index
     assert re.search(r"^  auto_sort_hubs:\s*$", yaml_content, re.MULTILINE)
+    assert re.search(r"^  ignore_ids:\s*$", yaml_content, re.MULTILINE)
+    assert re.search(r"^  ignore_imdb_ids:\s*$", yaml_content, re.MULTILINE)
     assert re.search(r"^  playlist_exclude_users:\s*$", yaml_content, re.MULTILINE)
 
 
