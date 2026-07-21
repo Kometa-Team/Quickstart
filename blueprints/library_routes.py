@@ -171,43 +171,345 @@ def _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries=None, 
 # --- card fragment + autosave ----------------------------------------------
 
 
-@bp.route("/library_fragment/<library_id>")
-def library_fragment(library_id):
-    """Return a single library form fragment so we can lazy-load library settings on the page."""
+def _library_fragment_context(library_id, *, include_attributes=True, include_collections=True, include_overlays=True):
     movie_libraries, show_libraries, telemetry_data = _build_library_lists()
     all_libraries = {lib["id"]: lib for lib in movie_libraries + show_libraries}
     library = all_libraries.get(library_id)
 
     if not library:
-        return jsonify({"error": "Library not found"}), 404
+        return None
 
-    attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
-    collection_config = helpers.load_quickstart_config("quickstart_collections.json")
-    overlay_config = helpers.load_quickstart_overlay_config()
+    attribute_config = helpers.load_quickstart_config("quickstart_attributes.json") if include_attributes else {}
+    collection_config = helpers.load_quickstart_config("quickstart_collections.json") if include_collections else []
+    overlay_config = helpers.load_quickstart_overlay_config() if include_overlays else []
 
     legacy_playlist_libraries = _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries, show_libraries)
     data = persistence.retrieve_settings("025-libraries")
     configured_ids = _configured_library_ids(data.get("libraries", {}))
 
-    image_data = _build_preview_image_data()
+    image_data = _build_preview_image_data() if include_overlays else {}
 
     page_info = {"telemetry": telemetry_data}
 
+    return {
+        "library": library,
+        "data": data,
+        "page_info": page_info,
+        "telemetry": telemetry_data,
+        "attribute_config": attribute_config,
+        "collection_config": collection_config,
+        "overlay_config": overlay_config,
+        "image_data": image_data,
+        "movie_images": image_data.get("movie", []),
+        "configured_ids": configured_ids,
+        "legacy_playlist_libraries": legacy_playlist_libraries,
+        "lazy_section_override_counts": _lazy_section_override_counts(library, data.get("libraries", {}), telemetry_data),
+    }
+
+
+def _coerce_loaded_library_sections(raw_value):
+    if isinstance(raw_value, list):
+        return {str(item).strip() for item in raw_value if str(item).strip()}
+    if isinstance(raw_value, tuple):
+        return {str(item).strip() for item in raw_value if str(item).strip()}
+    if isinstance(raw_value, str):
+        return {item.strip() for item in raw_value.split(",") if item.strip()}
+    return set()
+
+
+def _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loaded_sections):
+    """Ignore lazy-section loaded markers when their form fields are absent.
+
+    A stale/incorrect ``__loaded_sections`` value is dangerous: autosave would
+    believe a lazy section was intentionally posted and could replace saved
+    collection/overlay selections with an incomplete payload. Raw
+    ``*_collection_files`` / ``*_overlay_files`` fields are advanced file-entry
+    controls and do not prove the heavy defaults section was loaded.
+    """
+    loaded_sections = set(loaded_sections or set())
+    if not isinstance(incoming_libraries, dict) or not library_id:
+        return loaded_sections
+
+    def has_collection_payload():
+        collection_files_key = f"{library_id}-collection_files"
+        for key in incoming_libraries:
+            if not isinstance(key, str) or not key.startswith(f"{library_id}-"):
+                continue
+            if key == collection_files_key:
+                continue
+            if f"{library_id}-collection_" in key or f"{library_id}-template_collection_" in key:
+                return True
+        return False
+
+    def has_overlay_payload():
+        overlay_files_key = f"{library_id}-overlay_files"
+        overlay_markers = (
+            f"{library_id}-overlay_",
+            f"{library_id}-movie-overlay_",
+            f"{library_id}-show-overlay_",
+            f"{library_id}-season-overlay_",
+            f"{library_id}-episode-overlay_",
+            f"{library_id}-movie-template_overlay_",
+            f"{library_id}-show-template_overlay_",
+            f"{library_id}-season-template_overlay_",
+            f"{library_id}-episode-template_overlay_",
+        )
+        for key in incoming_libraries:
+            if not isinstance(key, str) or not key.startswith(f"{library_id}-"):
+                continue
+            if key == overlay_files_key:
+                continue
+            if any(marker in key for marker in overlay_markers):
+                return True
+        return False
+
+    if "collections" in loaded_sections and not has_collection_payload():
+        loaded_sections.discard("collections")
+    if "overlays" in loaded_sections and not has_overlay_payload():
+        loaded_sections.discard("overlays")
+    return loaded_sections
+
+
+def _has_saved_value(value):
+    return value not in [None, "", [], {}, "[]", "{}"]
+
+
+def _coerce_bool(value):
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _jsonish(value, fallback):
+    if isinstance(value, (list, dict)):
+        return value
+    if value in [None, ""]:
+        return fallback
+    try:
+        import json
+
+        parsed = json.loads(str(value))
+        if isinstance(parsed, type(fallback)):
+            return parsed
+    except Exception:
+        return fallback
+    return fallback
+
+
+def _template_value_is_configured(value, default=None, field_type=""):
+    field_type = str(field_type or "").strip().lower()
+    if value is None:
+        return False
+    if field_type == "toggle" or isinstance(default, bool) or isinstance(value, bool):
+        return _coerce_bool(value) != _coerce_bool(default)
+    if field_type in {"string_list", "list"} or isinstance(default, list):
+        return _jsonish(value, []) != _jsonish(default, [])
+    if field_type in {"mapping_list", "dict", "map"} or isinstance(default, dict):
+        return _jsonish(value, {}) != _jsonish(default, {})
+    if not _has_saved_value(value):
+        return False
+    default_value = "" if default is None else str(default).strip()
+    value = str(value).strip()
+    return value != default_value if default_value else True
+
+
+def _count_collection_overrides_for_library(library, libraries_data, collection_config):
+    if not isinstance(libraries_data, dict):
+        return 0
+    library_id = library["id"]
+    library_type = library["type"]
+    count = 0
+    for group in collection_config or []:
+        for collection in group.get("collections", []):
+            if library_type not in collection.get("media_types", []):
+                continue
+            clean_id = str(collection.get("id", "")).replace("collection_", "")
+            for item in collection.get("template_variables", []) or []:
+                key = item.get("key") if isinstance(item, dict) else None
+                if not key:
+                    continue
+                media_types = item.get("media_types") or []
+                if media_types and library_type not in media_types:
+                    continue
+                if str(key).startswith("visible_") and not library.get("plex_pass", False):
+                    continue
+                field_name = f"{library_id}-template_collection_{clean_id}_{key}"
+                if _template_value_is_configured(libraries_data.get(field_name), item.get("default"), item.get("type")):
+                    count += 1
+    return count
+
+
+def _iter_overlay_template_items(template_variables):
+    if isinstance(template_variables, dict):
+        for key, details in template_variables.items():
+            if isinstance(details, dict):
+                yield key, details
+    elif isinstance(template_variables, list):
+        for item in template_variables:
+            if isinstance(item, dict):
+                key = item.get("key")
+                if key:
+                    yield key, item
+
+
+def _count_overlay_overrides_for_library(library, libraries_data, overlay_config):
+    if not isinstance(libraries_data, dict):
+        return 0
+    library_id = library["id"]
+    library_type = library["type"]
+    render_types = ["movie"] if library_type == "movie" else ["show", "season", "episode"]
+    count = 0
+    for group in overlay_config or []:
+        for overlay in group.get("overlays", []):
+            for render_type in render_types:
+                media_types = overlay.get("media_types") or []
+                if media_types and render_type not in media_types:
+                    continue
+                template_name = f"{library_id}-{render_type}-template_{overlay.get('id')}"
+                for key, details in _iter_overlay_template_items(overlay.get("template_variables")):
+                    if key == "builder_level":
+                        continue
+                    var_media_types = details.get("media_types") or []
+                    if var_media_types and render_type not in var_media_types:
+                        continue
+                    field_name = f"{template_name}[{key}]"
+                    if _template_value_is_configured(libraries_data.get(field_name), details.get("default"), details.get("input_type")):
+                        count += 1
+    return count
+
+
+def _lazy_section_override_counts(library, libraries_data, telemetry_data=None):
+    library_with_plex = dict(library)
+    # Collection visibility for visible_* variables depends on Plex Pass.
+    telemetry_data = telemetry_data if isinstance(telemetry_data, dict) else {}
+    library_with_plex["plex_pass"] = bool(telemetry_data.get("plex_pass"))
+    collection_config = helpers.load_quickstart_config("quickstart_collections.json")
+    overlay_config = helpers.load_quickstart_overlay_config()
+    return {
+        "collections": _count_collection_overrides_for_library(library_with_plex, libraries_data, collection_config),
+        "overlays": _count_overlay_overrides_for_library(library, libraries_data, overlay_config),
+    }
+
+
+def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections):
+    """Keep persisted collection/overlay values when those lazy sections were never opened."""
+    incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
+    unloaded_sections = {"collections", "overlays"} - set(loaded_sections or set())
+    if not unloaded_sections:
+        return incoming_libraries
+
+    settings = persistence.retrieve_settings("025-libraries")
+    existing_libraries = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    if not isinstance(existing_libraries, dict):
+        return incoming_libraries
+
+    preserved = dict(incoming_libraries)
+    prefix = f"{library_id}-"
+
+    def should_preserve(key):
+        if not isinstance(key, str) or not key.startswith(prefix):
+            return False
+        if "collections" in unloaded_sections and (f"{library_id}-collection_" in key or f"{library_id}-template_collection_" in key or key == f"{library_id}-collection_files"):
+            return True
+        if "overlays" in unloaded_sections and (
+            f"{library_id}-overlay_" in key
+            or key == f"{library_id}-overlay_files"
+            or f"{library_id}-movie-overlay_" in key
+            or f"{library_id}-show-overlay_" in key
+            or f"{library_id}-season-overlay_" in key
+            or f"{library_id}-episode-overlay_" in key
+            or f"{library_id}-movie-template_overlay_" in key
+            or f"{library_id}-show-template_overlay_" in key
+            or f"{library_id}-season-template_overlay_" in key
+            or f"{library_id}-episode-template_overlay_" in key
+        ):
+            return True
+        if unloaded_sections and key.startswith(f"{library_id}-template_variables"):
+            return True
+        return False
+
+    for key, value in existing_libraries.items():
+        if key not in preserved and should_preserve(key):
+            preserved[key] = value
+
+    return preserved
+
+
+def _save_lookup_label_only_library_payload(library_id, incoming):
+    """Persist lookup-label metadata without running full library validation."""
+    if not isinstance(incoming, dict):
+        return jsonify({"success": False, "error": "Invalid lookup label payload."}), 400
+
+    config_name = persistence.resolve_request_config_name(incoming)
+    settings = persistence.retrieve_settings("025-libraries")
+    existing_libraries = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    existing_libraries = existing_libraries.copy() if isinstance(existing_libraries, dict) else {}
+    allowed_prefixes = (f"{library_id}-", "playlist-template_variables[")
+    updates = {}
+    for key, value in incoming.items():
+        key = str(key or "").strip()
+        if not key.endswith("__lookup_labels"):
+            continue
+        if not key.startswith(allowed_prefixes):
+            continue
+        updates[key] = str(value or "{}").strip() or "{}"
+
+    if not updates:
+        return jsonify({"success": True, "lookup_labels_only": True, "updated": 0})
+
+    existing_libraries.update(updates)
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=helpers.booler(settings.get("validated", False)),
+        user_entered=True,
+        data={"libraries": existing_libraries, "validated": helpers.booler(settings.get("validated", False))},
+    )
+    return jsonify({"success": True, "lookup_labels_only": True, "updated": len(updates)})
+
+
+@bp.route("/library_fragment/<library_id>")
+def library_fragment(library_id):
+    """Return a single library form fragment so we can lazy-load library settings on the page."""
+    context = _library_fragment_context(library_id, include_collections=False, include_overlays=False)
+
+    if not context:
+        return jsonify({"error": "Library not found"}), 404
+
     html = render_template(
         "partials/_library_card.html",
-        library=library,
-        data=data,
-        page_info=page_info,
-        attribute_config=attribute_config,
-        collection_config=collection_config,
-        overlay_config=overlay_config,
-        image_data=image_data,
-        movie_images=image_data["movie"],
-        configured_ids=configured_ids,
-        legacy_playlist_libraries=legacy_playlist_libraries,
+        defer_heavy_sections=True,
+        **context,
     )
 
     return html
+
+
+@bp.route("/library_fragment/<library_id>/section/<section_name>")
+def library_fragment_section(library_id, section_name):
+    """Return a heavy library section fragment on demand."""
+    if section_name not in {"collections", "overlays"}:
+        return jsonify({"error": "Unsupported library section"}), 404
+
+    include_collections = section_name == "collections"
+    include_overlays = section_name == "overlays"
+    context = _library_fragment_context(
+        library_id,
+        include_attributes=False,
+        include_collections=include_collections,
+        include_overlays=include_overlays,
+    )
+
+    if not context:
+        return jsonify({"error": "Library not found"}), 404
+
+    library = context["library"]
+    if section_name == "collections":
+        template_name = "partials/_movie_collections.html" if library["type"] == "movie" else "partials/_show_collections.html"
+    else:
+        template_name = "partials/_movie_overlays.html" if library["type"] == "movie" else "partials/_show_overlays.html"
+
+    return render_template(template_name, **context)
 
 
 @bp.route("/autosave_library/<library_id>", methods=["POST"])
@@ -219,12 +521,20 @@ def autosave_library(library_id):
 
     try:
         incoming = request.get_json(silent=True) or request.form
+        if isinstance(incoming, dict) and helpers.booler(incoming.get("__lookup_labels_only")):
+            return _save_lookup_label_only_library_payload(library_id, incoming)
+        loaded_sections = _coerce_loaded_library_sections(incoming.get("__loaded_sections") if hasattr(incoming, "get") else None)
         config_name = persistence.resolve_request_config_name(incoming if isinstance(incoming, dict) else {})
         errors = path_validation.validate_payload(incoming)
         if errors:
             return jsonify({"success": False, "error": "Invalid path values.", "errors": errors}), 400
-        clean_payload = persistence.clean_form_data(MultiDict(incoming))
+        clean_source = dict(incoming) if isinstance(incoming, dict) else incoming
+        if isinstance(clean_source, dict):
+            clean_source.pop("__loaded_sections", None)
+        clean_payload = persistence.clean_form_data(MultiDict(clean_source))
         incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+        loaded_sections = _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loaded_sections)
+        incoming_libraries = _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections)
         selected_library_ids = _qs._selected_library_ids_from_libraries_data(incoming_libraries)
         collection_errors = _qs._validate_library_collection_files(incoming_libraries, selected_library_ids)
         metadata_errors = _qs._validate_library_metadata_files(incoming_libraries, selected_library_ids)
@@ -392,7 +702,9 @@ def copy_library_settings():
 
         # If the client sent a fresh payload for the source card, merge it in before copying
         if isinstance(source_payload, dict) and source_payload:
-            payload_errors = path_validation.validate_payload(source_payload)
+            source_payload_for_merge = dict(source_payload)
+            loaded_sections = _coerce_loaded_library_sections(source_payload_for_merge.pop("__loaded_sections", []))
+            payload_errors = path_validation.validate_payload(source_payload_for_merge)
             if payload_errors:
                 return (
                     jsonify(
@@ -405,11 +717,11 @@ def copy_library_settings():
                     400,
                 )
             try:
-                clean_payload = persistence.clean_form_data(MultiDict(source_payload))
+                clean_payload = persistence.clean_form_data(MultiDict(source_payload_for_merge))
                 incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
                 normalized_incoming, normalization_errors, _ = _qs._normalize_library_file_entries_payload(
                     incoming_dict,
-                    session.get("config_name") or source_payload.get("config_name"),
+                    session.get("config_name") or source_payload_for_merge.get("config_name"),
                     validate_local=False,
                 )
                 if normalization_errors:
@@ -423,7 +735,8 @@ def copy_library_settings():
                         ),
                         400,
                     )
-                incoming_dict = normalized_incoming
+                loaded_sections = _loaded_sections_with_payload_evidence(source_prefix, normalized_incoming, loaded_sections)
+                incoming_dict = _preserve_unloaded_lazy_section_values(source_prefix, normalized_incoming, loaded_sections)
 
                 merged = libraries_data.copy()
 

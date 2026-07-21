@@ -169,6 +169,15 @@ def _build_form_payload(case):
     return {"validated": True, "libraries": data}
 
 
+def _build_form_payload_with_color(case, color):
+    payload = _build_form_payload(case)
+    base, _library_name = _base_parts(case)
+    builder = case["builder"]
+    overlay_key = case["overlay_key"]
+    payload["libraries"][f"{base}-{builder}-template_overlay_{overlay_key}[color]"] = color
+    return payload
+
+
 def _run_build_config_with_payload(qs_module, monkeypatch, payload):
     monkeypatch.setattr(
         qs_module.output.helpers,
@@ -254,3 +263,22 @@ def test_content_rating_yaml_contract_keeps_use_key_toggles(monkeypatch, qs_modu
         template_vars = _template_vars_from_yaml(yaml_content, case)
         for key in case["template_vars"]:
             assert template_vars[key] is False
+
+
+def test_content_rating_yaml_omits_default_color_when_not_supplied(monkeypatch, qs_module):
+    case = next(item for item in OVERLAY_CASES if item["id"] == "uk")
+
+    yaml_content = _run_build_config_with_payload(qs_module, monkeypatch, _build_form_payload(case))
+    template_vars = _template_vars_from_yaml(yaml_content, case)
+
+    assert "color" not in template_vars
+
+
+def test_content_rating_yaml_preserves_explicit_false_color(monkeypatch, qs_module):
+    case = next(item for item in OVERLAY_CASES if item["id"] == "uk")
+
+    payload = _build_form_payload_with_color(case, False)
+    yaml_content = _run_build_config_with_payload(qs_module, monkeypatch, payload)
+    template_vars = _template_vars_from_yaml(yaml_content, case)
+
+    assert template_vars["color"] is False

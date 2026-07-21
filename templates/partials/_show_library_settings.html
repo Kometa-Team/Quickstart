@@ -12,7 +12,17 @@
             </h2>
             <div id="{{ library.id }}-collections" class="accordion-collapse collapse">
                 <div class="accordion-body">
+                    {% if defer_heavy_sections %}
+                    <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
+                        data-library-lazy-section="collections" data-library-id="{{ library.id }}"
+                        data-lazy-override-count="{{ lazy_section_override_counts.collections | default(0) }}">
+                        <div class="spinner-border spinner-border-sm text-info d-none" role="status"
+                            aria-hidden="true"></div>
+                        <span>Open this section to load collection settings.</span>
+                    </div>
+                    {% else %}
                     {% include "partials/_show_collections.html" %}
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -27,7 +37,17 @@
             </h2>
             <div id="{{ library.id }}-overlays" class="accordion-collapse collapse">
                 <div class="accordion-body">
+                    {% if defer_heavy_sections %}
+                    <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
+                        data-library-lazy-section="overlays" data-library-id="{{ library.id }}"
+                        data-lazy-override-count="{{ lazy_section_override_counts.overlays | default(0) }}">
+                        <div class="spinner-border spinner-border-sm text-info d-none" role="status"
+                            aria-hidden="true"></div>
+                        <span>Open this section to load overlay settings.</span>
+                    </div>
+                    {% else %}
                     {% include "partials/_show_overlays.html" %}
+                    {% endif %}
                 </div>
             </div>
         </div>

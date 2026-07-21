@@ -1,3 +1,6 @@
+import builtins
+import json
+import os
 import re
 
 import pytest
@@ -145,6 +148,47 @@ def test_settings_page_enables_auto_sort_hubs_with_plex_pass(client, monkeypatch
     assert 'value="configured.desc" selected' in html
 
 
+def test_mal_page_preserves_distinct_authorization_hidden_fields(client, monkeypatch, qs_module):
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "140-mal":
+            return {
+                "validated": True,
+                "validated_at": "2026-07-20T00:00:00Z",
+                "user_entered": True,
+                "code_verifier": "verifier",
+                "mal": {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "cache_expiration": 60,
+                    "authorization": {
+                        "access_token": "MAL-AT",
+                        "token_type": "Bearer",
+                        "expires_in": 2592000,
+                        "refresh_token": "MAL-RT",
+                    },
+                },
+            }
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/step/140-mal")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    for field_id, expected in {
+        "access_token": "MAL-AT",
+        "token_type": "Bearer",
+        "expires_in": "2592000",
+        "refresh_token": "MAL-RT",
+    }.items():
+        match = re.search(rf'id="{field_id}"[^>]+value="([^"]*)"', html)
+        assert match is not None
+        assert match.group(1) == expected
+
+
 def test_validate_library_auto_sort_hubs_rejects_invalid_value(qs_module):
     errors = qs_module._validate_library_auto_sort_hubs(
         {
@@ -186,6 +230,197 @@ def test_library_fragment_disables_auto_sort_hubs_without_plex_pass(client, monk
     assert 'name="mov-library_movies-top_level_auto_sort_hubs"' not in attrs
     assert 'name="mov-library_movies-top_level_auto_sort_hubs" value="alpha"' in html
     assert "Requires Plex Pass. Validate Plex first if this should be available." in html
+
+
+def test_library_fragment_defers_heavy_collection_and_overlay_sections(client, monkeypatch, qs_module, library_routes_module):
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": True}),
+    )
+    monkeypatch.setattr(library_routes_module, "_migrate_legacy_playlist_libraries_to_library_toggles", lambda *_args: set())
+    monkeypatch.setattr(
+        library_routes_module.helpers,
+        "load_quickstart_config",
+        lambda filename: (
+            [
+                {
+                    "accordion": "Award Collections",
+                    "collections": [
+                        {
+                            "id": "collection_award",
+                            "media_types": ["movie"],
+                            "template_variables": [
+                                {"key": "style", "type": "text_input", "default": "default"},
+                            ],
+                        }
+                    ],
+                }
+            ]
+            if filename == "quickstart_collections.json"
+            else {}
+        ),
+    )
+    monkeypatch.setattr(
+        library_routes_module.helpers,
+        "load_quickstart_overlay_config",
+        lambda: [
+            {
+                "accordion": "Media Overlays",
+                "overlays": [
+                    {
+                        "id": "overlay_resolution",
+                        "media_types": ["movie"],
+                        "template_variables": {
+                            "style": {"input_type": "select", "default": "default"},
+                        },
+                    }
+                ],
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_preview_image_data",
+        lambda: (_ for _ in ()).throw(AssertionError("Initial library fragment should defer preview image data")),
+    )
+
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "025-libraries":
+            return {
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    "mov-library_movies-template_collection_award_style": "custom",
+                    "mov-library_movies-movie-template_overlay_resolution[style]": "custom",
+                }
+            }
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/library_fragment/mov-library_movies")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'data-library-lazy-section="collections"' in html
+    assert 'data-library-lazy-section="overlays"' in html
+    assert html.count('data-lazy-override-count="1"') == 2
+    assert "Open this section to load collection settings." in html
+    assert "Open this section to load overlay settings." in html
+
+
+def test_library_fragment_section_renders_requested_heavy_section(client, monkeypatch, qs_module, library_routes_module):
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": True}),
+    )
+    monkeypatch.setattr(library_routes_module, "_migrate_legacy_playlist_libraries_to_library_toggles", lambda *_args: set())
+    monkeypatch.setattr(library_routes_module, "_build_preview_image_data", lambda: {"movie": [], "show": [], "season": [], "episode": []})
+
+    original_load_quickstart_config = library_routes_module.helpers.load_quickstart_config
+
+    def fake_load_quickstart_config(filename):
+        if filename == "quickstart_collections.json":
+            return []
+        return original_load_quickstart_config(filename)
+
+    monkeypatch.setattr(library_routes_module.helpers, "load_quickstart_config", fake_load_quickstart_config)
+    monkeypatch.setattr(library_routes_module.helpers, "load_quickstart_overlay_config", lambda: [])
+
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "025-libraries":
+            return {"libraries": {"mov-library_movies-library": "Movies"}}
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    collections = client.get("/library_fragment/mov-library_movies/section/collections")
+    overlays = client.get("/library_fragment/mov-library_movies/section/overlays")
+
+    assert collections.status_code == 200
+    assert "Reorder Collection Sections" in collections.get_data(as_text=True)
+    assert overlays.status_code == 200
+    assert "Preview Overlays" in overlays.get_data(as_text=True)
+
+
+def test_libraries_step_initial_render_skips_heavy_lazy_card_payload(client, monkeypatch, qs_module):
+    original_load_quickstart_config = qs_module.helpers.load_quickstart_config
+
+    def fail_on_lazy_card_payload(filename):
+        if filename in {
+            "quickstart_attributes.json",
+            "quickstart_collections.json",
+            "quickstart_overlays.json",
+        }:
+            raise AssertionError(f"{filename} should only load from library fragments")
+        return original_load_quickstart_config(filename)
+
+    monkeypatch.setattr(qs_module.helpers, "load_quickstart_config", fail_on_lazy_card_payload)
+    monkeypatch.setattr(
+        qs_module.helpers,
+        "load_quickstart_overlay_config",
+        lambda: (_ for _ in ()).throw(AssertionError("quickstart_overlays.json should only load from library fragments")),
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_build_preview_image_data",
+        lambda: (_ for _ in ()).throw(AssertionError("preview image data should only load from library fragments")),
+    )
+    resp = client.get("/step/025-libraries")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert 'id="libraryPicker"' in html
+    assert 'id="library-form-container"' in html
+
+
+def test_quickstart_json_config_cache_reuses_file_reads_and_isolates_callers(tmp_path, monkeypatch):
+    from modules.helpers import _overlays
+
+    json_dir = tmp_path / "json"
+    json_dir.mkdir()
+    config_file = json_dir / "sample.json"
+    config_file.write_text(json.dumps({"items": [{"name": "one"}]}), encoding="utf-8")
+    monkeypatch.setattr(_overlays, "JSON_SETTINGS", str(json_dir))
+    _overlays._QUICKSTART_CONFIG_CACHE.clear()
+
+    first = _overlays.load_quickstart_config("sample.json")
+    first["items"][0]["name"] = "mutated"
+
+    original_open = builtins.open
+
+    def fail_open(*args, **kwargs):
+        raise AssertionError("cached config should not reopen the JSON file")
+
+    monkeypatch.setattr(builtins, "open", fail_open)
+    second = _overlays.load_quickstart_config("sample.json")
+    monkeypatch.setattr(builtins, "open", original_open)
+
+    assert second == {"items": [{"name": "one"}]}
+
+
+def test_quickstart_json_config_cache_invalidates_when_file_changes(tmp_path, monkeypatch):
+    from modules.helpers import _overlays
+
+    json_dir = tmp_path / "json"
+    json_dir.mkdir()
+    config_file = json_dir / "sample.json"
+    config_file.write_text(json.dumps({"value": "old"}), encoding="utf-8")
+    monkeypatch.setattr(_overlays, "JSON_SETTINGS", str(json_dir))
+    _overlays._QUICKSTART_CONFIG_CACHE.clear()
+
+    assert _overlays.load_quickstart_config("sample.json") == {"value": "old"}
+
+    config_file.write_text(json.dumps({"value": "new"}), encoding="utf-8")
+    stat = config_file.stat()
+    os.utime(config_file, ns=(stat.st_atime_ns + 1_000_000_000, stat.st_mtime_ns + 1_000_000_000))
+
+    assert _overlays.load_quickstart_config("sample.json") == {"value": "new"}
 
 
 def test_validate_apprise_rejects_bad_url(client):
@@ -1612,6 +1847,30 @@ def test_validate_collection_folder_accepts_managed_relative_folder_path(client,
     assert payload["valid"] is True
     assert payload["normalized_location"].startswith("config/pytest_managed_collection_folder/collection_files/mov-library_movies/")
     assert payload["organized"] is True
+
+
+def test_validate_overlay_folder_accepts_imported_managed_config_path(client, isolated_config_dir):
+    config_name = "pytest_imported_overlay_folder"
+    managed_dir = isolated_config_dir / config_name / "overlay_files" / "mov-library_movies" / "config_overlay_files_abc123"
+    managed_dir.mkdir(parents=True, exist_ok=True)
+    (managed_dir / "ratings.yml").write_text("overlays:\n  test:\n    overlay:\n      name: test\n", encoding="utf-8")
+
+    resp = client.post(
+        "/validate_overlay_file",
+        json={
+            "config_name": config_name,
+            "library_id": "mov-library_movies",
+            "overlay_file_type": "folder",
+            "overlay_file_location": f"config/{config_name}/overlay_files/mov-library_movies/config_overlay_files_abc123",
+        },
+    )
+
+    assert resp.status_code == 200, resp.get_json()
+    payload = resp.get_json()
+    assert payload["valid"] is True
+    assert payload["validated_files"] == 1
+    assert payload["files"] == ["ratings.yml"]
+    assert payload["organized"] is False
 
 
 def test_validate_metadata_folder_rejects_empty_folder(client, tmp_path):
@@ -5139,6 +5398,81 @@ def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_ra
     assert libraries["mov-library_target-template_collection_content_rating_us_limit"] == 40
     assert libraries["mov-library_target-movie-overlay_content_rating"] == "uk"
     assert libraries["mov-library_target-movie-template_overlay_content_rating_uk[color]"] == "white"
+
+
+def test_copy_library_settings_preserves_unloaded_lazy_source_sections(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+    from modules import database
+    from flask import session
+
+    config_name = "pytest_copy_lazy_source_sections"
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-playlist": "true",
+                "mov-library_movies-attribute_language": "en",
+                "mov-library_movies-collection_award": True,
+                "mov-library_movies-template_collection_award_style": "signature",
+                "mov-library_movies-movie-overlay_resolution": "true",
+                "mov-library_movies-movie-template_overlay_resolution[horizontal_align]": "right",
+                "mov-library_target-library": "Other Movies",
+                "libraries": "Movies,Other Movies",
+            },
+            "validated": False,
+        },
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: (
+            [
+                {"id": "mov-library_movies", "name": "Movies"},
+                {"id": "mov-library_target", "name": "Other Movies"},
+            ],
+            [],
+            {},
+        ),
+    )
+
+    with app.test_request_context("/copy_library_settings"):
+        session["config_name"] = config_name
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/copy_library_settings",
+        json={
+            "source_library_id": "mov-library_movies",
+            "target_library_ids": ["mov-library_target"],
+            "source_payload": {
+                "__loaded_sections": [],
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-playlist": "true",
+                "mov-library_movies-attribute_language": "fr",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json()["success"] is True
+
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    libraries = stored["libraries"]
+    assert libraries["mov-library_movies-attribute_language"] == "fr"
+    assert libraries["mov-library_movies-template_collection_award_style"] == "signature"
+    assert libraries["mov-library_movies-movie-template_overlay_resolution[horizontal_align]"] == "right"
+    assert libraries["mov-library_target-library"] == ""
+    assert libraries["mov-library_target-playlist"] is True
+    assert libraries["mov-library_target-attribute_language"] == "fr"
+    assert libraries["mov-library_target-collection_award"] is True
+    assert libraries["mov-library_target-template_collection_award_style"] == "signature"
+    assert libraries["mov-library_target-movie-overlay_resolution"] in {True, "true"}
+    assert libraries["mov-library_target-movie-template_overlay_resolution[horizontal_align]"] == "right"
 
 
 def test_sync_managed_library_artifacts_to_kometa_copies_and_prunes(isolated_config_dir, app):

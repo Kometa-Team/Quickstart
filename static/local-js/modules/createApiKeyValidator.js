@@ -1,5 +1,5 @@
 // Shared factory for credential-validation wizards: ONE primary credential
-// input (api key or token), zero or more additional non-secret fields
+// input (api key or token by default), zero or more additional non-secret fields
 // (url, topic, etc.), one validate button, server endpoint that returns
 // { valid: boolean }. Used by every "fill in a credential then click
 // Validate" page in the wizard.
@@ -35,8 +35,8 @@
 //   gracefully no-op if an expected element is absent (defence in depth
 //   for partial template rendering).
 //
-//   The PRIMARY field (config.fieldId) is the credential -- it gets
-//   the show/hide toggle treatment. ADDITIONAL fields
+//   The PRIMARY field (config.fieldId) is the credential by default -- it gets
+//   the show/hide toggle treatment unless maskPrimaryField is false. ADDITIONAL fields
 //   (config.additionalFieldIds) are non-secret accompanying inputs
 //   that participate in the empty-validation check, the reset-on-input
 //   listener wiring, and the payload builder. The toggle never applies
@@ -62,7 +62,8 @@ const DEFAULT_MESSAGES = {
  *
  * @param {object} config
  * @param {string} config.fieldId                Element id of the primary credential input.
- *                                               Gets the show/hide toggle treatment.
+ *                                               Gets the show/hide toggle treatment unless
+ *                                               maskPrimaryField is false.
  * @param {string[]} [config.additionalFieldIds=[]]  Element ids of additional non-secret fields
  *                                                   (e.g. url, topic). All are required for
  *                                                   the empty-validation check, get input
@@ -120,6 +121,8 @@ const DEFAULT_MESSAGES = {
  *                                               `data.validated` for success but `data.valid: false` on
  *                                               failure -- asymmetric naming preserved from the legacy API).
  * @param {string} [config.spinnerKey='validate'] Argument passed to show/hideSpinner.
+ * @param {boolean} [config.maskPrimaryField=true] Whether to treat the primary field as a secret.
+ *                                                 Set false for path/URL validators that reuse this flow.
  */
 export function createApiKeyValidator (config) {
   const {
@@ -139,7 +142,8 @@ export function createApiKeyValidator (config) {
     onPreSubmit,
     revalidateOnLoad = false,
     isValid = (data) => !!data.valid,
-    spinnerKey = 'validate'
+    spinnerKey = 'validate',
+    maskPrimaryField = true
   } = config
 
   if (!fieldId) throw new Error('createApiKeyValidator: fieldId is required')
@@ -170,8 +174,10 @@ export function createApiKeyValidator (config) {
     .map(id => ({ id, el: document.getElementById(id) }))
     .filter(entry => entry.el)
 
-  // ── initial visibility of the credential field ──────────────────────
-  if (apiKeyInput.value.trim() === '') {
+  // ── initial visibility of the primary field ─────────────────────────
+  if (!maskPrimaryField) {
+    apiKeyInput.setAttribute('type', 'text')
+  } else if (apiKeyInput.value.trim() === '') {
     apiKeyInput.setAttribute('type', 'text') // show placeholder text
     if (toggleButton) setToggleButtonIcon(toggleButton, true)
   } else {
@@ -308,7 +314,7 @@ export function createApiKeyValidator (config) {
   }
 
   // ── show/hide toggle for the credential field ───────────────────────
-  if (toggleButton) {
+  if (maskPrimaryField && toggleButton) {
     toggleButton.addEventListener('click', function () {
       const currentType = apiKeyInput.getAttribute('type')
       apiKeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')

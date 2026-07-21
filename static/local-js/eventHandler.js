@@ -9,9 +9,21 @@ function callValidationHandler (methodName, ...args) {
   return handler[methodName](...args)
 }
 
+function queryScopedElements (scope, selector) {
+  const root = scope && typeof scope.querySelectorAll === 'function' ? scope : document
+  const elements = []
+
+  if (root !== document && typeof root.matches === 'function' && root.matches(selector)) {
+    elements.push(root)
+  }
+
+  elements.push(...root.querySelectorAll(selector))
+  return elements
+}
+
 const EventHandler = {
-  attachLibraryListeners: function () {
-    document.querySelectorAll('.library-checkbox').forEach((checkbox) => {
+  attachLibraryListeners: function (scope = document) {
+    queryScopedElements(scope, '.library-checkbox').forEach((checkbox) => {
       const libraryId = checkbox.id.replace(/-(library|card-container)$/, '')
 
       if (checkbox.dataset.listenerAdded !== 'true') {
@@ -31,7 +43,7 @@ const EventHandler = {
       }
     })
 
-    document.querySelectorAll("[id$='-card-container']").forEach((library) => {
+    queryScopedElements(scope, "[id$='-card-container']").forEach((library) => {
       const libraryId = library.id.replace('-card-container', '')
       const isMovie = libraryId.startsWith('mov-library_')
 
@@ -100,26 +112,26 @@ const EventHandler = {
       initializeOverlays(libraryId, isMovie)
 
       // Attach overlay selection listeners (CHANGE events)
+      library.querySelectorAll('.accordion select').forEach(select => {
+        if (!select.dataset.listenerAdded) {
+          select.addEventListener('change', () => {
+            console.log(`[DEBUG] Dropdown changed: ${select.id} -> ${select.value}`)
+            updateAccordionHighlights()
+            callValidationHandler('updateValidationState')
+
+            // Trigger preview update if template variable
+            if (select.classList.contains('template-variable-select')) {
+              const nameParts = select.name.split('-')
+              const previewLibraryId = nameParts.slice(0, 2).join('-') // e.g., mov-library_movies
+              const type = nameParts[2] // e.g., movie
+              ImageHandler.generateSinglePreview(previewLibraryId, type)
+            }
+          })
+          select.dataset.listenerAdded = 'true'
+        }
+      })
+
       library.querySelectorAll('.accordion input').forEach((input) => {
-        library.querySelectorAll('.accordion select').forEach(select => {
-          if (!select.dataset.listenerAdded) {
-            select.addEventListener('change', () => {
-              console.log(`[DEBUG] Dropdown changed: ${select.id} -> ${select.value}`)
-              updateAccordionHighlights()
-              callValidationHandler('updateValidationState')
-
-              // Trigger preview update if template variable
-              if (select.classList.contains('template-variable-select')) {
-                const nameParts = select.name.split('-')
-                const previewLibraryId = nameParts.slice(0, 2).join('-') // e.g., mov-library_movies
-                const type = nameParts[2] // e.g., movie
-                ImageHandler.generateSinglePreview(previewLibraryId, type)
-              }
-            })
-            select.dataset.listenerAdded = 'true'
-          }
-        })
-
         if (input.id && !input.dataset.listenerAdded) {
           console.log(`[DEBUG] Attaching toggle listener for ${input.id}`)
           input.addEventListener('change', () => {
@@ -136,7 +148,7 @@ const EventHandler = {
       })
 
       // Attach attribute_reset_overlays listeners
-      document.querySelectorAll("[id$='-attribute_reset_overlays']").forEach(dropdown => {
+      library.querySelectorAll("[id$='-attribute_reset_overlays']").forEach(dropdown => {
         if (!dropdown.dataset.listenerAdded) {
           console.log(`[DEBUG] Attaching change listener for Reset Overlays: ${dropdown.id}`)
 
@@ -366,22 +378,25 @@ const shouldReattachForNode = (node) => {
 }
 
 const observer = new MutationObserver((mutations) => {
-  let needsReattachment = false
+  const reattachmentScopes = new Set()
 
   mutations.forEach((mutation) => {
     if (mutation.addedNodes.length > 0) {
       mutation.addedNodes.forEach((node) => {
         if (shouldReattachForNode(node)) {
           console.log(`[DEBUG] New element detected: ${node.id || node.className}, triggering re-attachment.`)
-          needsReattachment = true
+          const cardScope = node.matches?.("[id$='-card-container']")
+            ? node
+            : node.closest?.("[id$='-card-container']")
+          reattachmentScopes.add(cardScope || node)
         }
       })
     }
   })
 
-  if (needsReattachment) {
+  if (reattachmentScopes.size > 0) {
     console.log('[DEBUG] Reattaching event listeners due to DOM mutation...')
-    EventHandler.attachLibraryListeners()
+    reattachmentScopes.forEach(scope => EventHandler.attachLibraryListeners(scope))
   }
 })
 

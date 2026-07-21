@@ -6,6 +6,7 @@ createApiKeyValidator({
   validatedAtFieldId: 'apprise_validated_at',
   endpoint: '/validate_apprise',
   buildPayload: (location) => ({ apprise_location: location }),
+  maskPrimaryField: false,
   messages: {
     empty: 'Please enter an Apprise YAML path or URL.',
     success: 'Apprise location validated successfully!',

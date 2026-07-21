@@ -99,6 +99,9 @@ _PLAIN_SCALAR_SECTIONS = frozenset(
 )
 
 
+_SETTINGS_WARNING_DEFAULT_KEYS = ("auto_sort_hubs", "playlist_exclude_users")
+
+
 # --- pruning / cleaning ---------------------------------------------------
 
 
@@ -364,7 +367,8 @@ def _apply_settings_normalization(cleaned_data):
     """
     settings_block = cleaned_data.get("settings")
     if not isinstance(settings_block, dict):
-        return
+        settings_block = {}
+        cleaned_data["settings"] = settings_block
 
     for setting_key in list(settings_block.keys()):
         normalized_value = _normalize_settings_section_value(setting_key, settings_block.get(setting_key))
@@ -375,6 +379,9 @@ def _apply_settings_normalization(cleaned_data):
 
     if "asset_directory" in settings_block and isinstance(settings_block["asset_directory"], (str, list)):
         settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
+
+    for setting_key in _SETTINGS_WARNING_DEFAULT_KEYS:
+        settings_block.setdefault(setting_key, None)
 
 
 # --- validation comment ---------------------------------------------------

@@ -8,6 +8,20 @@
 export const librariesValidatedAtInput = document.getElementById('libraries_validated_at')
 let librariesTouched = false
 
+function getConfiguredLibraryOptions (type) {
+  const picker = document.getElementById('libraryPicker')
+  if (!picker) return []
+  return Array.from(picker.querySelectorAll('option[value]')).filter(option => {
+    return option.value.startsWith(`${type}-library_`) && option.dataset.configured === 'true'
+  })
+}
+
+function optionLabel (option) {
+  return String(option.dataset.label || option.textContent || '')
+    .replace(/\s+\(configured\)$/, '')
+    .trim()
+}
+
 export const ValidationHandler = {
   updateValidationState: function () {
     console.log('[DEBUG] Running validation state update.')
@@ -285,21 +299,53 @@ export const ValidationHandler = {
   },
 
   getSelectedLibraryIds: function (type) {
-    const selected = [...document.querySelectorAll(`input[id$='-library-value'][id^='${type}-library_']`)]
-      .filter(input => input.value && input.value.trim() !== '')
-      .map(input => input.id.replace('-library-value', ''))
+    const configuredOptions = getConfiguredLibraryOptions(type)
+    const selectedIds = new Set(configuredOptions.map(option => option.value))
+    const configuredOptionIds = new Set(configuredOptions.map(option => option.value))
+    const picker = document.getElementById('libraryPicker')
+    const pickerOptionIds = new Set(
+      Array.from(picker?.querySelectorAll(`option[value^='${type}-library_']`) || []).map(option => option.value)
+    )
 
+    document.querySelectorAll(`input[id$='-library-value'][id^='${type}-library_']`).forEach(input => {
+      if (!input.value || input.value.trim() === '') return
+      const id = input.id.replace('-library-value', '')
+      if (pickerOptionIds.has(id) && !configuredOptionIds.has(id)) return
+      selectedIds.add(id)
+    })
+
+    const selected = Array.from(selectedIds)
     console.log('[DEBUG] Selected', type, 'Library IDs:', selected)
     return selected
   },
 
   getSelectedLibraryNames: function (type) {
-    const names = [...document.querySelectorAll(`input[id$='-library-value'][id^='${type}-library_']`)]
-      .filter(input => input.value && input.value.trim() !== '')
-      .map(input => input.value.trim())
+    const configuredOptions = getConfiguredLibraryOptions(type)
+    const selectedNames = []
+    const selectedIds = new Set()
+    const picker = document.getElementById('libraryPicker')
+    const pickerOptionIds = new Set(
+      Array.from(picker?.querySelectorAll(`option[value^='${type}-library_']`) || []).map(option => option.value)
+    )
+    const configuredOptionIds = new Set(configuredOptions.map(option => option.value))
 
-    console.log('[DEBUG] Selected', type, 'Library Names:', names)
-    return names
+    configuredOptions.forEach(option => {
+      const label = optionLabel(option)
+      if (!label) return
+      selectedNames.push(label)
+      selectedIds.add(option.value)
+    })
+
+    document.querySelectorAll(`input[id$='-library-value'][id^='${type}-library_']`).forEach(input => {
+      if (!input.value || input.value.trim() === '') return
+      const id = input.id.replace('-library-value', '')
+      if (selectedIds.has(id)) return
+      if (pickerOptionIds.has(id) && !configuredOptionIds.has(id)) return
+      selectedNames.push(input.value.trim())
+    })
+
+    console.log('[DEBUG] Selected', type, 'Library Names:', selectedNames)
+    return selectedNames
   },
 
   // Backward compatibility alias

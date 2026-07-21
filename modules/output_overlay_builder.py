@@ -108,14 +108,16 @@ def _apply_content_rating_color(overlay_entry, overlay_name, full_key_prefix_bas
 
     The color key lives on the un-variant-suffixed template overlay
     key (``..._template_overlay_content_rating_<variant>[color]``).
-    Mutates ``overlay_entry`` in place, setting
-    ``template_variables['color']`` to a bool.  Default: False.
+    Mutates ``overlay_entry`` in place only when the user supplied the
+    field. Missing means "use the Kometa/Quickstart default".
     """
     if not overlay_name.startswith("content_rating_"):
         return
     variant = overlay_name[len("content_rating_") :]
     color_key = f"{full_key_prefix_base}_content_rating_{variant}[color]"
-    color_value = raw_overlay_entries.get(color_key, False)
+    if color_key not in raw_overlay_entries:
+        return
+    color_value = raw_overlay_entries.get(color_key)
     if isinstance(color_value, str):
         color_value = color_value.lower() == "true"
     overlay_entry.setdefault("template_variables", {})["color"] = color_value

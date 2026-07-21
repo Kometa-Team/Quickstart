@@ -110,6 +110,36 @@ def _normalize_apprise_section(section_payload: Any) -> str:
     return str(apprise_location).strip() if apprise_location is not None else ""
 
 
+def _record_apprise_source_paths(section_payload: Any, report: ImportReport) -> None:
+    """Record the original Apprise YAML key shape as imported.
+
+    Apprise is normalized internally to ``apprise.location`` because that is
+    the Quickstart form field, but Kometa configs commonly use
+    ``apprise.config``. Recording the source key keeps the annotated import
+    report from marking a successfully-normalized source line as unmapped.
+    """
+    if isinstance(section_payload, dict):
+        if "config" in section_payload:
+            report.add("imported", "apprise.config")
+            return
+        if "location" in section_payload:
+            report.add("imported", "apprise.location")
+            return
+        if "apprise" in section_payload:
+            nested_apprise = section_payload.get("apprise")
+            if isinstance(nested_apprise, dict):
+                if "config" in nested_apprise:
+                    report.add("imported", "apprise.apprise.config")
+                    return
+                if "location" in nested_apprise:
+                    report.add("imported", "apprise.apprise.location")
+                    return
+            report.add("imported", "apprise.apprise")
+            return
+    elif isinstance(section_payload, str):
+        report.add("imported", "apprise")
+
+
 def _normalize_settings_section(section_payload: dict) -> dict:
     """Normalize the settings section's asset_directory (str-or-list to list)."""
     asset_directory = section_payload.get("asset_directory")
@@ -167,6 +197,7 @@ def process_simple_sections(
                 normalized_apprise = {"location": apprise_location}
                 payload[section] = {section: normalized_apprise}
                 _flatten_dict(section, normalized_apprise, report)
+                _record_apprise_source_paths(section_payload, report)
             else:
                 report.add("unmapped", section, "Unsupported section format.")
             continue
