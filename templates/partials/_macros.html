@@ -295,7 +295,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 
 {% macro select_section(library, data, prefix, title, description, wiki, options,
 preview_image=False, tooltip_variant="info", container_class="border rounded p-3 mb-2",
-yml_location="attribute", telemetry=None, requires_plex_pass=False) %}
+yml_location="attribute", telemetry=None, requires_plex_pass=False, default_value=None) %}
 
 {# raw_prefix can contain brackets for name, but needs cleaning for id #}
 {% set raw_prefix =
@@ -307,6 +307,7 @@ prefix if yml_location == "top_level" else
 {% set field_id = (library.id ~ "-" ~ raw_prefix).replace("[", "_").replace("]", "") %}
 {% set field_name = library.id ~ "-" ~ raw_prefix %}
 {% set selected = data.libraries.get(field_name, '') %}
+{% set select_default = default_value if default_value is not none else (options[0][0] if options else '') %}
 {% set has_plex_pass = false %}
 {% if telemetry is mapping and telemetry.get("plex_pass") is sameas true %}
 {% set has_plex_pass = true %}
@@ -325,7 +326,7 @@ prefix if yml_location == "top_level" else
                     </span>
                 </span>
                 <select class="form-select" id="{{ field_id }}" {% if not disable_for_plex_pass %}name="{{ field_name }}"{% endif %}
-                    data-default=""
+                    data-default="{{ select_default }}"
                     aria-describedby="{{ field_id }}_text" {% if preview_image %}data-preview="true" {% endif %}{% if disable_for_plex_pass %} disabled aria-disabled="true"{% endif %}>
                     {% for value, label in options %}
                     <option value="{{ value }}" {% if selected==value %}selected{% endif %}>{{ label }}</option>
@@ -1120,7 +1121,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
 <!-- Plex Pass: {{ telemetry.plex_pass }} -->
 <!-- {{ group.accordion }} Collection Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion">
+<div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion"
+    data-collection-group-shell="true" data-library-id="{{ library.id }}">
     <div class="accordion-item">
         <h2 class="accordion-header overlay-accordion-header d-flex align-items-center">
             <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse"
@@ -1132,6 +1134,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
         <div id="{{ library.id }}-{{ accordion_safe }}" class="accordion-collapse collapse"
             data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
             <div class="accordion-body">
+                <div class="d-flex justify-content-end mb-3 collection-parent-reset-actions">
+                    <button type="button"
+                        class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
+                        data-collection-parent-reset="true">
+                        Reset {{ group.accordion }}
+                    </button>
+                </div>
 
                 {% set lib_meta = telemetry.libraries[library.name] if telemetry.libraries and library.name in
                 telemetry.libraries else {} %}
@@ -2345,7 +2354,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                     <input type="hidden"
                                                         id="{{ template_name }}-{{ var_name }}"
                                                         name="{{ template_name }}[{{ var_name }}]"
-                                                        value="{{ hidden_value if hidden_value != '' else var_details.default }}">
+                                                        value="{{ hidden_value if hidden_value != '' else var_details.default }}"
+                                                        data-default="{{ var_details.default }}">
                                                     {% elif var_details.input_type == "number" %}
                                                     {% if var_name in ['horizontal_offset', 'initial_horizontal_offset'] %}{% set ns.has_offsets = true %}{% set ns.h_id = template_name ~ '-' ~ var_name %}{% endif %}
                                                     {% if var_name in ['vertical_offset', 'initial_vertical_offset'] %}{% set ns.has_offsets = true %}{% set ns.v_id = template_name ~ '-' ~ var_name %}{% endif %}
@@ -2488,7 +2498,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             aria-describedby="{{ input_id }}_text"
                                                             value="{{ safe_text_value }}"
                                                             data-default="{{ var_details.default }}"
-                                                            {% if var_name == 'text' and overlay.id in ['overlay_aspect', 'overlay_video_format'] %}data-skip-yaml="true"{% endif %}>
+                                                            {% if var_name == 'text' and overlay.id in ['overlay_aspect', 'overlay_video_format'] %}data-skip-yaml="true" data-skip-override-count="true"{% endif %}>
                                                     </div>
                                                         {% endif %}
                                                     {% elif var_details.input_type == "multiselect" %}

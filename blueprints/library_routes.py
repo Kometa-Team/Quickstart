@@ -204,6 +204,16 @@ def _library_fragment_context(library_id, *, include_attributes=True, include_co
         "configured_ids": configured_ids,
         "legacy_playlist_libraries": legacy_playlist_libraries,
         "lazy_section_override_counts": _lazy_section_override_counts(library, data.get("libraries", {}), telemetry_data),
+        "collection_group_override_counts": (
+            _collection_group_override_counts_for_library(
+                library,
+                data.get("libraries", {}),
+                collection_config,
+                telemetry_data,
+            )
+            if include_collections
+            else {}
+        ),
     }
 
 
@@ -215,6 +225,22 @@ def _coerce_loaded_library_sections(raw_value):
     if isinstance(raw_value, str):
         return {item.strip() for item in raw_value.split(",") if item.strip()}
     return set()
+
+
+def _coerce_loaded_collection_groups(raw_value):
+    values = raw_value
+    if isinstance(raw_value, str):
+        values = raw_value.split(",")
+    if not isinstance(values, (list, tuple, set)):
+        return set()
+
+    loaded = set()
+    for item in values:
+        try:
+            loaded.add(int(str(item).strip()))
+        except (TypeError, ValueError):
+            continue
+    return loaded
 
 
 def _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loaded_sections):
@@ -339,6 +365,19 @@ def _count_collection_overrides_for_library(library, libraries_data, collection_
     return count
 
 
+def _count_collection_group_overrides_for_library(library, libraries_data, group):
+    return _count_collection_overrides_for_library(library, libraries_data, [group] if isinstance(group, dict) else [])
+
+
+def _collection_group_override_counts_for_library(library, libraries_data, collection_config, telemetry_data=None):
+    if not isinstance(collection_config, list):
+        return {}
+    library_with_plex = dict(library or {})
+    telemetry_data = telemetry_data if isinstance(telemetry_data, dict) else {}
+    library_with_plex["plex_pass"] = bool(telemetry_data.get("plex_pass"))
+    return {index: _count_collection_group_overrides_for_library(library_with_plex, libraries_data, group) for index, group in enumerate(collection_config)}
+
+
 def _iter_overlay_template_items(template_variables):
     if isinstance(template_variables, dict):
         for key, details in template_variables.items():
@@ -350,6 +389,152 @@ def _iter_overlay_template_items(template_variables):
                 key = item.get("key")
                 if key:
                     yield key, item
+
+
+def _overlay_template_defaults_map(template_variables):
+    defaults = {}
+    for key, details in _iter_overlay_template_items(template_variables):
+        defaults[key] = details.get("default") if isinstance(details, dict) else None
+    return defaults
+
+
+def _meaningful_overlay_value(value):
+    if value is None or value is False:
+        return False
+    if isinstance(value, str):
+        stripped = value.strip()
+        return bool(stripped) and stripped.lower() != "none"
+    return True
+
+
+def _overlay_template_value(libraries_data, template_name, key, defaults):
+    value = libraries_data.get(f"{template_name}[{key}]")
+    return value if value is not None else defaults.get(key)
+
+
+def _rating_axis_positions(axis, position, count):
+    safe_count = max(1, min(3, int(count or 1)))
+    constants = {
+        "edge_inset": 30,
+        "center": 0,
+        "v2": 235,
+        "v3": 440,
+        "cv2": 105,
+        "cv3": 205,
+        "h2": 345,
+        "h3": 660,
+        "ch2": 160,
+        "ch3": 335,
+    }
+    if axis == "horizontal":
+        if position == "center":
+            if safe_count == 1:
+                return [constants["center"]]
+            if safe_count == 2:
+                return [-constants["ch2"], constants["ch2"]]
+            return [-constants["ch3"], constants["center"], constants["ch3"]]
+        if position == "right":
+            if safe_count == 1:
+                return [-constants["edge_inset"]]
+            if safe_count == 2:
+                return [-constants["h2"], -constants["edge_inset"]]
+            return [-constants["h3"], -constants["h2"], -constants["edge_inset"]]
+        if safe_count == 1:
+            return [constants["edge_inset"]]
+        if safe_count == 2:
+            return [constants["edge_inset"], constants["h2"]]
+        return [constants["edge_inset"], constants["h2"], constants["h3"]]
+
+    if position == "center":
+        if safe_count == 1:
+            return [constants["center"]]
+        if safe_count == 2:
+            return [-constants["cv2"], constants["cv2"]]
+        return [-constants["cv3"], constants["center"], constants["cv3"]]
+    if position == "bottom":
+        if safe_count == 1:
+            return [-constants["edge_inset"]]
+        if safe_count == 2:
+            return [-constants["v2"], -constants["edge_inset"]]
+        return [-constants["v3"], -constants["v2"], -constants["edge_inset"]]
+    if safe_count == 1:
+        return [constants["edge_inset"]]
+    if safe_count == 2:
+        return [constants["edge_inset"], constants["v2"]]
+    return [constants["edge_inset"], constants["v2"], constants["v3"]]
+
+
+def _rating_overlay_dynamic_defaults(libraries_data, template_name, defaults):
+    alignment = str(_overlay_template_value(libraries_data, template_name, "rating_alignment", defaults) or "vertical").strip().lower()
+    alignment = "horizontal" if alignment == "horizontal" else "vertical"
+    h_pos = str(_overlay_template_value(libraries_data, template_name, "horizontal_position", defaults) or "left").strip().lower()
+    h_pos = h_pos if h_pos in {"left", "center", "right"} else "left"
+    v_pos = str(_overlay_template_value(libraries_data, template_name, "vertical_position", defaults) or "center").strip().lower()
+    v_pos = v_pos if v_pos in {"top", "center", "bottom"} else "center"
+
+    active_slots = []
+    for idx in (1, 2, 3):
+        rating = _overlay_template_value(libraries_data, template_name, f"rating{idx}", defaults)
+        image = _overlay_template_value(libraries_data, template_name, f"rating{idx}_image", defaults)
+        if _meaningful_overlay_value(rating) and _meaningful_overlay_value(image):
+            active_slots.append(idx)
+
+    dynamic = {
+        "back_width": 270 if alignment == "horizontal" else 160,
+        "back_height": 80 if alignment == "horizontal" else 160,
+        "addon_position": "left" if alignment == "horizontal" else "top",
+        "horizontal_offset": 0 if h_pos == "center" else 15,
+        "vertical_offset": 0 if v_pos == "center" else 15,
+    }
+    if not active_slots:
+        return dynamic
+
+    if alignment == "horizontal":
+        h_positions = _rating_axis_positions("horizontal", h_pos, len(active_slots))
+        shared_v = 0 if v_pos == "center" else (-30 if v_pos == "bottom" else 30)
+        for position, idx in enumerate(active_slots):
+            dynamic[f"rating{idx}_horizontal_offset"] = h_positions[position]
+            dynamic[f"rating{idx}_vertical_offset"] = shared_v
+        return dynamic
+
+    v_positions = _rating_axis_positions("vertical", v_pos, len(active_slots))
+    shared_h = 0 if h_pos == "center" else (-30 if h_pos == "right" else 30)
+    for position, idx in enumerate(active_slots):
+        dynamic[f"rating{idx}_horizontal_offset"] = shared_h
+        dynamic[f"rating{idx}_vertical_offset"] = v_positions[position]
+    return dynamic
+
+
+def _overlay_template_effective_default(overlay, key, details, libraries_data, template_name):
+    if overlay.get("id") == "overlay_ratings":
+        defaults = _overlay_template_defaults_map(overlay.get("template_variables"))
+        dynamic_defaults = _rating_overlay_dynamic_defaults(libraries_data, template_name, defaults)
+        if key in dynamic_defaults:
+            return dynamic_defaults[key]
+    return details.get("default")
+
+
+def _overlay_template_key_counts_as_override(overlay, key, details):
+    if key == "builder_level":
+        return False
+    if details.get("input_type") == "hidden" and details.get("default") is None:
+        return False
+    if key == "text" and overlay.get("id") in {"overlay_aspect", "overlay_video_format"}:
+        return False
+    return True
+
+
+def _overlay_group_is_active(library_id, render_type, group, overlay, libraries_data):
+    input_type = str(group.get("input_type") or "checkbox").strip().lower()
+    if input_type == "radio":
+        radio_group_name = str(group.get("radio_group_name") or "").strip()
+        if not radio_group_name:
+            return False
+        field_name = f"{library_id}-{render_type}-{radio_group_name}"
+        return str(libraries_data.get(field_name, "")).strip() == str(overlay.get("value", "")).strip()
+
+    field_name = f"{library_id}-{render_type}-{overlay.get('id')}"
+    return _coerce_bool(libraries_data.get(field_name))
 
 
 def _count_overlay_overrides_for_library(library, libraries_data, overlay_config):
@@ -365,15 +550,18 @@ def _count_overlay_overrides_for_library(library, libraries_data, overlay_config
                 media_types = overlay.get("media_types") or []
                 if media_types and render_type not in media_types:
                     continue
+                if not _overlay_group_is_active(library_id, render_type, group, overlay, libraries_data):
+                    continue
                 template_name = f"{library_id}-{render_type}-template_{overlay.get('id')}"
                 for key, details in _iter_overlay_template_items(overlay.get("template_variables")):
-                    if key == "builder_level":
+                    if not _overlay_template_key_counts_as_override(overlay, key, details):
                         continue
                     var_media_types = details.get("media_types") or []
                     if var_media_types and render_type not in var_media_types:
                         continue
                     field_name = f"{template_name}[{key}]"
-                    if _template_value_is_configured(libraries_data.get(field_name), details.get("default"), details.get("input_type")):
+                    effective_default = _overlay_template_effective_default(overlay, key, details, libraries_data, template_name)
+                    if _template_value_is_configured(libraries_data.get(field_name), effective_default, details.get("input_type")):
                         count += 1
     return count
 
@@ -391,11 +579,50 @@ def _lazy_section_override_counts(library, libraries_data, telemetry_data=None):
     }
 
 
-def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections):
+def _collection_key_group_indexes(library_id, collection_config, library_type):
+    indexes_by_key = {}
+    if not library_id or not isinstance(collection_config, list):
+        return indexes_by_key
+    for group_index, group in enumerate(collection_config):
+        for collection in group.get("collections", []) if isinstance(group, dict) else []:
+            if library_type not in collection.get("media_types", []):
+                continue
+            collection_id = str(collection.get("id", "")).strip()
+            if not collection_id:
+                continue
+            clean_id = collection_id.replace("collection_", "")
+            indexes_by_key[f"{library_id}-{collection_id}"] = group_index
+            indexes_by_key[f"{library_id}-template_collection_{clean_id}_"] = group_index
+    return indexes_by_key
+
+
+def _collection_key_belongs_to_unloaded_group(key, collection_key_indexes, loaded_collection_groups):
+    if loaded_collection_groups is None:
+        return False
+    for prefix, group_index in collection_key_indexes.items():
+        if (key == prefix or key.startswith(prefix)) and group_index not in loaded_collection_groups:
+            return True
+    return False
+
+
+def _is_collection_default_key(library_id, key):
+    if not isinstance(key, str) or key == f"{library_id}-collection_files":
+        return False
+    return key.startswith(f"{library_id}-collection_") or key.startswith(f"{library_id}-template_collection_")
+
+
+def _drop_collection_default_keys(library_id, libraries_data):
+    if not isinstance(libraries_data, dict):
+        return {}
+    return {key: value for key, value in libraries_data.items() if not _is_collection_default_key(library_id, key)}
+
+
+def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections, loaded_collection_groups=None):
     """Keep persisted collection/overlay values when those lazy sections were never opened."""
     incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
     unloaded_sections = {"collections", "overlays"} - set(loaded_sections or set())
-    if not unloaded_sections:
+    should_preserve_unloaded_collection_groups = "collections" in set(loaded_sections or set()) and loaded_collection_groups is not None
+    if not unloaded_sections and not should_preserve_unloaded_collection_groups:
         return incoming_libraries
 
     settings = persistence.retrieve_settings("025-libraries")
@@ -405,11 +632,21 @@ def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loade
 
     preserved = dict(incoming_libraries)
     prefix = f"{library_id}-"
+    library_type = "movie" if str(library_id).startswith("mov-") else "show"
+    collection_key_indexes = {}
+    if should_preserve_unloaded_collection_groups:
+        collection_key_indexes = _collection_key_group_indexes(
+            library_id,
+            helpers.load_quickstart_config("quickstart_collections.json"),
+            library_type,
+        )
 
     def should_preserve(key):
         if not isinstance(key, str) or not key.startswith(prefix):
             return False
-        if "collections" in unloaded_sections and (f"{library_id}-collection_" in key or f"{library_id}-template_collection_" in key or key == f"{library_id}-collection_files"):
+        if should_preserve_unloaded_collection_groups and _collection_key_belongs_to_unloaded_group(key, collection_key_indexes, loaded_collection_groups):
+            return True
+        if "collections" in unloaded_sections and (_is_collection_default_key(library_id, key) or key == f"{library_id}-collection_files"):
             return True
         if "overlays" in unloaded_sections and (
             f"{library_id}-overlay_" in key
@@ -512,6 +749,28 @@ def library_fragment_section(library_id, section_name):
     return render_template(template_name, **context)
 
 
+@bp.route("/library_fragment/<library_id>/section/collections/group/<int:group_index>")
+def library_fragment_collection_group(library_id, group_index):
+    """Return one collection group fragment on demand."""
+    context = _library_fragment_context(
+        library_id,
+        include_attributes=False,
+        include_collections=True,
+        include_overlays=False,
+    )
+
+    if not context:
+        return jsonify({"error": "Library not found"}), 404
+
+    collection_config = context.get("collection_config") or []
+    if group_index < 0 or group_index >= len(collection_config):
+        return jsonify({"error": "Collection group not found"}), 404
+
+    context = dict(context)
+    context["group"] = collection_config[group_index]
+    return render_template("partials/_collection_group_fragment.html", **context)
+
+
 @bp.route("/autosave_library/<library_id>", methods=["POST"])
 def autosave_library(library_id):
     """Merge-save a single library when switching cards without requiring full navigation submit."""
@@ -524,6 +783,9 @@ def autosave_library(library_id):
         if isinstance(incoming, dict) and helpers.booler(incoming.get("__lookup_labels_only")):
             return _save_lookup_label_only_library_payload(library_id, incoming)
         loaded_sections = _coerce_loaded_library_sections(incoming.get("__loaded_sections") if hasattr(incoming, "get") else None)
+        loaded_collection_groups_raw = incoming.get("__loaded_collection_groups") if hasattr(incoming, "get") else None
+        loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
+        reset_collection_defaults = helpers.booler(incoming.get("__reset_collection_defaults") if hasattr(incoming, "get") else None)
         config_name = persistence.resolve_request_config_name(incoming if isinstance(incoming, dict) else {})
         errors = path_validation.validate_payload(incoming)
         if errors:
@@ -531,10 +793,17 @@ def autosave_library(library_id):
         clean_source = dict(incoming) if isinstance(incoming, dict) else incoming
         if isinstance(clean_source, dict):
             clean_source.pop("__loaded_sections", None)
+            clean_source.pop("__loaded_collection_groups", None)
+            clean_source.pop("__reset_collection_defaults", None)
         clean_payload = persistence.clean_form_data(MultiDict(clean_source))
         incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
         loaded_sections = _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loaded_sections)
-        incoming_libraries = _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections)
+        if reset_collection_defaults:
+            loaded_sections.add("collections")
+            incoming_libraries = _drop_collection_default_keys(library_id, incoming_libraries)
+        incoming_libraries = _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections, loaded_collection_groups)
+        if reset_collection_defaults:
+            incoming_libraries = _drop_collection_default_keys(library_id, incoming_libraries)
         selected_library_ids = _qs._selected_library_ids_from_libraries_data(incoming_libraries)
         collection_errors = _qs._validate_library_collection_files(incoming_libraries, selected_library_ids)
         metadata_errors = _qs._validate_library_metadata_files(incoming_libraries, selected_library_ids)
@@ -556,6 +825,11 @@ def autosave_library(library_id):
         if normalization_errors:
             return jsonify({"success": False, "error": "Unable to organize library files.", "errors": normalization_errors}), 400
         save_payload = dict(incoming) if isinstance(incoming, dict) else {}
+        save_payload.pop("__loaded_sections", None)
+        save_payload.pop("__loaded_collection_groups", None)
+        save_payload.pop("__reset_collection_defaults", None)
+        if reset_collection_defaults:
+            save_payload = _drop_collection_default_keys(library_id, save_payload)
         save_payload.update(normalized_libraries)
         save_payload["config_name"] = config_name
         persistence.save_settings("025-libraries", save_payload)
@@ -704,6 +978,8 @@ def copy_library_settings():
         if isinstance(source_payload, dict) and source_payload:
             source_payload_for_merge = dict(source_payload)
             loaded_sections = _coerce_loaded_library_sections(source_payload_for_merge.pop("__loaded_sections", []))
+            loaded_collection_groups_raw = source_payload_for_merge.pop("__loaded_collection_groups", None)
+            loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
             payload_errors = path_validation.validate_payload(source_payload_for_merge)
             if payload_errors:
                 return (
@@ -736,7 +1012,12 @@ def copy_library_settings():
                         400,
                     )
                 loaded_sections = _loaded_sections_with_payload_evidence(source_prefix, normalized_incoming, loaded_sections)
-                incoming_dict = _preserve_unloaded_lazy_section_values(source_prefix, normalized_incoming, loaded_sections)
+                incoming_dict = _preserve_unloaded_lazy_section_values(
+                    source_prefix,
+                    normalized_incoming,
+                    loaded_sections,
+                    loaded_collection_groups,
+                )
 
                 merged = libraries_data.copy()
 

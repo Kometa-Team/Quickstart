@@ -210,52 +210,73 @@ playlist-template_variables[{{ field_key }}]
 </div>
 {%- endmacro %}
 
-<div class="alert alert-secondary small mb-3" role="alert">
-  These playlist defaults are shared across all libraries you enable for playlists on this page.
+<div class="accordion-item">
+  <h3 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+      data-bs-target="#{{ library.id }}-playlist-shared-defaults" aria-expanded="false"
+      aria-controls="{{ library.id }}-playlist-shared-defaults">
+      Shared Playlist Defaults
+    </button>
+  </h3>
+  <div id="{{ library.id }}-playlist-shared-defaults" class="accordion-collapse collapse"
+    data-library-override-scope="true" data-library-override-label="Shared Playlist Defaults">
+    <div class="accordion-body">
+      <div class="alert alert-secondary small mb-3" role="alert">
+        These playlist defaults are shared across all libraries you enable for playlists on this page.
+      </div>
+      {{ playlist_user_picker('sync_to_users', 'Sync To Users', library.id ~ '-playlist-sync-users-modal', 'Select Plex usernames', 'Sets the users to sync all playlists to.', true) }}
+      {{ playlist_user_picker('exclude_users', 'Exclude Users', library.id ~ '-playlist-exclude-users-modal', 'Select Plex usernames to exclude', 'Sets the users to exclude from sync for all playlists.') }}
+      {{ playlist_toggle_input('delete_playlist', 'Delete Playlists', 'Delete all playlists for the users defined by sync_to_users.') }}
+      {{ playlist_string_list_input('ignore_ids', 'Ignore IDs', 'Add TMDb or TVDb ID', 'Set TMDb or TVDb IDs to ignore in all playlists.', 'numeric_id') }}
+      {{ playlist_string_list_input('ignore_imdb_ids', 'Ignore IMDb IDs', 'Add IMDb ID (e.g. tt1234567)', 'Set IMDb IDs to ignore in all playlists.', 'imdb_id_plex') }}
+      {{ playlist_toggle_input('radarr_add_missing', 'Radarr Add Missing', 'Override Radarr add_missing for all playlists in this defaults file.') }}
+      {{ playlist_text_input('radarr_folder', 'Radarr Folder', 'Set Radarr root folder path', 'Override Radarr root_folder_path for all playlists in this defaults file.') }}
+      {{ playlist_string_list_input('radarr_tag', 'Radarr Tags', 'Add Radarr tag', 'Override Radarr tags for all playlists in this defaults file.') }}
+      {{ playlist_toggle_input('sonarr_add_missing', 'Sonarr Add Missing', 'Override Sonarr add_missing for all playlists in this defaults file.') }}
+      {{ playlist_text_input('sonarr_folder', 'Sonarr Folder', 'Set Sonarr root folder path', 'Override Sonarr root_folder_path for all playlists in this defaults file.') }}
+      {{ playlist_string_list_input('sonarr_tag', 'Sonarr Tags', 'Add Sonarr tag', 'Override Sonarr tags for all playlists in this defaults file.') }}
+      {{ playlist_string_list_input('item_radarr_tag', 'Item Radarr Tags', 'Add item Radarr tag', 'Append a Radarr tag to every movie found by all playlists in this defaults file.') }}
+      {{ playlist_string_list_input('item_sonarr_tag', 'Item Sonarr Tags', 'Add item Sonarr tag', 'Append a Sonarr tag to every series found by all playlists in this defaults file.') }}
+      {{ playlist_string_list_input('trakt_list', 'Default Trakt Lists', 'Add Trakt list URL', 'Default Trakt list URLs used when a playlist key does not provide its own builder list.') }}
+      {{ playlist_string_list_input('imdb_list', 'Default IMDb Lists', 'Add IMDb list URL', 'Default IMDb list URLs used when a playlist key does not provide its own builder list.') }}
+      {{ playlist_string_list_input('mdblist_list', 'Default MDBList Lists', 'Add MDBList URL', 'Default MDBList URLs used when a playlist key does not provide its own builder list.') }}
+    </div>
+  </div>
 </div>
 
-<div class="mb-3">
-  <h6 class="text-uppercase text-muted small mb-2">Shared Playlist Defaults</h6>
-  {{ playlist_user_picker('sync_to_users', 'Sync To Users', library.id ~ '-playlist-sync-users-modal', 'Select Plex usernames', 'Sets the users to sync all playlists to.', true) }}
-  {{ playlist_user_picker('exclude_users', 'Exclude Users', library.id ~ '-playlist-exclude-users-modal', 'Select Plex usernames to exclude', 'Sets the users to exclude from sync for all playlists.') }}
-  {{ playlist_toggle_input('delete_playlist', 'Delete Playlists', 'Delete all playlists for the users defined by sync_to_users.') }}
-  {{ playlist_string_list_input('ignore_ids', 'Ignore IDs', 'Add TMDb or TVDb ID', 'Set TMDb or TVDb IDs to ignore in all playlists.', 'numeric_id') }}
-  {{ playlist_string_list_input('ignore_imdb_ids', 'Ignore IMDb IDs', 'Add IMDb ID (e.g. tt1234567)', 'Set IMDb IDs to ignore in all playlists.', 'imdb_id_plex') }}
-  {{ playlist_toggle_input('radarr_add_missing', 'Radarr Add Missing', 'Override Radarr add_missing for all playlists in this defaults file.') }}
-  {{ playlist_text_input('radarr_folder', 'Radarr Folder', 'Set Radarr root folder path', 'Override Radarr root_folder_path for all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('radarr_tag', 'Radarr Tags', 'Add Radarr tag', 'Override Radarr tags for all playlists in this defaults file.') }}
-  {{ playlist_toggle_input('sonarr_add_missing', 'Sonarr Add Missing', 'Override Sonarr add_missing for all playlists in this defaults file.') }}
-  {{ playlist_text_input('sonarr_folder', 'Sonarr Folder', 'Set Sonarr root folder path', 'Override Sonarr root_folder_path for all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('sonarr_tag', 'Sonarr Tags', 'Add Sonarr tag', 'Override Sonarr tags for all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('item_radarr_tag', 'Item Radarr Tags', 'Add item Radarr tag', 'Append a Radarr tag to every movie found by all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('item_sonarr_tag', 'Item Sonarr Tags', 'Add item Sonarr tag', 'Append a Sonarr tag to every series found by all playlists in this defaults file.') }}
-  {{ playlist_string_list_input('trakt_list', 'Default Trakt Lists', 'Add Trakt list URL', 'Default Trakt list URLs used when a playlist key does not provide its own builder list.') }}
-  {{ playlist_string_list_input('imdb_list', 'Default IMDb Lists', 'Add IMDb list URL', 'Default IMDb list URLs used when a playlist key does not provide its own builder list.') }}
-  {{ playlist_string_list_input('mdblist_list', 'Default MDBList Lists', 'Add MDBList URL', 'Default MDBList URLs used when a playlist key does not provide its own builder list.') }}
-</div>
-
-<div class="mb-2">
-  <h6 class="text-uppercase text-muted small mb-2">Per-Playlist Overrides</h6>
-  {% if playlist_default_entries %}
-  {{ playlist_use_toggle_group('use_', 'Playlist Toggles', playlist_default_entries, 'Turn bundled default playlists on or off by key.') }}
-  {% else %}
-  {{ playlist_mapping_input('use_', 'Use Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Turn an individual playlist on or off by key.', '', 'Use override', 'string') }}
-  {% endif %}
-  {{ playlist_mapping_input('name_', 'Name Overrides', 'Playlist key (e.g. mcu)', 'Custom playlist name', 'Override the playlist name for a specific key.', '', 'Custom playlist name', 'string') }}
-  {{ playlist_mapping_input('summary_', 'Summary Overrides', 'Playlist key (e.g. mcu)', 'Custom playlist summary', 'Override the playlist summary for a specific key.', '', 'Custom playlist summary', 'string') }}
-  {{ playlist_mapping_input('url_poster_', 'Poster URL Overrides', 'Playlist key (e.g. mcu)', 'https://example.com/poster.jpg', 'Override the poster URL for a specific playlist key.', '', 'Poster URL', 'string') }}
-  {{ playlist_mapping_input('delete_playlist_', 'Delete Playlist Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Delete a specific playlist for the users defined by sync_to_users.', '', 'Delete playlist', 'string') }}
-  {{ playlist_mapping_input('sync_to_users_', 'Sync To Users Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated usernames', 'Override synced users for a specific playlist key.', '', 'Users', 'string_list') }}
-  {{ playlist_mapping_input('exclude_users_', 'Exclude Users Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated usernames', 'Override excluded users for a specific playlist key.', '', 'Excluded users', 'string_list') }}
-  {{ playlist_mapping_input('radarr_add_missing_', 'Radarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Radarr add_missing for a specific playlist key.', '', 'Radarr add missing', 'boolean') }}
-  {{ playlist_mapping_input('radarr_folder_', 'Radarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Radarr root folder path', 'Override Radarr root_folder_path for a specific playlist key.', '', 'Radarr folder', 'string') }}
-  {{ playlist_mapping_input('radarr_tag_', 'Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Radarr tags', 'Override Radarr tags for a specific playlist key.', '', 'Radarr tags', 'string_list') }}
-  {{ playlist_mapping_input('sonarr_add_missing_', 'Sonarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Sonarr add_missing for a specific playlist key.', '', 'Sonarr add missing', 'boolean') }}
-  {{ playlist_mapping_input('sonarr_folder_', 'Sonarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Sonarr root folder path', 'Override Sonarr root_folder_path for a specific playlist key.', '', 'Sonarr folder', 'string') }}
-  {{ playlist_mapping_input('sonarr_tag_', 'Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Sonarr tags', 'Override Sonarr tags for a specific playlist key.', '', 'Sonarr tags', 'string_list') }}
-  {{ playlist_mapping_input('trakt_list_', 'Trakt List Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Trakt list URLs', 'Override the Trakt list URLs for a specific playlist key.', '', 'Trakt URLs', 'string_list') }}
-  {{ playlist_mapping_input('imdb_list_', 'IMDb List Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated IMDb list URLs', 'Override the IMDb list URLs for a specific playlist key.', '', 'IMDb URLs', 'string_list') }}
-  {{ playlist_mapping_input('mdblist_list_', 'MDBList Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated MDBList URLs', 'Override the MDBList URLs for a specific playlist key.', '', 'MDBList URLs', 'string_list') }}
-  {{ playlist_mapping_input('item_radarr_tag_', 'Item Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated item Radarr tags', 'Override item Radarr tags for a specific playlist key.', '', 'Item Radarr tags', 'string_list') }}
-  {{ playlist_mapping_input('item_sonarr_tag_', 'Item Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated item Sonarr tags', 'Override item Sonarr tags for a specific playlist key.', '', 'Item Sonarr tags', 'string_list') }}
+<div class="accordion-item">
+  <h3 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+      data-bs-target="#{{ library.id }}-playlist-overrides" aria-expanded="false"
+      aria-controls="{{ library.id }}-playlist-overrides">
+      Per-Playlist Overrides
+    </button>
+  </h3>
+  <div id="{{ library.id }}-playlist-overrides" class="accordion-collapse collapse"
+    data-library-override-scope="true" data-library-override-label="Per-Playlist Overrides">
+    <div class="accordion-body">
+      {% if playlist_default_entries %}
+      {{ playlist_use_toggle_group('use_', 'Playlist Toggles', playlist_default_entries, 'Turn bundled default playlists on or off by key.') }}
+      {% else %}
+      {{ playlist_mapping_input('use_', 'Use Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Turn an individual playlist on or off by key.', '', 'Use override', 'string') }}
+      {% endif %}
+      {{ playlist_mapping_input('name_', 'Name Overrides', 'Playlist key (e.g. mcu)', 'Custom playlist name', 'Override the playlist name for a specific key.', '', 'Custom playlist name', 'string') }}
+      {{ playlist_mapping_input('summary_', 'Summary Overrides', 'Playlist key (e.g. mcu)', 'Custom playlist summary', 'Override the playlist summary for a specific key.', '', 'Custom playlist summary', 'string') }}
+      {{ playlist_mapping_input('url_poster_', 'Poster URL Overrides', 'Playlist key (e.g. mcu)', 'https://example.com/poster.jpg', 'Override the poster URL for a specific playlist key.', '', 'Poster URL', 'string') }}
+      {{ playlist_mapping_input('delete_playlist_', 'Delete Playlist Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Delete a specific playlist for the users defined by sync_to_users.', '', 'Delete playlist', 'string') }}
+      {{ playlist_mapping_input('sync_to_users_', 'Sync To Users Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated usernames', 'Override synced users for a specific playlist key.', '', 'Users', 'string_list') }}
+      {{ playlist_mapping_input('exclude_users_', 'Exclude Users Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated usernames', 'Override excluded users for a specific playlist key.', '', 'Excluded users', 'string_list') }}
+      {{ playlist_mapping_input('radarr_add_missing_', 'Radarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Radarr add_missing for a specific playlist key.', '', 'Radarr add missing', 'boolean') }}
+      {{ playlist_mapping_input('radarr_folder_', 'Radarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Radarr root folder path', 'Override Radarr root_folder_path for a specific playlist key.', '', 'Radarr folder', 'string') }}
+      {{ playlist_mapping_input('radarr_tag_', 'Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Radarr tags', 'Override Radarr tags for a specific playlist key.', '', 'Radarr tags', 'string_list') }}
+      {{ playlist_mapping_input('sonarr_add_missing_', 'Sonarr Add Missing Overrides', 'Playlist key (e.g. mcu)', 'true or false', 'Override Sonarr add_missing for a specific playlist key.', '', 'Sonarr add missing', 'boolean') }}
+      {{ playlist_mapping_input('sonarr_folder_', 'Sonarr Folder Overrides', 'Playlist key (e.g. mcu)', 'Sonarr root folder path', 'Override Sonarr root_folder_path for a specific playlist key.', '', 'Sonarr folder', 'string') }}
+      {{ playlist_mapping_input('sonarr_tag_', 'Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Sonarr tags', 'Override Sonarr tags for a specific playlist key.', '', 'Sonarr tags', 'string_list') }}
+      {{ playlist_mapping_input('trakt_list_', 'Trakt List Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated Trakt list URLs', 'Override the Trakt list URLs for a specific playlist key.', '', 'Trakt URLs', 'string_list') }}
+      {{ playlist_mapping_input('imdb_list_', 'IMDb List Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated IMDb list URLs', 'Override the IMDb list URLs for a specific playlist key.', '', 'IMDb URLs', 'string_list') }}
+      {{ playlist_mapping_input('mdblist_list_', 'MDBList Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated MDBList URLs', 'Override the MDBList URLs for a specific playlist key.', '', 'MDBList URLs', 'string_list') }}
+      {{ playlist_mapping_input('item_radarr_tag_', 'Item Radarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated item Radarr tags', 'Override item Radarr tags for a specific playlist key.', '', 'Item Radarr tags', 'string_list') }}
+      {{ playlist_mapping_input('item_sonarr_tag_', 'Item Sonarr Tag Overrides', 'Playlist key (e.g. mcu)', 'Add comma-separated item Sonarr tags', 'Override item Sonarr tags for a specific playlist key.', '', 'Item Sonarr tags', 'string_list') }}
+    </div>
+  </div>
 </div>

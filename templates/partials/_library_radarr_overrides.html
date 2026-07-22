@@ -5,7 +5,8 @@
             Radarr Overrides
         </button>
     </h2>
-    <div id="{{ library.id }}-radarr-overrides" class="accordion-collapse collapse">
+    <div id="{{ library.id }}-radarr-overrides" class="accordion-collapse collapse"
+        data-library-override-scope="true" data-library-override-label="Radarr Overrides">
         <div class="accordion-body">
             <div class="alert alert-success small mb-3" role="alert">
                 Enter your Radarr URL and token override only if this library should use a different Radarr instance than the global
@@ -27,10 +28,10 @@
             </div>
             <input type="hidden" name="{{ library.id }}-library_service_radarr_validated"
                 value="{{ data['libraries'].get(library.id ~ '-library_service_radarr_validated', '') }}"
-                data-library-service-validated="radarr">
+                data-default="" data-library-service-validated="radarr">
             <input type="hidden" name="{{ library.id }}-library_service_radarr_validated_at"
                 value="{{ data['libraries'].get(library.id ~ '-library_service_radarr_validated_at', '') }}"
-                data-library-service-validated-at="radarr">
+                data-default="" data-library-service-validated-at="radarr">
             <div class="alert d-none small mb-3" role="alert" data-library-service-status="radarr"></div>
             <div class="input-group mb-2">
                 <span class="input-group-text" id="{{ library.id }}-attribute_radarr_url_text"
@@ -44,7 +45,7 @@
                 <input type="text" class="form-control" id="{{ library.id }}-attribute_radarr_url"
                     name="{{ library.id }}-attribute_radarr_url"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_url', '') | default('', true) }}"
-                    placeholder="Leave blank to use global Radarr URL"
+                    data-default="" placeholder="Leave blank to use global Radarr URL"
                     aria-describedby="{{ library.id }}-attribute_radarr_url_text">
             </div>
 
@@ -60,7 +61,7 @@
                 <input type="password" class="form-control" id="{{ library.id }}-attribute_radarr_token"
                     name="{{ library.id }}-attribute_radarr_token"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_token', '') | default('', true) }}"
-                    placeholder="Leave blank to use global Radarr token"
+                    data-default="" placeholder="Leave blank to use global Radarr token"
                     aria-describedby="{{ library.id }}-attribute_radarr_token_text">
                 <button class="btn btn-outline-secondary" type="button"
                     data-toggle-secret-visibility
@@ -83,6 +84,7 @@
                     id="{{ library.id }}-attribute_radarr_root_folder_path"
                     name="{{ library.id }}-attribute_radarr_root_folder_path"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_root_folder_path', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_radarr_root_folder_path_text">
                 <datalist id="{{ library.id }}-radarr-root-folders"></datalist>
             </div>
@@ -100,6 +102,7 @@
                     id="{{ library.id }}-attribute_radarr_quality_profile"
                     name="{{ library.id }}-attribute_radarr_quality_profile"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_quality_profile', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_radarr_quality_profile_text">
                 <datalist id="{{ library.id }}-radarr-quality-profiles"></datalist>
             </div>
@@ -116,6 +119,7 @@
                 {% set radarr_availability = data['libraries'].get(library.id ~ '-attribute_radarr_availability', '') %}
                 <select class="form-select" id="{{ library.id }}-attribute_radarr_availability"
                     name="{{ library.id }}-attribute_radarr_availability"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_radarr_availability_text">
                     <option value="" {% if not radarr_availability %}selected{% endif %}>Inherit</option>
                     <option value="announced" {% if radarr_availability == 'announced' %}selected{% endif %}>Announced (default)</option>
@@ -137,6 +141,7 @@
                 <input type="text" class="form-control" id="{{ library.id }}-attribute_radarr_tag"
                     name="{{ library.id }}-attribute_radarr_tag"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_tag', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_radarr_tag_text">
             </div>
 
@@ -153,6 +158,7 @@
                     id="{{ library.id }}-attribute_radarr_radarr_path"
                     name="{{ library.id }}-attribute_radarr_radarr_path"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_radarr_path', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_radarr_radarr_path_text">
             </div>
 
@@ -169,6 +175,7 @@
                     id="{{ library.id }}-attribute_radarr_plex_path"
                     name="{{ library.id }}-attribute_radarr_plex_path"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_radarr_plex_path', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_radarr_plex_path_text">
             </div>
 
@@ -192,6 +199,7 @@
                     </span>
                 </span>
                 <select class="form-select" id="{{ field_name }}" name="{{ field_name }}"
+                    data-default=""
                     aria-describedby="{{ field_name }}_text">
                     <option value="" {% if field_value == '' %}selected{% endif %}>Inherit</option>
                     <option value="true" {% if field_value|string|lower == 'true' %}selected{% endif %}>True</option>
