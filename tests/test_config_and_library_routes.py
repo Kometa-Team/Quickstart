@@ -389,6 +389,162 @@ def test_autosave_library_ignores_lazy_loaded_marker_without_collection_payload(
     assert libraries["mov-library_movies-collection_files"] == '[{"type":"folder","location":"config/test/collection_files/movies"}]'
 
 
+def test_autosave_library_preserves_unopened_lazy_collection_groups(
+    client,
+    isolated_config_dir,
+    qs_module,
+    library_routes_module,
+    monkeypatch,
+):
+    from modules import database
+
+    config_name = "pytest_lazy_collection_group_autosave"
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_award": "true",
+                "mov-library_movies-template_collection_award_style": "signature",
+                "mov-library_movies-collection_chart": "true",
+                "mov-library_movies-template_collection_chart_style": "compact",
+            },
+            "validated": True,
+        },
+    )
+
+    monkeypatch.setattr(
+        library_routes_module.helpers,
+        "load_quickstart_config",
+        lambda filename: (
+            [
+                {
+                    "accordion": "Award Collections",
+                    "collections": [
+                        {
+                            "id": "collection_award",
+                            "media_types": ["movie"],
+                            "template_variables": [{"key": "style", "type": "text_input", "default": ""}],
+                        }
+                    ],
+                },
+                {
+                    "accordion": "Chart Collections",
+                    "collections": [
+                        {
+                            "id": "collection_chart",
+                            "media_types": ["movie"],
+                            "template_variables": [{"key": "style", "type": "text_input", "default": ""}],
+                        }
+                    ],
+                },
+            ]
+            if filename == "quickstart_collections.json"
+            else {}
+        ),
+    )
+    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: {"mov-library_movies"})
+    monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda libs, ids: [])
+    monkeypatch.setattr(
+        qs_module,
+        "_normalize_library_file_entries_payload",
+        lambda libs, config_name, **kw: (libs, [], False),
+    )
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__loaded_sections": ["collections"],
+            "__loaded_collection_groups": [0],
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-collection_award": "true",
+            "mov-library_movies-template_collection_award_style": "updated",
+        },
+    )
+
+    assert resp.status_code == 200
+    _validated, _user_entered, saved = database.retrieve_section_data(config_name, "libraries")
+    libraries = saved["libraries"]
+    assert libraries["mov-library_movies-template_collection_award_style"] == "updated"
+    assert libraries["mov-library_movies-collection_chart"] is True
+    assert libraries["mov-library_movies-template_collection_chart_style"] == "compact"
+
+
+def test_autosave_library_reset_collections_drops_unloaded_collection_defaults(
+    client,
+    isolated_config_dir,
+    qs_module,
+    monkeypatch,
+):
+    from modules import database
+
+    config_name = "pytest_reset_lazy_collections"
+    collection_files = '[{"type":"folder","location":"config/test/collection_files/movies"}]'
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_language": "English",
+                "mov-library_movies-collection_award": "true",
+                "mov-library_movies-template_collection_award_style": "signature",
+                "mov-library_movies-collection_chart": "true",
+                "mov-library_movies-template_collection_chart_style": "compact",
+                "mov-library_movies-collection_files": collection_files,
+                "mov-library_movies-overlay_resolution": "true",
+            },
+            "validated": True,
+        },
+    )
+
+    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: {"mov-library_movies"})
+    monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda libs, ids: [])
+    monkeypatch.setattr(
+        qs_module,
+        "_normalize_library_file_entries_payload",
+        lambda libs, config_name, **kw: (libs, [], False),
+    )
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__loaded_sections": ["collections"],
+            "__loaded_collection_groups": [],
+            "__reset_collection_defaults": "true",
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_language": "English",
+            "mov-library_movies-collection_award": "false",
+            "mov-library_movies-template_collection_award_style": "",
+            "mov-library_movies-collection_files": collection_files,
+            "mov-library_movies-overlay_resolution": "true",
+        },
+    )
+
+    assert resp.status_code == 200
+    _validated, _user_entered, saved = database.retrieve_section_data(config_name, "libraries")
+    libraries = saved["libraries"]
+    assert "mov-library_movies-collection_award" not in libraries
+    assert "mov-library_movies-template_collection_award_style" not in libraries
+    assert "mov-library_movies-collection_chart" not in libraries
+    assert "mov-library_movies-template_collection_chart_style" not in libraries
+    assert libraries["mov-library_movies-collection_files"] == collection_files
+    assert libraries["mov-library_movies-overlay_resolution"] is True
+
+
 # ===========================================================================
 # /autosave-imagemaid
 # ===========================================================================

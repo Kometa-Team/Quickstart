@@ -7,6 +7,7 @@
 
     <h4 class="mb-0 text-white">
       <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name }}
+      <span class="small accordion-override-summary ms-2 d-none" data-library-total-summary></span>
     </h4>
     {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
     {% set playlist_checked = data.get('libraries', {}).get(library.id ~ '-playlist') or (legacy_playlist_libraries is defined and library.name in legacy_playlist_libraries) %}
@@ -48,6 +49,7 @@
 
     <h4 class="mb-0 text-white">
       <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name }}
+      <span class="small accordion-override-summary ms-2 d-none" data-library-total-summary></span>
     </h4>
     {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
     {% set playlist_checked = data.get('libraries', {}).get(library.id ~ '-playlist') or (legacy_playlist_libraries is defined and library.name in legacy_playlist_libraries) %}

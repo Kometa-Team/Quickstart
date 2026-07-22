@@ -5,7 +5,8 @@
             Metadata Files
         </button>
     </h2>
-    <div id="{{ library.id }}-metadata-files" class="accordion-collapse collapse">
+    <div id="{{ library.id }}-metadata-files" class="accordion-collapse collapse"
+        data-library-override-scope="true" data-library-override-label="Metadata Files">
         <div class="accordion-body">
             <div class="d-flex flex-column gap-3">
                 <div class="alert alert-warning small mb-0" role="alert">
@@ -21,7 +22,7 @@
                 <div class="metadata-files-editor" data-metadata-files-editor data-library-id="{{ library.id }}">
                 <div class="alert small mb-4" role="alert" data-metadata-custom-repo-status></div>
                 <input type="hidden" name="{{ library.id }}-metadata_files" id="{{ library.id }}-metadata_files"
-                    value="{{ data['libraries'].get(library.id ~ '-metadata_files', '[]') }}">
+                    value="{{ data['libraries'].get(library.id ~ '-metadata_files', '[]') }}" data-default="[]">
                 <div class="metadata-files-list d-flex flex-column gap-3 mt-1" data-metadata-files-list></div>
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-add-metadata-file>

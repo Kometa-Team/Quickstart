@@ -6,11 +6,45 @@
     data-collection-section-modal-trigger data-library-id="{{ library.id }}">
     <i class="bi bi-arrows-move me-1"></i>Reorder Collection Sections
   </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm reset-offset-btn"
+    data-collection-all-reset="true" data-library-id="{{ library.id }}">
+    Reset Collections
+  </button>
   <span class="small text-muted">Drag enabled collection defaults into the order you want. Quickstart will rewrite their <code>collection_section</code> values.</span>
 </div>
 {% include "partials/_collection_section_modal.html" %}
-{% import 'partials/_macros.html' as macros %}
 
 {% for group in collection_config %}
-{{ macros.collection_group_section(library, data, version_info, group, telemetry) }}
+{% set accordion_safe = group.accordion | replace(' ', '') %}
+{% set group_count = collection_group_override_counts.get(loop.index0, 0) if collection_group_override_counts is defined else 0 %}
+<div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion"
+  data-collection-group-shell="true" data-library-id="{{ library.id }}" data-collection-group-index="{{ loop.index0 }}">
+  <div class="accordion-item{% if group_count > 0 %} template-variable-section-has-overrides{% endif %}">
+    <h2 class="accordion-header overlay-accordion-header d-flex align-items-center{% if group_count > 0 %} template-variable-section-has-overrides{% endif %}">
+      <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ library.id }}-{{ accordion_safe }}" aria-expanded="false"
+        aria-controls="{{ library.id }}-{{ accordion_safe }}">
+        {{ group.accordion }}
+        <span class="small accordion-override-summary ms-3{% if group_count <= 0 %} d-none{% endif %}"
+          data-accordion-override-summary>
+          {{ group_count }} {{ 'override' if group_count == 1 else 'overrides' }}
+        </span>
+      </button>
+    </h2>
+    <div id="{{ library.id }}-{{ accordion_safe }}" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion"
+      data-collection-group-lazy-collapse="true"
+      data-library-id="{{ library.id }}"
+      data-collection-group-index="{{ loop.index0 }}"
+      data-lazy-override-count="{{ group_count }}">
+      <div class="accordion-body">
+        <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
+          data-collection-group-lazy-placeholder="true">
+          <div class="spinner-border spinner-border-sm text-info d-none" role="status" aria-hidden="true"></div>
+          <span>Open this group to load {{ group.accordion }} settings.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endfor %}

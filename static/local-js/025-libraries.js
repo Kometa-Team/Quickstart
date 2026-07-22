@@ -2069,6 +2069,26 @@ function initPlaylistFilesEditors (scope) {
   })
 }
 
+function renderLibraryFileEditorForHiddenInput (input) {
+  if (!input || input.type !== 'hidden') return false
+
+  const editorConfigs = [
+    { selector: '[data-metadata-files-editor]', render: renderMetadataFilesEditor },
+    { selector: '[data-collection-files-editor]', render: renderCollectionFilesEditor },
+    { selector: '[data-overlay-files-editor]', render: renderOverlayFilesEditor },
+    { selector: '[data-playlist-files-editor]', render: renderPlaylistFilesEditor }
+  ]
+
+  for (const config of editorConfigs) {
+    const editor = input.closest(config.selector)
+    if (!editor) continue
+    config.render(editor)
+    return true
+  }
+
+  return false
+}
+
 document.addEventListener('click', async event => {
   const addButton = event.target.closest('[data-add-playlist-file]')
   if (addButton) {
@@ -5385,7 +5405,9 @@ function initializeLibraryCardControls (card, libraryId) {
   wireOverlayVariableSections(card)
   wireCollectionVariableSections(card)
   wireLibraryOverrideScopes(card)
+  wireLazyCollectionGroups(card)
   updateLazySectionOverrideSummaries(card)
+  refreshTemplateOverrideState(card)
   wireOffsetReset(card)
   if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
     OverlayHandler.initializeOverlayBoards(card)
@@ -5462,6 +5484,127 @@ function wireLazyLibrarySections (card) {
   card.dataset.lazyLibrarySectionsBound = 'true'
 }
 
+function loadedCollectionGroupMarker (card) {
+  if (!card) return null
+  let marker = card.querySelector('input[type="hidden"][name="__loaded_collection_groups"]')
+  if (marker) return marker
+
+  marker = document.createElement('input')
+  marker.type = 'hidden'
+  marker.name = '__loaded_collection_groups'
+  marker.value = ''
+  card.appendChild(marker)
+  return marker
+}
+
+function resetCollectionDefaultsMarker (card) {
+  if (!card) return null
+  let marker = card.querySelector('input[type="hidden"][name="__reset_collection_defaults"]')
+  if (marker) return marker
+
+  marker = document.createElement('input')
+  marker.type = 'hidden'
+  marker.name = '__reset_collection_defaults'
+  marker.value = 'false'
+  card.appendChild(marker)
+  return marker
+}
+
+function markCollectionDefaultsReset (card) {
+  const marker = resetCollectionDefaultsMarker(card)
+  if (marker) marker.value = 'true'
+}
+
+function markLazyCollectionGroupLoaded (card, groupIndex) {
+  const marker = loadedCollectionGroupMarker(card)
+  if (!marker) return
+  const values = new Set(String(marker.value || '').split(',').map(value => value.trim()).filter(Boolean))
+  values.add(String(groupIndex))
+  marker.value = Array.from(values).sort((a, b) => Number(a) - Number(b)).join(',')
+}
+
+function loadLazyCollectionGroup (collapse, card) {
+  if (!collapse || collapse.dataset?.collectionGroupLazyCollapse !== 'true') {
+    return Promise.resolve(collapse?.closest('[data-collection-group-shell="true"]') || null)
+  }
+  if (collapse.dataset.lazyState === 'loading') {
+    return Promise.reject(new Error('Collection group is already loading.'))
+  }
+
+  const libraryId = collapse.dataset.libraryId || card?.dataset?.libraryId || activeLibraryId
+  const groupIndex = collapse.dataset.collectionGroupIndex
+  if (!libraryId || groupIndex === undefined) {
+    return Promise.reject(new Error('Missing collection group identifiers.'))
+  }
+
+  const shell = collapse.closest('[data-collection-group-shell="true"]')
+  const placeholder = collapse.querySelector('[data-collection-group-lazy-placeholder]')
+  const spinner = placeholder?.querySelector('.spinner-border')
+  const status = placeholder?.querySelector('span')
+  collapse.dataset.lazyState = 'loading'
+  spinner?.classList.remove('d-none')
+  if (status) status.textContent = 'Loading collection group settings...'
+
+  return fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/collections/group/${encodeURIComponent(groupIndex)}`, {
+    credentials: 'same-origin'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error(`Failed to load collection group (${res.status})`)
+      return res.text()
+    })
+    .then(html => {
+      if (!shell) return null
+      const template = document.createElement('template')
+      template.innerHTML = String(html || '').trim()
+      const replacement = template.content.firstElementChild
+      if (!replacement) throw new Error('Empty collection group fragment')
+      shell.replaceWith(replacement)
+      replacement.dataset.collectionGroupLoaded = 'true'
+      replacement.dataset.collectionGroupIndex = String(groupIndex)
+      const replacementCollapse = replacement.querySelector('.accordion-collapse')
+      const replacementButton = replacement.querySelector('.accordion-button')
+      if (replacementCollapse) {
+        replacementCollapse.classList.add('show')
+        replacementCollapse.dataset.collectionGroupLoaded = 'true'
+        replacementCollapse.dataset.collectionGroupIndex = String(groupIndex)
+      }
+      if (replacementButton) {
+        replacementButton.classList.remove('collapsed')
+        replacementButton.setAttribute('aria-expanded', 'true')
+      }
+      markLazyCollectionGroupLoaded(card, groupIndex)
+      initializeLibraryCardControls(card, libraryId)
+      refreshTemplateOverrideState(card)
+      return replacement
+    })
+}
+
+function wireLazyCollectionGroups (card) {
+  if (!card || card.dataset.lazyCollectionGroupsBound === 'true') return
+
+  card.addEventListener('shown.bs.collapse', event => {
+    const collapse = event.target
+    if (!collapse || collapse.dataset?.collectionGroupLazyCollapse !== 'true') return
+    if (collapse.dataset.lazyState === 'loaded' || collapse.dataset.lazyState === 'loading') return
+    const placeholder = collapse.querySelector('[data-collection-group-lazy-placeholder]')
+    const spinner = placeholder?.querySelector('.spinner-border')
+    const status = placeholder?.querySelector('span')
+
+    loadLazyCollectionGroup(collapse, card)
+      .catch(err => {
+        console.error('[Libraries] Failed to load lazy collection group', err)
+        collapse.dataset.lazyState = 'error'
+        spinner?.classList.add('d-none')
+        if (status) status.textContent = 'Unable to load this collection group. Close and reopen it to retry.'
+        if (typeof showToast === 'function') {
+          showToast('error', 'Unable to load collection group settings. Try again.')
+        }
+      })
+  })
+
+  card.dataset.lazyCollectionGroupsBound = 'true'
+}
+
 function mountCard (card, libraryId) {
   libraryContainer.replaceChildren()
   setCachedCardFormSubmission(card, false)
@@ -5517,6 +5660,22 @@ function buildPayloadFromCard (card) {
     }
   })
   payload.__loaded_sections = loadedLazySections
+  const loadedCollectionGroups = new Set()
+  const collectionGroupMarker = card.querySelector('input[type="hidden"][name="__loaded_collection_groups"]')
+  String(collectionGroupMarker?.value || '').split(',').forEach(value => {
+    const trimmed = value.trim()
+    if (trimmed) loadedCollectionGroups.add(trimmed)
+  })
+  card.querySelectorAll('[data-collection-group-loaded="true"][data-collection-group-index]').forEach(group => {
+    loadedCollectionGroups.add(String(group.dataset.collectionGroupIndex || '').trim())
+  })
+  payload.__loaded_collection_groups = Array.from(loadedCollectionGroups)
+    .filter(Boolean)
+    .sort((a, b) => Number(a) - Number(b))
+  const resetCollectionDefaults = card.querySelector('input[type="hidden"][name="__reset_collection_defaults"]')
+  if (resetCollectionDefaults && resetCollectionDefaults.value === 'true') {
+    payload.__reset_collection_defaults = 'true'
+  }
   const checkboxNames = new Set(
     Array.from(card.querySelectorAll('input[type="checkbox"][name]'))
       .map(el => String(el.name || '').trim())
@@ -5535,6 +5694,7 @@ function buildPayloadFromCard (card) {
   })
   card.querySelectorAll('input, select, textarea').forEach(el => {
     if (!el.name || el.disabled) return
+    if (el.name === '__loaded_collection_groups' || el.name === '__reset_collection_defaults') return
     if (el.dataset && el.dataset.skipYaml === 'true') return
     if (el.type === 'file') return
 
@@ -5595,34 +5755,11 @@ function initLibraryAssetDirectoryInputs (card) {
     const inputName = container.dataset.inputName
     const addBtnSelector = `[data-add-asset-directory="${container.id}"]`
     const addBtn = card.querySelector(addBtnSelector)
-    let counter = container.querySelectorAll(`input[name="${inputName}"]`).length
-
-    const buildRow = (value = '') => {
-      counter += 1
-      const row = document.createElement('div')
-      row.className = 'input-group mb-2'
-
-      const input = document.createElement('input')
-      input.type = 'text'
-      input.className = 'form-control'
-      input.name = inputName
-      input.id = `${container.id}_${counter}`
-      input.placeholder = 'Add Asset Directory'
-      input.dataset.pathRule = 'asset_directory'
-      input.value = value
-
-      const removeBtn = document.createElement('button')
-      removeBtn.className = 'btn btn-danger library-remove-asset-directory'
-      removeBtn.type = 'button'
-      removeBtn.textContent = 'Remove'
-
-      row.append(input, removeBtn)
-      return row
-    }
+    container.dataset.assetDirectoryCounter = String(container.querySelectorAll(`input[name="${inputName}"]`).length)
 
     if (addBtn) {
       addBtn.addEventListener('click', () => {
-        const row = buildRow('')
+        const row = buildLibraryAssetDirectoryRow(container, inputName, '')
         container.appendChild(row)
         if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
           PathValidation.attach(row)
@@ -5643,6 +5780,75 @@ function initLibraryAssetDirectoryInputs (card) {
       container.removeChild(fieldGroup)
     })
   })
+}
+
+function buildLibraryAssetDirectoryRow (container, inputName, value = '') {
+  const current = Number(container?.dataset?.assetDirectoryCounter || '0') || 0
+  const next = current + 1
+  if (container) {
+    container.dataset.assetDirectoryCounter = String(next)
+  }
+
+  const row = document.createElement('div')
+  row.className = 'input-group mb-2'
+
+  const input = document.createElement('input')
+  input.type = 'text'
+  input.className = 'form-control'
+  input.name = inputName
+  input.id = `${container?.id || 'asset_directory'}_${next}`
+  input.placeholder = 'Add Asset Directory'
+  input.dataset.pathRule = 'asset_directory'
+  input.value = value
+
+  const removeBtn = document.createElement('button')
+  removeBtn.className = 'btn btn-danger library-remove-asset-directory'
+  removeBtn.type = 'button'
+  removeBtn.textContent = 'Remove'
+
+  row.append(input, removeBtn)
+  return row
+}
+
+function resetLibraryAssetDirectoryContainers (scope, changes) {
+  if (!scope) return []
+  const changedInputs = []
+
+  scope.querySelectorAll('[data-library-asset-directory-container]').forEach(container => {
+    const inputName = container.dataset.inputName
+    if (!inputName) return
+
+    const rows = Array.from(container.querySelectorAll('.input-group'))
+    const values = Array.from(container.querySelectorAll(`input[name="${inputName}"]`))
+      .map(input => String(input.value || '').trim())
+    const populated = values.filter(Boolean)
+    const needsReset = populated.length > 0 || rows.length !== 1
+    if (!needsReset) return
+
+    if (Array.isArray(changes)) {
+      changes.push({
+        label: 'Asset Directory',
+        from: populated.length ? populated.join(', ') : `${rows.length} blank rows`,
+        to: 'Default'
+      })
+    }
+
+    container.replaceChildren()
+    container.dataset.assetDirectoryCounter = '0'
+    const row = buildLibraryAssetDirectoryRow(container, inputName, '')
+    container.appendChild(row)
+    if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+      PathValidation.attach(row)
+    }
+    const input = row.querySelector(`input[name="${inputName}"]`)
+    if (input) {
+      changedInputs.push(input)
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+  })
+
+  return changedInputs
 }
 
 function scheduleLookupLabelAutosave (delayMs = 900) {
@@ -5868,6 +6074,7 @@ function openCopyModal (sourceId, sourceName, sourceType) {
         if (libraryPicker && libraryPicker.value) {
           loadLibrary(libraryPicker.value)
         }
+        refreshTemplateOverrideState(libraryContainer?.firstElementChild || document)
         if (typeof showToast === 'function') {
           const label = filtered.length === 1 ? 'library' : 'libraries'
           showToast('success', `Mirrored settings to ${filtered.length} ${label}.`)
@@ -6637,7 +6844,7 @@ function setupMappingListHandlers (prefix, scope) {
   })
 }
 
-async function runCollectionGroupReset (btn, group) {
+async function runCollectionGroupReset (btn, group, options = {}) {
   if (!btn || !group || btn.dataset.resetBusy === 'true') return
 
   const idleLabel = btn.dataset.resetIdleLabel || btn.textContent.trim() || 'Reset to Defaults'
@@ -6649,12 +6856,6 @@ async function runCollectionGroupReset (btn, group) {
     await new Promise(resolve => requestAnimationFrame(() => resolve()))
     await new Promise(resolve => window.setTimeout(resolve, 0))
   }
-  const escapeHtml = (value) => String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
   const getInputLabel = (input) => {
     if (!input) return 'Field'
     const describedBy = input.getAttribute('aria-describedby')
@@ -6715,11 +6916,11 @@ async function runCollectionGroupReset (btn, group) {
       return
     }
     const preview = changes.slice(0, 12)
-      .map(change => `${escapeHtml(change.label)}: ${escapeHtml(change.from)} → ${escapeHtml(change.to)}`)
-      .join('<br>')
+      .map(change => `${change.label}: ${change.from} -> ${change.to}`)
+      .join('\n')
     const extraCount = changes.length - 12
-    const suffix = extraCount > 0 ? `<br>...and ${extraCount} more field${extraCount === 1 ? '' : 's'}.` : ''
-    showToast('info', `Reset to defaults (${changes.length} field${changes.length === 1 ? '' : 's'}):<br>${preview}${suffix}`)
+    const suffix = extraCount > 0 ? `\n...and ${extraCount} more field${extraCount === 1 ? '' : 's'}.` : ''
+    showToast('info', `Reset to defaults (${changes.length} field${changes.length === 1 ? '' : 's'}):\n${preview}${suffix}`)
   }
 
   try {
@@ -6736,11 +6937,19 @@ async function runCollectionGroupReset (btn, group) {
       const from = getDisplayValue(input)
       const to = getDefaultDisplayValue(input, defaultValue)
       if (from !== to) {
-        changes.push({ label: getInputLabel(input), from, to })
+        const scheduleEquivalent = input.closest('[data-schedule-builder]') &&
+          normalizeScheduleOverrideValue(from) === normalizeScheduleOverrideValue(to)
+        if (!scheduleEquivalent) {
+          changes.push({ label: getInputLabel(input), from, to })
+        }
         return true
       }
       return false
     }
+
+    resetLibraryAssetDirectoryContainers(group, changes).forEach(input => {
+      pendingChangeInputs.add(input)
+    })
 
     const inputs = Array.from(group.querySelectorAll('input[data-default], select[data-default], textarea[data-default]'))
     for (let index = 0; index < inputs.length; index += 1) {
@@ -6758,7 +6967,10 @@ async function runCollectionGroupReset (btn, group) {
         if (changed) input.checked = nextChecked
       } else {
         changed = recordReset(input, defaultValue)
-        if (changed) input.value = defaultValue
+        if (changed) {
+          input.value = defaultValue
+          renderLibraryFileEditorForHiddenInput(input)
+        }
       }
 
       if (changed) {
@@ -6789,7 +7001,9 @@ async function runCollectionGroupReset (btn, group) {
     if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
       ValidationHandler.updateValidationState()
     }
-    finalizeToast(changes)
+    if (!options.suppressToast) {
+      finalizeToast(changes)
+    }
   } finally {
     delete group.dataset.resetting
     btn.dataset.resetBusy = 'false'
@@ -6802,6 +7016,75 @@ function wireOffsetReset (scope) {
   root.querySelectorAll('.reset-offset-btn').forEach(btn => {
     if (btn.dataset.listenerAdded) return
     btn.addEventListener('click', async () => {
+      if (btn.dataset.collectionAllReset === 'true') {
+        const sectionBody = btn.closest('.accordion-body')
+        if (sectionBody) {
+          const card = btn.closest('.library-settings-card')
+          try {
+            markCollectionDefaultsReset(card)
+            clearLazyCollectionShellOverrideSummaries(sectionBody)
+            await runCollectionGroupReset(btn, sectionBody, { suppressToast: true })
+            setLibrariesButtonPersistentBusy(btn, true, 'Saving...')
+            refreshTemplateOverrideState(sectionBody.closest('.accordion-collapse') || sectionBody)
+            await autosaveActiveLibrary({ quiet: true })
+            if (typeof showToast === 'function') {
+              showToast('info', 'Collections reset to defaults.')
+            }
+          } catch (error) {
+            console.error('[collections reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Collections reset to defaults failed.')
+            }
+          } finally {
+            const marker = card?.querySelector('input[type="hidden"][name="__reset_collection_defaults"]')
+            if (marker) marker.value = 'false'
+            setLibrariesButtonPersistentBusy(btn, false)
+          }
+          return
+        }
+      }
+
+      if (btn.dataset.collectionParentReset === 'true') {
+        let sectionBody = btn.closest('.accordion-body')
+        if (!sectionBody) {
+          const groupShell = btn.closest('[data-collection-group-shell="true"]')
+          const lazyCollapse = groupShell?.querySelector('[data-collection-group-lazy-collapse="true"]')
+          if (lazyCollapse) {
+            try {
+              setLibrariesButtonPersistentBusy(btn, true)
+              const card = btn.closest('.library-settings-card')
+              const replacement = await loadLazyCollectionGroup(lazyCollapse, card)
+              const resetBtn = replacement?.querySelector('[data-collection-parent-reset="true"]')
+              sectionBody = replacement?.querySelector('.accordion-body')
+              if (sectionBody && resetBtn) {
+                await runCollectionGroupReset(resetBtn, sectionBody)
+                refreshTemplateOverrideState(sectionBody.closest('.accordion-collapse') || sectionBody)
+              }
+            } catch (error) {
+              console.error('[collection parent reset failed]', error)
+              if (typeof showToast === 'function') {
+                showToast('error', 'Collection group reset to defaults failed.')
+              }
+            } finally {
+              setLibrariesButtonPersistentBusy(btn, false)
+            }
+            return
+          }
+          sectionBody = btn.closest('.accordion')?.querySelector(':scope > .accordion-item > .accordion-collapse > .accordion-body')
+        }
+        if (sectionBody) {
+          runCollectionGroupReset(btn, sectionBody).then(() => {
+            refreshTemplateOverrideState(sectionBody.closest('.accordion-collapse') || sectionBody)
+          }).catch(error => {
+            console.error('[collection parent reset failed]', error)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Collection group reset to defaults failed.')
+            }
+          })
+          return
+        }
+      }
+
       if (btn.dataset.collectionVariableSectionReset === 'true') {
         const section = btn.closest('[data-collection-variable-section="true"]')
         const sectionBody = section?.querySelector('.collection-variable-section-body') || section
@@ -6880,12 +7163,6 @@ function wireOffsetReset (scope) {
         const changes = []
         const touched = new Set()
         const isRatingsOverlay = group?.dataset?.overlayId === 'overlay_ratings'
-        const escapeHtml = (value) => String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
       const getInputLabel = (input) => {
         if (!input) return 'Field'
         const describedBy = input.getAttribute('aria-describedby')
@@ -6998,6 +7275,7 @@ function wireOffsetReset (scope) {
           const changed = recordReset(input, defaultValue)
           if (changed) {
             input.value = defaultValue
+            renderLibraryFileEditorForHiddenInput(input)
             input.dispatchEvent(new Event('change', { bubbles: true }))
           }
         }
@@ -7017,7 +7295,10 @@ function wireOffsetReset (scope) {
             if (changed) input.checked = nextChecked
           } else {
             const changed = recordReset(input, defaultValue)
-            if (changed) input.value = defaultValue
+            if (changed) {
+              input.value = defaultValue
+              renderLibraryFileEditorForHiddenInput(input)
+            }
           }
           if (changes.length && touched.has(input)) {
             input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -7058,9 +7339,9 @@ function wireOffsetReset (scope) {
       const finalizeToast = () => {
         if (changes.length && typeof showToast === 'function') {
           const details = changes
-            .map(change => `${escapeHtml(change.label)}: ${escapeHtml(change.from)} → ${escapeHtml(change.to)}`)
-            .join('<br>')
-          showToast('info', `Reset to defaults:<br>${details}`)
+            .map(change => `${change.label}: ${change.from} -> ${change.to}`)
+            .join('\n')
+          showToast('info', `Reset to defaults:\n${details}`)
         } else if (!changes.length && typeof showToast === 'function') {
           showToast('info', 'Already at defaults (no changes).')
         }
@@ -7616,6 +7897,7 @@ function wireRatingsOffsetSync (scope) {
     if (metricInputs.backPadding) metricInputs.backPadding.addEventListener('change', refreshDerivedOffsets)
 
     updateAdjustedIndicators()
+    refreshTemplateOverrideState(group)
     group.dataset.ratingsOffsetSyncBound = 'true'
   })
 }
@@ -7762,11 +8044,43 @@ function parseCollectionSectionStoredMapping (rawValue) {
   return {}
 }
 
+function normalizeScheduleOverrideValue (rawValue) {
+  const raw = String(rawValue || '').trim().toLowerCase()
+  if (!raw) return ''
+  const normalizeMonthDay = value => {
+    const match = String(value || '').trim().match(/^0*(\d{1,2})\/0*(\d{1,2})$/)
+    if (!match) return String(value || '').trim().toLowerCase()
+    return `${Number(match[1])}/${Number(match[2])}`
+  }
+  const normalizeDate = value => {
+    const match = String(value || '').trim().match(/^0*(\d{1,2})\/0*(\d{1,2})\/(\d{4})$/)
+    if (!match) return String(value || '').trim().toLowerCase()
+    return `${Number(match[1])}/${Number(match[2])}/${match[3]}`
+  }
+
+  const wrapperMatch = raw.match(/^([a-z_]+)\((.*)\)$/)
+  if (!wrapperMatch) return raw.replace(/\s+/g, '')
+  const mode = wrapperMatch[1]
+  const inner = wrapperMatch[2].trim()
+  if (mode === 'range' && !inner.includes('|')) {
+    const parts = inner.split('-').map(value => value.trim())
+    return `range(${normalizeMonthDay(parts[0])}-${normalizeMonthDay(parts[1])})`
+  }
+  if (mode === 'yearly') return `yearly(${normalizeMonthDay(inner)})`
+  if (mode === 'date') return `date(${normalizeDate(inner)})`
+  if (mode === 'weekly') {
+    return `weekly(${inner.split('|').map(value => value.trim().toLowerCase()).filter(Boolean).join('|')})`
+  }
+  return `${mode}(${inner.replace(/\s+/g, '')})`
+}
+
 function isInternalTemplateMetadataField (field) {
   if (!field) return false
   const name = String(field.name || '').trim()
   return field.dataset?.skipOverrideCount === 'true' ||
+    field.dataset?.skipYaml === 'true' ||
     field.dataset?.templateMetadata === 'lookup-labels' ||
+    name.includes('-library_service_') ||
     name.endsWith('_hidden') ||
     name.endsWith('__lookup_labels')
 }
@@ -7796,6 +8110,10 @@ function isCollectionSectionFieldConfigured (fields) {
   const primaryField = visibleFields[0] || enabledFields[0]
   if (!primaryField) return false
 
+  if (String(primaryField.name || '').endsWith('-attribute_asset_directory')) {
+    return visibleFields.some(field => String(field.value ?? '').trim())
+  }
+
   if (primaryField.closest('[data-template-string-list]')) {
     const values = parseCollectionSectionStoredStringList(primaryField.value)
     const defaults = parseCollectionSectionStoredStringList(primaryField.dataset.default || '[]')
@@ -7810,6 +8128,9 @@ function isCollectionSectionFieldConfigured (fields) {
 
   const value = String(primaryField.value ?? '').trim()
   const defaultValue = String(primaryField.dataset.default || '').trim()
+  if (primaryField.closest('[data-schedule-builder]')) {
+    return normalizeScheduleOverrideValue(value) !== normalizeScheduleOverrideValue(defaultValue)
+  }
   if (!value) return false
   return defaultValue ? value !== defaultValue : true
 }
@@ -7827,6 +8148,12 @@ function setOverrideSummaryBadge (badge, count) {
 function findTemplateVariableFieldRow (field) {
   if (!field) return null
   return field.closest(
+    '[data-playlist-files-editor], ' +
+    '[data-collection-files-editor], ' +
+    '[data-metadata-files-editor], ' +
+    '[data-overlay-files-editor], ' +
+    '[data-playlist-key-toggle-group], ' +
+    '[data-playlist-user-picker], ' +
     '[data-template-string-list], ' +
     '[data-template-mapping-list], ' +
     '[data-overlay-language-weight-builder], ' +
@@ -7905,9 +8232,7 @@ function updateAncestorOverrideSummaries (element) {
     seen.add(collapse)
     const accordionItem = collapse.closest('.accordion-item')
     const header = accordionItem?.querySelector('.accordion-header')
-    const count = Array.from(collapse.querySelectorAll('.template-toggle-group')).reduce((total, group) => {
-      return total + (Number(group.dataset.overrideCount || '0') || 0)
-    }, 0)
+    const count = getAccordionCollapseOverrideCount(collapse)
 
     accordionItem?.classList.toggle('template-variable-section-has-overrides', count > 0)
     header?.classList.toggle('template-variable-section-has-overrides', count > 0)
@@ -7915,6 +8240,7 @@ function updateAncestorOverrideSummaries (element) {
 
     collapse = accordionItem?.parentElement?.closest('.accordion-collapse')
   }
+  updateLibraryAggregateOverrideSummaries(element?.closest('.library-settings-card'))
 }
 
 function updateLazySectionOverrideSummaries (scope) {
@@ -7929,6 +8255,84 @@ function updateLazySectionOverrideSummaries (scope) {
     header?.classList.toggle('template-variable-section-has-overrides', count > 0)
     setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
   })
+  root.querySelectorAll?.('[data-collection-group-lazy-collapse][data-lazy-override-count]').forEach(collapse => {
+    const count = Number(collapse.dataset.lazyOverrideCount || '0') || 0
+    const item = collapse.closest('.accordion-item')
+    const header = item?.querySelector(':scope > .accordion-header') || item?.querySelector('.accordion-header')
+
+    item?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
+  })
+}
+
+function clearLazyCollectionShellOverrideSummaries (scope) {
+  const root = scope || document
+  root.querySelectorAll?.('[data-collection-group-lazy-collapse][data-lazy-override-count]').forEach(collapse => {
+    collapse.dataset.lazyOverrideCount = '0'
+    const item = collapse.closest('.accordion-item')
+    const header = item?.querySelector(':scope > .accordion-header') || item?.querySelector('.accordion-header')
+
+    item?.classList.remove('template-variable-section-has-overrides')
+    header?.classList.remove('template-variable-section-has-overrides')
+    setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), 0)
+  })
+}
+
+function isOverlayTemplateGroupActiveForCounts (group) {
+  const toggle = group?.querySelector('.overlay-toggle')
+  return !toggle || toggle.checked
+}
+
+function getDirectChildAccordionItems (collapse) {
+  return Array.from(collapse?.querySelectorAll?.(':scope > .accordion-body > .accordion > .accordion-item') || [])
+}
+
+function getAccordionCollapseOverrideCount (collapse) {
+  const explicitCount = Number(collapse?.dataset?.overrideCount || '')
+  if (Number.isFinite(explicitCount) && explicitCount > 0) return explicitCount
+
+  const lazyCount = Number(collapse?.querySelector?.('[data-library-lazy-section][data-lazy-override-count]')?.dataset?.lazyOverrideCount || '')
+  if (Number.isFinite(lazyCount) && lazyCount > 0) return lazyCount
+
+  const lazyGroupCount = Number(collapse?.dataset?.lazyOverrideCount || '')
+  if (collapse?.dataset?.collectionGroupLazyCollapse === 'true' && Number.isFinite(lazyGroupCount) && lazyGroupCount > 0) return lazyGroupCount
+
+  const childItems = getDirectChildAccordionItems(collapse)
+  if (childItems.length) {
+    return childItems.reduce((total, item) => total + getAccordionItemOverrideCount(item), 0)
+  }
+
+  return Array.from(collapse?.querySelectorAll?.('.template-toggle-group') || []).reduce((total, group) => {
+    if (!isOverlayTemplateGroupActiveForCounts(group)) return total
+    return total + (Number(group.dataset.overrideCount || '0') || 0)
+  }, 0)
+}
+
+function getAccordionItemOverrideCount (item) {
+  if (!item) return 0
+  const collapse = Array.from(item.children).find(child => child.classList?.contains('accordion-collapse'))
+  return getAccordionCollapseOverrideCount(collapse)
+}
+
+function getLibrarySectionOverrideTotal (card, advanced) {
+  if (!card) return 0
+  const accordion = card.querySelector('.accordion')
+  const items = Array.from(accordion?.children || []).filter(item => item.classList?.contains('accordion-item'))
+  return items.reduce((total, item) => {
+    const isAdvanced = item.classList.contains('library-advanced-section')
+    if (advanced !== isAdvanced) return total
+    return total + getAccordionItemOverrideCount(item)
+  }, 0)
+}
+
+function updateLibraryAggregateOverrideSummaries (card) {
+  if (!card) return
+  const coreCount = getLibrarySectionOverrideTotal(card, false)
+  const advancedCount = getLibrarySectionOverrideTotal(card, true)
+  setOverrideSummaryBadge(card.querySelector('[data-library-core-summary]'), coreCount)
+  setOverrideSummaryBadge(card.querySelector('[data-library-advanced-summary]'), advancedCount)
+  setOverrideSummaryBadge(card.querySelector('[data-library-total-summary]'), coreCount + advancedCount)
 }
 
 function updateTemplateGroupOverrideSummary (section) {
@@ -7936,9 +8340,11 @@ function updateTemplateGroupOverrideSummary (section) {
   if (!group) return
 
   const sections = group.querySelectorAll('[data-collection-variable-section="true"], [data-overlay-variable-section="true"]')
-  const count = Array.from(sections).reduce((total, item) => {
-    return total + (Number(item.dataset.overrideCount || '0') || 0)
-  }, 0)
+  const count = isOverlayTemplateGroupActiveForCounts(group)
+    ? Array.from(sections).reduce((total, item) => {
+        return total + (Number(item.dataset.overrideCount || '0') || 0)
+      }, 0)
+    : 0
 
   group.dataset.overrideCount = String(count)
   group.classList.toggle('template-variable-section-has-overrides', count > 0)
@@ -7959,6 +8365,12 @@ function refreshTemplateOverrideState (scope) {
   getLibraryOverrideScopes(root).forEach(section => {
     updateLibraryOverrideScopeSummary(section)
   })
+  root.querySelectorAll?.('.library-settings-card').forEach(card => {
+    updateLibraryAggregateOverrideSummaries(card)
+  })
+  if (root.matches?.('.library-settings-card')) {
+    updateLibraryAggregateOverrideSummaries(root)
+  }
 }
 
 function getLibraryOverrideScopes (root) {
@@ -8032,6 +8444,7 @@ function updateLibraryOverrideScopeSummary (scope) {
   item?.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
   header?.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
   setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), configuredCount)
+  updateLibraryAggregateOverrideSummaries(scope.closest('.library-settings-card'))
 }
 
 function wireLibraryOverrideScopes (scope) {
@@ -8085,6 +8498,8 @@ function updateOverlayVariableSectionSummary (section) {
   const summary = section.querySelector('[data-overlay-section-summary]')
   const body = section.querySelector('.overlay-variable-section-body')
   if (!summary || !body) return
+  const group = section.closest('.template-toggle-group')
+  const activeGroup = isOverlayTemplateGroupActiveForCounts(group)
 
   const fieldsByName = new Map()
   body.querySelectorAll('[name]').forEach(field => {
@@ -8097,11 +8512,15 @@ function updateOverlayVariableSectionSummary (section) {
   })
 
   let configuredCount = 0
-  fieldsByName.forEach(fields => {
-    if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
-  })
+  if (activeGroup) {
+    fieldsByName.forEach(fields => {
+      if (isCollectionSectionFieldConfigured(fields)) configuredCount += 1
+    })
+  }
 
-  updateTemplateVariableFieldOverrideStates(body, fieldsByName)
+  if (activeGroup) {
+    updateTemplateVariableFieldOverrideStates(body, fieldsByName)
+  }
 
   summary.textContent = configuredCount === 0
     ? 'Defaults'

@@ -293,6 +293,7 @@ def test_library_fragment_defers_heavy_collection_and_overlay_sections(client, m
                 "libraries": {
                     "mov-library_movies-library": "Movies",
                     "mov-library_movies-template_collection_award_style": "custom",
+                    "mov-library_movies-movie-overlay_resolution": "true",
                     "mov-library_movies-movie-template_overlay_resolution[style]": "custom",
                 }
             }
@@ -311,6 +312,141 @@ def test_library_fragment_defers_heavy_collection_and_overlay_sections(client, m
     assert "Open this section to load overlay settings." in html
 
 
+def test_library_fragment_lazy_overlay_count_ignores_inactive_overlay_values(client, monkeypatch, qs_module, library_routes_module):
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": True}),
+    )
+    monkeypatch.setattr(library_routes_module, "_migrate_legacy_playlist_libraries_to_library_toggles", lambda *_args: set())
+    monkeypatch.setattr(library_routes_module.helpers, "load_quickstart_config", lambda _filename: [])
+    monkeypatch.setattr(
+        library_routes_module.helpers,
+        "load_quickstart_overlay_config",
+        lambda: [
+            {
+                "accordion": "Media Overlays",
+                "overlays": [
+                    {
+                        "id": "overlay_content_rating_commonsense",
+                        "media_types": ["movie"],
+                        "template_variables": {
+                            "style": {"input_type": "select", "default": "default"},
+                        },
+                    }
+                ],
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_preview_image_data",
+        lambda: (_ for _ in ()).throw(AssertionError("Initial library fragment should defer preview image data")),
+    )
+
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "025-libraries":
+            return {
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    "mov-library_movies-movie-overlay_content_rating_commonsense": "false",
+                    "mov-library_movies-movie-template_overlay_content_rating_commonsense[style]": "custom",
+                }
+            }
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/library_fragment/mov-library_movies")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'data-library-lazy-section="overlays"' in html
+    assert 'data-lazy-override-count="0"' in html
+
+
+def test_lazy_overlay_count_uses_rendered_ratings_defaults(library_routes_module):
+    library = {"id": "mov-library_movies", "name": "Movies", "type": "movie"}
+    libraries_data = {
+        "mov-library_movies-movie-overlay_ratings": "true",
+        "mov-library_movies-movie-template_overlay_ratings[rating1]": "user",
+        "mov-library_movies-movie-template_overlay_ratings[rating1_image]": "rt_tomato",
+        "mov-library_movies-movie-template_overlay_ratings[rating1_font]": "LibreFranklin-Bold.ttf",
+        "mov-library_movies-movie-template_overlay_ratings[rating1_horizontal_offset]": "-30",
+        "mov-library_movies-movie-template_overlay_ratings[rating1_vertical_offset]": "-205",
+        "mov-library_movies-movie-template_overlay_ratings[rating2]": "critic",
+        "mov-library_movies-movie-template_overlay_ratings[rating2_image]": "imdb",
+        "mov-library_movies-movie-template_overlay_ratings[rating2_font]": "Roboto-Medium.ttf",
+        "mov-library_movies-movie-template_overlay_ratings[rating2_horizontal_offset]": "-30",
+        "mov-library_movies-movie-template_overlay_ratings[rating2_vertical_offset]": "0",
+        "mov-library_movies-movie-template_overlay_ratings[rating3]": "audience",
+        "mov-library_movies-movie-template_overlay_ratings[rating3_image]": "tmdb",
+        "mov-library_movies-movie-template_overlay_ratings[rating3_font]": "Consensus-SemiBold.otf",
+        "mov-library_movies-movie-template_overlay_ratings[rating3_horizontal_offset]": "-30",
+        "mov-library_movies-movie-template_overlay_ratings[rating3_vertical_offset]": "205",
+        "mov-library_movies-movie-template_overlay_ratings[horizontal_position]": "right",
+        "mov-library_movies-movie-template_overlay_ratings[vertical_position]": "center",
+        "mov-library_movies-movie-template_overlay_ratings[rating_alignment]": "vertical",
+        "mov-library_movies-movie-overlay_aspect": "true",
+        "mov-library_movies-movie-template_overlay_aspect[text]": "1.78",
+        "mov-library_movies-movie-template_overlay_aspect[horizontal_offset]": "-332",
+        "mov-library_movies-movie-template_overlay_aspect[vertical_offset]": "510",
+        "mov-library_movies-movie-overlay_languages_subtitles": "true",
+        "mov-library_movies-movie-template_overlay_languages_subtitles[use_subtitles]": True,
+    }
+    overlay_config = [
+        {
+            "accordion": "Media Overlays",
+            "overlays": [
+                {
+                    "id": "overlay_ratings",
+                    "media_types": ["movie"],
+                    "template_variables": {
+                        "rating1": {"input_type": "select", "default": "user"},
+                        "rating1_image": {"input_type": "select", "default": "rt_tomato"},
+                        "rating1_font": {"input_type": "text", "default": "Inter-Medium.ttf"},
+                        "rating1_horizontal_offset": {"input_type": "number", "default": 15},
+                        "rating1_vertical_offset": {"input_type": "number", "default": 0},
+                        "rating2": {"input_type": "select", "default": "critic"},
+                        "rating2_image": {"input_type": "select", "default": "imdb"},
+                        "rating2_font": {"input_type": "text", "default": "Inter-Medium.ttf"},
+                        "rating2_horizontal_offset": {"input_type": "number", "default": 15},
+                        "rating2_vertical_offset": {"input_type": "number", "default": 0},
+                        "rating3": {"input_type": "select", "default": "audience"},
+                        "rating3_image": {"input_type": "select", "default": "tmdb"},
+                        "rating3_font": {"input_type": "text", "default": "Inter-Medium.ttf"},
+                        "rating3_horizontal_offset": {"input_type": "number", "default": 15},
+                        "rating3_vertical_offset": {"input_type": "number", "default": 0},
+                        "horizontal_position": {"input_type": "select", "default": "left"},
+                        "vertical_position": {"input_type": "select", "default": "center"},
+                        "rating_alignment": {"input_type": "select", "default": "vertical"},
+                    },
+                },
+                {
+                    "id": "overlay_aspect",
+                    "media_types": ["movie"],
+                    "template_variables": [
+                        {"key": "text", "input_type": "text"},
+                        {"key": "horizontal_offset", "input_type": "number", "default": 0},
+                        {"key": "vertical_offset", "input_type": "number", "default": 150},
+                    ],
+                },
+                {
+                    "id": "overlay_languages_subtitles",
+                    "media_types": ["movie"],
+                    "template_variables": {
+                        "use_subtitles": {"input_type": "hidden", "default": True},
+                    },
+                },
+            ],
+        }
+    ]
+
+    assert library_routes_module._count_overlay_overrides_for_library(library, libraries_data, overlay_config) == 6
+
+
 def test_library_fragment_section_renders_requested_heavy_section(client, monkeypatch, qs_module, library_routes_module):
     monkeypatch.setattr(
         library_routes_module,
@@ -324,7 +460,22 @@ def test_library_fragment_section_renders_requested_heavy_section(client, monkey
 
     def fake_load_quickstart_config(filename):
         if filename == "quickstart_collections.json":
-            return []
+            return [
+                {
+                    "accordion": "Award Collections",
+                    "collections": [
+                        {
+                            "id": "collection_award",
+                            "label": "Awards Default Row",
+                            "url": "https://example.com/award",
+                            "media_types": ["movie"],
+                            "template_variables": [
+                                {"key": "style", "label": "Style", "type": "text_input", "default": ""},
+                            ],
+                        }
+                    ],
+                }
+            ]
         return original_load_quickstart_config(filename)
 
     monkeypatch.setattr(library_routes_module.helpers, "load_quickstart_config", fake_load_quickstart_config)
@@ -340,10 +491,16 @@ def test_library_fragment_section_renders_requested_heavy_section(client, monkey
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
 
     collections = client.get("/library_fragment/mov-library_movies/section/collections")
+    collection_group = client.get("/library_fragment/mov-library_movies/section/collections/group/0")
     overlays = client.get("/library_fragment/mov-library_movies/section/overlays")
 
     assert collections.status_code == 200
     assert "Reorder Collection Sections" in collections.get_data(as_text=True)
+    assert "data-collection-group-lazy-collapse" in collections.get_data(as_text=True)
+    assert "Awards Default Row" not in collections.get_data(as_text=True)
+    assert collection_group.status_code == 200
+    assert "Awards Default Row" in collection_group.get_data(as_text=True)
+    assert 'data-template-variable-key="style"' in collection_group.get_data(as_text=True)
     assert overlays.status_code == 200
     assert "Preview Overlays" in overlays.get_data(as_text=True)
 

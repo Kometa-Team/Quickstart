@@ -11,6 +11,15 @@ START_JS_PATH = ROOT / "static" / "local-js" / "001-start.js"
 OVERLAYS_PATH = ROOT / "static" / "json" / "quickstart_overlays.json"
 LIBRARIES_TEMPLATE_PATH = ROOT / "templates" / "025-libraries.html"
 PLAYLIST_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_playlists.html"
+LIBRARY_CARD_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_card.html"
+CORE_SEPARATOR_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_core_separator.html"
+ADVANCED_SEPARATOR_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_advanced_separator.html"
+COLLECTION_FILES_ACCORDION_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_collection_files_accordion.html"
+COLLECTION_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_collection_files.html"
+METADATA_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_metadata_files.html"
+OVERLAY_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_overlay_files.html"
+RADARR_OVERRIDES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_radarr_overrides.html"
+SONARR_OVERRIDES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_sonarr_overrides.html"
 
 
 def test_collection_macros_render_collapsible_detail_section():
@@ -18,6 +27,8 @@ def test_collection_macros_render_collapsible_detail_section():
 
     assert "collection-details-toggle" in macros
     assert "collection-detail-actions" in macros
+    assert 'data-collection-parent-reset="true"' in macros
+    assert "Reset {{ group.accordion }}" in macros
     assert 'class="collection-template-section mt-2"' in macros
     assert 'data-detail-section="true"' in macros
     assert 'data-collection-variable-section="true"' in macros
@@ -93,6 +104,19 @@ def test_libraries_script_wires_overlay_variable_sections():
     assert "data-accordion-override-summary" in script
     assert "findTemplateVariableFieldRow(field)" in script
     assert "refreshTemplateOverrideState(group)" in script
+    assert "function isOverlayTemplateGroupActiveForCounts" in script
+    assert "if (!isOverlayTemplateGroupActiveForCounts(group)) return total" in script
+    assert "const activeGroup = isOverlayTemplateGroupActiveForCounts(group)" in script
+
+
+def test_schedule_override_comparison_normalizes_month_day_padding():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function normalizeScheduleOverrideValue" in script
+    assert "normalizeMonthDay" in script
+    assert "primaryField.closest('[data-schedule-builder]')" in script
+    assert "normalizeScheduleOverrideValue(value) !== normalizeScheduleOverrideValue(defaultValue)" in script
+    assert "const scheduleEquivalent = input.closest('[data-schedule-builder]')" in script
 
 
 def test_libraries_script_replaces_mirror_confirm_handler():
@@ -213,11 +237,24 @@ def test_libraries_lazy_loads_heavy_collection_and_overlay_sections():
     routes = (ROOT / "blueprints" / "library_routes.py").read_text(encoding="utf-8")
 
     assert "function wireLazyLibrarySections" in script
+    assert "function wireLazyCollectionGroups" in script
+    assert "function loadLazyCollectionGroup" in script
+    assert "function markLazyCollectionGroupLoaded" in script
+    assert "function markCollectionDefaultsReset" in script
+    assert "function clearLazyCollectionShellOverrideSummaries" in script
     assert "function updateLazySectionOverrideSummaries" in script
     assert "shown.bs.collapse" in script
     assert "/section/${encodeURIComponent(sectionName)}" in script
+    assert "/section/collections/group/${encodeURIComponent(groupIndex)}" in script
+    assert "__loaded_collection_groups" in script
+    assert "__reset_collection_defaults" in script
+    assert "clearLazyCollectionShellOverrideSummaries(sectionBody)" in script
+    assert "await autosaveActiveLibrary({ quiet: true })" in script
+    assert "await loadAllLazyCollectionGroups(sectionBody, card)" not in script
+    assert "await loadLazyCollectionGroup(lazyCollapse, card)" in script
     assert "initializeLibraryCardControls(card, libraryId)" in script
     assert "wireLazyLibrarySections(card)" in script
+    assert "wireLazyCollectionGroups(card)" in script
     assert "updateLazySectionOverrideSummaries(card)" in script
     assert "data-lazy-override-count" in movie_settings
     assert "data-lazy-override-count" in show_settings
@@ -227,6 +264,27 @@ def test_libraries_lazy_loads_heavy_collection_and_overlay_sections():
     assert 'data-library-lazy-section="overlays"' in show_settings
     assert "defer_heavy_sections=True" in routes
     assert '@bp.route("/library_fragment/<library_id>/section/<section_name>")' in routes
+    assert '@bp.route("/library_fragment/<library_id>/section/collections/group/<int:group_index>")' in routes
+
+
+def test_collection_section_partials_lazy_load_parent_groups():
+    movie_collections = (ROOT / "templates" / "partials" / "_movie_collections.html").read_text(encoding="utf-8")
+    show_collections = (ROOT / "templates" / "partials" / "_show_collections.html").read_text(encoding="utf-8")
+    group_fragment = (ROOT / "templates" / "partials" / "_collection_group_fragment.html").read_text(encoding="utf-8")
+
+    for partial in (movie_collections, show_collections):
+        assert "data-collection-group-shell" in partial
+        assert "data-collection-group-lazy-collapse" in partial
+        assert "data-collection-group-lazy-placeholder" in partial
+        assert 'data-collection-all-reset="true"' in partial
+        assert "Reset Collections" in partial
+        assert 'data-collection-parent-reset="true"' not in partial
+        assert "Reset {{ group.accordion }}" not in partial
+        assert "collection_group_override_counts.get(loop.index0, 0)" in partial
+        assert "Open this group to load" in partial
+        assert "macros.collection_group_section" not in partial
+
+    assert "macros.collection_group_section(library, data, version_info, group, telemetry)" in group_fragment
 
 
 def test_cached_library_cards_do_not_submit_stale_form_fields():
@@ -273,6 +331,10 @@ def test_attributes_and_playlists_have_override_scope_counts_and_resets():
     assert 'data-library-override-label="Attributes"' in movie_settings
     assert 'data-library-override-label="Attributes"' in show_settings
     assert 'data-library-override-label="Playlists"' in playlists
+    assert 'data-library-override-label="Playlist Files"' in playlists
+    assert 'id="{{ library.id }}-playlist-accordion"' in playlists
+    assert 'data-library-override-label="Shared Playlist Defaults"' in playlist_vars
+    assert 'data-library-override-label="Per-Playlist Overrides"' in playlist_vars
     for label in ("Separators", "Overlay Operations", "Library Operations", "Miscellaneous"):
         assert f'data-library-override-label="{label}"' in movie_attributes
         assert f'data-library-override-label="{label}"' in show_attributes
@@ -281,6 +343,53 @@ def test_attributes_and_playlists_have_override_scope_counts_and_resets():
     assert 'data-default="false"' in macros
     assert 'data-default="false"' in playlists
     assert 'data-default="false"' in playlist_vars
+
+
+def test_advanced_library_sections_have_override_scope_counts_and_defaults():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    library_card = LIBRARY_CARD_PARTIAL_PATH.read_text(encoding="utf-8")
+    core_separator = CORE_SEPARATOR_PARTIAL_PATH.read_text(encoding="utf-8")
+    advanced_separator = ADVANCED_SEPARATOR_PARTIAL_PATH.read_text(encoding="utf-8")
+    movie_settings = (ROOT / "templates" / "partials" / "_movie_library_settings.html").read_text(encoding="utf-8")
+    show_settings = (ROOT / "templates" / "partials" / "_show_library_settings.html").read_text(encoding="utf-8")
+    collection_files_accordion = COLLECTION_FILES_ACCORDION_PARTIAL_PATH.read_text(encoding="utf-8")
+    collection_files = COLLECTION_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
+    metadata_files = METADATA_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
+    overlay_files = OVERLAY_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
+    radarr_overrides = RADARR_OVERRIDES_PARTIAL_PATH.read_text(encoding="utf-8")
+    sonarr_overrides = SONARR_OVERRIDES_PARTIAL_PATH.read_text(encoding="utf-8")
+
+    assert "function updateLibraryAggregateOverrideSummaries" in script
+    assert "function getLibrarySectionOverrideTotal" in script
+    assert "data-library-core-summary" in script
+    assert "refreshTemplateOverrideState(card)" in script
+    assert "refreshTemplateOverrideState(libraryContainer?.firstElementChild || document)" in script
+    assert "[data-playlist-files-editor]" in script
+    assert "[data-collection-files-editor]" in script
+    assert "[data-metadata-files-editor]" in script
+    assert "[data-overlay-files-editor]" in script
+    assert "[data-playlist-key-toggle-group]" in script
+    assert "[data-playlist-user-picker]" in script
+    assert "name.includes('-library_service_')" in script
+
+    assert "data-library-total-summary" in library_card
+    assert "Library Defaults" in core_separator
+    assert "data-library-core-summary" in core_separator
+    assert "data-library-advanced-summary" in advanced_separator
+    assert '{% include "partials/_library_core_separator.html" %}' in movie_settings
+    assert '{% include "partials/_library_core_separator.html" %}' in show_settings
+    assert 'data-library-override-label="Collection Files"' in collection_files_accordion
+    assert 'data-library-override-label="Metadata Files"' in metadata_files
+    assert 'data-library-override-label="Overlay Files"' in overlay_files
+    assert 'data-library-override-label="Radarr Overrides"' in radarr_overrides
+    assert 'data-library-override-label="Sonarr Overrides"' in sonarr_overrides
+    assert radarr_overrides.count('data-default=""') >= 10
+    assert sonarr_overrides.count('data-default=""') >= 10
+    assert 'data-library-service-validated="radarr"' in radarr_overrides
+    assert 'data-library-service-validated="sonarr"' in sonarr_overrides
+    assert 'data-default="[]"' in collection_files
+    assert 'data-default="[]"' in metadata_files
+    assert 'data-default="[]"' in overlay_files
 
 
 def test_analytics_page_checks_reingest_status_before_loading_trends():
@@ -301,6 +410,7 @@ def test_template_variable_sections_show_override_rail():
     assert ".collection-variable-section.template-variable-section-has-overrides" in styles
     assert ".overlay-variable-section.template-variable-section-has-overrides" in styles
     assert ".template-toggle-group.template-variable-section-has-overrides" in styles
+    assert ".accordion-item.template-variable-section-has-overrides > .accordion-header" in styles
     assert ".accordion-header.template-variable-section-has-overrides" in styles
     assert ".template-variable-field-has-override" in styles
     assert "[data-template-string-list].template-variable-field-has-override" in styles

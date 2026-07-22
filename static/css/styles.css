@@ -2042,7 +2042,8 @@ fieldset:disabled .btn {
 
 .collection-variable-section,
 .overlay-variable-section,
-.template-toggle-group {
+.template-toggle-group,
+.accordion-item.template-variable-section-has-overrides {
     position: relative;
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
@@ -2067,6 +2068,10 @@ fieldset:disabled .btn {
     border-radius: 0 4px 4px 0;
     background: var(--theme-primary);
     box-shadow: 0 0 10px rgba(var(--accent-color), 0.35);
+}
+
+.accordion-item.template-variable-section-has-overrides > .accordion-header {
+    border-left: 4px solid var(--theme-primary) !important;
 }
 
 .accordion-header.template-variable-section-has-overrides {

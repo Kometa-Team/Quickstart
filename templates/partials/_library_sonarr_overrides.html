@@ -5,7 +5,8 @@
             Sonarr Overrides
         </button>
     </h2>
-    <div id="{{ library.id }}-sonarr-overrides" class="accordion-collapse collapse">
+    <div id="{{ library.id }}-sonarr-overrides" class="accordion-collapse collapse"
+        data-library-override-scope="true" data-library-override-label="Sonarr Overrides">
         <div class="accordion-body">
             <div class="alert alert-success small mb-3" role="alert">
                 Enter your Sonarr URL and token override only if this library should use a different Sonarr instance than the global
@@ -27,10 +28,10 @@
             </div>
             <input type="hidden" name="{{ library.id }}-library_service_sonarr_validated"
                 value="{{ data['libraries'].get(library.id ~ '-library_service_sonarr_validated', '') }}"
-                data-library-service-validated="sonarr">
+                data-default="" data-library-service-validated="sonarr">
             <input type="hidden" name="{{ library.id }}-library_service_sonarr_validated_at"
                 value="{{ data['libraries'].get(library.id ~ '-library_service_sonarr_validated_at', '') }}"
-                data-library-service-validated-at="sonarr">
+                data-default="" data-library-service-validated-at="sonarr">
             <div class="alert d-none small mb-3" role="alert" data-library-service-status="sonarr"></div>
             <div class="input-group mb-2">
                 <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_url_text"
@@ -44,7 +45,7 @@
                 <input type="text" class="form-control" id="{{ library.id }}-attribute_sonarr_url"
                     name="{{ library.id }}-attribute_sonarr_url"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_url', '') | default('', true) }}"
-                    placeholder="Leave blank to use global Sonarr URL"
+                    data-default="" placeholder="Leave blank to use global Sonarr URL"
                     aria-describedby="{{ library.id }}-attribute_sonarr_url_text">
             </div>
 
@@ -60,7 +61,7 @@
                 <input type="password" class="form-control" id="{{ library.id }}-attribute_sonarr_token"
                     name="{{ library.id }}-attribute_sonarr_token"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_token', '') | default('', true) }}"
-                    placeholder="Leave blank to use global Sonarr token"
+                    data-default="" placeholder="Leave blank to use global Sonarr token"
                     aria-describedby="{{ library.id }}-attribute_sonarr_token_text">
                 <button class="btn btn-outline-secondary" type="button"
                     data-toggle-secret-visibility
@@ -83,6 +84,7 @@
                     id="{{ library.id }}-attribute_sonarr_root_folder_path"
                     name="{{ library.id }}-attribute_sonarr_root_folder_path"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_root_folder_path', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_root_folder_path_text">
                 <datalist id="{{ library.id }}-sonarr-root-folders"></datalist>
             </div>
@@ -100,6 +102,7 @@
                     id="{{ library.id }}-attribute_sonarr_quality_profile"
                     name="{{ library.id }}-attribute_sonarr_quality_profile"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_quality_profile', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_quality_profile_text">
                 <datalist id="{{ library.id }}-sonarr-quality-profiles"></datalist>
             </div>
@@ -117,6 +120,7 @@
                     id="{{ library.id }}-attribute_sonarr_language_profile"
                     name="{{ library.id }}-attribute_sonarr_language_profile"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_language_profile', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_language_profile_text">
                 <datalist id="{{ library.id }}-sonarr-language-profiles"></datalist>
             </div>
@@ -133,6 +137,7 @@
                 {% set sonarr_series_type = data['libraries'].get(library.id ~ '-attribute_sonarr_series_type', '') %}
                 <select class="form-select" id="{{ library.id }}-attribute_sonarr_series_type"
                     name="{{ library.id }}-attribute_sonarr_series_type"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_series_type_text">
                     <option value="" {% if not sonarr_series_type %}selected{% endif %}>Inherit</option>
                     <option value="standard" {% if sonarr_series_type == 'standard' %}selected{% endif %}>Standard (default)</option>
@@ -178,6 +183,7 @@
                 <input type="text" class="form-control" id="{{ library.id }}-attribute_sonarr_tag"
                     name="{{ library.id }}-attribute_sonarr_tag"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_tag', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_tag_text">
             </div>
 
@@ -194,6 +200,7 @@
                     id="{{ library.id }}-attribute_sonarr_sonarr_path"
                     name="{{ library.id }}-attribute_sonarr_sonarr_path"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_sonarr_path', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_sonarr_path_text">
             </div>
 
@@ -210,6 +217,7 @@
                     id="{{ library.id }}-attribute_sonarr_plex_path"
                     name="{{ library.id }}-attribute_sonarr_plex_path"
                     value="{{ data['libraries'].get(library.id ~ '-attribute_sonarr_plex_path', '') | default('', true) }}"
+                    data-default=""
                     aria-describedby="{{ library.id }}-attribute_sonarr_plex_path_text">
             </div>
 
@@ -234,6 +242,7 @@
                     </span>
                 </span>
                 <select class="form-select" id="{{ field_name }}" name="{{ field_name }}"
+                    data-default=""
                     aria-describedby="{{ field_name }}_text">
                     <option value="" {% if field_value == '' %}selected{% endif %}>Inherit</option>
                     <option value="true" {% if field_value|string|lower == 'true' %}selected{% endif %}>True</option>

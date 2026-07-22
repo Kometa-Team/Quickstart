@@ -505,7 +505,7 @@ function setButtonIconAndText (button, iconClasses, text) {
 function showToast (type, message) {
   const toastId = `toast-${Date.now()}` // Unique ID for each toast
   const toastContainer = document.querySelector('.toast-container')
-  const safeMessage = escapeHtml(message)
+  const safeMessage = escapeHtml(message).replace(/\r?\n/g, '<br>')
 
   // Define Bootstrap colors, icons, and progress bar styles per type
   const toastConfig = {
@@ -2558,7 +2558,7 @@ function restoreBlankCacheExpirations () {
           ? `${item.label} was blank. Set to minimum: ${item.value}.`
           : `${item.label} was blank. Restored to default: ${item.value}.`
       ))
-      .join('<br>')
+      .join('\n')
     showToast('info', message)
   }
 }
