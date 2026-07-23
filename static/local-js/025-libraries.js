@@ -8139,6 +8139,25 @@ function formatTemplateOverrideCount (count) {
   return count === 1 ? '1 override' : `${count} overrides`
 }
 
+function isTrueDatasetValue (value) {
+  return String(value || '').trim().toLowerCase() === 'true'
+}
+
+function isTemplateGroupActiveForSignal (group) {
+  if (!group) return false
+  const toggle = group.querySelector('input[type="checkbox"][data-template-group], input[type="radio"][data-template-group], .overlay-toggle')
+  if (!toggle) return false
+  return toggle.checked
+}
+
+function getLazyElementSignalCount (element) {
+  return Number(element?.dataset?.lazyOverrideCount || '0') || 0
+}
+
+function getLazyElementHasSignal (element) {
+  return getLazyElementSignalCount(element) > 0 || isTrueDatasetValue(element?.dataset?.lazyActive)
+}
+
 function setOverrideSummaryBadge (badge, count) {
   if (!badge) return
   badge.textContent = count > 0 ? formatTemplateOverrideCount(count) : ''
@@ -8233,9 +8252,10 @@ function updateAncestorOverrideSummaries (element) {
     const accordionItem = collapse.closest('.accordion-item')
     const header = accordionItem?.querySelector('.accordion-header')
     const count = getAccordionCollapseOverrideCount(collapse)
+    const hasSignal = getAccordionCollapseHasActiveSignal(collapse)
 
-    accordionItem?.classList.toggle('template-variable-section-has-overrides', count > 0)
-    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    accordionItem?.classList.toggle('template-variable-section-has-overrides', hasSignal)
+    header?.classList.toggle('template-variable-section-has-overrides', hasSignal)
     setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
 
     collapse = accordionItem?.parentElement?.closest('.accordion-collapse')
@@ -8246,22 +8266,24 @@ function updateAncestorOverrideSummaries (element) {
 function updateLazySectionOverrideSummaries (scope) {
   const root = scope || document
   root.querySelectorAll?.('[data-library-lazy-section][data-lazy-override-count]').forEach(placeholder => {
-    const count = Number(placeholder.dataset.lazyOverrideCount || '0') || 0
+    const count = getLazyElementSignalCount(placeholder)
+    const hasSignal = getLazyElementHasSignal(placeholder)
     const collapse = placeholder.closest('.accordion-collapse')
     const item = collapse?.closest('.accordion-item')
     const header = item?.querySelector(':scope > .accordion-header') || item?.querySelector('.accordion-header')
 
-    item?.classList.toggle('template-variable-section-has-overrides', count > 0)
-    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    item?.classList.toggle('template-variable-section-has-overrides', hasSignal)
+    header?.classList.toggle('template-variable-section-has-overrides', hasSignal)
     setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
   })
   root.querySelectorAll?.('[data-collection-group-lazy-collapse][data-lazy-override-count]').forEach(collapse => {
-    const count = Number(collapse.dataset.lazyOverrideCount || '0') || 0
+    const count = getLazyElementSignalCount(collapse)
+    const hasSignal = getLazyElementHasSignal(collapse)
     const item = collapse.closest('.accordion-item')
     const header = item?.querySelector(':scope > .accordion-header') || item?.querySelector('.accordion-header')
 
-    item?.classList.toggle('template-variable-section-has-overrides', count > 0)
-    header?.classList.toggle('template-variable-section-has-overrides', count > 0)
+    item?.classList.toggle('template-variable-section-has-overrides', hasSignal)
+    header?.classList.toggle('template-variable-section-has-overrides', hasSignal)
     setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
   })
 }
@@ -8270,6 +8292,7 @@ function clearLazyCollectionShellOverrideSummaries (scope) {
   const root = scope || document
   root.querySelectorAll?.('[data-collection-group-lazy-collapse][data-lazy-override-count]').forEach(collapse => {
     collapse.dataset.lazyOverrideCount = '0'
+    collapse.dataset.lazyActive = 'false'
     const item = collapse.closest('.accordion-item')
     const header = item?.querySelector(':scope > .accordion-header') || item?.querySelector('.accordion-header')
 
@@ -8307,6 +8330,17 @@ function getAccordionCollapseOverrideCount (collapse) {
     if (!isOverlayTemplateGroupActiveForCounts(group)) return total
     return total + (Number(group.dataset.overrideCount || '0') || 0)
   }, 0)
+}
+
+function getAccordionCollapseHasActiveSignal (collapse) {
+  if (!collapse) return false
+  if (getAccordionCollapseOverrideCount(collapse) > 0) return true
+  const lazyPlaceholder = collapse.querySelector?.('[data-library-lazy-section][data-lazy-active="true"]')
+  if (lazyPlaceholder) return true
+  if (collapse.dataset?.collectionGroupLazyCollapse === 'true' && isTrueDatasetValue(collapse.dataset.lazyActive)) return true
+  return Array.from(collapse.querySelectorAll?.('.template-toggle-group') || []).some(group => {
+    return isOverlayTemplateGroupActiveForCounts(group) && isTemplateGroupActiveForSignal(group)
+  })
 }
 
 function getAccordionItemOverrideCount (item) {
@@ -8347,7 +8381,7 @@ function updateTemplateGroupOverrideSummary (section) {
     : 0
 
   group.dataset.overrideCount = String(count)
-  group.classList.toggle('template-variable-section-has-overrides', count > 0)
+  group.classList.toggle('template-variable-section-has-overrides', count > 0 || isTemplateGroupActiveForSignal(group))
   setOverrideSummaryBadge(getOrCreateTemplateOverrideBadge(group), count)
   updateAncestorOverrideSummaries(group)
 }

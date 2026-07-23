@@ -17,10 +17,12 @@
 {% for group in collection_config %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
 {% set group_count = collection_group_override_counts.get(loop.index0, 0) if collection_group_override_counts is defined else 0 %}
+{% set group_active = collection_group_active_states.get(loop.index0, false) if collection_group_active_states is defined else false %}
+{% set group_signal = group_count > 0 or group_active %}
 <div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion"
   data-collection-group-shell="true" data-library-id="{{ library.id }}" data-collection-group-index="{{ loop.index0 }}">
-  <div class="accordion-item{% if group_count > 0 %} template-variable-section-has-overrides{% endif %}">
-    <h2 class="accordion-header overlay-accordion-header d-flex align-items-center{% if group_count > 0 %} template-variable-section-has-overrides{% endif %}">
+  <div class="accordion-item{% if group_signal %} template-variable-section-has-overrides{% endif %}">
+    <h2 class="accordion-header overlay-accordion-header d-flex align-items-center{% if group_signal %} template-variable-section-has-overrides{% endif %}">
       <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse"
         data-bs-target="#{{ library.id }}-{{ accordion_safe }}" aria-expanded="false"
         aria-controls="{{ library.id }}-{{ accordion_safe }}">
@@ -36,7 +38,8 @@
       data-collection-group-lazy-collapse="true"
       data-library-id="{{ library.id }}"
       data-collection-group-index="{{ loop.index0 }}"
-      data-lazy-override-count="{{ group_count }}">
+      data-lazy-override-count="{{ group_count }}"
+      data-lazy-active="{{ 'true' if group_active else 'false' }}">
       <div class="accordion-body">
         <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
           data-collection-group-lazy-placeholder="true">
