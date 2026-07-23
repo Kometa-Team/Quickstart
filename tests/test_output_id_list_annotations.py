@@ -138,3 +138,26 @@ def test_library_placeholder_id_emits_saved_lookup_comment(app):
 
     assert re.search(r"placeholder_imdb_id: tt0108052\s+# Schindler's List", yaml_content)
     assert "__template_variable_comments" not in yaml_content
+
+
+def test_trakt_token_only_residue_is_not_emitted(app):
+    trakt = {
+        "trakt": {
+            "authorization": {
+                "access_token": "stale-access-token",
+                "refresh_token": "stale-refresh-token",
+            },
+            "client_id": None,
+            "client_secret": None,
+            "pin": None,
+            "force_refresh": False,
+        }
+    }
+
+    with app.app_context():
+        yaml_content = dump_section("", "trakt", trakt, "none", None)
+
+    assert yaml_content == ""
+    assert "trakt:" not in yaml_content
+    assert "authorization:" not in yaml_content
+    assert "stale-access-token" not in yaml_content

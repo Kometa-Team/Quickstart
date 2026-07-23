@@ -360,6 +360,38 @@ def _apply_trakt_reorder(cleaned_data):
     cleaned_data["trakt"] = ordered_section
 
 
+def _has_nonblank_oauth_value(value):
+    if value is None:
+        return False
+    text = str(value).strip()
+    return bool(text) and text.lower() not in {"none", "null", "false"}
+
+
+def _drop_unusable_trakt_section(cleaned_data):
+    """Drop token-only Trakt residue left after a user clears visible inputs.
+
+    Imported bundles can leave ``authorization`` tokens behind after the Trakt
+    page is visually cleared. Without a client identity, those tokens cannot be
+    validated as a configured Trakt setup and should not keep being emitted.
+    """
+    section = cleaned_data.get("trakt")
+    if not isinstance(section, dict):
+        return
+    auth = section.get("authorization") if isinstance(section.get("authorization"), dict) else {}
+    has_visible_identity = any(
+        _has_nonblank_oauth_value(value)
+        for value in (
+            section.get("client_id"),
+            section.get("client_secret"),
+            section.get("pin"),
+            auth.get("client_id"),
+            auth.get("client_secret"),
+        )
+    )
+    if not has_visible_identity:
+        cleaned_data.pop("trakt", None)
+
+
 def _apply_settings_normalization(cleaned_data):
     """Normalize settings-block values, mirroring the schema shapes expected
     by Kometa.  ``asset_directory`` in particular can arrive as a multi-line
@@ -499,6 +531,9 @@ def dump_section(title, dump_name, data, header_style, config_name):
         _apply_mal_trakt_int_coercions(cleaned_data, dump_name)
 
     if dump_name == "trakt":
+        _drop_unusable_trakt_section(cleaned_data)
+        if "trakt" not in cleaned_data:
+            return ""
         _apply_trakt_reorder(cleaned_data)
 
     if dump_name == "settings":

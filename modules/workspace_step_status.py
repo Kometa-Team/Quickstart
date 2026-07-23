@@ -118,32 +118,60 @@ def _has_meaningful_optional_input(template_key, payload):
         if not isinstance(trakt, dict):
             return False
         auth = trakt.get("authorization", {}) if isinstance(trakt.get("authorization"), dict) else {}
-        return any(
+        visible_inputs = (
+            trakt.get("client_id"),
+            trakt.get("client_secret"),
+            trakt.get("pin"),
+        )
+        if any(_is_meaningful_optional_status_input(value) for value in visible_inputs):
+            return True
+        has_authorization_token = any(
             _is_meaningful_optional_status_input(value)
             for value in (
-                trakt.get("client_id"),
-                trakt.get("client_secret"),
-                trakt.get("pin"),
                 auth.get("access_token"),
                 auth.get("refresh_token"),
             )
         )
+        has_client_identity = any(
+            _is_meaningful_optional_status_input(value)
+            for value in (
+                trakt.get("client_id"),
+                trakt.get("client_secret"),
+                auth.get("client_id"),
+                auth.get("client_secret"),
+            )
+        )
+        return has_authorization_token and has_client_identity
 
     if template_key == "140-mal":
         mal = payload.get("mal", {})
         if not isinstance(mal, dict):
             return False
         auth = mal.get("authorization", {}) if isinstance(mal.get("authorization"), dict) else {}
-        return any(
+        visible_inputs = (
+            mal.get("client_id"),
+            mal.get("client_secret"),
+            mal.get("localhost_url"),
+        )
+        if any(_is_meaningful_optional_status_input(value) for value in visible_inputs):
+            return True
+        has_authorization_token = any(
             _is_meaningful_optional_status_input(value)
             for value in (
-                mal.get("client_id"),
-                mal.get("client_secret"),
-                mal.get("localhost_url"),
                 auth.get("access_token"),
                 auth.get("refresh_token"),
             )
         )
+        has_client_identity = any(
+            _is_meaningful_optional_status_input(value)
+            for value in (
+                mal.get("client_id"),
+                mal.get("client_secret"),
+                auth.get("client_id"),
+                auth.get("client_secret"),
+            )
+        )
+        return has_authorization_token and has_client_identity
 
     # For unknown validation-backed optional steps, keep prior behavior.
     return True

@@ -1071,6 +1071,41 @@ def _normalize_shared_playlist_file_entries_payload(libraries_data, config_name,
     return normalized, errors
 
 
+def _library_save_prefix_from_key(key):
+    prefix = _library_prefix_from_key(key)
+    if prefix:
+        return prefix
+    if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
+        return None
+    for suffix in ("-playlist", "-collection_files", "-metadata_files", "-overlay_files"):
+        if key.endswith(suffix):
+            return key[: -len(suffix)]
+    return None
+
+
+def _merge_libraries_payload_for_partial_step_save(incoming_libraries):
+    """Merge the submitted active library card into the full persisted map."""
+    incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
+    settings = persistence.retrieve_settings("025-libraries")
+    existing_libraries = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    existing_libraries = existing_libraries if isinstance(existing_libraries, dict) else {}
+    merged_libraries = dict(existing_libraries)
+
+    for key, value in incoming_libraries.items():
+        prefix = _library_save_prefix_from_key(key)
+        if prefix and key in (f"{prefix}-library", f"{prefix}-playlist") and not _is_truthy_setting_value(value):
+            continue
+        merged_libraries[key] = value
+
+    for shared in ("mov-template_variables", "sho-template_variables"):
+        if shared in incoming_libraries:
+            merged_libraries[shared] = incoming_libraries[shared]
+        elif shared in existing_libraries and shared not in merged_libraries:
+            merged_libraries[shared] = existing_libraries[shared]
+
+    return merged_libraries
+
+
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
 
@@ -1973,6 +2008,7 @@ def step(name):
         if save_source_name == "libraries":
             clean_payload = persistence.clean_form_data(request.form)
             incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+            incoming_libraries = _merge_libraries_payload_for_partial_step_save(incoming_libraries)
             selected_library_ids = _selected_library_ids_from_libraries_data(incoming_libraries)
             validation_errors += _validate_library_collection_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_library_metadata_files(incoming_libraries, selected_library_ids)

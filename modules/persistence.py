@@ -258,26 +258,43 @@ def save_settings(raw_source, form_data):
             def _library_prefix(key):
                 if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
                     return None
-                if "-template_" in key:
-                    return key.split("-template_", 1)[0]
-                if "-attribute_" in key:
-                    return key.split("-attribute_", 1)[0]
-                if "-collection_" in key:
-                    return key.split("-collection_", 1)[0]
-                if "-overlay_" in key:
-                    return key.split("-overlay_", 1)[0]
-                if "-top_level_" in key:
-                    return key.split("-top_level_", 1)[0]
+                for marker in (
+                    "-movie-template_",
+                    "-show-template_",
+                    "-season-template_",
+                    "-episode-template_",
+                    "-movie-overlay_",
+                    "-show-overlay_",
+                    "-season-overlay_",
+                    "-episode-overlay_",
+                    "-template_",
+                    "-attribute_",
+                    "-collection_",
+                    "-overlay_",
+                    "-top_level_",
+                    "-library_service_",
+                ):
+                    if marker in key:
+                        return key.split(marker, 1)[0]
                 if key.endswith("-library"):
                     return key[: -len("-library")]
+                for suffix in ("-playlist", "-collection_files", "-metadata_files", "-overlay_files"):
+                    if key.endswith(suffix):
+                        return key[: -len(suffix)]
                 return None
 
             # Identify library prefixes present in this payload (e.g., mov-library_xxx, sho-library_yyy)
             prefixes = set()
-            for key in incoming_libraries:
+            for key, value in incoming_libraries.items():
                 prefix = _library_prefix(key)
-                if prefix:
-                    prefixes.add(prefix)
+                if not prefix:
+                    continue
+                # Lazy library cards can leave disabled/hidden false toggles in
+                # form payloads. A false include/playlist toggle alone is not
+                # enough evidence that this prefix was intentionally submitted.
+                if key in (f"{prefix}-library", f"{prefix}-playlist") and value in [None, False, "", "false"]:
+                    continue
+                prefixes.add(prefix)
 
             # Remove existing entries for the affected prefixes so we can replace them cleanly
             for prefix in prefixes:

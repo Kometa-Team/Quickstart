@@ -569,6 +569,52 @@ def _is_collectionless_entry(item):
     return default_name in {"collectionless", "collection_collectionless"} or default_name.endswith("collectionless")
 
 
+def _collection_default_order_map(library_type):
+    """Return the canonical collection default order from quickstart_collections.json."""
+    media_type = {"mov": "movie", "sho": "show"}.get(library_type)
+    order_map = {}
+    try:
+        groups = helpers.load_quickstart_config("quickstart_collections.json")
+    except Exception as exc:
+        helpers.ts_log(f"Failed to load quickstart_collections.json for collection order: {exc}", level="ERROR")
+        return order_map
+
+    for group in groups or []:
+        if not isinstance(group, dict):
+            continue
+        for collection in group.get("collections", []) or []:
+            if not isinstance(collection, dict):
+                continue
+            collection_id = str(collection.get("id") or "").strip()
+            if not collection_id:
+                continue
+            raw_id = collection_id.replace("collection_", "", 1)
+            if raw_id in order_map:
+                continue
+            media_types = collection.get("media_types") or []
+            if media_type and media_types and media_type not in media_types:
+                continue
+            order_map[raw_id] = len(order_map)
+    return order_map
+
+
+def _sort_generated_collection_entries(collection_files, library_type):
+    """Sort generated collection defaults canonically while preserving unknown-key order."""
+    order_map = _collection_default_order_map(library_type)
+    fallback_start = len(order_map)
+
+    def sort_key(indexed_item):
+        index, item = indexed_item
+        default_name = str(item.get("default", "")).strip()
+        return (
+            1 if _is_collectionless_entry(item) else 0,
+            order_map.get(default_name, fallback_start + index),
+            index,
+        )
+
+    collection_files[:] = [item for _index, item in sorted(enumerate(collection_files), key=sort_key)]
+
+
 def _build_child_prefix(library_key, raw_id):
     """Compute the template-child-key prefix for a collection.
 
@@ -606,8 +652,10 @@ def build_collection_files(
     parsed out of ``<library_prefix>-collection_files`` from the raw
     collection group; user-authored ordering wins for those.
 
-    The returned list is stably sorted so 'collectionless' sinks to
-    the end (Kometa expects it last within a library).
+    Generated defaults are sorted by quickstart_collections.json so
+    imported/saved insertion order does not affect final YAML diffs.
+    'collectionless' still sinks to the end of generated defaults
+    (Kometa expects it last within a library).
     """
     collection_key = helpers.extract_library_name(library_key)
     if debug:
@@ -670,7 +718,7 @@ def build_collection_files(
     raw_collection_entries = _parse_collection_file_block_entries(raw_collection_group.get(f"{library_prefix}-collection_files"))
 
     if collection_files:
-        collection_files.sort(key=_is_collectionless_entry)
+        _sort_generated_collection_entries(collection_files, library_type)
 
     if raw_collection_entries:
         collection_files.extend(raw_collection_entries)

@@ -285,7 +285,8 @@ const EventHandler = {
           const isHidden = !input.offsetParent
           const min = parseFloat(input.dataset.minSaved || '0')
           const max = parseFloat(input.dataset.maxSaved || '10')
-          const val = parseFloat(input.value)
+          const rawValue = String(input.value || '').trim()
+          const val = parseFloat(rawValue)
           if (isHidden) {
             const feedback = input.parentElement?.querySelector('.invalid-feedback')
             input.setCustomValidity('')
@@ -294,7 +295,7 @@ const EventHandler = {
             return
           }
           const feedback = input.parentElement?.querySelector('.invalid-feedback')
-          const invalid = Number.isNaN(val) || val < min || val > max
+          const invalid = rawValue !== '' && (Number.isNaN(val) || val < min || val > max)
           if (invalid) {
             input.setCustomValidity(`Enter a value between ${min} and ${max}`)
             input.classList.add('is-invalid')
@@ -515,8 +516,9 @@ function installRatingSubmitGuard () {
       if (!input.offsetParent) return false
       const min = parseFloat(input.dataset.minSaved || input.getAttribute('min') || '0')
       const max = parseFloat(input.dataset.maxSaved || input.getAttribute('max') || '10')
-      const val = parseFloat(input.value)
-      return Number.isNaN(val) || val < min || val > max
+      const rawValue = String(input.value || '').trim()
+      const val = parseFloat(rawValue)
+      return rawValue !== '' && (Number.isNaN(val) || val < min || val > max)
     })
     if (invalid.length) {
       evt.preventDefault()
