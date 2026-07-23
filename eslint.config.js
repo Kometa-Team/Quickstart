@@ -183,6 +183,24 @@ module.exports = [
       'no-var': 'error',
       'prefer-const': 'error',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
+      // Guard the app-config accessor boundary (#1334 Step 5). All
+      // app-level config reads/writes go through getAppConfig /
+      // setAppConfig in modules/appConfig.js so that the bootstrap
+      // mechanism (inline object today; fetched payload or reactive
+      // store tomorrow) can change in exactly one place. Direct
+      // window.QS_AppConfig member access re-couples call sites to the
+      // current mechanism. The accessor module itself is exempted in
+      // an override block below.
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'window',
+          property: 'QS_AppConfig',
+          message:
+            'Do not read window.QS_AppConfig directly. Import ' +
+            'getAppConfig/setAppConfig from modules/appConfig.js instead.'
+        }
+      ],
       // Regression guards for the inline-handler / shim cleanup sprint.
       'no-restricted-syntax': [
         'error',
@@ -207,6 +225,14 @@ module.exports = [
     files: moduleFiles,
     languageOptions: {
       sourceType: 'module'
+    }
+  },
+  {
+    // The accessor module is the one place allowed to touch
+    // window.QS_AppConfig -- it owns the namespace.
+    files: ['static/local-js/modules/appConfig.js'],
+    rules: {
+      'no-restricted-properties': 'off'
     }
   }
 ]

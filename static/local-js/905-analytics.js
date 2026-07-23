@@ -1,4 +1,5 @@
 /* global bootstrap */
+import { getAppConfig } from './modules/appConfig.js'
 import { elementGroup } from './modules/elementGroup.js'
 
 const tableBody = document.querySelector('#logscan-trends-table tbody')
@@ -1670,10 +1671,10 @@ function renderArchiveStorageSummary (storage) {
   if (!tablePolicy) return
   const kometaKeepLimit = storage && Number.isFinite(storage.kometa_keep_limit)
     ? storage.kometa_keep_limit
-    : (parseInt((window.QS_AppConfig && window.QS_AppConfig.QS_KOMETA_LOG_KEEP) || '0', 10) || 0)
+    : (parseInt(getAppConfig('QS_KOMETA_LOG_KEEP', '0'), 10) || 0)
   const imagemaidKeepLimit = storage && Number.isFinite(storage.imagemaid_keep_limit)
     ? storage.imagemaid_keep_limit
-    : (parseInt((window.QS_AppConfig && window.QS_AppConfig.QS_IMAGEMAID_LOG_KEEP) || '0', 10) || 0)
+    : (parseInt(getAppConfig('QS_IMAGEMAID_LOG_KEEP', '0'), 10) || 0)
   const kometaRetentionLabel = storage && storage.kometa_retention_label
     ? storage.kometa_retention_label
     : (kometaKeepLimit > 0 ? `Keep last ${kometaKeepLimit} archived logs` : 'Keep all archived logs')
