@@ -20,7 +20,16 @@ vi.spyOn(console, 'error').mockImplementation(() => {})
 
 afterEach(() => {
   document.body.innerHTML = ''
+  vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
+
+async function flushAsyncWork () {
+  for (let index = 0; index < 5; index += 1) {
+    await Promise.resolve()
+  }
+  await new Promise(resolve => setTimeout(resolve, 0))
+}
 
 describe('separatorPreview module surface', () => {
   it('exports initializeOverlays as a function', () => {
@@ -143,5 +152,93 @@ describe('separatorPreview: smoke tests', () => {
     select.value = 'tvdb_show' // not allowed for movie library
     separatorPreview.syncSeparatorPlaceholderFields(wrapper, { show: true })
     expect(select.value).toBe('imdb')
+  })
+
+  it('initializeOverlays: populates separator placeholder picklists from Plex top audience-rated items', async () => {
+    const items = Array.from({ length: 12 }, (_, index) => ({
+      title: `Movie ${index + 1}`,
+      imdb_id: `tt123456${index}`,
+      tmdb_movie: `${600 + index}`
+    }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'success', items })
+    }))
+    document.body.innerHTML = `
+      <form id="configForm">
+        <select name="mov-library_1-template_variables[use_separator]">
+          <option value="gold" selected>gold</option>
+        </select>
+        <div data-separator-placeholder-wrapper="true" data-library-id="Movies" data-library-prefix="mov-library_1" data-library-type="movie">
+          <select class="separator-placeholder-source">
+            <option value="imdb" selected>IMDb ID</option>
+            <option value="tmdb_movie">TMDb Movie ID</option>
+          </select>
+          <div class="separator-placeholder-field" data-placeholder-source="imdb">
+            <select id="imdb_picklist" class="separator-placeholder-picklist" data-separator-placeholder-input="imdb" data-separator-placeholder-value=""></select>
+            <input type="hidden" id="imdb_picklist__lookup_labels">
+          </div>
+          <div class="separator-placeholder-field d-none" data-placeholder-source="tmdb_movie">
+            <select id="tmdb_picklist" class="separator-placeholder-picklist" data-separator-placeholder-input="tmdb_movie" data-separator-placeholder-value=""></select>
+            <input type="hidden" id="tmdb_picklist__lookup_labels">
+          </div>
+        </div>
+      </form>
+    `
+
+    separatorPreview.initializeOverlays('mov-library_1', true)
+    await flushAsyncWork()
+
+    expect(fetch).toHaveBeenCalledWith('/get_top_imdb_items/Movies?type=movie', { credentials: 'same-origin' })
+    const imdbOptions = Array.from(document.getElementById('imdb_picklist').querySelectorAll('option')).map(option => option.value).filter(Boolean)
+    expect(imdbOptions).toHaveLength(10)
+    expect(imdbOptions[0]).toBe('tt1234560')
+    expect(imdbOptions[9]).toBe('tt1234569')
+  })
+
+  it('initializeOverlays: rebuilds the active picklist for the selected placeholder source', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        status: 'success',
+        items: [{ title: 'The Matrix', imdb_id: 'tt0133093', tmdb_movie: '603' }]
+      })
+    }))
+    document.body.innerHTML = `
+      <form id="configForm">
+        <select name="mov-library_1-template_variables[use_separator]">
+          <option value="gold" selected>gold</option>
+        </select>
+        <div data-separator-placeholder-wrapper="true" data-library-id="Movies" data-library-prefix="mov-library_1" data-library-type="movie">
+          <select class="separator-placeholder-source">
+            <option value="imdb" selected>IMDb ID</option>
+            <option value="tmdb_movie">TMDb Movie ID</option>
+          </select>
+          <div class="separator-placeholder-field" data-placeholder-source="imdb">
+            <select id="imdb_picklist" class="separator-placeholder-picklist" data-separator-placeholder-input="imdb" data-separator-placeholder-value=""></select>
+            <input type="hidden" id="imdb_picklist__lookup_labels">
+          </div>
+          <div class="separator-placeholder-field d-none" data-placeholder-source="tmdb_movie">
+            <select id="tmdb_picklist" class="separator-placeholder-picklist" data-separator-placeholder-input="tmdb_movie" data-separator-placeholder-value=""></select>
+            <input type="hidden" id="tmdb_picklist__lookup_labels">
+          </div>
+        </div>
+      </form>
+    `
+
+    separatorPreview.initializeOverlays('mov-library_1', true)
+    await flushAsyncWork()
+
+    const source = document.querySelector('.separator-placeholder-source')
+    source.value = 'tmdb_movie'
+    source.dispatchEvent(new Event('change'))
+    await flushAsyncWork()
+
+    const imdbField = document.querySelector('[data-placeholder-source="imdb"]')
+    const tmdbField = document.querySelector('[data-placeholder-source="tmdb_movie"]')
+    expect(imdbField.classList.contains('d-none')).toBe(true)
+    expect(tmdbField.classList.contains('d-none')).toBe(false)
+    const tmdbOptions = Array.from(document.getElementById('tmdb_picklist').querySelectorAll('option')).map(option => option.value)
+    expect(tmdbOptions).toContain('603')
   })
 })

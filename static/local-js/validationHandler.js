@@ -64,7 +64,7 @@ export const ValidationHandler = {
     } else {
       console.log('[DEBUG] Validation Failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Please review your selections: ensure you have picked at least one library, selected an item inside each chosen library, and if using Separators, selected a valid <strong>Placeholder IMDb ID</strong>. Items needing attention are highlighted in red below.',
+        'Please review your selections: ensure you have picked at least one library, selected an item inside each chosen library, and if using Separators, selected a valid <strong>Placeholder ID</strong>. Items needing attention are highlighted in red below.',
         'danger',
         { html: true }
       )
