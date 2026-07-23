@@ -302,7 +302,7 @@ jobs:
       # See modules/helpers/_vite_manifest.py for how templates consume
       # this at request time; roadmap #1334 Step 4.
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
