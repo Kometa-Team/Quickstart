@@ -1,5 +1,7 @@
 """Library-page routes: card fragments, autosave, dependency hints, copy."""
 
+import time
+
 from flask import Blueprint, jsonify, render_template, request, session
 from werkzeug.datastructures import MultiDict
 
@@ -24,6 +26,9 @@ from modules.dependency_reasons import (
 # bodies for the `import quickstart as _qs` calls.
 
 bp = Blueprint("library_routes", __name__)
+
+_TOP_PLACEHOLDER_CACHE_TTL_SECONDS = 600
+_top_placeholder_cache = {}
 
 
 # --- top-level imdb items route -------------------------------------------
@@ -51,8 +56,40 @@ def get_top_imdb_items_route(library_name):
             }
         )
 
-    # Call with placeholder_id
-    items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
+    cache_key = (str(media_type or "").strip().lower(), str(library_name or "").strip().lower())
+    now = time.time()
+    cached = _top_placeholder_cache.get(cache_key)
+    if cached and now - cached.get("created", 0) < _TOP_PLACEHOLDER_CACHE_TTL_SECONDS:
+        return jsonify(
+            {
+                "status": "success",
+                "items": cached.get("items", []),
+                "saved_item": cached.get("saved_item"),
+                "cached": True,
+            }
+        )
+
+    try:
+        items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
+    except Exception as e:
+        helpers.ts_log(
+            f"Separator placeholder top-item lookup failed for library='{library_name}' type='{media_type}': {e}",
+            level="ERROR",
+        )
+        return jsonify(
+            {
+                "status": "lookup_unavailable",
+                "items": [],
+                "saved_item": None,
+                "message": ("Unable to load top audience-rated Plex items. " "Check Plex connectivity, library metadata, and database health, then try again."),
+            }
+        )
+
+    _top_placeholder_cache[cache_key] = {
+        "created": now,
+        "items": items,
+        "saved_item": saved_item,
+    }
 
     return jsonify({"status": "success", "items": items, "saved_item": saved_item})
 

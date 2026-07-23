@@ -17,6 +17,7 @@ import * as separatorPreview from '../../../static/local-js/modules/separatorPre
 // Silence chatty debug output from the DOM manipulators.
 vi.spyOn(console, 'log').mockImplementation(() => {})
 vi.spyOn(console, 'error').mockImplementation(() => {})
+vi.spyOn(console, 'warn').mockImplementation(() => {})
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -240,5 +241,42 @@ describe('separatorPreview: smoke tests', () => {
     expect(tmdbField.classList.contains('d-none')).toBe(false)
     const tmdbOptions = Array.from(document.getElementById('tmdb_picklist').querySelectorAll('option')).map(option => option.value)
     expect(tmdbOptions).toContain('603')
+  })
+
+  it('initializeOverlays: keeps saved picklist value when top item lookup is unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        status: 'lookup_unavailable',
+        items: [],
+        message: 'Unable to load top audience-rated Plex items.'
+      })
+    }))
+    document.body.innerHTML = `
+      <form id="configForm">
+        <select name="mov-library_1-template_variables[use_separator]">
+          <option value="gold" selected>gold</option>
+        </select>
+        <div data-separator-placeholder-wrapper="true" data-library-id="Unavailable Movies" data-library-prefix="mov-library_1" data-library-type="movie">
+          <select class="separator-placeholder-source">
+            <option value="imdb" selected>IMDb ID</option>
+            <option value="tmdb_movie">TMDb Movie ID</option>
+          </select>
+          <div class="separator-placeholder-field" data-placeholder-source="imdb">
+            <select id="imdb_picklist" class="separator-placeholder-picklist" data-separator-placeholder-input="imdb" data-separator-placeholder-value="tt0108052"></select>
+            <input type="hidden" id="imdb_picklist__lookup_labels">
+          </div>
+        </div>
+      </form>
+    `
+
+    separatorPreview.initializeOverlays('mov-library_1', true)
+    await flushAsyncWork()
+
+    const select = document.getElementById('imdb_picklist')
+    const options = Array.from(select.querySelectorAll('option')).map(option => option.textContent)
+    expect(select.value).toBe('tt0108052')
+    expect(options[0]).toBe('Unable to load top audience-rated Plex items.')
+    expect(options[1]).toContain('not revalidated')
   })
 })

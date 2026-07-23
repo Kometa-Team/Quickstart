@@ -143,7 +143,7 @@ function writeSeparatorLookupLabel (select) {
   hidden.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
-function setPlaceholderPicklistOptions (select, items) {
+function setPlaceholderPicklistOptions (select, items, lookupError = '') {
   if (!select) return
   const source = String(select.dataset.separatorPlaceholderInput || '').trim()
   const savedValue = String(select.dataset.separatorPlaceholderValue || select.value || '').trim()
@@ -164,13 +164,15 @@ function setPlaceholderPicklistOptions (select, items) {
   select.replaceChildren()
   const blank = document.createElement('option')
   blank.value = ''
-  blank.textContent = options.length ? '-- Choose a top audience-rated item --' : `No top items with ${placeholderValueLabel(source)} IDs found`
+  blank.textContent = lookupError || (options.length ? '-- Choose a top audience-rated item --' : `No top items with ${placeholderValueLabel(source)} IDs found`)
   select.appendChild(blank)
 
   if (savedValue && !seen.has(savedValue)) {
     const saved = document.createElement('option')
     saved.value = savedValue
-    saved.textContent = `Saved ${placeholderValueLabel(source)} ID: ${savedValue}`
+    saved.textContent = lookupError
+      ? `Saved ${placeholderValueLabel(source)} ID: ${savedValue} (not revalidated)`
+      : `Saved ${placeholderValueLabel(source)} ID: ${savedValue}`
     saved.dataset.lookupLabel = ''
     select.appendChild(saved)
   }
@@ -221,17 +223,31 @@ function loadSeparatorPlaceholderPicklists (wrapper) {
         if (!response.ok) throw new Error(`Top item lookup failed (${response.status})`)
         return response.json()
       })
-      .then(data => Array.isArray(data?.items) ? data.items : [])
+      .then(data => {
+        const items = Array.isArray(data?.items) ? data.items : []
+        if (data?.status && data.status !== 'success') {
+          return {
+            items,
+            error: String(data?.message || 'Top item lookup unavailable. Check Plex and try again.').trim()
+          }
+        }
+        return { items, error: '' }
+      })
       .catch(error => {
-        console.error('[Separator Placeholder] Failed to load top items:', error)
-        return []
+        console.warn('[Separator Placeholder] Failed to load top items:', error)
+        return {
+          items: [],
+          error: 'Top item lookup unavailable. Check Plex and try again.'
+        }
       })
     separatorPlaceholderPicklistCache.set(cacheKey, request)
   }
 
-  request.then(items => {
+  request.then(result => {
+    const items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : [])
+    const lookupError = Array.isArray(result) ? '' : String(result?.error || '').trim()
     wrapper.querySelectorAll('.separator-placeholder-picklist').forEach(select => {
-      setPlaceholderPicklistOptions(select, items)
+      setPlaceholderPicklistOptions(select, items, lookupError)
     })
   })
 }
