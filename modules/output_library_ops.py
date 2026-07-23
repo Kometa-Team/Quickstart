@@ -156,11 +156,13 @@ def build_mass_genre_update_operation(attr_group, library_type, lib_id):
     return result
 
 
-# Keys read from attr_group for each 'mass_<media>_update' operation.
-# Poster has one extra key (ignore_overlays) that background lacks;
-# otherwise the shape is identical, which is why they share a helper.
+# Keys read from attr_group for each mass image operation.  Poster has
+# show-level toggles and ignore_overlays, background has show-level
+# toggles, logo/square_art are item-level only in Kometa.
 _MASS_POSTER_UPDATE_KEYS = ("seasons", "episodes", "ignore_locked", "ignore_overlays", "source")
 _MASS_BACKGROUND_UPDATE_KEYS = ("seasons", "episodes", "ignore_locked", "source")
+_MASS_LOGO_UPDATE_KEYS = ("ignore_locked", "ignore_overlays", "source")
+_MASS_SQUARE_ART_UPDATE_KEYS = ("ignore_locked", "ignore_overlays", "source")
 
 # Values that the mass_poster/background 'empty' check considers
 # 'user hasn't set this field' -- distinct from _EMPTY_OVERRIDE_VALUES
@@ -209,6 +211,16 @@ def build_mass_background_update_operation(attr_group, library_type, lib_id):
     ``mass_background_source``.
     """
     return _build_mass_media_update_operation(attr_group, library_type, lib_id, "background", _MASS_BACKGROUND_UPDATE_KEYS)
+
+
+def build_mass_logo_update_operation(attr_group, library_type, lib_id):
+    """Return the ``mass_logo_update`` operations dict, or empty."""
+    return _build_mass_media_update_operation(attr_group, library_type, lib_id, "logo", _MASS_LOGO_UPDATE_KEYS)
+
+
+def build_mass_square_art_update_operation(attr_group, library_type, lib_id):
+    """Return the ``mass_square_art_update`` operations dict, or empty."""
+    return _build_mass_media_update_operation(attr_group, library_type, lib_id, "square_art", _MASS_SQUARE_ART_UPDATE_KEYS)
 
 
 def build_mapper_operations(attr_group, library_type, lib_id):
@@ -452,6 +464,24 @@ _GROUPED_OPERATIONS = (
     "sonarr_remove_by_tag",
 )
 
+_MASS_METADATA_GROUPED_OPERATIONS = frozenset(
+    {
+        "mass_content_rating_update",
+        "mass_original_title_update",
+        "mass_studio_update",
+        "mass_originally_available_update",
+        "mass_added_at_update",
+        "mass_audience_rating_update",
+        "mass_critic_rating_update",
+        "mass_user_rating_update",
+        "mass_episode_audience_rating_update",
+        "mass_episode_critic_rating_update",
+        "mass_episode_user_rating_update",
+        "mass_background_update",
+        "mass_poster_update",
+    }
+)
+
 # Rating operations whose ``custom_string`` fallback must be coerced
 # to float instead of string.  Frozen so callers can't mutate it.
 _RATING_OPERATIONS_FLOAT_COERCE = frozenset(
@@ -521,7 +551,7 @@ def _format_grouped_op_sequence(values):
     return seq
 
 
-def build_grouped_mass_update_operations(attr_group, library_type, lib_id):
+def build_grouped_mass_update_operations(attr_group, library_type, lib_id, *, include_mass_metadata_legacy=True):
     """Return a dict of the 17 grouped mass_update operations.
 
     For each operation name in ``_GROUPED_OPERATIONS``, reads three
@@ -543,6 +573,8 @@ def build_grouped_mass_update_operations(attr_group, library_type, lib_id):
     """
     result = {}
     for op in _GROUPED_OPERATIONS:
+        if not include_mass_metadata_legacy and op in _MASS_METADATA_GROUPED_OPERATIONS:
+            continue
         values = []
 
         # 1. Ordered source list (sortable)
@@ -568,6 +600,104 @@ def build_grouped_mass_update_operations(attr_group, library_type, lib_id):
 
         if values:
             result[op] = _format_grouped_op_sequence(values)
+
+    return result
+
+
+def _single_or_sequence(value):
+    """Use scalar YAML for one source and block sequence for multiple."""
+    if isinstance(value, CommentedSeq):
+        items = list(value)
+    elif isinstance(value, list):
+        items = value
+    else:
+        return value
+    if len(items) == 1:
+        return items[0]
+    seq = CommentedSeq(items)
+    seq.fa.set_block_style()
+    return seq
+
+
+_MASS_METADATA_DIRECT_ALIASES = (
+    ("mass_original_title_update", "original_title"),
+    ("mass_studio_update", "studio"),
+    ("mass_originally_available_update", "originally_available"),
+    ("mass_added_at_update", "added_at"),
+)
+
+_MASS_METADATA_RATING_ALIASES = (
+    ("mass_audience_rating_update", "audience"),
+    ("mass_critic_rating_update", "critic"),
+    ("mass_user_rating_update", "user"),
+    ("mass_episode_audience_rating_update", "episode_audience"),
+    ("mass_episode_critic_rating_update", "episode_critic"),
+    ("mass_episode_user_rating_update", "episode_user"),
+)
+
+
+def build_mass_metadata_update_operation(attr_group, library_type, lib_id):
+    """Return Kometa's grouped ``mass_metadata_update`` operation.
+
+    Quickstart stores/edit these controls as flat legacy operation
+    fields.  Kometa does the same internally after parsing the grouped
+    key, so this builder only canonicalizes final YAML output.
+    """
+    result = {}
+    grouped_ops = build_grouped_mass_update_operations(attr_group, library_type, lib_id)
+
+    genre = {}
+    genre_update = build_mass_genre_update_operation(attr_group, library_type, lib_id)
+    if genre_update:
+        genre["source"] = _single_or_sequence(genre_update)
+    mappers = build_mapper_operations(attr_group, library_type, lib_id)
+    if mappers.get("genre_mapper"):
+        genre["mappings"] = mappers["genre_mapper"]
+    if genre:
+        result["genre"] = genre
+
+    content_rating = {}
+    if grouped_ops.get("mass_content_rating_update"):
+        content_rating["source"] = _single_or_sequence(grouped_ops["mass_content_rating_update"])
+    if mappers.get("content_rating_mapper"):
+        content_rating["mappings"] = mappers["content_rating_mapper"]
+    if content_rating:
+        result["content_rating"] = content_rating
+
+    for old_key, new_key in _MASS_METADATA_DIRECT_ALIASES:
+        value = grouped_ops.get(old_key)
+        if value:
+            result[new_key] = _single_or_sequence(value)
+
+    labels = attr_group.get(_attr_key(library_type, lib_id, "mass_imdb_parental_labels"))
+    if labels not in _SETTINGS_EMPTY_VALUES:
+        result["labels"] = labels
+
+    collection_mode = attr_group.get(_attr_key(library_type, lib_id, "mass_collection_mode"))
+    if collection_mode not in _SETTINGS_EMPTY_VALUES:
+        result["collections"] = {"mode": collection_mode}
+
+    ratings = {}
+    for old_key, new_key in _MASS_METADATA_RATING_ALIASES:
+        value = grouped_ops.get(old_key)
+        if value:
+            ratings[new_key] = _single_or_sequence(value)
+    if ratings:
+        result["ratings"] = ratings
+
+    images = (
+        ("poster", build_mass_poster_update_operation(attr_group, library_type, lib_id)),
+        ("background", build_mass_background_update_operation(attr_group, library_type, lib_id)),
+        ("logo", build_mass_logo_update_operation(attr_group, library_type, lib_id)),
+        ("square_art", build_mass_square_art_update_operation(attr_group, library_type, lib_id)),
+    )
+    for image_key, image_value in images:
+        if image_value:
+            result[image_key] = image_value
+
+    backup = build_metadata_backup_operation(attr_group, library_type, lib_id)
+    if backup:
+        result["backup"] = backup
 
     return result
 
@@ -623,8 +753,6 @@ _SETTINGS_EMPTY_VALUES = frozenset({None, "", False})
 _LIBRARY_OPERATIONS_FIELDS = (
     "assets_for_all",
     "assets_for_all_collections",
-    "mass_imdb_parental_labels",
-    "mass_collection_mode",
     "update_blank_track_titles",
     "remove_title_parentheses",
     "split_duplicates",

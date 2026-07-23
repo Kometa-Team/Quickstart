@@ -70,6 +70,15 @@ def _normalize_op_items(value: Any) -> list:
     return [value]
 
 
+def _first_valid_option(raw_value: Any, valid_options: set[str]) -> str | None:
+    """Return the first valid option from a scalar or list-like value."""
+    for item in _normalize_op_items(raw_value):
+        candidate = str(item).strip()
+        if candidate in valid_options:
+            return candidate
+    return None
+
+
 def handle_mass_update_operation(
     lib_id: str,
     lib_name: str,
@@ -176,10 +185,13 @@ def handle_toggle_select_operation(
     select_options = set(definition.get("select_options") or [])
     toggle_keys = set(definition.get("toggle_keys") or [])
     toggle_aliases = {}
+    stripped_prefix = op_key.replace("_update", "_", 1)
     for key in toggle_keys:
         toggle_aliases[key] = key
         if key.startswith(f"{op_key}_"):
             toggle_aliases[key.replace(f"{op_key}_", "", 1)] = key
+        if key.startswith(stripped_prefix):
+            toggle_aliases[key.replace(stripped_prefix, "", 1)] = key
 
     def resolve_toggle_key(raw_key: str) -> str | None:
         return toggle_aliases.get(raw_key)
@@ -191,8 +203,8 @@ def handle_toggle_select_operation(
         for raw_key, raw_value in op_value.items():
             key = str(raw_key)
             if key == "source":
-                candidate = str(raw_value).strip()
-                if candidate in select_options:
+                candidate = _first_valid_option(raw_value, select_options)
+                if candidate:
                     source = candidate
                     report.add("imported", f"libraries.{lib_name}.operations.{op_key}.source")
                     imported_any = True
@@ -333,6 +345,294 @@ def handle_delete_collections_operation(
     return True, imported_any
 
 
+def handle_metadata_backup_operation(
+    lib_id: str,
+    lib_name: str,
+    op_key: str,
+    op_value: Any,
+    *,
+    libraries_data: dict[str, Any],
+    report: ImportReport,
+) -> tuple[bool, bool]:
+    """Dispatch the ``metadata_backup`` operation into flat fields."""
+    if op_key != "metadata_backup":
+        return False, False
+    if not isinstance(op_value, dict):
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "Unsupported metadata_backup format.")
+        return True, False
+
+    imported_any = False
+    field_map = {
+        "path": "metadata_backup_path",
+        "exclude": "metadata_backup_exclude",
+        "sync_tags": "sync_tags",
+        "add_blank_entries": "add_blank_entries",
+    }
+    for raw_key, raw_value in op_value.items():
+        key = str(raw_key)
+        target = field_map.get(key)
+        if not target:
+            report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.{key}")
+            continue
+        if key == "exclude":
+            values = raw_value if isinstance(raw_value, list) else _normalize_op_items(raw_value)
+            cleaned = [str(item).strip() for item in values if str(item).strip()]
+            if cleaned:
+                libraries_data[f"{lib_id}-attribute_{target}"] = _encode_json(cleaned)
+                imported_any = True
+        else:
+            libraries_data[f"{lib_id}-attribute_{target}"] = raw_value
+            imported_any = True
+        report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{key}")
+
+    if imported_any:
+        report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+    else:
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
+    return True, imported_any
+
+
+_MASS_METADATA_DIRECT_ALIASES = {
+    "original_title": "mass_original_title_update",
+    "studio": "mass_studio_update",
+    "originally_available": "mass_originally_available_update",
+    "added_at": "mass_added_at_update",
+}
+
+_MASS_METADATA_RATING_ALIASES = {
+    "audience": "mass_audience_rating_update",
+    "critic": "mass_critic_rating_update",
+    "user": "mass_user_rating_update",
+    "episode_audience": "mass_episode_audience_rating_update",
+    "episode_critic": "mass_episode_critic_rating_update",
+    "episode_user": "mass_episode_user_rating_update",
+}
+
+_MASS_METADATA_IMAGE_ALIASES = {
+    "poster": "mass_poster_update",
+    "background": "mass_background_update",
+    "logo": "mass_logo_update",
+    "square_art": "mass_square_art_update",
+    "squart_art": "mass_square_art_update",
+}
+
+
+def _mass_metadata_source(value: Any) -> Any:
+    if isinstance(value, dict) and "source" in value:
+        return value.get("source")
+    return value
+
+
+def _mass_metadata_dict_keys_as_sources(value: dict, ignored_keys: set[str]) -> list[str]:
+    return [str(key) for key in value if str(key) not in ignored_keys]
+
+
+def handle_mass_image_update_operation(
+    lib_id: str,
+    lib_name: str,
+    op_key: str,
+    op_value: Any,
+    *,
+    toggle_select_defs: dict,
+    libraries_data: dict[str, Any],
+    report: ImportReport,
+) -> tuple[bool, bool]:
+    """Dispatch Kometa's grouped ``mass_image_update`` compatibility op."""
+    if op_key != "mass_image_update":
+        return False, False
+    if not isinstance(op_value, dict):
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "Unsupported mass_image_update format.")
+        return True, False
+
+    imported_any = False
+    for image_key, image_value in op_value.items():
+        old_key = _MASS_METADATA_IMAGE_ALIASES.get(str(image_key))
+        if not old_key:
+            report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.{image_key}")
+            continue
+        _handled, imported = handle_toggle_select_operation(
+            lib_id,
+            lib_name,
+            old_key,
+            image_value,
+            toggle_select_defs=toggle_select_defs,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        imported_any = imported_any or imported
+
+    if imported_any:
+        report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+    else:
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
+    return True, imported_any
+
+
+def handle_mass_metadata_update_operation(
+    lib_id: str,
+    lib_name: str,
+    op_key: str,
+    op_value: Any,
+    *,
+    mass_update_defs: dict,
+    toggle_select_defs: dict,
+    libraries_data: dict[str, Any],
+    report: ImportReport,
+) -> tuple[bool, bool]:
+    """Dispatch grouped ``mass_metadata_update`` into legacy flat UI keys."""
+    if op_key != "mass_metadata_update":
+        return False, False
+    if not isinstance(op_value, dict):
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "Unsupported mass_metadata_update format.")
+        return True, False
+
+    imported_any = False
+
+    for new_key, old_key in _MASS_METADATA_DIRECT_ALIASES.items():
+        if new_key not in op_value:
+            continue
+        _handled, imported = handle_mass_update_operation(
+            lib_id,
+            lib_name,
+            old_key,
+            _mass_metadata_source(op_value[new_key]),
+            mass_update_defs=mass_update_defs,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        imported_any = imported_any or imported
+        if imported:
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{new_key}")
+
+    if "genre" in op_value:
+        genre_value = op_value["genre"]
+        if isinstance(genre_value, dict):
+            if isinstance(genre_value.get("mappings"), dict) and genre_value["mappings"]:
+                libraries_data[f"{lib_id}-attribute_genre_mapper"] = json.dumps(genre_value["mappings"], ensure_ascii=True)
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}.genre.mappings")
+                imported_any = True
+            source_value = genre_value.get("source")
+            if source_value is None:
+                source_value = _mass_metadata_dict_keys_as_sources(genre_value, {"mappings", "schedule"})
+        else:
+            source_value = genre_value
+        if source_value:
+            _handled, imported = handle_mass_update_operation(
+                lib_id,
+                lib_name,
+                "mass_genre_update",
+                source_value,
+                mass_update_defs=mass_update_defs,
+                libraries_data=libraries_data,
+                report=report,
+            )
+            imported_any = imported_any or imported
+            if imported:
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}.genre")
+
+    if "content_rating" in op_value:
+        rating_value = op_value["content_rating"]
+        if isinstance(rating_value, dict):
+            if isinstance(rating_value.get("mappings"), dict) and rating_value["mappings"]:
+                libraries_data[f"{lib_id}-attribute_content_rating_mapper"] = json.dumps(rating_value["mappings"], ensure_ascii=True)
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}.content_rating.mappings")
+                imported_any = True
+            source_value = rating_value.get("source")
+            if source_value is None:
+                source_value = _mass_metadata_dict_keys_as_sources(rating_value, {"mappings", "schedule"})
+        else:
+            source_value = rating_value
+        if source_value:
+            _handled, imported = handle_mass_update_operation(
+                lib_id,
+                lib_name,
+                "mass_content_rating_update",
+                source_value,
+                mass_update_defs=mass_update_defs,
+                libraries_data=libraries_data,
+                report=report,
+            )
+            imported_any = imported_any or imported
+            if imported:
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}.content_rating")
+
+    labels = op_value.get("labels")
+    if labels is not None:
+        label_value = labels.get("severity") if isinstance(labels, dict) else labels
+        if label_value not in (None, ""):
+            libraries_data[f"{lib_id}-attribute_mass_imdb_parental_labels"] = label_value
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}.labels")
+            imported_any = True
+
+    collections = op_value.get("collections")
+    if collections is not None:
+        collection_mode = collections.get("mode") if isinstance(collections, dict) else collections
+        if collection_mode not in (None, ""):
+            libraries_data[f"{lib_id}-attribute_mass_collection_mode"] = collection_mode
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}.collections")
+            imported_any = True
+
+    ratings = op_value.get("ratings")
+    if isinstance(ratings, dict):
+        for new_key, old_key in _MASS_METADATA_RATING_ALIASES.items():
+            if new_key not in ratings:
+                continue
+            _handled, imported = handle_mass_update_operation(
+                lib_id,
+                lib_name,
+                old_key,
+                _mass_metadata_source(ratings[new_key]),
+                mass_update_defs=mass_update_defs,
+                libraries_data=libraries_data,
+                report=report,
+            )
+            imported_any = imported_any or imported
+            if imported:
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}.ratings.{new_key}")
+    elif ratings is not None:
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.ratings", "Unsupported ratings format.")
+
+    for new_key, old_key in _MASS_METADATA_IMAGE_ALIASES.items():
+        if new_key not in op_value:
+            continue
+        _handled, imported = handle_toggle_select_operation(
+            lib_id,
+            lib_name,
+            old_key,
+            op_value[new_key],
+            toggle_select_defs=toggle_select_defs,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        imported_any = imported_any or imported
+        if imported:
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{new_key}")
+
+    if "backup" in op_value:
+        _handled, imported = handle_metadata_backup_operation(
+            lib_id,
+            lib_name,
+            "metadata_backup",
+            op_value["backup"],
+            libraries_data=libraries_data,
+            report=report,
+        )
+        imported_any = imported_any or imported
+        if imported:
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}.backup")
+
+    known_keys = set(_MASS_METADATA_DIRECT_ALIASES) | {"genre", "content_rating", "labels", "collections", "ratings", "backup"} | set(_MASS_METADATA_IMAGE_ALIASES)
+    for key in op_value:
+        if str(key) not in known_keys and str(key) != "schedule":
+            report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.{key}", "Unsupported mass_metadata_update field.")
+
+    if imported_any:
+        report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+    else:
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
+    return True, imported_any
+
+
 def process_operations_block(
     lib_id: str,
     lib_name: str,
@@ -388,6 +688,45 @@ def process_operations_block(
             lib_name,
             key,
             value,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        if handled:
+            imported_ops = imported_ops or imported
+            continue
+
+        handled, imported = handle_mass_metadata_update_operation(
+            lib_id,
+            lib_name,
+            key,
+            value,
+            mass_update_defs=mass_update_defs,
+            toggle_select_defs=toggle_select_defs,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        if handled:
+            imported_ops = imported_ops or imported
+            continue
+
+        handled, imported = handle_metadata_backup_operation(
+            lib_id,
+            lib_name,
+            key,
+            value,
+            libraries_data=libraries_data,
+            report=report,
+        )
+        if handled:
+            imported_ops = imported_ops or imported
+            continue
+
+        handled, imported = handle_mass_image_update_operation(
+            lib_id,
+            lib_name,
+            key,
+            value,
+            toggle_select_defs=toggle_select_defs,
             libraries_data=libraries_data,
             report=report,
         )

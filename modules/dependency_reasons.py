@@ -84,6 +84,7 @@ QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
+QS_TRAKT_DEP_SOURCE_PREFIXES = ("trakt",)
 QS_MDBLIST_OVERLAY_IMAGE_VALUES = {"letterboxd", "metacritic", "rt_tomato", "rt_popcorn", "mdb"}
 QS_ANIDB_OVERLAY_IMAGE_VALUES = {"anidb"}
 QS_TRAKT_OVERLAY_IMAGE_VALUES = {"trakt"}
@@ -376,6 +377,15 @@ def _attribute_dependency_source_reasons(libraries_data, source_prefixes):
         if prefix and prefix not in active_prefixes:
             continue
 
+        attr_body = key.split("-attribute_", 1)[1]
+        if attr_body.endswith("_source"):
+            operation = attr_body[: -len("_source")]
+            source_value = str(raw_value or "").strip().lower()
+            if operation.startswith("mass_") and matches_source(source_value):
+                detail = f"{operation} uses {source_value}"
+                _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+                continue
+
         operation, source_value = extract_operation_and_source(key)
         if operation and source_value and _is_truthy_setting_value(raw_value):
             detail = f"{operation} uses {source_value}"
@@ -417,11 +427,19 @@ def _libraries_data_trakt_dependency_reasons(libraries_data):
         QS_TRAKT_DEP_COLLECTION_IDS,
         "Trakt Charts collection enabled",
     )
+    attribute_reasons = _attribute_dependency_source_reasons(
+        libraries_data,
+        QS_TRAKT_DEP_SOURCE_PREFIXES,
+    )
     overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
         libraries_data,
         QS_TRAKT_OVERLAY_IMAGE_VALUES,
     )
-    return collection_reasons + [reason for reason in overlay_reasons if reason not in collection_reasons]
+    reasons = collection_reasons[:]
+    for reason in attribute_reasons + overlay_reasons:
+        if reason not in reasons:
+            reasons.append(reason)
+    return reasons
 
 
 def _libraries_data_omdb_dependency_reasons(libraries_data):

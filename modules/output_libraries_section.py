@@ -38,10 +38,7 @@ from modules.output_library_ops import (
     build_grouped_mass_update_operations,
     build_library_operations,
     build_library_settings,
-    build_mapper_operations,
-    build_mass_background_update_operation,
-    build_mass_genre_update_operation,
-    build_mass_poster_update_operation,
+    build_mass_metadata_update_operation,
     build_metadata_backup_operation,
     build_service_overrides,
     build_template_variables,
@@ -145,10 +142,6 @@ def build_libraries_section(
         operations.update(build_library_operations(attr_group, library_type, lib_id))
         service_name, service_overrides = build_service_overrides(attr_group, library_type, lib_id)
 
-        mass_genre_update = build_mass_genre_update_operation(attr_group, library_type, lib_id)
-        if mass_genre_update:
-            operations["mass_genre_update"] = mass_genre_update
-
         delete_collections = build_delete_collections_operation(attr_group, library_type, lib_id)
         if delete_collections:
             operations["delete_collections"] = delete_collections
@@ -198,21 +191,18 @@ def build_libraries_section(
         if template_variable_comments:
             entry[_TEMPLATE_VARIABLE_COMMENTS_KEY] = template_variable_comments
 
-        # Grouped mass update operations (mass_genre_update handled above)
-        operations.update(build_grouped_mass_update_operations(attr_group, library_type, lib_id))
-        operations.update(build_mapper_operations(attr_group, library_type, lib_id))
+        # Grouped mass metadata output.  Quickstart's DB/UI still stores
+        # these as flat operation fields, matching Kometa's parsed runtime
+        # fields, but final YAML should use the canonical grouped key.
+        mass_metadata = build_mass_metadata_update_operation(attr_group, library_type, lib_id)
+        if mass_metadata:
+            operations["mass_metadata_update"] = mass_metadata
+
+        operations.update(build_grouped_mass_update_operations(attr_group, library_type, lib_id, include_mass_metadata_legacy=False))
 
         backup = build_metadata_backup_operation(attr_group, library_type, lib_id)
-        if backup:
+        if backup and not mass_metadata:
             operations["metadata_backup"] = backup
-
-        poster = build_mass_poster_update_operation(attr_group, library_type, lib_id)
-        if poster:
-            operations["mass_poster_update"] = poster
-
-        background = build_mass_background_update_operation(attr_group, library_type, lib_id)
-        if background:
-            operations["mass_background_update"] = background
 
         # Top-level fields (Remove/Reset Overlays, etc.)
         top_group = top_level.get(lib_id, {})
