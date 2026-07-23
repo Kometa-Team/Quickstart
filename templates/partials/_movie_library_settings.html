@@ -5,11 +5,18 @@
         {% include "partials/_library_core_separator.html" %}
 
         <!-- Movie Collections -->
-        <div class="accordion-item">
-            <h2 class="accordion-header">
+        {% set collections_lazy_count = lazy_section_override_counts.get('collections', 0) if lazy_section_override_counts is defined else 0 %}
+        {% set collections_lazy_active = lazy_section_active_states.get('collections', false) if lazy_section_active_states is defined else false %}
+        {% set collections_lazy_signal = collections_lazy_count > 0 or collections_lazy_active %}
+        <div class="accordion-item{% if collections_lazy_signal %} template-variable-section-has-overrides{% endif %}">
+            <h2 class="accordion-header{% if collections_lazy_signal %} template-variable-section-has-overrides{% endif %}">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse"
                     data-bs-target="#{{ library.id }}-collections">
                     Collections
+                    <span class="small accordion-override-summary ms-3{% if collections_lazy_count <= 0 %} d-none{% endif %}"
+                        data-accordion-override-summary>
+                        {{ collections_lazy_count }} {{ 'override' if collections_lazy_count == 1 else 'overrides' }}
+                    </span>
                 </button>
             </h2>
             <div id="{{ library.id }}-collections" class="accordion-collapse collapse">
@@ -17,7 +24,8 @@
                     {% if defer_heavy_sections %}
                     <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
                         data-library-lazy-section="collections" data-library-id="{{ library.id }}"
-                        data-lazy-override-count="{{ lazy_section_override_counts.collections | default(0) }}">
+                        data-lazy-override-count="{{ collections_lazy_count }}"
+                        data-lazy-active="{{ 'true' if collections_lazy_active else 'false' }}">
                         <div class="spinner-border spinner-border-sm text-info d-none" role="status"
                             aria-hidden="true"></div>
                         <span>Open this section to load collection settings.</span>
@@ -30,11 +38,18 @@
         </div>
 
         <!-- Movie Overlays -->
-        <div class="accordion-item">
-            <h2 class="accordion-header">
+        {% set overlays_lazy_count = lazy_section_override_counts.get('overlays', 0) if lazy_section_override_counts is defined else 0 %}
+        {% set overlays_lazy_active = lazy_section_active_states.get('overlays', false) if lazy_section_active_states is defined else false %}
+        {% set overlays_lazy_signal = overlays_lazy_count > 0 or overlays_lazy_active %}
+        <div class="accordion-item{% if overlays_lazy_signal %} template-variable-section-has-overrides{% endif %}">
+            <h2 class="accordion-header{% if overlays_lazy_signal %} template-variable-section-has-overrides{% endif %}">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse"
                     data-bs-target="#{{ library.id }}-overlays">
                     Overlays
+                    <span class="small accordion-override-summary ms-3{% if overlays_lazy_count <= 0 %} d-none{% endif %}"
+                        data-accordion-override-summary>
+                        {{ overlays_lazy_count }} {{ 'override' if overlays_lazy_count == 1 else 'overrides' }}
+                    </span>
                 </button>
             </h2>
             <div id="{{ library.id }}-overlays" class="accordion-collapse collapse">
@@ -42,7 +57,8 @@
                     {% if defer_heavy_sections %}
                     <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
                         data-library-lazy-section="overlays" data-library-id="{{ library.id }}"
-                        data-lazy-override-count="{{ lazy_section_override_counts.overlays | default(0) }}">
+                        data-lazy-override-count="{{ overlays_lazy_count }}"
+                        data-lazy-active="{{ 'true' if overlays_lazy_active else 'false' }}">
                         <div class="spinner-border spinner-border-sm text-info d-none" role="status"
                             aria-hidden="true"></div>
                         <span>Open this section to load overlay settings.</span>

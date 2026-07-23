@@ -180,8 +180,10 @@ def _library_fragment_context(library_id, *, include_attributes=True, include_co
         return None
 
     attribute_config = helpers.load_quickstart_config("quickstart_attributes.json") if include_attributes else {}
-    collection_config = helpers.load_quickstart_config("quickstart_collections.json") if include_collections else []
-    overlay_config = helpers.load_quickstart_overlay_config() if include_overlays else []
+    lazy_collection_config = helpers.load_quickstart_config("quickstart_collections.json")
+    lazy_overlay_config = helpers.load_quickstart_overlay_config()
+    collection_config = lazy_collection_config if include_collections else []
+    overlay_config = lazy_overlay_config if include_overlays else []
 
     legacy_playlist_libraries = _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries, show_libraries)
     data = persistence.retrieve_settings("025-libraries")
@@ -203,13 +205,34 @@ def _library_fragment_context(library_id, *, include_attributes=True, include_co
         "movie_images": image_data.get("movie", []),
         "configured_ids": configured_ids,
         "legacy_playlist_libraries": legacy_playlist_libraries,
-        "lazy_section_override_counts": _lazy_section_override_counts(library, data.get("libraries", {}), telemetry_data),
+        "lazy_section_override_counts": _lazy_section_override_counts(
+            library,
+            data.get("libraries", {}),
+            telemetry_data,
+            collection_config=lazy_collection_config,
+            overlay_config=lazy_overlay_config,
+        ),
+        "lazy_section_active_states": _lazy_section_active_states(
+            library,
+            data.get("libraries", {}),
+            collection_config=lazy_collection_config,
+            overlay_config=lazy_overlay_config,
+        ),
         "collection_group_override_counts": (
             _collection_group_override_counts_for_library(
                 library,
                 data.get("libraries", {}),
                 collection_config,
                 telemetry_data,
+            )
+            if include_collections
+            else {}
+        ),
+        "collection_group_active_states": (
+            _collection_group_active_states_for_library(
+                library,
+                data.get("libraries", {}),
+                collection_config,
             )
             if include_collections
             else {}
@@ -376,6 +399,35 @@ def _collection_group_override_counts_for_library(library, libraries_data, colle
     telemetry_data = telemetry_data if isinstance(telemetry_data, dict) else {}
     library_with_plex["plex_pass"] = bool(telemetry_data.get("plex_pass"))
     return {index: _count_collection_group_overrides_for_library(library_with_plex, libraries_data, group) for index, group in enumerate(collection_config)}
+
+
+def _collection_group_has_active_selection_for_library(library, libraries_data, group):
+    if not isinstance(libraries_data, dict) or not isinstance(group, dict) or not isinstance(library, dict):
+        return False
+    library_id = library.get("id")
+    library_type = library.get("type")
+    if not library_id or not library_type:
+        return False
+    for collection in group.get("collections", []) or []:
+        media_types = collection.get("media_types") or []
+        if media_types and library_type not in media_types:
+            continue
+        collection_id = str(collection.get("id", "")).strip()
+        if not collection_id:
+            continue
+        if _coerce_bool(libraries_data.get(f"{library_id}-{collection_id}")):
+            return True
+    return False
+
+
+def _collection_group_active_states_for_library(library, libraries_data, collection_config):
+    if not isinstance(collection_config, list):
+        return {}
+    return {index: _collection_group_has_active_selection_for_library(library, libraries_data, group) for index, group in enumerate(collection_config)}
+
+
+def _has_active_collection_selection_for_library(library, libraries_data, collection_config):
+    return any(_collection_group_active_states_for_library(library, libraries_data, collection_config).values())
 
 
 def _iter_overlay_template_items(template_variables):
@@ -566,16 +618,42 @@ def _count_overlay_overrides_for_library(library, libraries_data, overlay_config
     return count
 
 
-def _lazy_section_override_counts(library, libraries_data, telemetry_data=None):
+def _has_active_overlay_selection_for_library(library, libraries_data, overlay_config):
+    if not isinstance(libraries_data, dict):
+        return False
+    library_id = library["id"]
+    library_type = library["type"]
+    render_types = ["movie"] if library_type == "movie" else ["show", "season", "episode"]
+    for group in overlay_config or []:
+        for overlay in group.get("overlays", []):
+            for render_type in render_types:
+                media_types = overlay.get("media_types") or []
+                if media_types and render_type not in media_types:
+                    continue
+                if _overlay_group_is_active(library_id, render_type, group, overlay, libraries_data):
+                    return True
+    return False
+
+
+def _lazy_section_override_counts(library, libraries_data, telemetry_data=None, collection_config=None, overlay_config=None):
     library_with_plex = dict(library)
     # Collection visibility for visible_* variables depends on Plex Pass.
     telemetry_data = telemetry_data if isinstance(telemetry_data, dict) else {}
     library_with_plex["plex_pass"] = bool(telemetry_data.get("plex_pass"))
-    collection_config = helpers.load_quickstart_config("quickstart_collections.json")
-    overlay_config = helpers.load_quickstart_overlay_config()
+    collection_config = collection_config if isinstance(collection_config, list) else helpers.load_quickstart_config("quickstart_collections.json")
+    overlay_config = overlay_config if isinstance(overlay_config, list) else helpers.load_quickstart_overlay_config()
     return {
         "collections": _count_collection_overrides_for_library(library_with_plex, libraries_data, collection_config),
         "overlays": _count_overlay_overrides_for_library(library, libraries_data, overlay_config),
+    }
+
+
+def _lazy_section_active_states(library, libraries_data, collection_config=None, overlay_config=None):
+    collection_config = collection_config if isinstance(collection_config, list) else helpers.load_quickstart_config("quickstart_collections.json")
+    overlay_config = overlay_config if isinstance(overlay_config, list) else helpers.load_quickstart_overlay_config()
+    return {
+        "collections": _has_active_collection_selection_for_library(library, libraries_data, collection_config),
+        "overlays": _has_active_overlay_selection_for_library(library, libraries_data, overlay_config),
     }
 
 
