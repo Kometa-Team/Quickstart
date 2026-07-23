@@ -883,6 +883,32 @@ def test_workspace_context_keeps_trakt_optional_without_dependency(monkeypatch, 
     assert ctx["trakt_requirement_reasons"] == []
 
 
+def test_trakt_optional_token_only_residue_stays_unknown(qs_module):
+    section_rows = {
+        "trakt": {
+            "validated": False,
+            "user_entered": True,
+            "data": {
+                "validation_status": "",
+                "validation_reason": "",
+                "trakt": {
+                    "authorization": {
+                        "access_token": "stale-access-token",
+                        "refresh_token": "stale-refresh-token",
+                    },
+                    "client_id": None,
+                    "client_secret": None,
+                    "pin": None,
+                    "force_refresh": False,
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("130-trakt", "optional", section_rows, config_exists=True)
+    assert state == "unknown"
+
+
 def test_optional_skipped_without_changes_stays_unknown(qs_module):
     section_rows = {
         "tautulli": {
@@ -990,6 +1016,31 @@ def test_mal_optional_without_credentials_ignores_stale_failed_marker(qs_module)
                 "mal": {
                     "cache_expiration": "60",
                     "authorization": {"access_token": ""},
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("140-mal", "optional", section_rows, config_exists=True)
+    assert state == "unknown"
+
+
+def test_mal_optional_token_only_residue_stays_unknown(qs_module):
+    section_rows = {
+        "mal": {
+            "validated": False,
+            "user_entered": True,
+            "data": {
+                "validation_status": "",
+                "validation_reason": "",
+                "mal": {
+                    "authorization": {
+                        "access_token": "stale-access-token",
+                        "refresh_token": "stale-refresh-token",
+                    },
+                    "client_id": None,
+                    "client_secret": None,
+                    "localhost_url": None,
                 },
             },
         }

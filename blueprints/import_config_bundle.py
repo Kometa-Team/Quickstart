@@ -101,24 +101,23 @@ def _extract_zip_bundle(raw_text: bytes) -> BundleExtractionResult:
 
     try:
         with zipfile.ZipFile(BytesIO(raw_text)) as archive:
-            archive_members = archive.namelist()
+            archive_members = _normalized_archive_members(archive.namelist())
             unexpected_members = []
             bundled_library_files = []
             bundled_overlay_images = []
             config_files = []
             font_files = []
 
-            for member_name in archive_members:
-                normalized_member = bundle_artifacts.normalize_bundle_member_name(member_name)
+            for member_name, normalized_member in archive_members:
                 if not normalized_member:
                     continue
                 if not bundle_artifacts.is_allowed_bundle_member(normalized_member):
                     unexpected_members.append(normalized_member)
                     continue
                 if _is_bundled_library_archive_member(normalized_member):
-                    bundled_library_files.append(member_name)
+                    bundled_library_files.append((member_name, normalized_member))
                 elif bundle_artifacts.is_bundled_overlay_image_archive_member(normalized_member):
-                    bundled_overlay_images.append(member_name)
+                    bundled_overlay_images.append((member_name, normalized_member))
                 elif bundle_artifacts.yaml_path_suffix(normalized_member):
                     config_files.append(member_name)
                 elif normalized_member.lower().endswith((".ttf", ".otf")):
@@ -157,6 +156,40 @@ def _extract_zip_bundle(raw_text: bytes) -> BundleExtractionResult:
         extracted_dir=extracted_dir,
         extracted_fonts=extracted_fonts,
     )
+
+
+def _normalized_archive_members(member_names):
+    """Return ``(archive_name, bundle_relative_name)`` pairs.
+
+    Windows Explorer commonly zips an exported bundle by wrapping the
+    original contents in one top-level folder. Strip that single common
+    wrapper so ``wrapper/config.yml`` and ``wrapper/<config>/...`` import
+    the same way as the original Quickstart bundle.
+    """
+    normalized = []
+    for member_name in member_names:
+        if str(member_name or "").replace("\\", "/").endswith("/"):
+            continue
+        member = bundle_artifacts.normalize_bundle_member_name(member_name)
+        if member:
+            normalized.append((member_name, member))
+    if not normalized:
+        return []
+
+    roots = {member.split("/", 1)[0] for _member_name, member in normalized}
+    if len(roots) != 1:
+        return normalized
+
+    root = next(iter(roots))
+    stripped = []
+    for member_name, member in normalized:
+        if member == root:
+            stripped.append((member_name, ""))
+        elif member.startswith(f"{root}/"):
+            stripped.append((member_name, member[len(root) + 1 :]))
+        else:
+            stripped.append((member_name, member))
+    return stripped
 
 
 def _extract_fonts(archive, font_files, extracted_dir: Path, extracted_fonts: list) -> None:
@@ -201,8 +234,13 @@ def _extract_bundled_files(archive, member_names, extracted_dir: Path) -> None:
     skipped.  Empty and directory members are also skipped.
     """
     resolved_root = extracted_dir.resolve()
-    for member_name in member_names:
-        normalized_member = str(member_name).replace("\\", "/").lstrip("/")
+    for member in member_names:
+        if isinstance(member, tuple):
+            member_name, archive_path = member
+        else:
+            member_name = member
+            archive_path = member
+        normalized_member = str(archive_path).replace("\\", "/").lstrip("/")
         if not normalized_member or normalized_member.endswith("/"):
             continue
         target = (extracted_dir / Path(normalized_member)).resolve()

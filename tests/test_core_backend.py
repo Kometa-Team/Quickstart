@@ -4653,6 +4653,47 @@ def test_import_config_preview_rejects_zip_with_unsupported_entries(client):
     assert "unexpected.exe" in payload["message"]
 
 
+def test_import_config_preview_accepts_windows_wrapped_bundle_directories(client):
+    import io
+    import zipfile
+    from pathlib import Path
+
+    bundle = io.BytesIO()
+    with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/", b"")
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/", b"")
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/collection_files/", b"")
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/collection_files/mov-library_movies/", b"")
+        archive.writestr(
+            "bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/collection_files/mov-library_movies/config_collection_files_a8a07b81df/",
+            b"",
+        )
+        archive.writestr(
+            "bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/collection_files/mov-library_movies/config_collection_files_a8a07b81df/movies_refresh.yml",
+            "collections: {}\n",
+        )
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/fonts/", b"")
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/fonts/Poster.ttf", b"font")
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/config.yml", "settings:\n  cache: true\n")
+        archive.writestr("bullmoose20_prod9_config_bundle (test)/README.txt", "Quickstart config bundle\n")
+    bundle.seek(0)
+
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_wrapped_bundle", "file": (bundle, "bundle.zip")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 200, resp.get_data(as_text=True)
+    payload = resp.get_json()
+    assert payload["success"] is True
+
+    with client.session_transaction() as sess:
+        bundle_dir = Path(sess["import_preview_bundle_dir"])
+
+    assert (bundle_dir / "bullmoose20_prod9" / "collection_files" / "mov-library_movies" / "config_collection_files_a8a07b81df" / "movies_refresh.yml").exists()
+
+
 def test_import_config_preview_handles_yaml_date_scalars_in_cache(client):
     import io
     import json

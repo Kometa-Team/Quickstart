@@ -617,12 +617,56 @@ def _drop_collection_default_keys(library_id, libraries_data):
     return {key: value for key, value in libraries_data.items() if not _is_collection_default_key(library_id, key)}
 
 
+def _merge_active_library_payload_with_saved_libraries(library_id, incoming_libraries, existing_libraries):
+    """Merge one active-card autosave with the full persisted libraries map.
+
+    The browser only posts the mounted library card during lazy switching. The
+    backend must validate and save against the whole libraries map or unrelated
+    libraries lose their ``*-library`` selection flags and disappear from final
+    output.
+    """
+    incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
+    existing_libraries = existing_libraries if isinstance(existing_libraries, dict) else {}
+    merged = dict(existing_libraries)
+
+    prefixes = set()
+    if library_id:
+        prefixes.add(library_id)
+    for key in incoming_libraries:
+        prefix = _library_prefix_from_key(key)
+        if prefix:
+            prefixes.add(prefix)
+
+    for prefix in prefixes:
+        for existing_key in list(merged.keys()):
+            if existing_key == f"{prefix}-library" or existing_key.startswith(prefix + "-"):
+                merged.pop(existing_key, None)
+
+    for key, value in incoming_libraries.items():
+        if (key.endswith("-library") or key.endswith("-playlist")) and not _is_truthy_setting_value(value):
+            continue
+        merged[key] = value
+
+    return merged
+
+
+def _is_library_file_entry_key(library_id, key):
+    return key in {
+        f"{library_id}-collection_files",
+        f"{library_id}-metadata_files",
+        f"{library_id}-overlay_files",
+    }
+
+
 def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections, loaded_collection_groups=None):
-    """Keep persisted collection/overlay values when those lazy sections were never opened."""
+    """Keep persisted values for omitted lazy/partial library sections."""
     incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
     unloaded_sections = {"collections", "overlays"} - set(loaded_sections or set())
     should_preserve_unloaded_collection_groups = "collections" in set(loaded_sections or set()) and loaded_collection_groups is not None
-    if not unloaded_sections and not should_preserve_unloaded_collection_groups:
+    missing_partial_fields = {
+        f"{library_id}-{suffix}" for suffix in ("collection_files", "metadata_files", "overlay_files", "playlist") if f"{library_id}-{suffix}" not in incoming_libraries
+    }
+    if not unloaded_sections and not should_preserve_unloaded_collection_groups and not missing_partial_fields:
         return incoming_libraries
 
     settings = persistence.retrieve_settings("025-libraries")
@@ -644,13 +688,14 @@ def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loade
     def should_preserve(key):
         if not isinstance(key, str) or not key.startswith(prefix):
             return False
+        if key in missing_partial_fields and (_is_library_file_entry_key(library_id, key) or key == f"{library_id}-playlist"):
+            return True
         if should_preserve_unloaded_collection_groups and _collection_key_belongs_to_unloaded_group(key, collection_key_indexes, loaded_collection_groups):
             return True
-        if "collections" in unloaded_sections and (_is_collection_default_key(library_id, key) or key == f"{library_id}-collection_files"):
+        if "collections" in unloaded_sections and _is_collection_default_key(library_id, key):
             return True
         if "overlays" in unloaded_sections and (
             f"{library_id}-overlay_" in key
-            or key == f"{library_id}-overlay_files"
             or f"{library_id}-movie-overlay_" in key
             or f"{library_id}-show-overlay_" in key
             or f"{library_id}-season-overlay_" in key
@@ -804,11 +849,14 @@ def autosave_library(library_id):
         incoming_libraries = _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections, loaded_collection_groups)
         if reset_collection_defaults:
             incoming_libraries = _drop_collection_default_keys(library_id, incoming_libraries)
-        selected_library_ids = _qs._selected_library_ids_from_libraries_data(incoming_libraries)
-        collection_errors = _qs._validate_library_collection_files(incoming_libraries, selected_library_ids)
-        metadata_errors = _qs._validate_library_metadata_files(incoming_libraries, selected_library_ids)
-        overlay_errors = _qs._validate_library_overlay_files(incoming_libraries, selected_library_ids)
-        auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(incoming_libraries, selected_library_ids)
+        settings = persistence.retrieve_settings("025-libraries")
+        existing_libraries = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+        merged_libraries = _merge_active_library_payload_with_saved_libraries(library_id, incoming_libraries, existing_libraries)
+        selected_library_ids = _qs._selected_library_ids_from_libraries_data(merged_libraries)
+        collection_errors = _qs._validate_library_collection_files(merged_libraries, selected_library_ids)
+        metadata_errors = _qs._validate_library_metadata_files(merged_libraries, selected_library_ids)
+        overlay_errors = _qs._validate_library_overlay_files(merged_libraries, selected_library_ids)
+        auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(merged_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
         if metadata_errors:
@@ -818,19 +866,13 @@ def autosave_library(library_id):
         if auto_sort_hubs_errors:
             return jsonify({"success": False, "error": "Invalid library settings.", "errors": auto_sort_hubs_errors}), 400
         normalized_libraries, normalization_errors, changed = _qs._normalize_library_file_entries_payload(
-            incoming_libraries,
+            merged_libraries,
             config_name,
             validate_local=False,
         )
         if normalization_errors:
             return jsonify({"success": False, "error": "Unable to organize library files.", "errors": normalization_errors}), 400
-        save_payload = dict(incoming) if isinstance(incoming, dict) else {}
-        save_payload.pop("__loaded_sections", None)
-        save_payload.pop("__loaded_collection_groups", None)
-        save_payload.pop("__reset_collection_defaults", None)
-        if reset_collection_defaults:
-            save_payload = _drop_collection_default_keys(library_id, save_payload)
-        save_payload.update(normalized_libraries)
+        save_payload = dict(normalized_libraries)
         save_payload["config_name"] = config_name
         persistence.save_settings("025-libraries", save_payload)
         return jsonify({"success": True, "normalized": bool(changed), "libraries": normalized_libraries})
