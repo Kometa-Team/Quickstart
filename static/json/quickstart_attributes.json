@@ -1630,6 +1630,14 @@
             "TMDb"
           ],
           [
+            "trakt",
+            "Trakt"
+          ],
+          [
+            "tvdb",
+            "TVDb"
+          ],
+          [
             "plex",
             "Plex"
           ],
@@ -1693,6 +1701,14 @@
             "TMDb"
           ],
           [
+            "trakt",
+            "Trakt"
+          ],
+          [
+            "tvdb",
+            "TVDb"
+          ],
+          [
             "plex",
             "Plex"
           ],
@@ -1739,6 +1755,14 @@
           [
             "tmdb",
             "TMDb"
+          ],
+          [
+            "trakt",
+            "Trakt"
+          ],
+          [
+            "tvdb",
+            "TVDb"
           ],
           [
             "plex",
@@ -1799,6 +1823,14 @@
             "TMDb"
           ],
           [
+            "trakt",
+            "Trakt"
+          ],
+          [
+            "tvdb",
+            "TVDb"
+          ],
+          [
             "plex",
             "Plex"
           ],
@@ -1809,6 +1841,126 @@
           [
             "unlock",
             "Unlock Background Field"
+          ]
+        ]
+      },
+      "yml_location": "attribute"
+    },
+    {
+      "prefix": "mass_logo_update",
+      "type": "toggle_with_select",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Logo Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-metadata-update",
+      "description": "Updates the logo of each item in the library based on the selected source and optional toggles.",
+      "tooltip_variant": "info",
+      "container_class": "accordion",
+      "toggles": [
+        {
+          "key": "mass_logo_ignore_locked",
+          "label": "Ignore Locked Logos",
+          "tooltip": "Skip updating image if the logo field is locked."
+        },
+        {
+          "key": "mass_logo_ignore_overlays",
+          "label": "Ignore Overlaid Logos",
+          "tooltip": "Skip updating image if the current image has an Overlay."
+        }
+      ],
+      "select_input": {
+        "key": "mass_logo_source",
+        "label": "Logo Source",
+        "tooltip": "Choose the source to update the logo image from.",
+        "options": [
+          [
+            "",
+            "None"
+          ],
+          [
+            "tmdb",
+            "TMDb"
+          ],
+          [
+            "trakt",
+            "Trakt"
+          ],
+          [
+            "tvdb",
+            "TVDb"
+          ],
+          [
+            "plex",
+            "Plex"
+          ],
+          [
+            "lock",
+            "Lock Logo Field"
+          ],
+          [
+            "unlock",
+            "Unlock Logo Field"
+          ]
+        ]
+      },
+      "yml_location": "attribute"
+    },
+    {
+      "prefix": "mass_square_art_update",
+      "type": "toggle_with_select",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Square Art Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-metadata-update",
+      "description": "Updates square art for each item in the library based on the selected source and optional toggles.",
+      "tooltip_variant": "info",
+      "container_class": "accordion",
+      "toggles": [
+        {
+          "key": "mass_square_art_ignore_locked",
+          "label": "Ignore Locked Square Art",
+          "tooltip": "Skip updating image if the square art field is locked."
+        },
+        {
+          "key": "mass_square_art_ignore_overlays",
+          "label": "Ignore Overlaid Square Art",
+          "tooltip": "Skip updating image if the current image has an Overlay."
+        }
+      ],
+      "select_input": {
+        "key": "mass_square_art_source",
+        "label": "Square Art Source",
+        "tooltip": "Choose the source to update square art from.",
+        "options": [
+          [
+            "",
+            "None"
+          ],
+          [
+            "plex",
+            "Plex"
+          ],
+          [
+            "trakt",
+            "Trakt"
+          ],
+          [
+            "tvdb",
+            "TVDb"
+          ],
+          [
+            "lock",
+            "Lock Square Art Field"
+          ],
+          [
+            "unlock",
+            "Unlock Square Art Field"
           ]
         ]
       },

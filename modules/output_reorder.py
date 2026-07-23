@@ -47,6 +47,7 @@ _OPERATIONS_ORDER = (
     "assets_for_all",
     "assets_for_all_collections",
     "delete_collections",
+    "mass_metadata_update",
     "mass_genre_update",
     "mass_content_rating_update",
     "mass_original_title_update",
