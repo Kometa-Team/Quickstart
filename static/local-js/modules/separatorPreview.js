@@ -103,6 +103,139 @@ function getSeparatorPlaceholderWrapper (libraryId) {
   return document.querySelector(`[data-separator-placeholder-wrapper="true"][data-library-prefix="${libraryId}"]`)
 }
 
+const separatorPlaceholderPicklistCache = new Map()
+
+function placeholderValueKey (source) {
+  if (source === 'tmdb_movie') return 'tmdb_movie'
+  if (source === 'tvdb_show') return 'tvdb_show'
+  return 'imdb_id'
+}
+
+function placeholderValueLabel (source) {
+  if (source === 'tmdb_movie') return 'TMDb'
+  if (source === 'tvdb_show') return 'TVDb'
+  return 'IMDb'
+}
+
+function itemValueForSource (item, source) {
+  const value = item?.[placeholderValueKey(source)]
+  if (value) return String(value).trim()
+  if (source === 'imdb' && String(item?.id || '').trim().startsWith('tt')) {
+    return String(item.id).trim()
+  }
+  return ''
+}
+
+function optionTextForItem (item, source, value) {
+  const title = String(item?.title || 'Untitled').trim()
+  const label = placeholderValueLabel(source)
+  return `${title} — ${label} ${value}`
+}
+
+function writeSeparatorLookupLabel (select) {
+  if (!select?.id) return
+  const hidden = document.getElementById(`${select.id}__lookup_labels`)
+  if (!hidden) return
+  const value = String(select.value || '').trim()
+  const selectedOption = select.selectedOptions?.[0]
+  const label = String(selectedOption?.dataset?.lookupLabel || '').trim()
+  hidden.value = value && label ? JSON.stringify({ [value]: label }) : '{}'
+  hidden.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+function setPlaceholderPicklistOptions (select, items) {
+  if (!select) return
+  const source = String(select.dataset.separatorPlaceholderInput || '').trim()
+  const savedValue = String(select.dataset.separatorPlaceholderValue || select.value || '').trim()
+  const options = []
+  const seen = new Set()
+
+  items.forEach(item => {
+    const value = itemValueForSource(item, source)
+    if (!value || seen.has(value)) return
+    seen.add(value)
+    options.push({
+      value,
+      text: optionTextForItem(item, source, value),
+      label: String(item?.title || '').trim()
+    })
+  })
+
+  select.replaceChildren()
+  const blank = document.createElement('option')
+  blank.value = ''
+  blank.textContent = options.length ? '-- Choose a top audience-rated item --' : `No top items with ${placeholderValueLabel(source)} IDs found`
+  select.appendChild(blank)
+
+  if (savedValue && !seen.has(savedValue)) {
+    const saved = document.createElement('option')
+    saved.value = savedValue
+    saved.textContent = `Saved ${placeholderValueLabel(source)} ID: ${savedValue}`
+    saved.dataset.lookupLabel = ''
+    select.appendChild(saved)
+  }
+
+  options.slice(0, 10).forEach(item => {
+    const option = document.createElement('option')
+    option.value = item.value
+    option.textContent = item.text
+    option.dataset.lookupLabel = item.label
+    select.appendChild(option)
+  })
+
+  select.value = savedValue || ''
+  if (select.value !== savedValue) {
+    select.value = ''
+  }
+  writeSeparatorLookupLabel(select)
+}
+
+function setPlaceholderPicklistLoading (wrapper, loading) {
+  wrapper.querySelectorAll('.separator-placeholder-picklist').forEach(select => {
+    if (loading) {
+      const currentValue = String(select.value || select.dataset.separatorPlaceholderValue || '').trim()
+      select.replaceChildren()
+      const option = document.createElement('option')
+      option.value = currentValue
+      option.textContent = 'Loading top audience-rated items...'
+      select.appendChild(option)
+      select.value = currentValue
+    }
+  })
+}
+
+function loadSeparatorPlaceholderPicklists (wrapper) {
+  if (!wrapper || wrapper.classList.contains('visually-hidden')) return
+  const libraryName = String(wrapper.dataset.libraryId || '').trim()
+  const libraryType = String(wrapper.dataset.libraryType || 'movie').trim().toLowerCase()
+  if (!libraryName) return
+
+  const cacheKey = `${libraryType}:${libraryName}`
+  let request = separatorPlaceholderPicklistCache.get(cacheKey)
+  if (!request) {
+    setPlaceholderPicklistLoading(wrapper, true)
+    request = fetch(`/get_top_imdb_items/${encodeURIComponent(libraryName)}?type=${encodeURIComponent(libraryType)}`, {
+      credentials: 'same-origin'
+    })
+      .then(response => {
+        if (!response.ok) throw new Error(`Top item lookup failed (${response.status})`)
+        return response.json()
+      })
+      .then(data => Array.isArray(data?.items) ? data.items : [])
+      .catch(error => {
+        console.error('[Separator Placeholder] Failed to load top items:', error)
+        return []
+      })
+    separatorPlaceholderPicklistCache.set(cacheKey, request)
+  }
+
+  request.then(items => {
+    wrapper.querySelectorAll('.separator-placeholder-picklist').forEach(select => {
+      setPlaceholderPicklistOptions(select, items)
+    })
+  })
+}
+
 /**
  * Reconcile a placeholder wrapper's visible fields against the
  * selected source. Which sources are allowed depends on library type
@@ -143,8 +276,11 @@ export function syncSeparatorPlaceholderFields (wrapper, options = {}) {
     if (fieldGroup) fieldGroup.classList.toggle('d-none', !isActive)
     if (!isActive) {
       input.value = ''
+      input.dataset.separatorPlaceholderValue = ''
+      writeSeparatorLookupLabel(input)
     }
   })
+  if (show) loadSeparatorPlaceholderPicklists(wrapper)
 }
 
 /**
@@ -288,4 +424,14 @@ export function initializeOverlays (libraryId, isMovie) {
     })
     sourceSelect.dataset.listenerAdded = 'true'
   }
+
+  placeholderWrapper?.querySelectorAll('.separator-placeholder-picklist').forEach(select => {
+    if (select.dataset.listenerAdded === 'true') return
+    select.addEventListener('change', () => {
+      select.dataset.separatorPlaceholderValue = String(select.value || '').trim()
+      writeSeparatorLookupLabel(select)
+      updateAccordionHighlights()
+    })
+    select.dataset.listenerAdded = 'true'
+  })
 }

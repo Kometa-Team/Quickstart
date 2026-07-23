@@ -36,22 +36,46 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
         raise ValueError(f"Library ID {library_id} not found.")
 
     ts_log(f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG")
-    items = section.search(sort="audienceRating:desc", maxresults=25)
+    items = section.search(sort="audienceRating:desc", maxresults=50)
 
+    source_counts = {"imdb_id": 0}
+    source_counts["tvdb_show" if str(media_type).lower() == "show" else "tmdb_movie"] = 0
     imdb_items = []
     for item in items:
         imdb_id = None
-        for guid in item.guids:
-            if guid.id.startswith("imdb://"):
-                imdb_id = guid.id.replace("imdb://", "")
-                break
-        if imdb_id:
-            imdb_items.append({"id": imdb_id, "title": item.title})
+        tmdb_id = None
+        tvdb_id = None
+        for guid in getattr(item, "guids", []) or []:
+            guid_id = str(getattr(guid, "id", "") or "").strip()
+            if guid_id.startswith("imdb://"):
+                imdb_id = guid_id.replace("imdb://", "", 1)
+            elif guid_id.startswith("tmdb://"):
+                tmdb_id = guid_id.replace("tmdb://", "", 1)
+            elif guid_id.startswith("tvdb://"):
+                tvdb_id = guid_id.replace("tvdb://", "", 1)
+        if imdb_id or tmdb_id or tvdb_id:
+            imdb_items.append(
+                {
+                    "id": imdb_id or tmdb_id or tvdb_id,
+                    "imdb_id": imdb_id or "",
+                    "tmdb_movie": tmdb_id or "",
+                    "tvdb_show": tvdb_id or "",
+                    "title": item.title,
+                }
+            )
+            if imdb_id:
+                source_counts["imdb_id"] += 1
+            if "tmdb_movie" in source_counts and tmdb_id:
+                source_counts["tmdb_movie"] += 1
+            if "tvdb_show" in source_counts and tvdb_id:
+                source_counts["tvdb_show"] += 1
+        if all(count >= 10 for count in source_counts.values()):
+            break
 
     # Best-effort placeholder recovery; disabled fallback to avoid missing module issues
     saved_item = None
 
-    ts_log(f"Returning {len(imdb_items)} IMDb items", level="DEBUG")
+    ts_log(f"Returning {len(imdb_items)} Plex top items", level="DEBUG")
     return imdb_items, saved_item
 
 
