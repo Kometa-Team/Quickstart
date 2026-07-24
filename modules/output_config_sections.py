@@ -81,9 +81,9 @@ def normalize_playlist_files_section(config_data, *, debug=False):
     _debug(debug, f"Extracted libraries value: {libraries_value}")
 
     if isinstance(libraries_value, list):
-        libraries_list = [str(lib).strip() for lib in libraries_value if str(lib).strip()]
+        libraries_list = [str(lib) for lib in libraries_value if str(lib)]
     else:
-        libraries_list = [lib.strip() for lib in str(libraries_value or "").split(",") if lib.strip()]
+        libraries_list = [lib for lib in str(libraries_value or "").split(",") if lib]
     _debug(debug, f"Processed libraries list: {libraries_value}")
 
     playlist_template_variables = {key: value for key, value in playlist_data.items() if key != "libraries" and value not in (None, "", [], {})}
