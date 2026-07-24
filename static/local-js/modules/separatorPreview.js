@@ -90,6 +90,7 @@ function updateSeparatorPreview (fieldId, selectedStyle) {
     separatorPreviewContainer.style.display = 'block'
     console.log(`[DEBUG] Separator preview updated to: ${imageUrl}`)
   } else {
+    separatorPreviewImage.removeAttribute('src')
     separatorPreviewContainer.style.display = 'none'
   }
 }

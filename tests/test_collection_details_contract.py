@@ -149,10 +149,10 @@ def test_libraries_lookup_label_autosave_uses_narrow_payload():
 def test_mirror_modal_explains_targets_stay_excluded():
     template = LIBRARIES_TEMPLATE_PATH.read_text(encoding="utf-8")
 
-    assert "does not include target libraries in the final YAML automatically" in template
+    assert "does not include target libraries in the final config automatically" in template
     assert "runs the normal library validation flow" in template
     assert "placeholder IDs" in template
-    assert "enable <strong>Include in YAML</strong>" in template
+    assert "enable <strong>Include in config</strong>" in template
 
 
 def test_playlist_toggle_preserves_mirrored_state_when_excluded():

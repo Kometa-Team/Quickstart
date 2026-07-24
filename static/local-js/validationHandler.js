@@ -22,6 +22,28 @@ function optionLabel (option) {
     .trim()
 }
 
+function hasLibraryConfigurationSignal (libraryContainer) {
+  if (!libraryContainer) return false
+  const card = libraryContainer.closest?.('.library-settings-card') || libraryContainer.querySelector?.('.library-settings-card') || libraryContainer
+  if (
+    window.QSLibraryValidation &&
+    typeof window.QSLibraryValidation.hasConfiguredSignal === 'function'
+  ) {
+    return window.QSLibraryValidation.hasConfiguredSignal(card)
+  }
+
+  if (libraryContainer.querySelector('.template-variable-section-has-overrides, .template-variable-field-has-override')) return true
+  if (libraryContainer.querySelector('.accordion-header.selected')) return true
+
+  const totalSummary = libraryContainer.querySelector('[data-library-total-summary]')
+  if (totalSummary && !totalSummary.classList.contains('d-none') && /\d/.test(totalSummary.textContent || '')) return true
+
+  return Array.from(libraryContainer.querySelectorAll('[data-lazy-override-count], [data-lazy-active]')).some(element => {
+    const count = Number(element.dataset.lazyOverrideCount || '0') || 0
+    return count > 0 || element.dataset.lazyActive === 'true'
+  })
+}
+
 export const ValidationHandler = {
   updateValidationState: function () {
     console.log('[DEBUG] Running validation state update.')
@@ -64,7 +86,7 @@ export const ValidationHandler = {
     } else {
       console.log('[DEBUG] Validation Failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Please review your selections: ensure you have picked at least one library, selected an item inside each chosen library, and if using Separators, selected a valid <strong>Placeholder ID</strong>. Items needing attention are highlighted in red below.',
+        'Please review your selections: ensure you have picked at least one library, configured content inside each included library, and if using Separators, selected a valid <strong>Placeholder ID</strong>. Items needing attention are highlighted in red below.',
         'danger',
         { html: true }
       )
@@ -160,7 +182,7 @@ export const ValidationHandler = {
       return false
     }
 
-    // Validate that all selected libraries have at least one highlight
+    // Validate that all selected libraries have configured content.
     const validateLibraries = () => {
       const selectedLibraries = [
         ...ValidationHandler.getSelectedLibraryIds('mov'),
@@ -184,18 +206,17 @@ export const ValidationHandler = {
           return true
         }
 
-        const hasSelectedHeader = Array.from(libraryContainer.querySelectorAll('.accordion-header.selected'))
-          .some(header => !header.closest('[data-qs-minimal-yaml="false"]'))
-        console.log(`[DEBUG] Library "${libraryId}-container" has selected header highlight: ${hasSelectedHeader}`)
+        const hasConfiguredContent = hasLibraryConfigurationSignal(libraryContainer)
+        console.log(`[DEBUG] Library "${libraryId}-container" has configured content signal: ${hasConfiguredContent}`)
 
-        if (!hasSelectedHeader) {
+        if (!hasConfiguredContent) {
           invalidLibraries.push(libraryId)
         } else {
           // If the library is valid, remove red border
           libraryContainer.style.border = ''
         }
 
-        return hasSelectedHeader
+        return hasConfiguredContent
       })
 
       if (!isValid) {
@@ -290,7 +311,7 @@ export const ValidationHandler = {
     } else {
       console.log('[DEBUG] Some validations failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Each selected library must have at least one highlighted item, a valid separator placeholder must be selected if a separator is enabled, and any path or URL fields must be valid.',
+        'Each included library must have configured content, a valid separator placeholder must be selected if a separator is enabled, and any path or URL fields must be valid.',
         'danger'
       )
       ValidationHandler.disableNavigation(false)

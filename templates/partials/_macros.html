@@ -459,8 +459,8 @@ prefix if yml_location == "top_level" else
             </div>
             {% endif %}
             {% if preview_image and prefix == "use_separator" %}
-            <div id="{{ field_id }}-separatorPreviewContainer" class="mt-3 d-flex justify-content-start">
-                <img id="{{ field_id }}-separatorPreviewImage" src="" alt="{{ field_id }} Separator Preview"
+            <div id="{{ field_id }}-separatorPreviewContainer" class="mt-3 justify-content-start" style="display: none;">
+                <img id="{{ field_id }}-separatorPreviewImage" alt="{{ field_id }} Separator Preview"
                     class="img-fluid" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc;">
             </div>
             {% endif %}
