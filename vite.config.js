@@ -78,6 +78,10 @@ function discoverModuleEntries (dir) {
 
 export default defineConfig({
   root: rootDir,
+  // Flask serves Vite output from /static/dist/. Without this, built entry
+  // modules import chunks from the site root (e.g. /chunks/foo.js), which
+  // 404s behind Quickstart's Flask static route.
+  base: '/static/dist/',
   // Tell Vite where to resolve bare specifiers relative to. Today everything
   // is relative-path imports, but once we add npm packages (Alpine for
   // Step 6) this will matter.

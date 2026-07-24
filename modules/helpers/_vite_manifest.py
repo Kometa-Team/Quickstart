@@ -59,6 +59,7 @@ _MANIFEST_PATH = os.path.join(
     ".vite",
     "manifest.json",
 )
+_DIST_DIR = os.path.dirname(os.path.dirname(_MANIFEST_PATH))
 
 # Thread-safe lazy load: read the manifest once, cache the dict.
 _manifest_cache: dict | None = None
@@ -140,7 +141,10 @@ def asset_url(name: str) -> str:
     key = f"static/local-js/{name}.js"
     entry = manifest.get(key)
     if entry and "file" in entry:
-        return f"/static/dist/{entry['file']}"
+        built_file = str(entry["file"]).lstrip("/")
+        built_path = os.path.join(_DIST_DIR, *built_file.split("/"))
+        if os.path.exists(built_path):
+            return f"/static/dist/{built_file}"
     return f"/static/local-js/{name}.js"
 
 
