@@ -54,6 +54,46 @@ export function hasLibraryFileEntries (accordionBody) {
   return Boolean(raw && raw !== '[]')
 }
 
+function isLibrariesTemplate () {
+  return String(window.QS_CURRENT_TEMPLATE || document.documentElement?.dataset?.qsTemplate || '').trim() === '025-libraries'
+}
+
+function clearLegacyLibraryAccordionSelections () {
+  document.querySelectorAll('.accordion-header.selected').forEach(header => {
+    header.classList.remove('selected')
+  })
+}
+
+function isHiddenForAccordionHighlight (field) {
+  return !field ||
+    field.disabled ||
+    field.type === 'hidden' ||
+    field.hidden ||
+    field.closest('.visually-hidden, .d-none, [hidden]')
+}
+
+function checkboxDiffersFromDefault (field) {
+  if (!field || (field.type !== 'checkbox' && field.type !== 'radio')) return false
+  const defaultRaw = String(field.dataset?.default || '').trim().toLowerCase()
+  if (!defaultRaw) return field.checked
+  const normalizedValue = String(field.value || 'true').trim().toLowerCase()
+  const defaultChecked = defaultRaw === 'true' || defaultRaw === normalizedValue
+  return field.checked !== defaultChecked
+}
+
+function fieldHasNonDefaultValue (field) {
+  if (isHiddenForAccordionHighlight(field)) return false
+  if (field.dataset?.skipOverrideCount === 'true' || field.dataset?.skipYaml === 'true') return false
+  if (field.type === 'checkbox' || field.type === 'radio') return checkboxDiffersFromDefault(field)
+  const value = String(field.value || '').trim().toLowerCase()
+  if (!value || value === 'none') return false
+  if (field.dataset?.default !== undefined) {
+    const defaultValue = String(field.dataset.default || '').trim().toLowerCase()
+    return value !== defaultValue
+  }
+  return true
+}
+
 /**
  * Walk up the ancestor chain from `element` adding `.selected` to each
  * `.accordion-header` we pass through. Stops early on:
@@ -67,6 +107,7 @@ export function hasLibraryFileEntries (accordionBody) {
  * level further up.
  */
 export function highlightParentAccordions (element) {
+  if (isLibrariesTemplate()) return
   while (element) {
     const parentAccordion = element.closest('.accordion-item')
     if (!parentAccordion) break
@@ -119,6 +160,10 @@ export function highlightParentAccordions (element) {
  * Skips `.accordion-item` elements whose id contains `-previewOverlays`.
  */
 export function removeHighlightIfEmpty (element) {
+  if (isLibrariesTemplate()) {
+    clearLegacyLibraryAccordionSelections()
+    return
+  }
   if (!element) return
   const accordionItem = element.closest('.accordion-item')
   if (!accordionItem) return
@@ -133,12 +178,11 @@ export function removeHighlightIfEmpty (element) {
     return
   }
 
-  const hasSelections = accordionBody?.querySelector(
-    "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
-    "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-    "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
-    '.list-group li'
-  ) !== null
+  const hasSelections = Array.from(accordionBody?.querySelectorAll(
+    "input[type='checkbox']:not(.readonly-toggle):not(.template-child-toggle), " +
+    "input[type='radio'], " +
+    "select[data-user-modified='true']"
+  ) || []).some(fieldHasNonDefaultValue) || accordionBody?.querySelector('.list-group li') !== null
   const bodyHasLibraryFileEntries = hasLibraryFileEntries(accordionBody)
 
   // If this accordion has collection toggles and none are enabled, force no highlight.
@@ -170,6 +214,10 @@ export function removeHighlightIfEmpty (element) {
  * Preview-Overlays accordions never highlight themselves.
  */
 export function updateAccordionHighlights () {
+  if (isLibrariesTemplate()) {
+    clearLegacyLibraryAccordionSelections()
+    return
+  }
   console.log('\u{1F50D} [DEBUG] Updating accordion highlights...')
 
   document.querySelectorAll('.accordion-item').forEach((accordion) => {
@@ -191,11 +239,10 @@ export function updateAccordionHighlights () {
 
     if (accordionBody) {
       // 1. Check for directly selected inputs (checkboxes, radios, list selections)
-      isCheckedOrSelected = accordionBody.querySelector(
-        "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
-        "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-        '.list-group li'
-      ) !== null
+      isCheckedOrSelected = Array.from(accordionBody.querySelectorAll(
+        "input[type='checkbox']:not(.readonly-toggle):not(.template-child-toggle), " +
+        "input[type='radio']"
+      )).some(fieldHasNonDefaultValue) || accordionBody.querySelector('.list-group li') !== null
 
       // 1b. Any non-empty inputs/selects also count as activity
       // Suppress value-based highlighting for true Collection/Overlay sections,
@@ -215,13 +262,7 @@ export function updateAccordionHighlights () {
           accordionBody.querySelectorAll("input[type='text'], input[type='number'], input[type='date']")
         )
         const selects = Array.from(accordionBody.querySelectorAll('select'))
-        hasValue = textInputs.some((input) => {
-          const v = (input.value || '').trim().toLowerCase()
-          return v && v !== 'none'
-        }) || selects.some((sel) => {
-          const v = (sel.value || '').trim().toLowerCase()
-          return v && v !== 'none'
-        })
+        hasValue = textInputs.some(fieldHasNonDefaultValue) || selects.some(fieldHasNonDefaultValue)
       }
 
       // 2. Check for modified template selects, but only if toggle is still ON
@@ -268,11 +309,10 @@ export function updateAccordionHighlights () {
       if (isPreview) return false
 
       // Only highlight if child toggle is on or has modified select tied to an enabled toggle
-      const hasActiveToggle = child.querySelector(
-        "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
-        "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-        '.list-group li'
-      )
+      const hasActiveToggle = Array.from(child.querySelectorAll(
+        "input[type='checkbox']:not(.readonly-toggle):not(.template-child-toggle), " +
+        "input[type='radio']"
+      )).some(fieldHasNonDefaultValue) || child.querySelector('.list-group li') !== null
       if (hasActiveToggle) return true
 
       const hasModifiedSelectWithToggle = Array.from(

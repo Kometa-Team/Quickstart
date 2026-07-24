@@ -37,6 +37,7 @@ let activeLibraryId = null
 let loadRequestId = 0
 let allowNextStepNavigation = false
 let lookupLabelAutosaveTimer = null
+let libraryCardInitializing = 0
 
 function setLibrariesButtonBusy (button, busy, label = 'Working...') {
   if (!button) return
@@ -6020,6 +6021,60 @@ function refreshPickerLabels () {
   updateConfiguredCounts()
 }
 
+function isLibraryCardInitializing (card) {
+  return libraryCardInitializing > 0 || card?.dataset?.libraryInitializing === 'true'
+}
+
+function setLibraryIncludedFromUserEdit (card, libraryId) {
+  if (!libraryPicker || !card || !libraryId) return
+  const toggle = card.querySelector('.include-library-toggle')
+  if (!toggle || toggle.checked || toggle.disabled) return
+  const targetInputId = toggle.dataset.targetInput
+  const targetInput = targetInputId ? document.getElementById(targetInputId) : null
+  const option = libraryPicker.querySelector(`option[value="${libraryId}"]`)
+  toggle.checked = true
+  if (targetInput) targetInput.value = toggle.value
+  if (option) option.dataset.configured = 'true'
+  toggle.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+function shouldAutoIncludeLibraryEditTarget (target) {
+  if (!target || !target.closest) return false
+  if (target.closest('[data-resetting="true"]')) return false
+  if (target.closest('.external-yaml-editor-modal')) return false
+  if (target.matches('.include-library-toggle, .library-advanced-toggle, .accordion-button')) return false
+  if (target.matches('[data-bs-toggle="collapse"], [data-bs-toggle="modal"], [data-bs-dismiss]')) return false
+  if (target.matches('[data-toggle-secret-visibility], [data-collection-details-toggle], [data-overlay-details-toggle]')) return false
+  if (target.matches('[data-external-yaml-edit], [data-external-yaml-create], [data-external-yaml-choose]')) return false
+
+  if (target.matches('[data-playlist-key-toggle]')) return true
+  if (target.matches('[data-template-string-add], [data-template-mapping-add], [data-add-asset-directory]')) return true
+  if (target.matches('[data-add-collection-file], [data-add-metadata-file], [data-add-overlay-file], [data-add-playlist-file]')) return true
+  if (target.matches('[data-remove-collection-file], [data-remove-metadata-file], [data-remove-overlay-file], [data-remove-playlist-file]')) return true
+  if (target.matches('.library-remove-asset-directory')) return true
+
+  const field = target.matches('input, select, textarea') ? target : target.closest('input, select, textarea')
+  if (!field || field.disabled || !field.name) return false
+  if (field.type === 'file') return false
+  if (field.type === 'hidden' && isInternalTemplateMetadataField(field)) return false
+  if (field.dataset?.skipYaml === 'true' || field.dataset?.skipOverrideCount === 'true') return false
+  if (field.classList.contains('include-library-toggle')) return false
+  return true
+}
+
+function wireAutoIncludeOnLibraryEdits (card, libraryId) {
+  if (!card || card.dataset.autoIncludeOnEditBound === 'true') return
+  const maybeInclude = event => {
+    if (!event.isTrusted || isLibraryCardInitializing(card)) return
+    if (!shouldAutoIncludeLibraryEditTarget(event.target)) return
+    setLibraryIncludedFromUserEdit(card, libraryId)
+  }
+  card.addEventListener('input', maybeInclude)
+  card.addEventListener('change', maybeInclude)
+  card.addEventListener('click', maybeInclude)
+  card.dataset.autoIncludeOnEditBound = 'true'
+}
+
 function wireIncludeToggle (card, libraryId) {
   if (!libraryPicker || !card) return
   const toggle = card.querySelector('.include-library-toggle')
@@ -6033,7 +6088,7 @@ function wireIncludeToggle (card, libraryId) {
   function syncStatus () {
     if (!status) return
     const included = toggle.checked
-    status.textContent = included ? 'Included in YAML' : 'Excluded from YAML'
+    status.textContent = included ? 'Included in config' : 'Excluded from config'
     status.classList.toggle('bg-success', included)
     status.classList.toggle('bg-secondary', !included)
     if (playlistToggle) {
@@ -6341,81 +6396,89 @@ function moveCurrentToCache () {
 }
 
 function initializeLibraryCardControls (card, libraryId) {
-  initPlaylistKeyToggleGroups(card)
-  initPlaylistUserPickers(card)
-  initPlaylistFilesEditors(card)
-  initSecretVisibilityToggles(card)
-  syncHiddenCheckboxPairs(card)
-  wireIncludeToggle(card, libraryId)
-  wireAdvancedToggle(card)
-  wireLibraryServiceValidationButtons(card)
-  refreshPickerLabels()
-  initTooltips(card)
-  sortLanguageSelects(card)
-  setupOverlayLanguageWeightBuilders(card)
-  initNumericOnlyInputs(card)
-  setupCollectionTemplateFieldRules(card)
-  initStylePreviewGrids(card)
-  initRelativeYearInputs(card)
-  initScheduleBuilders(card)
-  initLibraryAssetDirectoryInputs(card)
-  wireOffsetReset(card)
-  wireRatingsOffsetSync(card)
-  initSortablesInScope(card)
-  setupCustomStringListHandlers('mass_genre_update', card)
-  setupCustomStringListHandlers('radarr_remove_by_tag', card)
-  setupCustomStringListHandlers('sonarr_remove_by_tag', card)
-  setupCustomStringListHandlers('metadata_backup', card)
-  setupCustomStringListHandlers('mass_content_rating_update', card)
-  setupCustomStringListHandlers('mass_genre_mapper', card)
-  setupTemplateStringListHandlers(card)
-  setupTemplateMappingListHandlers(card)
-  setupMappingListHandlers('genre_mapper', card)
-  setupMappingListHandlers('content_rating_mapper', card)
-  wireOverlayDetailToggles(card)
-  wireOverlayVariableSectionToggles(card)
-  wireCollectionDetailToggles(card)
-  wireCollectionVariableSectionToggles(card)
-  setupParentChildToggleVisibility(card)
-  if (typeof setupParentChildToggleSync === 'function') {
-    setupParentChildToggleSync()
+  libraryCardInitializing += 1
+  if (card) card.dataset.libraryInitializing = 'true'
+  try {
+    initPlaylistKeyToggleGroups(card)
+    initPlaylistUserPickers(card)
+    initPlaylistFilesEditors(card)
+    initSecretVisibilityToggles(card)
+    syncHiddenCheckboxPairs(card)
+    wireIncludeToggle(card, libraryId)
+    wireAutoIncludeOnLibraryEdits(card, libraryId)
+    wireAdvancedToggle(card)
+    wireLibraryServiceValidationButtons(card)
+    refreshPickerLabels()
+    initTooltips(card)
+    sortLanguageSelects(card)
+    setupOverlayLanguageWeightBuilders(card)
+    initNumericOnlyInputs(card)
+    setupCollectionTemplateFieldRules(card)
+    initStylePreviewGrids(card)
+    initRelativeYearInputs(card)
+    initScheduleBuilders(card)
+    initLibraryAssetDirectoryInputs(card)
+    wireOffsetReset(card)
+    wireRatingsOffsetSync(card)
+    initSortablesInScope(card)
+    setupCustomStringListHandlers('mass_genre_update', card)
+    setupCustomStringListHandlers('radarr_remove_by_tag', card)
+    setupCustomStringListHandlers('sonarr_remove_by_tag', card)
+    setupCustomStringListHandlers('metadata_backup', card)
+    setupCustomStringListHandlers('mass_content_rating_update', card)
+    setupCustomStringListHandlers('mass_genre_mapper', card)
+    setupTemplateStringListHandlers(card)
+    setupTemplateMappingListHandlers(card)
+    setupMappingListHandlers('genre_mapper', card)
+    setupMappingListHandlers('content_rating_mapper', card)
+    wireOverlayDetailToggles(card)
+    wireOverlayVariableSectionToggles(card)
+    wireCollectionDetailToggles(card)
+    wireCollectionVariableSectionToggles(card)
+    setupParentChildToggleVisibility(card)
+    if (typeof setupParentChildToggleSync === 'function') {
+      setupParentChildToggleSync()
+    }
+    setupAddMissingDependencies(card)
+    wireOverlayTemplateSections(card)
+    wireCollectionTemplateSections(card)
+    wireOverlayVariableSections(card)
+    wireCollectionVariableSections(card)
+    wireLibraryOverrideScopes(card)
+    wireLazyCollectionGroups(card)
+    updateLazySectionOverrideSummaries(card)
+    refreshTemplateOverrideState(card)
+    wireOffsetReset(card)
+    if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
+      OverlayHandler.initializeOverlayBoards(card)
+    }
+    if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayPositioners) {
+      OverlayHandler.initializeOverlayPositioners(card)
+    }
+    if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeJumpButtons) {
+      OverlayHandler.initializeJumpButtons(card)
+    }
+    if (typeof EventHandler !== 'undefined') {
+      EventHandler.attachLibraryListeners(card)
+    }
+    if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+      PathValidation.attach(card)
+    }
+    if (typeof URLValidation !== 'undefined' && URLValidation.attach) {
+      URLValidation.attach(card)
+    }
+    if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
+      ValidationHandler.updateValidationState()
+    }
+    wireFontUploads(card)
+    wireFontPreviews(card)
+    wireFontPickerButtons(card)
+    bindDependencyRequirementHintLiveRefresh(card)
+    scheduleDependencyRequirementHintRefresh(0)
+  } finally {
+    libraryCardInitializing = Math.max(0, libraryCardInitializing - 1)
+    if (card) delete card.dataset.libraryInitializing
   }
-  setupAddMissingDependencies(card)
-  wireOverlayTemplateSections(card)
-  wireCollectionTemplateSections(card)
-  wireOverlayVariableSections(card)
-  wireCollectionVariableSections(card)
-  wireLibraryOverrideScopes(card)
-  wireLazyCollectionGroups(card)
-  updateLazySectionOverrideSummaries(card)
-  refreshTemplateOverrideState(card)
-  wireOffsetReset(card)
-  if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
-    OverlayHandler.initializeOverlayBoards(card)
-  }
-  if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayPositioners) {
-    OverlayHandler.initializeOverlayPositioners(card)
-  }
-  if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeJumpButtons) {
-    OverlayHandler.initializeJumpButtons(card)
-  }
-  if (typeof EventHandler !== 'undefined') {
-    EventHandler.attachLibraryListeners(card)
-  }
-  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
-    PathValidation.attach(card)
-  }
-  if (typeof URLValidation !== 'undefined' && URLValidation.attach) {
-    URLValidation.attach(card)
-  }
-  if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
-    ValidationHandler.updateValidationState()
-  }
-  wireFontUploads(card)
-  wireFontPreviews(card)
-  wireFontPickerButtons(card)
-  bindDependencyRequirementHintLiveRefresh(card)
-  scheduleDependencyRequirementHintRefresh(0)
 }
 
 function wireLazyLibrarySections (card) {
@@ -6629,6 +6692,20 @@ function restorePreviousLibrarySelection (previousLibraryId) {
 
 wireFontPickerModal()
 
+function isUncheckedTemplateParentToggle (field) {
+  if (!field || field.type !== 'checkbox' || field.dataset?.radioGroup === 'true') return false
+  if (field.dataset?.default !== undefined) return false
+  return !field.checked && Boolean(field.matches('[data-template-group], .overlay-toggle'))
+}
+
+function shouldOmitDefaultFieldFromLibraryPayload (field) {
+  if (!field || !field.dataset || field.dataset.default === undefined) return false
+  if (field.classList?.contains('include-library-toggle') || field.classList?.contains('playlist-library-toggle')) return false
+  if (String(field.name || '').endsWith('-library') || String(field.name || '').endsWith('-playlist')) return false
+  if (isInternalTemplateMetadataField(field)) return false
+  return !isCollectionSectionFieldConfigured([field])
+}
+
 function buildPayloadFromCard (card) {
   const payload = {}
   const libraryId = activeLibraryId || String(card?.querySelector('[name]')?.name || '').split('-')[0]
@@ -6682,6 +6759,8 @@ function buildPayloadFromCard (card) {
     if (el.type === 'hidden' && checkboxNames.has(String(el.name || '').trim())) {
       return
     }
+    if (isUncheckedTemplateParentToggle(el)) return
+    if (shouldOmitDefaultFieldFromLibraryPayload(el)) return
 
     if (el.tagName === 'SELECT' && el.multiple) {
       payload[el.name] = Array.from(el.selectedOptions).map(opt => opt.value)
@@ -6691,7 +6770,10 @@ function buildPayloadFromCard (card) {
     if (el.type === 'checkbox') {
       if (el.dataset && el.dataset.radioGroup === 'true') {
         if (!Object.prototype.hasOwnProperty.call(payload, el.name)) {
-          payload[el.name] = radioCheckboxValues.get(el.name) || ''
+          const selectedValue = radioCheckboxValues.get(el.name) || ''
+          if (selectedValue) {
+            payload[el.name] = selectedValue
+          }
         }
         return
       }
@@ -6719,6 +6801,7 @@ function buildPayloadFromCard (card) {
       if (!el.name || el.disabled) return
       if (card.contains(el)) return
       if (checkboxNames.has(String(el.name || '').trim())) return
+      if (shouldOmitDefaultFieldFromLibraryPayload(el)) return
       payload[el.name] = el.value ?? ''
     })
   }
@@ -9124,11 +9207,20 @@ function isTrueDatasetValue (value) {
   return String(value || '').trim().toLowerCase() === 'true'
 }
 
+function checkboxCheckedDiffersFromDefault (field) {
+  if (!field || (field.type !== 'checkbox' && field.type !== 'radio')) return false
+  const defaultRaw = String(field.dataset?.default || '').trim().toLowerCase()
+  if (!defaultRaw) return field.checked
+  const normalizedValue = String(field.value || 'true').trim().toLowerCase()
+  const defaultChecked = defaultRaw === 'true' || defaultRaw === normalizedValue
+  return field.checked !== defaultChecked
+}
+
 function isTemplateGroupActiveForSignal (group) {
   if (!group) return false
   const toggle = group.querySelector('input[type="checkbox"][data-template-group], input[type="radio"][data-template-group], .overlay-toggle')
   if (!toggle) return false
-  return toggle.checked
+  return checkboxCheckedDiffersFromDefault(toggle)
 }
 
 function getLazyElementSignalCount (element) {
@@ -9341,13 +9433,29 @@ function getLibrarySectionOverrideTotal (card, advanced) {
   }, 0)
 }
 
+function getLibraryCardOverrideTotal (card) {
+  if (!card) return 0
+  return getLibrarySectionOverrideTotal(card, false) + getLibrarySectionOverrideTotal(card, true)
+}
+
+function getLibraryCardHasConfigurationSignal (card) {
+  if (!card) return false
+  if (getLibraryCardOverrideTotal(card) > 0) return true
+  if (card.querySelector('.template-variable-section-has-overrides, .template-variable-field-has-override')) return true
+  if (card.querySelector('[data-library-lazy-section][data-lazy-active="true"], [data-collection-group-lazy-collapse][data-lazy-active="true"]')) return true
+  return Array.from(card.querySelectorAll('[data-library-lazy-section][data-lazy-override-count], [data-collection-group-lazy-collapse][data-lazy-override-count]')).some(element => {
+    const count = Number(element.dataset.lazyOverrideCount || '0') || 0
+    return count > 0
+  })
+}
+
 function updateLibraryAggregateOverrideSummaries (card) {
   if (!card) return
   const coreCount = getLibrarySectionOverrideTotal(card, false)
   const advancedCount = getLibrarySectionOverrideTotal(card, true)
   setOverrideSummaryBadge(card.querySelector('[data-library-core-summary]'), coreCount)
   setOverrideSummaryBadge(card.querySelector('[data-library-advanced-summary]'), advancedCount)
-  setOverrideSummaryBadge(card.querySelector('[data-library-total-summary]'), coreCount + advancedCount)
+  setOverrideSummaryBadge(card.querySelector('[data-library-total-summary]'), getLibraryCardOverrideTotal(card))
 }
 
 function updateTemplateGroupOverrideSummary (section) {
@@ -9386,6 +9494,11 @@ function refreshTemplateOverrideState (scope) {
   if (root.matches?.('.library-settings-card')) {
     updateLibraryAggregateOverrideSummaries(root)
   }
+}
+
+window.QSLibraryValidation = {
+  hasConfiguredSignal: getLibraryCardHasConfigurationSignal,
+  refreshSummaries: refreshTemplateOverrideState
 }
 
 function getLibraryOverrideScopes (root) {

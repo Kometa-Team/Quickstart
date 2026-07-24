@@ -142,9 +142,9 @@ playlist-template_variables[{{ field_key }}]
   <div class="row g-2">
     {% for entry in entries %}
     <div class="col-12 col-lg-6">
-      <label class="form-check form-switch border rounded px-3 py-2 h-100 d-flex align-items-start gap-2">
+      <label class="form-check form-switch border rounded py-2 h-100 d-flex align-items-start gap-2 qs-playlist-key-toggle-card">
         <input class="form-check-input mt-1" type="checkbox" data-playlist-key-toggle data-playlist-key="{{ entry.key }}">
-        <span class="d-flex flex-column">
+        <span class="d-flex flex-column min-w-0">
           <span class="fw-semibold">{{ entry.label }}</span>
           <span class="small text-muted">{{ entry.key }}</span>
         </span>
