@@ -33,7 +33,7 @@ function hasLibraryConfigurationSignal (libraryContainer) {
   }
 
   if (libraryContainer.querySelector('.template-variable-section-has-overrides, .template-variable-field-has-override')) return true
-  if (libraryContainer.querySelector('.accordion-header.selected')) return true
+  if (Array.from(libraryContainer.querySelectorAll('.accordion-header.selected')).some(header => !header.closest('[data-qs-minimal-yaml="false"]'))) return true
 
   const totalSummary = libraryContainer.querySelector('[data-library-total-summary]')
   if (totalSummary && !totalSummary.classList.contains('d-none') && /\d/.test(totalSummary.textContent || '')) return true
