@@ -27,6 +27,13 @@ TRANSIENT_FORM_FIELDS = {
     "importMode",
 }
 
+KOMETA_INSTALL_SELECTION_FIELDS = (
+    "install_mode",
+    "existing_root",
+    "external_config_root",
+    "external_log_root",
+)
+
 
 def _normalize_plex_db_cache_value(value):
     if value is None or isinstance(value, bool):
@@ -217,6 +224,40 @@ def clean_form_data(form_data):
     return clean_data
 
 
+def _preserve_kometa_install_selection(data, clean_data):
+    if not isinstance(data, dict):
+        return data
+    incoming_section = data.get("kometa")
+    if not isinstance(incoming_section, dict):
+        return data
+
+    # The Start page owns these fields through /save-kometa-install-mode.
+    # Generic Kometa-page saves often contain only final-page controls, so they
+    # must not reset an existing/external install back to the managed default.
+    if any(field in clean_data or field in incoming_section for field in KOMETA_INSTALL_SELECTION_FIELDS):
+        return data
+
+    try:
+        _validated, _user_entered, stored_payload = database.retrieve_section_data(session["config_name"], "kometa")
+    except Exception:
+        return data
+
+    stored_section = stored_payload.get("kometa", {}) if isinstance(stored_payload, dict) else {}
+    if not isinstance(stored_section, dict):
+        return data
+
+    preserved = {field: stored_section.get(field) for field in KOMETA_INSTALL_SELECTION_FIELDS if field in stored_section}
+    if not preserved:
+        return data
+
+    merged_section = dict(incoming_section)
+    for field, value in preserved.items():
+        if value is not None:
+            merged_section[field] = value
+    data["kometa"] = merged_section
+    return data
+
+
 def save_settings(raw_source, form_data):
     # Extract the source and source_name
     source, source_name = extract_names(raw_source)
@@ -258,6 +299,8 @@ def save_settings(raw_source, form_data):
         helpers.ts_log(f"Cleaned asset_directory: {clean_data['asset_directory']}", level="DEBUG")
 
     data = helpers.build_config_dict(source_name, clean_data)
+    if source_name == "kometa":
+        data = _preserve_kometa_install_selection(data, clean_data)
 
     if app.config["QS_DEBUG"]:
         helpers.ts_log(f"Final data structure to save: {data}", level="DEBUG")

@@ -16,6 +16,10 @@ from modules import persistence
 from modules.helpers._logging import ts_log
 
 
+def _normalize_library_identifier(value):
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+
 def get_top_imdb_items(library_id, media_type, placeholder_id=None):
     ts_log("Fetching Plex credentials for '010-plex'", level="DEBUG")
     plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
@@ -27,8 +31,9 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
         ts_log(f"Section: key={section.key}, title={section.title}", level="DEBUG")
 
     ts_log(f"Searching for section with ID or title: {library_id}", level="DEBUG")
+    normalized_library_id = _normalize_library_identifier(library_id)
     section = next(
-        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
+        (s for s in plex.library.sections() if str(s.key) == str(library_id) or _normalize_library_identifier(getattr(s, "title", "")) == normalized_library_id),
         None,
     )
 
