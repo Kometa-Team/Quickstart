@@ -28,7 +28,7 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
 
     ts_log(f"Searching for section with ID or title: {library_id}", level="DEBUG")
     section = next(
-        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
+        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.strip().lower() == str(library_id).strip().lower()),
         None,
     )
 
@@ -102,6 +102,26 @@ def _normalize_lookup_title(value):
     return normalized
 
 
+def _get_section_by_name(plex, library_name):
+    """Find a Plex library section by name, matching case-insensitively and ignoring leading/trailing whitespace.
+
+    Args:
+        plex: PlexServer instance
+        library_name: The library name to search for
+
+    Returns:
+        The matching section object, or None if not found
+    """
+    normalized_name = str(library_name or "").strip().lower()
+    if not normalized_name:
+        return None
+
+    for section in plex.library.sections():
+        if section.title.strip().lower() == normalized_name:
+            return section
+    return None
+
+
 def find_item_by_title(library_name, title):
     normalized_title = _normalize_lookup_title(title)
     if not normalized_title:
@@ -113,9 +133,8 @@ def find_item_by_title(library_name, title):
 
     plex = PlexServer(plex_url, plex_token, timeout=8)
 
-    try:
-        section = plex.library.section(library_name)
-    except Exception:
+    section = _get_section_by_name(plex, library_name)
+    if not section:
         return None
 
     results = section.search(title=title, maxresults=20)
@@ -137,9 +156,8 @@ def find_item_by_imdb_id(library_name, imdb_id, media_type, fallback_title=None)
 
     plex = PlexServer(plex_url, plex_token, timeout=8)
 
-    try:
-        section = plex.library.section(library_name)
-    except Exception:
+    section = _get_section_by_name(plex, library_name)
+    if not section:
         return None
 
     def build_match(item, source):
