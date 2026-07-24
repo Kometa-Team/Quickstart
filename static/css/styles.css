@@ -3569,6 +3569,169 @@ div#loading {
 .theme-swatch--reality { background-color: #e80c0b; }
 .theme-swatch--soul { background-color: #ff9900; }
 .theme-swatch--space { background-color: #0062ff; }
+
+.external-yaml-editor-toolbar {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-bottom: 0.45rem;
+}
+
+.external-yaml-editor-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: flex-end;
+}
+
+.external-yaml-search {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.external-yaml-search .form-control {
+    min-width: 12rem;
+}
+
+.external-yaml-search-count {
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    min-width: 4.5rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.external-yaml-status-banner {
+    border: 1px solid var(--theme-border);
+    border-radius: 0.45rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.external-yaml-status-details {
+    border-top: 1px solid var(--theme-border);
+    padding-top: 0.75rem;
+}
+
+.external-yaml-status--success {
+    background: rgba(var(--bs-success-rgb), 0.14);
+    border-color: rgba(var(--bs-success-rgb), 0.45);
+    color: var(--bs-success-text-emphasis);
+}
+
+.external-yaml-status--warning {
+    background: rgba(var(--bs-warning-rgb), 0.14);
+    border-color: rgba(var(--bs-warning-rgb), 0.45);
+    color: var(--bs-warning-text-emphasis);
+}
+
+.external-yaml-status--error {
+    background: rgba(var(--bs-danger-rgb), 0.14);
+    border-color: rgba(var(--bs-danger-rgb), 0.55);
+    color: var(--bs-danger-text-emphasis);
+}
+
+.external-yaml-editor-shell {
+    display: grid;
+    grid-template-columns: minmax(3.25rem, auto) 1fr;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.external-yaml-editor-lines {
+    max-height: 32rem;
+    overflow: hidden;
+    padding: 0.375rem 0.35rem;
+    background: rgba(0, 0, 0, 0.24);
+    border-right: 1px solid var(--bs-border-color);
+    color: var(--bs-secondary-color);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    text-align: right;
+    user-select: none;
+}
+
+.external-yaml-editor-line {
+    display: block;
+    width: 100%;
+    padding: 0 0.35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: right;
+}
+
+.external-yaml-editor-line--issue {
+    color: var(--bs-warning);
+    font-weight: 700;
+}
+
+.external-yaml-editor-content {
+    min-height: 32rem;
+    border: 0;
+    border-radius: 0;
+    line-height: 1.45;
+    white-space: pre;
+}
+
+.external-yaml-editor-content:focus {
+    box-shadow: none;
+}
+
+.external-yaml-issue-list {
+    display: grid;
+    gap: 0.375rem;
+}
+
+.external-yaml-issue {
+    width: 100%;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.35rem;
+    padding: 0.35rem 0.55rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: inherit;
+    text-align: left;
+}
+
+.external-yaml-issue--error {
+    border-color: rgba(var(--bs-danger-rgb), 0.6);
+    color: var(--bs-danger-text-emphasis);
+}
+
+.external-yaml-issue--warning {
+    border-color: rgba(var(--bs-warning-rgb), 0.6);
+    color: var(--bs-warning-text-emphasis);
+}
+
+@media (max-width: 768px) {
+    .external-yaml-editor-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .external-yaml-editor-actions,
+    .external-yaml-search {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .external-yaml-search .form-control {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+}
 .theme-swatch--time { background-color: #6df751; }
 
 /* Sortable Item Styling */
