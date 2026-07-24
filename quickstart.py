@@ -199,6 +199,7 @@ from blueprints.imagemaid_updates import bp as imagemaid_updates_bp
 from blueprints.config_routes import bp as config_routes_bp
 from blueprints.download_routes import bp as download_routes_bp
 from blueprints.test_libraries_routes import bp as test_libraries_routes_bp
+from blueprints.external_yaml_routes import bp as external_yaml_routes_bp
 from blueprints import app_config_routes
 from blueprints.app_config_routes import bp as app_config_routes_bp
 from blueprints.library_routes import (
@@ -1137,6 +1138,7 @@ app.register_blueprint(imagemaid_updates_bp)
 app.register_blueprint(config_routes_bp)
 app.register_blueprint(download_routes_bp)
 app.register_blueprint(test_libraries_routes_bp)
+app.register_blueprint(external_yaml_routes_bp)
 app.register_blueprint(library_routes_bp)
 app.register_blueprint(import_config_routes_bp)
 app.register_blueprint(imagemaid_routes_bp)
