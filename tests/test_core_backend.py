@@ -6710,6 +6710,7 @@ def test_check_kometa_update_existing_mode_allows_status_check(client, tmp_path,
 
 
 def test_get_kometa_config_dir_prefers_persisted_external_selection(app, tmp_path):
+    from pathlib import Path
     from flask import session
     from modules import database, helpers
 
@@ -6733,13 +6734,14 @@ def test_get_kometa_config_dir_prefers_persisted_external_selection(app, tmp_pat
     )
 
     with app.test_request_context("/step/900-kometa"):
+        managed_root = (Path(helpers.CONFIG_DIR) / "kometa").resolve()
         app.config["KOMETA_INSTALL_MODE"] = "managed"
-        app.config["KOMETA_CONFIG_DIR"] = ""
-        app.config["KOMETA_LOG_DIR"] = ""
+        app.config["KOMETA_CONFIG_DIR"] = str(managed_root / "config")
+        app.config["KOMETA_LOG_DIR"] = str(managed_root / "config" / "logs")
         session["config_name"] = config_name
         session["kometa_install_mode"] = "managed"
-        session["kometa_config_dir"] = ""
-        session["kometa_log_dir"] = ""
+        session["kometa_config_dir"] = str(managed_root / "config")
+        session["kometa_log_dir"] = str(managed_root / "config" / "logs")
         assert helpers.get_kometa_config_dir() == external_config.resolve()
         assert helpers.get_kometa_log_dir() == external_logs.resolve()
 
@@ -6768,6 +6770,56 @@ def test_get_kometa_root_path_prefers_persisted_existing_selection(app, tmp_path
         session["config_name"] = config_name
         session["kometa_root"] = managed_default
         assert helpers.get_kometa_root_path() == existing_root.resolve()
+
+
+def test_get_kometa_install_mode_prefers_persisted_selection(app, tmp_path):
+    from flask import session
+    from modules import database, helpers
+
+    config_name = "pytest_persisted_existing_mode"
+    existing_root = tmp_path / "persisted-existing-mode"
+    existing_root.mkdir(parents=True, exist_ok=True)
+
+    database.save_section_data(
+        name=config_name,
+        section="kometa",
+        validated=False,
+        user_entered=True,
+        data={"kometa": {"install_mode": "existing", "existing_root": str(existing_root)}},
+    )
+
+    with app.test_request_context("/step/900-kometa"):
+        app.config["KOMETA_INSTALL_MODE"] = "managed"
+        session["config_name"] = config_name
+        session["kometa_install_mode"] = "managed"
+        assert helpers.get_kometa_install_mode() == "existing"
+
+
+def test_save_kometa_page_preserves_existing_install_selection(app, tmp_path):
+    from flask import session
+    from modules import database, persistence
+
+    config_name = "pytest_save_kometa_preserve_existing"
+    existing_root = tmp_path / "preserve-existing-kometa"
+    existing_root.mkdir(parents=True, exist_ok=True)
+
+    database.save_section_data(
+        name=config_name,
+        section="kometa",
+        validated=True,
+        user_entered=True,
+        data={"kometa": {"install_mode": "existing", "existing_root": str(existing_root)}},
+    )
+
+    with app.test_request_context("/step/900-kometa"):
+        session["config_name"] = config_name
+        persistence.save_settings("900-kometa", {"header_style": "single line"})
+
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "kometa")
+    kometa = stored["kometa"]
+    assert kometa["install_mode"] == "existing"
+    assert kometa["existing_root"] == str(existing_root)
+    assert kometa["header_style"] == "single line"
 
 
 def test_normalize_config_name_for_storage_strips_yaml_filename_suffix():

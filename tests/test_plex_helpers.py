@@ -13,11 +13,10 @@ class _Item:
 
 
 class _Section:
-    key = "1"
-    title = "Movies"
-
-    def __init__(self, items):
+    def __init__(self, items, title="Movies", key="1"):
         self._items = items
+        self.title = title
+        self.key = key
 
     def search(self, sort=None, maxresults=None):
         assert sort == "audienceRating:desc"
@@ -70,3 +69,16 @@ def test_get_top_imdb_items_continues_until_each_relevant_source_has_top_ten(mon
 
     assert len(result) == 20
     assert [item["tmdb_movie"] for item in result if item["tmdb_movie"]] == [str(900 + index) for index in range(10)]
+
+
+def test_get_top_imdb_items_matches_plex_section_titles_with_outer_spaces(monkeypatch):
+    items = [_Item("Movie", ["imdb://tt1234567", "tmdb://42"])]
+    section = _Section(items, title=" Movies")
+
+    monkeypatch.setattr(_plex.persistence, "get_stored_plex_credentials", lambda page: ("http://plex", "token"))
+    monkeypatch.setattr(_plex, "PlexServer", lambda url, token: _Plex(section))
+
+    result, _saved_item = _plex.get_top_imdb_items("Movies", "movie")
+
+    assert result[0]["title"] == "Movie"
+    assert result[0]["imdb_id"] == "tt1234567"

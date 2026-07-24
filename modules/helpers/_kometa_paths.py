@@ -25,9 +25,9 @@ def get_kometa_root_path() -> Path:
     """
     Resolve the Kometa root folder consistently.
     Priority:
-        1) app.config["KOMETA_ROOT"] if it differs from the managed default
+        1) persisted existing-install override for the active config
         2) session["kometa_root"] if it differs from the managed default
-        3) persisted existing-install override for the active config
+        3) app.config["KOMETA_ROOT"] if it differs from the managed default
         4) managed default under <CONFIG_DIR>/kometa
     """
     from modules.helpers._install_mode import _managed_kometa_root_default, get_kometa_install_mode, _get_persisted_kometa_runtime_section
@@ -35,15 +35,7 @@ def get_kometa_root_path() -> Path:
     managed_default = str(_managed_kometa_root_default())
     base = None
     install_mode = get_kometa_install_mode()
-    if has_app_context():
-        configured = app.config.get("KOMETA_ROOT")
-        if configured and os.path.normpath(str(configured)) != managed_default:
-            base = configured
-    if not base and has_request_context():
-        session_root = session.get("kometa_root")
-        if session_root and os.path.normpath(str(session_root)) != managed_default:
-            base = session_root
-    if not base and has_request_context():
+    if has_request_context():
         try:
             section = _get_persisted_kometa_runtime_section()
             if isinstance(section, dict):
@@ -53,6 +45,14 @@ def get_kometa_root_path() -> Path:
                     base = existing_root
         except Exception:
             base = None
+    if not base and has_request_context():
+        session_root = session.get("kometa_root")
+        if session_root and os.path.normpath(str(session_root)) != managed_default:
+            base = session_root
+    if not base and has_app_context():
+        configured = app.config.get("KOMETA_ROOT")
+        if configured and os.path.normpath(str(configured)) != managed_default:
+            base = configured
     if not base:
         if has_app_context():
             base = app.config.get("KOMETA_ROOT")
@@ -61,12 +61,12 @@ def get_kometa_root_path() -> Path:
     if not base:
         if install_mode == "external":
             config_dir = None
-            if has_app_context():
-                config_dir = app.config.get("KOMETA_CONFIG_DIR")
-            if not config_dir and has_request_context():
-                config_dir = session.get("kometa_config_dir")
             if not config_dir and has_request_context():
                 config_dir = _get_persisted_kometa_runtime_section().get("external_config_root")
+            if not config_dir and has_request_context():
+                config_dir = session.get("kometa_config_dir")
+            if not config_dir and has_app_context():
+                config_dir = app.config.get("KOMETA_CONFIG_DIR")
             if config_dir:
                 return Path(os.path.normpath(str(config_dir))).resolve()
         base = managed_default
@@ -89,15 +89,15 @@ def get_kometa_config_dir() -> Path:
         return get_kometa_root_path() / "config"
 
     configured = None
-    if has_app_context():
-        configured = app.config.get("KOMETA_CONFIG_DIR")
-    if not configured and has_request_context():
-        configured = session.get("kometa_config_dir")
     if not configured and has_request_context():
         section = _get_persisted_kometa_runtime_section()
         mode = str(section.get("install_mode") or "").strip().lower()
         if mode == "external":
             configured = section.get("external_config_root")
+    if not configured and has_request_context():
+        configured = session.get("kometa_config_dir")
+    if not configured and has_app_context():
+        configured = app.config.get("KOMETA_CONFIG_DIR")
     if configured:
         return Path(os.path.normpath(str(configured))).resolve()
     return get_kometa_root_path() / "config"
@@ -123,10 +123,6 @@ def get_kometa_log_dir() -> Path:
         return get_kometa_config_dir() / "logs"
 
     configured = None
-    if has_app_context():
-        configured = app.config.get("KOMETA_LOG_DIR")
-    if not configured and has_request_context():
-        configured = session.get("kometa_log_dir")
     if not configured and has_request_context():
         section = _get_persisted_kometa_runtime_section()
         mode = str(section.get("install_mode") or "").strip().lower()
@@ -136,6 +132,10 @@ def get_kometa_log_dir() -> Path:
                 config_dir = section.get("external_config_root") or ""
                 if config_dir:
                     return Path(os.path.normpath(str(config_dir))).resolve() / "logs"
+    if not configured and has_request_context():
+        configured = session.get("kometa_log_dir")
+    if not configured and has_app_context():
+        configured = app.config.get("KOMETA_LOG_DIR")
     if configured:
         return Path(os.path.normpath(str(configured))).resolve()
     return get_kometa_config_dir() / "logs"
