@@ -4305,6 +4305,7 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
 
     telemetry = {
         "server_name": "Test Plex",
+        "db_cache": "2048 MB",
         "maintenance_window": "02:00 – 05:00",
         "platform": "Windows",
     }
@@ -4321,8 +4322,40 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["validated"] is True
+    assert payload["db_cache"] == 2048
     assert payload["maintenance_window"] == "02:00 – 05:00"
     assert calls == {"save_settings": 1, "save_section": 1}
+
+
+def test_plex_page_normalizes_formatted_db_cache_on_load(client, isolated_config_dir):
+    from modules import database
+
+    config_name = "pytest_plex_formatted_db_cache"
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    database.save_section_data(
+        name=config_name,
+        section="plex",
+        validated=True,
+        user_entered=True,
+        data={
+            "validated": True,
+            "plex": {
+                "url": "http://plex.local:32400",
+                "token": "token",
+                "db_cache": "2048 MB",
+                "timeout": 60,
+            },
+        },
+    )
+
+    resp = client.get("/step/010-plex")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    match = re.search(r'id="plex_db_cache"[^>]+value="([^"]*)"', html)
+    assert match is not None
+    assert match.group(1) == "2048"
 
 
 def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):

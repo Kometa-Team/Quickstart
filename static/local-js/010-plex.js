@@ -7,6 +7,11 @@ import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
 const hiddenSection = document.getElementById('hidden')
 const plexDbCache = document.getElementById('plexDbCache')
 
+function normalizeDbCacheValue (value) {
+  const match = String(value ?? '').match(/\d+/)
+  return match ? match[0] : ''
+}
+
 ;(function showSavedSectionsIfValidated () {
   const validated = document.getElementById('plex_validated')?.value.toLowerCase() === 'true'
   if (validated) {
@@ -49,15 +54,16 @@ function applyPlexResponse (data) {
   // validate round-trip, and reading the latest value is arguably more
   // correct (it reflects what the user actually wants right now).
   const dbCacheInput = document.getElementById('plex_db_cache')
-  const currentDbCache = dbCacheInput ? dbCacheInput.value : ''
-  const serverDbCache = data.db_cache
+  const currentDbCache = dbCacheInput ? normalizeDbCacheValue(dbCacheInput.value) : ''
+  const serverDbCache = normalizeDbCacheValue(data.db_cache)
+  if (!serverDbCache) return
 
   if (plexDbCache) {
     plexDbCache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB'
     plexDbCache.style.color = '#75b798'
     plexDbCache.style.display = 'block'
 
-    if (Number(currentDbCache) !== serverDbCache) {
+    if (currentDbCache && currentDbCache !== serverDbCache) {
       plexDbCache.textContent += '.\nWarning: The value in the input box (' + currentDbCache + ' MB) does not match the value retrieved from the server (' + serverDbCache + ' MB).'
       plexDbCache.style.color = '#ea868f'
     }

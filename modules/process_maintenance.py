@@ -45,6 +45,8 @@ from __future__ import annotations
 import re
 from datetime import datetime, timezone
 
+from flask import has_request_context
+
 from modules import database, helpers, persistence
 from modules.process_control_state import MAINTENANCE_STATE, MAINTENANCE_STATE_LOCK
 from modules.process_pending_start import peek_pending_kometa_start
@@ -83,11 +85,11 @@ def get_maintenance_window_from_db(config_name=None):
         _validated, _user_entered, data = database.retrieve_section_data(name=config_name, section="plex_telemetry")
         telemetry = data.get("plex_telemetry", {}) if isinstance(data, dict) else {}
         window_str = telemetry.get("maintenance_window")
-        if not window_str:
+        if not window_str and has_request_context():
             legacy_telemetry = persistence.retrieve_settings("plex_telemetry")
             if isinstance(legacy_telemetry, dict):
                 window_str = legacy_telemetry.get("plex_telemetry", {}).get("maintenance_window")
-        if not window_str:
+        if not window_str and has_request_context():
             legacy_plex = persistence.retrieve_settings("010-plex")
             if isinstance(legacy_plex, dict):
                 window_str = legacy_plex.get("plex", {}).get("telemetry", {}).get("maintenance_window")
@@ -105,7 +107,9 @@ def get_plex_credentials_from_db(config_name=None):
     if not config_name:
         return None, None
     try:
-        _validated, _user_entered, data = database.retrieve_section_data(name=config_name, section="plex")
+        validated, _user_entered, data = database.retrieve_section_data(name=config_name, section="plex")
+        if validated is not True:
+            return None, None
         plex_data = data.get("plex", {}) if isinstance(data, dict) else {}
         plex_url = plex_data.get("url") or plex_data.get("plex_url")
         plex_token = plex_data.get("token") or plex_data.get("plex_token")
