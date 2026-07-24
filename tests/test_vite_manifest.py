@@ -59,9 +59,18 @@ def fake_manifest(tmp_path, monkeypatch):
     before calling ``reload_manifest()`` + ``asset_url()``.
     """
     manifest_path = tmp_path / "manifest.json"
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
     monkeypatch.setattr(_vite_manifest, "_MANIFEST_PATH", str(manifest_path))
+    monkeypatch.setattr(_vite_manifest, "_DIST_DIR", str(dist_dir))
     reload_manifest()
     return manifest_path
+
+
+def _touch_dist_file(path):
+    built_path = Path(_vite_manifest._DIST_DIR) / path
+    built_path.parent.mkdir(parents=True, exist_ok=True)
+    built_path.write_text("// built\n", encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -114,6 +123,7 @@ class TestLoadManifest:
 
 class TestAssetUrlWithManifest:
     def test_returns_hashed_dist_path_for_entry(self, fake_manifest):
+        _touch_dist_file("000-base-DKccW2Od.js")
         fake_manifest.write_text(
             json.dumps(
                 {
@@ -128,6 +138,7 @@ class TestAssetUrlWithManifest:
 
     def test_prefers_dist_over_source_when_both_exist(self, fake_manifest):
         """Manifest entry always wins; we never inspect the source path."""
+        _touch_dist_file("010-plex-xyz789.js")
         fake_manifest.write_text(
             json.dumps(
                 {
@@ -149,6 +160,7 @@ class TestAssetUrlWithManifest:
         references these directly, but if it ever did the lookup should
         still work.)
         """
+        _touch_dist_file("chunks/imageHandler-abc.js")
         fake_manifest.write_text(
             json.dumps(
                 {
@@ -173,6 +185,11 @@ class TestAssetUrlWithManifest:
                 }
             )
         )
+        assert asset_url("000-base") == "/static/local-js/000-base.js"
+
+    def test_manifest_entry_missing_built_file_falls_back(self, fake_manifest):
+        """A stale manifest without its dist file must not emit a guaranteed 404 URL."""
+        fake_manifest.write_text(json.dumps({"static/local-js/000-base.js": {"file": "000-base-stale.js"}}))
         assert asset_url("000-base") == "/static/local-js/000-base.js"
 
 
@@ -215,6 +232,7 @@ class TestManifestCaching:
         is invoked for the manifest path across many ``asset_url()``
         calls.
         """
+        _touch_dist_file("000-base-abc.js")
         fake_manifest.write_text(json.dumps({"static/local-js/000-base.js": {"file": "000-base-abc.js"}}))
 
         real_open = open
@@ -234,10 +252,12 @@ class TestManifestCaching:
 
     def test_reload_manifest_forces_fresh_read(self, fake_manifest):
         """After reload_manifest(), the next asset_url() call re-reads disk."""
+        _touch_dist_file("000-base-v1.js")
         fake_manifest.write_text(json.dumps({"static/local-js/000-base.js": {"file": "000-base-v1.js"}}))
         assert asset_url("000-base") == "/static/dist/000-base-v1.js"
 
         # Rewrite the manifest and reload.
+        _touch_dist_file("000-base-v2.js")
         fake_manifest.write_text(json.dumps({"static/local-js/000-base.js": {"file": "000-base-v2.js"}}))
         reload_manifest()
 
@@ -245,6 +265,7 @@ class TestManifestCaching:
 
     def test_reload_without_manifest_still_falls_back(self, fake_manifest):
         """A manifest that appears and then disappears must fall back cleanly."""
+        _touch_dist_file("000-base-v1.js")
         fake_manifest.write_text(json.dumps({"static/local-js/000-base.js": {"file": "000-base-v1.js"}}))
         assert asset_url("000-base") == "/static/dist/000-base-v1.js"
 
