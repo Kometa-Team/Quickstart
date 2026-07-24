@@ -38,7 +38,7 @@ def get_top_imdb_items_route(library_name):
 
     tmp_key = f"tmp_{media_type}_libraries"
     raw_libraries = plex_settings.get(tmp_key, "")
-    library_names = [lib.strip() for lib in raw_libraries.split(",") if lib.strip()]
+    library_names = [lib for lib in raw_libraries.split(",") if lib]
 
     helpers.ts_log(f"Searching for library name: {library_name}", level="DEBUG")
     helpers.ts_log(f"Available libraries of type '{media_type}': {library_names}", level="DEBUG")
@@ -84,22 +84,22 @@ def _build_library_lists():
 
     movie_libraries = [
         {
-            "id": f"mov-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
-            "name": lib.strip(),
+            "id": f"mov-library_{helpers.normalize_id(lib, existing_ids)}",
+            "name": lib,
             "type": "movie",
         }
         for lib in movie_raw.split(",")
-        if lib.strip()
+        if lib
     ]
 
     show_libraries = [
         {
-            "id": f"sho-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
-            "name": lib.strip(),
+            "id": f"sho-library_{helpers.normalize_id(lib, existing_ids)}",
+            "name": lib,
             "type": "show",
         }
         for lib in show_raw.split(",")
-        if lib.strip()
+        if lib
     ]
 
     return movie_libraries, show_libraries, telemetry_data
