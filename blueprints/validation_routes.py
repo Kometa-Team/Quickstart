@@ -112,7 +112,10 @@ def validate_plex():
     except Exception as e:
         helpers.ts_log(f"Failed to fetch Plex telemetry during validation: {e}", level="WARNING")
 
-    merged = {**plex_data, **telemetry}
+    # Keep validator fields authoritative for the Plex page contract. Telemetry
+    # uses display strings like "2048 MB", while the page's db_cache input needs
+    # the numeric value returned by validate_plex_server.
+    merged = {**telemetry, **plex_data}
     return jsonify(merged)
 
 

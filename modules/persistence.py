@@ -4,6 +4,7 @@ import secrets
 import json
 import datetime
 import copy
+import re
 
 from flask import current_app as app
 from flask import has_request_context, session
@@ -25,6 +26,22 @@ TRANSIENT_FORM_FIELDS = {
     "newConfigName",
     "importMode",
 }
+
+
+def _normalize_plex_db_cache_value(value):
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    text = str(value).strip()
+    if not text:
+        return ""
+    match = re.search(r"\d+", text)
+    if match:
+        return int(match.group(0))
+    return value
 
 
 def _get_iso_reference_lists():
@@ -152,6 +169,9 @@ def clean_form_data(form_data):
             clean_data[key] = None
 
         elif isinstance(value, str):
+            if key == "plex_db_cache":
+                clean_data[key] = _normalize_plex_db_cache_value(value)
+                continue
             if key.endswith("template_overlay_runtimes[text]") and value == "":
                 clean_data[key] = ""
                 continue
@@ -478,6 +498,11 @@ def retrieve_settings(target):
             if isinstance(auth, dict) and "force_refresh" in auth and "force_refresh" not in section:
                 section["force_refresh"] = auth.pop("force_refresh")
             section.setdefault("force_refresh", False)
+
+    if source_name == "plex":
+        section = data[source_name]
+        if isinstance(section, dict) and "db_cache" in section:
+            section["db_cache"] = _normalize_plex_db_cache_value(section.get("db_cache"))
 
     # Only modify if the target is 'libraries'
     if source_name == "libraries":

@@ -1,5 +1,7 @@
 import time
 
+from modules import process_maintenance
+
 
 class _FakeProc:
     def __init__(self, pid, cmdline):
@@ -30,6 +32,45 @@ def _reset_maintenance_state(qs_module):
                 "window_unavailable_since": None,
             }
         )
+
+
+def test_maintenance_window_db_lookup_skips_request_settings_outside_request(monkeypatch):
+    calls = {"legacy": 0}
+
+    def fake_retrieve_section_data(name, section):
+        assert name == "bad_plex_cfg"
+        assert section == "plex_telemetry"
+        return False, True, {"plex_telemetry": {}}
+
+    def fail_legacy_lookup(section):
+        calls["legacy"] += 1
+        raise RuntimeError("Working outside of request context.")
+
+    monkeypatch.setattr(process_maintenance.database, "retrieve_section_data", fake_retrieve_section_data)
+    monkeypatch.setattr(process_maintenance.persistence, "retrieve_settings", fail_legacy_lookup)
+
+    assert process_maintenance.get_maintenance_window_from_db("bad_plex_cfg") == (None, None, None)
+    assert calls["legacy"] == 0
+
+
+def test_maintenance_live_lookup_skips_unvalidated_plex_credentials(monkeypatch):
+    calls = {"plex": 0}
+
+    def fake_retrieve_section_data(name, section):
+        assert name == "bad_plex_cfg"
+        assert section == "plex"
+        return False, True, {"plex": {"url": "http://192.168.2.242:32400", "token": "bad"}}
+
+    def fail_live_lookup(*_args, **_kwargs):
+        calls["plex"] += 1
+        raise AssertionError("invalid Plex credentials should not be polled by maintenance refresh")
+
+    monkeypatch.setattr(process_maintenance.database, "retrieve_section_data", fake_retrieve_section_data)
+    monkeypatch.setattr(process_maintenance.helpers, "get_plex_maintenance_hours", fail_live_lookup)
+
+    assert process_maintenance.get_plex_credentials_from_db("bad_plex_cfg") == (None, None)
+    assert process_maintenance.get_maintenance_window_live("bad_plex_cfg") == (None, None, None)
+    assert calls["plex"] == 0
 
 
 def test_stop_kometa_non_kometa_pid_warning(tmp_path, client, monkeypatch, qs_module):
