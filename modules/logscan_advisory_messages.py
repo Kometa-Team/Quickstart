@@ -332,15 +332,20 @@ def build_advisory_messages(
     if kometa_time_recommendation:
         special_check_lines.append(kometa_time_recommendation)
 
-    # Extract Memory value:
-    kometa_mem_recommendation = analyzer.calculate_memory_recommendation(content)
-    if kometa_mem_recommendation:
-        special_check_lines.append(kometa_mem_recommendation)
+    validation_run = bool(getattr(analyzer, "validation_summary", {}).get("validation_run"))
+    kometa_mem_recommendation = None
+    kometa_db_cache_recommendation = None
+    if not validation_run:
+        # Validation-only logs do not include the full run header/system
+        # metrics, so normal-run tuning recommendations would be false
+        # positives.
+        kometa_mem_recommendation = analyzer.calculate_memory_recommendation(content)
+        if kometa_mem_recommendation:
+            special_check_lines.append(kometa_mem_recommendation)
 
-    # Extract DB Cache value:
-    kometa_db_cache_recommendation = analyzer.make_db_cache_recommendations(content)
-    if kometa_db_cache_recommendation:
-        special_check_lines.append(kometa_db_cache_recommendation)
+        kometa_db_cache_recommendation = analyzer.make_db_cache_recommendations(content)
+        if kometa_db_cache_recommendation:
+            special_check_lines.append(kometa_db_cache_recommendation)
 
     # Extract WSL information
     wsl_recommendation = analyzer.detect_wsl_and_recommendation(content)

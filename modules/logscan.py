@@ -45,6 +45,7 @@ class LogscanAnalyzer:
         self.server_versions = []
         self.people_index_available = False
         self._people_index = None
+        self.validation_summary = {}
 
     def reset_server_versions(self):
         """Reset the server_versions list to an empty list."""
@@ -206,6 +207,9 @@ class LogscanAnalyzer:
 
     def extract_finished_runs(self, content):
         return logscan_finished_runs.extract_finished_runs(content)
+
+    def extract_validation_summary(self, content):
+        return logscan_finished_runs.extract_validation_summary(content)
 
     def _parse_run_time_from_line(self, line):
         return logscan_finished_runs.parse_run_time_from_line(line)
@@ -373,9 +377,16 @@ class LogscanAnalyzer:
         run_command=None,
         command_signature=None,
         section_runtimes=None,
+        validation_summary=None,
     ):
         started_at = self._normalize_started_at(self.started_at)
         finished_at = self.finished_at
+        validation_summary = validation_summary if isinstance(validation_summary, dict) else {}
+        validation_run = bool(validation_summary.get("validation_run"))
+        validation_result = validation_summary.get("validation_result")
+        validation_complete = validation_run and bool(validation_result)
+        if not finished_at and validation_summary.get("finished_at"):
+            finished_at = validation_summary.get("finished_at")
         if not finished_at and finished_runs:
             last_run = finished_runs[-1]
             if " - " in last_run:
@@ -388,7 +399,7 @@ class LogscanAnalyzer:
         run_time_seconds = None
         if isinstance(self.run_time, timedelta):
             run_time_seconds = int(self.run_time.total_seconds())
-        run_complete = run_time_seconds is not None
+        run_complete = run_time_seconds is not None or validation_complete
         section_total_seconds = None
         section_delta_seconds = None
         if section_runtimes:
@@ -420,7 +431,7 @@ class LogscanAnalyzer:
             run_key_seed = "|".join(run_key_parts)
             run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
 
-        return {
+        summary = {
             "run_key": run_key,
             "started_at": started_at,
             "finished_at": finished_at,
@@ -440,6 +451,11 @@ class LogscanAnalyzer:
             "log_counts": counts,
             "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
+        if validation_run:
+            summary["validation_run"] = True
+            summary["validation_level"] = validation_summary.get("validation_level")
+            summary["validation_result"] = validation_result
+        return summary
 
     def analyze_content(self, content, log_path=None, config_name=None, config_path=None, include_people_scan=True):
         self.reset_server_versions()
@@ -451,6 +467,7 @@ class LogscanAnalyzer:
         self.current_kometa_version = None
         self.kometa_newest_version = None
         self.people_index_available = False
+        self.validation_summary = {}
 
         raw_content = content or ""
         self._raw_content = raw_content
@@ -460,6 +477,8 @@ class LogscanAnalyzer:
         header_lines = self.extract_header_lines(cleaned_content)
         finished_lines = self.extract_last_lines(cleaned_content)
         finished_runs = self.extract_finished_runs(cleaned_content)
+        validation_summary = self.extract_validation_summary(raw_content)
+        self.validation_summary = validation_summary if isinstance(validation_summary, dict) else {}
         self.extract_plex_config(cleaned_content)
         run_command_raw = self.extract_run_command(cleaned_content)
         command_signature = self.compute_command_signature(run_command_raw)
@@ -518,6 +537,7 @@ class LogscanAnalyzer:
             run_command=run_command,
             command_signature=command_signature,
             section_runtimes=section_runtimes,
+            validation_summary=validation_summary,
         )
         if summary:
             summary["analysis_counts"] = analysis_counts

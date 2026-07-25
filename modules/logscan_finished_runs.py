@@ -83,6 +83,56 @@ def extract_finished_runs(content: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Validation-only run parsing
+# ---------------------------------------------------------------------------
+
+
+_VALIDATION_REPORT_RE = re.compile(r"\bValidation\s+Report(?:\s*\(([^)]*)\))?", re.IGNORECASE)
+_VALIDATION_RESULT_RE = re.compile(r"\[validator\.py:\d+\].*?\bResult:\s*([^|]+)", re.IGNORECASE)
+_LOG_TIMESTAMP_RE = re.compile(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),")
+
+
+def extract_validation_summary(content: str) -> Optional[dict]:
+    """Return terminal validation-run metadata when a Kometa validate log is complete.
+
+    Kometa ``--validate`` runs do not always emit the normal ``Finished Run`` /
+    ``Run Time:`` block.  They do emit a validation report with a terminal
+    ``validator.py`` / ``Result: ...`` line.  Any validator result means the
+    validation command finished and should not be treated as an incomplete run.
+    """
+    if not content:
+        return None
+
+    validation_level = None
+    validation_result = None
+    last_timestamp = None
+
+    for line in content.splitlines():
+        timestamp_match = _LOG_TIMESTAMP_RE.search(line)
+        if timestamp_match:
+            last_timestamp = timestamp_match.group(1).strip()
+
+        report_match = _VALIDATION_REPORT_RE.search(line)
+        if report_match:
+            if report_match.group(1):
+                validation_level = report_match.group(1).strip().lower()
+
+        result_match = _VALIDATION_RESULT_RE.search(line)
+        if result_match:
+            validation_result = result_match.group(1).strip().lower()
+
+    if not validation_result:
+        return None
+
+    return {
+        "validation_run": True,
+        "validation_level": validation_level,
+        "validation_result": validation_result,
+        "finished_at": last_timestamp,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Run-time parsing
 # ---------------------------------------------------------------------------
 
