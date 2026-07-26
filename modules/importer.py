@@ -3,6 +3,7 @@ import re
 from typing import Any
 
 from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
 
 from modules import helpers
 
@@ -104,9 +105,52 @@ def sanitize_config_name(raw_name: str | None) -> str:
     return re.sub(r"[^a-z0-9_]", "", raw_name.strip().lower())
 
 
+def _dealias_yaml_value(value: Any, active_ids: set[int] | None = None) -> Any:
+    """Clone parsed YAML values so aliases cannot share mutable objects.
+
+    ruamel resolves anchors and merge keys for us, but plain aliases can still
+    point at the same Python dict/list.  Import normalization mutates nested
+    values in a few places, so each occurrence needs an independent object.
+    """
+    if active_ids is None:
+        active_ids = set()
+    if isinstance(value, dict):
+        value_id = id(value)
+        if value_id in active_ids:
+            raise ValueError("Recursive YAML aliases are not supported.")
+        active_ids.add(value_id)
+        try:
+            return {_dealias_yaml_value(key, active_ids): _dealias_yaml_value(item, active_ids) for key, item in value.items()}
+        finally:
+            active_ids.remove(value_id)
+    if isinstance(value, list):
+        value_id = id(value)
+        if value_id in active_ids:
+            raise ValueError("Recursive YAML aliases are not supported.")
+        active_ids.add(value_id)
+        try:
+            return [_dealias_yaml_value(item, active_ids) for item in value]
+        finally:
+            active_ids.remove(value_id)
+    if isinstance(value, tuple):
+        value_id = id(value)
+        if value_id in active_ids:
+            raise ValueError("Recursive YAML aliases are not supported.")
+        active_ids.add(value_id)
+        try:
+            return tuple(_dealias_yaml_value(item, active_ids) for item in value)
+        finally:
+            active_ids.remove(value_id)
+    return value
+
+
 def load_yaml_config(raw_text: str) -> dict:
     yaml = YAML(typ="safe", pure=True)
-    loaded = yaml.load(raw_text)
+    try:
+        loaded = yaml.load(raw_text)
+        loaded = _dealias_yaml_value(loaded)
+    except (ValueError, YAMLError):
+        return {}
     return loaded if isinstance(loaded, dict) else {}
 
 
