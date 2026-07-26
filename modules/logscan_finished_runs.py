@@ -132,6 +132,35 @@ def extract_validation_summary(content: str) -> Optional[dict]:
     }
 
 
+def extract_log_timestamp_bounds(content: str) -> dict:
+    """Return first/last log-line timestamps and elapsed seconds when available."""
+    if not content:
+        return {}
+
+    first_timestamp = None
+    last_timestamp = None
+    for line in content.splitlines():
+        match = _LOG_TIMESTAMP_RE.search(line)
+        if not match:
+            continue
+        try:
+            parsed = datetime.strptime(match.group(1).strip(), "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            continue
+        if first_timestamp is None:
+            first_timestamp = parsed
+        last_timestamp = parsed
+
+    if first_timestamp is None or last_timestamp is None:
+        return {}
+
+    return {
+        "started_at": first_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "finished_at": last_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "elapsed_seconds": max(0, int((last_timestamp - first_timestamp).total_seconds())),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Run-time parsing
 # ---------------------------------------------------------------------------

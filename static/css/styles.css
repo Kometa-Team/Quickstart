@@ -2075,13 +2075,10 @@ fieldset:disabled .btn {
     box-shadow: 0 0 10px rgba(var(--accent-color), 0.35);
 }
 
-.accordion-item.template-variable-section-has-overrides > .accordion-header {
+.accordion-item.template-variable-section-has-overrides > .accordion-header > .accordion-button,
+.accordion-header.template-variable-section-has-overrides > .accordion-button {
     border-left: 4px solid var(--theme-primary) !important;
-}
-
-.accordion-header.template-variable-section-has-overrides {
-    border-left: 4px solid var(--theme-primary) !important;
-    padding-left: 10px !important;
+    padding-left: calc(var(--bs-accordion-btn-padding-x, 1.25rem) + 6px) !important;
 }
 
 .template-override-summary,

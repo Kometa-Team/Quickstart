@@ -211,6 +211,9 @@ class LogscanAnalyzer:
     def extract_validation_summary(self, content):
         return logscan_finished_runs.extract_validation_summary(content)
 
+    def extract_log_timestamp_bounds(self, content):
+        return logscan_finished_runs.extract_log_timestamp_bounds(content)
+
     def _parse_run_time_from_line(self, line):
         return logscan_finished_runs.parse_run_time_from_line(line)
 
@@ -378,13 +381,17 @@ class LogscanAnalyzer:
         command_signature=None,
         section_runtimes=None,
         validation_summary=None,
+        timestamp_bounds=None,
     ):
         started_at = self._normalize_started_at(self.started_at)
         finished_at = self.finished_at
         validation_summary = validation_summary if isinstance(validation_summary, dict) else {}
+        timestamp_bounds = timestamp_bounds if isinstance(timestamp_bounds, dict) else {}
         validation_run = bool(validation_summary.get("validation_run"))
         validation_result = validation_summary.get("validation_result")
         validation_complete = validation_run and bool(validation_result)
+        if not started_at and timestamp_bounds.get("started_at"):
+            started_at = timestamp_bounds.get("started_at")
         if not finished_at and validation_summary.get("finished_at"):
             finished_at = validation_summary.get("finished_at")
         if not finished_at and finished_runs:
@@ -397,9 +404,16 @@ class LogscanAnalyzer:
                 finished_at = finished_at.split(":", 1)[1].strip()
 
         run_time_seconds = None
+        run_time_source = None
         if isinstance(self.run_time, timedelta):
             run_time_seconds = int(self.run_time.total_seconds())
-        run_complete = run_time_seconds is not None or validation_complete
+            run_time_source = "kometa"
+        if not finished_at and timestamp_bounds.get("finished_at"):
+            finished_at = timestamp_bounds.get("finished_at")
+        run_complete = run_time_source == "kometa" or validation_complete
+        if run_time_seconds is None and isinstance(timestamp_bounds.get("elapsed_seconds"), int):
+            run_time_seconds = timestamp_bounds.get("elapsed_seconds")
+            run_time_source = "log_timestamps"
         section_total_seconds = None
         section_delta_seconds = None
         if section_runtimes:
@@ -436,6 +450,7 @@ class LogscanAnalyzer:
             "started_at": started_at,
             "finished_at": finished_at,
             "run_time_seconds": run_time_seconds,
+            "run_time_source": run_time_source,
             "run_complete": run_complete,
             "section_runtime_total_seconds": section_total_seconds,
             "section_runtime_delta_seconds": section_delta_seconds,
@@ -479,6 +494,7 @@ class LogscanAnalyzer:
         finished_runs = self.extract_finished_runs(cleaned_content)
         validation_summary = self.extract_validation_summary(raw_content)
         self.validation_summary = validation_summary if isinstance(validation_summary, dict) else {}
+        timestamp_bounds = self.extract_log_timestamp_bounds(raw_content)
         self.extract_plex_config(cleaned_content)
         run_command_raw = self.extract_run_command(cleaned_content)
         command_signature = self.compute_command_signature(run_command_raw)
@@ -538,6 +554,7 @@ class LogscanAnalyzer:
             command_signature=command_signature,
             section_runtimes=section_runtimes,
             validation_summary=validation_summary,
+            timestamp_bounds=timestamp_bounds,
         )
         if summary:
             summary["analysis_counts"] = analysis_counts

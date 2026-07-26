@@ -40,7 +40,8 @@ def test_analyze_content_marks_validate_passed_log_complete_without_runtime():
 
     assert isinstance(summary, dict)
     assert summary.get("run_complete") is True
-    assert summary.get("run_time_seconds") is None
+    assert summary.get("run_time_seconds") == 1
+    assert summary.get("run_time_source") == "log_timestamps"
     assert summary.get("validation_run") is True
     assert summary.get("validation_level") == "full"
     assert summary.get("validation_result") == "passed"
@@ -63,10 +64,33 @@ def test_analyze_content_marks_validate_failed_log_complete_without_runtime():
 
     assert isinstance(summary, dict)
     assert summary.get("run_complete") is True
+    assert summary.get("run_time_seconds") == 1
+    assert summary.get("run_time_source") == "log_timestamps"
     assert summary.get("validation_run") is True
     assert summary.get("validation_result") == "failed"
     assert not any(rec.get("first_line") == "INFO - Run incomplete" for rec in result.get("recommendations", []))
     assert not any("Memory value not found" in rec.get("message", "") for rec in result.get("recommendations", []))
+
+
+def test_analyze_content_uses_log_timestamp_bounds_without_marking_incomplete_run_complete():
+    analyzer = LogscanAnalyzer()
+    content = "\n".join(
+        [
+            "[2026-07-24 18:24:37,827] [kometa.py:441] [INFO] | New log started",
+            "[2026-07-24 18:26:10,100] [metadata.py:100] [INFO] | Still processing",
+        ]
+    )
+
+    result = analyzer.analyze_content(content, include_people_scan=False)
+    summary = result.get("summary")
+
+    assert isinstance(summary, dict)
+    assert summary.get("started_at") == "2026-07-24 18:24:37"
+    assert summary.get("finished_at") == "2026-07-24 18:26:10"
+    assert summary.get("run_time_seconds") == 93
+    assert summary.get("run_time_source") == "log_timestamps"
+    assert summary.get("run_complete") is False
+    assert any("Run incomplete" in rec.get("first_line", "") for rec in result.get("recommendations", []))
 
 
 def test_library_runtime_does_not_become_finished_run_total():

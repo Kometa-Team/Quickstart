@@ -410,8 +410,8 @@ def test_template_variable_sections_show_override_rail():
     assert ".collection-variable-section.template-variable-section-has-overrides" in styles
     assert ".overlay-variable-section.template-variable-section-has-overrides" in styles
     assert ".template-toggle-group.template-variable-section-has-overrides" in styles
-    assert ".accordion-item.template-variable-section-has-overrides > .accordion-header" in styles
-    assert ".accordion-header.template-variable-section-has-overrides" in styles
+    assert ".accordion-header.template-variable-section-has-overrides > .accordion-button" in styles
+    assert ".accordion-header.template-variable-section-has-overrides {\n    border-left:" not in styles
     assert ".template-variable-field-has-override" in styles
     assert "[data-template-string-list].template-variable-field-has-override" in styles
     assert "background: linear-gradient(90deg, rgba(var(--accent-color), 0.08), transparent 34%);" in styles
