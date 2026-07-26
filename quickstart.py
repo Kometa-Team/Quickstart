@@ -428,7 +428,8 @@ ACTIVE_WORK_POLICIES = {
     ],
 }
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
-LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
+LOGSCAN_ANALYSIS_CACHE_VERSION = 3
+LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "version": LOGSCAN_ANALYSIS_CACHE_VERSION, "data": None}
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "aux_signature": None, "data": None}
 
 VALIDATION_DOC_BASE = "/step/"
@@ -4040,7 +4041,7 @@ def logscan_analyze():
         return jsonify({"error": f"Failed to stat log: {str(e)}"}), 500
 
     cached = LOGSCAN_ANALYSIS_CACHE
-    if cached.get("mtime") == stats.st_mtime and cached.get("size") == stats.st_size:
+    if cached.get("version") == LOGSCAN_ANALYSIS_CACHE_VERSION and cached.get("mtime") == stats.st_mtime and cached.get("size") == stats.st_size:
         data = cached.get("data") or {}
         data["cached"] = True
         return jsonify(data)
@@ -4096,8 +4097,8 @@ def logscan_analyze():
             if _logscan_needs_reingest(cache_logs, log_path.parent):
                 _start_logscan_auto_reingest(log_path.parent)
 
-    LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "data": result})
     result["cached"] = False
+    LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "version": LOGSCAN_ANALYSIS_CACHE_VERSION, "data": dict(result)})
     return jsonify(result)
 
 

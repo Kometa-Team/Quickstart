@@ -16,6 +16,7 @@ import pytest
 from modules.logscan_finished_runs import (
     extract_finished_runs,
     extract_last_lines,
+    extract_validation_summary,
     find_last_run_time_index,
     format_contiguous_lines,
     parse_final_run_metadata,
@@ -113,6 +114,94 @@ class TestExtractFinishedRuns:
         assert len(result) == 2
         assert "collections" in result[0]
         assert "overlays" in result[1]
+
+
+# ---------------------------------------------------------------------------
+# extract_validation_summary
+# ---------------------------------------------------------------------------
+
+
+class TestExtractValidationSummary:
+    def test_passed_validation_report_is_terminal(self):
+        content = "\n".join(
+            [
+                "[2026-07-24 18:24:37,827] [kometa.py:441] [INFO] | Validation Report (full)",
+                "[2026-07-24 18:24:38,100] [validator.py:100] [INFO] | Result: PASSED",
+            ]
+        )
+
+        result = extract_validation_summary(content)
+
+        assert result == {
+            "validation_run": True,
+            "validation_level": "full",
+            "validation_result": "passed",
+            "finished_at": "2026-07-24 18:24:38",
+        }
+
+    def test_passed_validation_report_preserves_warning_suffix(self):
+        content = "\n".join(
+            [
+                "[2026-07-24 18:24:37,827] [validator.py:452] [INFO] | Validation Report (structure+schema)",
+                "[2026-07-24 18:24:38,100] [validator.py:485] [INFO] | Result: PASSED with 2 warning(s)",
+            ]
+        )
+
+        result = extract_validation_summary(content)
+
+        assert result is not None
+        assert result["validation_level"] == "structure+schema"
+        assert result["validation_result"] == "passed with 2 warning(s)"
+
+    def test_failed_validation_report_is_terminal(self):
+        content = "\n".join(
+            [
+                "[2026-07-24 18:24:37,827] [kometa.py:441] [INFO] | Validation Report (structure)",
+                "[2026-07-24 18:24:38,100] [validator.py:100] [INFO] | Result: FAILED",
+            ]
+        )
+
+        result = extract_validation_summary(content)
+
+        assert result is not None
+        assert result["validation_level"] == "structure"
+        assert result["validation_result"] == "failed"
+
+    def test_validator_result_without_report_line_is_terminal(self):
+        content = "\n".join(
+            [
+                "[2026-07-24 23:12:08,515] [validator.py:481] [INFO] |",
+                "[2026-07-24 23:12:08,515] [validator.py:482] [INFO] | ===============================================================",
+                "[2026-07-24 23:12:08,515] [validator.py:485] [INFO] | Result: FAILED",
+                "[2026-07-24 23:12:08,516] [validator.py:486] [INFO] | ===============================================================",
+            ]
+        )
+
+        result = extract_validation_summary(content)
+
+        assert result is not None
+        assert result["validation_run"] is True
+        assert result["validation_level"] is None
+        assert result["validation_result"] == "failed"
+        assert result["finished_at"] == "2026-07-24 23:12:08"
+
+    def test_validator_result_text_does_not_have_to_be_passed_or_failed(self):
+        content = "\n".join(
+            [
+                "[2026-07-24 18:24:37,827] [validator.py:452] [INFO] | Validation Report (syntax)",
+                "[2026-07-24 18:24:38,100] [validator.py:485] [INFO] | Result: SKIPPED",
+            ]
+        )
+
+        result = extract_validation_summary(content)
+
+        assert result is not None
+        assert result["validation_result"] == "skipped"
+
+    def test_incomplete_validation_report_without_result_is_not_terminal(self):
+        content = "[2026-07-24 18:24:37,827] [kometa.py:441] [INFO] | Validation Report (syntax)"
+
+        assert extract_validation_summary(content) is None
 
 
 # ---------------------------------------------------------------------------

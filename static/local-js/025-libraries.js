@@ -9438,6 +9438,21 @@ function getLibraryCardOverrideTotal (card) {
   return getLibrarySectionOverrideTotal(card, false) + getLibrarySectionOverrideTotal(card, true)
 }
 
+function syncDirectLibraryAccordionOverrideSignals (card) {
+  if (!card) return
+  const accordion = card.querySelector('.accordion')
+  const items = Array.from(accordion?.children || []).filter(item => item.classList?.contains('accordion-item'))
+  items.forEach(item => {
+    const collapse = Array.from(item.children).find(child => child.classList?.contains('accordion-collapse'))
+    const header = Array.from(item.children).find(child => child.classList?.contains('accordion-header')) || item.querySelector(':scope > .accordion-header')
+    const count = getAccordionCollapseOverrideCount(collapse)
+    const hasSignal = getAccordionCollapseHasActiveSignal(collapse)
+    item.classList.toggle('template-variable-section-has-overrides', hasSignal)
+    header?.classList.toggle('template-variable-section-has-overrides', hasSignal)
+    setOverrideSummaryBadge(getOrCreateAccordionOverrideBadge(header), count)
+  })
+}
+
 function getLibraryCardHasConfigurationSignal (card) {
   if (!card) return false
   if (getLibraryCardOverrideTotal(card) > 0) return true
@@ -9451,6 +9466,7 @@ function getLibraryCardHasConfigurationSignal (card) {
 
 function updateLibraryAggregateOverrideSummaries (card) {
   if (!card) return
+  syncDirectLibraryAccordionOverrideSignals(card)
   const coreCount = getLibrarySectionOverrideTotal(card, false)
   const advancedCount = getLibrarySectionOverrideTotal(card, true)
   setOverrideSummaryBadge(card.querySelector('[data-library-core-summary]'), coreCount)
