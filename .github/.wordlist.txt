@@ -22,6 +22,7 @@ Frontend
 Homebrew
 https
 ImageMaid
+integrations
 Jellyfin
 Jinja
 jQuery
@@ -80,6 +81,7 @@ Vite
 Vitest
 walkthrough
 walkthroughs
+webhooks
 Wayland
 xxxx
 YamTrack
