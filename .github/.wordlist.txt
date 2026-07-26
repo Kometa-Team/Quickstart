@@ -19,6 +19,7 @@ Emby
 exe
 executables
 Frontend
+Gotify
 Homebrew
 https
 ImageMaid
@@ -39,6 +40,7 @@ minification
 minified
 MyAnimeList
 NAS
+notifiarr
 ntfy
 OMDb
 OpenSSL
