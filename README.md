@@ -41,7 +41,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 ### Config Bundles
 - **Bundle export:** Quickstart can package a config as a ZIP bundle for backup, migration, restore, or sharing.
 - **What a bundle contains:** A bundle includes exactly one YAML config plus supported extras such as imported `.ttf` / `.otf` fonts, `README.txt`, and managed `metadata_files`, `collection_files`, and `overlay_files` content.
-- **Bundle import:** Quickstart previews bundle contents before import, imports supported sections and managed extras, and ignores unsupported payloads instead of blindly restoring everything.
+- **Bundle import:** Quickstart previews bundle contents before import, imports supported sections and managed extras, and ignores unsupported payloads instead of blindly restoring everything. ZIPs wrapped in one top-level folder, such as files re-zipped by Windows Explorer, are normalized during import.
 - **Restore behavior:** Importing a bundle creates or updates a Quickstart config profile, copies supported bundle assets into the workspace, and then runs validation/mapping flows before the imported config is treated as ready.
 - **Clean YAML vs full bundle:** Use plain YAML when you only want the config text. Use a bundle when you also want the managed assets and fonts that belong with that config.
 
@@ -49,12 +49,18 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Step-by-Step Pages:** Each section validates its own data, giving you instant feedback before proceeding
 - **Library Telemetry:** Pulls real Plex server data (Plex Pass status, library types, agent/scanner compatibility)
 - **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
-- **Dependency-Aware Optional Pages:** Optional pages such as Tautulli, OMDb, MDBList, AniDB, Radarr, Sonarr, Trakt, and MyAnimeList become required when selected library features need them
+- **Organized Library Defaults:** Collections, overlays, attributes, and playlists are grouped into logical accordions with override counters, visual override indicators, and scoped reset-to-defaults actions.
+- **Library Mirroring:** Copy compatible library selections from one Plex library to another, then explicitly include the destination library in the generated config after validation.
+- **Dependency-Aware Optional Pages:** Optional pages such as GitHub, Tautulli, OMDb, MDBList, Notifiarr, Gotify, ntfy, Apprise, Yamtrack, Webhooks, AniDB, Radarr, Sonarr, Trakt, and MyAnimeList become required when selected library features need them
 - **TODO Sidebar:** Outstanding dependency and validation tasks are grouped into clickable cards that save the current page and open the affected setup page
 - **Library-Scoped Playlists:** Playlist file selection now lives on the Libraries page so playlists stay tied to the libraries included in the generated YAML
 - **Library Collection Files:** Add multiple raw `collection_files` entries per library with mixed `file`, `folder`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to non-empty YAML with a non-empty top-level `collections:` mapping before output
 - **Library Metadata Files:** Add multiple `metadata_files` entries per library with mixed `file`, `folder`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to non-empty YAML with a non-empty top-level `metadata:` mapping before output
-- **Custom Repo Awareness:** `repo` collection and metadata files are dependency-aware and point back to `Settings -> Custom Repo` when that base path is missing
+- **Library Overlay Files:** Add multiple raw `overlay_files` entries per library with mixed `file`, `folder`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to non-empty YAML with a non-empty top-level `overlays:` mapping before output
+- **External YAML Editor:** Create or edit managed collection, metadata, and overlay YAML files from the Libraries page. The editor includes line numbers, search, select-all, undo/redo, YAML linting, tab/indent warnings, and non-blocking schema warnings so work can be saved while schema coverage continues to improve.
+- **Folder and Remote YAML Helpers:** Folder entries offer a filtered picklist of editable top-level `.yml` / `.yaml` files, and remote `url`, `git`, or `repo` sources can be copied into a managed local file before editing.
+- **Custom Repo Awareness:** `repo` collection, metadata, and overlay files are dependency-aware and point back to `Settings -> Custom Repo` when that base path is missing
+- **Separator Helper:** Separator attributes can use Plex-driven placeholder picklists and live separator poster previews instead of requiring users to manually type opaque IDs.
 - **Filtered Page Search:** Find matches on Libraries and Settings pages and auto-expand matching sections
 - **Settings Cog:** Quick access to runtime controls like debug mode and port changes from anywhere
 
@@ -81,6 +87,8 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 #### Kometa
 - **One-Click Execution:** In `managed` mode, the Kometa page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
 - **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
+- **Runtime Flags & Environment Variables:** Supported Kometa runtime flags are grouped on the final page, including validation/schema options, logging options, run modes, and related environment variable guidance.
+- **Validation Levels:** Kometa validation commands support `syntax`, `structure`, and `full` validate-level choices from the UI.
 - **Process Management:** In `managed` and `existing direct` modes, start, stop, and monitor Kometa runs directly from the web interface
 - **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
 - **Incomplete Run Recovery:** If a Kometa run stops early, Quickstart preserves the run context and surfaces resume or recovery guidance when it can determine the affected scope
@@ -93,6 +101,11 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 - **Mode-aware validation:** The ImageMaid page validates mode-specific requirements such as restore-folder availability before a run starts
 - **Guided run gating:** Run controls stay hidden until ImageMaid is installed and validated, with explicit guidance for the next required step
 - **Maintenance-aware start protection:** ImageMaid starts are blocked during Plex maintenance windows instead of colliding with active maintenance
+
+#### Optional Integrations
+- **Service validation pages:** Quickstart includes dedicated setup pages for GitHub, Tautulli, OMDb, MDBList, Notifiarr, Gotify, ntfy, Apprise, Yamtrack, Webhooks, AniDB, Radarr, Sonarr, Trakt, and MyAnimeList.
+- **Credential checks:** Optional services stay optional until selected features need them, and validation checks the configured endpoint or token before those dependencies are treated as ready.
+- **Yamtrack validation:** Yamtrack validation verifies credentials and reports the detected server version when the instance exposes it.
 
 ![Kometa Runner](static/images/readme/kometa-runner.png)
 ![ImageMaid Runner](static/images/readme/imagemaid-runner.png)
@@ -121,9 +134,11 @@ This reduces the chance of Plex background maintenance colliding with long Komet
   - `config/imagemaid/config/logs`
   - `config/cache/logscan/archive/kometa`
   - `config/cache/logscan/archive/imagemaid`
+- **Reingest-safe loading:** While a reset or full reingest is running, the Analytics page polls lightweight reingest status instead of doing heavy trend and run-table work on every refresh.
 - **Stable run tracking:** Runs are deduped with a stable `run_key` and cached in `config/cache/logscan/ingest_cache.json`.
 - **Missing people requests:** Deduped output is written to `config/cache/logscan/meta_people_missing.log` (metadata in `meta_people_missing.json`).
 - **UI helpers:** App/config/time-range filters, sortable table headers, analytics breakdowns, and per-run “Report” recommendations.
+- **Validation-run awareness:** Kometa validation-only logs are recognized as completed validation runs, and partial logs can still use available line timestamps for start/end/duration context when a full finished-run block is absent.
 - **Independent retention:** Kometa and ImageMaid archived logs each have their own retention setting in Quickstart Settings
 - **Startup migrations:** Quickstart can perform a one-time Analytics reset + reingest on startup when a release needs historical log data rebuilt for a new feature.
 
@@ -154,7 +169,8 @@ How it works:
 
 ### Import Existing Config
 - **Import Config:** Launch import from `Manage Configs` in the Utilities menu to prefill settings, libraries, and templates.
-- **YAML or Config Bundle ZIP:** Zip imports must contain exactly one YAML config. Supported extras are limited to `.ttf` / `.otf` fonts, `README.txt`, and managed `metadata_files`, `collection_files`, and `overlay_files` content.
+- **YAML or Config Bundle ZIP:** Zip imports must contain exactly one YAML config. Supported extras are limited to `.ttf` / `.otf` fonts, `README.txt`, and managed `metadata_files`, `collection_files`, and `overlay_files` content. ZIPs may also contain a single wrapper folder around the exported bundle contents.
+- **YAML anchors and aliases:** Config imports support YAML anchors, aliases, and `<<` merge keys. Quickstart resolves them during import and stores expanded values, so generated output does not preserve the original anchor syntax.
 - **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`imported / not imported`) with filters (All/Imported/Not Imported/Comments) and a downloadable report.
 - **Plex credentials prompt:** If the import contains libraries, Plex validation is required for mapping. Quickstart will prompt for Plex URL/token if none are present; if the credentials in the file fail validation, you’ll be prompted to correct them and re‑run Preview.
 - **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import; you can re‑preview after mapping.
@@ -204,6 +220,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Built-in App Runners](#built-in-app-runners)
     - [Kometa](#kometa)
     - [ImageMaid](#imagemaid)
+    - [Optional Integrations](#optional-integrations)
   - [Live Previews \& Assets](#live-previews--assets)
   - [Automatic Updates](#automatic-updates)
   - [Themes \& Personalization](#themes--personalization)
