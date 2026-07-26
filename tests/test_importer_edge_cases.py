@@ -3,6 +3,65 @@ import json
 from modules import importer
 
 
+def test_load_yaml_config_resolves_merge_anchors():
+    parsed = importer.load_yaml_config("""
+radarr_defaults: &radarr_defaults
+  quality_profile: HD-1080p
+  root_folder_path: /movies
+
+libraries:
+  Movies:
+    radarr:
+      <<: *radarr_defaults
+      tag: kometa
+  4K Movies:
+    radarr:
+      <<: *radarr_defaults
+      quality_profile: 4K
+""")
+
+    assert parsed["libraries"]["Movies"]["radarr"] == {
+        "quality_profile": "HD-1080p",
+        "root_folder_path": "/movies",
+        "tag": "kometa",
+    }
+    assert parsed["libraries"]["4K Movies"]["radarr"] == {
+        "quality_profile": "4K",
+        "root_folder_path": "/movies",
+    }
+
+
+def test_load_yaml_config_dealiases_shared_anchor_objects():
+    parsed = importer.load_yaml_config("""
+common_tags: &common_tags
+  - kometa
+  - imported
+
+libraries:
+  Movies:
+    radarr:
+      tag: *common_tags
+  TV Shows:
+    sonarr:
+      tag: *common_tags
+""")
+
+    movie_tags = parsed["libraries"]["Movies"]["radarr"]["tag"]
+    show_tags = parsed["libraries"]["TV Shows"]["sonarr"]["tag"]
+
+    assert movie_tags == ["kometa", "imported"]
+    assert show_tags == ["kometa", "imported"]
+    assert movie_tags is not show_tags
+    movie_tags.append("movie-only")
+    assert show_tags == ["kometa", "imported"]
+
+
+def test_load_yaml_config_rejects_recursive_yaml_aliases():
+    parsed = importer.load_yaml_config("recursive: &recursive [*recursive]\n")
+
+    assert parsed == {}
+
+
 def test_prepare_import_payload_unknown_section():
     payload, report = importer.prepare_import_payload({"mystery": {"foo": "bar"}}, set(), set())
     assert payload == {}
