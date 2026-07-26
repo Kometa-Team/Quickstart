@@ -38,6 +38,7 @@ minification
 minified
 MyAnimeList
 NAS
+ntfy
 OMDb
 OpenSSL
 Personalization
