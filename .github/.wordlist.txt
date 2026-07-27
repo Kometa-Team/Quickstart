@@ -46,6 +46,7 @@ OMDb
 OpenSSL
 Personalization
 picklist
+picklists
 Plex
 PowerShell
 prebuilt
