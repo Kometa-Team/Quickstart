@@ -497,21 +497,18 @@ const libraryFileRowKinds = {
     domPrefix: 'metadata-file',
     typeOptions: ['file', 'folder', 'git', 'repo', 'url'],
     placeholder: 'config/metadata.yml, config/metadata/, user/file.yml, or https://example.com/metadata.yml',
-    editButtonFirst: false,
     updateValidateButton: (row, validated) => updateMetadataFileValidateButton(row, validated)
   },
   collection_files: {
     domPrefix: 'collection-file',
     typeOptions: ['file', 'folder', 'git', 'repo', 'url'],
     placeholder: 'config/collections.yml, config/collections/, user/file.yml, or https://example.com/collections.yml',
-    editButtonFirst: false,
     updateValidateButton: (row, validated) => updateCollectionFileValidateButton(row, validated)
   },
   overlay_files: {
     domPrefix: 'overlay-file',
     typeOptions: ['file', 'folder', 'git', 'repo', 'url'],
     placeholder: 'config/overlays.yml, config/overlays/, user/file.yml, or https://example.com/overlays.yml',
-    editButtonFirst: false,
     updateValidateButton: (row, validated) => updateOverlayFileValidateButton(row, validated)
   },
   playlist_files: {
@@ -519,10 +516,6 @@ const libraryFileRowKinds = {
     // NB: no 'folder' -- playlists are single-file.
     typeOptions: ['file', 'git', 'repo', 'url'],
     placeholder: 'config/playlists.yml, user/playlists.yml, or https://example.com/playlists.yml',
-    // NB: playlist row has Edit before Validate (see #1659); the other
-    // three have Validate before Edit. Preserved as-is for zero
-    // behaviour drift.
-    editButtonFirst: true,
     updateValidateButton: (row, validated) => updatePlaylistFileValidateButton(row, validated)
   }
 }
@@ -538,9 +531,7 @@ function buildLibraryFileRow (kind, entry = {}) {
   const validateBtn = `<button type="button" class="btn btn-success btn-sm" data-validate-${config.domPrefix}>Validate</button>`
   const editBtn = `<button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="${kind}">Edit</button>`
   const removeBtn = `<button type="button" class="btn btn-danger btn-sm" data-remove-${config.domPrefix}>Remove</button>`
-  const actionButtons = config.editButtonFirst
-    ? `${editBtn}\n          ${validateBtn}\n          ${removeBtn}`
-    : `${validateBtn}\n          ${editBtn}\n          ${removeBtn}`
+  const actionButtons = `${validateBtn}\n          ${editBtn}\n          ${removeBtn}`
   wrapper.innerHTML = `
     <div class="card-body">
       <div class="row g-3 align-items-end">
