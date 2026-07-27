@@ -485,51 +485,115 @@ function applyNormalizedLibraryFileLocation (row, selector, payload, editor, syn
   }
 }
 
-function buildMetadataFileRow (entry = {}) {
+// Shared row builder for the four library file kinds (metadata /
+// collection / overlay / playlist). Previously four ~46-line copy-paste
+// siblings; the differences are captured declaratively in
+// libraryFileRowKinds below. Behaviour is preserved byte-for-byte,
+// including the (probably-accidental) reversed Validate/Edit button
+// order on playlist rows -- fixing that inconsistency belongs in a
+// separate PR so this one stays a pure dedupe.
+const libraryFileRowKinds = {
+  metadata_files: {
+    domPrefix: 'metadata-file',
+    typeOptions: ['file', 'folder', 'git', 'repo', 'url'],
+    placeholder: 'config/metadata.yml, config/metadata/, user/file.yml, or https://example.com/metadata.yml',
+    editButtonFirst: false,
+    updateValidateButton: (row, validated) => updateMetadataFileValidateButton(row, validated)
+  },
+  collection_files: {
+    domPrefix: 'collection-file',
+    typeOptions: ['file', 'folder', 'git', 'repo', 'url'],
+    placeholder: 'config/collections.yml, config/collections/, user/file.yml, or https://example.com/collections.yml',
+    editButtonFirst: false,
+    updateValidateButton: (row, validated) => updateCollectionFileValidateButton(row, validated)
+  },
+  overlay_files: {
+    domPrefix: 'overlay-file',
+    typeOptions: ['file', 'folder', 'git', 'repo', 'url'],
+    placeholder: 'config/overlays.yml, config/overlays/, user/file.yml, or https://example.com/overlays.yml',
+    editButtonFirst: false,
+    updateValidateButton: (row, validated) => updateOverlayFileValidateButton(row, validated)
+  },
+  playlist_files: {
+    domPrefix: 'playlist-file',
+    // NB: no 'folder' -- playlists are single-file.
+    typeOptions: ['file', 'git', 'repo', 'url'],
+    placeholder: 'config/playlists.yml, user/playlists.yml, or https://example.com/playlists.yml',
+    // NB: playlist row has Edit before Validate (see #1659); the other
+    // three have Validate before Edit. Preserved as-is for zero
+    // behaviour drift.
+    editButtonFirst: true,
+    updateValidateButton: (row, validated) => updatePlaylistFileValidateButton(row, validated)
+  }
+}
+
+function buildLibraryFileRow (kind, entry = {}) {
+  const config = libraryFileRowKinds[kind]
+  if (!config) throw new Error(`buildLibraryFileRow: unknown kind ${kind}`)
   const wrapper = document.createElement('div')
   wrapper.className = 'card bg-body-tertiary border-secondary'
-  wrapper.setAttribute('data-metadata-file-row', 'true')
+  wrapper.setAttribute(`data-${config.domPrefix}-row`, 'true')
+  const optionSeparator = '\n            '
+  const options = config.typeOptions.map(opt => `<option value="${opt}">${opt}</option>`).join(optionSeparator)
+  const validateBtn = `<button type="button" class="btn btn-success btn-sm" data-validate-${config.domPrefix}>Validate</button>`
+  const editBtn = `<button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="${kind}">Edit</button>`
+  const removeBtn = `<button type="button" class="btn btn-danger btn-sm" data-remove-${config.domPrefix}>Remove</button>`
+  const actionButtons = config.editButtonFirst
+    ? `${editBtn}\n          ${validateBtn}\n          ${removeBtn}`
+    : `${validateBtn}\n          ${editBtn}\n          ${removeBtn}`
   wrapper.innerHTML = `
     <div class="card-body">
       <div class="row g-3 align-items-end">
         <div class="col-md-2">
           <label class="form-label small text-muted">Type</label>
-          <select class="form-select form-select-sm" data-metadata-file-type>
-            <option value="file">file</option>
-            <option value="folder">folder</option>
-            <option value="git">git</option>
-            <option value="repo">repo</option>
-            <option value="url">url</option>
+          <select class="form-select form-select-sm" data-${config.domPrefix}-type>
+            ${options}
           </select>
         </div>
         <div class="col-md-7">
           <label class="form-label small text-muted">Location</label>
-          <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml, config/metadata/, user/file.yml, or https://example.com/metadata.yml">
+          <input type="text" class="form-control form-control-sm" data-${config.domPrefix}-location placeholder="${config.placeholder}">
         </div>
         <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
-          <button type="button" class="btn btn-success btn-sm" data-validate-metadata-file>Validate</button>
-          <button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="metadata_files">Edit</button>
-          <button type="button" class="btn btn-danger btn-sm" data-remove-metadata-file>Remove</button>
+          ${actionButtons}
         </div>
       </div>
-      <div class="mt-2 small d-none" data-metadata-file-status></div>
+      <div class="mt-2 small d-none" data-${config.domPrefix}-status></div>
     </div>
   `
-  const typeSelect = wrapper.querySelector('[data-metadata-file-type]')
-  const locationInput = wrapper.querySelector('[data-metadata-file-location]')
-  if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
+  const typeSelect = wrapper.querySelector(`[data-${config.domPrefix}-type]`)
+  const locationInput = wrapper.querySelector(`[data-${config.domPrefix}-location]`)
+  if (typeSelect && config.typeOptions.includes(entry.type)) {
     typeSelect.value = entry.type
   }
   if (locationInput && entry.location) {
     locationInput.value = entry.location
   }
   if (entry.validated) {
-    wrapper.dataset.metadataFileState = 'success'
-    wrapper.dataset.metadataFileButtonState = 'success'
+    // Camel-case the dataset key: 'metadata-file' -> 'metadataFile'.
+    const camel = config.domPrefix.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+    wrapper.dataset[`${camel}State`] = 'success'
+    wrapper.dataset[`${camel}ButtonState`] = 'success'
   }
-  updateMetadataFileValidateButton(wrapper, Boolean(entry.validated))
-  updateExternalYamlEditButton(wrapper, 'metadata_files')
+  config.updateValidateButton(wrapper, Boolean(entry.validated))
+  updateExternalYamlEditButton(wrapper, kind)
   return wrapper
+}
+
+function buildMetadataFileRow (entry = {}) {
+  return buildLibraryFileRow('metadata_files', entry)
+}
+
+function buildCollectionFileRow (entry = {}) {
+  return buildLibraryFileRow('collection_files', entry)
+}
+
+function buildOverlayFileRow (entry = {}) {
+  return buildLibraryFileRow('overlay_files', entry)
+}
+
+function buildPlaylistFileRow (entry = {}) {
+  return buildLibraryFileRow('playlist_files', entry)
 }
 
 function updateMetadataFileValidateButton (row, isValidated) {
@@ -834,52 +898,6 @@ function initMetadataFilesEditors (scope) {
   })
 }
 
-function buildCollectionFileRow (entry = {}) {
-  const wrapper = document.createElement('div')
-  wrapper.className = 'card bg-body-tertiary border-secondary'
-  wrapper.setAttribute('data-collection-file-row', 'true')
-  wrapper.innerHTML = `
-    <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-2">
-          <label class="form-label small text-muted">Type</label>
-          <select class="form-select form-select-sm" data-collection-file-type>
-            <option value="file">file</option>
-            <option value="folder">folder</option>
-            <option value="git">git</option>
-            <option value="repo">repo</option>
-            <option value="url">url</option>
-          </select>
-        </div>
-        <div class="col-md-7">
-          <label class="form-label small text-muted">Location</label>
-          <input type="text" class="form-control form-control-sm" data-collection-file-location placeholder="config/collections.yml, config/collections/, user/file.yml, or https://example.com/collections.yml">
-        </div>
-        <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
-          <button type="button" class="btn btn-success btn-sm" data-validate-collection-file>Validate</button>
-          <button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="collection_files">Edit</button>
-          <button type="button" class="btn btn-danger btn-sm" data-remove-collection-file>Remove</button>
-        </div>
-      </div>
-      <div class="mt-2 small d-none" data-collection-file-status></div>
-    </div>
-  `
-  const typeSelect = wrapper.querySelector('[data-collection-file-type]')
-  const locationInput = wrapper.querySelector('[data-collection-file-location]')
-  if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
-    typeSelect.value = entry.type
-  }
-  if (locationInput && entry.location) {
-    locationInput.value = entry.location
-  }
-  if (entry.validated) {
-    wrapper.dataset.collectionFileState = 'success'
-    wrapper.dataset.collectionFileButtonState = 'success'
-  }
-  updateCollectionFileValidateButton(wrapper, Boolean(entry.validated))
-  updateExternalYamlEditButton(wrapper, 'collection_files')
-  return wrapper
-}
 
 function updateCollectionFileValidateButton (row, isValidated) {
   if (!row) return
@@ -1374,52 +1392,6 @@ if (libraryContainer && typeof MutationObserver !== 'undefined') {
   collectionObserver.observe(libraryContainer, { childList: true, subtree: true })
 }
 
-function buildOverlayFileRow (entry = {}) {
-  const wrapper = document.createElement('div')
-  wrapper.className = 'card bg-body-tertiary border-secondary'
-  wrapper.setAttribute('data-overlay-file-row', 'true')
-  wrapper.innerHTML = `
-    <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-2">
-          <label class="form-label small text-muted">Type</label>
-          <select class="form-select form-select-sm" data-overlay-file-type>
-            <option value="file">file</option>
-            <option value="folder">folder</option>
-            <option value="git">git</option>
-            <option value="repo">repo</option>
-            <option value="url">url</option>
-          </select>
-        </div>
-        <div class="col-md-7">
-          <label class="form-label small text-muted">Location</label>
-          <input type="text" class="form-control form-control-sm" data-overlay-file-location placeholder="config/overlays.yml, config/overlays/, user/file.yml, or https://example.com/overlays.yml">
-        </div>
-        <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
-          <button type="button" class="btn btn-success btn-sm" data-validate-overlay-file>Validate</button>
-          <button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="overlay_files">Edit</button>
-          <button type="button" class="btn btn-danger btn-sm" data-remove-overlay-file>Remove</button>
-        </div>
-      </div>
-      <div class="mt-2 small d-none" data-overlay-file-status></div>
-    </div>
-  `
-  const typeSelect = wrapper.querySelector('[data-overlay-file-type]')
-  const locationInput = wrapper.querySelector('[data-overlay-file-location]')
-  if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
-    typeSelect.value = entry.type
-  }
-  if (locationInput && entry.location) {
-    locationInput.value = entry.location
-  }
-  if (entry.validated) {
-    wrapper.dataset.overlayFileState = 'success'
-    wrapper.dataset.overlayFileButtonState = 'success'
-  }
-  updateOverlayFileValidateButton(wrapper, Boolean(entry.validated))
-  updateExternalYamlEditButton(wrapper, 'overlay_files')
-  return wrapper
-}
 
 function updateOverlayFileValidateButton (row, isValidated) {
   if (!row) return
@@ -1841,51 +1813,6 @@ function parsePlaylistFilesValue (rawValue) {
   }
 }
 
-function buildPlaylistFileRow (entry = {}) {
-  const wrapper = document.createElement('div')
-  wrapper.className = 'card bg-body-tertiary border-secondary'
-  wrapper.setAttribute('data-playlist-file-row', 'true')
-  wrapper.innerHTML = `
-    <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-2">
-          <label class="form-label small text-muted">Type</label>
-          <select class="form-select form-select-sm" data-playlist-file-type>
-            <option value="file">file</option>
-            <option value="git">git</option>
-            <option value="repo">repo</option>
-            <option value="url">url</option>
-          </select>
-        </div>
-        <div class="col-md-7">
-          <label class="form-label small text-muted">Location</label>
-          <input type="text" class="form-control form-control-sm" data-playlist-file-location placeholder="config/playlists.yml, user/playlists.yml, or https://example.com/playlists.yml">
-        </div>
-        <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
-          <button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="playlist_files">Edit</button>
-          <button type="button" class="btn btn-success btn-sm" data-validate-playlist-file>Validate</button>
-          <button type="button" class="btn btn-danger btn-sm" data-remove-playlist-file>Remove</button>
-        </div>
-      </div>
-      <div class="mt-2 small d-none" data-playlist-file-status></div>
-    </div>
-  `
-  const typeSelect = wrapper.querySelector('[data-playlist-file-type]')
-  const locationInput = wrapper.querySelector('[data-playlist-file-location]')
-  if (typeSelect && ['file', 'url', 'git', 'repo'].includes(entry.type)) {
-    typeSelect.value = entry.type
-  }
-  if (locationInput && entry.location) {
-    locationInput.value = entry.location
-  }
-  if (entry.validated) {
-    wrapper.dataset.playlistFileState = 'success'
-    wrapper.dataset.playlistFileButtonState = 'success'
-  }
-  updatePlaylistFileValidateButton(wrapper, Boolean(entry.validated))
-  updateExternalYamlEditButton(wrapper, 'playlist_files')
-  return wrapper
-}
 
 function updatePlaylistFileValidateButton (row, isValidated) {
   if (!row) return
