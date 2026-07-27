@@ -10,6 +10,15 @@ import {
   initializeOverlays,
   syncSeparatorPlaceholderFields
 } from './modules/separatorPreview.js'
+import {
+  isCommonsenseContentRatingOverlay,
+  getCommonsensePreviewTextInput,
+  getCommonsensePreviewOptions,
+  pickDefaultCommonsensePreviewValue,
+  getCommonsensePreviewValue,
+  setCommonsensePreviewValue,
+  normalizeCommonsensePreviewText
+} from './modules/commonsenseContentRatingPreview.js'
 
 const OverlayHandler = {
   baseDimensions: {
@@ -1060,76 +1069,6 @@ const OverlayHandler = {
 
     const isRegionalContentRatingOverlay = (cfg) => {
       return REGIONAL_CONTENT_RATING_OVERLAY_IDS.has(String(cfg?.id || '').trim())
-    }
-
-    const isCommonsenseContentRatingOverlay = (cfg) => {
-      return String(cfg?.id || '').trim() === 'overlay_content_rating_commonsense'
-    }
-
-    const getCommonsensePreviewTextInput = (cfg) => {
-      if (!cfg?.container) return null
-      const templateName = cfg.container.dataset.overlayTemplate
-      if (!templateName) return null
-      return cfg.container.querySelector(`[name="${templateName}[text]"]`)
-    }
-
-    const getCommonsensePreviewOptions = (cfg) => {
-      if (!cfg?.container) return []
-      const templateName = cfg.container.dataset.overlayTemplate
-      if (!templateName) return []
-      const options = []
-      cfg.container.querySelectorAll(`input[type="checkbox"][name^="${templateName}[use_"]`).forEach((input) => {
-        const rawName = String(input.name || '')
-        const match = new RegExp(`^${templateName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\[use_(.+)\\]$`).exec(rawName)
-        const value = String(match?.[1] || '').trim()
-        if (!value) return
-        const numericValue = Number(value)
-        const labelEl = input.closest('.form-check')?.querySelector('.form-check-label')
-        let label = String(labelEl?.textContent || `${value}+`).replace(/\s+/g, ' ').trim()
-        if (label.toLowerCase().startsWith('use ')) {
-          label = label.slice(4).trim()
-        }
-        options.push({
-          value,
-          label,
-          enabled: input.checked,
-          sortValue: Number.isFinite(numericValue) ? numericValue : Number.MAX_SAFE_INTEGER
-        })
-      })
-      options.sort((a, b) => {
-        if (a.sortValue !== b.sortValue) return a.sortValue - b.sortValue
-        return a.label.localeCompare(b.label)
-      })
-      return options
-    }
-
-    const pickDefaultCommonsensePreviewValue = (cfg) => {
-      const options = getCommonsensePreviewOptions(cfg)
-      return options.find(option => option.enabled)?.value || options[0]?.value || ''
-    }
-
-    const getCommonsensePreviewValue = (cfg) => {
-      const input = getCommonsensePreviewTextInput(cfg)
-      const current = String(input?.value || '').trim()
-      const options = getCommonsensePreviewOptions(cfg)
-      const values = new Set(options.map(option => option.value))
-      if (current && values.has(current)) return current
-      const fallback = pickDefaultCommonsensePreviewValue(cfg)
-      if (input && fallback) input.value = fallback
-      return fallback
-    }
-
-    const setCommonsensePreviewValue = (cfg, value) => {
-      const input = getCommonsensePreviewTextInput(cfg)
-      if (input) {
-        input.value = String(value || '').trim()
-      }
-    }
-
-    const normalizeCommonsensePreviewText = (value) => {
-      const normalized = String(value || '').trim()
-      if (!normalized) return ''
-      return normalized.toLowerCase() === 'nr' ? 'NR' : normalized
     }
 
     const getContentRatingPreviewOptions = (cfg) => {
