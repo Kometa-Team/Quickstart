@@ -1040,13 +1040,10 @@ const updatePlaylistFileValidateButton = playlistFilesEditor.updateValidateButto
 const setPlaylistFileButtonState = playlistFilesEditor.setButtonState
 const applyPlaylistFileDependencyState = playlistFilesEditor.applyDependencyState
 const setPlaylistFileStatus = playlistFilesEditor.setStatus
+const applyPlaylistFileServerErrors = playlistFilesEditor.applyServerErrors
 const syncPlaylistFilesEditor = playlistFilesEditor.syncEditor
 const renderPlaylistFilesEditor = playlistFilesEditor.renderEditor
 const initPlaylistFilesEditors = playlistFilesEditor.initEditors
-// Note: no `applyPlaylistFileServerErrors` shim -- there were zero call
-// sites in the original code, so exposing the (now free) subsystem method
-// under that name would just be dead code. Available via
-// playlistFilesEditor.applyServerErrors if a future caller needs it.
 
 
 
@@ -4978,6 +4975,7 @@ function autosaveActiveLibrary (options = {}) {
   const collectionEditor = card.querySelector('[data-collection-files-editor]')
   const metadataEditor = card.querySelector('[data-metadata-files-editor]')
   const overlayEditor = card.querySelector('[data-overlay-files-editor]')
+  const playlistEditor = card.querySelector('[data-playlist-files-editor]')
   const option = libraryPicker?.querySelector(`option[value="${activeLibraryId}"]`)
   const friendlyName = option?.dataset.label || option?.textContent?.trim() || activeLibraryId
 
@@ -4998,6 +4996,9 @@ function autosaveActiveLibrary (options = {}) {
           }
           if (overlayEditor) {
             applyOverlayFileServerErrors(overlayEditor, body && body.errors)
+          }
+          if (playlistEditor) {
+            applyPlaylistFileServerErrors(playlistEditor, body && body.errors)
           }
           const message = body && body.error ? body.error : `Autosave failed: ${res.status}`
           throw new Error(message)
