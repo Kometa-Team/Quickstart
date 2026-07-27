@@ -315,6 +315,25 @@ describe('createLibraryFilesEditor', () => {
       const { editor } = makeEditor()
       expect(ed.applyServerErrors(editor, [])).toBe(false)
     })
+
+    it('parses the real per-kind error prefix (kind: "playlist_files")', () => {
+      // Regression guard for the playlist server-error gap: the shared
+      // regex must recognise "playlist_files[N]: msg" strings that the
+      // Python side emits from build_validation_summary().
+      const ed = createLibraryFilesEditor(makeConfig({ kind: 'playlist_files' }), makeSharedDeps())
+      const { editor } = makeEditor()
+      const list = editor.querySelector('[data-test-files-list]')
+      list.appendChild(makeStubBuildRow('test-file')({ type: 'file', location: 'a.yml' }))
+      list.appendChild(makeStubBuildRow('test-file')({ type: 'repo', location: 'b' }))
+      const applied = ed.applyServerErrors(editor, [
+        'playlist_files[2]: Repo location must be non-empty.',
+        'not_our_prefix[1]: ignored'
+      ])
+      expect(applied).toBe(true)
+      const rows = list.querySelectorAll('[data-test-file-row]')
+      expect(rows[1].dataset.testFileState).toBe('error')
+      expect(rows[0].dataset.testFileState).toBe('')
+    })
   })
 
   describe('syncEditor', () => {
