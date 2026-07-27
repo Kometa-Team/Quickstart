@@ -312,3 +312,85 @@ def rename_config():
         session["config_name"] = new_name
 
     return jsonify(success=True, old_name=old_name, new_name=new_name, files=file_result)
+
+
+@bp.route("/duplicate-config", methods=["POST"])
+def duplicate_config():
+    import quickstart
+
+    wants_json = request.is_json or "application/json" in str(request.headers.get("Accept", "")).lower()
+    data = request.get_json(silent=True) if request.is_json else None
+    data = data or request.form or {}
+
+    def respond(payload, status=200):
+        if wants_json:
+            return jsonify(payload), status
+        category = "success" if payload.get("success") else "error"
+        flash(payload.get("message") or ("Config duplicated." if payload.get("success") else "Duplicate failed."), category)
+        return redirect(url_for("start"), code=303)
+
+    source_name = str(data.get("source_name", "")).strip()
+    new_name = config_management.sanitize_config_name(data.get("new_name"))
+    if not source_name or not new_name:
+        return respond({"success": False, "message": "Source and new config names are required."}, 400)
+    if source_name.lower() == new_name.lower():
+        return respond({"success": False, "message": "New config name must be different."}, 400)
+
+    available = database.get_unique_config_names() or []
+    if source_name not in available:
+        return respond({"success": False, "message": "Source config not found."}, 404)
+    if any(name.lower() == new_name.lower() for name in available):
+        return respond({"success": False, "message": "Config name already exists."}, 400)
+
+    file_check = config_management.duplicate_config_files(source_name, new_name, dry_run=True)
+    if not file_check.get("success"):
+        return respond({"success": False, "message": "Config files are not safe to duplicate.", "details": file_check}, 400)
+
+    file_result = config_management.duplicate_config_files(source_name, new_name)
+    if not file_result.get("success"):
+        return respond({"success": False, "message": "Failed to duplicate config files.", "details": file_result}, 500)
+
+    try:
+        db_result = database.duplicate_config(
+            source_name,
+            new_name,
+            transform_data=lambda _section, data_blob: config_management.rewrite_config_references(
+                data_blob,
+                source_name,
+                new_name,
+            ),
+        )
+    except Exception as exc:
+        helpers.ts_log(f"Failed to duplicate database rows: {exc}", level="ERROR")
+        cleanup = helpers.delete_config_artifacts(new_name, kometa_root=app.config.get("KOMETA_ROOT", "."))
+        response = {"success": False, "message": "Failed to duplicate database rows."}
+        if app.config["QS_DEBUG"]:
+            response["cleanup"] = cleanup
+        return respond(response, 500)
+
+    if not db_result.get("success"):
+        cleanup = helpers.delete_config_artifacts(new_name, kometa_root=app.config.get("KOMETA_ROOT", "."))
+        response = {"success": False, "message": db_result.get("message") or "Failed to duplicate config."}
+        if app.config["QS_DEBUG"]:
+            response["cleanup"] = cleanup
+        return respond(response, 400)
+
+    session["config_name"] = new_name
+    available = database.get_unique_config_names() or []
+    try:
+        menu_templates = helpers.get_menu_list()
+        workspace_status = quickstart._build_workspace_status_context(new_name, menu_templates, available_configs=available)
+    except Exception:
+        workspace_status = {}
+
+    return respond(
+        {
+            "success": True,
+            "message": f"Duplicated '{source_name}' to '{new_name}'.",
+            "source_name": source_name,
+            "new_name": new_name,
+            "files": file_result,
+            "database": db_result,
+            "workspace_status": workspace_status,
+        }
+    )

@@ -1,4 +1,5 @@
 import re
+import shutil
 from pathlib import Path
 
 from flask import current_app as app
@@ -15,6 +16,133 @@ def sanitize_config_name(raw_name: str | None) -> str:
 def normalize_config_filename(config_name: str | None) -> str:
     name = (config_name or "").strip().lower().replace(" ", "_")
     return name or "default"
+
+
+def rewrite_config_references(value, old_name: str, new_name: str):
+    old_norm = normalize_config_filename(old_name)
+    new_norm = normalize_config_filename(new_name)
+    old_root = str(helpers.get_managed_config_artifact_root(old_norm))
+    new_root = str(helpers.get_managed_config_artifact_root(new_norm))
+    replacements = (
+        (f"config/{old_norm}/", f"config/{new_norm}/"),
+        (f"config\\{old_norm}\\", f"config\\{new_norm}\\"),
+        (f"{old_norm}_config.yml", f"{new_norm}_config.yml"),
+        (f"{old_norm}_config.yaml", f"{new_norm}_config.yaml"),
+        (old_root, new_root),
+        (old_root.replace("\\", "/"), new_root.replace("\\", "/")),
+    )
+
+    if isinstance(value, dict):
+        rewritten = {}
+        for key, item in value.items():
+            if key == "config_name" and str(item or "").strip().lower() in {old_name.lower(), old_norm}:
+                rewritten[key] = new_name
+            else:
+                rewritten[key] = rewrite_config_references(item, old_name, new_name)
+        return rewritten
+    if isinstance(value, list):
+        return [rewrite_config_references(item, old_name, new_name) for item in value]
+    if isinstance(value, str):
+        text = value
+        for old, new in replacements:
+            text = text.replace(old, new)
+        return text
+    return value
+
+
+def _rewrite_file_config_references(path: Path, old_name: str, new_name: str) -> None:
+    if path.suffix.lower() not in {".yml", ".yaml", ".json", ".txt", ".md"}:
+        return
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return
+    rewritten = rewrite_config_references(text, old_name, new_name)
+    if rewritten != text:
+        path.write_text(rewritten, encoding="utf-8")
+
+
+def duplicate_config_files(source_name: str, new_name: str, dry_run: bool = False) -> dict:
+    result = {"success": False, "copied": [], "skipped": [], "errors": []}
+    source_norm = normalize_config_filename(source_name)
+    new_norm = normalize_config_filename(new_name)
+    if source_norm == new_norm:
+        result["errors"].append("Source and target filenames are identical.")
+        return result
+
+    config_dir = Path(helpers.CONFIG_DIR)
+    kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    source_config_file = config_dir / f"{source_norm}_config.yml"
+    new_config_file = config_dir / f"{new_norm}_config.yml"
+    source_kometa_file = kometa_root / "config" / f"{source_norm}_config.yml"
+    new_kometa_file = kometa_root / "config" / f"{new_norm}_config.yml"
+    source_managed_root = helpers.get_managed_config_artifact_root(source_norm)
+    new_managed_root = helpers.get_managed_config_artifact_root(new_norm)
+    source_legacy_dirs = helpers.get_legacy_managed_library_artifact_paths(source_norm)
+    new_managed_dirs = helpers.get_managed_library_artifact_paths(new_norm)
+
+    for target in (new_config_file, new_kometa_file, new_managed_root, *new_managed_dirs):
+        if target.exists():
+            result["errors"].append(f"Target already exists: {target}")
+    if result["errors"]:
+        return result
+
+    if dry_run:
+        result["success"] = True
+        return result
+
+    completed: list[Path] = []
+    try:
+        if source_config_file.exists():
+            new_config_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_config_file, new_config_file)
+            _rewrite_file_config_references(new_config_file, source_norm, new_norm)
+            completed.append(new_config_file)
+            result["copied"].append(str(new_config_file))
+        else:
+            result["skipped"].append(str(source_config_file))
+
+        if source_kometa_file.exists():
+            new_kometa_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_kometa_file, new_kometa_file)
+            _rewrite_file_config_references(new_kometa_file, source_norm, new_norm)
+            completed.append(new_kometa_file)
+            result["copied"].append(str(new_kometa_file))
+        else:
+            result["skipped"].append(str(source_kometa_file))
+
+        if source_managed_root.exists():
+            new_managed_root.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(source_managed_root, new_managed_root)
+            for copied_file in new_managed_root.rglob("*"):
+                if copied_file.is_file():
+                    _rewrite_file_config_references(copied_file, source_norm, new_norm)
+            completed.append(new_managed_root)
+            result["copied"].append(str(new_managed_root))
+
+        for source_legacy, new_managed in zip(source_legacy_dirs, new_managed_dirs):
+            if source_legacy.exists() and not new_managed.exists():
+                new_managed.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(source_legacy, new_managed)
+                for copied_file in new_managed.rglob("*"):
+                    if copied_file.is_file():
+                        _rewrite_file_config_references(copied_file, source_norm, new_norm)
+                completed.append(new_managed)
+                result["copied"].append(str(new_managed))
+    except Exception as exc:
+        result["errors"].append(f"Duplicate failed: {exc}")
+        for target in reversed(completed):
+            try:
+                if target.is_dir():
+                    shutil.rmtree(target)
+                elif target.exists():
+                    target.unlink()
+            except Exception as cleanup_exc:
+                result["errors"].append(f"Rollback failed for {target}: {cleanup_exc}")
+        return result
+
+    result["success"] = True
+    return result
 
 
 def rename_config_files(old_name: str, new_name: str, dry_run: bool = False) -> dict:
