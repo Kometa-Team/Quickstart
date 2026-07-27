@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import pickle
@@ -770,3 +771,68 @@ def rename_config(old_name, new_name):
 
     updated["success"] = True
     return updated
+
+
+def duplicate_config(source_name, target_name, transform_data=None):
+    if not source_name or not target_name or source_name == target_name:
+        return {"success": False, "message": "Invalid config name."}
+    copied = {"section_data": 0, "analytics_preferences": 0}
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            cursor.execute(analytics_preferences_table_create())
+
+            existing = cursor.execute(
+                "SELECT 1 FROM section_data WHERE name == ? LIMIT 1",
+                (target_name,),
+            ).fetchone()
+            if existing:
+                return {"success": False, "message": "Target config already exists."}
+
+            cursor.execute(
+                "SELECT section, validated, user_entered, data FROM section_data WHERE name == ?",
+                (source_name,),
+            )
+            rows = cursor.fetchall()
+            if not rows:
+                return {"success": False, "message": "Source config not found."}
+
+            for row in rows:
+                data_blob = None
+                if row["data"] is not None:
+                    data_blob = pickle.loads(row["data"])
+                    data_blob, _changed = _strip_transient_section_keys(data_blob)
+                    data_blob = copy.deepcopy(data_blob)
+                    if transform_data:
+                        data_blob = transform_data(row["section"], data_blob)
+                cursor.execute(
+                    """INSERT INTO section_data(name, section, validated, user_entered, data)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (
+                        target_name,
+                        row["section"],
+                        helpers.booler(row["validated"]),
+                        helpers.booler(row["user_entered"]),
+                        pickle.dumps(data_blob),
+                    ),
+                )
+                copied["section_data"] += 1
+
+            analytics_row = cursor.execute(
+                "SELECT preferences FROM analytics_preferences WHERE config_name == ?",
+                (source_name,),
+            ).fetchone()
+            if analytics_row:
+                cursor.execute(
+                    """INSERT OR REPLACE INTO analytics_preferences (
+                        config_name,
+                        preferences,
+                        updated_at
+                    ) VALUES (?, ?, datetime('now'))""",
+                    (target_name, analytics_row["preferences"]),
+                )
+                copied["analytics_preferences"] = cursor.rowcount
+
+    copied["success"] = True
+    return copied

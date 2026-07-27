@@ -5325,6 +5325,145 @@ def test_rename_config_moves_managed_library_file_directories(client, isolated_c
     assert old_name not in database.get_unique_config_names()
 
 
+def test_duplicate_config_copies_database_and_managed_artifacts(client, isolated_config_dir, app):
+    from modules import database
+    from pathlib import Path
+
+    source_name = "duplicate_source"
+    new_name = "duplicate_target"
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+
+    (isolated_config_dir / f"{source_name}_config.yml").write_text(
+        f"libraries:\n  Movies:\n    collection_files:\n      - file: config/{source_name}/collection_files/mov-library_movies/movies.yml\n",
+        encoding="utf-8",
+    )
+    (kometa_path / f"{source_name}_config.yml").write_text(
+        f"metadata_path: config/{source_name}/metadata_files/mov-library_movies/movies.yml\n",
+        encoding="utf-8",
+    )
+    metadata_dir = isolated_config_dir / source_name / "metadata_files" / "mov-library_movies"
+    collection_dir = isolated_config_dir / source_name / "collection_files" / "mov-library_movies"
+    metadata_dir.mkdir(parents=True, exist_ok=True)
+    collection_dir.mkdir(parents=True, exist_ok=True)
+    (metadata_dir / "movies.yml").write_text(
+        f"metadata:\n  Test:\n    file: config/{source_name}/metadata_files/mov-library_movies/movies.yml\n",
+        encoding="utf-8",
+    )
+    (collection_dir / "movies.yml").write_text("collections:\n  Test:\n    sort_title: Test\n", encoding="utf-8")
+
+    database.save_section_data(
+        name=source_name,
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": source_name}},
+    )
+    database.save_section_data(
+        name=source_name,
+        section="025-libraries",
+        validated=True,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies": {
+                    "metadata_files": [f"config/{source_name}/metadata_files/mov-library_movies/movies.yml"],
+                    "collection_files": [f"config/{source_name}/collection_files/mov-library_movies/movies.yml"],
+                }
+            }
+        },
+    )
+    database.save_analytics_preferences(source_name, {"panels": {"summary": False}, "issues": {}})
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = source_name
+
+    resp = client.post("/duplicate-config", json={"source_name": source_name, "new_name": new_name})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["source_name"] == source_name
+    assert payload["new_name"] == new_name
+
+    assert source_name in database.get_unique_config_names()
+    assert new_name in database.get_unique_config_names()
+
+    source_validated, _source_user_entered, source_data = database.retrieve_section_data(source_name, "025-libraries")
+    target_validated, target_user_entered, target_data = database.retrieve_section_data(new_name, "025-libraries")
+    assert source_validated is True
+    assert target_validated is True
+    assert target_user_entered is True
+    assert f"config/{source_name}/" in source_data["libraries"]["mov-library_movies"]["metadata_files"][0]
+    assert f"config/{new_name}/" in target_data["libraries"]["mov-library_movies"]["metadata_files"][0]
+    assert f"config/{new_name}/" in target_data["libraries"]["mov-library_movies"]["collection_files"][0]
+
+    _validated, _user_entered, start_data = database.retrieve_section_data(new_name, "start")
+    assert isinstance(start_data.get("start"), dict)
+
+    copied_metadata = isolated_config_dir / new_name / "metadata_files" / "mov-library_movies" / "movies.yml"
+    copied_collection = isolated_config_dir / new_name / "collection_files" / "mov-library_movies" / "movies.yml"
+    assert copied_metadata.exists()
+    assert copied_collection.exists()
+    assert f"config/{new_name}/metadata_files" in copied_metadata.read_text(encoding="utf-8")
+    assert f"config/{new_name}/collection_files" in (isolated_config_dir / f"{new_name}_config.yml").read_text(encoding="utf-8")
+    assert f"config/{new_name}/metadata_files" in (kometa_path / f"{new_name}_config.yml").read_text(encoding="utf-8")
+
+    with client.session_transaction() as sess:
+        assert sess["config_name"] == new_name
+
+
+def test_duplicate_config_rejects_existing_target(client, isolated_config_dir):
+    from modules import database
+
+    database.save_section_data(
+        name="duplicate_source",
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": "duplicate_source"}},
+    )
+    database.save_section_data(
+        name="duplicate_target",
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": "duplicate_target"}},
+    )
+
+    resp = client.post("/duplicate-config", json={"source_name": "duplicate_source", "new_name": "duplicate_target"})
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert "already exists" in payload["message"]
+
+
+def test_duplicate_config_form_post_redirects_and_activates_config(client, isolated_config_dir):
+    from modules import database
+
+    database.save_section_data(
+        name="duplicate_source",
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": "duplicate_source"}},
+    )
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "duplicate_source"
+
+    resp = client.post(
+        "/duplicate-config",
+        data={"source_name": "duplicate_source", "new_name": "duplicate_source_copy"},
+    )
+
+    assert resp.status_code == 303
+    assert resp.headers["Location"].endswith("/")
+    assert "duplicate_source_copy" in database.get_unique_config_names()
+
+    with client.session_transaction() as sess:
+        assert sess["config_name"] == "duplicate_source_copy"
+
+
 def test_prune_invalid_section_rows_removes_blank_config_entries(isolated_config_dir):
     import sqlite3
     from modules import database
