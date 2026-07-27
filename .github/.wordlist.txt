@@ -45,6 +45,7 @@ ntfy
 OMDb
 OpenSSL
 Personalization
+picklist
 Plex
 PowerShell
 prebuilt
