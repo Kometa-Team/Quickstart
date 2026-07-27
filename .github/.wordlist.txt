@@ -19,9 +19,11 @@ Emby
 exe
 executables
 Frontend
+Gotify
 Homebrew
 https
 ImageMaid
+integrations
 Jellyfin
 Jinja
 jQuery
@@ -38,9 +40,13 @@ minification
 minified
 MyAnimeList
 NAS
+notifiarr
+ntfy
 OMDb
 OpenSSL
 Personalization
+picklist
+picklists
 Plex
 PowerShell
 prebuilt
@@ -79,8 +85,10 @@ Vite
 Vitest
 walkthrough
 walkthroughs
+webhooks
 Wayland
 xxxx
+YamTrack
 YAML
 yozora
 yozoraxcii
