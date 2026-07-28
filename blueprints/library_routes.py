@@ -971,14 +971,6 @@ def autosave_library(library_id):
         collection_errors = _qs._validate_library_collection_files(merged_libraries, selected_library_ids)
         metadata_errors = _qs._validate_library_metadata_files(merged_libraries, selected_library_ids)
         overlay_errors = _qs._validate_library_overlay_files(merged_libraries, selected_library_ids)
-        # Playlists live in a shared-across-libraries hidden field
-        # (`playlist_files_entries`) that the current library card
-        # happens to render, so autosave receives the latest edits
-        # even though there is no per-library selection. Validate them
-        # the same way the full-form POST does -- otherwise invalid
-        # playlist entries silently save on card switch and the user
-        # only sees the error much later when they hit full Save.
-        playlist_errors = _qs._validate_shared_playlist_files(merged_libraries)
         auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(merged_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
@@ -986,8 +978,6 @@ def autosave_library(library_id):
             return jsonify({"success": False, "error": "Invalid metadata files.", "errors": metadata_errors}), 400
         if overlay_errors:
             return jsonify({"success": False, "error": "Invalid overlay files.", "errors": overlay_errors}), 400
-        if playlist_errors:
-            return jsonify({"success": False, "error": "Invalid playlist files.", "errors": playlist_errors}), 400
         if auto_sort_hubs_errors:
             return jsonify({"success": False, "error": "Invalid library settings.", "errors": auto_sort_hubs_errors}), 400
         normalized_libraries, normalization_errors, changed = _qs._normalize_library_file_entries_payload(

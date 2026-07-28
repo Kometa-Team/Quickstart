@@ -235,33 +235,6 @@ def test_autosave_library_returns_400_on_overlay_file_errors(client, isolated_co
     assert resp.get_json()["success"] is False
 
 
-def test_autosave_library_returns_400_on_playlist_file_errors(client, isolated_config_dir, qs_module, monkeypatch):
-    # Playlists live in a shared-across-libraries hidden field on the
-    # library card. Prior to this fix, autosave validated collection /
-    # metadata / overlay files but silently accepted invalid playlist
-    # entries, so a user only saw the error much later on full Save.
-    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: set())
-    monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
-    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", lambda libs, ids: [])
-    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", lambda libs, ids: [])
-    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda libs, ids: [])
-    monkeypatch.setattr(
-        qs_module,
-        "_validate_shared_playlist_files",
-        lambda libs: ["playlist_files playlist_files[1]: Repo location must be non-empty."],
-    )
-
-    resp = client.post(
-        "/autosave_library/mov-library_movies",
-        json={"config_name": "pytest_lib", "playlist_files_entries": '[{"type":"repo","location":""}]'},
-    )
-    assert resp.status_code == 400
-    body = resp.get_json()
-    assert body["success"] is False
-    assert body["error"] == "Invalid playlist files."
-    assert any("playlist_files[1]" in e for e in body["errors"])
-
-
 def test_autosave_library_returns_400_on_normalization_errors(client, isolated_config_dir, qs_module, monkeypatch):
     monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: set())
     monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
