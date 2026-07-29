@@ -99,7 +99,7 @@
   {% elif final_gate.stage == 'freshness' %}
   <div class="fw-semibold mb-1">Validation is stale</div>
   <div>
-    Bulk validation is missing or older than {{ final_gate.validation_ttl_hours }} hours. Quickstart is running Validate All now and will refresh this page when it finishes.
+    Validate All is missing or older than {{ final_gate.validation_ttl_hours }} hours. Quickstart is running Validate All now and will refresh this page when it finishes.
     <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>
   </div>
   {% elif final_gate.stage == 'config' %}
@@ -136,10 +136,6 @@
           data-skipped="{{ rollup_skipped }}">
           {{ rollup_label }}
         </span>
-        <span class="small text-muted ms-2">
-          Last updated:
-          <span id="validation-status-last-run" data-validation-iso="{{ validation_rollup_at | default('', true) }}">Never</span>
-        </span>
       </button>
     </h2>
     <div id="validation-status-collapse" class="accordion-collapse collapse{% if final_gate and final_gate.stage == 'freshness' %} show{% endif %}" aria-labelledby="validation-status-heading"
@@ -150,39 +146,25 @@
             Status
             <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Pill</span>
             shows the page name and is clickable; colors reflect validation status. Gray means not applicable.
-            <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
-              Bulk legend:
-              <span class="rating-mapping-option-via rating-mapping-option-via--validated">Bulk</span>
-              <span class="rating-mapping-option-via rating-mapping-option-via--interactive">Interactive</span>
-              <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
-            </div>
           </div>
           <button id="validate-all-services" type="button" class="btn btn-outline-info btn-sm" data-qs-validate-all>
-            <i class="bi bi-check2-circle me-1"></i> Validate Configured Services
+            <i class="bi bi-check2-circle me-1"></i> Validate All
             <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
           </button>
         </div>
-        <div class="small text-muted text-uppercase">Current validation summary</div>
-        <div id="validate-all-status" class="small text-muted">{{ validation_rollup if validation_rollup else 'Current status unavailable.' }}</div>
+        <div id="validate-all-status" class="small text-muted d-none"></div>
+        <div class="small text-muted text-uppercase">Validate All run summary</div>
+        {% set validate_all_summary = validation_bulk_rollup | replace('Completed. ', '') | replace('Completed ', '') if validation_bulk_rollup else '' %}
+        <div id="validate-all-status-bulk" class="small text-muted">{{ validate_all_summary if validate_all_summary else 'No Validate All run has completed yet.' }}</div>
         <div class="small text-muted mb-2">
-          Last updated:
-          <span id="validate-all-status-time" data-validation-iso="{{ validation_rollup_at | default('', true) }}">—</span>
-        </div>
-        <div class="small text-muted text-uppercase">Last bulk validation run</div>
-        <div id="validate-all-status-bulk" class="small text-muted">{{ validation_bulk_rollup if validation_bulk_rollup else 'No bulk validation run yet.' }}</div>
-        <div class="small text-muted mb-2">
-          Bulk updated:
+          Run completed:
           <span id="validate-all-status-bulk-time" data-validation-iso="{{ validation_bulk_rollup_at | default('', true) }}">—</span>
         </div>
-        {% set bulk_pages = ['010-plex','020-tmdb','025-libraries','030-tautulli','040-github','050-omdb','060-mdblist','070-notifiarr','080-gotify','085-ntfy','087-apprise','088-yamtrack','090-webhooks','100-anidb','110-radarr','120-sonarr','150-settings','130-trakt','140-mal'] %}
-        {% set interactive_pages = [] %}
-        {% set nonservice_pages = ['001-start','900-kometa','910-sponsor','905-analytics'] %}
         <div class="table-responsive" data-qs-sticky-first="true">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
             <thead>
               <tr>
                 <th>Status</th>
-                <th>Bulk</th>
                 <th>Last validated</th>
                 <th>Time since</th>
                 <th>Validation Results</th>
@@ -190,35 +172,17 @@
             </thead>
             <tbody>
               {% for entry in validation_meta %}
+              {% if entry.has_validation %}
               <tr data-validation-key="{{ entry.key }}">
                 <td>
                   <div class="d-flex flex-column gap-1">
-                    {% if entry.has_validation %}
                     <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--{{ 'validated' if entry.validated else 'unvalidated' }}"
                       href="javascript:void(0);" data-jumpto-page="{{ entry.page }}">
                       {{ entry.label }}
                     </a>
-                    {% else %}
-                    <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--neutral"
-                      href="javascript:void(0);" data-jumpto-page="{{ entry.page }}">
-                      {{ entry.label }}
-                    </a>
-                    {% endif %}
                   </div>
                 </td>
                 <td>
-                  {% if entry.page in bulk_pages %}
-                  <span class="rating-mapping-option-via rating-mapping-option-via--validated">Bulk</span>
-                  {% elif entry.page in interactive_pages %}
-                  <span class="rating-mapping-option-via rating-mapping-option-via--interactive">Interactive</span>
-                  {% elif entry.page in nonservice_pages or not entry.has_validation %}
-                  <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
-                  {% else %}
-                  <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if entry.has_validation %}
                   <span class="validation-timestamp small text-muted"
                     data-validation-iso="{{ entry.validated_at | default('', true) }}">
                     {% if entry.validated_at %}
@@ -229,34 +193,24 @@
                     Never
                     {% endif %}
                   </span>
-                  {% else %}
-                  <span class="validation-timestamp small text-muted">N/A</span>
-                  {% endif %}
                 </td>
                 <td>
-                  {% if entry.has_validation %}
                   {% if entry.validated_at %}
                   <span class="validation-age small text-muted"
                     data-validation-iso-age="{{ entry.validated_at | default('', true) }}">—</span>
                   {% else %}
                   <span class="validation-age small text-muted">—</span>
                   {% endif %}
-                  {% else %}
-                  <span class="validation-age small text-muted">N/A</span>
-                  {% endif %}
                 </td>
                 <td>
-                  {% if entry.has_validation %}
                   {% if entry.validation_result %}
                   <span class="validation-result small text-muted">{{ entry.validation_result }}</span>
                   {% else %}
                   <span class="validation-result small text-muted">—</span>
                   {% endif %}
-                  {% else %}
-                  <span class="validation-result small text-muted">N/A</span>
-                  {% endif %}
                 </td>
               </tr>
+              {% endif %}
               {% endfor %}
             </tbody>
           </table>

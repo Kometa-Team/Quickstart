@@ -802,10 +802,8 @@ document.querySelectorAll('[data-validation-iso-age]').forEach(el => {
 
 const validateAllBtn = document.getElementById('validate-all-services')
 const validateAllStatus = document.getElementById('validate-all-status')
-const validateAllStatusTime = document.getElementById('validate-all-status-time')
 const validateAllStatusBulk = document.getElementById('validate-all-status-bulk')
 const validateAllStatusBulkTime = document.getElementById('validate-all-status-bulk-time')
-const validationStatusLastRun = document.getElementById('validation-status-last-run')
 let previouslyBlocked = false
 let previousStatuses = {}
 
@@ -824,7 +822,7 @@ if (validateAllBtn) {
     if (validateAllStatus) {
       validateAllStatus.classList.add('d-none')
       validateAllStatus.classList.remove('text-danger', 'text-success', 'text-warning')
-      validateAllStatus.textContent = 'Validating configured services...'
+      validateAllStatus.textContent = 'Validating all services...'
       validateAllStatus.classList.remove('d-none')
     }
   })
@@ -858,34 +856,13 @@ if (validateAllBtn) {
     const skipped = summary.skipped || 0
     const summaryUpdatedAt = data.summary_updated_at || new Date().toISOString()
     if (validateAllStatus) {
-      validateAllStatus.classList.remove('d-none', 'text-danger', 'text-success', 'text-warning')
-      if (failed > 0) {
-        validateAllStatus.classList.add('text-danger')
-      } else if (skipped > 0) {
-        validateAllStatus.classList.add('text-warning')
-      } else {
-        validateAllStatus.classList.add('text-success')
-      }
-      const currentSummaryText = `Current. Validated: ${ok} • Failed: ${failed} • Pending: ${skipped}.`
-      validateAllStatus.textContent = currentSummaryText
-      if (validateAllStatusTime) {
-        validateAllStatusTime.dataset.validationIso = summaryUpdatedAt
-        const parsed = new Date(summaryUpdatedAt)
-        if (!Number.isNaN(parsed.getTime())) {
-          validateAllStatusTime.textContent = formatLocalTimestamp(parsed)
-        }
-      }
-      if (validationStatusLastRun) {
-        validationStatusLastRun.dataset.validationIso = summaryUpdatedAt
-        const parsed = new Date(summaryUpdatedAt)
-        if (!Number.isNaN(parsed.getTime())) {
-          validationStatusLastRun.textContent = formatLocalTimestamp(parsed)
-        }
-      }
+      validateAllStatus.classList.add('d-none')
+      validateAllStatus.classList.remove('text-danger', 'text-success', 'text-warning')
+      validateAllStatus.textContent = ''
     }
     if (validateAllStatusBulk) {
       validateAllStatusBulk.classList.remove('d-none')
-      validateAllStatusBulk.textContent = data.summary_text || `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.`
+      validateAllStatusBulk.textContent = data.summary_text || `Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.`
     }
     if (validateAllStatusBulkTime) {
       validateAllStatusBulkTime.dataset.validationIso = summaryUpdatedAt

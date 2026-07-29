@@ -2556,7 +2556,7 @@ def step(name):
         elif final_gate.get("stage") == "freshness":
             validation_rollup_state = "warn"
             if not validation_bulk_rollup:
-                validation_bulk_rollup = f"Validation is stale. Bulk validation has not run in the last {QS_FINAL_VALIDATION_TTL_HOURS} hours."
+                validation_bulk_rollup = f"Validation is stale. Validate All has not completed in the last {QS_FINAL_VALIDATION_TTL_HOURS} hours."
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         page_info["quickstart_root"] = helpers.get_app_root()
@@ -3196,7 +3196,7 @@ def validate_all_services():
         details=kometa_details,
     )
 
-    # Bulk validation for libraries
+    # Validate All checks for libraries
     plex_settings = persistence.retrieve_settings("010-plex") or {}
     plex_is_valid = helpers.booler(plex_settings.get("validated", False)) if isinstance(plex_settings, dict) else False
     if not plex_is_valid:
@@ -3318,7 +3318,7 @@ def validate_all_services():
                 ),
             )
 
-    # Bulk validation for settings
+    # Validate All checks for settings
     settings_settings = persistence.retrieve_settings("150-settings") or {}
     settings_section = settings_settings.get("settings", {}) if isinstance(settings_settings, dict) else {}
     if not isinstance(settings_section, dict) or not settings_section:
@@ -3381,7 +3381,7 @@ def validate_all_services():
         else:
             update_section_validation("150-settings", "settings", True)
 
-    # Bulk validation for AniDB
+    # Validate All checks for AniDB
     anidb_settings = persistence.retrieve_settings("100-anidb") or {}
     anidb_data = anidb_settings.get("anidb", {}) if isinstance(anidb_settings, dict) else {}
     anidb_enabled = helpers.booler(anidb_data.get("enable")) if isinstance(anidb_data, dict) else False
@@ -3390,7 +3390,7 @@ def validate_all_services():
     else:
         skip_section_validation("100-anidb", "anidb", reason="disabled")
 
-    # Bulk validation for Webhooks
+    # Validate All checks for Webhooks
     webhooks_settings = persistence.retrieve_settings("090-webhooks") or {}
     webhooks_data = webhooks_settings.get("webhooks", {}) if isinstance(webhooks_settings, dict) else {}
     configured_webhooks = False
@@ -3405,7 +3405,7 @@ def validate_all_services():
     else:
         skip_section_validation("090-webhooks", "webhooks", reason="no_webhooks")
 
-    # Bulk validation for Trakt (token check if present)
+    # Validate All checks for Trakt (token check if present)
     trakt_settings = persistence.retrieve_settings("130-trakt") or {}
     trakt_data = trakt_settings.get("trakt", {}) if isinstance(trakt_settings, dict) else {}
     trakt_auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
@@ -3436,7 +3436,7 @@ def validate_all_services():
         except requests.exceptions.RequestException:
             update_section_validation("130-trakt", "trakt", False, reason="validation_error")
 
-    # Bulk validation for MAL (token check if present)
+    # Validate All checks for MAL (token check if present)
     mal_settings = persistence.retrieve_settings("140-mal") or {}
     mal_data = mal_settings.get("mal", {}) if isinstance(mal_settings, dict) else {}
     mal_auth = mal_data.get("authorization", {}) if isinstance(mal_data, dict) else {}
@@ -3513,7 +3513,7 @@ def validate_all_services():
     failed = summary.get("failed", 0)
     skipped = summary.get("skipped", 0)
     separator = "\u2022"
-    summary_text = f"Completed. Validated: {ok} {separator} Failed: {failed} {separator} Skipped: {skipped}."
+    summary_text = f"Validated: {ok} {separator} Failed: {failed} {separator} Skipped: {skipped}."
     summary_updated_at = utc_now_iso()
     summary_payload = {
         "summary_text": summary_text,
