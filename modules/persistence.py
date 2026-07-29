@@ -531,7 +531,7 @@ def migrate_library_keys_to_plex_ids(config_name, all_plex_libraries):
         norm = normalize_id(lib["name"].strip(), existing_ids)
         norm_to_plex_id[norm] = str(lib["id"])
 
-    settings = retrieve_settings(config_name)
+    settings = retrieve_settings("025-libraries")
     libraries = settings.get("libraries", {})
     if not libraries:
         return 0
