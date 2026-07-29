@@ -4379,18 +4379,17 @@ def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):
             return [FakeUser()]
 
     class FakeSection:
-        def __init__(self, title, section_type, key=1):
+        def __init__(self, title, section_type):
             self.title = title
             self.type = section_type
-            self.key = key
 
     class FakeLibrary:
         def sections(self):
             calls["sections"] += 1
             return [
-                FakeSection("Movies", "movie", key=1),
-                FakeSection("Shows", "show", key=2),
-                FakeSection("Music", "artist", key=3),
+                FakeSection("Movies", "movie"),
+                FakeSection("Shows", "show"),
+                FakeSection("Music", "artist"),
             ]
 
     class FakePlex:
@@ -4415,9 +4414,9 @@ def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):
 
     payload = resp.get_json()
     assert payload["validated"] is True
-    assert payload["movie_libraries"] == [{"id": 1, "name": "Movies"}]
-    assert payload["show_libraries"] == [{"id": 2, "name": "Shows"}]
-    assert payload["music_libraries"] == [{"id": 3, "name": "Music"}]
+    assert payload["movie_libraries"] == ["Movies"]
+    assert payload["show_libraries"] == ["Shows"]
+    assert payload["music_libraries"] == ["Music"]
     assert calls["sections"] == 1
 
 

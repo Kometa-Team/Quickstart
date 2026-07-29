@@ -50,7 +50,6 @@ from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tes
     _map_playlist_libraries,
     _parse_base_plex_libraries,
     _parse_csv_or_list_to_set,
-    _plex_library_name_sets,
     _parse_plex_credentials_from_base,
     _parse_plex_credentials_from_config,
     _parse_plex_credentials_from_form,
@@ -138,7 +137,8 @@ def import_config_preview():
     needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
     needs_tmdb = isinstance(parsed, dict) and bool(parsed.get("tmdb") or parsed.get("libraries") or parsed.get("collections") or parsed.get("overlays"))
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
-    movie_names, show_names = _plex_library_name_sets(plex_data)
+    movie_names = _parse_csv_or_list_to_set(plex_data.get("tmp_movie_libraries", ""))
+    show_names = _parse_csv_or_list_to_set(plex_data.get("tmp_show_libraries", ""))
     plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
 
     if needs_plex:
@@ -591,7 +591,8 @@ def import_config_confirm():
                 show_names = plex_outcome.show_names
         else:
             plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
-            movie_names, show_names = _plex_library_name_sets(plex_data)
+            movie_names = _parse_csv_or_list_to_set(plex_data.get("tmp_movie_libraries", ""))
+            show_names = _parse_csv_or_list_to_set(plex_data.get("tmp_show_libraries", ""))
 
         if needs_tmdb:
             tmdb_error = validate_confirm_tmdb_credentials()

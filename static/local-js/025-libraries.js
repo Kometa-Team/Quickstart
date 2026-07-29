@@ -6011,18 +6011,12 @@ function updateConfiguredCounts () {
   configuredCountsDisplay.textContent = `Configured: ${counts.movie} ${movieLabel} / ${counts.show} ${showLabel}`
 }
 
-function nbspLeadingSpaces (s) {
-  const stripped = s.replace(/^ +/, '')
-  return ' '.repeat(s.length - stripped.length) + stripped
-}
-
 function refreshPickerLabels () {
   if (!libraryPicker) return
   libraryPicker.querySelectorAll('option[value]').forEach(opt => {
     const base = opt.dataset.label || opt.textContent.replace(/\s+\(configured\)$/, '')
     const configured = opt.dataset.configured === 'true'
-    const displayBase = nbspLeadingSpaces(base)
-    opt.textContent = configured ? `${displayBase} (configured)` : displayBase
+    opt.textContent = configured ? `${base} (configured)` : base
   })
   updateConfiguredCounts()
 }

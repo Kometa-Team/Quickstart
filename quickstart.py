@@ -1131,17 +1131,6 @@ app = Flask(__name__)
 # so ``python quickstart.py`` after a fresh clone still works.
 # Roadmap #1334 Step 4 activation. See modules/helpers/_vite_manifest.py.
 app.jinja_env.globals["asset_url"] = helpers.asset_url
-app.jinja_env.globals["vite_dev_origin"] = helpers.vite_dev_origin
-
-
-def _nbsp_leading_spaces(s: str) -> str:
-    """Replace leading ASCII spaces with EM SPACE (U+2003) for visible indentation in native dropdowns."""
-    s = str(s)
-    stripped = s.lstrip(" ")
-    return " " * (len(s) - len(stripped)) + stripped
-
-
-app.jinja_env.filters["nbsp_leading_spaces"] = _nbsp_leading_spaces
 
 app.register_blueprint(validation_routes_bp)
 app.register_blueprint(asset_routes_bp)
@@ -2310,33 +2299,48 @@ def step(name):
 
     page_info["telemetry"] = telemetry_data
 
-    # Extract the movie and show libraries by Plex section ID with display-name lookup.
-    _lib_name_map = persistence.get_library_names("010-plex")
+    # Extract the movie and show libraries
     movie_libraries_raw = plex_data.get("tmp_movie_libraries", "")
     show_libraries_raw = plex_data.get("tmp_show_libraries", "")
 
+    # Debugging extracted values
     if app.config["QS_DEBUG"]:
         helpers.ts_log("Extracted movie libraries:", movie_libraries_raw, level="DEBUG")
         helpers.ts_log("Extracted show libraries:", show_libraries_raw, level="DEBUG")
 
+    # Ensure it's a string before splitting
+    if not isinstance(movie_libraries_raw, str):
+        if app.config["QS_DEBUG"]:
+            helpers.ts_log("tmp_movie_libraries is not a string!", level="ERROR")
+
+        movie_libraries_raw = ""
+
+    if not isinstance(show_libraries_raw, str):
+        if app.config["QS_DEBUG"]:
+            helpers.ts_log("tmp_show_libraries is not a string!", level="ERROR")
+
+        show_libraries_raw = ""
+
+    existing_ids = set()  # Track used IDs to prevent duplicates
+
     movie_libraries = [
         {
-            "id": f"mov-library_{lib_id}",
-            "name": _lib_name_map.get(str(lib_id), f"Library {lib_id}"),
+            "id": f"mov-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
+            "name": lib.strip(),
             "type": "movie",
         }
-        for lib_id in persistence.decode_library_ids(movie_libraries_raw)
-        if lib_id
+        for lib in movie_libraries_raw.split(",")
+        if lib.strip()
     ]
 
     show_libraries = [
         {
-            "id": f"sho-library_{lib_id}",
-            "name": _lib_name_map.get(str(lib_id), f"Library {lib_id}"),
+            "id": f"sho-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
+            "name": lib.strip(),
             "type": "show",
         }
-        for lib_id in persistence.decode_library_ids(show_libraries_raw)
-        if lib_id
+        for lib in show_libraries_raw.split(",")
+        if lib.strip()
     ]
 
     # Ensure `libraries` dictionary exists
@@ -2375,10 +2379,9 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_movie_libraries", ""))
-    plex_data["tmp_show_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_show_libraries", ""))
-    plex_data["tmp_music_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_music_libraries", ""))
-    plex_data["tmp_library_names"] = persistence.get_library_names("010-plex")
+    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
+    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
+    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
     plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
 
     # Ensure correct rendering for the Kometa page
@@ -2568,6 +2571,7 @@ def step(name):
         movie_libraries = []
         show_libraries = []
         library_dropdown = []
+        existing_ids = set()
 
         for key, value in library_settings.items():
             if key.startswith("mov-library_") and key.endswith("-library"):

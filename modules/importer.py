@@ -5,7 +5,7 @@ from typing import Any
 from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
-from modules import helpers, persistence
+from modules import helpers
 
 # Language codes recognized as `weight_<code>` overlay-source ordering keys.
 # Hoisted out of prepare_import_payload's ~95-line nested comprehension --
@@ -393,14 +393,6 @@ def prepare_import_payload(
 
     importer_simple_sections.process_simple_sections(config_data, payload=payload, report=report)
 
-    # Build a name→Plex-ID reverse map from stored data so imported library
-    # keys use the real Plex section ID rather than a normalised name slug.
-    try:
-        _id_map = persistence.get_library_names()  # {plex_id_str: display_name}
-    except Exception:
-        _id_map = {}
-    _name_to_plex_id = {v: k for k, v in _id_map.items()}  # {display_name: plex_id_str}
-
     libraries_payload = config_data.get("libraries")
     if isinstance(libraries_payload, dict):
         libraries_data: dict[str, Any] = {}
@@ -440,8 +432,7 @@ def prepare_import_payload(
                     report.add("unmapped", f"libraries.{lib_name}", "Library type could not be determined.")
                     continue
 
-            plex_id = _name_to_plex_id.get(name) or _name_to_plex_id.get(resolved_name)
-            lib_id = f"{lib_type}-library_{plex_id}" if plex_id else f"{lib_type}-library_{helpers.normalize_id(name, existing_ids)}"
+            lib_id = f"{lib_type}-library_{helpers.normalize_id(name, existing_ids)}"
             libraries_data[f"{lib_id}-library"] = resolved_name
             report.add("imported", f"libraries.{lib_name}.library")
             playlist_names_for_library = {name, resolved_name}

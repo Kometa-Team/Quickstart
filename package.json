@@ -15,8 +15,5 @@
     "jsdom": "29.1.1",
     "vite": "8.1.0",
     "vitest": "4.1.9"
-  },
-  "dependencies": {
-    "opencode-omniroute-auth": "^1.2.2"
   }
 }
