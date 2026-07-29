@@ -122,13 +122,13 @@ def validate_plex_server(data):
 
         # Retrieve library sections once. This can be expensive on large Plex servers.
         sections = plex.library.sections()
-        music_libraries = [section.title for section in sections if section.type == "artist"]
-        movie_libraries = [section.title for section in sections if section.type == "movie"]
-        show_libraries = [section.title for section in sections if section.type == "show"]
+        music_libraries = [{"id": section.key, "name": section.title} for section in sections if section.type == "artist"]
+        movie_libraries = [{"id": section.key, "name": section.title} for section in sections if section.type == "movie"]
+        show_libraries = [{"id": section.key, "name": section.title} for section in sections if section.type == "show"]
 
-        helpers.ts_log(f"Music libraries: {music_libraries}", level="INFO")
-        helpers.ts_log(f"Movie libraries: {movie_libraries}", level="INFO")
-        helpers.ts_log(f"Show libraries: {show_libraries}", level="INFO")
+        helpers.ts_log(f"Music libraries: {[lib['name'] for lib in music_libraries]}", level="INFO")
+        helpers.ts_log(f"Movie libraries: {[lib['name'] for lib in movie_libraries]}", level="INFO")
+        helpers.ts_log(f"Show libraries: {[lib['name'] for lib in show_libraries]}", level="INFO")
 
     except Exception as e:
         helpers.ts_log(f"Error validating Plex server: {str(e)}", level="ERROR")

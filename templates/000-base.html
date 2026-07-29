@@ -73,6 +73,10 @@
     window.QS_TRAKT_REQUIREMENT_REASONS = {{ (trakt_requirement_reasons if trakt_requirement_reasons is defined else []) | tojson }};
     window.QS_MAL_REQUIREMENT_REASONS = {{ (mal_requirement_reasons if mal_requirement_reasons is defined else []) | tojson }};
   </script>
+  {% set _vite_origin = vite_dev_origin() %}
+  {% if _vite_origin %}
+  <script type="module" src="{{ _vite_origin }}/@vite/client"></script>
+  {% endif %}
   <script type="module" src="{{ asset_url('000-base') }}"></script>
   <script type="module" src="{{ asset_url('pathValidation') }}"></script>
   <script type="module" src="{{ asset_url('urlValidation') }}"></script>
