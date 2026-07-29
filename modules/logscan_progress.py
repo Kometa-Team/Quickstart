@@ -59,12 +59,15 @@ def get_progress_run_order(config_data=None):
 
 
 def get_progress_library_list(selected_libraries=None, config_path=None, config_data=None, config_name=None):
+    import json as _json
     import quickstart
 
     library_settings = {}
+    plex_name_map = {}
     if has_request_context():
         settings = persistence.retrieve_settings("025-libraries")
         library_settings = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+        plex_name_map = persistence.get_library_names()
     elif config_name:
         try:
             _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
@@ -77,6 +80,12 @@ def get_progress_library_list(selected_libraries=None, config_path=None, config_
                     library_settings = stored
         except Exception:
             library_settings = {}
+        try:
+            plex_settings = persistence.retrieve_settings_for_config(config_name, "010-plex")
+            raw = plex_settings.get("plex", {}).get("tmp_library_names", "")
+            plex_name_map = _json.loads(raw) if raw else {}
+        except Exception:
+            plex_name_map = {}
     libraries = []
     type_by_name = {}
     if isinstance(library_settings, dict):
@@ -84,9 +93,15 @@ def get_progress_library_list(selected_libraries=None, config_path=None, config_
             if not value:
                 continue
             if key.startswith("mov-library_") and key.endswith("-library"):
-                type_by_name[value] = "movie"
+                lib_id = helpers.extract_library_name(key)
+                display_name = plex_name_map.get(lib_id, "") if lib_id else ""
+                if display_name:
+                    type_by_name[display_name] = "movie"
             elif key.startswith("sho-library_") and key.endswith("-library"):
-                type_by_name[value] = "show"
+                lib_id = helpers.extract_library_name(key)
+                display_name = plex_name_map.get(lib_id, "") if lib_id else ""
+                if display_name:
+                    type_by_name[display_name] = "show"
     parsed = config_data if isinstance(config_data, dict) else quickstart._load_progress_config(config_path)
     if isinstance(parsed, dict):
         lib_section = parsed.get("libraries")
@@ -106,7 +121,13 @@ def get_progress_library_list(selected_libraries=None, config_path=None, config_
     return libraries
 
 
-def build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_data=None, original_command="", config_name=None):
+def build_incomplete_progress_snapshot(
+    progress=None,
+    last_log_at=None,
+    config_data=None,
+    original_command="",
+    config_name=None,
+):
     progress = progress if isinstance(progress, dict) else {}
     libraries = progress.get("libraries") if isinstance(progress.get("libraries"), list) else []
     if not libraries:
@@ -148,14 +169,16 @@ def build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_d
     ):
         if not isinstance(entry, dict):
             continue
-        name = str(entry.get("name") or "").strip()
+        name = str(entry.get("name") or "")
         lib_type = str(entry.get("type") or "").strip()
-        if name:
+        if name.strip():
             configured_type_by_name[name] = lib_type or None
     if isinstance(config_data, dict):
         config_libraries = config_data.get("libraries")
         if isinstance(config_libraries, dict):
-            configured_library_names = [str(name).strip() for name in config_libraries.keys() if str(name).strip()]
+            # Preserve names exactly as they appear in the YAML — leading/trailing
+            # whitespace is meaningful for libraries named e.g. " Movies ".
+            configured_library_names = [str(name) for name in config_libraries.keys() if str(name).strip()]
             configured_library_entries = [{"name": name, "type": configured_type_by_name.get(name)} for name in configured_library_names]
     elif configured_type_by_name:
         configured_library_names = list(configured_type_by_name.keys())
@@ -250,11 +273,12 @@ def build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_d
         "current_library": current_library,
         "phase_current": current_phase,
         "last_log_at": last_log_at or "",
-        "preparation_label": format_duration_brief(preparation_seconds) if isinstance(preparation_seconds, (int, float)) else "",
+        "preparation_label": (format_duration_brief(preparation_seconds) if isinstance(preparation_seconds, (int, float)) else ""),
         "footer_cells": [
-            format_duration_brief(totals.get(column["key"])) if isinstance(totals.get(column["key"]), (int, float)) and totals.get(column["key"]) > 0 else "" for column in columns
+            (format_duration_brief(totals.get(column["key"])) if isinstance(totals.get(column["key"]), (int, float)) and totals.get(column["key"]) > 0 else "")
+            for column in columns
         ],
-        "total_label": format_duration_brief(total_seconds) if total_seconds > 0 else "",
+        "total_label": (format_duration_brief(total_seconds) if total_seconds > 0 else ""),
     }
 
 
