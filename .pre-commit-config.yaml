@@ -38,7 +38,7 @@ repos:
         files: '\.md$'
         pass_filenames: false
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+    rev: v0.16.2
     hooks:
       - id: ruff
         args: [ --fix ]
