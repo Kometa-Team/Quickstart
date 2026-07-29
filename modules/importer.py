@@ -442,7 +442,7 @@ def prepare_import_payload(
 
             plex_id = _name_to_plex_id.get(name) or _name_to_plex_id.get(resolved_name)
             lib_id = f"{lib_type}-library_{plex_id}" if plex_id else f"{lib_type}-library_{helpers.normalize_id(name, existing_ids)}"
-            libraries_data[f"{lib_id}-library"] = resolved_name
+            libraries_data[f"{lib_id}-library"] = "true"
             report.add("imported", f"libraries.{lib_name}.library")
             playlist_names_for_library = {name, resolved_name}
             matched_names = playlist_libraries.intersection(playlist_names_for_library)
