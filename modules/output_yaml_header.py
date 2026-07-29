@@ -127,8 +127,8 @@ def _sorted_library_display_names(libraries):
     ``{key: display_name}`` dict shape used throughout ``build_config``.
     """
     return sorted(
-        (str(name) for name in libraries.values() if str(name).strip()),
-        key=lambda value: value.strip().casefold(),
+        (str(name).strip() for name in libraries.values() if str(name).strip()),
+        key=lambda value: value.casefold(),
     )
 
 

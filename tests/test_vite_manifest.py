@@ -36,8 +36,6 @@ from modules.helpers._vite_manifest import (
     _load_manifest,
     asset_url,
     reload_manifest,
-    vite_dev_mode,
-    vite_dev_origin,
 )
 
 # ---------------------------------------------------------------------------
@@ -278,80 +276,6 @@ class TestManifestCaching:
 
 
 # ---------------------------------------------------------------------------
-# vite_dev_mode / vite_dev_origin
-# ---------------------------------------------------------------------------
-
-
-class TestViteDevMode:
-    def test_off_by_default(self, monkeypatch):
-        monkeypatch.delenv("QS_VITE_DEV", raising=False)
-        assert vite_dev_mode() is False
-
-    def test_enabled_by_1(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "1")
-        assert vite_dev_mode() is True
-
-    def test_enabled_by_true(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "true")
-        assert vite_dev_mode() is True
-
-    def test_disabled_by_0(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "0")
-        assert vite_dev_mode() is False
-
-    def test_disabled_by_false(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "false")
-        assert vite_dev_mode() is False
-
-
-class TestViteDevOrigin:
-    def test_returns_empty_when_not_in_dev_mode(self, monkeypatch):
-        monkeypatch.delenv("QS_VITE_DEV", raising=False)
-        assert vite_dev_origin() == ""
-
-    def test_returns_default_origin_when_enabled(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "1")
-        monkeypatch.delenv("QS_VITE_DEV_HOST", raising=False)
-        monkeypatch.delenv("QS_VITE_DEV_PORT", raising=False)
-        assert vite_dev_origin() == "http://localhost:5173"
-
-    def test_respects_custom_port(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "1")
-        monkeypatch.delenv("QS_VITE_DEV_HOST", raising=False)
-        monkeypatch.setenv("QS_VITE_DEV_PORT", "3000")
-        assert vite_dev_origin() == "http://localhost:3000"
-
-    def test_respects_custom_host(self, monkeypatch):
-        monkeypatch.setenv("QS_VITE_DEV", "1")
-        monkeypatch.setenv("QS_VITE_DEV_HOST", "10.10.10.11")
-        monkeypatch.delenv("QS_VITE_DEV_PORT", raising=False)
-        assert vite_dev_origin() == "http://10.10.10.11:5173"
-
-
-class TestAssetUrlDevMode:
-    def test_returns_vite_url_in_dev_mode(self, monkeypatch, fake_manifest):
-        monkeypatch.setenv("QS_VITE_DEV", "1")
-        monkeypatch.delenv("QS_VITE_DEV_PORT", raising=False)
-        assert asset_url("010-plex") == "http://localhost:5173/static/local-js/010-plex.js"
-
-    def test_dev_mode_bypasses_manifest(self, monkeypatch, fake_manifest):
-        """When QS_VITE_DEV is set, the manifest is never consulted."""
-        monkeypatch.setenv("QS_VITE_DEV", "1")
-        _touch_dist_file("010-plex-abc.js")
-        fake_manifest.write_text(json.dumps({"static/local-js/010-plex.js": {"file": "010-plex-abc.js", "isEntry": True}}))
-        url = asset_url("010-plex")
-        assert url.startswith("http://localhost:"), url
-        assert "dist" not in url
-
-    def test_dev_mode_off_still_uses_manifest(self, monkeypatch, fake_manifest):
-        monkeypatch.setenv("QS_VITE_DEV", "0")
-        _touch_dist_file("010-plex-abc.js")
-        fake_manifest.write_text(json.dumps({"static/local-js/010-plex.js": {"file": "010-plex-abc.js", "isEntry": True}}))
-        reload_manifest()
-        assert asset_url("010-plex") == "/static/dist/010-plex-abc.js"
-
-
-# ---------------------------------------------------------------------------
 # Package re-export contract
 # ---------------------------------------------------------------------------
 
@@ -375,18 +299,6 @@ class TestPackageExports:
 
         assert hasattr(helpers, "reload_manifest")
         assert helpers.reload_manifest is reload_manifest
-
-    def test_vite_dev_mode_is_reexported_from_helpers(self):
-        from modules import helpers
-
-        assert hasattr(helpers, "vite_dev_mode")
-        assert helpers.vite_dev_mode is vite_dev_mode
-
-    def test_vite_dev_origin_is_reexported_from_helpers(self):
-        from modules import helpers
-
-        assert hasattr(helpers, "vite_dev_origin")
-        assert helpers.vite_dev_origin is vite_dev_origin
 
 
 # ---------------------------------------------------------------------------

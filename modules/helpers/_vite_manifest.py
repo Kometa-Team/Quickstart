@@ -115,37 +115,6 @@ def reload_manifest() -> None:
         _manifest_cache = None
 
 
-def vite_dev_mode() -> bool:
-    """Return True when the Vite dev server should be used instead of built assets.
-
-    Set ``QS_VITE_DEV=1`` (or any truthy value) in the environment before
-    starting Flask, then run ``npm run dev`` in a second terminal.  The
-    browser will load JS directly from the Vite dev server and receive
-    HMR updates on every file save.
-    """
-    return os.getenv("QS_VITE_DEV", "0") not in ("0", "", "false", "False", "no")
-
-
-def vite_dev_origin() -> str:
-    """Return the Vite dev-server origin when ``QS_VITE_DEV`` is set.
-
-    Returns ``'http://<host>:<port>'`` so templates can build absolute URLs
-    for the Vite client script and module imports.  Returns an empty string
-    when not in dev mode so ``{% if vite_dev_origin() %}`` works cleanly.
-
-    Override defaults via env vars:
-      QS_VITE_DEV_HOST  host the *browser* uses to reach the Vite server
-                        (default: ``localhost``; set to the server's LAN IP
-                        when the browser is on a different machine)
-      QS_VITE_DEV_PORT  Vite dev-server port (default: ``5173``)
-    """
-    if not vite_dev_mode():
-        return ""
-    host = os.getenv("QS_VITE_DEV_HOST", "localhost")
-    port = int(os.getenv("QS_VITE_DEV_PORT", "5173"))
-    return f"http://{host}:{port}"
-
-
 def asset_url(name: str) -> str:
     """Return the URL path a template should use for JS entry ``name``.
 
@@ -155,25 +124,19 @@ def asset_url(name: str) -> str:
 
     Resolution order:
 
-    1. If ``QS_VITE_DEV`` is set, return the Vite dev-server URL
-       (``http://localhost:<port>/static/local-js/<name>.js``).  The Vite
-       dev server handles HMR; the browser updates on every file save
-       without a manual rebuild.
-    2. If the manifest is loaded and has an entry keyed
+    1. If the manifest is loaded and has an entry keyed
        ``static/local-js/<name>.js``, return ``/static/dist/<manifest['file']>``.
        This is the fast, hashed, cache-busted, minified path used in
        production.
-    3. Otherwise, return ``/static/local-js/<name>.js`` -- the raw
+    2. Otherwise, return ``/static/local-js/<name>.js`` -- the raw
        source file, still served by Flask via the ``static`` blueprint.
-       This is the fallback path and preserves the
+       This is the dev-mode / source-checkout path and preserves the
        ``python quickstart.py`` after a clone experience.
 
-    The returned string is always absolute so callers can drop it
-    directly into ``<script src=...>`` without ``url_for``.
+    The returned string is always absolute (starts with ``/static/``) so
+    callers can drop it directly into ``<script src=...>`` without
+    ``url_for``.
     """
-    origin = vite_dev_origin()
-    if origin:
-        return f"{origin}/static/local-js/{name}.js"
     manifest = _get_manifest()
     key = f"static/local-js/{name}.js"
     entry = manifest.get(key)
@@ -185,4 +148,4 @@ def asset_url(name: str) -> str:
     return f"/static/local-js/{name}.js"
 
 
-__all__ = ["asset_url", "reload_manifest", "vite_dev_mode", "vite_dev_origin"]
+__all__ = ["asset_url", "reload_manifest"]
