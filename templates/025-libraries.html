@@ -181,7 +181,7 @@
         {% for library in movie_libraries %}
         <option value="{{ library.id }}" data-library-type="{{ library.type }}"
           data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
-          {{ library.name }}{% if library.id in configured_ids %} (configured){% endif %}
+          {{ library.name | nbsp_leading_spaces }}{% if library.id in configured_ids %} (configured){% endif %}
         </option>
         {% endfor %}
       </optgroup>
@@ -191,7 +191,7 @@
         {% for library in show_libraries %}
         <option value="{{ library.id }}" data-library-type="{{ library.type }}"
           data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
-          {{ library.name }}{% if library.id in configured_ids %} (configured){% endif %}
+          {{ library.name | nbsp_leading_spaces }}{% if library.id in configured_ids %} (configured){% endif %}
         </option>
         {% endfor %}
       </optgroup>

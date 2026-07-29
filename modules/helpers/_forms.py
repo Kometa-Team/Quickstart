@@ -54,7 +54,10 @@ def build_simple_dict(source, form_data):
         else:
             # Handle individual scalar values
             if value is not None and not isinstance(value, bool):
-                if final_key.endswith("_section"):
+                if final_key.endswith("-library") or final_key == "libraries":
+                    # Library display names from Plex — preserve exactly (leading/trailing spaces are significant)
+                    pass
+                elif final_key.endswith("_section"):
                     # Preserve as string to avoid stripping leading zeros
                     value = value.strip() if isinstance(value, str) else value
                 else:

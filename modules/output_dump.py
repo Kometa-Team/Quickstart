@@ -597,7 +597,7 @@ def _inject_library_section_headers(yaml_string, font):
 
         # Only inject header for lines like "  Movies:" or "  TV Shows:" inside the libraries block
         if in_libraries_block and line.startswith("  ") and not line.startswith("   ") and stripped.endswith(":") and not stripped.startswith("-"):
-            library_name = stripped.rstrip(":")
+            library_name = stripped.rstrip(":").strip("'\"")
             output.append(render_section_header(library_name, font))
         else:
             subheader_title = None
