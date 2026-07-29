@@ -159,6 +159,16 @@ def extract_libraries_bundle(nested_libraries_data, *, debug=False):
     movie_libraries = _select_libraries(nested_libraries_data, "mov-library_")
     show_libraries = _select_libraries(nested_libraries_data, "sho-library_")
 
+    # Authoritative display names from Plex (id_str → name with spaces preserved).
+    # Stored `-library` values may have been stripped; prefer the name map when the
+    # key contains a numeric section ID (i.e. after the ID-based migration has run).
+    from modules import persistence  # local import to avoid load-order cycle
+
+    plex_name_map = persistence.get_library_names()
+    if plex_name_map:
+        movie_libraries = {k: plex_name_map.get(helpers.extract_library_name(k), v) for k, v in movie_libraries.items()}
+        show_libraries = {k: plex_name_map.get(helpers.extract_library_name(k), v) for k, v in show_libraries.items()}
+
     movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}
     show_library_names = {helpers.extract_library_name(k) for k in show_libraries}
 
