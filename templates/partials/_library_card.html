@@ -14,9 +14,9 @@
     <div class="d-flex align-items-center gap-2">
       <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
         <input type="hidden" id="{{ library.id }}-library-value" name="{{ library.id }}-library"
-          value="{{ include_checked or '' }}">
+          value="{{ 'true' if include_checked else '' }}">
         <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
-          data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
+          data-target-input="{{ library.id }}-library-value" value="true"
           {% if include_checked %}checked{% endif %}>
         <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
           title="Controls whether this library is written to the final config and validated.">Include in config</label>
@@ -56,9 +56,9 @@
     <div class="d-flex align-items-center gap-2">
       <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
         <input type="hidden" id="{{ library.id }}-library-value" name="{{ library.id }}-library"
-          value="{{ include_checked or '' }}">
+          value="{{ 'true' if include_checked else '' }}">
         <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
-          data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
+          data-target-input="{{ library.id }}-library-value" value="true"
           {% if include_checked %}checked{% endif %}>
         <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
           title="Controls whether this library is written to the final config and validated.">Include in config</label>
