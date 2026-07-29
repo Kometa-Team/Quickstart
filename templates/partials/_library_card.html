@@ -6,7 +6,7 @@
     role="button">
 
     <h4 class="mb-0 text-white">
-      <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name }}
+      <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name | nbsp_leading_spaces }}
       <span class="small accordion-override-summary ms-2 d-none" data-library-total-summary></span>
     </h4>
     {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
@@ -48,7 +48,7 @@
     role="button">
 
     <h4 class="mb-0 text-white">
-      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name }}
+      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name | nbsp_leading_spaces }}
       <span class="small accordion-override-summary ms-2 d-none" data-library-total-summary></span>
     </h4>
     {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
