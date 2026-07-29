@@ -6022,8 +6022,11 @@ function updateConfiguredCounts () {
 }
 
 function nbspLeadingSpaces (s) {
-  const stripped = s.replace(/^ +/, '')
-  return ' '.repeat(s.length - stripped.length) + stripped
+  const lstripped = s.replace(/^ +/, '')
+  const leading = s.length - lstripped.length
+  const rstripped = lstripped.replace(/ +$/, '')
+  const trailing = lstripped.length - rstripped.length
+  return ' '.repeat(leading) + rstripped + ' '.repeat(trailing)
 }
 
 function refreshPickerLabels () {

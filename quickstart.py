@@ -1153,10 +1153,13 @@ app.jinja_env.globals["vite_dev_origin"] = helpers.vite_dev_origin
 
 
 def _nbsp_leading_spaces(s: str) -> str:
-    """Replace leading ASCII spaces with EM SPACE (U+2003) for visible indentation in native dropdowns."""
+    """Replace leading/trailing ASCII spaces with EM SPACE (U+2003) so they are visible in dropdowns."""
     s = str(s)
-    stripped = s.lstrip(" ")
-    return " " * (len(s) - len(stripped)) + stripped
+    lstripped = s.lstrip(" ")
+    leading = len(s) - len(lstripped)
+    rstripped = lstripped.rstrip(" ")
+    trailing = len(lstripped) - len(rstripped)
+    return " " * leading + rstripped + " " * trailing
 
 
 app.jinja_env.filters["nbsp_leading_spaces"] = _nbsp_leading_spaces
