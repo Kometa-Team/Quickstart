@@ -62,25 +62,31 @@ def _coerce_validation_response_payload(response):
 
 
 def _parse_csv_or_list_to_set(value):
-    """Coerce a library-list value into a stripped set of name strings.
+    """Coerce a library-list value into a set of name strings.
+
+    Leading/trailing whitespace is preserved in list and JSON-list forms
+    so that library names like " Movies " survive the round-trip.
+    Whitespace is used only as a filter (to skip blank values).
+    CSV values are still stripped because comma-delimited items typically
+    have spaces around the commas.
 
     Accepts four forms:
-    - Python list of dicts  (fresh validation response: ``[{"id": 10, "name": "Movies"}, ...]``)
+    - Python list of dicts  (fresh validation response: ``[{"id": 10, "name": " Movies "}, ...]``)
     - JSON string           (new format — library names may contain commas)
     - CSV string            (legacy format — backward compat with old stored data)
     - Python list of str    (already decoded)
     """
     if isinstance(value, list):
         if value and isinstance(value[0], dict):
-            return {str(v.get("name", "")).strip() for v in value if str(v.get("name", "")).strip()}
-        return {str(v).strip() for v in value if str(v).strip()}
+            return {str(v.get("name", "")) for v in value if str(v.get("name", "")).strip()}
+        return {str(v) for v in value if str(v).strip()}
     if isinstance(value, str):
         try:
             parsed = json.loads(value)
             if isinstance(parsed, list):
                 if parsed and isinstance(parsed[0], dict):
-                    return {str(v.get("name", "")).strip() for v in parsed if str(v.get("name", "")).strip()}
-                return {str(v).strip() for v in parsed if str(v).strip()}
+                    return {str(v.get("name", "")) for v in parsed if str(v.get("name", "")).strip()}
+                return {str(v) for v in parsed if str(v).strip()}
         except (json.JSONDecodeError, ValueError):
             pass
         return {v.strip() for v in value.split(",") if v.strip()}
