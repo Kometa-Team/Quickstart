@@ -2278,6 +2278,9 @@ def step(name):
             refresh_plex_libraries()
             all_libraries = persistence.retrieve_settings("010-plex")
             plex_data = all_libraries.get("plex", {})
+            if name == "025-libraries":
+                # Re-read after migration may have renamed old name-based keys to ID-based keys.
+                data = persistence.retrieve_settings(name)
 
     telemetry_payload = {}
     try:
