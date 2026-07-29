@@ -135,7 +135,7 @@
             <tbody>
               {% for lib_name, lib_info in page_info.telemetry.libraries.items() %}
               <tr>
-                <td>{{ lib_name }}</td>
+                <td>{{ lib_name | nbsp_leading_spaces }}</td>
                 <td><span class="badge bg-secondary text-uppercase">{{ lib_info.type }}</span></td>
                 <td><code>{{ lib_info.scanner }}</code></td>
                 <td><code>{{ lib_info.agent }}</code></td>
