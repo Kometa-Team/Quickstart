@@ -120,16 +120,22 @@ def _render_kometa_ascii_art(header_style):
     return add_border_to_ascii_art(heading)
 
 
-def _sorted_library_display_names(libraries):
-    """Return ``libraries.values()`` sorted case-insensitively.
+def _sorted_library_id_map(libraries):
+    """Return an ordered ``{section_id_str: display_name}`` dict, sorted by display name.
 
-    Empty / whitespace-only names are dropped.  ``libraries`` is the
-    ``{key: display_name}`` dict shape used throughout ``build_config``.
+    ``libraries`` is the ``{persistence_key: display_name}`` dict used throughout
+    ``build_config``; the section ID is the segment extracted from the key by
+    :func:`helpers.extract_library_name`.  Entries with blank display names are
+    dropped.
     """
-    return sorted(
-        (str(name).strip() for name in libraries.values() if str(name).strip()),
-        key=lambda value: value.casefold(),
-    )
+    pairs = []
+    for key, name in libraries.items():
+        lib_id = helpers.extract_library_name(key)
+        name_str = str(name)
+        if lib_id and name_str.strip():
+            pairs.append((lib_id, name_str))
+    pairs.sort(key=lambda pair: pair[1].strip().casefold())
+    return dict(pairs)
 
 
 def _get_kometa_schema_header(kometa_branch):
@@ -176,8 +182,11 @@ def render_yaml_header(header_style, config_name, movie_libraries, show_librarie
     qs_settings_lines = helpers.get_quickstart_settings_summary()
     qs_settings_block = "\n".join(qs_settings_lines) if qs_settings_lines else ""
 
-    library_names = _sorted_library_display_names(movie_libraries) + _sorted_library_display_names(show_libraries)
-    library_details = helpers.get_library_summaries(library_names)
+    library_id_map = {
+        **_sorted_library_id_map(movie_libraries),
+        **_sorted_library_id_map(show_libraries),
+    }
+    library_details = helpers.get_library_summaries(library_id_map)
 
     schema_header = _get_kometa_schema_header(kometa_branch)
     ascii_heading = _render_kometa_ascii_art(header_style)

@@ -61,8 +61,16 @@ from werkzeug.datastructures import MultiDict
 
 from werkzeug.wrappers import Request
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database, logscan, path_validation, url_validation
-from modules import importer  # noqa: F401 (load-bearing: tests do monkeypatch.setattr(qs_module.importer, ...))
+from modules import (
+    validations,
+    output,
+    persistence,
+    helpers,
+    database,
+    logscan,
+    path_validation,
+    url_validation,
+)
 from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/legacy in-module callers)
     QS_ANIDB_DEP_SOURCE_PREFIXES,
     QS_ANIDB_OVERLAY_IMAGE_VALUES,
@@ -192,7 +200,10 @@ from modules.background_jobs import (
     ensure_background_job as _ensure_background_job,
     complete_background_job as _complete_background_job,  # noqa: F401 (used directly by tests as qs_module._complete_background_job)
 )
-from blueprints.validation_routes import bp as validation_routes_bp, refresh_plex_libraries
+from blueprints.validation_routes import (
+    bp as validation_routes_bp,
+    refresh_plex_libraries,
+)
 from blueprints.asset_routes import bp as asset_routes_bp
 from blueprints.kometa_updates import bp as kometa_updates_bp
 from blueprints.imagemaid_updates import bp as imagemaid_updates_bp
@@ -232,7 +243,10 @@ from blueprints.imagemaid_routes import (  # noqa: F401 (re-exports for tests/le
     stop_imagemaid,
     validate_imagemaid,
 )
-from modules.assets import build_preview_image_data as _build_preview_image_data, list_overlay_fonts
+from modules.assets import (
+    build_preview_image_data as _build_preview_image_data,
+    list_overlay_fonts,
+)
 from modules.bundle_artifacts import dump_yaml_text as _dump_yaml_text
 from modules.tmdb_lookup import (
     get_active_tmdb_api_key as _get_active_tmdb_api_key,
@@ -429,8 +443,18 @@ ACTIVE_WORK_POLICIES = {
 }
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE_VERSION = 3
-LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "version": LOGSCAN_ANALYSIS_CACHE_VERSION, "data": None}
-LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "aux_signature": None, "data": None}
+LOGSCAN_ANALYSIS_CACHE = {
+    "mtime": None,
+    "size": None,
+    "version": LOGSCAN_ANALYSIS_CACHE_VERSION,
+    "data": None,
+}
+LOGSCAN_PROGRESS_CACHE = {
+    "mtime": None,
+    "size": None,
+    "aux_signature": None,
+    "data": None,
+}
 
 VALIDATION_DOC_BASE = "/step/"
 VALIDATION_DOC_FALLBACK = "/step/900-kometa"
@@ -538,7 +562,10 @@ def _get_active_work_blocker(subject):
         elif kind == "process":
             process_lookup = {
                 "kometa_run": (helpers.is_kometa_running, helpers.get_kometa_pid),
-                "imagemaid_run": (helpers.is_imagemaid_running, helpers.get_imagemaid_pid),
+                "imagemaid_run": (
+                    helpers.is_imagemaid_running,
+                    helpers.get_imagemaid_pid,
+                ),
             }
             resolver = process_lookup.get(identifier)
             if resolver:
@@ -614,7 +641,16 @@ LIBRARY_SONARR_BOOL_FIELDS = {
     "monitor_existing",
     "ignore_cache",
 }
-LIBRARY_SONARR_MONITOR_VALUES = {"all", "none", "future", "missing", "existing", "pilot", "first", "latest"}
+LIBRARY_SONARR_MONITOR_VALUES = {
+    "all",
+    "none",
+    "future",
+    "missing",
+    "existing",
+    "pilot",
+    "first",
+    "latest",
+}
 LIBRARY_SONARR_SERIES_TYPE_VALUES = {"standard", "daily", "anime"}
 
 
@@ -859,7 +895,13 @@ def _validate_library_service_overrides(library_id, libraries_data, force_valida
 
     overrides = _extract_library_service_overrides(libraries_data, library_id, service_name)
     if not overrides and not force_validate:
-        return {"valid": True, "skipped": True, "service": service_name, "overrides": {}, "errors": []}
+        return {
+            "valid": True,
+            "skipped": True,
+            "service": service_name,
+            "overrides": {},
+            "errors": [],
+        }
 
     settings = persistence.retrieve_settings(definition["template_key"]) or {}
     global_section = settings.get(definition["section_name"], {}) if isinstance(settings, dict) else {}
@@ -944,7 +986,10 @@ def _validate_library_service_overrides(library_id, libraries_data, force_valida
 def _validate_and_organize_library_file_request(kind, data, type_key, location_key):
     validator_info = LIBRARY_FILE_VALIDATORS.get(kind)
     if not validator_info:
-        return jsonify({"valid": False, "error": f"Unsupported library file kind: {kind}"}), 400
+        return (
+            jsonify({"valid": False, "error": f"Unsupported library file kind: {kind}"}),
+            400,
+        )
 
     _payload_type_key, _payload_location_key, validator = validator_info
     valid, message, details = validations._normalize_metadata_validation_result(validator(data))
@@ -953,7 +998,7 @@ def _validate_and_organize_library_file_request(kind, data, type_key, location_k
         if details.get("message") or isinstance(details.get("files"), list):
             payload["error_details"] = {
                 "text": details.get("message") or message,
-                "files": details.get("files") if isinstance(details.get("files"), list) else [],
+                "files": (details.get("files") if isinstance(details.get("files"), list) else []),
             }
         if isinstance(details.get("files"), list):
             payload["files"] = details["files"]
@@ -1079,7 +1124,12 @@ def _library_save_prefix_from_key(key):
         return prefix
     if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
         return None
-    for suffix in ("-playlist", "-collection_files", "-metadata_files", "-overlay_files"):
+    for suffix in (
+        "-playlist",
+        "-collection_files",
+        "-metadata_files",
+        "-overlay_files",
+    ):
         if key.endswith(suffix):
             return key[: -len(suffix)]
     return None
@@ -1131,6 +1181,20 @@ app = Flask(__name__)
 # so ``python quickstart.py`` after a fresh clone still works.
 # Roadmap #1334 Step 4 activation. See modules/helpers/_vite_manifest.py.
 app.jinja_env.globals["asset_url"] = helpers.asset_url
+app.jinja_env.globals["vite_dev_origin"] = helpers.vite_dev_origin
+
+
+def _nbsp_leading_spaces(s: str) -> str:
+    """Replace leading/trailing ASCII spaces with EM SPACE (U+2003) so they are visible in dropdowns."""
+    s = str(s)
+    lstripped = s.lstrip(" ")
+    leading = len(s) - len(lstripped)
+    rstripped = lstripped.rstrip(" ")
+    trailing = len(lstripped) - len(rstripped)
+    return " " * leading + rstripped + " " * trailing
+
+
+app.jinja_env.filters["nbsp_leading_spaces"] = _nbsp_leading_spaces
 
 app.register_blueprint(validation_routes_bp)
 app.register_blueprint(asset_routes_bp)
@@ -1348,7 +1412,10 @@ def before_request():
 
     # Log request size if applicable
     if request.content_length:
-        helpers.ts_log(f"Incoming request size: {request.content_length / 1024:.2f} KB", level="DEBUG")
+        helpers.ts_log(
+            f"Incoming request size: {request.content_length / 1024:.2f} KB",
+            level="DEBUG",
+        )
 
     # Only applies to form-encoded POSTs
     if request.method == "POST" and (request.content_type or "").startswith("application/x-www-form-urlencoded"):
@@ -1433,7 +1500,10 @@ shutdown_event = threading.Event()
 helpers.ensure_json_schema()
 sanitized_section_count = database.sanitize_all_section_data()
 if sanitized_section_count:
-    helpers.ts_log(f"Sanitized transient config-manager fields from {sanitized_section_count} persisted section(s).", level="INFO")
+    helpers.ts_log(
+        f"Sanitized transient config-manager fields from {sanitized_section_count} persisted section(s).",
+        level="INFO",
+    )
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
 parser.add_argument("--port", type=int, help="Specify the port number to run the server")
@@ -1449,7 +1519,10 @@ running_port = port
 app.config["QS_PORT"] = running_port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
-helpers.ts_log(f"Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}", level="INFO")
+helpers.ts_log(
+    f"Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}",
+    level="INFO",
+)
 
 
 @app.route("/")
@@ -1582,7 +1655,14 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
             rank += 2
         if mtime_matches:
             rank += 2
-        candidates.append((rank, mtime_delta if mtime_delta is not None else 999999, -entry.get("mtime", 0), entry))
+        candidates.append(
+            (
+                rank,
+                mtime_delta if mtime_delta is not None else 999999,
+                -entry.get("mtime", 0),
+                entry,
+            )
+        )
     if not candidates:
         return None
     candidates.sort()
@@ -1721,9 +1801,23 @@ def _delete_logscan_run_artifact(run_key):
     target_run = run_record if run_record else incomplete_run
     info = _resolve_logscan_run_log_info(run_key, run_record=target_run)
     if not info or not info.get("path"):
-        return False, {"error": "Archived log file for this run could not be found.", "run_key": run_key}, 404
+        return (
+            False,
+            {
+                "error": "Archived log file for this run could not be found.",
+                "run_key": run_key,
+            },
+            404,
+        )
     if info.get("location") != "archive":
-        return False, {"error": "Only archived logs can be deleted from Analytics.", "run_key": run_key}, 409
+        return (
+            False,
+            {
+                "error": "Only archived logs can be deleted from Analytics.",
+                "run_key": run_key,
+            },
+            409,
+        )
     deleted_file = False
     try:
         Path(info["path"]).unlink()
@@ -1731,7 +1825,11 @@ def _delete_logscan_run_artifact(run_key):
     except FileNotFoundError:
         deleted_file = False
     except Exception as exc:
-        return False, {"error": f"Failed to delete archived log: {exc}", "run_key": run_key}, 500
+        return (
+            False,
+            {"error": f"Failed to delete archived log: {exc}", "run_key": run_key},
+            500,
+        )
 
     if run_record:
         database.delete_log_run(run_key)
@@ -1759,18 +1857,40 @@ def _compress_logscan_run_artifact(run_key):
     target_run = run_record if run_record else incomplete_run
     info = _resolve_logscan_run_archive_action_info(run_key, prefer_uncompressed=True) or _resolve_logscan_run_log_info(run_key, run_record=target_run)
     if not info or not info.get("path"):
-        return False, {"error": "Archived log file for this run could not be found.", "run_key": run_key}, 404
+        return (
+            False,
+            {
+                "error": "Archived log file for this run could not be found.",
+                "run_key": run_key,
+            },
+            404,
+        )
     source_path = Path(info["path"])
     if info.get("location") != "archive":
-        return False, {"error": "Only archived logs can be compressed from Analytics.", "run_key": run_key}, 409
+        return (
+            False,
+            {
+                "error": "Only archived logs can be compressed from Analytics.",
+                "run_key": run_key,
+            },
+            409,
+        )
     if _is_logscan_gzip_path(source_path):
-        return False, {"error": "Archived log is already compressed.", "run_key": run_key}, 409
+        return (
+            False,
+            {"error": "Archived log is already compressed.", "run_key": run_key},
+            409,
+        )
 
     tool_name = _normalize_logscan_tool_name((target_run or {}).get("tool_name") or _detect_logscan_tool_from_path(source_path))
     archive_dir = _get_logscan_archive_dir(tool_name)
     compressed_path = _archive_log_file(source_path, archive_dir)
     if not compressed_path or not compressed_path.exists():
-        return False, {"error": "Failed to compress archived log.", "run_key": run_key}, 500
+        return (
+            False,
+            {"error": "Failed to compress archived log.", "run_key": run_key},
+            500,
+        )
 
     cache = _load_logscan_ingest_cache()
     cache_logs = cache.get("logs", {}) if isinstance(cache, dict) else {}
@@ -1899,7 +2019,13 @@ def logscan_trends_log_invalid_delete():
     for entry in invalid_entries:
         raw_path = entry.get("path")
         if not raw_path:
-            failures.append({"error": "Invalid archived log path missing.", "name": entry.get("name"), "status": 500})
+            failures.append(
+                {
+                    "error": "Invalid archived log path missing.",
+                    "name": entry.get("name"),
+                    "status": 500,
+                }
+            )
             continue
         path = Path(raw_path)
         deleted_file = False
@@ -1909,7 +2035,14 @@ def logscan_trends_log_invalid_delete():
         except FileNotFoundError:
             deleted_file = False
         except Exception as exc:
-            failures.append({"error": f"Failed to delete invalid archived log: {exc}", "name": entry.get("name"), "path": raw_path, "status": 500})
+            failures.append(
+                {
+                    "error": f"Failed to delete invalid archived log: {exc}",
+                    "name": entry.get("name"),
+                    "path": raw_path,
+                    "status": 500,
+                }
+            )
             continue
         _remove_logscan_ingest_cache_entries(raw_path=str(path.resolve()))
         deleted.append(
@@ -2187,7 +2320,10 @@ def step(name):
         item = template_list[num]
     except (ValueError, IndexError, KeyError):
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Invalid step name '{name}' (stem={stem}, num={num}, b={b}).", level="ERROR")
+            helpers.ts_log(
+                f"Invalid step name '{name}' (stem={stem}, num={num}, b={b}).",
+                level="ERROR",
+            )
         return abort(404)
 
     if num in progress_keys and total_steps:
@@ -2263,10 +2399,16 @@ def step(name):
     if should_refresh_plex:
         if all_libraries.get("validated") or settings_needs_user_refresh:
             if settings_needs_user_refresh and app.config["QS_DEBUG"]:
-                helpers.ts_log("Auto-refreshing Plex cache for settings page because tmp_user_list is empty.", level="DEBUG")
+                helpers.ts_log(
+                    "Auto-refreshing Plex cache for settings page because tmp_user_list is empty.",
+                    level="DEBUG",
+                )
             refresh_plex_libraries()
             all_libraries = persistence.retrieve_settings("010-plex")
             plex_data = all_libraries.get("plex", {})
+            if name == "025-libraries":
+                # Re-read after migration may have renamed old name-based keys to ID-based keys.
+                data = persistence.retrieve_settings(name)
 
     telemetry_payload = {}
     try:
@@ -2292,55 +2434,43 @@ def step(name):
                 "update_channel": "Unavailable",
                 "libraries": {},
             }
-            helpers.ts_log(f"Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}", level="WARNING")
+            helpers.ts_log(
+                f"Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}",
+                level="WARNING",
+            )
     else:
         if app.config["QS_DEBUG"]:
             helpers.ts_log("Using telemetry from fresh plex_data", level="DEBUG")
 
     page_info["telemetry"] = telemetry_data
 
-    # Extract the movie and show libraries
+    # Extract the movie and show libraries by Plex section ID with display-name lookup.
+    _lib_name_map = persistence.get_library_names("010-plex")
     movie_libraries_raw = plex_data.get("tmp_movie_libraries", "")
     show_libraries_raw = plex_data.get("tmp_show_libraries", "")
 
-    # Debugging extracted values
     if app.config["QS_DEBUG"]:
         helpers.ts_log("Extracted movie libraries:", movie_libraries_raw, level="DEBUG")
         helpers.ts_log("Extracted show libraries:", show_libraries_raw, level="DEBUG")
 
-    # Ensure it's a string before splitting
-    if not isinstance(movie_libraries_raw, str):
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("tmp_movie_libraries is not a string!", level="ERROR")
-
-        movie_libraries_raw = ""
-
-    if not isinstance(show_libraries_raw, str):
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("tmp_show_libraries is not a string!", level="ERROR")
-
-        show_libraries_raw = ""
-
-    existing_ids = set()  # Track used IDs to prevent duplicates
-
     movie_libraries = [
         {
-            "id": f"mov-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
-            "name": lib.strip(),
+            "id": f"mov-library_{lib_id}",
+            "name": _lib_name_map.get(str(lib_id), f"Library {lib_id}"),
             "type": "movie",
         }
-        for lib in movie_libraries_raw.split(",")
-        if lib.strip()
+        for lib_id in persistence.decode_library_ids(movie_libraries_raw)
+        if lib_id
     ]
 
     show_libraries = [
         {
-            "id": f"sho-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
-            "name": lib.strip(),
+            "id": f"sho-library_{lib_id}",
+            "name": _lib_name_map.get(str(lib_id), f"Library {lib_id}"),
             "type": "show",
         }
-        for lib in show_libraries_raw.split(",")
-        if lib.strip()
+        for lib_id in persistence.decode_library_ids(show_libraries_raw)
+        if lib_id
     ]
 
     # Ensure `libraries` dictionary exists
@@ -2355,7 +2485,10 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        helpers.ts_log("************************************************************************", level="DEBUG")
+        helpers.ts_log(
+            "************************************************************************",
+            level="DEBUG",
+        )
         helpers.ts_log(f"Data retrieved for {name}", level="DEBUG")
 
     (
@@ -2379,9 +2512,10 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
-    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
-    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
+    plex_data["tmp_movie_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_movie_libraries", ""))
+    plex_data["tmp_show_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_show_libraries", ""))
+    plex_data["tmp_music_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_music_libraries", ""))
+    plex_data["tmp_library_names"] = persistence.get_library_names("010-plex")
     plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
 
     # Ensure correct rendering for the Kometa page
@@ -2520,9 +2654,9 @@ def step(name):
                         "label": display_name,
                         "page": template_key,
                         "has_validation": has_validation,
-                        "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
-                        "validated_at": settings.get("validated_at", "") if has_validation else "",
-                        "validation_updated_at": validation_updated_at if has_validation else "",
+                        "validated": (helpers.booler(settings.get("validated", False)) if has_validation else None),
+                        "validated_at": (settings.get("validated_at", "") if has_validation else ""),
+                        "validation_updated_at": (validation_updated_at if has_validation else ""),
                         "validation_result": validation_result,
                     }
                 )
@@ -2540,7 +2674,13 @@ def step(name):
         saved_filename = ""
 
         if final_gate.get("can_build_config"):
-            validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(header_style, config_name=config_name)
+            (
+                validated,
+                validation_error,
+                config_data,
+                yaml_content,
+                validation_errors,
+            ) = output.build_config(header_style, config_name=config_name)
             if isinstance(config_data, dict):
                 config_data, _normalized_changed, normalization_errors = _normalize_generated_config_library_files(config_data, config_name)
                 if normalization_errors:
@@ -2571,7 +2711,6 @@ def step(name):
         movie_libraries = []
         show_libraries = []
         library_dropdown = []
-        existing_ids = set()
 
         for key, value in library_settings.items():
             if key.startswith("mov-library_") and key.endswith("-library"):
@@ -2632,7 +2771,10 @@ def step(name):
 
         end_time = time.perf_counter()
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Rendered 900-kometa.html in {end_time - start_time:.2f} seconds", level="PROFILE")
+            helpers.ts_log(
+                f"Rendered 900-kometa.html in {end_time - start_time:.2f} seconds",
+                level="PROFILE",
+            )
         return html
 
     else:
@@ -2683,7 +2825,10 @@ def step(name):
 
     end_time = time.perf_counter()
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"Rendered {name}.html in {end_time - start_time:.2f} seconds", level="PROFILE")
+        helpers.ts_log(
+            f"Rendered {name}.html in {end_time - start_time:.2f} seconds",
+            level="PROFILE",
+        )
     return html
 
 
@@ -2782,7 +2927,13 @@ def lookup_template_string_value():
     if preset == "tmdb_collection_id":
         api_key = _get_active_tmdb_api_key()
         if not api_key:
-            return jsonify({"valid": False, "verified": False, "message": "TMDb is not configured for the active config."})
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": False,
+                    "message": "TMDb is not configured for the active config.",
+                }
+            )
         try:
             response = requests.get(
                 f"https://api.themoviedb.org/3/collection/{value}",
@@ -2790,22 +2941,59 @@ def lookup_template_string_value():
                 timeout=10,
             )
         except requests.RequestException as exc:
-            return jsonify({"valid": False, "verified": False, "message": f"TMDb lookup failed: {exc}."})
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": False,
+                    "message": f"TMDb lookup failed: {exc}.",
+                }
+            )
 
         if response.status_code == 200:
             payload = response.json() if response.content else {}
             label = str(payload.get("name") or "").strip()
             if label:
-                return jsonify({"valid": True, "verified": True, "label": label, "message": f"TMDb: {label}"})
-            return jsonify({"valid": False, "verified": True, "message": "TMDb collection found, but no collection name was returned."})
+                return jsonify(
+                    {
+                        "valid": True,
+                        "verified": True,
+                        "label": label,
+                        "message": f"TMDb: {label}",
+                    }
+                )
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": True,
+                    "message": "TMDb collection found, but no collection name was returned.",
+                }
+            )
 
         if response.status_code == 404:
-            return jsonify({"valid": False, "verified": True, "message": "TMDb collection ID not found."})
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": True,
+                    "message": "TMDb collection ID not found.",
+                }
+            )
 
         if response.status_code in {401, 403}:
-            return jsonify({"valid": False, "verified": False, "message": "TMDb lookup could not be verified with the configured API key."})
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": False,
+                    "message": "TMDb lookup could not be verified with the configured API key.",
+                }
+            )
 
-        return jsonify({"valid": False, "verified": False, "message": f"TMDb lookup failed with status {response.status_code}."})
+        return jsonify(
+            {
+                "valid": False,
+                "verified": False,
+                "message": f"TMDb lookup failed with status {response.status_code}.",
+            }
+        )
 
     if preset == "numeric_id":
         tmdb_result = _lookup_tmdb_numeric_id(value, media_type=media_type)
@@ -2814,7 +3002,12 @@ def lookup_template_string_value():
         tmdb_result_type = str(tmdb_result.get("result_type") or "").strip().lower()
         expected_media_type = str(media_type or "").strip().lower()
 
-        warning_message = _build_tmdb_library_type_warning(tmdb_message, tmdb_result_type, expected_media_type, value_label="numeric ID")
+        warning_message = _build_tmdb_library_type_warning(
+            tmdb_message,
+            tmdb_result_type,
+            expected_media_type,
+            value_label="numeric ID",
+        )
         if tmdb_result.get("valid") and tmdb_result.get("verified") and warning_message:
             return jsonify(
                 {
@@ -2830,7 +3023,13 @@ def lookup_template_string_value():
             try:
                 plex_match = helpers.find_item_by_title(library_name, tmdb_label)
             except Exception as exc:
-                return jsonify({"valid": False, "verified": False, "message": f"Plex lookup failed: {exc}."})
+                return jsonify(
+                    {
+                        "valid": False,
+                        "verified": False,
+                        "message": f"Plex lookup failed: {exc}.",
+                    }
+                )
 
             if plex_match and plex_match.get("title"):
                 plex_title = str(plex_match.get("title")).strip()
@@ -2878,7 +3077,13 @@ def lookup_template_string_value():
             return jsonify(tmdb_result)
 
         if not library_name:
-            return jsonify({"valid": False, "verified": False, "message": "Active Plex library is required for IMDb lookup."})
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": False,
+                    "message": "Active Plex library is required for IMDb lookup.",
+                }
+            )
 
         find_item_by_imdb_id = helpers.find_item_by_imdb_id
         try:
@@ -2892,11 +3097,24 @@ def lookup_template_string_value():
             else:
                 result = find_item_by_imdb_id(library_name, value, media_type)
         except Exception as exc:
-            return jsonify({"valid": False, "verified": False, "message": f"Plex lookup failed: {exc}."})
+            return jsonify(
+                {
+                    "valid": False,
+                    "verified": False,
+                    "message": f"Plex lookup failed: {exc}.",
+                }
+            )
 
         if result and result.get("title"):
             title = str(result.get("title")).strip()
-            return jsonify({"valid": True, "verified": True, "label": title, "message": f"Plex: {title}"})
+            return jsonify(
+                {
+                    "valid": True,
+                    "verified": True,
+                    "label": title,
+                    "message": f"Plex: {title}",
+                }
+            )
 
         if tmdb_result.get("valid") and tmdb_result.get("verified"):
             if tmdb_label and tmdb_message:
@@ -2979,33 +3197,76 @@ def validate_all_services():
             "010-plex",
             "plex",
             validations.validate_plex_server,
-            lambda s: {"plex_url": s.get("plex", {}).get("url"), "plex_token": s.get("plex", {}).get("token")},
+            lambda s: {
+                "plex_url": s.get("plex", {}).get("url"),
+                "plex_token": s.get("plex", {}).get("token"),
+            },
             ["plex_url", "plex_token"],
         ),
-        ("020-tmdb", "tmdb", validations.validate_tmdb_server, lambda s: {"tmdb_apikey": s.get("tmdb", {}).get("apikey")}, ["tmdb_apikey"]),
+        (
+            "020-tmdb",
+            "tmdb",
+            validations.validate_tmdb_server,
+            lambda s: {"tmdb_apikey": s.get("tmdb", {}).get("apikey")},
+            ["tmdb_apikey"],
+        ),
         (
             "030-tautulli",
             "tautulli",
             validations.validate_tautulli_server,
-            lambda s: {"tautulli_url": s.get("tautulli", {}).get("url"), "tautulli_apikey": s.get("tautulli", {}).get("apikey")},
+            lambda s: {
+                "tautulli_url": s.get("tautulli", {}).get("url"),
+                "tautulli_apikey": s.get("tautulli", {}).get("apikey"),
+            },
             ["tautulli_url", "tautulli_apikey"],
         ),
-        ("040-github", "github", validations.validate_github_server, lambda s: {"github_token": s.get("github", {}).get("token")}, ["github_token"]),
-        ("050-omdb", "omdb", validations.validate_omdb_server, lambda s: {"omdb_apikey": s.get("omdb", {}).get("apikey")}, ["omdb_apikey"]),
-        ("060-mdblist", "mdblist", validations.validate_mdblist_server, lambda s: {"mdblist_apikey": s.get("mdblist", {}).get("apikey")}, ["mdblist_apikey"]),
-        ("070-notifiarr", "notifiarr", validations.validate_notifiarr_server, lambda s: {"notifiarr_apikey": s.get("notifiarr", {}).get("apikey")}, ["notifiarr_apikey"]),
+        (
+            "040-github",
+            "github",
+            validations.validate_github_server,
+            lambda s: {"github_token": s.get("github", {}).get("token")},
+            ["github_token"],
+        ),
+        (
+            "050-omdb",
+            "omdb",
+            validations.validate_omdb_server,
+            lambda s: {"omdb_apikey": s.get("omdb", {}).get("apikey")},
+            ["omdb_apikey"],
+        ),
+        (
+            "060-mdblist",
+            "mdblist",
+            validations.validate_mdblist_server,
+            lambda s: {"mdblist_apikey": s.get("mdblist", {}).get("apikey")},
+            ["mdblist_apikey"],
+        ),
+        (
+            "070-notifiarr",
+            "notifiarr",
+            validations.validate_notifiarr_server,
+            lambda s: {"notifiarr_apikey": s.get("notifiarr", {}).get("apikey")},
+            ["notifiarr_apikey"],
+        ),
         (
             "080-gotify",
             "gotify",
             validations.validate_gotify_server,
-            lambda s: {"gotify_url": s.get("gotify", {}).get("url"), "gotify_token": s.get("gotify", {}).get("token")},
+            lambda s: {
+                "gotify_url": s.get("gotify", {}).get("url"),
+                "gotify_token": s.get("gotify", {}).get("token"),
+            },
             ["gotify_url", "gotify_token"],
         ),
         (
             "085-ntfy",
             "ntfy",
             validations.validate_ntfy_server,
-            lambda s: {"ntfy_url": s.get("ntfy", {}).get("url"), "ntfy_token": s.get("ntfy", {}).get("token"), "ntfy_topic": s.get("ntfy", {}).get("topic")},
+            lambda s: {
+                "ntfy_url": s.get("ntfy", {}).get("url"),
+                "ntfy_token": s.get("ntfy", {}).get("token"),
+                "ntfy_topic": s.get("ntfy", {}).get("topic"),
+            },
             ["ntfy_url", "ntfy_token", "ntfy_topic"],
         ),
         (
@@ -3030,14 +3291,20 @@ def validate_all_services():
             "110-radarr",
             "radarr",
             validations.validate_radarr_server,
-            lambda s: {"radarr_url": s.get("radarr", {}).get("url"), "radarr_token": s.get("radarr", {}).get("token")},
+            lambda s: {
+                "radarr_url": s.get("radarr", {}).get("url"),
+                "radarr_token": s.get("radarr", {}).get("token"),
+            },
             ["radarr_url", "radarr_token"],
         ),
         (
             "120-sonarr",
             "sonarr",
             validations.validate_sonarr_server,
-            lambda s: {"sonarr_url": s.get("sonarr", {}).get("url"), "sonarr_token": s.get("sonarr", {}).get("token")},
+            lambda s: {
+                "sonarr_url": s.get("sonarr", {}).get("url"),
+                "sonarr_token": s.get("sonarr", {}).get("token"),
+            },
             ["sonarr_url", "sonarr_token"],
         ),
     ]
@@ -3098,7 +3365,10 @@ def validate_all_services():
                 user_entered=user_entered,
                 data=stored_data,
             )
-            results[template_key] = {"status": "validated", "validated_at": new_validated_at}
+            results[template_key] = {
+                "status": "validated",
+                "validated_at": new_validated_at,
+            }
             summary["validated"] += 1
         else:
             stored_data["validated"] = False
@@ -3118,7 +3388,11 @@ def validate_all_services():
                 user_entered=user_entered,
                 data=stored_data,
             )
-            results[template_key] = {"status": "failed", "validated_at": existing_validated_at, "reason": fail_reason}
+            results[template_key] = {
+                "status": "failed",
+                "validated_at": existing_validated_at,
+                "reason": fail_reason,
+            }
             if message:
                 results[template_key]["details"] = message
             summary["failed"] += 1
@@ -3141,7 +3415,10 @@ def validate_all_services():
                 user_entered=user_entered,
                 data=stored_data,
             )
-            results[template_key] = {"status": "validated", "validated_at": new_validated_at}
+            results[template_key] = {
+                "status": "validated",
+                "validated_at": new_validated_at,
+            }
             summary["validated"] += 1
             return
 
@@ -3233,7 +3510,15 @@ def validate_all_services():
             else:
 
                 def has_minimal_library_yaml_selection(lib_id):
-                    allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_", "-metadata_files", "-collection_files", "-overlay_files")
+                    allowed_markers = (
+                        "-collection_",
+                        "-overlay_",
+                        "-attribute_",
+                        "-top_level_",
+                        "-metadata_files",
+                        "-collection_files",
+                        "-overlay_files",
+                    )
                     for key, value in libraries_data.items():
                         if not isinstance(key, str) or not key.startswith(f"{lib_id}-"):
                             continue
@@ -3271,7 +3556,13 @@ def validate_all_services():
 
                 if libraries_reason is None:
                     for lib_id in selected_library_ids:
-                        use_separator = find_library_value(lib_id, ["template_variables[use_separator]", "attribute_use_separator"])
+                        use_separator = find_library_value(
+                            lib_id,
+                            [
+                                "template_variables[use_separator]",
+                                "attribute_use_separator",
+                            ],
+                        )
                         if is_blank_value(use_separator) or str(use_separator).strip().lower() == "none":
                             continue
                         placeholder_keys = [
@@ -3314,7 +3605,9 @@ def validate_all_services():
                 details=(
                     missing_placeholders
                     if libraries_reason == "missing_separator_placeholder"
-                    else arr_override_errors if libraries_reason == "invalid_arr_overrides" else auto_sort_hubs_errors if libraries_reason == "invalid_library_settings" else None
+                    else (
+                        arr_override_errors if libraries_reason == "invalid_arr_overrides" else (auto_sort_hubs_errors if libraries_reason == "invalid_library_settings" else None)
+                    )
                 ),
             )
 
@@ -3358,7 +3651,12 @@ def validate_all_services():
         if not _is_valid_auto_sort_hubs_value(settings_section.get("auto_sort_hubs")):
             invalid_fields.append("auto_sort_hubs")
 
-        check_regex("custom_repo", r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$", flags=re.IGNORECASE, allow_blank=True)
+        check_regex(
+            "custom_repo",
+            r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$",
+            flags=re.IGNORECASE,
+            allow_blank=True,
+        )
 
         asset_dirs = settings_section.get("asset_directory") if isinstance(settings_section, dict) else None
         if isinstance(asset_dirs, str):
@@ -3528,7 +3826,15 @@ def validate_all_services():
         user_entered=True,
         data=summary_payload,
     )
-    return jsonify({"success": True, "results": results, "summary": summary, "summary_text": summary_text, "summary_updated_at": summary_updated_at})
+    return jsonify(
+        {
+            "success": True,
+            "results": results,
+            "summary": summary,
+            "summary_text": summary_text,
+            "summary_updated_at": summary_updated_at,
+        }
+    )
 
 
 @app.route("/shutdown", methods=["POST"])
@@ -3589,16 +3895,38 @@ def start_kometa():
     _settings, kometa_section = _get_kometa_settings_section(config_name)
     selection = _resolve_kometa_selection(kometa_section)
     if selection.get("install_mode") == KOMETA_INSTALL_MODE_EXTERNAL:
-        return jsonify({"error": "External Kometa mode cannot launch Kometa from Quickstart. Quickstart can only sync config and optional logs in this mode."}), 400
+        return (
+            jsonify({"error": "External Kometa mode cannot launch Kometa from Quickstart. Quickstart can only sync config and optional logs in this mode."}),
+            400,
+        )
 
     if helpers.is_kometa_running():
         pid = helpers.get_kometa_pid()
         try:
             proc = psutil.Process(pid)
             started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
-            return jsonify({"error": f"Kometa is already running (PID: {pid}) since {started_at}.", "status": "running", "pid": pid, "started_at": started_at}), 400
+            return (
+                jsonify(
+                    {
+                        "error": f"Kometa is already running (PID: {pid}) since {started_at}.",
+                        "status": "running",
+                        "pid": pid,
+                        "started_at": started_at,
+                    }
+                ),
+                400,
+            )
         except Exception:
-            return jsonify({"error": f"Kometa is already running (PID: {pid}).", "status": "running", "pid": pid}), 400
+            return (
+                jsonify(
+                    {
+                        "error": f"Kometa is already running (PID: {pid}).",
+                        "status": "running",
+                        "pid": pid,
+                    }
+                ),
+                400,
+            )
     else:
         proc = _find_running_kometa_process()
         if proc:
@@ -3608,7 +3936,11 @@ def start_kometa():
                 started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
             except Exception:
                 started_at = None
-            payload = {"error": f"Kometa is already running (PID: {proc.pid}).", "status": "running", "pid": proc.pid}
+            payload = {
+                "error": f"Kometa is already running (PID: {proc.pid}).",
+                "status": "running",
+                "pid": proc.pid,
+            }
             if started_at:
                 payload["started_at"] = started_at
             return jsonify(payload), 400
@@ -3636,7 +3968,16 @@ def start_kometa():
         start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=maintenance_config_name)
     if _is_within_maintenance_window(datetime.now(), start_min, end_min):
         _set_pending_kometa_start(command, session.get("config_name"), start_mode=start_mode)
-        return jsonify({"status": "queued", "maintenance_window": window_str, "start_mode": start_mode}), 202
+        return (
+            jsonify(
+                {
+                    "status": "queued",
+                    "maintenance_window": window_str,
+                    "start_mode": start_mode,
+                }
+            ),
+            202,
+        )
 
     ok, result = _launch_kometa_command(command, session.get("config_name"), start_mode=start_mode)
     if ok:
@@ -3687,16 +4028,29 @@ def stop_kometa():
         _clear_process_metric_cache(pid, "kometa")
         _clear_run_context()
         try:
-            _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=run_config_name, reason="user_stop")
+            _write_quickstart_stop_marker(
+                helpers.get_kometa_root_path(),
+                config_name=run_config_name,
+                reason="user_stop",
+            )
         except Exception:
             pass
 
         if alive_after:
             alive_pids = ", ".join(str(p.pid) for p in alive_after if p is not None)
-            return jsonify({"warning": f"Kometa stop requested, but some processes are still running: {alive_pids}"}), 200
+            return (
+                jsonify({"warning": f"Kometa stop requested, but some processes are still running: {alive_pids}"}),
+                200,
+            )
         if not_kometa:
-            return jsonify({"warning": f"Cleaned PID file. Non-Kometa PIDs detected: {', '.join(map(str, not_kometa))}"}), 200
-        return jsonify({"success": True, "message": "Kometa stopped and cleaned up."}), 200
+            return (
+                jsonify({"warning": f"Cleaned PID file. Non-Kometa PIDs detected: {', '.join(map(str, not_kometa))}"}),
+                200,
+            )
+        return (
+            jsonify({"success": True, "message": "Kometa stopped and cleaned up."}),
+            200,
+        )
 
     except psutil.NoSuchProcess:
         # Process already gone; just clean up PID file
@@ -3706,7 +4060,11 @@ def stop_kometa():
             pass
         _clear_run_context()
         try:
-            _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=session.get("config_name"), reason="process_missing")
+            _write_quickstart_stop_marker(
+                helpers.get_kometa_root_path(),
+                config_name=session.get("config_name"),
+                reason="process_missing",
+            )
         except Exception:
             pass
         return jsonify({"warning": "Process not found. Cleaned up PID file."}), 200
@@ -3806,14 +4164,14 @@ def kometa_status():
                     started_at=started_at,
                     started_at_ts=started_at_ts,
                     elapsed_seconds=elapsed_seconds,
-                    cpu_percent=round(cpu_percent, 1) if cpu_percent is not None else None,
+                    cpu_percent=(round(cpu_percent, 1) if cpu_percent is not None else None),
                     memory_rss_mb=round(mem_rss_mb, 1),
-                    memory_percent=round(mem_percent, 2) if mem_percent is not None else None,
-                    disk_read_mb=round(io_stats.get("disk_read_mb"), 1) if io_stats.get("disk_read_mb") is not None else None,
-                    disk_write_mb=round(io_stats.get("disk_write_mb"), 1) if io_stats.get("disk_write_mb") is not None else None,
-                    disk_read_rate_mb_s=round(io_stats.get("disk_read_rate_mb_s"), 2) if io_stats.get("disk_read_rate_mb_s") is not None else None,
-                    disk_write_rate_mb_s=round(io_stats.get("disk_write_rate_mb_s"), 2) if io_stats.get("disk_write_rate_mb_s") is not None else None,
-                    system_cpu_percent=round(system_cpu_percent, 1) if system_cpu_percent is not None else None,
+                    memory_percent=(round(mem_percent, 2) if mem_percent is not None else None),
+                    disk_read_mb=(round(io_stats.get("disk_read_mb"), 1) if io_stats.get("disk_read_mb") is not None else None),
+                    disk_write_mb=(round(io_stats.get("disk_write_mb"), 1) if io_stats.get("disk_write_mb") is not None else None),
+                    disk_read_rate_mb_s=(round(io_stats.get("disk_read_rate_mb_s"), 2) if io_stats.get("disk_read_rate_mb_s") is not None else None),
+                    disk_write_rate_mb_s=(round(io_stats.get("disk_write_rate_mb_s"), 2) if io_stats.get("disk_write_rate_mb_s") is not None else None),
+                    system_cpu_percent=(round(system_cpu_percent, 1) if system_cpu_percent is not None else None),
                     system_memory_percent=round(vm.percent, 1),
                     system_memory_used_mb=round(system_mem_used_mb, 1),
                     system_memory_total_mb=round(system_mem_total_mb, 1),
@@ -4098,7 +4456,14 @@ def logscan_analyze():
                 _start_logscan_auto_reingest(log_path.parent)
 
     result["cached"] = False
-    LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "version": LOGSCAN_ANALYSIS_CACHE_VERSION, "data": dict(result)})
+    LOGSCAN_ANALYSIS_CACHE.update(
+        {
+            "mtime": stats.st_mtime,
+            "size": stats.st_size,
+            "version": LOGSCAN_ANALYSIS_CACHE_VERSION,
+            "data": dict(result),
+        }
+    )
     return jsonify(result)
 
 
@@ -4145,7 +4510,13 @@ def logscan_progress():
                 try:
                     if aux_path.exists() and aux_path.is_file():
                         aux_stats = aux_path.stat()
-                        signature.append((aux_path.name.lower(), aux_stats.st_mtime, aux_stats.st_size))
+                        signature.append(
+                            (
+                                aux_path.name.lower(),
+                                aux_stats.st_mtime,
+                                aux_stats.st_size,
+                            )
+                        )
                 except Exception:
                     continue
             return tuple(signature)
@@ -4289,9 +4660,20 @@ def logscan_progress():
             is_running=running,
         )
         phase_order = _get_progress_run_order(config_data=config_data)
-        allowed_phases = phase_order or ["operations", "metadata", "collections", "overlays"]
+        allowed_phases = phase_order or [
+            "operations",
+            "metadata",
+            "collections",
+            "overlays",
+        ]
         playlists_configured = bool(config_data.get("playlists")) if isinstance(config_data, dict) else False
-        if run_mode in ("collections", "overlays", "operations", "metadata", "playlists"):
+        if run_mode in (
+            "collections",
+            "overlays",
+            "operations",
+            "metadata",
+            "playlists",
+        ):
             allowed_phases = [run_mode]
             progress["phase_current"] = run_mode
             progress["phases_completed"] = []
@@ -4429,7 +4811,10 @@ def logscan_trends_ingest_health():
 def logscan_trends_archive_storage():
     snapshot = _logscan_reingest_snapshot()
     if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
-        return jsonify({"status": "running", "archive_storage": None, "reingest": snapshot}), 202
+        return (
+            jsonify({"status": "running", "archive_storage": None, "reingest": snapshot}),
+            202,
+        )
     resolution_context = _build_logscan_resolution_context()
     all_runs = database.get_log_runs(limit=None) if database.get_log_runs_count() else []
     all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
@@ -4449,7 +4834,17 @@ def logscan_trends_archive_storage():
 def logscan_trends_incomplete_runs():
     snapshot = _logscan_reingest_snapshot()
     if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
-        return jsonify({"status": "running", "incomplete_runs": [], "total_incomplete_runs": 0, "reingest": snapshot}), 202
+        return (
+            jsonify(
+                {
+                    "status": "running",
+                    "incomplete_runs": [],
+                    "total_incomplete_runs": 0,
+                    "reingest": snapshot,
+                }
+            ),
+            202,
+        )
     raw_limit = str(request.args.get("limit", "50")).strip().lower()
     if raw_limit == "all":
         limit = None
@@ -4462,7 +4857,13 @@ def logscan_trends_incomplete_runs():
     resolution_context = _build_logscan_resolution_context()
     runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
     all_runs = _get_logscan_incomplete_runs(limit=None)
-    return jsonify({"status": "idle", "incomplete_runs": runs, "total_incomplete_runs": len(all_runs)})
+    return jsonify(
+        {
+            "status": "idle",
+            "incomplete_runs": runs,
+            "total_incomplete_runs": len(all_runs),
+        }
+    )
 
 
 @app.route("/logscan/trends/recommendations", methods=["GET"])
@@ -4616,7 +5017,13 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
     if archive_dir:
         archive_dirs.append(Path(archive_dir))
     else:
-        archive_dirs.extend([_get_logscan_archive_dir("kometa"), _get_logscan_archive_dir("imagemaid"), _get_logscan_archive_root_dir()])
+        archive_dirs.extend(
+            [
+                _get_logscan_archive_dir("kometa"),
+                _get_logscan_archive_dir("imagemaid"),
+                _get_logscan_archive_root_dir(),
+            ]
+        )
 
     for current_archive_dir in archive_dirs:
         if not current_archive_dir.exists():
@@ -4633,7 +5040,10 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
                 except Exception as exc:
                     errors.append(f"Failed to remove archived Quickstart marker artifact {sidecar_path}: {exc}")
 
-    for path in sorted(_iter_logscan_candidate_files(include_archive=True, include_compressed=True), key=lambda item: item.name.lower()):
+    for path in sorted(
+        _iter_logscan_candidate_files(include_archive=True, include_compressed=True),
+        key=lambda item: item.name.lower(),
+    ):
         if _classify_logscan_file_location(path) != "archive":
             continue
         try:
@@ -4832,7 +5242,12 @@ def _start_logscan_auto_reingest(log_dir):
         sample_incomplete=[],
         sample_errors=[],
     )
-    thread = threading.Thread(target=_run_logscan_reingest_job, args=(job_id, False), daemon=True, name="logscan-auto-reingest")
+    thread = threading.Thread(
+        target=_run_logscan_reingest_job,
+        args=(job_id, False),
+        daemon=True,
+        name="logscan-auto-reingest",
+    )
     thread.start()
     return True
 
@@ -4852,7 +5267,13 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
         candidates = [live_dir / "meta.log"]
     else:
         candidates = [
-            path for path in sorted(live_dir.glob("*.log*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True) if path.is_file() and ".log" in path.name.lower()
+            path
+            for path in sorted(
+                live_dir.glob("*.log*"),
+                key=lambda p: p.stat().st_mtime if p.exists() else 0,
+                reverse=True,
+            )
+            if path.is_file() and ".log" in path.name.lower()
         ]
 
     ingest_cache = _load_logscan_ingest_cache()
@@ -5179,7 +5600,11 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
     if not logscan_ingest_lock.acquire(blocking=False):
         message = "Logscan ingest already running."
         if update_state:
-            _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
+            _update_logscan_reingest_state(
+                status="error",
+                error=message,
+                finished_at=datetime.now(timezone.utc).isoformat(),
+            )
         return {"success": False, "error": message}
     started_at = datetime.now(timezone.utc).isoformat()
     if update_state:
@@ -5229,7 +5654,11 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         if not kometa_log_dir.exists() and not imagemaid_log_dir.exists():
             message = f"Log folders not found at: {kometa_log_dir} or {imagemaid_log_dir}"
             if update_state:
-                _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
+                _update_logscan_reingest_state(
+                    status="error",
+                    error=message,
+                    finished_at=datetime.now(timezone.utc).isoformat(),
+                )
             return {"success": False, "error": message}
 
         log_files = _get_logscan_log_files(log_dir=kometa_log_dir, include_archive=True) if reset else _get_logscan_delta_files(log_dir=kometa_log_dir, include_archive=True)
@@ -5238,7 +5667,10 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
             _update_logscan_reingest_state(total=total_files)
 
         analyzer = logscan.LogscanAnalyzer()
-        preload_path = next((path for path in log_files if _detect_logscan_tool_from_path(path, log_dir=kometa_log_dir) == "kometa"), None)
+        preload_path = next(
+            (path for path in log_files if _detect_logscan_tool_from_path(path, log_dir=kometa_log_dir) == "kometa"),
+            None,
+        )
         if preload_path:
             analyzer.preload_people_index(preload_path)
         ingested = 0
@@ -5346,14 +5778,14 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                             "config_hash": summary.get("config_hash"),
                             "run_command": summary.get("run_command"),
                             "command_signature": summary.get("command_signature"),
-                            "section_runtimes": summary.get("section_runtimes") if isinstance(summary.get("section_runtimes"), dict) else {},
+                            "section_runtimes": (summary.get("section_runtimes") if isinstance(summary.get("section_runtimes"), dict) else {}),
                             "log_size": summary.get("log_size"),
-                            "log_counts": summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {},
-                            "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
-                            "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
-                            "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
-                            "quiet_period_summary": summary.get("quiet_period_summary") if isinstance(summary.get("quiet_period_summary"), dict) else {},
-                            "progress_snapshot": summary.get("progress_snapshot") if isinstance(summary.get("progress_snapshot"), dict) else {},
+                            "log_counts": (summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {}),
+                            "analysis_counts": (summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {}),
+                            "library_counts": (summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {}),
+                            "maintenance_summary": (summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {}),
+                            "quiet_period_summary": (summary.get("quiet_period_summary") if isinstance(summary.get("quiet_period_summary"), dict) else {}),
+                            "progress_snapshot": (summary.get("progress_snapshot") if isinstance(summary.get("progress_snapshot"), dict) else {}),
                             "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
                             "start_mode": summary.get("start_mode"),
                             "config_line_count": summary.get("config_line_count"),
@@ -5637,7 +6069,10 @@ def _start_pending_logscan_startup_migration(app_in):
                 level="INFO",
             )
         elif required_level > 0 and completed_level >= required_level:
-            helpers.ts_log(f"Analytics migration level {required_level} already applied.", level="DEBUG")
+            helpers.ts_log(
+                f"Analytics migration level {required_level} already applied.",
+                level="DEBUG",
+            )
         return state
 
     started_at = datetime.now(timezone.utc).isoformat()
@@ -5893,7 +6328,10 @@ def logscan_trends_preferences_update():
     saved = database.save_analytics_preferences(config_name, preferences)
     result = database.get_analytics_preferences(config_name)
     status_code = 200 if saved else 400
-    return jsonify({"success": saved, "config_name": config_name, "preferences": result}), status_code
+    return (
+        jsonify({"success": saved, "config_name": config_name, "preferences": result}),
+        status_code,
+    )
 
 
 @app.route("/logscan/trends/people-missing", methods=["GET"])
@@ -6000,21 +6438,28 @@ def support_info():
         plex_summary = "Plex info unavailable."
 
     library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
-    movie_libraries = []
-    show_libraries = []
+    plex_name_map = persistence.get_library_names()
+    movie_id_map = {}
+    show_id_map = {}
     for key, value in library_settings.items():
         if not key.endswith("-library") or value in [None, "", False]:
             continue
+        lib_id = helpers.extract_library_name(key)
+        if not lib_id:
+            continue
+        display_name = plex_name_map.get(lib_id, str(value))
+        if not display_name.strip():
+            continue
         if key.startswith("mov-library_"):
-            movie_libraries.append(str(value))
+            movie_id_map[lib_id] = display_name
         elif key.startswith("sho-library_"):
-            show_libraries.append(str(value))
+            show_id_map[lib_id] = display_name
 
-    movie_libraries = sorted((name.strip() for name in movie_libraries if str(name).strip()), key=lambda value: value.casefold())
-    show_libraries = sorted((name.strip() for name in show_libraries if str(name).strip()), key=lambda value: value.casefold())
-    library_names = movie_libraries + show_libraries
-    if library_names:
-        library_details = helpers.get_library_summaries(library_names)
+    movie_id_map = dict(sorted(movie_id_map.items(), key=lambda x: x[1].strip().casefold()))
+    show_id_map = dict(sorted(show_id_map.items(), key=lambda x: x[1].strip().casefold()))
+    library_id_map = {**movie_id_map, **show_id_map}
+    if library_id_map:
+        library_details = helpers.get_library_summaries(library_id_map)
         if library_details.lower().startswith("plex library summary unavailable"):
             library_details = "Library details unavailable."
     else:
@@ -6035,7 +6480,7 @@ def support_info():
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")
-    lines.append(f"# Libraries configured with Quickstart: {len(movie_libraries)} movie, {len(show_libraries)} show")
+    lines.append(f"# Libraries configured with Quickstart: {len(movie_id_map)} movie, {len(show_id_map)} show")
     if library_details:
         for line in library_details.splitlines():
             if line.strip():
@@ -6177,7 +6622,10 @@ def update_quickstart_settings():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             if sock.connect_ex(("localhost", new_port)) == 0:
-                return jsonify(success=False, message=f"Port {new_port} is already in use."), 409
+                return (
+                    jsonify(success=False, message=f"Port {new_port} is already in use."),
+                    409,
+                )
         finally:
             sock.close()
 
@@ -6237,7 +6685,13 @@ def update_quickstart_settings():
             try:
                 os.makedirs(desired_session_dir, exist_ok=True)
             except Exception:
-                return jsonify(success=False, message="Failed to create the session storage directory."), 500
+                return (
+                    jsonify(
+                        success=False,
+                        message="Failed to create the session storage directory.",
+                    ),
+                    500,
+                )
             helpers.update_env_variable("QS_FLASK_SESSION_DIR", desired_session_dir)
             app.config["QS_FLASK_SESSION_DIR"] = desired_session_dir
             app.config["SESSION_CACHELIB"] = FileSystemCache(
@@ -6380,7 +6834,7 @@ def validate_playlist_file():
         if details.get("message") or isinstance(details.get("files"), list):
             payload["error_details"] = {
                 "text": details.get("message") or message,
-                "files": details.get("files") if isinstance(details.get("files"), list) else [],
+                "files": (details.get("files") if isinstance(details.get("files"), list) else []),
             }
         if isinstance(details.get("files"), list):
             payload["files"] = details["files"]
@@ -6506,7 +6960,10 @@ if __name__ == "__main__":
         if app.config["QUICKSTART_DOCKER"]:
             helpers.ts_log("Quickstart is Running inside Docker.", level="INFO")
             helpers.ts_log(f"Access it at http://<your-server-ip>:{running_port}", level="INFO")
-            helpers.ts_log("Note: This IP is the HOST machine IP, not the container IP.", level="INFO")
+            helpers.ts_log(
+                "Note: This IP is the HOST machine IP, not the container IP.",
+                level="INFO",
+            )
         else:
             ip_address = get_lan_ip()
             helpers.ts_log("Quickstart is Running", level="INFO")
@@ -6591,8 +7048,14 @@ if __name__ == "__main__":
                 )
 
                 helpers.ts_log("Quickstart is Running", level="INFO")
-                helpers.ts_log(f"Access it locally at: http://localhost:{running_port}", level="INFO")
-                helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}", level="INFO")
+                helpers.ts_log(
+                    f"Access it locally at: http://localhost:{running_port}",
+                    level="INFO",
+                )
+                helpers.ts_log(
+                    f"Access it from other devices at: http://{ip_address}:{running_port}",
+                    level="INFO",
+                )
                 helpers.ts_log(
                     f"Port and Debug Settings can be amended via the Settings cog in the UI, " f"right-clicking the system tray icon, or by editing your {DOTENV} file",
                     level="INFO",

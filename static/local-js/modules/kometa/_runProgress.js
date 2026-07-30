@@ -59,7 +59,7 @@
 //   module importable in test contexts.
 
 import { kometaState } from './_state.js'
-import { coerceRunSeconds, formatRunSeconds } from './_util.js'
+import { coerceRunSeconds, formatRunSeconds, nbspLeadingSpaces } from './_util.js'
 
 /**
  * Canonical phase order for the run-progress panel. Server can
@@ -290,7 +290,7 @@ function renderLibraryRows (payload, visibleLibraries, phasesToShow, phaseIndexL
 
     return `
         <tr>
-          <td>${entry.name}</td>
+          <td><code>${nbspLeadingSpaces(entry.name)}</code></td>
           <td>${typeLabel}</td>
           <td><span class="badge ${klass}">${entry.status}</span></td>
           ${durationCells}

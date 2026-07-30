@@ -198,6 +198,9 @@ def clean_form_data(form_data):
                 clean_data[key] = True
             elif lc_value == "false":
                 clean_data[key] = False
+            elif key.endswith("-library"):
+                # Library display names from Plex — preserve exactly (leading/trailing spaces are significant)
+                clean_data[key] = value
             else:
                 clean_data[key] = value.strip()
 
@@ -454,8 +457,122 @@ def get_stored_plex_credentials(name):
     return None, None
 
 
+def decode_library_ids(value):
+    """Decode a stored library-ID list into a list of string IDs.
+
+    Handles three forms:
+    - Already a list of dicts  → extract 'id' field from each
+    - Already a list           → returned as-is (strings or ints → coerced to str)
+    - CSV string of integers   → split on comma (current format)
+    - JSON string              → parsed; if it's a list of dicts, extract 'id'
+    - Legacy JSON of names     → returned as-is (old pre-ID format; callers
+                                 should detect non-integer items and treat as names)
+    """
+    if isinstance(value, list):
+        if value and isinstance(value[0], dict):
+            return [str(item["id"]) for item in value if "id" in item]
+        return [str(v) for v in value if v or v == 0]
+    if not isinstance(value, str) or not value:
+        return []
+    try:
+        result = json.loads(value)
+        if isinstance(result, list):
+            if result and isinstance(result[0], dict):
+                return [str(item["id"]) for item in result if "id" in item]
+            return [str(v) for v in result if v or v == 0]
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return [v for v in value.split(",") if v]
+
+
+def get_library_names(config_name="010-plex"):
+    """Return the stored Plex section-ID → display-name mapping.
+
+    Returns a dict like ``{"10": " Movies L", "3": "TV Shows"}``.
+    Keys are string-coerced Plex section IDs.  Returns an empty dict
+    when no mapping has been stored yet (fresh install, pre-validation).
+    """
+    plex_data = retrieve_settings(config_name).get("plex", {})
+    raw = plex_data.get("tmp_library_names", "")
+    if not raw:
+        return {}
+    try:
+        result = json.loads(raw)
+        if isinstance(result, dict):
+            return {str(k): v for k, v in result.items()}
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return {}
+
+
+def migrate_library_keys_to_plex_ids(config_name, all_plex_libraries):
+    """Rekey existing settings from normalised-name keys to Plex section-ID keys.
+
+    Runs once at Plex validation time.  ``all_plex_libraries`` is a flat list
+    of ``{"id": int, "name": str}`` dicts covering all library types.
+
+    Returns the number of keys that were renamed (0 = already migrated or
+    no matching keys found).
+    """
+    from modules.helpers._misc import normalize_id, extract_library_name  # local import to avoid circularity
+
+    # Build normalised-name → Plex-ID lookup using the same dedup logic that
+    # originally created the keys.
+    existing_ids: set = set()
+    norm_to_plex_id: dict = {}
+    for lib in all_plex_libraries:
+        norm = normalize_id(lib["name"].strip(), existing_ids)
+        norm_to_plex_id[norm] = str(lib["id"])
+
+    settings = retrieve_settings("025-libraries")
+    libraries = settings.get("libraries", {})
+    if not libraries:
+        return 0
+
+    # Short-circuit: if every library key already uses a numeric ID, skip.
+    def _id_is_numeric(key):
+        lib_id = extract_library_name(key)
+        return lib_id is not None and lib_id.lstrip("-").isdigit()
+
+    keyed_keys = [k for k in libraries if extract_library_name(k) is not None]
+    if keyed_keys and all(_id_is_numeric(k) for k in keyed_keys):
+        return 0
+
+    new_libraries = {}
+    rename_count = 0
+    for key, value in libraries.items():
+        lib_id = extract_library_name(key)
+        if lib_id and lib_id in norm_to_plex_id:
+            new_key = key.replace(f"library_{lib_id}-", f"library_{norm_to_plex_id[lib_id]}-", 1)
+            new_libraries[new_key] = value
+            rename_count += 1
+        else:
+            new_libraries[key] = value
+
+    if rename_count > 0:
+        try:
+            database.save_section_data(
+                name=config_name,
+                section="libraries",
+                validated=True,
+                user_entered=False,
+                data={"libraries": new_libraries},
+            )
+        except Exception as e:
+            helpers.ts_log(f"Library key migration failed: {e}", level="WARNING")
+            return 0
+
+    return rename_count
+
+
 def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_libraries, user_list=None):
-    """Update stored Plex cache fields in the database and preserve `validated`."""
+    """Update stored Plex cache fields in the database and preserve `validated`.
+
+    ``movie_libraries``, ``show_libraries``, and ``music_libraries`` are lists
+    of ``{"id": int|str, "name": str}`` dicts as returned by the Plex validation
+    endpoint.  IDs are stored as a simple comma-separated list of integers;
+    the display-name lookup is stored as a JSON dict keyed by string ID.
+    """
     try:
         # Fetch existing settings from DB before updating
         settings_before = retrieve_settings(name)
@@ -469,10 +586,23 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         validated_before = settings_before.get("validated", True)
         validated_at_before = settings_before.get("validated_at")
 
-        # Update library data
-        settings_before["plex"]["tmp_movie_libraries"] = ",".join(movie_libraries) if movie_libraries else ""
-        settings_before["plex"]["tmp_show_libraries"] = ",".join(show_libraries) if show_libraries else ""
-        settings_before["plex"]["tmp_music_libraries"] = ",".join(music_libraries) if music_libraries else ""
+        # Store library IDs as simple CSV (integers — no encoding issues).
+        # Store the name lookup as a JSON dict so display names are preserved
+        # exactly as Plex provides them (leading spaces, commas, etc. all safe).
+        # Accept both new format ({id, name} dicts) and legacy format (name strings).
+        def _lib_id(lib):
+            return lib["id"] if isinstance(lib, dict) else lib
+
+        def _lib_name(lib):
+            return lib["name"] if isinstance(lib, dict) else str(lib)
+
+        all_libs = list(movie_libraries) + list(show_libraries) + list(music_libraries)
+        name_lookup = {str(_lib_id(lib)): _lib_name(lib) for lib in all_libs}
+
+        settings_before["plex"]["tmp_movie_libraries"] = ",".join(str(_lib_id(lib)) for lib in movie_libraries)
+        settings_before["plex"]["tmp_show_libraries"] = ",".join(str(_lib_id(lib)) for lib in show_libraries)
+        settings_before["plex"]["tmp_music_libraries"] = ",".join(str(_lib_id(lib)) for lib in music_libraries)
+        settings_before["plex"]["tmp_library_names"] = json.dumps(name_lookup)
         if user_list is not None:
             cleaned_users = [str(user).strip() for user in user_list if str(user).strip()]
             settings_before["plex"]["tmp_user_list"] = ",".join(cleaned_users)

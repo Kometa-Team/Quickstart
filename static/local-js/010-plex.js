@@ -55,30 +55,47 @@ function applyPlexResponse (data) {
   // correct (it reflects what the user actually wants right now).
   const dbCacheInput = document.getElementById('plex_db_cache')
   const currentDbCache = dbCacheInput ? normalizeDbCacheValue(dbCacheInput.value) : ''
+  const defaultDbCache = dbCacheInput ? normalizeDbCacheValue(dbCacheInput.defaultValue) : ''
   const serverDbCache = normalizeDbCacheValue(data.db_cache)
   if (!serverDbCache) return
+
+  // if we got something back from the server, stick it in the field
+  if (dbCacheInput) dbCacheInput.value = serverDbCache
 
   if (plexDbCache) {
     plexDbCache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB'
     plexDbCache.style.color = '#75b798'
     plexDbCache.style.display = 'block'
 
-    if (currentDbCache && currentDbCache !== serverDbCache) {
+    // Only warn if the user deliberately set a value (differs from the field's
+    // HTML default) that doesn't match what the server reports.  Firing on the
+    // default value would claim a mismatch against a number the user never chose.
+    const userModified = currentDbCache !== defaultDbCache
+    if (userModified && currentDbCache !== serverDbCache) {
       plexDbCache.textContent += '.\nWarning: The value in the input box (' + currentDbCache + ' MB) does not match the value retrieved from the server (' + serverDbCache + ' MB).'
       plexDbCache.style.color = '#ea868f'
     }
   }
-  if (dbCacheInput) dbCacheInput.value = serverDbCache
 
   // Hidden tmp_ inputs that hold the lists for the next wizard pages.
+  // Library lists are stored as comma-separated Plex section IDs (integers).
+  // The name lookup is stored as a JSON object keyed by string ID.
   const tmpUserList = document.getElementById('tmp_user_list')
   const tmpMusicLibraries = document.getElementById('tmp_music_libraries')
   const tmpMovieLibraries = document.getElementById('tmp_movie_libraries')
   const tmpShowLibraries = document.getElementById('tmp_show_libraries')
+  const tmpLibraryNames = document.getElementById('tmp_library_names')
+
+  const toIdCsv = (libs) => (libs ?? []).map(lib => lib.id ?? lib).join(',')
+  const toNameMap = (libs) => Object.fromEntries((libs ?? []).map(lib => [String(lib.id ?? lib), lib.name ?? String(lib)]))
+
+  const allLibs = [...(data.movie_libraries ?? []), ...(data.show_libraries ?? []), ...(data.music_libraries ?? [])]
+
   if (tmpUserList) tmpUserList.value = data.user_list
-  if (tmpMusicLibraries) tmpMusicLibraries.value = data.music_libraries
-  if (tmpMovieLibraries) tmpMovieLibraries.value = data.movie_libraries
-  if (tmpShowLibraries) tmpShowLibraries.value = data.show_libraries
+  if (tmpMusicLibraries) tmpMusicLibraries.value = toIdCsv(data.music_libraries)
+  if (tmpMovieLibraries) tmpMovieLibraries.value = toIdCsv(data.movie_libraries)
+  if (tmpShowLibraries) tmpShowLibraries.value = toIdCsv(data.show_libraries)
+  if (tmpLibraryNames) tmpLibraryNames.value = JSON.stringify(toNameMap(allLibs))
 
   // Reveal the "hidden" section that holds the db_cache configuration.
   if (hiddenSection) hiddenSection.style.display = 'block'
