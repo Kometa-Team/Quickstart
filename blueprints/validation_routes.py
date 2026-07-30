@@ -112,14 +112,6 @@ def validate_plex():
     except Exception as e:
         helpers.ts_log(f"Failed to fetch Plex telemetry during validation: {e}", level="WARNING")
 
-    # Migrate existing library settings from name-based keys to Plex-ID keys.
-    all_libs = list(plex_data.get("movie_libraries") or []) + list(plex_data.get("show_libraries") or []) + list(plex_data.get("music_libraries") or [])
-    if config_name and all_libs and isinstance(all_libs[0], dict):
-        try:
-            persistence.migrate_library_keys_to_plex_ids(config_name, all_libs)
-        except Exception as e:
-            helpers.ts_log(f"Library key migration failed during validate_plex: {e}", level="WARNING")
-
     # Keep validator fields authoritative for the Plex page contract. Telemetry
     # uses display strings like "2048 MB", while the page's db_cache input needs
     # the numeric value returned by validate_plex_server.
@@ -155,9 +147,6 @@ def refresh_plex_libraries():
         cached_refresh = helpers.get_cached_plex_refresh(plex_url, plex_token)
         if cached_refresh:
             helpers.ts_log("Using cached Plex library refresh payload.", level="DEBUG")
-            all_libs = list(cached_refresh.get("movie_libraries") or []) + list(cached_refresh.get("show_libraries") or []) + list(cached_refresh.get("music_libraries") or [])
-            if all_libs and isinstance(all_libs[0], dict):
-                persistence.migrate_library_keys_to_plex_ids(config_name, all_libs)
             persistence.update_stored_plex_libraries(
                 "010-plex",
                 cached_refresh.get("movie_libraries", []),
@@ -198,10 +187,7 @@ def refresh_plex_libraries():
         if not plex_data.get("validated"):
             return jsonify({"valid": False, "error": "Plex validation failed"}), 500
 
-        # Migrate existing settings from name-based keys to Plex-ID keys, then store.
-        all_libs = list(plex_data.get("movie_libraries") or []) + list(plex_data.get("show_libraries") or []) + list(plex_data.get("music_libraries") or [])
-        if all_libs and isinstance(all_libs[0], dict):
-            persistence.migrate_library_keys_to_plex_ids(config_name, all_libs)
+        # Update stored libraries
         persistence.update_stored_plex_libraries(
             "010-plex",
             plex_data.get("movie_libraries", []),

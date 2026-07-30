@@ -32,7 +32,6 @@ that ``from blueprints.import_config_routes import ...`` and the
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
@@ -62,62 +61,19 @@ def _coerce_validation_response_payload(response):
 
 
 def _parse_csv_or_list_to_set(value):
-    """Coerce a library-list value into a set of name strings.
+    """Coerce a comma-string or list into a stripped set of strings.
 
-    Leading/trailing whitespace is preserved in list and JSON-list forms
-    so that library names like " Movies " survive the round-trip.
-    Whitespace is used only as a filter (to skip blank values).
-    CSV values are still stripped because comma-delimited items typically
-    have spaces around the commas.
-
-    Accepts four forms:
-    - Python list of dicts  (fresh validation response: ``[{"id": 10, "name": " Movies "}, ...]``)
-    - JSON string           (new format — library names may contain commas)
-    - CSV string            (legacy format — backward compat with old stored data)
-    - Python list of str    (already decoded)
+    DRY refactor: pre-refactor this lived as an inner closure named
+    ``parse_list`` in THREE separate routes (import_config_preview,
+    import_config_preview_mapped, import_config_confirm) with byte-for-byte
+    identical 6-line bodies (18 lines of literal duplication).  Hoisted
+    to module scope and renamed for clarity.
     """
-    if isinstance(value, list):
-        if value and isinstance(value[0], dict):
-            return {str(v.get("name", "")) for v in value if str(v.get("name", "")).strip()}
-        return {str(v) for v in value if str(v).strip()}
     if isinstance(value, str):
-        try:
-            parsed = json.loads(value)
-            if isinstance(parsed, list):
-                if parsed and isinstance(parsed[0], dict):
-                    return {str(v.get("name", "")) for v in parsed if str(v.get("name", "")).strip()}
-                return {str(v) for v in parsed if str(v).strip()}
-        except (json.JSONDecodeError, ValueError):
-            pass
         return {v.strip() for v in value.split(",") if v.strip()}
+    if isinstance(value, list):
+        return {str(v).strip() for v in value if str(v).strip()}
     return set()
-
-
-def _plex_library_name_sets(plex_data):
-    """Return ``(movie_name_set, show_name_set)`` from stored Plex data.
-
-    Handles both the new ID-based format (where ``tmp_library_names`` holds the
-    ID→name dict) and the legacy format (where names are stored directly in
-    ``tmp_movie_libraries`` / ``tmp_show_libraries``).
-    """
-    name_map_raw = plex_data.get("tmp_library_names", "")
-    if name_map_raw:
-        try:
-            name_map = {str(k): str(v) for k, v in json.loads(name_map_raw).items()}
-        except (json.JSONDecodeError, ValueError):
-            name_map = {}
-        from modules.persistence import decode_library_ids
-
-        movie_ids = decode_library_ids(plex_data.get("tmp_movie_libraries", ""))
-        show_ids = decode_library_ids(plex_data.get("tmp_show_libraries", ""))
-        movie_names = {name_map[i] for i in movie_ids if i in name_map}
-        show_names = {name_map[i] for i in show_ids if i in name_map}
-        return movie_names, show_names
-    # Legacy: names stored directly
-    return (
-        _parse_csv_or_list_to_set(plex_data.get("tmp_movie_libraries", "")),
-        _parse_csv_or_list_to_set(plex_data.get("tmp_show_libraries", "")),
-    )
 
 
 def _parse_base_plex_libraries(base_name: str):
@@ -139,7 +95,10 @@ def _parse_base_plex_libraries(base_name: str):
     plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
     if not isinstance(plex_block, dict):
         return set(), set()
-    return _plex_library_name_sets(plex_block)
+    return (
+        _parse_csv_or_list_to_set(plex_block.get("tmp_movie_libraries", "")),
+        _parse_csv_or_list_to_set(plex_block.get("tmp_show_libraries", "")),
+    )
 
 
 # --- credential parsers ---------------------------------------------------
