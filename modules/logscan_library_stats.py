@@ -228,21 +228,13 @@ def normalize_library_name(value: object) -> str:
 def match_library_name(raw_name: str, library_entries: list[dict]) -> Optional[str]:
     """Find the config library-entry name that best matches *raw_name*.
 
-    * Exact string match wins first (preserves meaningful leading/trailing whitespace).
-    * Exact normalized match wins next.
+    * Exact normalized match wins.
     * Otherwise, the LONGEST substring match wins (both directions:
       ``needle in candidate`` and ``candidate in needle``).
 
     Returns the entry's ``name`` field, or ``None`` when nothing
     matches.
     """
-    # Exact match first — libraries whose names differ only in whitespace
-    # (e.g. "Movies" vs " Movies ") must not be conflated by normalization.
-    for entry in library_entries:
-        name = entry.get("name")
-        if name is not None and raw_name == name:
-            return name
-
     needle = normalize_library_name(raw_name)
     if not needle:
         return None

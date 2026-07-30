@@ -998,7 +998,7 @@
                         <tbody>
                           {% for row in incomplete_resume_hint.progress_snapshot.rows %}
                           <tr>
-                            <td><code>{{ row.name | nbsp_leading_spaces }}</code></td>
+                            <td>{{ row.name }}</td>
                             <td>{{ row.type }}</td>
                             <td><span class="badge {{ row.status_class }}">{{ row.status }}</span></td>
                             {% for cell in row.phase_cells %}

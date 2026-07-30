@@ -56,20 +56,6 @@ export function escapeHtml (value) {
 }
 
 /**
- * Replace leading/trailing ASCII spaces with EM SPACE (U+2003) so
- * they survive HTML rendering without being collapsed. Mirrors the
- * server-side `nbsp_leading_spaces` Jinja filter.
- */
-export function nbspLeadingSpaces (value) {
-  const s = String(value == null ? '' : value)
-  const lstripped = s.replace(/^ +/, '')
-  const leading = s.length - lstripped.length
-  const rstripped = lstripped.replace(/ +$/, '')
-  const trailing = lstripped.length - rstripped.length
-  return ' '.repeat(leading) + rstripped + ' '.repeat(trailing)
-}
-
-/**
  * Turn plain text into HTML with any http(s) URLs converted to
  * anchor tags. `[https://...]` bracket-wrapped URLs are also
  * detected (the brackets are stripped from the display text).
