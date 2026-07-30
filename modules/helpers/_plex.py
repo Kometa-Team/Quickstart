@@ -257,7 +257,7 @@ def get_library_summaries(configured_library_id_map):
                 continue
 
             lib_name = info.get("name", display_name)
-            output_lines.append(f"Information on library: {lib_name}")
+            output_lines.append(f"Information on library: [{lib_name}]")
             output_lines.append(f"Type: {info.get('type', 'Unknown').capitalize()}")
             output_lines.append(f"Agent: {info.get('agent', 'Unknown')}")
             output_lines.append(f"Scanner: {info.get('scanner', 'Unknown')}")
