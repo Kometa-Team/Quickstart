@@ -2318,8 +2318,8 @@ function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null)
   if (heading && !isReview) {
     heading.innerHTML = `<b>${
       isConfigured
-        ? (isRequired ? 'This required page is configured' : 'This optional page is configured')
-        : (isRequired ? 'This page is mandatory and must be completed' : 'This page is optional')
+        ? (isRequired ? 'This required page passed validation' : 'This optional page is configured')
+        : (isRequired ? 'This required page needs validation' : 'This page is optional')
     }</b>`
   }
 

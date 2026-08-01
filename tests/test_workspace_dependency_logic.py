@@ -589,7 +589,7 @@ def test_workspace_app_readiness_imagemaid_missing_plex_points_to_plex(monkeypat
     assert payload["imagemaid"]["target_step"] == "010-plex"
 
 
-def test_workspace_app_readiness_kometa_freshness_keeps_app_available(monkeypatch, qs_module, workspace_status_module):
+def test_workspace_app_readiness_kometa_freshness_stays_ready(monkeypatch, qs_module, workspace_status_module):
     monkeypatch.setattr(qs_module.helpers, "get_menu_list", _template_list)
     monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
     monkeypatch.setattr(workspace_status_module, "_build_workspace_status_context", lambda *_args, **_kwargs: {"readiness": {}})
@@ -611,9 +611,10 @@ def test_workspace_app_readiness_kometa_freshness_keeps_app_available(monkeypatc
 
     payload = qs_module._build_workspace_app_readiness("cfg")
 
-    assert payload["kometa"]["state"] == "review"
-    assert payload["kometa"]["summary"] == "Validation refresh recommended"
+    assert payload["kometa"]["state"] == "ready"
+    assert payload["kometa"]["summary"] == "Ready"
     assert payload["kometa"]["action_label"] == "Open Kometa"
+    assert payload["kometa"]["href"] == "/step/900-kometa"
 
 
 def test_workspace_status_context_aligns_app_steps_with_app_readiness(monkeypatch, qs_module, workspace_status_module):
