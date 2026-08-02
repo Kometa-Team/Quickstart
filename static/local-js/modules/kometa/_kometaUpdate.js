@@ -24,8 +24,8 @@
 //        toast based on result. Doesn't actually apply anything.
 //
 //   5. The full update path (the main event)
-//        Sets phase 'queued', disables buttons, starts a heartbeat
-//        toast, POSTs /update-kometa with background=true, then
+//        Sets phase 'queued', disables buttons, shows inline progress,
+//        POSTs /update-kometa with background=true, then
 //        polls /kometa-update-progress via pollKometaUpdateProgress
 //        on a setInterval. When the job completes, calls
 //        validateKometaRoot to re-verify the install.
@@ -78,7 +78,6 @@ import {
   stopKometaUpdatePolling,
   pollKometaUpdateProgress
 } from './_updatePolling.js'
-import { formatElapsed } from './_util.js'
 import { validateKometaRoot } from './_validateRoot.js'
 import { updateRunNowState } from './_runControls.js'
 import { runKometaStatusPass } from './_statusPass.js'
@@ -277,22 +276,11 @@ export function callUpdateKometa () {
 
   // ---- Heartbeat toast (every 30s) ------------------------------
   //
-  // The user should feel like something is happening even when the
-  // log is quiet (e.g. during ZIP download). Toast is fired once
-  // immediately, then every 30s until cleanup.
-  const startTs = Date.now()
-  showToast('info', 'Still working on Kometa... (0 seconds elapsed)', 10000)
-  const heartbeatId = setInterval(() => {
-    const secs = Math.floor((Date.now() - startTs) / 1000)
-    showToast('info', `Still working on Kometa... (${secs} seconds elapsed)`, 10000)
-  }, 30000)
-
   // postUpdateLabel is set in the success handler and consumed by
   // cleanupUI to briefly show a checkmark before the button resets.
   let postUpdateLabel = null
 
   const cleanupUI = () => {
-    clearInterval(heartbeatId)
     stopKometaUpdatePolling()
     kometaState.kometaUpdateJobId = null
     kometaState.kometaUpdateLogIndex = 0
@@ -342,10 +330,9 @@ export function callUpdateKometa () {
     .then(async res => {
       const data = await res.json()
       if (res.status === 409) {
+        const message = data.error || 'Update blocked: Kometa running.'
         setKometaUpdatePhaseBadge('failed')
-        showToast('warning', data.error || 'Kometa is running; stop it before updating.')
-        logBox.insertAdjacentHTML('beforeend', `${data.error || 'Update blocked: Kometa running.'}\n`)
-        logBox.scrollTop = logBox.scrollHeight
+        appendKometaStatusLine(message)
         return { success: false, log: data.log || [], blocked: true }
       }
       if (!res.ok) {
@@ -372,25 +359,21 @@ export function callUpdateKometa () {
           const updateBox = el('kometa-update-box')
           if (updateBox) updateBox.classList.add('d-none')
           syncUpdateButtonLabel()
-          const elapsed = formatElapsed(Date.now() - startTs)
           // Server may report success under 'update_success' (newer
           // servers) or 'success' (older). Use nullish coalescing so
           // 'update_success: false' takes precedence over 'success: true'.
           const updateSucceeded = progress.update_success ?? progress.success
           if (updateSucceeded) {
             if (progress.up_to_date) {
-              showToast('info', 'Kometa is already up to date.')
               postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'
               appendKometaStatusLine('Kometa is already up to date.')
               setKometaUpdatePhaseBadge('ready')
             } else {
-              showToast('success', `Kometa update completed in ${elapsed}.`)
               appendKometaStatusLine('Kometa update completed successfully.')
               setKometaUpdatePhaseBadge('validating')
             }
             validateKometaRoot({ appendStatus: true })
           } else {
-            showToast('error', 'Kometa update failed.')
             appendKometaStatusLine('Kometa update failed.')
             setKometaUpdatePhaseBadge('failed')
             // We still validate on failure so the user sees WHY it
@@ -432,17 +415,14 @@ export function callUpdateKometa () {
       // current endpoint doesn't do). Kept as a defensive fallback
       // for future endpoint changes.
       if (!data.success && !data.blocked) {
-        showToast('error', data.error || 'Kometa update failed.')
-        logBox.insertAdjacentHTML('beforeend', 'Kometa update failed.\n')
-        logBox.scrollTop = logBox.scrollHeight
+        appendKometaStatusLine(data.error || 'Kometa update failed.')
+        setKometaUpdatePhaseBadge('failed')
         validateKometaRoot({ appendStatus: true })
       }
     })
     .catch(err => {
       console.error(err)
-      showToast('error', 'Error during Kometa update.')
-      logBox.insertAdjacentHTML('beforeend', 'Error occurred during Kometa update.\n')
-      logBox.scrollTop = logBox.scrollHeight
+      appendKometaStatusLine(`Error occurred during Kometa update: ${err.message || 'Unknown error.'}`)
       setKometaUpdatePhaseBadge('failed')
       cleanupUI()
       syncKometaRollupBadge()

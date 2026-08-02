@@ -52,6 +52,26 @@ function installBadge (opts = {}) {
   return badge
 }
 
+function installProgressUi () {
+  const progress = document.createElement('div')
+  progress.id = 'kometa-update-progress'
+  progress.className = 'alert alert-secondary d-none'
+  progress.innerHTML = `
+    <div id="kometa-update-progress-title"></div>
+    <div id="kometa-update-progress-message"></div>
+    <span id="kometa-update-progress-percent"></span>
+    <div id="kometa-update-progress-bar" class="progress-bar bg-secondary"></div>
+  `
+  document.body.appendChild(progress)
+  return {
+    progress,
+    title: document.getElementById('kometa-update-progress-title'),
+    message: document.getElementById('kometa-update-progress-message'),
+    percent: document.getElementById('kometa-update-progress-percent'),
+    bar: document.getElementById('kometa-update-progress-bar')
+  }
+}
+
 function installLogBox (initialText = '') {
   document.body.innerHTML = ''
   const box = document.createElement('pre')
@@ -147,6 +167,51 @@ describe('setKometaUpdatePhaseBadge', () => {
     setKometaUpdatePhaseBadge('ready')
     expect(badge.classList.contains('ms-2')).toBe(true)
     expect(badge.classList.contains('rounded-pill')).toBe(true)
+  })
+
+  it("shows inline progress for phase 'queued'", () => {
+    installBadge()
+    const ui = installProgressUi()
+    setKometaUpdatePhaseBadge('queued')
+    expect(ui.progress.classList.contains('d-none')).toBe(false)
+    expect(ui.progress.classList.contains('alert-info')).toBe(true)
+    expect(ui.title.textContent).toBe('Kometa update progress')
+    expect(ui.message.textContent).toBe('Starting Kometa update job.')
+    expect(ui.percent.textContent).toBe('5%')
+    expect(ui.bar.style.width).toBe('5%')
+    expect(ui.bar.getAttribute('aria-valuenow')).toBe('5')
+    expect(ui.bar.classList.contains('progress-bar-striped')).toBe(true)
+    expect(ui.bar.classList.contains('progress-bar-animated')).toBe(true)
+  })
+
+  it("hides inline progress for phase 'idle'", () => {
+    installBadge()
+    const ui = installProgressUi()
+    setKometaUpdatePhaseBadge('queued')
+    setKometaUpdatePhaseBadge('idle')
+    expect(ui.progress.classList.contains('d-none')).toBe(true)
+    expect(ui.message.textContent).toBe('No Kometa update is running.')
+    expect(ui.percent.textContent).toBe('0%')
+    expect(ui.bar.style.width).toBe('0%')
+  })
+
+  it("shows terminal success progress without animation", () => {
+    installBadge()
+    const ui = installProgressUi()
+    setKometaUpdatePhaseBadge('ready')
+    expect(ui.progress.classList.contains('d-none')).toBe(false)
+    expect(ui.progress.classList.contains('alert-success')).toBe(true)
+    expect(ui.message.textContent).toBe('Kometa update is complete.')
+    expect(ui.percent.textContent).toBe('100%')
+    expect(ui.bar.classList.contains('bg-success')).toBe(true)
+    expect(ui.bar.classList.contains('progress-bar-animated')).toBe(false)
+  })
+
+  it('uses an explicit inline progress message when provided', () => {
+    installBadge()
+    const ui = installProgressUi()
+    setKometaUpdatePhaseBadge('downloading', 'Downloading build archive...')
+    expect(ui.message.textContent).toBe('Downloading build archive...')
   })
 })
 

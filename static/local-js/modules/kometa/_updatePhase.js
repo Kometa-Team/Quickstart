@@ -1,13 +1,13 @@
 // Kometa update-phase badge + status log.
 //
 // This module owns the small cluster of functions that render a
-// "which phase of the update is Kometa in?" badge and append status
-// lines to the validation-log panel. The badge's phase is inferred
-// from log-line text via a rule-based classifier.
+// "which phase of the update is Kometa in?" badge, inline progress
+// panel, and status log. The badge's phase is inferred from log-line
+// text via a rule-based classifier.
 //
 // EXPORTS:
 //
-//   setKometaUpdatePhaseBadge(phase)
+//   setKometaUpdatePhaseBadge(phase, progressMessage = null)
 //        -- write a phase to the #kometa-update-phase-badge (updates
 //           text + style class). Unknown phases coerce to 'idle'.
 //           Also writes kometaState.kometaUpdatePhaseStatus.
@@ -40,6 +40,7 @@
 // DOM ELEMENTS TOUCHED:
 //
 //   #kometa-update-phase-badge  (span, gets text + text-bg-* class)
+//   #kometa-update-progress     (inline progress panel for long updates)
 //   #kometa-validation-log      (pre or div, gets textContent /
 //                                 insertAdjacentHTML)
 //
@@ -88,6 +89,131 @@ const PHASE_BADGE_CLASSES = [
   'text-bg-danger'
 ]
 
+const PHASE_PROGRESS = {
+  idle: {
+    percent: 0,
+    message: 'No Kometa update is running.',
+    alertClass: 'alert-secondary',
+    barClass: 'bg-secondary',
+    hidden: true
+  },
+  checking: {
+    percent: 10,
+    message: 'Checking Kometa version and update status.',
+    alertClass: 'alert-info',
+    barClass: 'bg-info',
+    animated: true
+  },
+  queued: {
+    percent: 5,
+    message: 'Starting Kometa update job.',
+    alertClass: 'alert-info',
+    barClass: 'bg-primary',
+    animated: true
+  },
+  downloading: {
+    percent: 25,
+    message: 'Downloading Kometa package.',
+    alertClass: 'alert-info',
+    barClass: 'bg-primary',
+    animated: true
+  },
+  extracting: {
+    percent: 40,
+    message: 'Extracting Kometa files.',
+    alertClass: 'alert-warning',
+    barClass: 'bg-warning',
+    animated: true
+  },
+  preserving: {
+    percent: 55,
+    message: 'Preserving Kometa logs and cache.',
+    alertClass: 'alert-warning',
+    barClass: 'bg-warning',
+    animated: true
+  },
+  venv: {
+    percent: 70,
+    message: 'Preparing Kometa virtual environment.',
+    alertClass: 'alert-info',
+    barClass: 'bg-info',
+    animated: true
+  },
+  dependencies: {
+    percent: 85,
+    message: 'Installing Kometa dependencies.',
+    alertClass: 'alert-warning',
+    barClass: 'bg-warning',
+    animated: true
+  },
+  validating: {
+    percent: 95,
+    message: 'Validating Kometa after update.',
+    alertClass: 'alert-info',
+    barClass: 'bg-info',
+    animated: true
+  },
+  ready: {
+    percent: 100,
+    message: 'Kometa update is complete.',
+    alertClass: 'alert-success',
+    barClass: 'bg-success'
+  },
+  failed: {
+    percent: 100,
+    message: 'Kometa update failed. Review the log below.',
+    alertClass: 'alert-danger',
+    barClass: 'bg-danger'
+  }
+}
+
+const PROGRESS_ALERT_CLASSES = [
+  'alert-secondary',
+  'alert-info',
+  'alert-primary',
+  'alert-warning',
+  'alert-success',
+  'alert-danger'
+]
+
+const PROGRESS_BAR_CLASSES = [
+  'bg-secondary',
+  'bg-info',
+  'bg-primary',
+  'bg-warning',
+  'bg-success',
+  'bg-danger',
+  'progress-bar-striped',
+  'progress-bar-animated'
+]
+
+function renderKometaUpdateProgress (phase, progressMessage = null) {
+  const container = document.getElementById('kometa-update-progress')
+  if (!container) return
+
+  const progress = PHASE_PROGRESS[phase] || PHASE_PROGRESS.idle
+  const percent = Math.max(0, Math.min(100, Number(progress.percent) || 0))
+  container.classList.toggle('d-none', Boolean(progress.hidden) && !progressMessage)
+  container.classList.remove(...PROGRESS_ALERT_CLASSES)
+  container.classList.add(progress.alertClass || 'alert-secondary')
+
+  const title = document.getElementById('kometa-update-progress-title')
+  const message = document.getElementById('kometa-update-progress-message')
+  const percentBadge = document.getElementById('kometa-update-progress-percent')
+  const bar = document.getElementById('kometa-update-progress-bar')
+
+  if (title) title.textContent = 'Kometa update progress'
+  if (message) message.textContent = progressMessage || progress.message
+  if (percentBadge) percentBadge.textContent = `${percent}%`
+  if (bar) {
+    bar.style.width = `${percent}%`
+    bar.setAttribute('aria-valuenow', String(percent))
+    bar.classList.remove(...PROGRESS_BAR_CLASSES)
+    bar.classList.add(progress.barClass || 'bg-secondary')
+    if (progress.animated) bar.classList.add('progress-bar-striped', 'progress-bar-animated')
+  }
+}
+
 /**
  * Write a phase to the update-phase badge. Unknown phases silently
  * coerce to 'idle'. Also updates kometaState.kometaUpdatePhaseStatus
@@ -96,8 +222,9 @@ const PHASE_BADGE_CLASSES = [
  * No-op when the badge element is missing.
  *
  * @param {string} phase  See PHASE_MAP keys.
+ * @param {?string} progressMessage  Optional message for the inline progress panel.
  */
-export function setKometaUpdatePhaseBadge (phase) {
+export function setKometaUpdatePhaseBadge (phase, progressMessage = null) {
   const badge = document.getElementById('kometa-update-phase-badge')
   if (!badge) return
 
@@ -108,6 +235,7 @@ export function setKometaUpdatePhaseBadge (phase) {
   badge.classList.remove(...PHASE_BADGE_CLASSES)
   badge.classList.add(next.klass)
   badge.textContent = next.label
+  renderKometaUpdateProgress(normalized, progressMessage)
 }
 
 // ---------------------------------------------------------------------
