@@ -144,29 +144,17 @@ def _build_workspace_app_readiness_from_status(config_name, workspace_status, te
             href=_step_href(blocker_key),
             target_step=blocker_key,
         )
-    elif final_gate.get("stage") == "freshness":
+    else:
+        detail = "Open Kometa to validate, review, download, prepare, or run this config."
+        if install_context.get("kometa_is_external_install"):
+            detail = "Open Kometa to validate, review, download, and sync this config for your external Kometa install."
         kometa.update(
-            state="review",
-            summary="Validation refresh recommended",
-            detail=f"Open Kometa to refresh bulk validation before running. Quickstart expects validation within the last {QS_FINAL_VALIDATION_TTL_HOURS} hours, but the app itself is still available.",
+            state="ready",
+            summary="Ready",
+            detail=detail,
             action_label="Open Kometa",
             href=_step_href("900-kometa"),
             target_step="900-kometa",
-        )
-    elif install_context.get("kometa_can_launch"):
-        kometa.update(
-            state="ready",
-            summary="Ready in Quickstart",
-            detail="Open Kometa to prepare the runtime if needed, then review or run this config.",
-        )
-    elif install_context.get("kometa_can_sync_config"):
-        detail = "Open Kometa to review and sync this config."
-        if install_context.get("kometa_is_external_install"):
-            detail = "Open Kometa to review and sync this config for your external Kometa install."
-        kometa.update(
-            state="review",
-            summary="Config ready",
-            detail=detail,
         )
 
     imagemaid_settings, imagemaid_section = _get_imagemaid_settings_section(config_name)
