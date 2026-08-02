@@ -107,6 +107,24 @@ def test_external_yaml_validate_reports_schema_issue_path_and_line(client, isola
     assert validation["issues"][0]["path"] == "collections"
 
 
+def test_external_yaml_validate_warns_for_non_string_mapping_keys(client, isolated_config_dir):
+    response = client.post(
+        "/external_yaml_file/validate",
+        json={
+            "kind": "collection_files",
+            "content": "collections:\n  false:\n    summary: Boolean-like collection key\n",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    validation = payload["validation"]
+    assert validation["can_save"] is True
+    assert validation["schema_valid"] is False
+    assert any("parsed mapping key" in warning for warning in validation["warnings"])
+    assert any(issue.get("path") == "collections.False" for issue in validation["issues"])
+
+
 def test_external_yaml_read_rejects_remote_sources(client, isolated_config_dir):
     response = client.post(
         "/external_yaml_file/read",
