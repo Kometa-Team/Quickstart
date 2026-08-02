@@ -14,6 +14,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from werkzeug.utils import secure_filename
 
 from modules import helpers, path_validation
+from modules.jsonschema_compat import find_non_string_mapping_key_paths, stringify_mapping_keys_for_jsonschema
 from modules.validations_shared import _saved_custom_repo_base
 
 EXTERNAL_YAML_KINDS = {
@@ -322,7 +323,22 @@ def validate_external_yaml_content(kind, content):
         schema_path = Path(helpers.JSON_SCHEMA_DIR) / info["schema"]
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         parsed_with_lines = parse_external_yaml_with_lines(content)
-        schema_errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(parsed), key=lambda err: list(err.path))
+        non_string_key_paths = find_non_string_mapping_key_paths(parsed)
+        if non_string_key_paths:
+            schema_valid = False
+            for key_path in non_string_key_paths[:10]:
+                path = _schema_path_label(key_path)
+                key = key_path[-1]
+                message = f"{path}: YAML parsed mapping key `{key}` as {type(key).__name__}; " "quote it if it should be treated as text."
+                warnings.append(message)
+                line, column = _node_line_for_path(parsed_with_lines, list(key_path)) if parsed_with_lines is not None else (None, None)
+                issues.append(_issue("warning", message, line=line, column=column, path=path, source="schema"))
+            if len(non_string_key_paths) > 10:
+                message = f"{len(non_string_key_paths) - 10} additional non-string YAML keys not shown."
+                warnings.append(message)
+                issues.append(_issue("warning", message, source="schema"))
+        validation_input = stringify_mapping_keys_for_jsonschema(parsed)
+        schema_errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(validation_input), key=lambda err: list(err.path))
         if schema_errors:
             schema_valid = False
             for err in schema_errors[:10]:

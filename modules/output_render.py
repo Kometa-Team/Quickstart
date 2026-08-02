@@ -67,6 +67,7 @@ from modules.output_optimize import optimize_template_variables
 from modules.output_playlists import apply_playlist_libraries_toggle
 from modules.output_postprocess import _rewrite_custom_font_paths, clean_section_data
 from modules.output_yaml_header import render_yaml_header
+from modules.jsonschema_compat import stringify_mapping_keys_for_jsonschema
 
 
 def retrieve_config_sections(header_style):
@@ -286,7 +287,8 @@ def _validate_yaml_content(yaml_content, yaml_parser, schema):
     """
     parsed_yaml = yaml_parser.load(yaml_content)
     validator = jsonschema.Draft7Validator(schema)
-    sorted_errors = sorted(validator.iter_errors(parsed_yaml), key=lambda err: list(err.path))
+    validation_input = stringify_mapping_keys_for_jsonschema(parsed_yaml)
+    sorted_errors = sorted(validator.iter_errors(validation_input), key=lambda err: list(err.path))
     if sorted_errors:
         return False, sorted_errors[0], sorted_errors
     return True, None, []
