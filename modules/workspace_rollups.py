@@ -109,8 +109,6 @@ def _build_live_validation_rollup(step_statuses, template_keys):
 
     if counts["failed"] > 0:
         state = "error"
-    elif counts["skipped"] > 0:
-        state = "warn"
     elif counts["validated"] > 0:
         state = "ok"
     else:

@@ -2453,6 +2453,7 @@ def step(name):
 
     if name == "900-kometa":
         validation_meta = []
+        validation_groups = []
         validation_bulk_rollup = None
         validation_bulk_rollup_at = None
         try:
@@ -2472,31 +2473,48 @@ def step(name):
         validation_rollup_state = "unknown"
         validation_rollup_at = None
         if final_gate.get("stage") != "todo":
-            for file, display_name in file_list:
-                template_key = file.rsplit(".", 1)[0]
+            template_display_names = {file.rsplit(".", 1)[0]: display_name for file, display_name in file_list}
+            validation_group_specs = [
+                ("setup", "Setup", workspace_status.get("required_keys", [])),
+                ("optional", "Optional Services", workspace_status.get("optional_keys", [])),
+                ("apps", "Apps", ["900-kometa", "915-imagemaid"]),
+                ("insights", "Insights", ["905-analytics"]),
+                ("other", "Other", ["910-sponsor"]),
+            ]
+            seen_validation_keys = set()
+
+            def build_validation_entry(template_key, group_key):
                 settings = persistence.retrieve_settings(template_key)
-                has_validation = template_key in QS_VALIDATION_STEP_KEYS
+                has_validation = template_key in QS_VALIDATION_STEP_KEYS or template_key == "001-start"
                 validation_status = None
                 validation_reason = None
                 validation_details = None
                 validation_updated_at = None
+                stored_validated = None
+                stored_validated_at = None
                 if has_validation:
-                    section_name = template_key.split("-", 1)[1]
+                    section_name = "kometa" if template_key == "001-start" else template_key.split("-", 1)[1]
                     stored_section = database.retrieve_section_data(config_name, section_name)
+                    if stored_section:
+                        stored_validated = stored_section[0]
                     stored_payload = stored_section[2] if stored_section else None
                     if isinstance(stored_payload, dict):
                         validation_status = stored_payload.get("validation_status")
                         validation_reason = stored_payload.get("validation_reason")
                         validation_details = stored_payload.get("validation_details")
                         validation_updated_at = stored_payload.get("validation_updated_at")
+                        stored_validated = stored_payload.get("validated", stored_validated)
+                        stored_validated_at = stored_payload.get("validated_at")
                 if not validation_status and has_validation:
-                    if helpers.booler(settings.get("validated", False)):
+                    if helpers.booler(stored_validated) or helpers.booler(settings.get("validated", False)):
                         validation_status = "validated"
-                    elif settings.get("validated_at"):
+                    elif stored_validated_at or settings.get("validated_at"):
                         validation_status = "failed"
                 if not validation_updated_at and has_validation:
-                    validation_updated_at = settings.get("validated_at")
+                    validation_updated_at = stored_validated_at or settings.get("validated_at")
 
+                validated = validation_status == "validated" or helpers.booler(stored_validated) or helpers.booler(settings.get("validated", False))
+                validated_at = validation_updated_at or stored_validated_at or settings.get("validated_at", "")
                 validation_result = ""
                 if validation_status:
                     label = validation_status.capitalize()
@@ -2514,18 +2532,39 @@ def step(name):
                     else:
                         validation_result = label
 
-                validation_meta.append(
-                    {
-                        "key": template_key,
-                        "label": display_name,
-                        "page": template_key,
-                        "has_validation": has_validation,
-                        "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
-                        "validated_at": settings.get("validated_at", "") if has_validation else "",
-                        "validation_updated_at": validation_updated_at if has_validation else "",
-                        "validation_result": validation_result,
-                    }
-                )
+                pill_state = "neutral"
+                if validated:
+                    pill_state = "validated"
+                elif validation_status == "failed":
+                    pill_state = "unvalidated"
+
+                return {
+                    "key": template_key,
+                    "label": template_display_names.get(template_key, template_key),
+                    "page": template_key,
+                    "group_key": group_key,
+                    "has_validation": has_validation,
+                    "validated": validated if has_validation else None,
+                    "validated_at": validated_at if has_validation else "",
+                    "validation_updated_at": validation_updated_at if has_validation else "",
+                    "validation_result": validation_result,
+                    "pill_state": pill_state,
+                }
+
+            for group_key, group_label, group_keys in validation_group_specs:
+                group_entries = []
+                for template_key in group_keys:
+                    if template_key in seen_validation_keys:
+                        continue
+                    has_validation = template_key in QS_VALIDATION_STEP_KEYS or template_key == "001-start"
+                    if not has_validation:
+                        continue
+                    entry = build_validation_entry(template_key, group_key)
+                    validation_meta.append(entry)
+                    group_entries.append(entry)
+                    seen_validation_keys.add(template_key)
+                if group_entries:
+                    validation_groups.append({"key": group_key, "label": group_label, "entries": group_entries})
             live_rollup = _build_live_validation_rollup(step_statuses, template_keys_for_rollup)
             validation_rollup = live_rollup.get("summary_text")
             validation_rollup_summary = live_rollup.get("counts", {})
@@ -2554,7 +2593,18 @@ def step(name):
             final_gate["config_valid"] = bool(validated)
             final_gate["stage"] = "kometa" if validated else "config"
         elif final_gate.get("stage") == "freshness":
-            validation_rollup_state = "warn"
+            try:
+                rollup_failed = int(validation_rollup_summary.get("failed") or 0)
+                rollup_validated = int(validation_rollup_summary.get("validated") or 0)
+            except (TypeError, ValueError):
+                rollup_failed = 0
+                rollup_validated = 0
+            if rollup_failed > 0:
+                validation_rollup_state = "error"
+            elif rollup_validated > 0:
+                validation_rollup_state = "ok"
+            else:
+                validation_rollup_state = "unknown"
             if not validation_bulk_rollup:
                 validation_bulk_rollup = f"Validation is stale. Validate All has not completed in the last {QS_FINAL_VALIDATION_TTL_HOURS} hours."
         page_info["saved_filename"] = saved_filename
@@ -2611,6 +2661,7 @@ def step(name):
             overlay_fonts=overlay_fonts,
             service_validations=service_validations,
             validation_meta=validation_meta,
+            validation_groups=validation_groups,
             jump_to_validations=jump_to_validations,
             step_statuses=step_statuses,
             section_statuses=section_statuses,

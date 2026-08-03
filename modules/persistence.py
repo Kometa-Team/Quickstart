@@ -129,12 +129,19 @@ def retrieve_settings_for_config(config_name, target):
 def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
     if not isinstance(stored_data, dict):
         stored_data = {}
+    timestamp = updated_at or helpers.utc_now_iso()
     stored_data["validation_status"] = status
-    if reason is not None:
-        stored_data["validation_reason"] = reason
-    if details is not None:
-        stored_data["validation_details"] = details
-    stored_data["validation_updated_at"] = updated_at or helpers.utc_now_iso()
+    stored_data["validation_updated_at"] = timestamp
+    if status == "validated":
+        stored_data["validated"] = True
+        stored_data["validated_at"] = timestamp
+        stored_data.pop("validation_reason", None)
+        stored_data.pop("validation_details", None)
+    else:
+        if reason is not None:
+            stored_data["validation_reason"] = reason
+        if details is not None:
+            stored_data["validation_details"] = details
     return stored_data
 
 

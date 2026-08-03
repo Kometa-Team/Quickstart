@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof URLValidation !== 'undefined' && URLValidation.attach) {
     URLValidation.attach(document)
   }
+  qsShowQueuedFlashToast()
   const saveError = document.getElementById('qs-save-error')
   if (saveError && saveError.dataset && saveError.dataset.message) {
     showToast('error', saveError.dataset.message)
@@ -499,6 +500,40 @@ function setButtonIconAndText (button, iconClasses, text) {
   const icon = document.createElement('i')
   icon.className = iconClasses
   button.replaceChildren(icon, document.createTextNode(` ${text}`))
+}
+
+const QS_FLASH_TOAST_KEY = 'qs:flash-toast'
+
+function qsQueueFlashToast (type, message) {
+  try {
+    window.sessionStorage.setItem(QS_FLASH_TOAST_KEY, JSON.stringify({
+      type: type || 'info',
+      message: String(message || '')
+    }))
+  } catch (err) {
+    console.warn('Unable to queue flash toast:', err)
+  }
+}
+
+function qsShowQueuedFlashToast () {
+  if (typeof showToast !== 'function') return
+  let payload = null
+  try {
+    payload = window.sessionStorage.getItem(QS_FLASH_TOAST_KEY)
+    window.sessionStorage.removeItem(QS_FLASH_TOAST_KEY)
+  } catch (err) {
+    console.warn('Unable to read flash toast:', err)
+    return
+  }
+  if (!payload) return
+  try {
+    const parsed = JSON.parse(payload)
+    if (parsed && parsed.message) {
+      showToast(parsed.type || 'info', parsed.message)
+    }
+  } catch (err) {
+    console.warn('Unable to show flash toast:', err)
+  }
 }
 
 // Function to show toast messages
@@ -2112,7 +2147,6 @@ function qsGetBulkSummaryCounts (summary) {
 function qsBulkSummaryState (summary) {
   const counts = qsGetBulkSummaryCounts(summary)
   if (counts.failed > 0) return 'error'
-  if (counts.skipped > 0) return 'warn'
   if (counts.validated > 0) return 'ok'
   return 'unknown'
 }
@@ -2121,7 +2155,6 @@ function qsBulkSummaryLabel (summary) {
   const counts = qsGetBulkSummaryCounts(summary)
   const state = qsBulkSummaryState(summary)
   if (state === 'error') return `${counts.failed} failed`
-  if (state === 'warn') return `${counts.skipped} skipped`
   if (state === 'ok') return 'All good'
   return 'Not run'
 }
@@ -2149,7 +2182,7 @@ function qsStepStateFromBulkStatus (status) {
   const normalized = String(status || '').trim().toLowerCase()
   if (normalized === 'validated') return 'ok'
   if (normalized === 'failed') return 'error'
-  if (normalized === 'skipped') return 'warn'
+  if (normalized === 'skipped') return 'unknown'
   return 'warn'
 }
 
@@ -2205,7 +2238,7 @@ function qsRunBulkValidation (options = {}) {
       qsApplyBulkValidationResults(results, summary)
       document.dispatchEvent(new CustomEvent('qs:bulk-validation-complete', { detail: data }))
 
-      if (!options.silentToast && typeof showToast === 'function') {
+      if (!options.silentToast && !data.suppressCompletionToast && typeof showToast === 'function') {
         const counts = qsGetBulkSummaryCounts(summary)
         showToast('info', `Validate all complete. Validated: ${counts.validated} • Failed: ${counts.failed} • Skipped: ${counts.skipped}`)
       }
@@ -2605,7 +2638,9 @@ window.QSBulkValidation = {
   run: qsRunBulkValidation,
   applyResults: qsApplyBulkValidationResults,
   getSummaryState: qsBulkSummaryState,
-  getSummaryCounts: qsGetBulkSummaryCounts
+  getSummaryCounts: qsGetBulkSummaryCounts,
+  getSummaryLabel: qsBulkSummaryLabel,
+  applyRollupBadge: qsApplyValidationRollupBadge
 }
 window.QSWorkspaceStatus = {
   refresh: qsRefreshWorkspaceStatus,
@@ -4370,6 +4405,7 @@ window.setButtonIconAndText = setButtonIconAndText
 window.showNavigationLoadingOverlay = showNavigationLoadingOverlay
 window.showSpinner = showSpinner
 window.showToast = showToast
+window.qsQueueFlashToast = qsQueueFlashToast
 
 // ES module exports for other modules. Currently consumed by
 // static/local-js/001-start.js (which is also loaded as type="module").

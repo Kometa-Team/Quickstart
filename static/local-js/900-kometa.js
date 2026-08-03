@@ -807,6 +807,34 @@ const validateAllStatusBulkTime = document.getElementById('validate-all-status-b
 let previouslyBlocked = false
 let previousStatuses = {}
 
+function getValidateAllCompleteMessage (summary) {
+  const counts = window.QSBulkValidation && typeof window.QSBulkValidation.getSummaryCounts === 'function'
+    ? window.QSBulkValidation.getSummaryCounts(summary)
+    : {
+        validated: Number((summary && summary.validated) || 0),
+        failed: Number((summary && summary.failed) || 0),
+        skipped: Number((summary && summary.skipped) || 0)
+      }
+  return `Validate all complete. Validated: ${counts.validated} • Failed: ${counts.failed} • Skipped: ${counts.skipped}`
+}
+
+function syncValidationRollupBadgeFromSummary (summary) {
+  if (window.QSBulkValidation && typeof window.QSBulkValidation.applyRollupBadge === 'function') {
+    window.QSBulkValidation.applyRollupBadge(summary)
+  }
+}
+
+function reloadAfterBulkValidationRefresh (data, summary) {
+  if (data && typeof data === 'object') {
+    data.suppressCompletionToast = true
+  }
+  syncValidationRollupBadgeFromSummary(summary)
+  if (typeof window.qsQueueFlashToast === 'function') {
+    window.qsQueueFlashToast('info', getValidateAllCompleteMessage(summary))
+  }
+  setTimeout(() => window.location.reload(), 300)
+}
+
 if (validateAllBtn) {
   document.addEventListener('qs:bulk-validation-start', function () {
     previouslyBlocked = !kometaState.showYAML
@@ -871,24 +899,23 @@ if (validateAllBtn) {
         validateAllStatusBulkTime.textContent = formatLocalTimestamp(parsed)
       }
     }
+    syncValidationRollupBadgeFromSummary(summary)
 
     if (finalGateState.stage === 'freshness') {
       resolveFreshnessGateAfterBulkValidation()
-      showToast('info', 'Validation complete. Refreshing Kometa...')
-      setTimeout(() => window.location.reload(), 300)
+      reloadAfterBulkValidationRefresh(data, summary)
       return
     }
 
     updateValidationGate()
+    syncValidationRollupBadgeFromSummary(summary)
     const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])
     if (previouslyBlocked && kometaState.showYAML) {
-      showToast('info', 'Validation complete. Refreshing YAML output...')
-      setTimeout(() => window.location.reload(), 300)
+      reloadAfterBulkValidationRefresh(data, summary)
       return
     }
     if (anyNewlyValidated) {
-      showToast('info', 'Validation updated. Refreshing YAML output...')
-      setTimeout(() => window.location.reload(), 300)
+      reloadAfterBulkValidationRefresh(data, summary)
     }
   })
 
@@ -910,22 +937,26 @@ if (validateAllBtn) {
         failed: Number(badge.dataset.failed || 0),
         skipped: Number(badge.dataset.skipped || 0)
       }
-      const state = window.QSBulkValidation.getSummaryState(initialSummary)
-      badge.classList.remove(
-        'qs-validation-rollup-badge--unknown',
-        'qs-validation-rollup-badge--ok',
-        'qs-validation-rollup-badge--warn',
-        'qs-validation-rollup-badge--error'
-      )
-      badge.classList.add(`qs-validation-rollup-badge--${state}`)
+      if (typeof window.QSBulkValidation.applyRollupBadge === 'function') {
+        window.QSBulkValidation.applyRollupBadge(initialSummary)
+      } else {
+        const state = window.QSBulkValidation.getSummaryState(initialSummary)
+        badge.classList.remove(
+          'qs-validation-rollup-badge--unknown',
+          'qs-validation-rollup-badge--ok',
+          'qs-validation-rollup-badge--warn',
+          'qs-validation-rollup-badge--error'
+        )
+        badge.classList.add(`qs-validation-rollup-badge--${state}`)
+      }
     }
   }
 
   if (getFinalGateState().autoValidate && window.QSBulkValidation && typeof window.QSBulkValidation.run === 'function') {
     window.QSBulkValidation.run({ source: 'final-freshness', silentToast: true })
-      .then(() => {
-        showToast('info', 'Validate All complete. Refreshing Kometa...')
-        setTimeout(() => window.location.reload(), 300)
+      .then((data) => {
+        const summary = data && data.summary ? data.summary : {}
+        reloadAfterBulkValidationRefresh(data, summary)
       })
       .catch(() => {})
   }
