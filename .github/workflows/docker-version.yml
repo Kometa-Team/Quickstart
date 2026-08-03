@@ -47,26 +47,23 @@ jobs:
           ref: develop
 
       - name: Build Changelog
-        id: build-changelog
         run: |
           latest_tag="$(git describe --tags --abbrev=0 --match "v*" ${{ needs.get-version.outputs.version }}^)"
           echo "${latest_tag}"
 
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "changelog<<$EOF" >> $GITHUB_OUTPUT
-          echo "## Commits" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          GIT_LOG_OUTPUT=$(git log ${latest_tag}..${{ needs.get-version.outputs.version }} --pretty='* [\`%h\`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')
-          echo "$GIT_LOG_OUTPUT" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...${{ needs.get-version.outputs.version }})" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+          {
+            echo "## Commits"
+            echo ""
+            git log "${latest_tag}..${{ needs.get-version.outputs.version }}" --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)'
+            echo ""
+            echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...${{ needs.get-version.outputs.version }})"
+          } > changelog.md
 
       - name: Create Releases
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          echo "${{ steps.build-changelog.outputs.changelog }}"
+          cat changelog.md
 
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
@@ -80,7 +77,7 @@ jobs:
 
           gh release create ${{ github.event.ref }} \
             --title "${{ vars.NAME }} ${{ github.event.ref }}" \
-            --notes "${{ steps.build-changelog.outputs.changelog }}" \
+            --notes-file changelog.md \
             --target "${{ needs.increment-build.outputs.commit-hash }}"
 
       - name: Discord Failure Notification
