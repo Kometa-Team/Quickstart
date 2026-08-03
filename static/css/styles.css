@@ -1220,10 +1220,25 @@ body.qs-has-workspace .footer {
     border-color: rgba(245, 158, 11, 0.55);
 }
 
+.rating-mapping-option-via--optional {
+    color: #e0f2fe;
+    background: rgba(14, 165, 233, 0.18);
+    border-color: rgba(14, 165, 233, 0.55);
+}
+
 .rating-mapping-option-via--neutral {
     color: var(--theme-text-muted);
     background: rgba(148, 163, 184, 0.12);
     border-color: rgba(148, 163, 184, 0.35);
+}
+
+.qs-validation-group-row th {
+    background: rgba(14, 165, 233, 0.08) !important;
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-top: 1px solid rgba(14, 165, 233, 0.25);
 }
 
 

@@ -25,21 +25,21 @@
 //     - state flags flipped, phase 'queued', section hidden
 //     - button labels vary by (forceUpdate, installed) combination
 //     - fetch called with right body
-//     - heartbeat toast fires immediately + every 30s
-//     - 409 response: warning toast, phase 'failed', doesn't throw
+//     - progress is shown inline rather than as heartbeat toasts
+//     - 409 response: status log line, phase 'failed', doesn't throw
 //     - success + job_id: kicks off polling
-//     - synchronous failure (defensive fallback): error toast
+//     - synchronous failure (defensive fallback): status log line
 //     - fetch throws: catch handler
 //
 //   cleanupUI (indirectly via completion):
-//     - clears heartbeat, stops polling, resets buttons
+//     - stops polling, resets buttons
 //     - postUpdateLabel sets button HTML + schedules reset
 //
 //   finalize (indirectly via completed job polling):
 //     - progress.done=false -> keep polling
-//     - progress.done=true + update_success -> success path
-//     - progress.done=true + up_to_date -> 'up to date' variant
-//     - progress.done=true + !update_success -> failure path
+//     - progress.done=true + update_success -> status log success path
+//     - progress.done=true + up_to_date -> status log 'up to date' variant
+//     - progress.done=true + !update_success -> status log failure path
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -67,9 +67,6 @@ vi.mock('../../../static/local-js/modules/kometa/_headerBadges.js', () => ({
 vi.mock('../../../static/local-js/modules/kometa/_updatePolling.js', () => ({
   stopKometaUpdatePolling: vi.fn(),
   pollKometaUpdateProgress: vi.fn()
-}))
-vi.mock('../../../static/local-js/modules/kometa/_util.js', () => ({
-  formatElapsed: vi.fn((ms) => `${Math.floor(ms / 1000)}s`)
 }))
 vi.mock('../../../static/local-js/modules/kometa/_validateRoot.js', () => ({
   validateKometaRoot: vi.fn()
@@ -479,31 +476,32 @@ describe('callUpdateKometa -- path 5: full update setup', () => {
     await flush()
   })
 
-  it("shows initial heartbeat toast immediately", () => {
+  it("does not show heartbeat toast during full update setup", () => {
     installFixture()
     mockFetchWith(okJson({ success: true }))
     callUpdateKometa()
-    expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('Still working on Kometa'))).toBe(true)
+    expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('queued')
+    expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('Still working on Kometa'))).toBe(false)
   })
 })
 
 // ---------------------------------------------------------------------
-// Path 5: Heartbeat interval
+// Path 5: Inline progress instead of heartbeat interval
 // ---------------------------------------------------------------------
 
-describe('callUpdateKometa -- heartbeat toast', () => {
-  it("fires additional heartbeat toasts every 30 seconds", async () => {
+describe('callUpdateKometa -- no heartbeat toast', () => {
+  it("does not emit repeated heartbeat toasts while update request is pending", async () => {
     vi.useFakeTimers()
     installFixture()
-    // Never-resolving fetch so cleanup doesn't fire during our tick
+    // Never-resolving fetch so cleanup does not fire during our tick.
     global.fetch = vi.fn(() => new Promise(() => {}))
     callUpdateKometa()
     const startCount = toastCalls.filter(c => c[1].includes('Still working')).length
-    expect(startCount).toBe(1)  // initial
+    expect(startCount).toBe(0)
     vi.advanceTimersByTime(30000)
-    expect(toastCalls.filter(c => c[1].includes('Still working')).length).toBe(2)
+    expect(toastCalls.filter(c => c[1].includes('Still working')).length).toBe(0)
     vi.advanceTimersByTime(30000)
-    expect(toastCalls.filter(c => c[1].includes('Still working')).length).toBe(3)
+    expect(toastCalls.filter(c => c[1].includes('Still working')).length).toBe(0)
   })
 })
 
@@ -512,14 +510,15 @@ describe('callUpdateKometa -- heartbeat toast', () => {
 // ---------------------------------------------------------------------
 
 describe('callUpdateKometa -- 409 response (Kometa running)', () => {
-  it("shows warning + phase 'failed' + doesn't throw", async () => {
+  it("writes status line + phase 'failed' + doesn't throw", async () => {
     installFixture()
     mockFetchWith(errJson(409, { error: 'Kometa is running' }))
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'warning' && c[1].includes('Kometa is running'))).toBe(true)
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('Kometa is running')
+    expect(toastCalls.some(c => c[0] === 'warning' && c[1].includes('Kometa is running'))).toBe(false)
     expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('failed')
-    // .blocked path -- so should NOT trigger the else-branch's error toast
+    // .blocked path -- so should NOT trigger the defensive-failure toast path.
     expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('failed'))).toBe(false)
   })
 
@@ -528,7 +527,8 @@ describe('callUpdateKometa -- 409 response (Kometa running)', () => {
     mockFetchWith(errJson(409, {}))
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'warning' && c[1].includes('Kometa is running'))).toBe(true)
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('Update blocked: Kometa running.')
+    expect(toastCalls.some(c => c[0] === 'warning' && c[1].includes('Kometa is running'))).toBe(false)
   })
 })
 
@@ -543,12 +543,14 @@ describe('callUpdateKometa -- 409 response (Kometa running)', () => {
 // ---------------------------------------------------------------------
 
 describe('callUpdateKometa -- synchronous failure', () => {
-  it("shows error toast when success=false and NOT blocked", async () => {
+  it("writes status line when success=false and NOT blocked", async () => {
     installFixture()
     mockFetchWith(okJson({ success: false, error: 'boom' }))
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('boom'))).toBe(true)
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('boom')
+    expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('failed')
+    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('boom'))).toBe(false)
     expect(validateKometaRoot).toHaveBeenCalledWith({ appendStatus: true })
   })
 
@@ -557,7 +559,8 @@ describe('callUpdateKometa -- synchronous failure', () => {
     mockFetchWith(okJson({ success: false }))
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('Kometa update failed'))).toBe(true)
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('Kometa update failed.')
+    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('Kometa update failed'))).toBe(false)
   })
 })
 
@@ -566,7 +569,7 @@ describe('callUpdateKometa -- synchronous failure', () => {
 // ---------------------------------------------------------------------
 
 describe('callUpdateKometa -- fetch reject', () => {
-  it("shows error toast + phase 'failed' + cleans up", async () => {
+  it("writes status line + phase 'failed' + cleans up", async () => {
     installFixture()
     global.fetch = vi.fn(() => Promise.reject(new Error('network down')))
     // Silence expected console.error from the catch handler
@@ -575,7 +578,8 @@ describe('callUpdateKometa -- fetch reject', () => {
     callUpdateKometa()
     await flush()
     console.error = originalErr
-    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('Error during Kometa update'))).toBe(true)
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('Error occurred during Kometa update: network down')
+    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('Error during Kometa update'))).toBe(false)
     expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('failed')
     // Cleanup: state flag flipped back
     expect(kometaState.kometaUpdating).toBe(false)
@@ -608,7 +612,7 @@ describe('callUpdateKometa -- background job polling', () => {
     })
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('already up to date'))).toBe(true)
+    expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('already up to date'))).toBe(false)
     expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('ready')
     expect(appendKometaStatusLine).toHaveBeenCalledWith('Kometa is already up to date.')
     expect(validateKometaRoot).toHaveBeenCalledWith({ appendStatus: true })
@@ -624,7 +628,7 @@ describe('callUpdateKometa -- background job polling', () => {
     })
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'success' && c[1].includes('completed'))).toBe(true)
+    expect(toastCalls.some(c => c[0] === 'success' && c[1].includes('completed'))).toBe(false)
     expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('validating')
     expect(appendKometaStatusLine).toHaveBeenCalledWith('Kometa update completed successfully.')
   })
@@ -638,7 +642,8 @@ describe('callUpdateKometa -- background job polling', () => {
     })
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('Kometa update failed'))).toBe(true)
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('Kometa update failed.')
+    expect(toastCalls.some(c => c[0] === 'error' && c[1].includes('Kometa update failed'))).toBe(false)
     expect(setKometaUpdatePhaseBadge).toHaveBeenCalledWith('failed')
     expect(validateKometaRoot).toHaveBeenCalledWith({ appendStatus: true })
   })
@@ -655,7 +660,8 @@ describe('callUpdateKometa -- background job polling', () => {
     })
     callUpdateKometa()
     await flush()
-    expect(toastCalls.some(c => c[0] === 'error')).toBe(true)  // failure path
+    expect(appendKometaStatusLine).toHaveBeenCalledWith('Kometa update failed.')
+    expect(toastCalls.some(c => c[0] === 'error')).toBe(false)  // failure path uses inline status
   })
 
   it("falls back to 'success' when 'update_success' is undefined", async () => {
@@ -796,7 +802,7 @@ describe('callUpdateKometa -- cleanupUI', () => {
     expect(syncFinalAccordionRollups.mock.calls.length).toBeGreaterThanOrEqual(2)
   })
 
-  it("stops the heartbeat interval on cleanup", async () => {
+  it("does not emit heartbeat toasts after cleanup", async () => {
     vi.useFakeTimers()
     installFixture()
     mockFetchWith(okJson({ success: true, job_id: 'JOB-C5' }))
@@ -810,7 +816,7 @@ describe('callUpdateKometa -- cleanupUI', () => {
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
-    // Heartbeat should now be cleared. Advancing 60s shouldn't add new toasts.
+    // Heartbeat toasts are no longer used. Advancing 60s should not add any.
     const before = toastCalls.filter(c => c[1].includes('Still working')).length
     await vi.advanceTimersByTimeAsync(60000)
     const after = toastCalls.filter(c => c[1].includes('Still working')).length

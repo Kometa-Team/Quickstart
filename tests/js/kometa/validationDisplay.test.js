@@ -41,12 +41,13 @@
 //     - status + reason + array details (comma-joined)
 //     - status + reason + empty array (no details suffix)
 //
-//   updateValidationRow (11):
+//   updateValidationRow:
 //     - no-op when row missing
 //     - no-op when result missing
 //     - sets --validated pill for 'validated' status
 //     - sets --unvalidated pill for 'failed' status
 //     - sets --neutral pill for 'skipped' status
+//     - sets --optional pill for skipped optional rows
 //     - removes prior pill classes before adding new one
 //     - populates timestamp + dataset when validated_at set
 //     - skips timestamp when validated_at empty
@@ -288,13 +289,25 @@ describe('updateValidationRow', () => {
     expect(document.querySelector('.validation-status-pill').classList.contains('rating-mapping-option-via--validated')).toBe(false)
   })
 
+  it("sets --neutral pill class for skipped optional rows", () => {
+    const row = document.querySelector('[data-validation-key="plex"]')
+    row.dataset.validationGroup = 'optional'
+    document.querySelector('.validation-status-pill').className = 'validation-status-pill rating-mapping-option-via--unvalidated'
+    updateValidationRow('plex', { status: 'skipped' })
+    const pill = document.querySelector('.validation-status-pill')
+    expect(pill.classList.contains('rating-mapping-option-via--neutral')).toBe(true)
+    expect(pill.classList.contains('rating-mapping-option-via--optional')).toBe(false)
+    expect(pill.classList.contains('rating-mapping-option-via--unvalidated')).toBe(false)
+  })
+
   it("clears prior pill classes before adding new one (unknown status)", () => {
-    document.querySelector('.validation-status-pill').className = 'validation-status-pill rating-mapping-option-via--validated'
+    document.querySelector('.validation-status-pill').className = 'validation-status-pill rating-mapping-option-via--validated rating-mapping-option-via--optional'
     updateValidationRow('plex', { status: 'weird-unknown-status' })
-    // All three known classes should be gone; no new one added.
+    // All known state classes should be gone; no new one added.
     const pill = document.querySelector('.validation-status-pill')
     expect(pill.classList.contains('rating-mapping-option-via--validated')).toBe(false)
     expect(pill.classList.contains('rating-mapping-option-via--unvalidated')).toBe(false)
+    expect(pill.classList.contains('rating-mapping-option-via--optional')).toBe(false)
     expect(pill.classList.contains('rating-mapping-option-via--neutral')).toBe(false)
   })
 

@@ -22,6 +22,10 @@ from modules.background_jobs import (
 bp = Blueprint("kometa_updates", __name__)
 
 
+def _kometa_root_validation_error(error, logs, status_code=200):
+    return jsonify(success=False, error=error, log=logs), status_code
+
+
 @bp.route("/save-kometa-install-mode", methods=["POST"])
 def save_kometa_install_mode():
     payload = request.get_json(silent=True) or {}
@@ -143,9 +147,16 @@ def validate_kometa_root():
         print(msg, file=sys.stderr)
         logs.append(msg)
 
-    target = kometa_install.resolve_kometa_request_target(payload, logs=logs, require_existing_root=True)
+    def fail(error, status_code=200):
+        return _kometa_root_validation_error(error, logs, status_code=status_code)
+
+    try:
+        target = kometa_install.resolve_kometa_request_target(payload, logs=logs, require_existing_root=True)
+    except (OSError, ValueError) as exc:
+        log(f"❌ Unable to validate Kometa path: {exc}")
+        return fail("Unable to validate Kometa path.")
     if target.get("error"):
-        return jsonify(success=False, error=target["error"], log=logs), 400
+        return fail(target["error"])
     install_mode = target["install_mode"]
     p = target["path_obj"]
     config_dir = target.get("config_dir")
@@ -154,7 +165,7 @@ def validate_kometa_root():
     if install_mode == kometa_install.KOMETA_INSTALL_MODE_EXTERNAL:
         if not p or not p.exists() or not p.is_dir():
             log("❌ The selected external Kometa config path does not exist in this Quickstart environment.")
-            return jsonify(success=False, error="The selected external Kometa config path does not exist in this Quickstart environment.", log=logs), 400
+            return fail("The selected external Kometa config path does not exist in this Quickstart environment.")
         log(f"🔍 Checking external Kometa config path: {p}")
         if log_dir and Path(log_dir).exists():
             log(f"📄 External Kometa logs are accessible at: {log_dir}")
@@ -164,13 +175,13 @@ def validate_kometa_root():
             sync_result = kometa_install.sync_generated_yaml_and_assets_to_kometa_config(config_dir, payload.get("config_name", "kometa"), logs=logs)
         except FileNotFoundError:
             log("❌ Generated YAML not found.")
-            return jsonify(success=False, error="Generated YAML not found.", log=logs), 500
+            return fail("Generated YAML not found.")
         except ValueError as exc:
             log(f"❌ {exc}")
-            return jsonify(success=False, error=str(exc), log=logs), 400
+            return fail(str(exc))
         except Exception as exc:
             log(f"⚠️ Failed to sync config-owned assets referenced in the config: {exc}")
-            return jsonify(success=False, error="Failed to sync generated config to the external Kometa config path.", log=logs), 500
+            return fail("Failed to sync generated config to the external Kometa config path.")
         log("✅ External Kometa config path is valid and synced.")
         return (
             jsonify(
@@ -198,33 +209,26 @@ def validate_kometa_root():
             log(f"📁 Created Kometa root: {p}")
         except Exception as e:
             log(f"❌ Failed to create Kometa root: {e}")
-            return jsonify(success=False, error="Failed to create Kometa root.", log=logs), 500
+            return fail("Failed to create Kometa root.")
     elif install_mode == kometa_install.KOMETA_INSTALL_MODE_EXISTING and not p.exists():
         log("❌ The selected existing Kometa path does not exist in this Quickstart environment.")
-        return jsonify(success=False, error="The selected existing Kometa path does not exist in this Quickstart environment.", log=logs), 400
+        return fail("The selected existing Kometa path does not exist in this Quickstart environment.")
     elif install_mode == kometa_install.KOMETA_INSTALL_MODE_EXISTING:
         missing = kometa_install.validate_existing_kometa_root(p)
         if missing:
             log("❌ The selected existing Kometa path does not look like a Kometa root.")
             log("ℹ️ Choose the folder that contains kometa.py, requirements.txt, and config/.")
-            return (
-                jsonify(
-                    success=False,
-                    error="Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.",
-                    log=logs,
-                ),
-                400,
-            )
+            return fail("Choose the Kometa root folder that contains kometa.py, requirements.txt, and config/.")
 
     try:
         if install_mode == kometa_install.KOMETA_INSTALL_MODE_MANAGED:
             (p / "config").mkdir(parents=True, exist_ok=True)
         elif not (p / "config").exists():
             log("❌ The selected existing Kometa path is missing its config folder.")
-            return jsonify(success=False, error="The selected existing Kometa path is missing its config folder.", log=logs), 400
+            return fail("The selected existing Kometa path is missing its config folder.")
     except Exception as e:
         log(f"❌ Failed to create config folder: {e}")
-        return jsonify(success=False, error="Failed to create config folder.", log=logs), 500
+        return fail("Failed to create config folder.")
 
     # Keep POSIX (internal) and native (display) versions
     kometa_root_posix = p.as_posix()
@@ -241,7 +245,7 @@ def validate_kometa_root():
     if missing_tools:
         for tool in missing_tools:
             log(f"❌ Required tool not found: {tool}")
-        return jsonify(success=False, error=f"Missing required tools: {', '.join(missing_tools)}", log=logs), 400
+        return fail(f"Missing required tools: {', '.join(missing_tools)}")
 
     log("✅ All required external tools are available.")
 
@@ -275,7 +279,7 @@ def validate_kometa_root():
         fpath = p / fname
         if not fpath.exists():
             log(f"❌ Required file missing: {fname}")
-            return jsonify(success=False, error=f"{fname} not found.", log=logs), 400
+            return fail(f"{fname} not found.")
         log(f"✔️ Found required file: {fname}")
 
     # --- Virtualenv & deps under <root>/kometa-venv ---
@@ -292,13 +296,13 @@ def validate_kometa_root():
             log("✅ Virtual environment created.")
         except subprocess.CalledProcessError as e:
             log(f"❌ Failed to create venv: {str(e)}")
-            return jsonify(success=False, error="Failed to create venv.", log=logs), 500
+            return fail("Failed to create venv.")
     else:
         log("ℹ️ Virtual environment already exists.")
 
     if not pip_bin.exists():
         log(f"❌ pip not found in venv at {pip_bin}")
-        return jsonify(success=False, error=f"pip not found in {pip_bin}", log=logs), 500
+        return fail(f"pip not found in {pip_bin}")
 
     log("⬆️ Checking pip version and attempting upgrade...")
     try:
@@ -309,7 +313,7 @@ def validate_kometa_root():
             log(f"    {line}")
     except subprocess.CalledProcessError as e:
         log(f"❌ pip upgrade failed: {e}")
-        return jsonify(success=False, error="pip upgrade failed.", log=logs), 500
+        return fail("pip upgrade failed.")
 
     log("📦 Installing requirements.txt...")
     try:
@@ -326,16 +330,16 @@ def validate_kometa_root():
             log(f"    {line}")
     except subprocess.CalledProcessError as e:
         log(f"❌ Error installing requirements: {str(e)}")
-        return jsonify(success=False, error="Failed pip install.", log=logs), 500
+        return fail("Failed pip install.")
 
     try:
         kometa_install.sync_generated_yaml_and_assets_to_kometa_config(p / "config", payload.get("config_name", "kometa"), logs=logs)
     except FileNotFoundError:
         log("❌ Generated YAML not found.")
-        return jsonify(success=False, error="Generated YAML not found.", log=logs), 500
+        return fail("Generated YAML not found.")
     except ValueError as exc:
         log(f"❌ {exc}")
-        return jsonify(success=False, error=str(exc), log=logs), 400
+        return fail(str(exc))
     except Exception as e:
         log(f"⚠️ Failed to sync config-owned assets referenced in the config: {e}")
 

@@ -180,7 +180,7 @@ export function formatValidationResult (status, reason, details) {
  *
  * Updates (in order):
  *   1. The .validation-status-pill CSS class (removes prior, adds one
- *      of --validated / --unvalidated / --neutral based on status).
+ *      of --validated / --unvalidated / --neutral based on status.
  *   2. The .validation-timestamp textContent + dataset.validationIso
  *      when result.validated_at is set + parseable.
  *   3. The .validation-age textContent + dataset.validationIsoAge
@@ -206,6 +206,7 @@ export function updateValidationRow (key, result) {
     pill.classList.remove(
       'rating-mapping-option-via--validated',
       'rating-mapping-option-via--unvalidated',
+      'rating-mapping-option-via--optional',
       'rating-mapping-option-via--neutral'
     )
     if (status === 'validated') {

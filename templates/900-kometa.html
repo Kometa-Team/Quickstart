@@ -109,27 +109,36 @@
 </div>
 {% endif %}
 
-{% if validation_meta and (not final_gate or final_gate.stage != 'todo') %}
+{% if validation_groups and (not final_gate or final_gate.stage != 'todo') %}
 <div class="accordion mt-3 mb-3" id="validation-status-accordion">
   <div class="accordion-item">
     <h2 class="accordion-header" id="validation-status-heading">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
         data-bs-target="#validation-status-collapse" aria-expanded="false" aria-controls="validation-status-collapse">
         Validation status
-        {% set rollup_validated = validation_rollup_summary.get('validated', 0) if validation_rollup_summary else 0 %}
-        {% set rollup_failed = validation_rollup_summary.get('failed', 0) if validation_rollup_summary else 0 %}
-        {% set rollup_skipped = validation_rollup_summary.get('skipped', 0) if validation_rollup_summary else 0 %}
-        {% set rollup_unknown = validation_rollup_summary.get('unknown', 0) if validation_rollup_summary else 0 %}
-        {% if validation_rollup_state == 'error' %}
-        {% set rollup_label = rollup_failed ~ ' failed' %}
+        {% set rollup_validated = (validation_rollup_summary.get('validated', 0) if validation_rollup_summary else 0)|int %}
+        {% set rollup_failed = (validation_rollup_summary.get('failed', 0) if validation_rollup_summary else 0)|int %}
+        {% set rollup_skipped = (validation_rollup_summary.get('skipped', 0) if validation_rollup_summary else 0)|int %}
+        {% set rollup_unknown = (validation_rollup_summary.get('unknown', 0) if validation_rollup_summary else 0)|int %}
+        {% if rollup_failed > 0 %}
+        {% set rollup_display_state = 'error' %}
+        {% elif rollup_validated > 0 %}
+        {% set rollup_display_state = 'ok' %}
         {% elif validation_rollup_state == 'warn' %}
-        {% set rollup_label = rollup_skipped ~ ' pending' %}
-        {% elif validation_rollup_state == 'ok' %}
+        {% set rollup_display_state = 'unknown' %}
+        {% else %}
+        {% set rollup_display_state = validation_rollup_state %}
+        {% endif %}
+        {% if rollup_display_state == 'error' %}
+        {% set rollup_label = rollup_failed ~ ' failed' %}
+        {% elif rollup_display_state == 'ok' %}
         {% set rollup_label = 'All good' %}
+        {% elif rollup_display_state == 'warn' %}
+        {% set rollup_label = 'Review needed' %}
         {% else %}
         {% set rollup_label = 'Not run' %}
         {% endif %}
-        <span id="validation-status-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--{{ validation_rollup_state }}"
+        <span id="validation-status-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--{{ rollup_display_state }}"
           data-qs-validation-rollup-badge
           data-validated="{{ rollup_validated }}"
           data-failed="{{ rollup_failed }}"
@@ -152,12 +161,11 @@
             <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
           </button>
         </div>
-        <div id="validate-all-status" class="small text-muted d-none"></div>
         <div class="small text-muted text-uppercase">Validate All run summary</div>
         {% set validate_all_summary = validation_bulk_rollup | replace('Completed. ', '') | replace('Completed ', '') if validation_bulk_rollup else '' %}
         <div id="validate-all-status-bulk" class="small text-muted">{{ validate_all_summary if validate_all_summary else 'No Validate All run has completed yet.' }}</div>
         <div class="small text-muted mb-2">
-          Run completed:
+          Validate All completed:
           <span id="validate-all-status-bulk-time" data-validation-iso="{{ validation_bulk_rollup_at | default('', true) }}">—</span>
         </div>
         <div class="table-responsive" data-qs-sticky-first="true">
@@ -171,12 +179,15 @@
               </tr>
             </thead>
             <tbody>
-              {% for entry in validation_meta %}
-              {% if entry.has_validation %}
-              <tr data-validation-key="{{ entry.key }}">
+              {% for group in validation_groups %}
+              <tr class="qs-validation-group-row" data-validation-group-header="{{ group.key }}">
+                <th colspan="4">{{ group.label }}</th>
+              </tr>
+              {% for entry in group.entries %}
+              <tr data-validation-key="{{ entry.key }}" data-validation-group="{{ entry.group_key }}">
                 <td>
                   <div class="d-flex flex-column gap-1">
-                    <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--{{ 'validated' if entry.validated else 'unvalidated' }}"
+                    <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--{{ entry.pill_state }}"
                       href="javascript:void(0);" data-jumpto-page="{{ entry.page }}">
                       {{ entry.label }}
                     </a>
@@ -210,7 +221,7 @@
                   {% endif %}
                 </td>
               </tr>
-              {% endif %}
+              {% endfor %}
               {% endfor %}
             </tbody>
           </table>
@@ -479,6 +490,18 @@
               <div id="kometa-update-box" class="alert alert-warning mt-2 mb-0 d-none" role="alert">
                 Update available: <span id="kometa-local-version"></span> -> <span id="kometa-remote-version"></span>.
                 <span id="kometa-update-box-note">{{ 'Update this existing Kometa install manually outside Quickstart before running.' if page_info.kometa_install_mode == 'existing' else 'Click "Update Available" to apply it.' }}</span>
+              </div>
+
+              <div id="kometa-update-progress" class="alert alert-secondary mt-2 mb-0 d-none" role="status" aria-live="polite">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                  <div class="fw-semibold" id="kometa-update-progress-title">Kometa update progress</div>
+                  <span id="kometa-update-progress-percent" class="badge text-bg-secondary">0%</span>
+                </div>
+                <div id="kometa-update-progress-message" class="small text-muted mb-2">No Kometa update is running.</div>
+                <div class="progress" style="height: 10px;">
+                  <div id="kometa-update-progress-bar" class="progress-bar bg-secondary" role="progressbar"
+                    style="width: 0%;" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+                </div>
               </div>
 
               <pre id="kometa-validation-log" class="form-control bg-dark text-light mt-3"

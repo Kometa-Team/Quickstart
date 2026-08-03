@@ -6592,6 +6592,10 @@ def test_save_kometa_install_mode_persists_existing_root(client, tmp_path):
     assert user_entered is True
     assert stored["kometa"]["install_mode"] == "existing"
     assert stored["kometa"]["existing_root"] == str(existing_root)
+    assert stored["validation_status"] == "validated"
+    assert stored["validated"] is True
+    assert stored["validated_at"]
+    assert stored["validation_updated_at"] == stored["validated_at"]
 
 
 def test_validate_kometa_root_existing_mode_does_not_create_missing_root(client, tmp_path):
@@ -6606,11 +6610,78 @@ def test_validate_kometa_root_existing_mode_does_not_create_missing_root(client,
         },
     )
 
-    assert resp.status_code == 400
+    assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["success"] is False
     assert "does not exist in this Quickstart environment" in payload["error"]
     assert not missing_root.exists()
+
+
+def test_validate_kometa_root_external_missing_generated_yaml_returns_json_error(client, tmp_path):
+    external_config = tmp_path / "kometa-config"
+    external_config.mkdir(parents=True, exist_ok=True)
+
+    resp = client.post(
+        "/validate-kometa-root",
+        json={
+            "config_name": "pytest_missing_generated_config",
+            "install_mode": "external",
+            "external_config_root": str(external_config),
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert payload["error"] == "Generated YAML not found."
+
+
+def test_validate_kometa_root_external_sync_exception_returns_json_error(client, tmp_path, monkeypatch):
+    from blueprints import kometa_updates
+
+    external_config = tmp_path / "kometa-config"
+    external_config.mkdir(parents=True, exist_ok=True)
+
+    def fail_sync(*args, **kwargs):
+        raise RuntimeError("sync failed")
+
+    monkeypatch.setattr(
+        kometa_updates.kometa_install,
+        "sync_generated_yaml_and_assets_to_kometa_config",
+        fail_sync,
+    )
+
+    resp = client.post(
+        "/validate-kometa-root",
+        json={
+            "config_name": "pytest_external_sync_failure",
+            "install_mode": "external",
+            "external_config_root": str(external_config),
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert payload["error"] == "Failed to sync generated config to the external Kometa config path."
+    assert any("sync failed" in line for line in payload["log"])
+
+
+def test_validate_kometa_root_target_resolution_exception_returns_json_error(client, monkeypatch):
+    from blueprints import kometa_updates
+
+    def fail_resolution(*args, **kwargs):
+        raise ValueError("bad target")
+
+    monkeypatch.setattr(kometa_updates.kometa_install, "resolve_kometa_request_target", fail_resolution)
+
+    resp = client.post("/validate-kometa-root", json={"config_name": "pytest_bad_kometa_target"})
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert payload["error"] == "Unable to validate Kometa path."
+    assert any("bad target" in line for line in payload["log"])
 
 
 def test_save_kometa_install_mode_rejects_non_kometa_folder(client, tmp_path):
@@ -6665,6 +6736,10 @@ def test_save_kometa_install_mode_persists_external_paths(client, tmp_path):
     assert stored["kometa"]["install_mode"] == "external"
     assert stored["kometa"]["external_config_root"] == str(external_config)
     assert stored["kometa"]["external_log_root"] == str(external_logs)
+    assert stored["validation_status"] == "validated"
+    assert stored["validated"] is True
+    assert stored["validated_at"]
+    assert stored["validation_updated_at"] == stored["validated_at"]
 
 
 def test_build_workspace_status_context_marks_start_error_for_missing_existing_kometa_root(app, tmp_path, qs_module):

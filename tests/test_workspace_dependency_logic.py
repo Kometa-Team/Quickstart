@@ -1690,3 +1690,49 @@ def test_libraries_mal_dependency_hint_endpoint_non_mal_source_returns_empty(cli
     assert payload["success"] is True
     assert payload["required"] is False
     assert payload["reasons"] == []
+
+
+def test_live_validation_rollup_skipped_optional_steps_do_not_warn():
+    from modules.workspace_rollups import _build_live_validation_rollup
+
+    template_keys = ["010-plex", "020-tmdb", "030-tautulli", "040-github"]
+    step_statuses = {
+        "010-plex": "ok",
+        "020-tmdb": "ok",
+        "030-tautulli": "warn",
+        "040-github": "warn",
+    }
+
+    rollup = _build_live_validation_rollup(step_statuses, template_keys)
+
+    assert rollup["counts"] == {"validated": 2, "failed": 0, "skipped": 2, "unknown": 0}
+    assert rollup["state"] == "ok"
+
+
+def test_live_validation_rollup_many_skipped_optional_steps_stays_green():
+    from modules.workspace_status_constants import QS_VALIDATION_STEP_KEYS
+    from modules.workspace_rollups import _build_live_validation_rollup
+
+    template_keys = sorted(QS_VALIDATION_STEP_KEYS)
+    validated_keys = {"010-plex", "020-tmdb", "025-libraries", "100-anidb", "150-settings"}
+    step_statuses = {key: ("ok" if key in validated_keys else "warn") for key in template_keys}
+
+    rollup = _build_live_validation_rollup(step_statuses, template_keys)
+
+    assert rollup["counts"] == {"validated": 5, "failed": 0, "skipped": 14, "unknown": 0}
+    assert rollup["state"] == "ok"
+
+
+def test_live_validation_rollup_skipped_only_steps_stay_neutral():
+    from modules.workspace_rollups import _build_live_validation_rollup
+
+    template_keys = ["030-tautulli", "040-github"]
+    step_statuses = {
+        "030-tautulli": "warn",
+        "040-github": "warn",
+    }
+
+    rollup = _build_live_validation_rollup(step_statuses, template_keys)
+
+    assert rollup["counts"] == {"validated": 0, "failed": 0, "skipped": 2, "unknown": 0}
+    assert rollup["state"] == "unknown"
