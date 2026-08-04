@@ -215,11 +215,7 @@ def get_logscan_delta_files(log_dir=None, include_archive=True):
 
     ingest_cache = quickstart._load_logscan_ingest_cache()
     cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
-    known_md5s = {
-        entry.get("content_md5")
-        for entry in cache_logs.values()
-        if isinstance(entry, dict) and entry.get("content_md5")
-    }
+    known_md5s = {entry.get("content_md5") for entry in cache_logs.values() if isinstance(entry, dict) and entry.get("content_md5")}
     candidates = []
     for path in get_logscan_log_files(log_dir=log_dir, include_archive=include_archive):
         cache_entry = cache_logs.get(str(path.resolve()), {})
