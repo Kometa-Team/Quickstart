@@ -4,7 +4,7 @@
 # that broken Python builds (missing _sqlite3, _ssl, etc.) surface a
 # friendly error instead of a confusing stdlib traceback. That makes
 # this file's import-order-vs-code arrangement look like an E402 to
-# ruff for every subsequent import, so we suppress E402 file-wide.
+# ruff for every subsequent import, so we suppress E402 file-wide!
 
 # Startup preflight: probe stdlib C-extensions (sqlite3, _ssl) BEFORE
 # any third-party import runs. Broken Python builds (usually pyenv/asdf
