@@ -103,6 +103,7 @@ const moduleFiles = [
   'static/local-js/040-github.js',
   'static/local-js/050-omdb.js',
   'static/local-js/060-mdblist.js',
+  'static/local-js/065-serializd.js',
   'static/local-js/067-floppy.js',
   'static/local-js/070-notifiarr.js',
   'static/local-js/080-gotify.js',

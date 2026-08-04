@@ -1443,6 +1443,7 @@ function qsCurrentStepHasMeaningfulInput () {
     '040-github': ['github_token'],
     '050-omdb': ['omdb_apikey'],
     '060-mdblist': ['mdblist_apikey'],
+    '065-serializd': ['serializd_email', 'serializd_password'],
     '067-floppy': ['floppy_url', 'floppy_token'],
     '070-notifiarr': ['notifiarr_apikey'],
     '080-gotify': ['gotify_url', 'gotify_token'],

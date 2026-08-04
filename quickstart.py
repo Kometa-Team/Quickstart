@@ -461,6 +461,7 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "040-github",
         "050-omdb",
         "060-mdblist",
+        "065-serializd",
         "067-floppy",
         "070-notifiarr",
         "080-gotify",
@@ -493,6 +494,7 @@ VALIDATION_DOCS = {
     "tracearr": f"{VALIDATION_DOC_BASE}035-tracearr",
     "omdb": f"{VALIDATION_DOC_BASE}050-omdb",
     "mdblist": f"{VALIDATION_DOC_BASE}060-mdblist",
+    "serializd": f"{VALIDATION_DOC_BASE}065-serializd",
     "floppy": f"{VALIDATION_DOC_BASE}067-floppy",
     "notifiarr": f"{VALIDATION_DOC_BASE}070-notifiarr",
     "github": f"{VALIDATION_DOC_BASE}040-github",
@@ -3084,6 +3086,17 @@ def validate_all_services():
         ("040-github", "github", validations.validate_github_server, lambda s: {"github_token": s.get("github", {}).get("token")}, ["github_token"]),
         ("050-omdb", "omdb", validations.validate_omdb_server, lambda s: {"omdb_apikey": s.get("omdb", {}).get("apikey")}, ["omdb_apikey"]),
         ("060-mdblist", "mdblist", validations.validate_mdblist_server, lambda s: {"mdblist_apikey": s.get("mdblist", {}).get("apikey")}, ["mdblist_apikey"]),
+        (
+            "065-serializd",
+            "serializd",
+            validations.validate_serializd_server,
+            lambda s: {
+                "serializd_email": s.get("serializd", {}).get("email"),
+                "serializd_password": s.get("serializd", {}).get("password"),
+                "serializd_timeout": s.get("serializd", {}).get("timeout", 60),
+            },
+            ["serializd_email", "serializd_password"],
+        ),
         (
             "067-floppy",
             "floppy",

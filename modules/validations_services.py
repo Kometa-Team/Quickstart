@@ -50,6 +50,7 @@ are consistent.
 from __future__ import annotations
 
 import re
+import json
 from html import unescape
 from json import JSONDecodeError
 
@@ -721,6 +722,42 @@ def validate_mdblist_server(data):
         return jsonify({"valid": True, "message": "API key is valid!"})
     else:
         return jsonify({"valid": False, "message": "Invalid API key"})
+
+
+def validate_serializd_server(data):
+    email = str(data.get("serializd_email") or "").strip()
+    password = str(data.get("serializd_password") or "").strip()
+    try:
+        timeout = int(data.get("serializd_timeout") or 60)
+    except (TypeError, ValueError):
+        return jsonify({"valid": False, "error": "Serializd timeout must be a positive whole number."}), 400
+
+    if not email:
+        return jsonify({"valid": False, "error": "Serializd email is required."}), 400
+    if not password:
+        return jsonify({"valid": False, "error": "Serializd password is required."}), 400
+    if timeout < 1:
+        return jsonify({"valid": False, "error": "Serializd timeout must be a positive whole number."}), 400
+
+    try:
+        response = requests.post(
+            "https://serializd.onrender.com/api/login",
+            data=json.dumps({"email": email, "password": password}),
+            headers={
+                "Origin": "https://www.serializd.com",
+                "Referer": "https://www.serializd.com",
+                "X-Requested-With": "serializd_vercel",
+            },
+            timeout=timeout,
+        )
+        if response.ok:
+            payload = response.json()
+            if payload.get("token") and payload.get("username"):
+                return jsonify({"valid": True, "message": f"Serializd credentials are valid for {payload['username']}."})
+        return jsonify({"valid": False, "error": "Serializd email or password is invalid."}), 400
+    except (requests.RequestException, ValueError) as exc:
+        helpers.ts_log(f"Error validating Serializd credentials: {exc}", level="ERROR")
+        return jsonify({"valid": False, "error": f"Serializd connection error: {exc}"}), 400
 
 
 def validate_floppy_server(data):
