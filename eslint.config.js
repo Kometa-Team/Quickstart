@@ -99,6 +99,7 @@ const moduleFiles = [
   'static/local-js/020-tmdb.js',
   'static/local-js/027-playlist_files.js',
   'static/local-js/030-tautulli.js',
+  'static/local-js/035-tracearr.js',
   'static/local-js/040-github.js',
   'static/local-js/050-omdb.js',
   'static/local-js/060-mdblist.js',
