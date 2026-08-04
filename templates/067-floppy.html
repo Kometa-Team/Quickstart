@@ -1,0 +1,39 @@
+{% extends "000-base.html" %} {% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+{% set floppy = data.get('floppy', {}) %}
+<div class="input-group mb-2">
+  <span class="input-group-text" id="floppy_url_text" style="width: 190px; justify-content: space-between;">
+    Floppy URL
+    <span class="text-info ms-3" data-bs-toggle="tooltip" title="The base URL of your Floppy server.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="url" class="form-control" id="floppy_url" name="floppy_url"
+    value="{{ floppy.get('url', '') }}" placeholder="https://floppy.example.com" aria-describedby="floppy_url_text">
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="floppy_token_text" style="width: 190px; justify-content: space-between;">
+    Floppy API Token
+    <span class="text-info ms-3" data-bs-toggle="tooltip" title="Optional for public lists. Required for private lists, tracked items, and ratings.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="password" class="form-control" id="floppy_token" name="floppy_token"
+    value="{{ floppy.get('token', '') or '' }}" autocomplete="off" aria-describedby="floppy_token_text">
+  <button class="btn btn-success" id="validateButton" type="button">
+    Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
+
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="floppy_validated" name="floppy_validated"
+    value="{{ data.get('validated', False) }}" title="">
+  <label for="floppy_validated">Floppy Validated</label>
+</div>
+<input type="hidden" id="floppy_validated_at" name="floppy_validated_at" value="{{ data.get('validated_at', '') or '' }}">
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
+</form>
+{% endblock %}

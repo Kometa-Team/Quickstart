@@ -47,6 +47,7 @@ from flask import has_request_context, url_for
 from modules import database
 from modules.dependency_reasons import (
     QS_ANIDB_REQUIRED_STEP_KEY,
+    QS_FLOPPY_REQUIRED_STEP_KEY,
     QS_MAL_REQUIRED_STEP_KEY,
     QS_MDBLIST_REQUIRED_STEP_KEY,
     QS_OMDB_REQUIRED_STEP_KEY,
@@ -215,6 +216,7 @@ def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at
         ("tautulli", QS_TAUTULLI_REQUIRED_STEP_KEY, "Tautulli", "tautulli_requirement_reasons", "qs-tautulli-required-hint"),
         ("omdb", QS_OMDB_REQUIRED_STEP_KEY, "OMDb", "omdb_requirement_reasons", "qs-omdb-required-hint"),
         ("mdblist", QS_MDBLIST_REQUIRED_STEP_KEY, "MDBList", "mdblist_requirement_reasons", "qs-mdblist-required-hint"),
+        ("floppy", QS_FLOPPY_REQUIRED_STEP_KEY, "Floppy", "floppy_requirement_reasons", "qs-floppy-required-hint"),
         ("anidb", QS_ANIDB_REQUIRED_STEP_KEY, "AniDB", "anidb_requirement_reasons", "qs-anidb-required-hint"),
         ("radarr", QS_RADARR_REQUIRED_STEP_KEY, "Radarr", "radarr_requirement_reasons", "qs-radarr-required-hint"),
         ("sonarr", QS_SONARR_REQUIRED_STEP_KEY, "Sonarr", "sonarr_requirement_reasons", "qs-sonarr-required-hint"),

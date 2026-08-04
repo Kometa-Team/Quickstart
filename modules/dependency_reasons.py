@@ -72,6 +72,7 @@ def _parse_json_array(value):
 QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
 QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
 QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
+QS_FLOPPY_REQUIRED_STEP_KEY = "067-floppy"
 QS_ANIDB_REQUIRED_STEP_KEY = "100-anidb"
 QS_RADARR_REQUIRED_STEP_KEY = "110-radarr"
 QS_SONARR_REQUIRED_STEP_KEY = "120-sonarr"
@@ -83,12 +84,14 @@ QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
+QS_FLOPPY_DEP_SOURCE_PREFIXES = ("floppy",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
 QS_TRAKT_DEP_SOURCE_PREFIXES = ("trakt",)
 QS_MDBLIST_OVERLAY_IMAGE_VALUES = {"letterboxd", "metacritic", "rt_tomato", "rt_popcorn", "mdb"}
 QS_ANIDB_OVERLAY_IMAGE_VALUES = {"anidb"}
 QS_TRAKT_OVERLAY_IMAGE_VALUES = {"trakt"}
 QS_MAL_OVERLAY_IMAGE_VALUES = {"mal"}
+QS_FLOPPY_OVERLAY_SOURCE_VALUES = {"floppy"}
 QS_RADARR_DEP_ATTRIBUTE_PREFIXES = ("radarr_add_all", "radarr_remove_by_tag")
 QS_RADARR_DEP_COLLECTION_PREFIXES = ("collection_radarr_",)
 QS_RADARR_DEP_TEMPLATE_COLLECTION_PREFIXES = ("radarr_add_missing_",)
@@ -337,6 +340,38 @@ def _libraries_data_overlay_rating_dependency_reasons(libraries_data, image_valu
     return reasons
 
 
+def _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, source_values):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
+    reasons = []
+    seen = set()
+    normalized_sources = {str(value or "").strip().lower() for value in source_values if str(value or "").strip()}
+
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        selected_source = str(raw_value or "").strip().lower()
+        if selected_source not in normalized_sources:
+            continue
+
+        match = re.match(
+            r"^(?P<prefix>(?:mov|sho)-library_[a-z0-9_]+)-(?P<builder>movie|show|season|episode)-template_overlay_ratings\[rating[123]\]$",
+            key,
+        )
+        if not match:
+            continue
+
+        prefix = match.group("prefix")
+        builder = match.group("builder")
+        if prefix not in active_prefixes or not _is_truthy_setting_value(libraries_data.get(f"{prefix}-{builder}-overlay_ratings")):
+            continue
+
+        _append_dependency_reason(reasons, seen, libraries_data, prefix, f"{builder} ratings overlay uses {selected_source}")
+
+    return reasons
+
+
 def _attribute_dependency_source_reasons(libraries_data, source_prefixes):
     if not isinstance(libraries_data, dict):
         return []
@@ -457,6 +492,18 @@ def _libraries_data_mdblist_dependency_reasons(libraries_data):
     overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
         libraries_data,
         QS_MDBLIST_OVERLAY_IMAGE_VALUES,
+    )
+    return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
+
+
+def _libraries_data_floppy_dependency_reasons(libraries_data):
+    attribute_reasons = _attribute_dependency_source_reasons(
+        libraries_data,
+        QS_FLOPPY_DEP_SOURCE_PREFIXES,
+    )
+    overlay_reasons = _libraries_data_overlay_rating_source_dependency_reasons(
+        libraries_data,
+        QS_FLOPPY_OVERLAY_SOURCE_VALUES,
     )
     return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
@@ -589,6 +636,10 @@ def _config_omdb_dependency_reasons(section_rows):
 
 def _config_mdblist_dependency_reasons(section_rows):
     return _config_dependency_reasons(section_rows, _libraries_data_mdblist_dependency_reasons)
+
+
+def _config_floppy_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_floppy_dependency_reasons)
 
 
 def _config_anidb_dependency_reasons(section_rows):

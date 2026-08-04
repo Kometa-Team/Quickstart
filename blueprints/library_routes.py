@@ -11,6 +11,7 @@ from modules.assets import build_preview_image_data as _build_preview_image_data
 from modules.dependency_reasons import (
     _is_truthy_setting_value,
     _libraries_data_anidb_dependency_reasons,
+    _libraries_data_floppy_dependency_reasons,
     _libraries_data_mal_dependency_reasons,
     _libraries_data_mdblist_dependency_reasons,
     _libraries_data_omdb_dependency_reasons,
@@ -1050,6 +1051,7 @@ _DEPENDENCY_HINT_ROUTES = (
     ("Tautulli", "tautulli", _libraries_data_tautulli_dependency_reasons),
     ("OMDb", "omdb", _libraries_data_omdb_dependency_reasons),
     ("MDBList", "mdblist", _libraries_data_mdblist_dependency_reasons),
+    ("Floppy", "floppy", _libraries_data_floppy_dependency_reasons),
     ("AniDB", "anidb", _libraries_data_anidb_dependency_reasons),
     ("Radarr", "radarr", _libraries_data_radarr_dependency_reasons),
     ("Sonarr", "sonarr", _libraries_data_sonarr_dependency_reasons),

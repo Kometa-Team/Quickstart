@@ -70,6 +70,8 @@ const DEFAULT_MESSAGES = {
  *                                                   listeners that reset validation, and have
  *                                                   their values passed to buildPayload as the
  *                                                   second argument.
+ * @param {string[]} [config.optionalFieldIds=[]]    Element ids included in listeners and buildPayload
+ *                                                   without being required for validation.
  * @param {string} config.validatedFieldId       Element id of the hidden "<service>_validated" input.
  * @param {string} [config.validatedAtFieldId]   Element id of the hidden "<service>_validated_at" timestamp input.
  * @param {string} [config.toggleButtonId='toggleApikeyVisibility']  Id of the show/hide toggle button.
@@ -128,6 +130,7 @@ export function createApiKeyValidator (config) {
   const {
     fieldId,
     additionalFieldIds = [],
+    optionalFieldIds = [],
     validatedFieldId,
     validatedAtFieldId,
     toggleButtonId = 'toggleApikeyVisibility',
@@ -173,6 +176,10 @@ export function createApiKeyValidator (config) {
   const additionalElements = additionalFieldIds
     .map(id => ({ id, el: document.getElementById(id) }))
     .filter(entry => entry.el)
+  const optionalElements = optionalFieldIds
+    .map(id => ({ id, el: document.getElementById(id) }))
+    .filter(entry => entry.el)
+  const payloadElements = [...additionalElements, ...optionalElements]
 
   // ── initial visibility of the primary field ─────────────────────────
   if (!maskPrimaryField) {
@@ -200,6 +207,9 @@ export function createApiKeyValidator (config) {
   for (const { el } of additionalElements) {
     el.addEventListener('input', resetValidation)
   }
+  for (const { el } of optionalElements) {
+    el.addEventListener('input', resetValidation)
+  }
 
   // ── status message helpers ──────────────────────────────────────────
   function showStatus (text, color) {
@@ -222,7 +232,7 @@ export function createApiKeyValidator (config) {
 
   function collectAdditionalValues () {
     const out = {}
-    for (const { id, el } of additionalElements) {
+    for (const { id, el } of payloadElements) {
       out[id] = el.value
     }
     return out
@@ -336,6 +346,9 @@ export function createApiKeyValidator (config) {
     form.addEventListener('submit', function (event) {
       if (!apiKeyInput.value) apiKeyInput.value = ''
       for (const { el } of additionalElements) {
+        if (!el.value) el.value = ''
+      }
+      for (const { el } of optionalElements) {
         if (!el.value) el.value = ''
       }
       if (typeof onPreSubmit === 'function' && onPreSubmit() === false) {

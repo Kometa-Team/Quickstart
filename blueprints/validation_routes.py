@@ -505,3 +505,12 @@ def validate_notifiarr():
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
     return jsonify(result.get_json()), status_code or 400
+
+
+@bp.route("/validate_floppy", methods=["POST"])
+def validate_floppy():
+    data = request.get_json(silent=True) or {}
+    result, status_code = _unpack_validation_result(validations.validate_floppy_server(data))
+    if result.get_json().get("valid"):
+        return jsonify(result.get_json())
+    return jsonify(result.get_json()), status_code or 400
