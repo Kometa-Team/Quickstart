@@ -185,7 +185,7 @@ def build_incomplete_progress_snapshot(
         configured_library_entries = [{"name": name, "type": configured_type_by_name.get(name)} for name in configured_library_names]
 
     def _normalize_snapshot_library_name(raw_name):
-        name = str(raw_name or "").strip()
+        name = str(raw_name or "")
         if not name:
             return ""
         if configured_library_entries:
@@ -193,12 +193,12 @@ def build_incomplete_progress_snapshot(
             if matched:
                 return matched
             if name.lower().startswith("finished "):
-                alternate = name[9:].strip()
+                alternate = name[9:]
                 matched = logscan.LogscanAnalyzer()._match_library_name(alternate, configured_library_entries)
                 if matched:
                     return matched
         if name.lower().startswith("finished "):
-            return name[9:].strip()
+            return name[9:]
         return name
 
     current_library = _normalize_snapshot_library_name(current_library)

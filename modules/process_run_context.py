@@ -57,14 +57,48 @@ from modules.process_control_state import (
 from modules.process_markers import extract_kometa_config_path
 
 
+def _strip_outer_quotes(value):
+    text = str(value or "")
+    if len(text) >= 2 and ((text[0] == '"' and text[-1] == '"') or (text[0] == "'" and text[-1] == "'")):
+        return text[1:-1]
+    return text
+
+
+def _parse_run_libraries_value(value):
+    text = str(value or "")
+    if not text:
+        return []
+
+    parts = []
+    current = []
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == "|":
+            token = "".join(current)
+            if token and token.strip():
+                parts.append(token)
+            current = []
+            index += 1
+            continue
+
+        current.append(char)
+        index += 1
+
+    token = "".join(current)
+    if token and token.strip():
+        parts.append(token)
+    return parts
+
+
 def extract_selected_libraries(command):
     if not command:
         return None, None
-    is_win = sys.platform.startswith("win")
+
     try:
-        parts = shlex.split(command, posix=not is_win)
-    except Exception:
-        parts = command.split()
+        parts = shlex.split(str(command), posix=True)
+    except ValueError:
+        parts = str(command).split()
 
     run_option = None
     selected = None
@@ -72,12 +106,12 @@ def extract_selected_libraries(command):
         if part in ("--run", "--run-libraries", "--times"):
             run_option = part
         if part.startswith("--run-libraries="):
-            value = part.split("=", 1)[1].strip().strip('"').strip("'")
-            selected = [v for v in value.split("|") if v.strip()]
+            raw_value = part.split("=", 1)[1]
+            selected = _parse_run_libraries_value(raw_value)
             break
         if part == "--run-libraries" and idx + 1 < len(parts):
-            value = parts[idx + 1].strip().strip('"').strip("'")
-            selected = [v for v in value.split("|") if v.strip()]
+            raw_value = parts[idx + 1]
+            selected = _parse_run_libraries_value(raw_value)
             run_option = "--run-libraries"
             break
     return run_option, selected
