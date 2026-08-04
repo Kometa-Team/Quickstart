@@ -102,7 +102,7 @@ jobs:
 
       - name: Run Spellcheck on Changed Files
         id: spellcheck
-        uses: rojopolis/spellcheck-github-actions@0.65.0
+        uses: rojopolis/spellcheck-github-actions@0.64.0
         with:
           task_name: Markdown
           source_files: ${{ steps.get-changes.outputs.files }}
@@ -226,7 +226,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run Tests
-        run: python -m pytest
+        run: pytest
 
 
   get-version:
@@ -322,6 +322,13 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
 
+<<<<<<< HEAD
+=======
+      # Build the Vite bundles BEFORE PyInstaller runs so the shipped
+      # binary includes static/dist/ (hashed, minified JS + manifest).
+      # See modules/helpers/_vite_manifest.py for how templates consume
+      # this at request time; roadmap #1334 Step 4.
+>>>>>>> 617301bb (Update GitHub workflows)
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
