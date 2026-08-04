@@ -31,6 +31,7 @@ def test_json_schema_sync_manifest_includes_live_nightly_builders_and_schema_fil
         "builders/radarr.yml",
         "builders/sonarr.yml",
         "builders/tautulli.yml",
+        "builders/tracearr.yml",
         "builders/tmdb.yml",
         "builders/trakt.yml",
         "builders/tvdb.yml",

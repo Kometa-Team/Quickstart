@@ -31,6 +31,7 @@
   } %}
   {% set service_icon_class_map = {
     '025-libraries': 'bi bi-collection-fill',
+    '035-tracearr': 'bi bi-activity',
     '090-webhooks': 'bi bi-diagram-3-fill',
     '905-analytics': 'bi bi-graph-up-arrow',
     '910-sponsor': 'bi bi-heart-fill',
@@ -56,6 +57,7 @@
   {% set insights_open = current_template in insight_keys %}
   {% set other_open = current_template in other_keys %}
   {% set tautulli_reasons = tautulli_requirement_reasons if tautulli_requirement_reasons is defined else [] %}
+  {% set tracearr_reasons = tracearr_requirement_reasons if tracearr_requirement_reasons is defined else [] %}
   {% set omdb_reasons = omdb_requirement_reasons if omdb_requirement_reasons is defined else [] %}
   {% set mdblist_reasons = mdblist_requirement_reasons if mdblist_requirement_reasons is defined else [] %}
   {% set anidb_reasons = anidb_requirement_reasons if anidb_requirement_reasons is defined else [] %}
@@ -89,6 +91,17 @@
                     {% endfor %}
                     {% if tautulli_reasons|length > 2 %}
                     <div class="qs-dependency-hint-line">+{{ tautulli_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-tracearr-required-hint {% if not tracearr_reasons %}d-none{% endif %}" data-qs-dependency-hint="tracearr" data-qs-dependency-short="T">
+                  <div class="qs-dependency-hint-title">Tracearr required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in tracearr_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if tracearr_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ tracearr_reasons|length - 2 }} more...</div>
                     {% endif %}
                   </div>
                 </div>

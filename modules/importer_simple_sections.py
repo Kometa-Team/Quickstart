@@ -37,6 +37,7 @@ SIMPLE_SECTIONS: frozenset[str] = frozenset(
         "omdb",
         "mdblist",
         "tautulli",
+        "tracearr",
         "notifiarr",
         "gotify",
         "ntfy",

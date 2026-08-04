@@ -28420,6 +28420,565 @@
         ]
       },
       {
+        "id": "collection_tracearr",
+        "label": "Tracearr Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/tracearr",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tracearr.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "Requires Tracearr authentication and Kometa nightly",
+        "tooltip_variant": "danger",
+        "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "Determines where these collections appear on the Plex Collections page.",
+            "section": "basics"
+          },
+          {
+            "key": "use_all",
+            "label": "Use All Child Collections",
+            "type": "toggle",
+            "default": true,
+            "section": "basics"
+          },
+          {
+            "key": "allowed_libraries",
+            "label": "Allowed Libraries",
+            "type": "select",
+            "options": [
+              {"value": "", "label": "Default"},
+              {"value": "movie", "label": "Movie"},
+              {"value": "show", "label": "Show"}
+            ],
+            "section": "basics"
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "default": "color",
+            "options": ["color", "white"],
+            "section": "basics"
+          },
+          {
+            "key": "sort_prefix",
+            "label": "Sort Prefix",
+            "type": "text_input",
+            "section": "naming"
+          },
+          {
+            "key": "sort_title",
+            "label": "Sort Title",
+            "type": "text_input",
+            "section": "naming"
+          },
+          {
+            "key": "name_format",
+            "label": "Name Format",
+            "type": "text_input",
+            "section": "naming"
+          },
+          {
+            "key": "summary_format",
+            "label": "Summary Format",
+            "type": "text_input",
+            "section": "naming"
+          },
+          {
+            "key": "minimum_items",
+            "label": "Minimum Items",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "shared_defaults"
+          },
+          {
+            "key": "sync_mode",
+            "label": "Sync Mode",
+            "type": "select",
+            "default": "sync",
+            "options": [
+              {"value": "append", "label": "Append"},
+              {"value": "sync", "label": "Sync"}
+            ],
+            "section": "shared_defaults"
+          },
+          {
+            "key": "cache_builders",
+            "label": "Cache Builders",
+            "type": "text_input",
+            "default": 0,
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "shared_defaults"
+          },
+          {
+            "key": "collection_order",
+            "label": "Collection Order",
+            "type": "select",
+            "default": "custom",
+            "options": [
+              {"value": "custom", "label": "Custom Order"},
+              {"value": "alpha", "label": "Alphabetical Order"},
+              {"value": "random", "label": "Random"}
+            ],
+            "section": "shared_defaults"
+          },
+          {
+            "key": "schedule",
+            "label": "Schedule",
+            "type": "text",
+            "placeholder": "weekly(sunday)",
+            "section": "shared_defaults"
+          },
+          {
+            "key": "list_days",
+            "label": "List Days",
+            "type": "text_input",
+            "default": "30",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "shared_defaults"
+          },
+          {
+            "key": "list_minimum",
+            "label": "List Minimum",
+            "type": "text_input",
+            "default": "0",
+            "tooltip": "Minimum matching Tracearr activity required for an item to be included.",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "shared_defaults"
+          },
+          {
+            "key": "list_size",
+            "label": "List Size",
+            "type": "text_input",
+            "default": "20",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "shared_defaults"
+          },
+          {
+            "key": "use_popular",
+            "label": "Tracearr Popular",
+            "type": "toggle",
+            "default": true,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_popular",
+            "label": "Popular List Days",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_popular",
+            "label": "Popular List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_popular",
+            "label": "Popular List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "use_watched",
+            "label": "Tracearr Watched",
+            "type": "toggle",
+            "default": true,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_watched",
+            "label": "Watched List Days",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_watched",
+            "label": "Watched List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_watched",
+            "label": "Watched List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "use_trending",
+            "label": "Tracearr Trending",
+            "type": "toggle",
+            "default": true,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_trending",
+            "label": "Trending List Days",
+            "type": "text_input",
+            "default": "7",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_trending",
+            "label": "Trending List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_trending",
+            "label": "Trending List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "use_rewatched",
+            "label": "Tracearr Rewatched",
+            "type": "toggle",
+            "default": true,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_rewatched",
+            "label": "Rewatched List Days",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_rewatched",
+            "label": "Rewatched List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_rewatched",
+            "label": "Rewatched List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "use_completed",
+            "label": "Tracearr Completed",
+            "type": "toggle",
+            "default": true,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_completed",
+            "label": "Completed List Days",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_completed",
+            "label": "Completed List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_completed",
+            "label": "Completed List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "use_binged",
+            "label": "Tracearr Binged",
+            "tooltip": "Available for show libraries only.",
+            "type": "toggle",
+            "default": true,
+            "media_types": ["show"],
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_binged",
+            "label": "Binged List Days",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "media_types": ["show"],
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_binged",
+            "label": "Binged List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "media_types": ["show"],
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_binged",
+            "label": "Binged List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "media_types": ["show"],
+            "section": "child_collections"
+          },
+          {
+            "key": "use_transcoded",
+            "label": "Tracearr Most Transcoded",
+            "type": "toggle",
+            "default": true,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_days_transcoded",
+            "label": "Most Transcoded List Days",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_minimum_transcoded",
+            "label": "Most Transcoded List Minimum",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 0,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "list_size_transcoded",
+            "label": "Most Transcoded List Size",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "section": "child_collections"
+          },
+          {
+            "key": "name_popular",
+            "label": "Tracearr Popular Name",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_popular",
+            "label": "Tracearr Popular Summary",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "name_watched",
+            "label": "Tracearr Watched Name",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_watched",
+            "label": "Tracearr Watched Summary",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "name_trending",
+            "label": "Tracearr Trending Name",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_trending",
+            "label": "Tracearr Trending Summary",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "name_rewatched",
+            "label": "Tracearr Rewatched Name",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_rewatched",
+            "label": "Tracearr Rewatched Summary",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "name_completed",
+            "label": "Tracearr Completed Name",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_completed",
+            "label": "Tracearr Completed Summary",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "name_binged",
+            "label": "Tracearr Binged Name",
+            "type": "text_input",
+            "media_types": ["show"],
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_binged",
+            "label": "Tracearr Binged Summary",
+            "type": "text_input",
+            "media_types": ["show"],
+            "section": "child_collections"
+          },
+          {
+            "key": "name_transcoded",
+            "label": "Tracearr Most Transcoded Name",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "summary_transcoded",
+            "label": "Tracearr Most Transcoded Summary",
+            "type": "text_input",
+            "section": "child_collections"
+          },
+          {
+            "key": "image",
+            "label": "Image Path",
+            "type": "text",
+            "section": "artwork"
+          },
+          {
+            "key": "url_poster",
+            "label": "Poster URL",
+            "type": "text",
+            "section": "artwork"
+          },
+          {
+            "key": "url_background",
+            "label": "Background URL",
+            "type": "text",
+            "section": "artwork"
+          },
+          {
+            "key": "url_logo",
+            "label": "Logo URL",
+            "type": "text",
+            "section": "artwork"
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "default": false,
+            "section": "visibility"
+          },
+          {
+            "key": "hub_priority",
+            "label": "Hub Priority",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "requires_plex_pass": true,
+            "requires_any_of_template_keys": ["visible_home", "visible_library", "visible_shared"],
+            "section": "visibility"
+          }
+        ],
+        "sections": [
+          {"id": "basics", "label": "Basics"},
+          {"id": "naming", "label": "Naming"},
+          {"id": "builder", "label": "Builder Controls"},
+          {"id": "children", "label": "Chart Collections"},
+          {"id": "artwork", "label": "Artwork"},
+          {"id": "automation", "label": "Automation"},
+          {"id": "visibility", "label": "Visibility"}
+        ],
+        "template_variable_sections": [
+          {"id": "basics", "label": "Basics", "default_open": true},
+          {"id": "naming", "label": "Naming"},
+          {"id": "shared_defaults", "label": "Shared Defaults"},
+          {"id": "child_collections", "label": "Chart Collections"},
+          {"id": "filtering", "label": "Filtering and Exclusions"},
+          {"id": "artwork", "label": "Artwork"},
+          {"id": "visibility", "label": "Visibility"},
+          {"id": "item_tags", "label": "Item Tags"},
+          {"id": "radarr", "label": "Radarr"},
+          {"id": "sonarr", "label": "Sonarr"}
+        ]
+      },
+      {
         "id": "collection_imdb",
         "label": "IMDb Charts",
         "url": "https://kometa.wiki/en/nightly/defaults/chart/imdb",
