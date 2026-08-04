@@ -83,6 +83,7 @@ def test_floppy_step_renders_connector_fields_and_module_script(client):
     assert 'id="floppy_url"' in page
     assert 'id="floppy_token"' in page
     assert 'src="/static/local-js/067-floppy.js"' in page
+    assert 'src="/static/images/service-icons/floppy.png"' in page
 
 
 def test_floppy_simple_section_import_round_trip_contract():
