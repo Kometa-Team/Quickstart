@@ -16,7 +16,7 @@
 <!--body1-start-->
 ## Welcome to Kometa Quickstart
 
-## ✨ Features Test Test Test
+## ✨ Features Test Test Test Testttt
 
 Kometa Quickstart is more than just a YAML generator - it's a full interactive environment for configuring Kometa, running built-in Kometa-Team apps, and reviewing their results. Key features include:
 
