@@ -2,6 +2,15 @@ import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
 
 const serverSelect = document.getElementById('tracearr_server_id')
 
+function createOption (label, value, defaultSelected = false, selected = false) {
+  const option = document.createElement('option')
+  option.textContent = label
+  option.value = value
+  option.defaultSelected = defaultSelected
+  option.selected = selected
+  return option
+}
+
 serverSelect?.addEventListener('change', () => {
   const validated = document.getElementById('tracearr_validated')
   const validatedAt = document.getElementById('tracearr_validated_at')
@@ -16,15 +25,15 @@ serverSelect?.addEventListener('change', () => {
 function renderServers (servers = []) {
   if (!serverSelect) return
   const selected = serverSelect.value || serverSelect.dataset.currentValue || ''
-  serverSelect.replaceChildren(new Option('Auto-detect by Plex server name', ''))
+  serverSelect.replaceChildren(createOption('Auto-detect by Plex server name', ''))
   servers.forEach(server => {
     const id = String(server?.id || '')
     if (!id) return
     const name = String(server?.name || 'Unnamed Plex server')
-    serverSelect.add(new Option(`${name} (${id})`, id, false, id === selected))
+    serverSelect.add(createOption(`${name} (${id})`, id, false, id === selected))
   })
   if (selected && !Array.from(serverSelect.options).some(option => option.value === selected)) {
-    serverSelect.add(new Option(selected, selected, true, true))
+    serverSelect.add(createOption(selected, selected, true, true))
   }
 }
 
