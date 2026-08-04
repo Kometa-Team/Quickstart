@@ -2118,14 +2118,15 @@ def test_ingest_completed_live_logs_caches_unchanged_incomplete_live_kometa_log(
     assert analyze_calls["count"] == 1
 
 
-def test_ingest_completed_live_meta_log_copies_once_and_preserves_source(isolated_config_dir, monkeypatch, qs_module):
+def test_completed_recovery_log_remains_downloadable_after_archive(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = isolated_config_dir / "kometa"
     log_dir = kometa_root / "config" / "logs"
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
     log_dir.mkdir(parents=True, exist_ok=True)
     archive_dir.mkdir(parents=True, exist_ok=True)
     runtime_log = log_dir / "meta.log"
-    runtime_log.write_text("completed live log\n", encoding="utf-8")
+    log_content = "completed recovery log\n"
+    runtime_log.write_text(log_content, encoding="utf-8")
 
     cache = {"version": 1, "logs": {}}
     analyze_calls = {"count": 0}
@@ -2139,11 +2140,13 @@ def test_ingest_completed_live_meta_log_copies_once_and_preserves_source(isolate
                     "tool_name": "kometa",
                     "run_complete": True,
                     "finished_at": "2026-04-30T18:00:00Z",
+                    "start_mode": "recovery",
                 },
                 "recommendations": [],
             }
 
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module, "_get_logscan_archive_dir", lambda *_args, **_kwargs: archive_dir)
     monkeypatch.setattr(qs_module, "_flush_quickstart_pending_markers", lambda *_args, **_kwargs: {"flushed": True})
@@ -2166,6 +2169,13 @@ def test_ingest_completed_live_meta_log_copies_once_and_preserves_source(isolate
     live_entry = cache["logs"][str(runtime_log.resolve())]
     archive_entry = cache["logs"][str(archived_paths[0].resolve())]
     assert live_entry["content_md5"] == archive_entry["content_md5"]
+
+    download = client.get("/tail-log?size=all&download=1")
+
+    assert download.status_code == 200
+    assert download.mimetype == "text/plain"
+    assert download.data.decode("utf-8") == log_content
+    assert download.headers["Content-Disposition"].startswith("attachment; filename=meta.log")
 
 
 def test_logscan_reingest_reset_false_scans_only_delta_files(client, isolated_config_dir, monkeypatch, qs_module):
