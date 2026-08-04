@@ -468,6 +468,10 @@ code {
     border-color: var(--theme-border);
 }
 
+#library-multiselect option {
+    white-space: pre;
+}
+
 /* -------------------- */
 /* HEADER STYLES        */
 /* -------------------- */

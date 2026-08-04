@@ -613,7 +613,7 @@
               <select multiple class="form-select" id="library-multiselect">
                 {% set dropdown_libraries = library_dropdown if library_dropdown else (movie_libraries + show_libraries) %}
                 {% for lib in dropdown_libraries %}
-                <option value="{{ lib.name }}">{{ lib.name }}</option>
+                <option value="{{ lib.name | e }}" title="{{ lib.name | e }}">[{{ lib.name | nbsp_leading_spaces }}]</option>
                 {% endfor %}
               </select>
             </div>
