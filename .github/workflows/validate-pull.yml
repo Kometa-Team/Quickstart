@@ -1,111 +1,41 @@
 name: Validate Pull Request
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
-
-# Default every job to the least privilege. Jobs that need more override this.
-permissions:
-  contents: read
+  pull_request_target:
+    types: [ opened, synchronize, reopened, labeled ]
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number }}
-  cancel-in-progress: ${{ github.event.action == 'synchronize' || github.event.action == 'opened' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-
-  guard:
-    name: Guard
-    runs-on: ubuntu-latest
-    # Ignore label events that cannot affect this workflow.
-    if: >-
-      (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
-      contains(fromJSON('["build","build-full"]'), github.event.label.name)
-    steps:
-      - name: Check Base Branch
-        if: github.base_ref == 'master'
-        run: |
-          echo "ERROR: Pull Requests cannot be submitted to master."
-          echo "Please submit the Pull Request to the develop branch."
-          exit 1
 
   validate-changes:
     name: Validate Changes
     runs-on: ubuntu-latest
-    needs: [guard]
-    permissions:
-      contents: read
     outputs:
       part: ${{ steps.list-changes.outputs.part }}
       build: ${{ steps.list-changes.outputs.build }}
     steps:
+
       - name: Display Refs
         run: |
           echo "Base Repo: ${{ github.event.pull_request.base.repo.full_name }}"
           echo "Base Ref: ${{ github.base_ref }}"
           echo "Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
           echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
-          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
 
-      - name: Checkout Repo
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Get Changes
-        id: get-changes
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: Check for Remote Branch
+        if: "!contains(github.event.pull_request.labels.*.name, 'approved')"
         run: |
-          echo "files<<EOF" >> "$GITHUB_OUTPUT"
-          git diff --name-only "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          base_name="${repo_name%/*}"
 
-      - name: List Changed Files
-        id: list-changes
-        env:
-          CHANGED_FILES: ${{ steps.get-changes.outputs.files }}
-        run: |
-          while IFS= read -r file; do
-            [[ -z "$file" ]] && continue
+          if [[ "${base_name}" != "Kometa-Team" ]]; then
+              echo "ERROR: Pull Requests must be approved before they can run workflows"
+              exit 1
+          fi
 
-            if [[ "$file" =~ ^PART$ ]]; then
-              echo "$file already contains a build-number change"
-              echo "build=true" >> "$GITHUB_OUTPUT"
-            elif [[ "$file" =~ ^(modules/|static/|templates/|quickstart\.py$|requirements\.txt$|requirements-dev\.txt$|package\.json$|package-lock\.json$|quickstart\.spec$|\.dockerignore$|Dockerfile$) ]]; then
-              echo "$file will trigger tests and build preparation"
-              echo "part=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "$file will not trigger application builds"
-            fi
-          done <<< "$CHANGED_FILES"
-
-      - name: Get Changed Markdown Files
-        uses: tj-actions/changed-files@v47
-        id: changed_files
-        with:
-          files: |
-            **.md
-
-      - name: Run Spellcheck on Changed Markdown Files
-        if: steps.changed_files.outputs.any_changed == 'true'
-        uses: rojopolis/spellcheck-github-actions@0.64.0
-        with:
-          task_name: Markdown
-          source_files: ${{ steps.changed_files.outputs.all_changed_files }}
-
-  format-code:
-    name: Format Code and Add Part File
-    runs-on: ubuntu-latest
-    needs: [guard, validate-changes]
-    if: >-
-      needs.validate-changes.outputs.build != 'true' &&
-      needs.validate-changes.outputs.part == 'true' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    permissions:
-      contents: write
-    steps:
       - name: Create App Token
         uses: actions/create-github-app-token@v3
         id: app-token
@@ -113,156 +43,218 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
-      - name: Check Out PR Branch
+      - name: Checkout Repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: Check Base Branch
+        if: github.base_ref == 'master'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr close ${{ github.event.pull_request.number }} --comment "Pull Requests cannot be submitted to master. Please resubmit the Pull Request to the develop branch."
+          echo "ERROR: Pull Requests cannot be submitted to master. Please resubmit the Pull Request to the develop branch"
+          exit 1
+
+      - name: Get Changes
+        id: get-changes
+        run: |
+          git remote add -f upstream https://github.com/Kometa-Team/${{ vars.REPO_NAME }}.git
+          git remote update
+          if [[ ${{ github.event.action }} == "labeled" ]]; then
+              echo "files=$(git diff --name-only upstream/develop HEAD | xargs)" >> $GITHUB_OUTPUT
+          else
+              echo "files=$(git diff --name-only HEAD^ | xargs)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: List Changed Files
+        id: list-changes
+        run: |
+          for file in ${{ steps.get-changes.outputs.files }}; do
+              if [[ $file =~ ^(PART).*$ ]] ; then
+                  echo "build=true" >> $GITHUB_OUTPUT
+              elif [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
+                  echo "$file will trigger builds"
+                  echo "part=true" >> $GITHUB_OUTPUT
+              else
+                  echo "$file will not trigger builds"
+              fi
+          done
+
+      - name: Run Spellcheck on Changed Files
+        id: spellcheck
+        uses: rojopolis/spellcheck-github-actions@0.64.0
+        with:
+          task_name: Markdown
+          source_files: ${{ steps.changed_files.outputs.all_changed_files }}
+
+
+  format-code:
+    name: Format Code and Add Part File
+    if: needs.validate-changes.outputs.build != 'true' && needs.validate-changes.outputs.part == 'true'
+    runs-on: ubuntu-latest
+    needs: [ validate-changes ]
+    steps:
+
+      - name: Create App Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
+      - name: Check Out Repo
         uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
 
       - name: Format Code
-        run: black . -l 180
-
-      - name: Update PART File
-        if: >-
-          contains(github.event.pull_request.labels.*.name, 'build') ||
-          contains(github.event.pull_request.labels.*.name, 'build-full')
+        id: format-code
         run: |
-          part="$(cat PART 2>/dev/null || true)"
-          if [[ "$part" =~ ^[0-9]+$ ]]; then
-            new_value=$((part + 1))
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
+            black . -l 180
+
+      - name: Update PART File and Commit
+        id: update-version
+        if: contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'build-full')
+        run: |
+          branch_name=${{ github.event.pull_request.head.ref }}
+          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          base_name="${repo_name%/*}"
+          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
+              tag_name="${base_name}"
           else
-            new_value=1
+              tag_name="${branch_name}"
           fi
-          echo "$new_value" > PART
+          echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
 
-      - name: Commit Changes
-        id: commit-changes
-        run: |
-          if git diff --quiet; then
-            echo "No formatting or PART changes to commit."
-            exit 0
+          if [[ "${base_name}" == "Kometa-Team" ]]; then
+              extra=""
+          else
+              extra=" from the ${{ github.event.pull_request.head.repo.full_name }} repo"
           fi
+          echo "extra-text=${extra}" >> $GITHUB_OUTPUT
+
+          old_msg=$(git log -1 HEAD --pretty=format:%s)
+          echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
+
+          part=$(cat PART)
+          if [ -n "$part" ]; then
+              new_value="$((${part} + 1))"
+          else
+              new_value="1"
+          fi
+
+          echo "part_value=${new_value}" >> $GITHUB_OUTPUT
+
+          echo "$new_value" > "PART"
 
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
+          git commit -m "${tag_name} Part: ${new_value}"
+          git push
 
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'build-full') }}" == "true" ]]; then
-            git commit -m "Format Code and Update PART"
-          else
-            git commit -m "Code Format"
-          fi
+      - name: Check Diff
+        id: verify_diff
+        run: |
+            git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
 
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+      - name: Commit Code Format Changes
+        if: steps.verify_diff.outputs.changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'build') && !contains(github.event.pull_request.labels.*.name, 'build-full')
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Code Format"
+          git push
+
 
   run-tests:
     name: Run Test Suite
     runs-on: ubuntu-latest
-    needs: [guard, validate-changes, format-code]
-    # Run when code changed. A skipped format job is valid for forks or an existing PART change.
-    if: >-
-      always() &&
-      needs.guard.result == 'success' &&
-      needs.validate-changes.result == 'success' &&
-      (needs.format-code.result == 'success' || needs.format-code.result == 'skipped') &&
-      (needs.validate-changes.outputs.part == 'true' || needs.validate-changes.outputs.build == 'true')
-    permissions:
-      contents: read
+    if: needs.validate-changes.outputs.part == 'true' || needs.validate-changes.outputs.build == 'true'
+    needs: [ validate-changes ]
     steps:
-      - name: Check Out PR Head
+
+      - name: Check Out Repo
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
 
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
       - name: Run Tests
         run: pytest
 
+
   get-version:
     name: Get Version
     runs-on: ubuntu-latest
-    needs: [guard, validate-changes, run-tests]
-    if: >-
-      always() &&
-      needs.guard.result == 'success' &&
-      needs.validate-changes.result == 'success' &&
-      (needs.run-tests.result == 'success' || needs.run-tests.result == 'skipped') &&
-      needs.validate-changes.outputs.build == 'true' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      (contains(github.event.pull_request.labels.*.name, 'build') ||
-       contains(github.event.pull_request.labels.*.name, 'build-full'))
-    permissions:
-      contents: read
+    if: needs.validate-changes.outputs.build == 'true'
     outputs:
       tag-name: ${{ steps.get-data.outputs.tag-name }}
       version: ${{ steps.get-data.outputs.version }}
       part: ${{ steps.get-data.outputs.part }}
+    needs: [ validate-changes ]
     steps:
-      - name: Check Out PR Head
+
+      - name: Create App Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
+      - name: Check Out Repo
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Get Version
         id: get-data
-        env:
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          branch_name="$(echo "$HEAD_REF" | sed 's/[^a-zA-Z0-9._-]/-/g')"
-          base_name="${HEAD_REPO%/*}"
-
-          if [[ "$branch_name" =~ ^(master|develop)$ ]]; then
-            tag_name="$base_name"
+          branch_name=${{ github.event.pull_request.head.ref }}
+          base_name="${repo_name%/*}"
+          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
+              tag_name="${base_name}"
           else
-            tag_name="$branch_name"
+              tag_name="${branch_name}"
           fi
+          echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
+          echo "version=$(cat VERSION)-build$(cat BUILDNUM)" >> $GITHUB_OUTPUT
+          part=$(cat PART)
+          echo "part=${part}" >> $GITHUB_OUTPUT
 
-          echo "tag-name=$tag_name" >> "$GITHUB_OUTPUT"
-          echo "version=$(cat VERSION)-build$(cat BUILDNUM)" >> "$GITHUB_OUTPUT"
-          echo "part=$(cat PART)" >> "$GITHUB_OUTPUT"
 
   docker-build-pull:
     name: Docker
     uses: ./.github/workflows/docker-build.yml
     secrets: inherit
-    needs: [validate-changes, run-tests, get-version]
-    if: >-
-      needs.get-version.result == 'success' &&
-      needs.validate-changes.outputs.build == 'true'
+    needs: [ validate-changes, get-version ]
+    if: needs.validate-changes.outputs.build == 'true'
     with:
       branch: ${{ github.event.pull_request.head.ref }}
       repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -270,15 +262,12 @@ jobs:
       tag_name: ${{ needs.get-version.outputs.tag-name }}
       full_build: ${{ contains(github.event.pull_request.labels.*.name, 'build-full') }}
 
+
   build-executable:
     name: Build ${{ matrix.os_upper }} Executable
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
-    needs: [validate-changes, run-tests, get-version]
-    if: >-
-      needs.get-version.result == 'success' &&
-      needs.validate-changes.outputs.build == 'true'
-    permissions:
-      contents: read
+    if: needs.validate-changes.outputs.build == 'true'
+    needs: [ validate-changes, get-version ]
     outputs:
       windows: ${{ steps.save-links.outputs.windows }}
       ubuntu: ${{ steps.save-links.outputs.ubuntu }}
@@ -287,31 +276,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows
-            os_upper: Windows
-            os_version: latest
-            ext: .exe
-          - os: ubuntu
-            os_upper: Linux
-            os_version: latest
+          - os: 'windows'
+            os_upper: 'Windows'
+            os_version: 'latest'
+            ext: '.exe'
+          - os: 'ubuntu'
+            os_upper: 'Linux'
+            os_version: 'latest'
             ext: ''
-          - os: macos
-            os_upper: MacOS
+          - os: 'macos'
+            os_upper: 'MacOS'
             os_version: '13'
             ext: ''
     steps:
-      - name: Check Out PR Head
+
+      - name: Check Out Repo
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
 
+      # Build the Vite bundles BEFORE PyInstaller runs so the shipped
+      # binary includes static/dist/ (hashed, minified JS + manifest).
+      # See modules/helpers/_vite_manifest.py for how templates consume
+      # this at request time; roadmap #1334 Step 4.
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: '22'
-          cache: npm
+          cache: 'npm'
 
       - name: Build JS Bundles
         run: |
@@ -322,8 +316,6 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-          cache: pip
-          cache-dependency-path: requirements.txt
 
       - name: Install Requirements
         run: pip install -r requirements.txt pyinstaller
@@ -333,9 +325,9 @@ jobs:
         shell: bash
         run: |
           filename="Quickstart-v${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}${{ matrix.ext }}"
-          echo "filename=$filename" >> "$GITHUB_OUTPUT"
-          pyinstaller -y ./quickstart.spec -- --branch pull --build "${{ runner.os }}"
-          mv "dist/Quickstart${{ matrix.ext }}" "dist/$filename"
+          echo "filename=${filename}" >> $GITHUB_OUTPUT
+          pyinstaller -y ./quickstart.spec -- --branch pull --build ${{ runner.os }}
+          mv dist/Quickstart${{ matrix.ext }} dist/${filename}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
@@ -344,26 +336,20 @@ jobs:
           name: ${{ steps.build-executable.outputs.filename }}
           path: dist/${{ steps.build-executable.outputs.filename }}
 
-      - name: Save Links
+      - name: Save Links to Env Vars
         id: save-links
         shell: bash
         run: |
-          link_text="[${{ steps.build-executable.outputs.filename }}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
-          echo "${{ matrix.os }}=$link_text" >> "$GITHUB_OUTPUT"
+          link_text=$"[${{ steps.build-executable.outputs.filename }}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
+          echo "${{ matrix.os }}=${link_text}" >> $GITHUB_OUTPUT
+
 
   add-links:
     name: Add Links to PR
     runs-on: ubuntu-latest
-    needs: [get-version, docker-build-pull, build-executable]
-    if: >-
-      always() &&
-      needs.get-version.result == 'success' &&
-      needs.build-executable.result == 'success' &&
-      (needs.docker-build-pull.result == 'success' || needs.docker-build-pull.result == 'skipped')
-    permissions:
-      contents: read
-      pull-requests: write
+    needs: [ get-version, build-executable ]
     steps:
+
       - name: Create App Token
         uses: actions/create-github-app-token@v3
         id: app-token
@@ -371,100 +357,51 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
-      - name: Generate PR Body
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          WINDOWS_LINK: ${{ needs.build-executable.outputs.windows }}
-          UBUNTU_LINK: ${{ needs.build-executable.outputs.ubuntu }}
-          MACOS_LINK: ${{ needs.build-executable.outputs.macos }}
-          TAG_NAME: ${{ needs.get-version.outputs.tag-name }}
+      - name: Checkout Repo
+        uses: actions/checkout@v7
+
+      - name: Print Links
         run: |
-          clean_body="$(printf '%s\n' "$PR_BODY" | sed '/^## Executables$/,$d')"
+          echo "${{ needs.build-executable.outputs.windows }}"
+          echo "${{ needs.build-executable.outputs.ubuntu }}"
+          echo "${{ needs.build-executable.outputs.macos }}"
 
-          {
-            printf '%s\n' "$clean_body"
-            printf '\n## Executables\n'
-            printf '\n**%s**\n' "$WINDOWS_LINK"
-            printf '\n**%s**\n' "$UBUNTU_LINK"
-            printf '\n**%s**\n' "$MACOS_LINK"
-            printf '\n## Docker Image\n'
-            printf '\n**`%s/%s:%s`**\n' "${{ vars.DOCKER_TEAM }}" "${{ vars.DOCKER_REPO }}" "$TAG_NAME"
-          } > /tmp/pr-body.md
+      - name: Generate Body
+        id: generate-body
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR_BODY=$(cat <<EOF
+          ${{ github.event.pull_request.body }}
+          EOF
+          )
 
-          gh pr edit "${{ github.event.pull_request.number }}" \
-            --repo "${{ github.repository }}" \
-            --body-file /tmp/pr-body.md
+          PR_BODY=$(echo "$PR_BODY" | sed -z 's/\n## Executables.*//')
+          PR_BODY+=$'\n\n## Executables'
+          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.windows }}**'
+          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.ubuntu }}**'
+          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.macos }}**'
+          PR_BODY+=$'\n\n## Docker Image'
+          PR_BODY+=$'\n\n**`${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}`**'
+
+          gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
 
   failure-notification:
     name: Failure Notification
     runs-on: ubuntu-latest
-    needs:
-      - validate-changes
-      - format-code
-      - run-tests
-      - get-version
-      - docker-build-pull
-      - build-executable
-      - add-links
-    if: >-
-      always() &&
-      contains(needs.*.result, 'failure') &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    needs: [ run-tests, get-version, build-executable, add-links ]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
     steps:
+
       - name: Discord Failure Notification
         uses: Kometa-Team/discord-notifications@master
         with:
           webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
           message: ${{ vars.BUILD_FAILURE_ROLE }}
-          title: "${{ vars.NAME }} PR CI: ${{ vars.TEXT_FAILURE }}"
-          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          title: "${{ vars.NAME }} ${{ needs.get-version.outputs.tag-name }}: ${{ vars.TEXT_FAILURE }}"
+          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
           color: ${{ vars.COLOR_FAILURE }}
           username: ${{ vars.BOT_NAME }}
           avatar_url: ${{ vars.BOT_IMAGE }}
           author: ${{ vars.DOCKER_NAME }}
           author_icon_url: ${{ vars.DOCKER_IMAGE }}
-
-  # Use this single stable job as the required branch-protection check.
-  ci-status:
-    name: CI Status
-    runs-on: ubuntu-latest
-    needs:
-      - guard
-      - validate-changes
-      - format-code
-      - run-tests
-      - get-version
-      - docker-build-pull
-      - build-executable
-      - add-links
-    if: always()
-    steps:
-      - name: Check Required Jobs
-        env:
-          NEEDS_JSON: ${{ toJSON(needs) }}
-        run: |
-          echo "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-
-          failed="$(echo "$NEEDS_JSON" | jq '
-            [
-              to_entries[]
-              | select(
-                  .key == "guard" or
-                  .key == "validate-changes" or
-                  .key == "format-code" or
-                  .key == "run-tests" or
-                  .key == "get-version" or
-                  .key == "docker-build-pull" or
-                  .key == "build-executable" or
-                  .key == "add-links"
-                )
-              | select(.value.result != "success" and .value.result != "skipped")
-            ]
-            | length
-          ')"
-
-          if [[ "$failed" -gt 0 ]]; then
-            echo "One or more CI jobs failed."
-            exit 1
-          fi
