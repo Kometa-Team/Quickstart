@@ -1,3 +1,5 @@
+import gzip
+import hashlib
 import json
 import re
 from datetime import datetime, timezone
@@ -7,6 +9,35 @@ from modules import helpers
 from modules.process_control import is_logscan_maintenance_sidecar
 
 _is_logscan_gzip_path = helpers.is_logscan_gzip_path
+
+
+def calculate_logscan_file_md5(path, chunk_size=1024 * 1024):
+    """Return an MD5 for the logical log bytes, decompressing gzip archives."""
+    path = Path(path)
+    opener = gzip.open if _is_logscan_gzip_path(path) else open
+    try:
+        digest = hashlib.md5(usedforsecurity=False)
+    except TypeError:  # pragma: no cover - compatibility with older Python builds
+        digest = hashlib.md5()
+    try:
+        with opener(path, "rb") as handle:
+            while chunk := handle.read(chunk_size):
+                digest.update(chunk)
+    except Exception:
+        return None
+    return digest.hexdigest()
+
+
+def find_logscan_cache_entry_by_md5(cache_logs, content_md5, exclude_path=None):
+    if not content_md5 or not isinstance(cache_logs, dict):
+        return None, None
+    excluded = str(Path(exclude_path).resolve()) if exclude_path else None
+    for cache_key, entry in cache_logs.items():
+        if cache_key == excluded or not isinstance(entry, dict):
+            continue
+        if entry.get("content_md5") == content_md5:
+            return cache_key, entry
+    return None, None
 
 
 def get_logscan_cache_dir():
@@ -166,6 +197,9 @@ def logscan_cache_entry_matches(path, cache_entry=None, stats=None, require_comp
         stats = stats or Path(path).stat()
     except Exception:
         return False
+    cached_md5 = cache_entry.get("content_md5")
+    if cached_md5:
+        return calculate_logscan_file_md5(path) == cached_md5
     cached_mtime = cache_entry.get("mtime")
     cached_size = cache_entry.get("size")
     try:
@@ -181,11 +215,22 @@ def get_logscan_delta_files(log_dir=None, include_archive=True):
 
     ingest_cache = quickstart._load_logscan_ingest_cache()
     cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    known_md5s = {
+        entry.get("content_md5")
+        for entry in cache_logs.values()
+        if isinstance(entry, dict) and entry.get("content_md5")
+    }
     candidates = []
     for path in get_logscan_log_files(log_dir=log_dir, include_archive=include_archive):
         cache_entry = cache_logs.get(str(path.resolve()), {})
-        if not logscan_cache_entry_matches(path, cache_entry=cache_entry):
-            candidates.append(path)
+        if logscan_cache_entry_matches(path, cache_entry=cache_entry):
+            continue
+        content_md5 = calculate_logscan_file_md5(path)
+        if content_md5 and content_md5 in known_md5s:
+            continue
+        candidates.append(path)
+        if content_md5:
+            known_md5s.add(content_md5)
 
     def _mtime_desc(value):
         try:

@@ -661,6 +661,48 @@ def test_logscan_trends_log_delete_removes_archived_log_and_run(client, isolated
     assert qs_module.database.get_log_run("run-delete-1") is None
 
 
+def test_logscan_trends_log_delete_keeps_live_copy_hash_cached(client, isolated_config_dir, monkeypatch, qs_module):
+    log_dir = isolated_config_dir / "kometa" / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    live_path = log_dir / "meta.log"
+    archived_path = archive_dir / "meta-delete-copy.log.gz"
+    content = b"copied complete run\n"
+    live_path.write_bytes(content)
+    with gzip.open(archived_path, "wb") as handle:
+        handle.write(content)
+    content_md5 = qs_module._calculate_logscan_file_md5(live_path)
+    stats = archived_path.stat()
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-delete-copy-1",
+            "finished_at": "2026-04-23T11:00:00Z",
+            "config_name": "cleanup",
+            "created_at": "2026-04-23T11:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    cache = {
+        "version": 1,
+        "logs": {
+            str(live_path.resolve()): {"run_key": "run-delete-copy-1", "run_complete": True, "content_md5": content_md5},
+            str(archived_path.resolve()): {"run_key": "run-delete-copy-1", "run_complete": True, "content_md5": content_md5},
+        },
+    }
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: copy.deepcopy(cache))
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: (cache.clear(), cache.update(copy.deepcopy(value))))
+
+    resp = client.post("/logscan/trends/log/delete", json={"run_key": "run-delete-copy-1"})
+
+    assert resp.status_code == 200
+    assert live_path.exists()
+    assert not archived_path.exists()
+    assert str(live_path.resolve()) in cache["logs"]
+    assert str(archived_path.resolve()) not in cache["logs"]
+
+
 def test_logscan_trends_log_compress_compresses_archived_log_and_updates_cache(client, isolated_config_dir, monkeypatch, qs_module):
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -799,7 +841,7 @@ def test_archive_log_file_uses_canonical_timestamp_size_name(isolated_config_dir
         assert handle.read() == "abc123\n"
 
 
-def test_archive_finished_live_meta_log_if_idle_moves_live_file_and_cache(isolated_config_dir, monkeypatch, qs_module):
+def test_archive_finished_live_meta_log_if_idle_copies_live_file_and_caches_hash(isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
@@ -831,12 +873,29 @@ def test_archive_finished_live_meta_log_if_idle_moves_live_file_and_cache(isolat
     assert archived is not None
     assert archived.exists()
     assert archived.parent == archive_dir
-    assert not live_path.exists()
+    assert live_path.exists()
     saved_cache = saved["cache"]
-    assert str(live_path.resolve()) not in saved_cache["logs"]
+    assert str(live_path.resolve()) in saved_cache["logs"]
     assert str(archived.resolve()) in saved_cache["logs"]
     assert saved_cache["logs"][str(archived.resolve())]["run_key"] == "run-live-finished-1"
+    assert saved_cache["logs"][str(live_path.resolve())]["content_md5"] == saved_cache["logs"][str(archived.resolve())]["content_md5"]
     assert archived.suffixes[-2:] == [".log", ".gz"]
+
+    archived_again = qs_module._archive_finished_live_meta_log_if_idle(log_dir=log_dir)
+
+    assert archived_again == archived
+    assert len(list(archive_dir.glob("*.log.gz"))) == 1
+
+
+def test_logscan_md5_matches_live_and_compressed_copy(isolated_config_dir, qs_module):
+    live_path = isolated_config_dir / "meta.log"
+    archived_path = isolated_config_dir / "meta-copy.log.gz"
+    content = b"same logical log bytes\n"
+    live_path.write_bytes(content)
+    with gzip.open(archived_path, "wb") as handle:
+        handle.write(content)
+
+    assert qs_module._calculate_logscan_file_md5(live_path) == qs_module._calculate_logscan_file_md5(archived_path)
 
 
 def test_classify_rotated_log_in_live_dir_as_archive(isolated_config_dir, qs_module):
@@ -1325,7 +1384,7 @@ def test_logscan_reingest_flushes_ingest_cache_incrementally(isolated_config_dir
     log_files = []
     for idx in range(qs_module.LOGSCAN_INGEST_CACHE_FLUSH_INTERVAL + 1):
         path = log_dir / f"meta-{idx:02d}.log"
-        path.write_text("finished run\n", encoding="utf-8")
+        path.write_text(f"finished run {idx}\n", encoding="utf-8")
         log_files.append(path)
 
     cache = {"version": 1, "logs": {}}
@@ -1346,6 +1405,65 @@ def test_logscan_reingest_flushes_ingest_cache_incrementally(isolated_config_dir
     assert result["scanned"] == len(log_files)
     assert save_sizes[0] == qs_module.LOGSCAN_INGEST_CACHE_FLUSH_INTERVAL
     assert save_sizes[-1] == len(log_files)
+
+
+def test_logscan_full_reingest_rebuilds_md5_cache_and_skips_copied_meta_log(isolated_config_dir, monkeypatch, qs_module):
+    class FakeAnalyzer:
+        _people_index = {}
+
+        def __init__(self):
+            self.analyze_calls = 0
+
+        def preload_people_index(self, *_args, **_kwargs):
+            return None
+
+        def analyze_content(self, _content, **_kwargs):
+            self.analyze_calls += 1
+            return {
+                "summary": {
+                    "run_key": "same-run",
+                    "finished_at": "2026-04-30T10:00:00Z",
+                    "run_complete": True,
+                    "tool_name": "kometa",
+                    "created_at": "2026-04-30T10:00:00Z",
+                },
+                "recommendations": [],
+                "missing_people": [],
+            }
+
+        def collect_missing_people_lines(self, *_args, **_kwargs):
+            return []
+
+    log_dir = isolated_config_dir / "kometa" / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    live_path = log_dir / "meta.log"
+    archived_path = archive_dir / "meta-copy.log.gz"
+    content = b"one completed log\n"
+    live_path.write_bytes(content)
+    with gzip.open(archived_path, "wb") as handle:
+        handle.write(content)
+
+    analyzer = FakeAnalyzer()
+    saved = {}
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", lambda: analyzer)
+    monkeypatch.setattr(qs_module, "_get_logscan_log_files", lambda *_args, **_kwargs: [live_path, archived_path])
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {}})
+    monkeypatch.setattr(qs_module, "_clear_logscan_ingest_cache", lambda: None)
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda payload: saved.update(copy.deepcopy(payload)))
+    monkeypatch.setattr(qs_module, "_build_completed_log_progress_snapshot", lambda **_kwargs: {})
+    monkeypatch.setattr(qs_module.database, "clear_log_runs", lambda: True)
+    monkeypatch.setattr(qs_module.database, "save_log_run", lambda *_args, **_kwargs: True)
+
+    result = qs_module._perform_logscan_reingest(reset=True, update_state=False)
+
+    assert result["success"] is True
+    assert result["scanned"] == 2
+    assert result["ingested"] == 1
+    assert result["duplicates"] == 1
+    assert analyzer.analyze_calls == 1
+    assert saved["logs"][str(live_path.resolve())]["content_md5"] == saved["logs"][str(archived_path.resolve())]["content_md5"]
 
 
 def test_logscan_reingest_archives_incomplete_rotated_live_log(client, isolated_config_dir, monkeypatch, qs_module):
@@ -1998,6 +2116,56 @@ def test_ingest_completed_live_logs_caches_unchanged_incomplete_live_kometa_log(
     second = qs_module._ingest_completed_live_logs("kometa")
     assert second == {"ingested": 0, "archived": 0}
     assert analyze_calls["count"] == 1
+
+
+def test_ingest_completed_live_meta_log_copies_once_and_preserves_source(isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = isolated_config_dir / "kometa"
+    log_dir = kometa_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    runtime_log = log_dir / "meta.log"
+    runtime_log.write_text("completed live log\n", encoding="utf-8")
+
+    cache = {"version": 1, "logs": {}}
+    analyze_calls = {"count": 0}
+
+    class _CompleteAnalyzer:
+        def analyze_content(self, _content, **_kwargs):
+            analyze_calls["count"] += 1
+            return {
+                "summary": {
+                    "run_key": "run-complete-live-1",
+                    "tool_name": "kometa",
+                    "run_complete": True,
+                    "finished_at": "2026-04-30T18:00:00Z",
+                },
+                "recommendations": [],
+            }
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module, "_get_logscan_archive_dir", lambda *_args, **_kwargs: archive_dir)
+    monkeypatch.setattr(qs_module, "_flush_quickstart_pending_markers", lambda *_args, **_kwargs: {"flushed": True})
+    monkeypatch.setattr(qs_module, "_build_completed_log_progress_snapshot", lambda **_kwargs: {})
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", _CompleteAnalyzer)
+    monkeypatch.setattr(qs_module.database, "save_log_run", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: copy.deepcopy(cache))
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: (cache.clear(), cache.update(copy.deepcopy(value))))
+    monkeypatch.setattr(qs_module, "_prune_logscan_archive", lambda *_args, **_kwargs: 0)
+
+    first = qs_module._ingest_completed_live_logs("kometa")
+    second = qs_module._ingest_completed_live_logs("kometa")
+
+    archived_paths = list(archive_dir.glob("*.log.gz"))
+    assert first == {"ingested": 1, "archived": 1}
+    assert second == {"ingested": 0, "archived": 0}
+    assert analyze_calls["count"] == 1
+    assert runtime_log.exists()
+    assert len(archived_paths) == 1
+    live_entry = cache["logs"][str(runtime_log.resolve())]
+    archive_entry = cache["logs"][str(archived_paths[0].resolve())]
+    assert live_entry["content_md5"] == archive_entry["content_md5"]
 
 
 def test_logscan_reingest_reset_false_scans_only_delta_files(client, isolated_config_dir, monkeypatch, qs_module):
