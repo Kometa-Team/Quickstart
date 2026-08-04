@@ -25,6 +25,7 @@ def test_tracearr_setup_page_renders(client):
     assert response.status_code == 200
     assert b"Public API Key" in response.data
     assert b"requires Kometa nightly" in response.data
+    assert b'src="/static/images/service-icons/tracearr.png"' in response.data
 
 
 def test_tracearr_settings_round_trip_into_generated_yaml(app, monkeypatch):
