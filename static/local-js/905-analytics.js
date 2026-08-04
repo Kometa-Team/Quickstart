@@ -1,6 +1,7 @@
 /* global bootstrap */
 import { getAppConfig } from './modules/appConfig.js'
 import { elementGroup } from './modules/elementGroup.js'
+import { nbspLeadingSpaces } from './modules/kometa/_util.js'
 
 const tableBody = document.querySelector('#logscan-trends-table tbody')
 const tableSummary = document.getElementById('logscan-table-summary')
@@ -584,7 +585,7 @@ function renderProgressSnapshotPanel (run, snapshot) {
     const phaseHtml = columns.map((column, index) => `<td class="text-end">${renderProgressSnapshotCellLabel(phaseCells[index])}</td>`).join('')
     return `
       <tr>
-        <td>${escapeHtml(row.name || '—')}</td>
+        <td><code>${escapeHtml(nbspLeadingSpaces(row.name || '—'))}</code></td>
         <td>${escapeHtml(row.type || '—')}</td>
         <td><span class="badge${statusClass}">${escapeHtml(row.status || 'Pending')}</span></td>
         ${phaseHtml}

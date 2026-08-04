@@ -3872,6 +3872,8 @@ div#loading {
     display: block;
     margin-top: 0.2rem;
     color: #f5e4a8;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
 }

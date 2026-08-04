@@ -2,6 +2,9 @@ from pathlib import Path
 import pytest
 from flask import session
 
+from modules.logscan_resume import dedupe_preserve_order
+from modules.process_control import extract_selected_libraries
+
 
 def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(tmp_path, monkeypatch, qs_module):
     latest_candidate = tmp_path / "meta-latest.log"
@@ -160,6 +163,96 @@ def test_build_incomplete_progress_snapshot_exposes_rows_and_totals(qs_module):
     assert snapshot["total_label"] == "7m 30s"
 
 
+def test_build_incomplete_progress_snapshot_preserves_library_name_whitespace(qs_module):
+    snapshot = qs_module._build_incomplete_progress_snapshot(
+        {
+            "phase_current": "collections",
+            "current_library": "  Movies  ",
+            "completed_count": 0,
+            "total_count": 1,
+            "libraries": [
+                {
+                    "name": "  Movies  ",
+                    "type": "movie",
+                    "status": "In progress",
+                    "durations": {},
+                }
+            ],
+        },
+        last_log_at="2026-05-05 03:30:00",
+        config_data={"playlists": {"daily": {}}, "settings": {"run_order": ["operations", "collections"]}},
+        original_command="kometa.py --run --config <config>",
+    )
+
+    assert snapshot["rows"][0]["name"] == "  Movies  "
+
+
+def test_resume_hint_metric_style_preserves_whitespace():
+    css_text = Path("static/css/styles.css").read_text(encoding="utf-8")
+
+    assert "white-space: pre-wrap" in css_text
+    assert "font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;" in css_text
+    assert "#incomplete-run-alert .qs-incomplete-run-metric-value" in css_text
+
+
+def test_extract_selected_libraries_preserves_whitespace_in_library_names():
+    command = 'kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>'
+
+    run_option, selected = extract_selected_libraries(command)
+
+    assert run_option == "--run-libraries"
+    assert selected == ["  Movies  ", "  TV Shows  "]
+
+
+def test_build_resume_library_scope_preserves_original_label_when_equivalent_by_whitespace(qs_module):
+    scope = qs_module._build_resume_library_scope(
+        original_command='kometa.py --run --run-libraries "  Movies  " --config <config>',
+        progress_libraries=[
+            {"name": "  Movies  ", "status": "In progress"},
+        ],
+        current_library="Movies",
+        allow_current_fallback=True,
+    )
+
+    assert scope == ["  Movies  "]
+
+
+def test_build_incomplete_scope_summary_preserves_leading_spaces_in_scope_labels(qs_module):
+    summary = qs_module._build_incomplete_scope_summary(
+        original_command='kometa.py --run --run-libraries "  Movies  " --config <config>',
+        suggested_command='kometa.py --run --run-libraries "  Movies  " --resume "Top Picks" --config <config>',
+        progress_libraries=[
+            {"name": "  Movies  ", "status": "In progress"},
+        ],
+    )
+
+    assert summary["original_scope_label"] == "  Movies  "
+    assert summary["recovery_scope_label"] == "  Movies  "
+    assert summary["pruned_label"] == ""
+
+
+def test_dedupe_preserve_order_keeps_whitespace_distinct_names():
+    values = ["Movies", " Movies ", "  Movies  ", "Movies"]
+
+    assert dedupe_preserve_order(values) == ["Movies", " Movies ", "  Movies  ", "Movies"]
+
+
+def test_build_resume_library_scope_matches_progress_libraries_whitespace_insensitively(qs_module):
+    scope = qs_module._build_resume_library_scope(
+        original_command='kometa.py --run --run-libraries " Movies| Movies| Movies | Movies| Movies | Movies L| Movies L-T | Movies | Movies |5YO-TMDB-Agent" --config <config>',
+        progress_libraries=[
+            {"name": "Movies", "status": "Done"},
+            {"name": "Movies L", "status": "Done"},
+            {"name": "Movies L-T", "status": "Done"},
+            {"name": "5YO-TMDB-Agent", "status": "Pending"},
+        ],
+        current_library="5YO-TMDB-Agent",
+        allow_current_fallback=True,
+    )
+
+    assert scope == ["5YO-TMDB-Agent"]
+
+
 def test_build_completed_log_progress_snapshot_does_not_require_request_context(qs_module, isolated_config_dir, monkeypatch):
     kometa_root = isolated_config_dir / "kometa"
     config_dir = kometa_root / "config"
@@ -225,6 +318,33 @@ def test_build_recovery_suggestions_preserves_full_run_scope_for_collection_resu
     assert '--resume "Top Picks"' in suggestions[0]
     assert '--run-libraries "Movies"' in suggestions[0]
     assert "--collections-only" not in suggestions[0]
+
+
+def test_build_recovery_command_preserves_library_name_whitespace(qs_module):
+    command = qs_module.build_recovery_command(
+        "kometa.py --run --config <config>",
+        phase="collections",
+        current_library="  Movies  ",
+    )
+
+    assert '--run-libraries "  Movies  "' in command
+
+
+def test_build_recovery_command_quotes_each_library_name_in_pipe_delimited_scope(qs_module):
+    command = qs_module.build_recovery_command(
+        "kometa.py --run --config <config>",
+        phase="collections",
+        library_scope=[" Movies", " Movies ", "Movies L", "5YO-TMDB-Agent"],
+    )
+
+    assert '--run-libraries " Movies| Movies |Movies L|5YO-TMDB-Agent"' in command
+
+
+def test_extract_selected_libraries_preserves_library_name_whitespace(qs_module):
+    run_option, selected_libraries = qs_module.extract_selected_libraries('kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>')
+
+    assert run_option == "--run-libraries"
+    assert selected_libraries == ["  Movies  ", "  TV Shows  "]
 
 
 def test_build_recovery_suggestions_preserves_collections_only_scope_when_original_was_collections_only(qs_module):
