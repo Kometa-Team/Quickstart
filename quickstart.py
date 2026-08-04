@@ -1,6 +1,6 @@
 # ruff: noqa: E402
 #
-# We intentionally run enforce_preflight() before all other imports so
+# We intentionally run enforce_preflight() before other imports so
 # that broken Python builds (missing _sqlite3, _ssl, etc.) surface a
 # friendly error instead of a confusing stdlib traceback. That makes
 # this file's import-order-vs-code arrangement look like an E402 to
