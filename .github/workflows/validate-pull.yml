@@ -1,8 +1,12 @@
 name: Validate Pull Request
 
+# Disabled as an automatic trigger during the ci.yml rollout (see the "Decisions" section of
+# quickstart-ci-redesign-plan.md) -- this ran on pull_request_target and executed fork PR code
+# with repo secrets, which is what ci.yml + promote-fork-pr.yml replace. Left as workflow_dispatch
+# only, runnable manually as a rollback path, until ci.yml has been green on a handful of real PRs.
+# Delete this whole file once that's confirmed.
 on:
-  pull_request_target:
-    types: [ opened, synchronize, reopened, labeled ]
+  workflow_dispatch:
 
 permissions:
   contents: read
