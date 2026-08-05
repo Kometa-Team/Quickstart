@@ -4,8 +4,11 @@ on:
   pull_request_target:
     types: [ opened, synchronize, reopened, labeled ]
 
+permissions:
+  contents: read
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,16 +22,23 @@ jobs:
     steps:
 
       - name: Display Refs
+        env:
+          BASE_REPO: ${{ github.event.pull_request.base.repo.full_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          echo "Base Repo: ${{ github.event.pull_request.base.repo.full_name }}"
-          echo "Base Ref: ${{ github.base_ref }}"
-          echo "Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
-          echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
+          echo "Base Repo: $BASE_REPO"
+          echo "Base Ref: $BASE_REF"
+          echo "Head Repo: $HEAD_REPO"
+          echo "Head Ref: $HEAD_REF"
 
       - name: Check for Remote Branch
         if: "!contains(github.event.pull_request.labels.*.name, 'approved')"
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
-          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          repo_name="$HEAD_REPO"
           base_name="${repo_name%/*}"
 
           if [[ "${base_name}" != "Kometa-Team" ]]; then
@@ -54,17 +64,21 @@ jobs:
         if: github.base_ref == 'master'
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr close ${{ github.event.pull_request.number }} --comment "Pull Requests cannot be submitted to master. Please resubmit the Pull Request to the develop branch."
+          gh pr close "$PR_NUMBER" --comment "Pull Requests cannot be submitted to master. Please resubmit the Pull Request to the develop branch."
           echo "ERROR: Pull Requests cannot be submitted to master. Please resubmit the Pull Request to the develop branch"
           exit 1
 
       - name: Get Changes
         id: get-changes
+        env:
+          REPO_NAME: ${{ vars.REPO_NAME }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
-          git remote add -f upstream https://github.com/Kometa-Team/${{ vars.REPO_NAME }}.git
+          git remote add -f upstream "https://github.com/Kometa-Team/${REPO_NAME}.git"
           git remote update
-          if [[ ${{ github.event.action }} == "labeled" ]]; then
+          if [[ "$EVENT_ACTION" == "labeled" ]]; then
               echo "files=$(git diff --name-only upstream/develop HEAD | xargs)" >> $GITHUB_OUTPUT
           else
               echo "files=$(git diff --name-only HEAD^ | xargs)" >> $GITHUB_OUTPUT
@@ -72,8 +86,10 @@ jobs:
 
       - name: List Changed Files
         id: list-changes
+        env:
+          CHANGED_FILES: ${{ steps.get-changes.outputs.files }}
         run: |
-          for file in ${{ steps.get-changes.outputs.files }}; do
+          for file in $CHANGED_FILES; do
               if [[ $file =~ ^(PART).*$ ]] ; then
                   echo "build=true" >> $GITHUB_OUTPUT
               elif [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
@@ -89,7 +105,7 @@ jobs:
         uses: rojopolis/spellcheck-github-actions@0.64.0
         with:
           task_name: Markdown
-          source_files: ${{ steps.changed_files.outputs.all_changed_files }}
+          source_files: ${{ steps.get-changes.outputs.files }}
 
 
   format-code:
@@ -97,6 +113,8 @@ jobs:
     if: needs.validate-changes.outputs.build != 'true' && needs.validate-changes.outputs.part == 'true'
     runs-on: ubuntu-latest
     needs: [ validate-changes ]
+    permissions:
+      contents: write
     steps:
 
       - name: Create App Token
@@ -128,9 +146,12 @@ jobs:
       - name: Update PART File and Commit
         id: update-version
         if: contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'build-full')
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
-          branch_name=${{ github.event.pull_request.head.ref }}
-          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          branch_name="$HEAD_REF"
+          repo_name="$HEAD_REPO"
           base_name="${repo_name%/*}"
           if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
               tag_name="${base_name}"
@@ -142,14 +163,14 @@ jobs:
           if [[ "${base_name}" == "Kometa-Team" ]]; then
               extra=""
           else
-              extra=" from the ${{ github.event.pull_request.head.repo.full_name }} repo"
+              extra=" from the ${repo_name} repo"
           fi
           echo "extra-text=${extra}" >> $GITHUB_OUTPUT
 
           old_msg=$(git log -1 HEAD --pretty=format:%s)
           echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
 
-          part=$(cat PART)
+          part=$(cat PART 2>/dev/null || echo "")
           if [ -n "$part" ]; then
               new_value="$((${part} + 1))"
           else
@@ -205,7 +226,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run Tests
-        run: pytest
+        run: python -m pytest
 
 
   get-version:
@@ -235,8 +256,12 @@ jobs:
 
       - name: Get Version
         id: get-data
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
-          branch_name=${{ github.event.pull_request.head.ref }}
+          branch_name="$HEAD_REF"
+          repo_name="$HEAD_REPO"
           base_name="${repo_name%/*}"
           if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
               tag_name="${base_name}"
@@ -245,7 +270,7 @@ jobs:
           fi
           echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
           echo "version=$(cat VERSION)-build$(cat BUILDNUM)" >> $GITHUB_OUTPUT
-          part=$(cat PART)
+          part=$(cat PART 2>/dev/null || echo "")
           echo "part=${part}" >> $GITHUB_OUTPUT
 
 
@@ -297,10 +322,6 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
 
-      # Build the Vite bundles BEFORE PyInstaller runs so the shipped
-      # binary includes static/dist/ (hashed, minified JS + manifest).
-      # See modules/helpers/_vite_manifest.py for how templates consume
-      # this at request time; roadmap #1334 Step 4.
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
@@ -323,11 +344,16 @@ jobs:
       - name: Build Executable
         id: build-executable
         shell: bash
+        env:
+          VERSION: ${{ needs.get-version.outputs.version }}
+          TAG_NAME: ${{ needs.get-version.outputs.tag-name }}
+          PART: ${{ needs.get-version.outputs.part }}
+          EXT: ${{ matrix.ext }}
         run: |
-          filename="Quickstart-v${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}${{ matrix.ext }}"
+          filename="Quickstart-v${VERSION}.${TAG_NAME}${PART}-${RUNNER_OS}${EXT}"
           echo "filename=${filename}" >> $GITHUB_OUTPUT
-          pyinstaller -y ./quickstart.spec -- --branch pull --build ${{ runner.os }}
-          mv dist/Quickstart${{ matrix.ext }} dist/${filename}
+          pyinstaller -y ./quickstart.spec -- --branch pull --build "${RUNNER_OS}"
+          mv "dist/Quickstart${EXT}" "dist/${filename}"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
@@ -339,15 +365,21 @@ jobs:
       - name: Save Links to Env Vars
         id: save-links
         shell: bash
+        env:
+          FILENAME: ${{ steps.build-executable.outputs.filename }}
+          ARTIFACT_URL: ${{ steps.artifact-upload-step.outputs.artifact-url }}
+          MATRIX_OS: ${{ matrix.os }}
         run: |
-          link_text=$"[${{ steps.build-executable.outputs.filename }}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
-          echo "${{ matrix.os }}=${link_text}" >> $GITHUB_OUTPUT
+          link_text="[${FILENAME}](${ARTIFACT_URL})"
+          echo "${MATRIX_OS}=${link_text}" >> $GITHUB_OUTPUT
 
 
   add-links:
     name: Add Links to PR
     runs-on: ubuntu-latest
     needs: [ get-version, build-executable ]
+    permissions:
+      pull-requests: write
     steps:
 
       - name: Create App Token
@@ -361,30 +393,38 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Print Links
+        env:
+          WIN_LINK: ${{ needs.build-executable.outputs.windows }}
+          UBUNTU_LINK: ${{ needs.build-executable.outputs.ubuntu }}
+          MACOS_LINK: ${{ needs.build-executable.outputs.macos }}
         run: |
-          echo "${{ needs.build-executable.outputs.windows }}"
-          echo "${{ needs.build-executable.outputs.ubuntu }}"
-          echo "${{ needs.build-executable.outputs.macos }}"
+          echo "$WIN_LINK"
+          echo "$UBUNTU_LINK"
+          echo "$MACOS_LINK"
 
       - name: Generate Body
         id: generate-body
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_BODY_RAW: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          WIN_LINK: ${{ needs.build-executable.outputs.windows }}
+          UBUNTU_LINK: ${{ needs.build-executable.outputs.ubuntu }}
+          MACOS_LINK: ${{ needs.build-executable.outputs.macos }}
+          DOCKER_TEAM: ${{ vars.DOCKER_TEAM }}
+          DOCKER_REPO: ${{ vars.DOCKER_REPO }}
+          TAG_NAME: ${{ needs.get-version.outputs.tag-name }}
         run: |
-          PR_BODY=$(cat <<EOF
-          ${{ github.event.pull_request.body }}
-          EOF
-          )
-
-          PR_BODY=$(echo "$PR_BODY" | sed -z 's/\n## Executables.*//')
+          PR_BODY=$(echo "$PR_BODY_RAW" | sed -z 's/\n## Executables.*//')
           PR_BODY+=$'\n\n## Executables'
-          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.windows }}**'
-          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.ubuntu }}**'
-          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.macos }}**'
+          PR_BODY+=$'\n\n**'"$WIN_LINK"'**'
+          PR_BODY+=$'\n\n**'"$UBUNTU_LINK"'**'
+          PR_BODY+=$'\n\n**'"$MACOS_LINK"'**'
           PR_BODY+=$'\n\n## Docker Image'
-          PR_BODY+=$'\n\n**`${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}`**'
+          PR_BODY+=$'\n\n**`'"$DOCKER_TEAM"'/'"$DOCKER_REPO"':'"$TAG_NAME"'`**'
 
-          gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
+          gh pr edit "$PR_NUMBER" --body "$PR_BODY"
+
 
   failure-notification:
     name: Failure Notification
@@ -397,7 +437,7 @@ jobs:
         uses: Kometa-Team/discord-notifications@master
         with:
           webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: ${{ vars.BUILD_FAILURE_ROLE }}
+          message: "QS Broke Needs Fix"
           title: "${{ vars.NAME }} ${{ needs.get-version.outputs.tag-name }}: ${{ vars.TEXT_FAILURE }}"
           url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
           color: ${{ vars.COLOR_FAILURE }}
