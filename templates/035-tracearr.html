@@ -11,7 +11,7 @@
     </span>
   </span>
   <input type="text" class="form-control" id="tracearr_url" name="tracearr_url"
-    value="{{ data.get('tracearr', {}).get('url', '') or '' }}" aria-describedby="tracearr_url_text"
+    value="{{ (data.get('tracearr', {}).get('url', '') or '') if data.get('user_entered') else '' }}" aria-describedby="tracearr_url_text"
     autocomplete="url" autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 

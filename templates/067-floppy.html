@@ -10,7 +10,7 @@
     </span>
   </span>
   <input type="url" class="form-control" id="floppy_url" name="floppy_url"
-    value="{{ floppy.get('url', '') or '' }}" aria-describedby="floppy_url_text" autocomplete="url"
+    value="{{ (floppy.get('url', '') or '') if data.get('user_entered') else '' }}" aria-describedby="floppy_url_text" autocomplete="url"
     autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 

@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock
 
-from modules import database
+from modules import database, persistence
 
 
 def _response(status_code=200, payload=None):
@@ -97,6 +97,25 @@ def test_floppy_step_renders_configured_url_and_module_script(client):
     assert 'id="floppy_token"' in page
     assert 'src="/static/local-js/067-floppy.js"' in page
     assert 'src="/static/images/service-icons/floppy.png"' in page
+
+
+def test_floppy_step_hides_dummy_template_url(client, monkeypatch):
+    config_name = "floppy-dummy-url-test"
+    original_get_dummy_data = persistence.get_dummy_data
+
+    def get_dummy_data(section):
+        if section == "floppy":
+            return {"url": "http://192.168.1.12:8080", "token": None}
+        return original_get_dummy_data(section)
+
+    monkeypatch.setattr(persistence, "get_dummy_data", get_dummy_data)
+    with client.session_transaction() as client_session:
+        client_session["config_name"] = config_name
+
+    response = client.get("/step/067-floppy")
+
+    assert response.status_code == 200
+    assert "192.168.1.12:8080" not in response.get_data(as_text=True)
 
 
 def test_floppy_simple_section_import_round_trip_contract():
