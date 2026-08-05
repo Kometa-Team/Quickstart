@@ -1,8 +1,8 @@
 name: Validate Pull Request
 
+# Disabled: workflow_dispatch is a placeholder to keep this file registered, not a working trigger (pull_request is undefined here). Rollback = restore pull_request_target below, then delete once ci.yml is proven.
 on:
-  pull_request_target:
-    types: [ opened, synchronize, reopened, labeled ]
+  workflow_dispatch:
 
 permissions:
   contents: read
