@@ -226,7 +226,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run Tests
-        run: pytest
+        run: python -m pytest
 
 
   get-version:
