@@ -1719,7 +1719,12 @@ def test_live_validation_rollup_many_skipped_optional_steps_stays_green():
 
     rollup = _build_live_validation_rollup(step_statuses, template_keys)
 
-    assert rollup["counts"] == {"validated": 5, "failed": 0, "skipped": 15, "unknown": 0}
+    assert rollup["counts"] == {
+        "validated": len(validated_keys),
+        "failed": 0,
+        "skipped": len(template_keys) - len(validated_keys),
+        "unknown": 0,
+    }
     assert rollup["state"] == "ok"
 
 

@@ -28442,6 +28442,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles override this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -28943,6 +28944,42 @@
             "type": "toggle",
             "default": false,
             "section": "visibility"
+          },
+          {
+            "key": "ignore_imdb_ids",
+            "label": "Ignore IMDb IDs",
+            "placeholder": "Add IMDb ID (e.g. tt1234567)",
+            "section": "filtering",
+            "tooltip": "Set a list of IMDb IDs to ignore in this Defaults File.<br><br>Each entry must look like <code>tt1234567</code>. Plex lookup is advisory and only checks the active library.",
+            "type": "string_list",
+            "validation_preset": "imdb_id_plex"
+          },
+          {
+            "key": "ignore_ids",
+            "label": "Ignore IDs",
+            "placeholder": "Add numeric ID (e.g. 603)",
+            "section": "filtering",
+            "tooltip": "Set a list of numeric IDs to ignore in this Defaults File.<br><br>Each entry must be a number like <code>603</code> or <code>1399</code>.",
+            "type": "string_list",
+            "validation_preset": "numeric_id"
+          },
+          {
+            "key": "item_radarr_tag",
+            "label": "Item Radarr Tag",
+            "media_types": ["movie"],
+            "placeholder": "Add item Radarr tag",
+            "section": "item_tags",
+            "tooltip": "Append a Radarr tag to every movie found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list"
+          },
+          {
+            "key": "item_sonarr_tag",
+            "label": "Item Sonarr Tag",
+            "media_types": ["show"],
+            "placeholder": "Add item Sonarr tag",
+            "section": "item_tags",
+            "tooltip": "Append a Sonarr tag to every series found by all collections in this Defaults File.<br><br>Add one tag at a time.",
+            "type": "string_list"
           },
           {
             "key": "hub_priority",
