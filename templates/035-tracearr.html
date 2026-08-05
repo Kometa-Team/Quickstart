@@ -1,0 +1,64 @@
+{% extends "000-base.html" %} {% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="tracearr_url_text" style="width: 150px; justify-content: space-between;">
+    Tracearr URL
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+      title="Enter the full URL for your Tracearr instance, including the port.<br><br><b>Example:</b> http://192.168.1.12:3019">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" id="tracearr_url" name="tracearr_url"
+    value="{{ data.get('tracearr', {}).get('url', '') or '' }}" aria-describedby="tracearr_url_text"
+    autocomplete="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="tracearr_apikey_text" style="width: 150px; justify-content: space-between;">
+    Public API Key
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+      title="Enter the Tracearr Public API key from Settings &gt; Public API. Public keys begin with <code>trr_pub_</code>.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="password" class="form-control" id="tracearr_apikey" name="tracearr_apikey"
+    value="{{ data.get('tracearr', {}).get('apikey', '') or '' }}" aria-describedby="tracearr_apikey_text"
+    autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button" aria-label="Show API key">
+    <i class="fas fa-eye"></i>
+  </button>
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="tracearr_server_id_text" style="width: 150px; justify-content: space-between;">
+    Plex Server
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+      title="Usually you can leave this blank and Kometa will match the Plex server by name. Validate to load the Plex servers configured in Tracearr, then select one when names differ or are ambiguous.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <select class="form-select" id="tracearr_server_id" name="tracearr_server_id"
+    data-current-value="{{ data.get('tracearr', {}).get('server_id', '') or '' }}"
+    aria-describedby="tracearr_server_id_text">
+    <option value="">Auto-detect by Plex server name</option>
+    {% if data.get('tracearr', {}).get('server_id') %}
+    <option value="{{ data['tracearr']['server_id'] }}" selected>{{ data['tracearr']['server_id'] }}</option>
+    {% endif %}
+  </select>
+  <button class="btn btn-success" id="validateButton" type="button">
+    Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
+
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="tracearr_validated" name="tracearr_validated"
+    value="{{ data.get('validated', False) }}">
+  <label for="tracearr_validated">Tracearr Validated</label>
+</div>
+<input type="hidden" id="tracearr_validated_at" name="tracearr_validated_at" value="{{ data.get('validated_at', '') }}">
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
+</form>
+{% endblock %}

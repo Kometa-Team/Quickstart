@@ -55,6 +55,7 @@ JSON_SCHEMA_SYNC_FILES = (
     ("builders/radarr.yml", "json-schema/builders/radarr.yml"),
     ("builders/sonarr.yml", "json-schema/builders/sonarr.yml"),
     ("builders/tautulli.yml", "json-schema/builders/tautulli.yml"),
+    ("builders/tracearr.yml", "json-schema/builders/tracearr.yml"),
     ("builders/tmdb.yml", "json-schema/builders/tmdb.yml"),
     ("builders/trakt.yml", "json-schema/builders/trakt.yml"),
     ("builders/tvdb.yml", "json-schema/builders/tvdb.yml"),

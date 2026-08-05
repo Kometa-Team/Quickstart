@@ -33,6 +33,7 @@ QS_VALIDATION_STEP_KEYS = {
     "020-tmdb",
     "025-libraries",
     "030-tautulli",
+    "035-tracearr",
     "040-github",
     "050-omdb",
     "060-mdblist",

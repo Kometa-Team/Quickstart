@@ -17,6 +17,7 @@ from modules.dependency_reasons import (
     _libraries_data_radarr_dependency_reasons,
     _libraries_data_sonarr_dependency_reasons,
     _libraries_data_tautulli_dependency_reasons,
+    _libraries_data_tracearr_dependency_reasons,
     _libraries_data_trakt_dependency_reasons,
     _library_prefix_from_key,
 )
@@ -1048,6 +1049,7 @@ def _libraries_dependency_hint_response(payload, resolver):
 # DRY them up with a registration loop driven by a (label, url-path, resolver) table.
 _DEPENDENCY_HINT_ROUTES = (
     ("Tautulli", "tautulli", _libraries_data_tautulli_dependency_reasons),
+    ("Tracearr", "tracearr", _libraries_data_tracearr_dependency_reasons),
     ("OMDb", "omdb", _libraries_data_omdb_dependency_reasons),
     ("MDBList", "mdblist", _libraries_data_mdblist_dependency_reasons),
     ("AniDB", "anidb", _libraries_data_anidb_dependency_reasons),

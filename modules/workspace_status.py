@@ -43,6 +43,7 @@ from modules.dependency_reasons import (
     QS_RADARR_REQUIRED_STEP_KEY,
     QS_SONARR_REQUIRED_STEP_KEY,
     QS_TAUTULLI_REQUIRED_STEP_KEY,
+    QS_TRACEARR_REQUIRED_STEP_KEY,
     QS_TRAKT_REQUIRED_STEP_KEY,
     _config_anidb_dependency_reasons,
     _config_mal_dependency_reasons,
@@ -51,6 +52,7 @@ from modules.dependency_reasons import (
     _config_radarr_dependency_reasons,
     _config_sonarr_dependency_reasons,
     _config_tautulli_dependency_reasons,
+    _config_tracearr_dependency_reasons,
     _config_trakt_dependency_reasons,
 )
 from modules.imagemaid import (
@@ -251,6 +253,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
 
     required_seed = set(QS_REQUIRED_STEP_KEYS)
     tautulli_requirement_reasons = _config_tautulli_dependency_reasons(section_rows) if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys else []
+    tracearr_requirement_reasons = _config_tracearr_dependency_reasons(section_rows) if QS_TRACEARR_REQUIRED_STEP_KEY in template_keys else []
     omdb_requirement_reasons = _config_omdb_dependency_reasons(section_rows) if QS_OMDB_REQUIRED_STEP_KEY in template_keys else []
     mdblist_requirement_reasons = _config_mdblist_dependency_reasons(section_rows) if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys else []
     anidb_requirement_reasons = _config_anidb_dependency_reasons(section_rows) if QS_ANIDB_REQUIRED_STEP_KEY in template_keys else []
@@ -260,6 +263,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
     mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
     if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys and tautulli_requirement_reasons:
         required_seed.add(QS_TAUTULLI_REQUIRED_STEP_KEY)
+    if QS_TRACEARR_REQUIRED_STEP_KEY in template_keys and tracearr_requirement_reasons:
+        required_seed.add(QS_TRACEARR_REQUIRED_STEP_KEY)
     if QS_OMDB_REQUIRED_STEP_KEY in template_keys and omdb_requirement_reasons:
         required_seed.add(QS_OMDB_REQUIRED_STEP_KEY)
     if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys and mdblist_requirement_reasons:
@@ -301,6 +306,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
             "optional_keys": list(optional_keys),
             "review_keys": list(review_keys),
             "tautulli_requirement_reasons": tautulli_requirement_reasons,
+            "tracearr_requirement_reasons": tracearr_requirement_reasons,
             "omdb_requirement_reasons": omdb_requirement_reasons,
             "mdblist_requirement_reasons": mdblist_requirement_reasons,
             "anidb_requirement_reasons": anidb_requirement_reasons,
@@ -395,6 +401,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "optional_keys": optional_keys,
         "review_keys": review_keys,
         "tautulli_requirement_reasons": tautulli_requirement_reasons,
+        "tracearr_requirement_reasons": tracearr_requirement_reasons,
         "omdb_requirement_reasons": omdb_requirement_reasons,
         "mdblist_requirement_reasons": mdblist_requirement_reasons,
         "anidb_requirement_reasons": anidb_requirement_reasons,

@@ -46,6 +46,7 @@ def _err_response(message="Error"):
     "route,mock_fn,payload",
     [
         ("/validate_tautulli", "validate_tautulli_server", {"tautulli_url": "http://t", "apikey": "k"}),
+        ("/validate_tracearr", "validate_tracearr_server", {"tracearr_url": "http://t", "tracearr_apikey": "trr_pub_k"}),
         ("/validate_trakt", "validate_trakt_server", {"client_id": "id", "client_secret": "sec"}),
         ("/validate_mal", "validate_mal_server", {"client_id": "id", "client_secret": "sec"}),
         ("/validate_webhook", "validate_webhook_server", {"webhook_url": "http://hook"}),
@@ -62,6 +63,7 @@ def test_validate_passthrough_route_proxies_success(client, route, mock_fn, payl
     "route,mock_fn,payload",
     [
         ("/validate_tautulli", "validate_tautulli_server", {"tautulli_url": "http://t", "apikey": "k"}),
+        ("/validate_tracearr", "validate_tracearr_server", {"tracearr_url": "http://t", "tracearr_apikey": "trr_pub_k"}),
         ("/validate_trakt", "validate_trakt_server", {"client_id": "id", "client_secret": "sec"}),
     ],
 )

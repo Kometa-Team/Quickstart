@@ -6,6 +6,7 @@ QS_COLLECTIONS_PATH = Path("static/json/quickstart_collections.json")
 CHART_COLLECTION_IDS = [
     "collection_basic",
     "collection_tautulli",
+    "collection_tracearr",
     "collection_imdb",
     "collection_tmdb",
     "collection_trakt",
@@ -83,6 +84,7 @@ def test_chart_source_child_specific_controls_share_chart_collections_section():
     examples = {
         "collection_basic": ["use_released", "name_episodes", "sort_by_released", "limit_episodes"],
         "collection_tautulli": ["list_days_popular", "list_size_watched", "cache_builders_popular", "collection_order_watched"],
+        "collection_tracearr": ["list_days_popular", "list_minimum_trending", "list_size_transcoded", "use_binged"],
         "collection_tmdb": ["use_trending", "limit_airing", "sync_mode_top", "schedule_air"],
         "collection_simkl": ["period", "limit_trending_today", "schedule_dvd"],
         "collection_myanimelist": ["starting_only", "starting_only_season", "limit_favorited", "schedule_airing"],

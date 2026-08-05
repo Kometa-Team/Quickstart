@@ -91,6 +91,7 @@ def _has_meaningful_optional_input(template_key, payload):
 
     simple_key_requirements = {
         "030-tautulli": ("tautulli", ("url", "apikey")),
+        "035-tracearr": ("tracearr", ("url", "apikey")),
         "040-github": ("github", ("token",)),
         "050-omdb": ("omdb", ("apikey",)),
         "060-mdblist": ("mdblist", ("apikey",)),

@@ -166,6 +166,7 @@ ORDERED_CONFIG_SECTIONS = (
     ("plex", "010-plex"),
     ("tmdb", "020-tmdb"),
     ("tautulli", "030-tautulli"),
+    ("tracearr", "035-tracearr"),
     ("github", "040-github"),
     ("omdb", "050-omdb"),
     ("mdblist", "060-mdblist"),
