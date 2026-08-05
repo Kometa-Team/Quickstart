@@ -226,7 +226,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run Tests
-        run: pytest
+        run: python -m pytest
 
 
   get-version:
@@ -323,12 +323,15 @@ jobs:
           fetch-depth: 0
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
       # Build the Vite bundles BEFORE PyInstaller runs so the shipped
       # binary includes static/dist/ (hashed, minified JS + manifest).
       # See modules/helpers/_vite_manifest.py for how templates consume
       # this at request time; roadmap #1334 Step 4.
 >>>>>>> 617301bb (Update GitHub workflows)
+=======
+>>>>>>> 0f180ea1 (Refactor GitHub Actions workflow for clarity and functionality)
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
