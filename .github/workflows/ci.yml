@@ -1,5 +1,4 @@
-# PR CI Orchestrator -- single entry point for all PR checks against develop, replaces validate-pull.yml.
-# See docs/quickstart-ci-redesign-plan.md (in the "Kometa issues and Dev" project) for the design rationale.
+# PR CI Orchestrator -- replaces validate-pull.yml; see quickstart-ci-redesign-plan.md for the design rationale.
 name: CI
 
 on:
@@ -20,10 +19,7 @@ jobs:
       contains(fromJSON('["build","build-full"]'), github.event.label.name)
     steps:
       - name: Check Base Branch
-        # Decision point: this fails loudly rather than auto-closing the PR (the old job used an App token
-        # + `gh pr close`, which isn't available here since fork PRs get no secrets under `pull_request`).
-        # If auto-close is wanted, add a tiny separate `pull_request_target` workflow that only calls the
-        # close API and never checks out code.
+        # Fails loudly instead of auto-closing (no App token available for fork PRs under pull_request); add a separate pull_request_target close-only workflow later if auto-close matters.
         if: github.base_ref == 'master'
         run: |
           echo "ERROR: Pull Requests cannot be submitted to master. Please submit the Pull Request to the develop branch."
@@ -64,16 +60,13 @@ jobs:
               fi
           done
 
-      # Markdown spellcheck is NOT duplicated here -- the pyspelling pre-commit hook in lint.yml already
-      # covers *.md on every pull_request, including locally via `pre-commit run`.
+      # Markdown spellcheck isn't duplicated here -- the pyspelling pre-commit hook in lint.yml already covers *.md on every pull_request.
 
   tests:
     needs: [guard]
     uses: ./.github/workflows/test.yml
 
-  # Computes the shared build identity (tag name, PART-equivalent, commit message) once, on the runner,
-  # never committed back to the branch. Gated here so docker-build and build-executable don't each
-  # re-implement the same gate and risk drifting apart.
+  # Computes the shared build identity once so docker-build and build-executable don't each re-implement the same gate and drift apart.
   build-vars:
     runs-on: ubuntu-latest
     needs: [validate, tests]
@@ -203,9 +196,7 @@ jobs:
           name: ${{ steps.build-executable.outputs.filename }}
           path: dist/${{ steps.build-executable.outputs.filename }}
 
-      # Written to a per-OS artifact instead of a shared job-outputs map -- the old add-links job read
-      # windows/ubuntu/macos keys off one outputs map shared across all three matrix legs, and whichever
-      # leg finished last could blank the other two links. This avoids that race entirely.
+      # Per-OS artifact instead of a shared job-outputs map -- avoids the race where the last-finishing matrix leg blanks the other links.
       - name: Save link file
         shell: bash
         env:
@@ -282,8 +273,7 @@ jobs:
           author: ${{ vars.DOCKER_NAME }}
           author_icon_url: ${{ vars.DOCKER_IMAGE }}
 
-  # Single stable context for branch protection -- immune to job renames inside test.yml, and
-  # guard/validate/tests skips (from the label filter above) count as pass, not pending.
+  # Single stable context for branch protection -- immune to job renames inside test.yml; skipped jobs count as pass, not pending.
   ci-status:
     runs-on: ubuntu-latest
     needs: [guard, validate, tests]

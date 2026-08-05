@@ -1,12 +1,4 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Testing
-#
-# Called as a job (workflow_call) from ci.yml for PRs targeting develop; also
-# runs standalone on push to develop for post-merge validation.
-#
-# Single job for now -- Quickstart has no schema/pyright/imports surface yet
-# to justify Kometa's seven-stage split. Extend here if/when that changes.
-# ─────────────────────────────────────────────────────────────────────────────
+# Reusable test workflow: called by ci.yml for PRs and runs on push to develop; single job for now since Quickstart has no schema/pyright surface yet to justify more stages.
 name: Tests
 
 on:

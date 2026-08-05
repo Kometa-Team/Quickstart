@@ -93,7 +93,6 @@ jobs:
           version=$(cat VERSION)
           build_value=$(cat BUILDNUM)
           next_build_value="$((${build_value} + 1))"
-          part_value=$(cat PART)
 
           old_msg=$(git log -1 HEAD --pretty=format:%s)
           new_msg="[${next_build_value}] ${old_msg}"
@@ -109,8 +108,25 @@ jobs:
           git config --local user.name "GitHub Action"
           git add BUILDNUM
           git add PART
-          git commit -m "${new_msg}" --amend
-          git push origin develop --force-with-lease
+
+          # Plain commit + push, not --amend/--force-with-lease -- concurrency group increment-build-develop already serializes runs, so a normal push is safe; retry loop is just a safety net.
+          git commit -m "${new_msg}"
+
+          push_ok=false
+          for attempt in 1 2 3; do
+            if git push origin develop; then
+              push_ok=true
+              break
+            fi
+            echo "Push rejected (attempt ${attempt}); fetching and rebasing before retry."
+            git fetch origin develop
+            git rebase origin/develop
+          done
+
+          if [ "$push_ok" != "true" ]; then
+            echo "::error::Could not push the build-number commit to develop after 3 attempts."
+            exit 1
+          fi
 
           hash=$(git rev-parse HEAD)
           echo "$hash"
