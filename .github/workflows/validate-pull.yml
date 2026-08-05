@@ -1,8 +1,8 @@
 name: Validate Pull Request
 
+# Disabled: trigger changed to workflow_dispatch during the ci.yml rollout (see quickstart-ci-redesign-plan.md); kept as a manual rollback path until ci.yml is proven, then delete.
 on:
-  pull_request_target:
-    types: [ opened, synchronize, reopened, labeled ]
+  workflow_dispatch:
 
 permissions:
   contents: read
