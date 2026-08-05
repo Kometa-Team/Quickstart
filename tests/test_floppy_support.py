@@ -1,6 +1,8 @@
 import json
 from unittest.mock import MagicMock
 
+from modules import database
+
 
 def _response(status_code=200, payload=None):
     response = MagicMock()
@@ -72,15 +74,26 @@ def test_floppy_validation_route_propagates_failure(client, monkeypatch):
     assert result.get_json() == {"valid": False, "error": "bad token"}
 
 
-def test_floppy_step_renders_connector_fields_and_module_script(client):
+def test_floppy_step_renders_configured_url_and_module_script(client):
+    config_name = "floppy-page-test"
+    configured_url = "https://floppy.internal.example:9443"
+    database.save_section_data(
+        name=config_name,
+        section="floppy",
+        validated=False,
+        user_entered=True,
+        data={"floppy": {"url": configured_url, "token": "test-token"}},
+    )
     with client.session_transaction() as session:
-        session["config_name"] = "floppy-page-test"
+        session["config_name"] = config_name
 
     response = client.get("/step/067-floppy")
 
     assert response.status_code == 200
     page = response.get_data(as_text=True)
     assert 'id="floppy_url"' in page
+    assert f'value="{configured_url}"' in page
+    assert "floppy.example.com" not in page
     assert 'id="floppy_token"' in page
     assert 'src="/static/local-js/067-floppy.js"' in page
     assert 'src="/static/images/service-icons/floppy.png"' in page

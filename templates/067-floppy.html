@@ -10,7 +10,8 @@
     </span>
   </span>
   <input type="url" class="form-control" id="floppy_url" name="floppy_url"
-    value="{{ floppy.get('url', '') }}" placeholder="https://floppy.example.com" aria-describedby="floppy_url_text">
+    value="{{ floppy.get('url', '') or '' }}" aria-describedby="floppy_url_text" autocomplete="url"
+    autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 
 <div class="input-group mb-2">
