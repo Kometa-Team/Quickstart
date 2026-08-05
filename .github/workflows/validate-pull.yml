@@ -437,7 +437,7 @@ jobs:
         uses: Kometa-Team/discord-notifications@master
         with:
           webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: "QS Broke Needs Fix""
+          message: "QS Broke Needs Fix"
           title: "${{ vars.NAME }} ${{ needs.get-version.outputs.tag-name }}: ${{ vars.TEXT_FAILURE }}"
           url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
           color: ${{ vars.COLOR_FAILURE }}
