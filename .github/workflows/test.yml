@@ -33,5 +33,13 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      # config/kometa/defaults is gitignored and normally populated by installing Kometa locally; this mirrors the app's nightly-branch default so the contract tests have real data to check.
+      - name: Fetch Kometa defaults for contract tests
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse --branch nightly https://github.com/Kometa-Team/Kometa.git /tmp/kometa-defaults
+          git -C /tmp/kometa-defaults sparse-checkout set defaults
+          mkdir -p config/kometa
+          cp -r /tmp/kometa-defaults/defaults config/kometa/defaults
+
       - name: Run Tests
         run: python -m pytest
