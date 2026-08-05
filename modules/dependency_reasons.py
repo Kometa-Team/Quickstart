@@ -70,6 +70,7 @@ def _parse_json_array(value):
 # --- dependency constants --------------------------------------------------
 
 QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
+QS_TRACEARR_REQUIRED_STEP_KEY = "035-tracearr"
 QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
 QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
 QS_FLOPPY_REQUIRED_STEP_KEY = "067-floppy"
@@ -80,6 +81,7 @@ QS_TRAKT_REQUIRED_STEP_KEY = "130-trakt"
 QS_MAL_REQUIRED_STEP_KEY = "140-mal"
 
 QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
+QS_TRACEARR_DEP_COLLECTION_IDS = {"collection_tracearr"}
 QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
@@ -456,6 +458,14 @@ def _libraries_data_tautulli_dependency_reasons(libraries_data):
     )
 
 
+def _libraries_data_tracearr_dependency_reasons(libraries_data):
+    return _libraries_data_collection_dependency_reasons(
+        libraries_data,
+        QS_TRACEARR_DEP_COLLECTION_IDS,
+        "Tracearr Charts collection enabled",
+    )
+
+
 def _libraries_data_trakt_dependency_reasons(libraries_data):
     collection_reasons = _libraries_data_collection_dependency_reasons(
         libraries_data,
@@ -628,6 +638,10 @@ def _config_requires_mal(section_rows):
 
 def _config_tautulli_dependency_reasons(section_rows):
     return _config_dependency_reasons(section_rows, _libraries_data_tautulli_dependency_reasons)
+
+
+def _config_tracearr_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_tracearr_dependency_reasons)
 
 
 def _config_omdb_dependency_reasons(section_rows):

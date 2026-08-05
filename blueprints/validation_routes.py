@@ -227,6 +227,12 @@ def validate_tautulli():
     return validations.validate_tautulli_server(data)
 
 
+@bp.route("/validate_tracearr", methods=["POST"])
+def validate_tracearr():
+    data = request.json
+    return validations.validate_tracearr_server(data)
+
+
 @bp.route("/validate_trakt", methods=["POST"])
 def validate_trakt():
     data = request.json

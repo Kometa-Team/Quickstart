@@ -4,7 +4,7 @@
 # that broken Python builds (missing _sqlite3, _ssl, etc.) surface a
 # friendly error instead of a confusing stdlib traceback. That makes
 # this file's import-order-vs-code arrangement look like an E402 to
-# ruff for every subsequent import, so we suppress E402 file-wide.
+# ruff for every subsequent import, so we suppress E402 file-wide!
 
 # Startup preflight: probe stdlib C-extensions (sqlite3, _ssl) BEFORE
 # any third-party import runs. Broken Python builds (usually pyenv/asdf
@@ -90,6 +90,8 @@ from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/leg
     QS_SONARR_REQUIRED_STEP_KEY,
     QS_TAUTULLI_DEP_COLLECTION_IDS,
     QS_TAUTULLI_REQUIRED_STEP_KEY,
+    QS_TRACEARR_DEP_COLLECTION_IDS,
+    QS_TRACEARR_REQUIRED_STEP_KEY,
     QS_TRAKT_DEP_COLLECTION_IDS,
     QS_TRAKT_OVERLAY_IMAGE_VALUES,
     QS_TRAKT_REQUIRED_STEP_KEY,
@@ -106,6 +108,7 @@ from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/leg
     _config_requires_mal,
     _config_sonarr_dependency_reasons,
     _config_tautulli_dependency_reasons,
+    _config_tracearr_dependency_reasons,
     _config_trakt_dependency_reasons,
     _dependency_reason_label,
     _is_truthy_setting_value,
@@ -122,6 +125,7 @@ from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/leg
     _libraries_data_service_dependency_reasons,
     _libraries_data_sonarr_dependency_reasons,
     _libraries_data_tautulli_dependency_reasons,
+    _libraries_data_tracearr_dependency_reasons,
     _libraries_data_template_collection_dependency_reasons,
     _libraries_data_trakt_dependency_reasons,
     _library_prefix_from_key,
@@ -451,6 +455,7 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "020-tmdb",
         "027-playlist_files",
         "030-tautulli",
+        "035-tracearr",
         "040-github",
         "050-omdb",
         "060-mdblist",
@@ -483,6 +488,7 @@ VALIDATION_DOCS = {
     "radarr": f"{VALIDATION_DOC_BASE}110-radarr",
     "sonarr": f"{VALIDATION_DOC_BASE}120-sonarr",
     "tautulli": f"{VALIDATION_DOC_BASE}030-tautulli",
+    "tracearr": f"{VALIDATION_DOC_BASE}035-tracearr",
     "omdb": f"{VALIDATION_DOC_BASE}050-omdb",
     "mdblist": f"{VALIDATION_DOC_BASE}060-mdblist",
     "floppy": f"{VALIDATION_DOC_BASE}067-floppy",
@@ -2416,12 +2422,14 @@ def step(name):
         "anidb": False,
         "trakt": False,
         "mal": False,
+        "tracearr": False,
     }
     overlay_fonts = []
     image_data = {}
     service_validation_sources = [
         ("010-plex", "plex"),
         ("020-tmdb", "tmdb"),
+        ("035-tracearr", "tracearr"),
         ("050-omdb", "omdb"),
         ("060-mdblist", "mdblist"),
         ("067-floppy", "floppy"),
@@ -2679,6 +2687,7 @@ def step(name):
             optional_keys=workspace_status.get("optional_keys", []),
             review_keys=workspace_status.get("review_keys", []),
             tautulli_requirement_reasons=workspace_status.get("tautulli_requirement_reasons", []),
+            tracearr_requirement_reasons=workspace_status.get("tracearr_requirement_reasons", []),
             omdb_requirement_reasons=workspace_status.get("omdb_requirement_reasons", []),
             mdblist_requirement_reasons=workspace_status.get("mdblist_requirement_reasons", []),
             floppy_requirement_reasons=workspace_status.get("floppy_requirement_reasons", []),
@@ -2729,6 +2738,7 @@ def step(name):
         optional_keys=workspace_status.get("optional_keys", []),
         review_keys=workspace_status.get("review_keys", []),
         tautulli_requirement_reasons=workspace_status.get("tautulli_requirement_reasons", []),
+        tracearr_requirement_reasons=workspace_status.get("tracearr_requirement_reasons", []),
         omdb_requirement_reasons=workspace_status.get("omdb_requirement_reasons", []),
         mdblist_requirement_reasons=workspace_status.get("mdblist_requirement_reasons", []),
         floppy_requirement_reasons=workspace_status.get("floppy_requirement_reasons", []),
@@ -2767,6 +2777,7 @@ def workspace_status():
         optional_keys=status.get("optional_keys", []),
         review_keys=status.get("review_keys", []),
         tautulli_requirement_reasons=status.get("tautulli_requirement_reasons", []),
+        tracearr_requirement_reasons=status.get("tracearr_requirement_reasons", []),
         omdb_requirement_reasons=status.get("omdb_requirement_reasons", []),
         mdblist_requirement_reasons=status.get("mdblist_requirement_reasons", []),
         floppy_requirement_reasons=status.get("floppy_requirement_reasons", []),
@@ -3054,6 +3065,17 @@ def validate_all_services():
             validations.validate_tautulli_server,
             lambda s: {"tautulli_url": s.get("tautulli", {}).get("url"), "tautulli_apikey": s.get("tautulli", {}).get("apikey")},
             ["tautulli_url", "tautulli_apikey"],
+        ),
+        (
+            "035-tracearr",
+            "tracearr",
+            validations.validate_tracearr_server,
+            lambda s: {
+                "tracearr_url": s.get("tracearr", {}).get("url"),
+                "tracearr_apikey": s.get("tracearr", {}).get("apikey"),
+                "tracearr_server_id": s.get("tracearr", {}).get("server_id"),
+            },
+            ["tracearr_url", "tracearr_apikey"],
         ),
         ("040-github", "github", validations.validate_github_server, lambda s: {"github_token": s.get("github", {}).get("token")}, ["github_token"]),
         ("050-omdb", "omdb", validations.validate_omdb_server, lambda s: {"omdb_apikey": s.get("omdb", {}).get("apikey")}, ["omdb_apikey"]),
@@ -5943,6 +5965,7 @@ def logscan_trends_page():
         optional_keys=workspace_status.get("optional_keys", []),
         review_keys=workspace_status.get("review_keys", []),
         tautulli_requirement_reasons=workspace_status.get("tautulli_requirement_reasons", []),
+        tracearr_requirement_reasons=workspace_status.get("tracearr_requirement_reasons", []),
         omdb_requirement_reasons=workspace_status.get("omdb_requirement_reasons", []),
         mdblist_requirement_reasons=workspace_status.get("mdblist_requirement_reasons", []),
         floppy_requirement_reasons=workspace_status.get("floppy_requirement_reasons", []),

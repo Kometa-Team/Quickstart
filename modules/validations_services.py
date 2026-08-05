@@ -10,7 +10,7 @@ return a Flask ``jsonify`` response indicating success/failure.
 ## The service families
 
 * **Plex family** -- direct media-server integration:
-  ``validate_plex_server``, ``validate_tautulli_server``,
+  ``validate_plex_server``, ``validate_tautulli_server``, ``validate_tracearr_server``,
   ``validate_trakt_server``.
 * **Notification services** -- outbound push/webhook:
   ``validate_gotify_server``, ``validate_ntfy_server``,
@@ -181,6 +181,48 @@ def validate_tautulli_server(data):
 
     # return success response
     return jsonify({"valid": is_valid})
+
+
+def validate_tracearr_server(data):
+    tracearr_url = str(data.get("tracearr_url") or "").strip().rstrip("/")
+    tracearr_apikey = str(data.get("tracearr_apikey") or "").strip()
+    configured_server_id = str(data.get("tracearr_server_id") or "").strip()
+
+    ok, msg = _validate_service_url(tracearr_url, "Tracearr", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
+    if not tracearr_apikey.startswith("trr_pub_"):
+        return jsonify({"valid": False, "error": "Tracearr Public API keys must begin with 'trr_pub_'."}), 400
+
+    try:
+        response = requests.get(
+            f"{tracearr_url}/api/v1/public/health",
+            headers={"Authorization": f"Bearer {tracearr_apikey}"},
+            timeout=10,
+        )
+        if response.status_code in {401, 403}:
+            return jsonify({"valid": False, "error": "Tracearr rejected the Public API key."}), 401
+        response.raise_for_status()
+        payload = response.json()
+    except requests.exceptions.RequestException as exc:
+        helpers.ts_log(f"Error validating Tracearr connection: {exc}", level="ERROR")
+        return jsonify({"valid": False, "error": f"Unable to connect to Tracearr: {exc}"}), 400
+    except ValueError:
+        return jsonify({"valid": False, "error": "Tracearr returned a non-JSON health response."}), 400
+
+    raw_servers = payload.get("servers") if isinstance(payload, dict) else None
+    if not isinstance(raw_servers, list):
+        return jsonify({"valid": False, "error": "Tracearr health response did not include a servers list."}), 400
+    servers = [
+        {"id": str(server.get("id")), "name": str(server.get("name") or "Unnamed Plex server")}
+        for server in raw_servers
+        if isinstance(server, dict) and server.get("type") == "plex" and server.get("id")
+    ]
+    if configured_server_id and not any(server["id"].lower() == configured_server_id.lower() for server in servers):
+        return jsonify({"valid": False, "error": "The selected Plex server is not available to this Tracearr API key.", "servers": servers}), 400
+
+    helpers.ts_log("Tracearr connection successful.")
+    return jsonify({"valid": True, "servers": servers})
 
 
 def validate_trakt_server(data):

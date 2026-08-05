@@ -1439,6 +1439,7 @@ function qsCurrentStepHasMeaningfulInput () {
   }
   const fieldMap = {
     '030-tautulli': ['tautulli_url', 'tautulli_apikey'],
+    '035-tracearr': ['tracearr_url', 'tracearr_apikey', 'tracearr_server_id'],
     '040-github': ['github_token'],
     '050-omdb': ['omdb_apikey'],
     '060-mdblist': ['mdblist_apikey'],
@@ -1766,6 +1767,11 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_TAUTULLI_REQUIREMENT_REASONS',
       label: 'Tautulli'
     },
+    tracearr: {
+      stepKey: '035-tracearr',
+      windowKey: 'QS_TRACEARR_REQUIREMENT_REASONS',
+      label: 'Tracearr'
+    },
     omdb: {
       stepKey: '050-omdb',
       windowKey: 'QS_OMDB_REQUIREMENT_REASONS',
@@ -2002,6 +2008,7 @@ function qsApplyWorkspaceStatus (payload) {
   const optionalKeys = qsArrayFromKeys(payload.optional_keys)
   const reviewKeys = qsArrayFromKeys(payload.review_keys)
   const tautulliReasons = qsArrayFromKeys(payload.tautulli_requirement_reasons)
+  const tracearrReasons = qsArrayFromKeys(payload.tracearr_requirement_reasons)
   const omdbReasons = qsArrayFromKeys(payload.omdb_requirement_reasons)
   const mdblistReasons = qsArrayFromKeys(payload.mdblist_requirement_reasons)
   const floppyReasons = qsArrayFromKeys(payload.floppy_requirement_reasons)
@@ -2015,6 +2022,7 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_OPTIONAL_KEYS = optionalKeys
   window.QS_REVIEW_KEYS = reviewKeys
   window.QS_TAUTULLI_REQUIREMENT_REASONS = tautulliReasons
+  window.QS_TRACEARR_REQUIREMENT_REASONS = tracearrReasons
   window.QS_OMDB_REQUIREMENT_REASONS = omdbReasons
   window.QS_MDBLIST_REQUIREMENT_REASONS = mdblistReasons
   window.QS_FLOPPY_REQUIREMENT_REASONS = floppyReasons
@@ -2027,6 +2035,7 @@ function qsApplyWorkspaceStatus (payload) {
   qsApplyGroupMembership(requiredKeys, optionalKeys, reviewKeys)
   qsApplyAllDependencyHints({
     tautulli: tautulliReasons,
+    tracearr: tracearrReasons,
     omdb: omdbReasons,
     mdblist: mdblistReasons,
     floppy: floppyReasons,

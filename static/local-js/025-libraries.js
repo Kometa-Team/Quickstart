@@ -103,6 +103,11 @@ const dependencyHintConfigs = {
     endpoint: '/libraries_tautulli_dependency_hint',
     windowKey: 'QS_TAUTULLI_REQUIREMENT_REASONS'
   },
+  tracearr: {
+    stepKey: '035-tracearr',
+    endpoint: '/libraries_tracearr_dependency_hint',
+    windowKey: 'QS_TRACEARR_REQUIREMENT_REASONS'
+  },
   omdb: {
     stepKey: '050-omdb',
     endpoint: '/libraries_omdb_dependency_hint',

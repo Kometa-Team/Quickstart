@@ -54,6 +54,7 @@ from modules.dependency_reasons import (
     QS_RADARR_REQUIRED_STEP_KEY,
     QS_SONARR_REQUIRED_STEP_KEY,
     QS_TAUTULLI_REQUIRED_STEP_KEY,
+    QS_TRACEARR_REQUIRED_STEP_KEY,
     QS_TRAKT_REQUIRED_STEP_KEY,
     _normalize_status,
 )
@@ -214,6 +215,7 @@ def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at
 
     dependency_defs = [
         ("tautulli", QS_TAUTULLI_REQUIRED_STEP_KEY, "Tautulli", "tautulli_requirement_reasons", "qs-tautulli-required-hint"),
+        ("tracearr", QS_TRACEARR_REQUIRED_STEP_KEY, "Tracearr", "tracearr_requirement_reasons", "qs-tracearr-required-hint"),
         ("omdb", QS_OMDB_REQUIRED_STEP_KEY, "OMDb", "omdb_requirement_reasons", "qs-omdb-required-hint"),
         ("mdblist", QS_MDBLIST_REQUIRED_STEP_KEY, "MDBList", "mdblist_requirement_reasons", "qs-mdblist-required-hint"),
         ("floppy", QS_FLOPPY_REQUIRED_STEP_KEY, "Floppy", "floppy_requirement_reasons", "qs-floppy-required-hint"),

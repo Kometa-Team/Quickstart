@@ -1,3 +1,5 @@
+"""ISO country, language, and IETF tag lookups sourced from the datasets/*-codes GitHub CSVs."""
+
 import csv
 import io
 

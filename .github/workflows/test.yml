@@ -1,0 +1,45 @@
+# Reusable test workflow: called by ci.yml for PRs and runs on push to develop; single job for now since Quickstart has no schema/pyright surface yet to justify more stages.
+name: Tests
+
+on:
+  workflow_call:
+  push:
+    branches: [develop]
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  test:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set Up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-test-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: ${{ runner.os }}-pip-test-
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      # config/kometa/defaults is gitignored and normally populated by installing Kometa locally; this mirrors the app's nightly-branch default so the contract tests have real data to check.
+      - name: Fetch Kometa defaults for contract tests
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse --branch nightly https://github.com/Kometa-Team/Kometa.git /tmp/kometa-defaults
+          git -C /tmp/kometa-defaults sparse-checkout set defaults
+          mkdir -p config/kometa
+          cp -r /tmp/kometa-defaults/defaults config/kometa/defaults
+
+      - name: Run Tests
+        run: python -m pytest
