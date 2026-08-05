@@ -265,6 +265,8 @@ from modules.logscan_cache import (
     build_logscan_archive_destination as _build_logscan_archive_destination,
     iter_logscan_candidate_files as _iter_logscan_candidate_files,
     get_logscan_log_files as _get_logscan_log_files,
+    calculate_logscan_file_md5 as _calculate_logscan_file_md5,
+    find_logscan_cache_entry_by_md5 as _find_logscan_cache_entry_by_md5,
     logscan_cache_entry_matches as _logscan_cache_entry_matches,
     get_logscan_delta_files as _get_logscan_delta_files,
     classify_logscan_file_location as _classify_logscan_file_location,
@@ -1733,7 +1735,7 @@ def _delete_logscan_run_artifact(run_key):
     if not run_record and not incomplete_run:
         return False, {"error": "Run not found.", "run_key": run_key}, 404
     target_run = run_record if run_record else incomplete_run
-    info = _resolve_logscan_run_log_info(run_key, run_record=target_run)
+    info = _resolve_logscan_run_archive_action_info(run_key) or _resolve_logscan_run_log_info(run_key, run_record=target_run)
     if not info or not info.get("path"):
         return False, {"error": "Archived log file for this run could not be found.", "run_key": run_key}, 404
     if info.get("location") != "archive":
@@ -1749,7 +1751,9 @@ def _delete_logscan_run_artifact(run_key):
 
     if run_record:
         database.delete_log_run(run_key)
-    _remove_logscan_ingest_cache_entries(run_key=run_key, raw_path=str(Path(info["path"]).resolve()))
+    # A copied live meta.log must remain hashed after its archive artifact is
+    # deleted, otherwise the next analytics refresh would ingest it again.
+    _remove_logscan_ingest_cache_entries(raw_path=str(Path(info["path"]).resolve()))
     return (
         True,
         {
@@ -4974,6 +4978,18 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
             cached_entry = cache_logs.get(cache_key, {})
             if _logscan_cache_entry_matches(path, cache_entry=cached_entry, stats=stats):
                 continue
+            content_md5 = _calculate_logscan_file_md5(path)
+            _duplicate_key, duplicate_entry = _find_logscan_cache_entry_by_md5(cache_logs, content_md5, exclude_path=path)
+            if duplicate_entry:
+                cache_logs[cache_key] = {
+                    **duplicate_entry,
+                    "mtime": stats.st_mtime,
+                    "size": stats.st_size,
+                    "content_md5": content_md5,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+                cache_dirty = True
+                continue
 
             content = _read_logscan_text(path, encoding="utf-8", errors="replace")
             if tool_name == "imagemaid":
@@ -5005,6 +5021,7 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
                 cache_logs[cache_key] = {
                     "mtime": stats.st_mtime,
                     "size": stats.st_size,
+                    "content_md5": content_md5,
                     "run_key": summary.get("run_key"),
                     "tool_name": tool_name,
                     "run_complete": False,
@@ -5030,6 +5047,7 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
             cache_logs[cache_key] = {
                 "mtime": stats.st_mtime,
                 "size": stats.st_size,
+                "content_md5": content_md5,
                 "run_key": summary.get("run_key"),
                 "tool_name": tool_name,
                 "run_complete": True,
@@ -5044,10 +5062,12 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
             if archived_path:
                 try:
                     archived_stats = archived_path.stat()
-                    cache_logs.pop(cache_key, None)
+                    if not path.exists():
+                        cache_logs.pop(cache_key, None)
                     cache_logs[str(archived_path.resolve())] = {
                         "mtime": archived_stats.st_mtime,
                         "size": archived_stats.st_size,
+                        "content_md5": content_md5,
                         "run_key": summary.get("run_key"),
                         "tool_name": tool_name,
                         "run_complete": True,
@@ -5095,16 +5115,19 @@ def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
         src_stats = path.stat()
         should_compress = not _is_logscan_gzip_path(path)
         preferred_suffix = ".log.gz" if should_compress else None
+        copy_source = path.name.lower() == "meta.log" and log_dir and path.resolve().parent == Path(log_dir).resolve()
         dest = _build_logscan_archive_destination(path, archive_dir, stats=src_stats, preferred_suffix=preferred_suffix)
         if dest.exists():
-            path.unlink()
+            if not copy_source:
+                path.unlink()
             return dest
         if should_compress:
             try:
                 with path.open("rb") as source, gzip.open(dest, "wb") as target:
                     shutil.copyfileobj(source, target)
                 os.utime(dest, (src_stats.st_atime, src_stats.st_mtime))
-                path.unlink()
+                if not copy_source:
+                    path.unlink()
             except Exception:
                 try:
                     if dest.exists():
@@ -5152,6 +5175,13 @@ def _archive_finished_live_meta_log_if_idle(log_dir=None):
     if not live_entry.get("run_key"):
         return None
 
+    content_md5 = _calculate_logscan_file_md5(live_path)
+    existing_archive_key, _existing_archive_entry = _find_logscan_cache_entry_by_md5(cache_logs, content_md5, exclude_path=live_path)
+    if existing_archive_key:
+        existing_archive_path = Path(existing_archive_key)
+        if existing_archive_path.exists() and _classify_logscan_file_location(existing_archive_path) == "archive":
+            return existing_archive_path
+
     archive_dir = _get_logscan_archive_dir()
     archived_path = _archive_log_file(live_path, archive_dir, log_dir=log_dir, allow_live_meta=True)
     if not archived_path:
@@ -5166,8 +5196,10 @@ def _archive_finished_live_meta_log_if_idle(log_dir=None):
     updated_entry = dict(live_entry)
     updated_entry["mtime"] = archived_stats.st_mtime
     updated_entry["size"] = archived_stats.st_size
+    updated_entry["content_md5"] = content_md5
     updated_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
-    cache_logs.pop(live_key, None)
+    live_entry["content_md5"] = content_md5
+    cache_logs[live_key] = live_entry
     cache_logs[archived_key] = updated_entry
     ingest_cache["logs"] = cache_logs
     _save_logscan_ingest_cache(ingest_cache)
@@ -5370,6 +5402,30 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 cache_key = str(path.resolve())
                 cached_entry = cache_logs.get(cache_key, {})
                 cached_run_key = cached_entry.get("run_key")
+                content_md5 = _calculate_logscan_file_md5(path)
+                _duplicate_key, duplicate_entry = _find_logscan_cache_entry_by_md5(cache_logs, content_md5, exclude_path=path)
+                if duplicate_entry:
+                    cache_logs[cache_key] = {
+                        **duplicate_entry,
+                        "mtime": stats.st_mtime,
+                        "size": stats.st_size,
+                        "content_md5": content_md5,
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    cache_dirty = True
+                    duplicates += 1
+                    if update_state:
+                        _update_logscan_reingest_state(
+                            scanned=idx,
+                            ingested=ingested,
+                            duplicates=duplicates,
+                            skipped_incomplete=skipped_incomplete,
+                            skipped_invalid=skipped_invalid,
+                            errors=errors,
+                        )
+                    if idx % LOGSCAN_INGEST_CACHE_FLUSH_INTERVAL == 0:
+                        _flush_ingest_cache_progress(force=True)
+                    continue
                 skip_save_if_cached = cached_entry.get("run_complete") is True and cached_run_key
                 tool_name = _detect_logscan_tool_from_path(path, log_dir=kometa_log_dir)
                 live_dir = _get_logscan_live_dir(tool_name, log_dir=kometa_log_dir if tool_name == "kometa" else None)
@@ -5428,6 +5484,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     cache_logs[cache_key] = {
                         "mtime": stats.st_mtime,
                         "size": stats.st_size,
+                        "content_md5": content_md5,
                         "run_key": summary.get("run_key"),
                         "tool_name": tool_name,
                         "run_complete": False,
@@ -5509,6 +5566,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 cache_logs[cache_key] = {
                     "mtime": stats.st_mtime,
                     "size": stats.st_size,
+                    "content_md5": content_md5,
                     "run_key": summary.get("run_key"),
                     "tool_name": tool_name,
                     "run_complete": True,
@@ -5527,6 +5585,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                             cache_logs[str(archived_path.resolve())] = {
                                 "mtime": archived_stats.st_mtime,
                                 "size": archived_stats.st_size,
+                                "content_md5": content_md5,
                                 "run_key": summary.get("run_key"),
                                 "tool_name": tool_name,
                                 "run_complete": True,
