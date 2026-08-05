@@ -1,3 +1,5 @@
+"""Filesystem paths and folder setup for uploaded, default, and cached library asset images."""
+
 import os
 
 from flask import has_request_context, session
