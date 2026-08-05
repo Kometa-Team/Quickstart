@@ -258,7 +258,8 @@ jobs:
     name: Failure Notification
     runs-on: ubuntu-latest
     needs: [tests, build-vars, docker-build, build-executable, add-links]
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    # Same-repo only -- fork PRs get no secrets under pull_request, so BUILD_WEBHOOK is unset there and this would just fail; fork-branch test failures also aren't a "page the team" event.
+    if: ${{ always() && contains(needs.*.result, 'failure') && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Discord Failure Notification
         uses: Kometa-Team/discord-notifications@master
