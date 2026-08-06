@@ -898,6 +898,11 @@
       "custom_string_validation": "rating",
       "sources": [
         [
+          "floppy",
+          "Use Floppy User Rating",
+          "Use your <b>Floppy user rating</b>."
+        ],
+        [
           "anidb_average",
           "Use AniDB Average",
           "Use <b>AniDB average rating</b>."
@@ -1068,6 +1073,11 @@
       "custom_string_placeholder": "e.g. 8.3",
       "custom_string_validation": "rating",
       "sources": [
+        [
+          "floppy",
+          "Use Floppy User Rating",
+          "Use your <b>Floppy user rating</b>."
+        ],
         [
           "anidb_average",
           "Use AniDB Average",
@@ -1240,6 +1250,11 @@
       "custom_string_validation": "rating",
       "sources": [
         [
+          "floppy",
+          "Use Floppy User Rating",
+          "Use your <b>Floppy user rating</b>."
+        ],
+        [
           "anidb_average",
           "Use AniDB Average",
           "Use <b>AniDB average rating</b>."
@@ -1410,6 +1425,11 @@
       "custom_string_validation": "rating",
       "sources": [
         [
+          "floppy",
+          "Use Floppy User Rating",
+          "Use your <b>Floppy episode rating</b>."
+        ],
+        [
           "imdb",
           "Use IMDb Rating",
           "Use <b>IMDb rating</b> directly."
@@ -1475,6 +1495,11 @@
       "custom_string_validation": "rating",
       "sources": [
         [
+          "floppy",
+          "Use Floppy User Rating",
+          "Use your <b>Floppy episode rating</b>."
+        ],
+        [
           "imdb",
           "Use IMDb Rating",
           "Use <b>IMDb rating</b> directly."
@@ -1539,6 +1564,11 @@
       "custom_string_placeholder": "e.g. 9.2",
       "custom_string_validation": "rating",
       "sources": [
+        [
+          "floppy",
+          "Use Floppy User Rating",
+          "Use your <b>Floppy episode rating</b>."
+        ],
         [
           "imdb",
           "Use IMDb Rating",

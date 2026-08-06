@@ -118,6 +118,11 @@ const dependencyHintConfigs = {
     endpoint: '/libraries_mdblist_dependency_hint',
     windowKey: 'QS_MDBLIST_REQUIREMENT_REASONS'
   },
+  floppy: {
+    stepKey: '067-floppy',
+    endpoint: '/libraries_floppy_dependency_hint',
+    windowKey: 'QS_FLOPPY_REQUIREMENT_REASONS'
+  },
   anidb: {
     stepKey: '100-anidb',
     endpoint: '/libraries_anidb_dependency_hint',

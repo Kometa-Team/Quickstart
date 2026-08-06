@@ -3983,6 +3983,7 @@ const OverlayHandler = {
       mal: { scale: 'decimal10', decimals: 2 },
       mdb: { scale: 'score100', decimals: 0 },
       mdblist: { scale: 'score100', decimals: 0 },
+      floppy: { scale: 'decimal10', decimals: 1 },
       star: { scale: 'decimal10', decimals: 1 },
       plex_star: { scale: 'decimal10', decimals: 1 }
     }
@@ -3990,6 +3991,7 @@ const OverlayHandler = {
       rt_popcorn: 'RT-Aud-Fresh',
       rt_tomato: 'RT-Crit-Fresh',
       mdb: 'MDBList',
+      floppy: 'Floppy',
       mal: 'MAL',
       'rt popcorn': 'RT-Aud-Fresh',
       'rt tomato': 'RT-Crit-Fresh',
@@ -4016,6 +4018,7 @@ const OverlayHandler = {
       mal: 'Lato-Regular.ttf',
       mdblist: 'Lato-Regular.ttf',
       mdb: 'Lato-Regular.ttf',
+      floppy: 'Inter-Medium.ttf',
       star: 'Roboto-Medium.ttf',
       plex_star: 'Roboto-Medium.ttf'
     }
@@ -4047,12 +4050,14 @@ const OverlayHandler = {
       rt_popcorn: { any: 'mdb_tomatoesaudience' },
       trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' },
       mal: { any: 'mal' },
-      mdb: { any: 'mdb' }
+      mdb: { any: 'mdb' },
+      floppy: { any: 'floppy' }
     }
     const RATING_SOURCE_MAP_EPISODE = {
       imdb: { any: 'imdb' },
       tmdb: { any: 'tmdb' },
-      trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' }
+      trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' },
+      floppy: { any: 'floppy' }
     }
     const RATING_SOURCE_LABEL_MAP = {
       anidb_rating: 'Use AniDB Rating',
@@ -4066,7 +4071,8 @@ const OverlayHandler = {
       trakt: 'Use Trakt Rating',
       trakt_user: 'Use Trakt Rating',
       mal: 'Use MyAnimeList Score',
-      mdb: 'Use MDBList Score'
+      mdb: 'Use MDBList Score',
+      floppy: 'Use Floppy User Rating'
     }
     const RATING_SOURCE_SERVICE_MAP = {
       anidb_rating: 'anidb',
@@ -4079,11 +4085,13 @@ const OverlayHandler = {
       trakt: 'trakt',
       trakt_user: 'trakt',
       mal: 'mal',
-      mdb: 'mdblist'
+      mdb: 'mdblist',
+      floppy: 'floppy'
     }
     const SERVICE_VALIDATION_INPUTS = {
       tmdb: 'qs-validate-tmdb',
       mdblist: 'qs-validate-mdblist',
+      floppy: 'qs-validate-floppy',
       trakt: 'qs-validate-trakt',
       mal: 'qs-validate-mal',
       myanimelist: 'qs-validate-mal',
@@ -4094,6 +4102,7 @@ const OverlayHandler = {
     const SERVICE_LABEL_MAP = {
       tmdb: 'TMDb',
       mdblist: 'MDBList',
+      floppy: 'Floppy',
       trakt: 'Trakt',
       mal: 'MyAnimeList',
       myanimelist: 'MyAnimeList',
@@ -4631,6 +4640,7 @@ const OverlayHandler = {
           const pillJumpMap = {
             tmdb: '020-tmdb',
             mdblist: '060-mdblist',
+            floppy: '067-floppy',
             anidb: '100-anidb',
             trakt: '130-trakt',
             myanimelist: '140-mal',
@@ -5152,7 +5162,7 @@ const OverlayHandler = {
           if (anchor) {
             const warning = document.createElement('div')
             warning.className = 'alert alert-warning py-1 px-2 mt-2 small rating-unique-warning'
-            warning.textContent = 'Each rating type (Critic/Audience/User) can only be used once. Please choose unique values.'
+            warning.textContent = 'Each rating source can only be used once. Please choose unique values.'
             anchor.insertAdjacentElement('afterend', warning)
           }
         }

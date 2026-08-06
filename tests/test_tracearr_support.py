@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from flask import session
 
-from modules import database, output
+from modules import database, output, persistence
 from modules.importer_simple_sections import SIMPLE_SECTIONS
 from modules.output_render import ORDERED_CONFIG_SECTIONS
 
@@ -19,13 +19,46 @@ def test_tracearr_service_is_registered_for_import_and_output():
     assert ("tracearr", "035-tracearr") in ORDERED_CONFIG_SECTIONS
 
 
-def test_tracearr_setup_page_renders(client):
+def test_tracearr_setup_page_renders_configured_url(client):
+    config_name = "tracearr-page-test"
+    configured_url = "https://tracearr.internal.example:4443"
+    database.save_section_data(
+        name=config_name,
+        section="tracearr",
+        validated=False,
+        user_entered=True,
+        data={"tracearr": {"url": configured_url, "apikey": "trr_pub_test"}},
+    )
+    with client.session_transaction() as client_session:
+        client_session["config_name"] = config_name
+
     response = client.get("/step/035-tracearr")
 
     assert response.status_code == 200
     assert b"Public API Key" in response.data
     assert b"requires Kometa nightly" in response.data
     assert b'src="/static/images/service-icons/tracearr.png"' in response.data
+    assert f'value="{configured_url}"'.encode() in response.data
+    assert b"192.168.1.12:3019" not in response.data
+
+
+def test_tracearr_setup_page_hides_dummy_template_url(client, monkeypatch):
+    config_name = "tracearr-dummy-url-test"
+    original_get_dummy_data = persistence.get_dummy_data
+
+    def get_dummy_data(section):
+        if section == "tracearr":
+            return {"url": "http://192.168.1.12:3019", "apikey": None}
+        return original_get_dummy_data(section)
+
+    monkeypatch.setattr(persistence, "get_dummy_data", get_dummy_data)
+    with client.session_transaction() as client_session:
+        client_session["config_name"] = config_name
+
+    response = client.get("/step/035-tracearr")
+
+    assert response.status_code == 200
+    assert b"192.168.1.12:3019" not in response.data
 
 
 def test_tracearr_settings_round_trip_into_generated_yaml(app, monkeypatch):

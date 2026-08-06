@@ -723,6 +723,43 @@ def validate_mdblist_server(data):
         return jsonify({"valid": False, "message": "Invalid API key"})
 
 
+def validate_floppy_server(data):
+    floppy_url = str(data.get("floppy_url") or "").strip()
+    floppy_token = str(data.get("floppy_token") or "").strip()
+    require_token = helpers.booler(data.get("floppy_require_token", False))
+
+    ok, msg = _validate_service_url(floppy_url, "Floppy", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
+    if require_token and not floppy_token:
+        return jsonify({"valid": False, "error": "A Floppy API token is required by the selected ratings features."}), 400
+
+    floppy_url = floppy_url.rstrip("/")
+    try:
+        headers = {"X-API-Key": floppy_token} if floppy_token else None
+        response = requests.get(
+            f"{floppy_url}/api/v1/lists",
+            headers=headers,
+            params={"limit": 1},
+            timeout=10,
+        )
+        if response.status_code == 401:
+            message = "Floppy API token is invalid." if floppy_token else "Floppy requires an API token for this server."
+            return jsonify({"valid": False, "error": message}), 400
+        if response.status_code == 403:
+            return jsonify({"valid": False, "error": "Floppy API access was denied."}), 400
+        if response.status_code == 404:
+            return jsonify({"valid": False, "error": "Floppy API endpoint was not found."}), 400
+        response.raise_for_status()
+        response.json()
+        if floppy_token:
+            return jsonify({"valid": True, "message": "Floppy authenticated connection validated."})
+        return jsonify({"valid": True, "message": "Floppy public-list connection validated."})
+    except (requests.RequestException, ValueError) as exc:
+        helpers.ts_log(f"Error validating Floppy connection: {exc}", level="ERROR")
+        return jsonify({"valid": False, "error": f"Floppy connection error: {exc}"}), 400
+
+
 # ---------------------------------------------------------------------------
 # Anime tracker (MyAnimeList)
 # ---------------------------------------------------------------------------

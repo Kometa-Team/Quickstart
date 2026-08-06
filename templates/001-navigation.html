@@ -19,6 +19,7 @@
     '040-github': 'images/service-icons/github.png',
     '050-omdb': 'images/service-icons/omdb.png',
     '060-mdblist': 'images/service-icons/mdblist.png',
+    '067-floppy': 'images/service-icons/floppy.png',
     '070-notifiarr': 'images/service-icons/notifiarr.png',
   '080-gotify': 'images/service-icons/gotify.png',
   '085-ntfy': 'images/service-icons/ntfy.png',
@@ -60,6 +61,7 @@
   {% set tracearr_reasons = tracearr_requirement_reasons if tracearr_requirement_reasons is defined else [] %}
   {% set omdb_reasons = omdb_requirement_reasons if omdb_requirement_reasons is defined else [] %}
   {% set mdblist_reasons = mdblist_requirement_reasons if mdblist_requirement_reasons is defined else [] %}
+  {% set floppy_reasons = floppy_requirement_reasons if floppy_requirement_reasons is defined else [] %}
   {% set anidb_reasons = anidb_requirement_reasons if anidb_requirement_reasons is defined else [] %}
   {% set radarr_reasons = radarr_requirement_reasons if radarr_requirement_reasons is defined else [] %}
   {% set sonarr_reasons = sonarr_requirement_reasons if sonarr_requirement_reasons is defined else [] %}
@@ -124,6 +126,17 @@
                     {% endfor %}
                     {% if mdblist_reasons|length > 2 %}
                     <div class="qs-dependency-hint-line">+{{ mdblist_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-floppy-required-hint {% if not floppy_reasons %}d-none{% endif %}" data-qs-dependency-hint="floppy" data-qs-dependency-short="F">
+                  <div class="qs-dependency-hint-title">Floppy required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in floppy_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if floppy_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ floppy_reasons|length - 2 }} more...</div>
                     {% endif %}
                   </div>
                 </div>

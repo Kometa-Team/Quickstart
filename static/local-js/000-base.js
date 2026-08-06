@@ -1443,6 +1443,7 @@ function qsCurrentStepHasMeaningfulInput () {
     '040-github': ['github_token'],
     '050-omdb': ['omdb_apikey'],
     '060-mdblist': ['mdblist_apikey'],
+    '067-floppy': ['floppy_url', 'floppy_token'],
     '070-notifiarr': ['notifiarr_apikey'],
     '080-gotify': ['gotify_url', 'gotify_token'],
     '085-ntfy': ['ntfy_url', 'ntfy_token', 'ntfy_topic'],
@@ -1781,6 +1782,11 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_MDBLIST_REQUIREMENT_REASONS',
       label: 'MDBList'
     },
+    floppy: {
+      stepKey: '067-floppy',
+      windowKey: 'QS_FLOPPY_REQUIREMENT_REASONS',
+      label: 'Floppy'
+    },
     anidb: {
       stepKey: '100-anidb',
       windowKey: 'QS_ANIDB_REQUIREMENT_REASONS',
@@ -2005,6 +2011,7 @@ function qsApplyWorkspaceStatus (payload) {
   const tracearrReasons = qsArrayFromKeys(payload.tracearr_requirement_reasons)
   const omdbReasons = qsArrayFromKeys(payload.omdb_requirement_reasons)
   const mdblistReasons = qsArrayFromKeys(payload.mdblist_requirement_reasons)
+  const floppyReasons = qsArrayFromKeys(payload.floppy_requirement_reasons)
   const anidbReasons = qsArrayFromKeys(payload.anidb_requirement_reasons)
   const radarrReasons = qsArrayFromKeys(payload.radarr_requirement_reasons)
   const sonarrReasons = qsArrayFromKeys(payload.sonarr_requirement_reasons)
@@ -2018,6 +2025,7 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_TRACEARR_REQUIREMENT_REASONS = tracearrReasons
   window.QS_OMDB_REQUIREMENT_REASONS = omdbReasons
   window.QS_MDBLIST_REQUIREMENT_REASONS = mdblistReasons
+  window.QS_FLOPPY_REQUIREMENT_REASONS = floppyReasons
   window.QS_ANIDB_REQUIREMENT_REASONS = anidbReasons
   window.QS_RADARR_REQUIREMENT_REASONS = radarrReasons
   window.QS_SONARR_REQUIREMENT_REASONS = sonarrReasons
@@ -2030,6 +2038,7 @@ function qsApplyWorkspaceStatus (payload) {
     tracearr: tracearrReasons,
     omdb: omdbReasons,
     mdblist: mdblistReasons,
+    floppy: floppyReasons,
     anidb: anidbReasons,
     radarr: radarrReasons,
     sonarr: sonarrReasons,
