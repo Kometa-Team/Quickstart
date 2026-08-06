@@ -2006,6 +2006,9 @@ document.addEventListener('DOMContentLoaded', function () {
         suggested = selectorValue
       }
       suggested = sanitizeConfigName(suggested)
+      if (suggested && isDuplicateName(suggested)) {
+        suggested = suggestDuplicateName(suggested)
+      }
       importConfigName.value = suggested
       if (!suggested) return
       if (isDuplicateName(suggested)) {
