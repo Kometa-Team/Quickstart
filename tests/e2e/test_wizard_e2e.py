@@ -1270,6 +1270,29 @@ def test_config_workspace_modal_changing_selector_shows_new_config_input(page, l
 
 
 @pytest.mark.e2e
+def test_import_config_modal_suggests_next_available_name(page, live_server):
+    """Import should never prefill the name of an existing config.
+
+    It reuses Duplicate's naming sequence so an active ``example`` config
+    becomes ``example_copy``, or ``example_copy_2`` when the first copy
+    already exists.
+    """
+    source_config = "pytest_import_source"
+    _seed_config(source_config)
+    _seed_config(f"{source_config}_copy")
+    _activate_config(page, live_server, source_config)
+    page.reload(wait_until="domcontentloaded")
+
+    page.locator("#configSelector").select_option(source_config)
+    page.evaluate("""() => {
+        document.getElementById('importConfigModal').dispatchEvent(new Event('show.bs.modal'))
+    }""")
+
+    expect(page.locator("#importConfigName")).to_have_value(f"{source_config}_copy_2")
+    expect(page.locator("#importConfigError")).to_be_hidden()
+
+
+@pytest.mark.e2e
 def test_config_workspace_reset_dispatches_to_clear_session(page, live_server):
     """Clicking the Reset button in the config workspace modal, then
     confirming, should POST to /clear_session with the selected config
