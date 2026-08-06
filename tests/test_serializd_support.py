@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from modules import importer, validations_services
+from modules import database, importer, validations_services
 from modules.output_dump import dump_section
 
 
@@ -78,3 +78,23 @@ def test_serializd_page_renders(client, isolated_config_dir):
     assert 'id="serializd_timeout"' in html
     assert 'src="/static/local-js/065-serializd.js"' in html
     assert 'src="/static/images/service-icons/serializd.png"' in html
+
+
+def test_serializd_page_renders_null_credentials_as_empty(client, isolated_config_dir):
+    config_name = "serializd-null-credentials-test"
+    database.save_section_data(
+        name=config_name,
+        section="serializd",
+        validated=False,
+        user_entered=True,
+        data={"serializd": {"email": None, "password": None, "timeout": 60}},
+    )
+    with client.session_transaction() as session:
+        session["config_name"] = config_name
+
+    response = client.get("/step/065-serializd")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'id="serializd_email" name="serializd_email"\n    value=""' in html
+    assert 'id="serializd_password" name="serializd_password"\n    value=""' in html

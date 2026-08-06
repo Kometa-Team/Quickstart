@@ -10,7 +10,7 @@
     </span>
   </span>
   <input type="email" class="form-control" id="serializd_email" name="serializd_email"
-    value="{{ serializd.get('email', '') }}" autocomplete="username" aria-describedby="serializd_email_text">
+    value="{{ serializd.get('email', '') or '' }}" autocomplete="username" aria-describedby="serializd_email_text">
 </div>
 
 <div class="input-group mb-2">
@@ -21,7 +21,7 @@
     </span>
   </span>
   <input type="password" class="form-control" id="serializd_password" name="serializd_password"
-    value="{{ serializd.get('password', '') }}" autocomplete="current-password" aria-describedby="serializd_password_text">
+    value="{{ serializd.get('password', '') or '' }}" autocomplete="current-password" aria-describedby="serializd_password_text">
   <button class="btn btn-secondary" id="togglePasswordVisibility" type="button" aria-label="Show or hide password">
     <i class="fas fa-eye"></i>
   </button>
