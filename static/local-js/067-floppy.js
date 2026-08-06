@@ -9,6 +9,8 @@ createApiKeyValidator({
   optionalFieldIds: floppyTokenRequired ? [] : ['floppy_token'],
   validatedFieldId: 'floppy_validated',
   validatedAtFieldId: 'floppy_validated_at',
+  toggleButtonId: 'toggleFloppyTokenVisibility',
+  toggleFieldId: 'floppy_token',
   endpoint: '/validate_floppy',
   maskPrimaryField: false,
   buildPayload: (url, extras) => ({

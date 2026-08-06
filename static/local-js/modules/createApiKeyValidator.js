@@ -75,6 +75,8 @@ const DEFAULT_MESSAGES = {
  * @param {string} config.validatedFieldId       Element id of the hidden "<service>_validated" input.
  * @param {string} [config.validatedAtFieldId]   Element id of the hidden "<service>_validated_at" timestamp input.
  * @param {string} [config.toggleButtonId='toggleApikeyVisibility']  Id of the show/hide toggle button.
+ * @param {string} [config.toggleFieldId]        Optional non-primary secret field controlled by the toggle.
+ *                                               Defaults to fieldId when omitted.
  * @param {string} [config.validateButtonId='validateButton']        Id of the validate button.
  * @param {string} [config.statusMessageId='statusMessage']          Id of the status callout element.
  * @param {string} [config.formId='configForm']                      Id of the wrapping form (for submit reset).
@@ -134,6 +136,7 @@ export function createApiKeyValidator (config) {
     validatedFieldId,
     validatedAtFieldId,
     toggleButtonId = 'toggleApikeyVisibility',
+    toggleFieldId,
     validateButtonId = 'validateButton',
     statusMessageId = 'statusMessage',
     formId = 'configForm',
@@ -163,6 +166,7 @@ export function createApiKeyValidator (config) {
   const validatedAtInput = validatedAtFieldId ? document.getElementById(validatedAtFieldId) : null
   const validateButton = document.getElementById(validateButtonId)
   const toggleButton = document.getElementById(toggleButtonId)
+  const toggleInput = toggleFieldId ? document.getElementById(toggleFieldId) : apiKeyInput
   const form = document.getElementById(formId)
 
   // If the credential or validate button isn't on the page, this wizard
@@ -190,6 +194,11 @@ export function createApiKeyValidator (config) {
   } else {
     apiKeyInput.setAttribute('type', 'password')
     if (toggleButton) setToggleButtonIcon(toggleButton, false)
+  }
+  if (toggleFieldId && toggleInput) {
+    const showPlainText = toggleInput.value.trim() === ''
+    toggleInput.setAttribute('type', showPlainText ? 'text' : 'password')
+    if (toggleButton) setToggleButtonIcon(toggleButton, showPlainText)
   }
 
   // ── initial button state ────────────────────────────────────────────
@@ -324,10 +333,10 @@ export function createApiKeyValidator (config) {
   }
 
   // ── show/hide toggle for the credential field ───────────────────────
-  if (maskPrimaryField && toggleButton) {
+  if ((maskPrimaryField || toggleFieldId) && toggleButton && toggleInput) {
     toggleButton.addEventListener('click', function () {
-      const currentType = apiKeyInput.getAttribute('type')
-      apiKeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
+      const currentType = toggleInput.getAttribute('type')
+      toggleInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
       setToggleButtonIcon(this, currentType === 'password')
     })
   }
