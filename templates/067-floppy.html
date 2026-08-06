@@ -23,6 +23,9 @@
   </span>
   <input type="password" class="form-control" id="floppy_token" name="floppy_token"
     value="{{ floppy.get('token', '') or '' }}" autocomplete="off" aria-describedby="floppy_token_text">
+  <button class="btn btn-secondary" id="toggleFloppyTokenVisibility" type="button" aria-label="Show or hide API token">
+    <i class="fas fa-eye"></i>
+  </button>
   <button class="btn btn-success" id="validateButton" type="button">
     Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
   </button>

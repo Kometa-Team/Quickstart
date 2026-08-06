@@ -154,6 +154,27 @@ describe('createApiKeyValidator initial field state', () => {
     expect(document.getElementById('test_apikey').getAttribute('type')).toBe('text')
   })
 
+  it('can target a non-primary secret field with the visibility toggle', () => {
+    document.body.innerHTML = buildBaseHTML({
+      keyValue: 'https://example.com',
+      extraInputs: '<input id="test_token" type="password" value="secret">'
+    })
+    createApiKeyValidator(defaultConfig({
+      maskPrimaryField: false,
+      toggleFieldId: 'test_token'
+    }))
+
+    const primaryInput = document.getElementById('test_apikey')
+    const tokenInput = document.getElementById('test_token')
+    const toggleButton = document.getElementById('toggleApikeyVisibility')
+    expect(primaryInput.getAttribute('type')).toBe('text')
+    expect(tokenInput.getAttribute('type')).toBe('password')
+
+    toggleButton.click()
+    expect(tokenInput.getAttribute('type')).toBe('text')
+    expect(primaryInput.getAttribute('type')).toBe('text')
+  })
+
   it('treats whitespace-only credential as empty (still password initially, then text)', () => {
     document.body.innerHTML = buildBaseHTML({ keyValue: '   ' })
     createApiKeyValidator(defaultConfig())
