@@ -170,6 +170,7 @@ ORDERED_CONFIG_SECTIONS = (
     ("github", "040-github"),
     ("omdb", "050-omdb"),
     ("mdblist", "060-mdblist"),
+    ("serializd", "065-serializd"),
     ("floppy", "067-floppy"),
     ("notifiarr", "070-notifiarr"),
     ("gotify", "080-gotify"),

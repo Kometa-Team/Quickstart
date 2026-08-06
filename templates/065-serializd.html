@@ -1,0 +1,53 @@
+{% extends "000-base.html" %} {% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+{% set serializd = data.get('serializd', {}) %}
+<div class="input-group mb-2">
+  <span class="input-group-text" id="serializd_email_text" style="width: 190px; justify-content: space-between;">
+    Serializd Email
+    <span class="text-info ms-3" data-bs-toggle="tooltip" title="The email address for your Serializd account.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="email" class="form-control" id="serializd_email" name="serializd_email"
+    value="{{ serializd.get('email', '') or '' }}" autocomplete="username" aria-describedby="serializd_email_text">
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="serializd_password_text" style="width: 190px; justify-content: space-between;">
+    Serializd Password
+    <span class="text-info ms-3" data-bs-toggle="tooltip" title="The password for your Serializd account.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="password" class="form-control" id="serializd_password" name="serializd_password"
+    value="{{ serializd.get('password', '') or '' }}" autocomplete="current-password" aria-describedby="serializd_password_text">
+  <button class="btn btn-secondary" id="togglePasswordVisibility" type="button" aria-label="Show or hide password">
+    <i class="fas fa-eye"></i>
+  </button>
+  <button class="btn btn-success" id="validateButton" type="button">
+    Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
+
+<div class="input-group mb-2">
+  <span class="input-group-text" id="serializd_timeout_text" style="width: 190px; justify-content: space-between;">
+    Timeout (seconds)
+    <span class="text-info ms-3" data-bs-toggle="tooltip" title="How long Kometa waits for Serializd. The default is 60 seconds.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="number" class="form-control" id="serializd_timeout" name="serializd_timeout"
+    value="{{ serializd.get('timeout', 60) or 60 }}" min="1" step="1" aria-describedby="serializd_timeout_text">
+</div>
+
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="serializd_validated" name="serializd_validated"
+    value="{{ data.get('validated', False) }}" title="">
+  <label for="serializd_validated">Serializd Validated</label>
+</div>
+<input type="hidden" id="serializd_validated_at" name="serializd_validated_at" value="{{ data.get('validated_at', '') or '' }}">
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
+</form>
+{% endblock %}

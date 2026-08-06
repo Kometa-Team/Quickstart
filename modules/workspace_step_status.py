@@ -95,6 +95,7 @@ def _has_meaningful_optional_input(template_key, payload):
         "040-github": ("github", ("token",)),
         "050-omdb": ("omdb", ("apikey",)),
         "060-mdblist": ("mdblist", ("apikey",)),
+        "065-serializd": ("serializd", ("email", "password")),
         "067-floppy": ("floppy", ("url", "token")),
         "070-notifiarr": ("notifiarr", ("apikey",)),
         "080-gotify": ("gotify", ("url", "token")),

@@ -119,6 +119,7 @@ from modules.validations_services import (  # noqa: F401
     validate_plex_server,
     validate_radarr_payload,
     validate_radarr_server,
+    validate_serializd_server,
     validate_sonarr_payload,
     validate_sonarr_server,
     validate_tautulli_server,
