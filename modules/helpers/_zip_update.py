@@ -46,6 +46,40 @@ def _write_text(p: Path, s: str):
     p.write_text(s, encoding="utf-8")
 
 
+def _requirements_file_has_git_dependency(requirements_path: Path) -> bool:
+    try:
+        text = requirements_path.read_text(encoding="utf-8")
+    except Exception:
+        return False
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "git+" in line or line.startswith("git://") or "github.com" in line:
+            return True
+    return False
+
+
+def _ensure_git_available_for_requirements(requirements_path: Path, logs: list[str]) -> bool:
+    if not _requirements_file_has_git_dependency(requirements_path):
+        return True
+
+    git_path = shutil.which("git")
+    if git_path:
+        try:
+            git_version = subprocess.check_output([git_path, "--version"], stderr=subprocess.STDOUT, text=True)
+            logs.append(f"🔧 Detected Git version: {git_version.strip()}")
+        except Exception as e:
+            logs.append(f"⚠️ Git is present but failed to run: {e}")
+        return True
+
+    logs.append("❌ Required tool not found: git")
+    logs.append("❌ Git is required to install Git-based dependencies from requirements.txt.")
+    logs.append("⚠️ Kometa dependencies include a Git-based package. " "Install Git and ensure it is available on PATH before retrying.")
+    return False
+
+
 def _get_upstream_sha(branch: str, logs: list[str], api_url_template: str = GITHUB_API_BRANCH, label: str = "Kometa") -> str | None:
     try:
         url = api_url_template.format(branch=branch)
@@ -320,6 +354,10 @@ def _ensure_venv(kometa_dir: Path, logs: list[str], venv_name: str = "kometa-ven
 
 def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str], requirements_file: str = "requirements.txt") -> bool:
     is_windows = os.name == "nt"
+    requirements_path = kometa_dir / requirements_file
+
+    if not _ensure_git_available_for_requirements(requirements_path, logs):
+        return False
 
     logs.append("⬆️ Upgrading pip...")
     p = subprocess.run(
@@ -346,7 +384,10 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str], requiremen
     if p.stdout.strip():
         logs.append(p.stdout.strip())
     if p.returncode != 0:
-        logs.append((p.stderr or p.stdout or "").strip() or "requirements install failed")
+        stderr = (p.stderr or p.stdout or "").strip()
+        if "Cannot find command 'git'" in stderr or "No such file or directory: 'git'" in stderr:
+            logs.append("❌ Git is required to install Git-based dependencies from requirements.txt.")
+        logs.append(stderr or "requirements install failed")
         return False
 
     return True
