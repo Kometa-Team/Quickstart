@@ -1,4 +1,5 @@
 import io
+import shutil
 import zipfile
 
 import requests
@@ -556,3 +557,24 @@ def test_perform_kometa_update_zip_only_writes_branch_metadata(tmp_path, monkeyp
     assert result["success"] is True
     assert (kometa_dir / ".kometa_sha").read_text(encoding="utf-8").strip() == "sha123"
     assert (kometa_dir / ".kometa_branch").read_text(encoding="utf-8").strip() == "develop"
+
+
+def test_pip_install_requires_git_for_git_based_requirements(tmp_path, monkeypatch):
+    kometa_dir = tmp_path / "kometa"
+    kometa_dir.mkdir(parents=True, exist_ok=True)
+    requirements_txt = kometa_dir / "requirements.txt"
+    requirements_txt.write_text(
+        "requests==2.34.2\ngit+https://github.com/Velocidensity/serializd-py.git\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(shutil, "which", lambda tool: None if tool == "git" else "/usr/bin/python")
+    logs = []
+
+    from modules.helpers._zip_update import _pip_install
+
+    result = _pip_install(kometa_dir / "python", kometa_dir, logs)
+
+    assert result is False
+    assert any("Required tool not found: git" in line for line in logs)
+    assert any("Git is required to install Git-based dependencies" in line for line in logs)
