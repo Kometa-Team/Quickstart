@@ -46,7 +46,7 @@ RUN echo "**** install system packages ****" \
  && apt-get update \
  && apt-get upgrade -y --no-install-recommends \
  && apt-get install -y tzdata --no-install-recommends \
- && apt-get install -y gcc g++ libxml2-dev libxslt-dev libz-dev libjpeg62-turbo-dev zlib1g-dev wget curl ffmpeg libsm6 libxext6 \
+ && apt-get install -y gcc g++ libxml2-dev libxslt-dev libz-dev libjpeg62-turbo-dev zlib1g-dev wget curl git ffmpeg libsm6 libxext6 \
  && wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-"$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
  && chmod +x /tini
 RUN echo "**** install python packages ****" \
