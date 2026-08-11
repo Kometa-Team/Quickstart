@@ -123,7 +123,7 @@ def vite_dev_mode() -> bool:
     browser will load JS directly from the Vite dev server and receive
     HMR updates on every file save.
     """
-    return os.getenv("QS_VITE_DEV", "0") not in ("0", "", "false", "False", "no")
+    return str(os.getenv("QS_VITE_DEV", "0")).strip().lower() not in ("0", "", "false", "no")
 
 
 def vite_dev_origin() -> str:
