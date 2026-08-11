@@ -4,6 +4,7 @@ from flask import session
 
 from modules.logscan_resume import dedupe_preserve_order
 from modules.process_control import extract_selected_libraries
+from modules import process_run_context
 
 
 def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(tmp_path, monkeypatch, qs_module):
@@ -345,6 +346,28 @@ def test_extract_selected_libraries_preserves_library_name_whitespace(qs_module)
 
     assert run_option == "--run-libraries"
     assert selected_libraries == ["  Movies  ", "  TV Shows  "]
+
+
+def test_extract_selected_libraries_uses_windows_shlex_rules(monkeypatch):
+    monkeypatch.setattr(process_run_context.sys, "platform", "win32")
+
+    run_option, selected_libraries = process_run_context.extract_selected_libraries(
+        'kometa.py --run --run-libraries "Movies" --config "C:\\temp\\"'
+    )
+
+    assert run_option == "--run-libraries"
+    assert selected_libraries == ["Movies"]
+
+
+def test_extract_selected_libraries_strips_quotes_after_split_fallback(monkeypatch):
+    monkeypatch.setattr(process_run_context.shlex, "split", lambda *_args, **_kwargs: (_ for _ in ()).throw(ValueError("boom")))
+
+    run_option, selected_libraries = process_run_context.extract_selected_libraries(
+        'kometa.py --run --run-libraries "Movies"'
+    )
+
+    assert run_option == "--run-libraries"
+    assert selected_libraries == ["Movies"]
 
 
 def test_build_recovery_suggestions_preserves_collections_only_scope_when_original_was_collections_only(qs_module):

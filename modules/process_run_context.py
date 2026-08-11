@@ -95,8 +95,9 @@ def extract_selected_libraries(command):
     if not command:
         return None, None
 
+    is_win = sys.platform.startswith("win")
     try:
-        parts = shlex.split(str(command), posix=True)
+        parts = shlex.split(str(command), posix=not is_win)
     except ValueError:
         parts = str(command).split()
 
@@ -106,11 +107,11 @@ def extract_selected_libraries(command):
         if part in ("--run", "--run-libraries", "--times"):
             run_option = part
         if part.startswith("--run-libraries="):
-            raw_value = part.split("=", 1)[1]
+            raw_value = _strip_outer_quotes(part.split("=", 1)[1])
             selected = _parse_run_libraries_value(raw_value)
             break
         if part == "--run-libraries" and idx + 1 < len(parts):
-            raw_value = parts[idx + 1]
+            raw_value = _strip_outer_quotes(parts[idx + 1])
             selected = _parse_run_libraries_value(raw_value)
             run_option = "--run-libraries"
             break
