@@ -201,6 +201,28 @@ def test_validate_yamtrack_missing_url_returns_400(client):
 # ---------------------------------------------------------------------------
 
 
+def test_import_trakt_yaml_parses_and_persists_credentials(client):
+    yaml_text = """
+trakt:
+  client_id: test-client-id
+  client_secret: test-client-secret
+  authorization:
+    access_token: test-access-token
+    token_type: bearer
+    expires_in: 604800
+    refresh_token: test-refresh-token
+    scope: public
+    created_at: 1786134359
+"""
+
+    resp = client.post("/import_trakt_yaml", json={"yaml": yaml_text})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["valid"] is True
+    assert data["trakt"]["client_id"] == "test-client-id"
+    assert data["trakt"]["authorization"]["access_token"] == "test-access-token"
+
+
 def test_validate_trakt_token_missing_access_and_client_id_returns_400(client):
     resp = client.post("/validate_trakt_token", json={})
     assert resp.status_code == 400

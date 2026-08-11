@@ -97,7 +97,7 @@ def test_floppy_step_renders_configured_url_and_module_script(client):
     assert 'id="floppy_token"' in page
     assert 'id="toggleFloppyTokenVisibility"' in page
     assert 'aria-label="Show or hide API token"' in page
-    assert 'src="/static/local-js/067-floppy.js"' in page
+    assert 'src="/static/dist/067-floppy-' in page
     assert 'src="/static/images/service-icons/floppy.png"' in page
 
 

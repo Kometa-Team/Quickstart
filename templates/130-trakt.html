@@ -1,6 +1,26 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a
+    class="btn btn-outline-primary"
+    id="trakt_open_url"
+    href="https://utilities.kometa.wiki/trakt-oauth/"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Open Trakt Utilities
+  </a>
+
+  <button
+    class="btn btn-success"
+    type="button"
+    data-bs-toggle="modal"
+    data-bs-target="#traktYamlImportModal"
+  >
+    Import YAML
+  </button>
+</div>
 <div class="input-group mb-2">
   <span class="input-group-text" id="trakt_client_id_text" style="width: 150px; justify-content: space-between;">
     Client ID
@@ -28,59 +48,20 @@
   <button class="btn btn-outline-secondary" id="toggleClientSecretVisibility" type="button">
     <i class="fas fa-eye"></i>
   </button>
-  <button class="btn btn-success" id="trakt_open_url" type="button">
-    Retrieve PIN <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
-  </button>
 </div>
-
-
 
 <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly>
-<div class="form-text mb-2" id="pin-info">
-  When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access
-  to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
-</div>
-<div class="form-text mb-2" id="pin-info">
-  If you have a PIN you generated in the last few minutes, enter it below.<br>
-</div>
-<div class="input-group mb-2" id="urlField">
-  <span class="input-group-text" id="trakt_pin_text" style="width: 150px; justify-content: space-between;">
-    Trakt PIN
-    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-      title="Enter the PIN received from Trakt for authentication.">
-      <i class="bi bi-info-circle-fill"></i>
-    </span>
-  </span>
-  <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin"
-    aria-describedby="trakt_pin_text">
-  <button class="btn btn-success" type="button" id="validate_trakt_pin">
-    Validate PIN <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-  </button>
-</div>
-
 <div class="input-group mb-2">
   <span class="input-group-text" style="width: 150px; justify-content: space-between;">
     Token Check
     <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-      title="Test the saved Trakt access token without re-doing the PIN flow.">
+      title="Test the saved Trakt access token without re-doing the YAML import flow.">
       <i class="bi bi-info-circle-fill"></i>
     </span>
   </span>
   <button class="btn btn-outline-info" type="button" id="trakt_check_token">
     Check Token <i id="spinner_check_trakt" class="spinner-border spinner-border-sm" style="display:none;"></i>
   </button>
-</div>
-
-<div class="form-check form-switch mb-2">
-  <input class="form-check-input" type="checkbox" name="trakt_force_refresh" id="trakt_force_refresh" value="true" {%
-    if data['trakt']['force_refresh']|string|lower=='true' %}checked{% endif %}>
-  <input type="hidden" name="trakt_force_refresh" value="false">
-  <label class="form-check-label" for="trakt_force_refresh">Force Refresh
-    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-      title="Refresh credentials on every run.">
-      <i class="bi bi-info-circle-fill"></i>
-    </span>
-  </label>
 </div>
 
 <input type="hidden" class="form-control" id="access_token" name="access_token"
@@ -95,6 +76,25 @@
   readonly>
 <input type="hidden" class="form-control" id="created_at" name="created_at"
   value="{{ data['trakt']['authorization']['created_at'] }}" readonly>
+<div class="modal fade" id="traktYamlImportModal" tabindex="-1" aria-labelledby="traktYamlImportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="traktYamlImportModalLabel">Import Trakt YAML</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">Paste the YAML export from the Trakt utilities site. Quickstart will parse it and save only the values needed for the final Trakt configuration.</p>
+        <textarea class="form-control" id="traktYamlImportText" rows="12" spellcheck="false" placeholder="trakt:&#10;  client_id: ...&#10;  client_secret: ...&#10;  authorization:&#10;    access_token: ..."></textarea>
+        <div id="traktYamlImportStatus" class="alert alert-info py-2 small mt-3 d-none" role="status"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="traktYamlImportSubmit">Import YAML</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="form-floating" style="display:none;">
   <input type="text" class="form-control" id="trakt_validated" name="trakt_validated" value="{{ data['validated'] }}"
     title="">
