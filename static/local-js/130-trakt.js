@@ -1,84 +1,127 @@
-import { createOauthValidator } from './modules/createOauthValidator.js'
+const TRAKT_UTILITIES_URL = 'https://utilities.kometa.wiki/trakt-oauth/'
+function setTraktAuthFields (traktPayload) {
+  if (!traktPayload) return
+  const auth = traktPayload.authorization || {}
+  const clientIdInput = document.getElementById('trakt_client_id')
+  const clientSecretInput = document.getElementById('trakt_client_secret')
+  const accessTokenInput = document.getElementById('access_token')
+  const tokenTypeInput = document.getElementById('token_type')
+  const expiresInInput = document.getElementById('expires_in')
+  const refreshTokenInput = document.getElementById('refresh_token')
+  const scopeInput = document.getElementById('scope')
+  const createdAtInput = document.getElementById('created_at')
 
-// Trakt OAuth PIN flow. Migrated to the shared createOauthValidator
-// factory in #1334 Step 6 PR 2.
-//
-// Trakt-specific quirks preserved from the pre-factory implementation:
-//   - client_id length is 64 chars before the authorization URL is built
-//   - authorization URL format is Trakt's oob (out-of-band) redirect
-//   - validate endpoint returns 6 authorization fields to copy
-//   - Check Token endpoint may rotate the token set via data.authorization
-//   - After success, the PIN input and URL field are cleared, both
-//     PIN-flow buttons are disabled, and the Check Token button becomes
-//     enabled.
+  if (clientIdInput) clientIdInput.value = traktPayload.client_id || ''
+  if (clientSecretInput) clientSecretInput.value = traktPayload.client_secret || ''
+  if (accessTokenInput) accessTokenInput.value = auth.access_token || ''
+  if (tokenTypeInput) tokenTypeInput.value = auth.token_type || ''
+  if (expiresInInput) expiresInInput.value = auth.expires_in || ''
+  if (refreshTokenInput) refreshTokenInput.value = auth.refresh_token || ''
+  if (scopeInput) scopeInput.value = auth.scope || ''
+  if (createdAtInput) createdAtInput.value = auth.created_at || ''
+}
 
-const TRAKT_CLIENT_ID_LENGTH = 64
+function showTraktStatus (message, type = 'info') {
+  const statusEl = document.getElementById('traktYamlImportStatus')
+  if (!statusEl) return
+  statusEl.className = `alert alert-${type} py-2 small mt-3`
+  statusEl.textContent = message
+  statusEl.classList.remove('d-none')
+}
 
-createOauthValidator({
-  serviceName: 'Trakt',
-  validatedFieldId: 'trakt_validated',
-  validatedAtFieldId: 'trakt_validated_at',
-  clientIdFieldId: 'trakt_client_id',
-  clientSecretFieldId: 'trakt_client_secret',
-  authorizeButtonId: 'trakt_open_url',
-  validateButtonId: 'validate_trakt_pin',
-  checkTokenButtonId: 'trakt_check_token',
-  urlFieldId: 'trakt_url',
-  expectedClientIdLength: TRAKT_CLIENT_ID_LENGTH,
-  buildAuthorizationURL: (clientId) =>
-    `https://trakt.tv/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=urn:ietf:wg:oauth:2.0:oob`,
-  secondaryValueFieldId: 'trakt_pin',
-  validateEndpoint: '/validate_trakt',
-  validateSpinnerKey: 'validate',
-  buildValidatePayload: ({ clientId, clientSecret, secondaryValue }) => ({
-    trakt_client_id: clientId,
-    trakt_client_secret: clientSecret,
-    trakt_pin: secondaryValue
-  }),
-  messages: {
-    validateMissingFields: 'ID, secret, and PIN are all required.'
-  },
-  applyValidateSuccess: (data, ctx) => {
-    document.getElementById('access_token').value = data.trakt_authorization_access_token
-    document.getElementById('token_type').value = data.trakt_authorization_token_type
-    document.getElementById('expires_in').value = data.trakt_authorization_expires_in
-    document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token
-    document.getElementById('scope').value = data.trakt_authorization_scope
-    document.getElementById('created_at').value = data.trakt_authorization_created_at
-    ctx.secondaryValueInput.value = ''
-    ctx.urlField.value = ''
-    ctx.authorizeButton.disabled = true
-    ctx.validateButton.disabled = true
-    if (ctx.checkTokenButton) ctx.checkTokenButton.disabled = false
-  },
-  checkTokenEndpoint: '/validate_trakt_token',
-  checkTokenSpinnerKey: 'check_trakt',
-  buildCheckTokenPayload: ({ accessToken, clientId, clientSecret, refreshToken }) => ({
-    access_token: accessToken,
-    client_id: clientId,
-    client_secret: clientSecret,
-    refresh_token: refreshToken,
-    debug: true
-  }),
-  checkTokenPreflight: ({ accessToken, clientId }) => {
-    // Trakt requires both accessToken AND clientId to be present
-    // before hitting the server (server would reject otherwise).
-    if (!accessToken.trim() || !clientId.trim()) {
-      return 'Missing access token or client ID.'
-    }
-    return null
-  },
-  applyCheckTokenSuccess: (data) => {
-    // Trakt-specific: response may rotate the token set. Copy the
-    // rotated fields when the server sent them.
-    if (data.authorization) {
-      const auth = data.authorization
-      if (auth.access_token) document.getElementById('access_token').value = auth.access_token
-      if (auth.token_type) document.getElementById('token_type').value = auth.token_type
-      if (auth.expires_in) document.getElementById('expires_in').value = auth.expires_in
-      if (auth.refresh_token) document.getElementById('refresh_token').value = auth.refresh_token
-      if (auth.scope) document.getElementById('scope').value = auth.scope
-      if (auth.created_at) document.getElementById('created_at').value = auth.created_at
-    }
+function wireYamlImportFlow () {
+  const importButton = document.getElementById('traktYamlImportSubmit')
+  const importText = document.getElementById('traktYamlImportText')
+  const openUtilitiesButton = document.getElementById('trakt_open_url')
+  const checkTokenButton = document.getElementById('trakt_check_token')
+
+  if (openUtilitiesButton) {
+    openUtilitiesButton.addEventListener('click', () => {
+      window.open(TRAKT_UTILITIES_URL, '_blank', 'noopener,noreferrer')
+    })
   }
-})
+
+  if (!importButton || !importText) {
+    console.error('[Trakt] Cannot wire import flow: button=' + !!importButton + ', text=' + !!importText)
+    return
+  }
+
+  if (importButton && importText) {
+    importButton.addEventListener('click', async () => {
+      const yaml = importText.value.trim()
+      if (!yaml) {
+        showTraktStatus('Paste the YAML export before importing.', 'danger')
+        return
+      }
+
+      showTraktStatus('Importing Trakt credentials...', 'info')
+
+      try {
+        const response = await fetch('/import_trakt_yaml', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ yaml })
+        })
+        const data = await response.json()
+        if (!response.ok || !data.valid) {
+          showTraktStatus(data.error || 'The YAML import failed.', 'danger')
+          return
+        }
+
+        setTraktAuthFields(data.trakt)
+        showTraktStatus('Trakt credentials imported successfully.', 'success')
+        const modalEl = document.getElementById('traktYamlImportModal')
+        if (modalEl && window.bootstrap) {
+          const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
+          modal.hide()
+        }
+      } catch {
+        showTraktStatus('Unable to import the Trakt YAML right now.', 'danger')
+      }
+    })
+  }
+
+  if (checkTokenButton) {
+    checkTokenButton.addEventListener('click', async () => {
+      const accessToken = document.getElementById('access_token')?.value || ''
+      const clientId = document.getElementById('trakt_client_id')?.value || ''
+      const clientSecret = document.getElementById('trakt_client_secret')?.value || ''
+      const refreshToken = document.getElementById('refresh_token')?.value || ''
+
+      if (!accessToken || !clientId || !clientSecret || !refreshToken) {
+        showTraktStatus('Missing access token, client ID, client secret, or refresh token.', 'danger')
+        return
+      }
+
+      showTraktStatus('Checking Trakt token...', 'info')
+
+      try {
+        const response = await fetch('/validate_trakt_token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: accessToken,
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+            debug: true
+          })
+        })
+        const data = await response.json()
+        if (!response.ok || !data.valid) {
+          showTraktStatus(data.error || 'Token check failed.', 'danger')
+          return
+        }
+
+        if (data.authorization) {
+          setTraktAuthFields({ client_id: clientId, client_secret: clientSecret, authorization: data.authorization })
+        }
+        showTraktStatus('Trakt token is valid.', 'success')
+      } catch {
+        showTraktStatus('Unable to validate the Trakt token right now.', 'danger')
+      }
+    })
+  }
+}
+
+wireYamlImportFlow()

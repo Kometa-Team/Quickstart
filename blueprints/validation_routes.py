@@ -1,5 +1,6 @@
 import requests
 from flask import Blueprint, Flask, current_app as app, jsonify, request, session
+from ruamel.yaml import YAML
 
 from modules import database, helpers, persistence, url_validation, validations
 
@@ -237,6 +238,70 @@ def validate_tracearr():
 def validate_trakt():
     data = request.json
     return validations.validate_trakt_server(data)
+
+
+@bp.route("/import_trakt_yaml", methods=["POST"])
+def import_trakt_yaml():
+    payload = request.get_json(silent=True) or {}
+    yaml_text = payload.get("yaml", "") or ""
+    if not isinstance(yaml_text, str) or not yaml_text.strip():
+        return jsonify({"valid": False, "error": "No YAML content provided."}), 400
+
+    try:
+        parser = YAML(typ="safe", pure=True)
+        parsed = parser.load(yaml_text)
+    except Exception as exc:  # noqa: BLE001
+        helpers.ts_log(f"Failed to parse Trakt YAML import: {exc}", level="ERROR")
+        return jsonify({"valid": False, "error": "The YAML could not be parsed."}), 400
+
+    if not isinstance(parsed, dict):
+        return jsonify({"valid": False, "error": "The YAML must contain a top-level mapping."}), 400
+
+    trakt_block = parsed.get("trakt")
+    if not isinstance(trakt_block, dict):
+        return jsonify({"valid": False, "error": "The YAML must contain a 'trakt' mapping."}), 400
+
+    normalized = {
+        "client_id": trakt_block.get("client_id"),
+        "client_secret": trakt_block.get("client_secret"),
+        "authorization": {},
+    }
+
+    auth_block = trakt_block.get("authorization")
+    if isinstance(auth_block, dict):
+        for key in ["access_token", "token_type", "expires_in", "refresh_token", "scope", "created_at"]:
+            if key in auth_block:
+                normalized["authorization"][key] = auth_block.get(key)
+
+    if not normalized.get("client_id") or not normalized.get("client_secret"):
+        return jsonify({"valid": False, "error": "The YAML import is missing a client_id or client_secret."}), 400
+
+    config_name = session.get("config_name") or persistence.ensure_session_config_name()
+    stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, "trakt")
+    if not isinstance(stored_data, dict):
+        stored_data = {}
+
+    trakt_data = stored_data.get("trakt", {}) if isinstance(stored_data.get("trakt"), dict) else {}
+    trakt_data.update(
+        {
+            "client_id": normalized.get("client_id"),
+            "client_secret": normalized.get("client_secret"),
+            "authorization": normalized.get("authorization", {}),
+        }
+    )
+    stored_data["trakt"] = trakt_data
+    stored_data["validated"] = True
+    stored_data["validated_at"] = helpers.utc_now_iso()
+
+    database.save_section_data(
+        name=config_name,
+        section="trakt",
+        validated=True,
+        user_entered=user_entered,
+        data=stored_data,
+    )
+
+    return jsonify({"valid": True, "trakt": trakt_data})
 
 
 @bp.route("/validate_trakt_token", methods=["POST"])
