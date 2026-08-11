@@ -5,6 +5,7 @@
 // URL), so importing here is the same object EventHandler.updateAccordionHighlights
 // delegates to.
 import { updateAccordionHighlights } from '/static/local-js/modules/accordionHighlights.js'
+import { nbspLeadingSpaces } from '/static/local-js/modules/kometa/_util.js'
 
 // Load all helper modules in parallel. These publish their symbols
 // via window.* shims (same pattern as pathValidation.js).
@@ -6019,14 +6020,6 @@ function updateConfiguredCounts () {
   const movieLabel = counts.movie === 1 ? 'movie' : 'movies'
   const showLabel = counts.show === 1 ? 'show' : 'shows'
   configuredCountsDisplay.textContent = `Configured: ${counts.movie} ${movieLabel} / ${counts.show} ${showLabel}`
-}
-
-function nbspLeadingSpaces (s) {
-  const lstripped = s.replace(/^ +/, '')
-  const leading = s.length - lstripped.length
-  const rstripped = lstripped.replace(/ +$/, '')
-  const trailing = lstripped.length - rstripped.length
-  return ' '.repeat(leading) + rstripped + ' '.repeat(trailing)
 }
 
 function refreshPickerLabels () {
