@@ -1326,7 +1326,7 @@ def test_import_config_modal_suggests_next_available_name(page, live_server):
 
     # configSelector now lives inside the Manage Configs Bootstrap modal.
     # Open the modal before interacting with the selector, matching the current UI.
-    page.locator(".qs-config-switch-trigger").click()
+    page.locator(".config-badge-button").click()
     expect(page.locator("#configSwitchModal")).to_be_visible()
     page.locator("#configSelector").select_option(source_config)
 
