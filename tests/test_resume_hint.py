@@ -7,9 +7,7 @@ from modules.process_control import extract_selected_libraries
 from modules import process_run_context
 
 
-def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(
-    tmp_path, monkeypatch, qs_module
-):
+def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(tmp_path, monkeypatch, qs_module):
     latest_candidate = tmp_path / "meta-latest.log"
     older_candidate = tmp_path / "meta-older.log"
     latest_candidate.write_text("latest", encoding="utf-8")
@@ -25,9 +23,7 @@ def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(
     monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: ingest_cache)
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     # Keep live meta candidate out of this test.
-    monkeypatch.setattr(
-        qs_module.helpers, "get_kometa_root_path", lambda: tmp_path / "no-meta-root"
-    )
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: tmp_path / "no-meta-root")
 
     calls = []
 
@@ -52,9 +48,7 @@ def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(
     assert calls == [latest_candidate.resolve()]
 
 
-def test_build_latest_incomplete_resume_hint_exposes_explanation(
-    monkeypatch, qs_module
-):
+def test_build_latest_incomplete_resume_hint_exposes_explanation(monkeypatch, qs_module):
     monkeypatch.setattr(
         qs_module,
         "_get_incomplete_resume_runs",
@@ -71,9 +65,7 @@ def test_build_latest_incomplete_resume_hint_exposes_explanation(
                 "resume_timing_summary": {"started_at": "2026-05-05 01:00:00"},
                 "resume_scope_summary": {"completed_label": "Movies"},
                 "resume_progress_snapshot": {"rows": [{"name": "Movies"}]},
-                "resume_maintenance_events": [
-                    {"label": "Paused", "at": "2026-05-05 02:00:00"}
-                ],
+                "resume_maintenance_events": [{"label": "Paused", "at": "2026-05-05 02:00:00"}],
             }
         ],
     )
@@ -167,9 +159,7 @@ def test_build_incomplete_progress_snapshot_exposes_rows_and_totals(qs_module):
         last_log_at="2026-05-05 03:30:00",
         config_data={
             "playlists": {"daily": {}},
-            "settings": {
-                "run_order": ["operations", "metadata", "collections", "overlays"]
-            },
+            "settings": {"run_order": ["operations", "metadata", "collections", "overlays"]},
         },
         original_command="kometa.py --run --config <config>",
     )
@@ -220,17 +210,12 @@ def test_resume_hint_metric_style_preserves_whitespace():
     css_text = Path("static/css/styles.css").read_text(encoding="utf-8")
 
     assert "white-space: pre-wrap" in css_text
-    assert (
-        "font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;"
-        in css_text
-    )
+    assert "font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;" in css_text
     assert "#incomplete-run-alert .qs-incomplete-run-metric-value" in css_text
 
 
 def test_extract_selected_libraries_preserves_whitespace_in_library_names():
-    command = (
-        'kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>'
-    )
+    command = 'kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>'
 
     run_option, selected = extract_selected_libraries(command)
 
@@ -298,9 +283,7 @@ def test_build_resume_library_scope_matches_progress_libraries_whitespace_insens
     assert scope == ["5YO-TMDB-Agent"]
 
 
-def test_build_completed_log_progress_snapshot_does_not_require_request_context(
-    qs_module, isolated_config_dir, monkeypatch
-):
+def test_build_completed_log_progress_snapshot_does_not_require_request_context(qs_module, isolated_config_dir, monkeypatch):
     kometa_root = isolated_config_dir / "kometa"
     config_dir = kometa_root / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -392,9 +375,7 @@ def test_build_recovery_command_quotes_each_library_name_in_pipe_delimited_scope
 
 
 def test_extract_selected_libraries_preserves_library_name_whitespace(qs_module):
-    run_option, selected_libraries = qs_module.extract_selected_libraries(
-        'kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>'
-    )
+    run_option, selected_libraries = qs_module.extract_selected_libraries('kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>')
 
     assert run_option == "--run-libraries"
     assert selected_libraries == ["  Movies  ", "  TV Shows  "]
@@ -403,9 +384,7 @@ def test_extract_selected_libraries_preserves_library_name_whitespace(qs_module)
 def test_extract_selected_libraries_uses_windows_shlex_rules(monkeypatch):
     monkeypatch.setattr(process_run_context.sys, "platform", "win32")
 
-    run_option, selected_libraries = process_run_context.extract_selected_libraries(
-        'kometa.py --run --run-libraries "Movies" --config "C:\\temp\\"'
-    )
+    run_option, selected_libraries = process_run_context.extract_selected_libraries('kometa.py --run --run-libraries "Movies" --config "C:\\temp\\"')
 
     assert run_option == "--run-libraries"
     assert selected_libraries == ["Movies"]
@@ -418,9 +397,7 @@ def test_extract_selected_libraries_strips_quotes_after_split_fallback(monkeypat
         lambda *_args, **_kwargs: (_ for _ in ()).throw(ValueError("boom")),
     )
 
-    run_option, selected_libraries = process_run_context.extract_selected_libraries(
-        'kometa.py --run --run-libraries "Movies"'
-    )
+    run_option, selected_libraries = process_run_context.extract_selected_libraries('kometa.py --run --run-libraries "Movies"')
 
     assert run_option == "--run-libraries"
     assert selected_libraries == ["Movies"]
@@ -505,9 +482,7 @@ def test_build_recovery_suggestions_for_collections_only_scopes_to_remaining_lib
         ("--overlays-only", "overlays"),
     ],
 )
-def test_build_recovery_suggestions_for_phase_only_runs_prune_completed_libraries(
-    qs_module, phase_flag, phase_current
-):
+def test_build_recovery_suggestions_for_phase_only_runs_prune_completed_libraries(qs_module, phase_flag, phase_current):
     suggestions = qs_module._build_recovery_suggestions(
         original_command=f"kometa.py --run {phase_flag} --config <config>",
         phase_current=phase_current,
@@ -570,9 +545,7 @@ def test_completed_scope_resume_message_states_scope_is_fully_completed(qs_modul
     assert "Movies" in message
 
 
-def test_build_latest_incomplete_resume_hint_marks_completed_scope(
-    monkeypatch, qs_module
-):
+def test_build_latest_incomplete_resume_hint_marks_completed_scope(monkeypatch, qs_module):
     monkeypatch.setattr(
         qs_module,
         "_get_incomplete_resume_runs",
@@ -605,39 +578,29 @@ def test_read_logscan_text_appends_live_kometa_maintenance_sidecar(tmp_path, qs_
     log_dir.mkdir(parents=True, exist_ok=True)
     meta_path = log_dir / "meta.log"
     sidecar_path = log_dir / "meta.quickstart-maintenance.log"
-    meta_path.write_text(
-        "[2026-05-05 01:00:00,000] [kometa.py:1] [INFO] | Start\n", encoding="utf-8"
-    )
+    meta_path.write_text("[2026-05-05 01:00:00,000] [kometa.py:1] [INFO] | Start\n", encoding="utf-8")
     sidecar_path.write_text(
         "[Quickstart] Maintenance marker: event=paused at=2026-05-05T06:00:00Z local_at=2026-05-05T02:00:00 window=02:00-05:00\n",
         encoding="utf-8",
     )
 
-    content = qs_module._read_logscan_text(
-        meta_path, encoding="utf-8", errors="replace"
-    )
+    content = qs_module._read_logscan_text(meta_path, encoding="utf-8", errors="replace")
 
     assert "Maintenance marker" in content
     assert content.count("Maintenance marker") == 1
 
 
-def test_write_quickstart_maintenance_marker_writes_pending_journal_without_touching_meta_log(
-    monkeypatch, tmp_path, qs_module
-):
+def test_write_quickstart_maintenance_marker_writes_pending_journal_without_touching_meta_log(monkeypatch, tmp_path, qs_module):
     import modules.process_markers as process_markers
 
     kometa_root = tmp_path
     monkeypatch.setattr(
         process_markers,
         "append_quickstart_meta_log_line",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(
-            AssertionError("meta.log should not be written during runtime")
-        ),
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("meta.log should not be written during runtime")),
     )
 
-    ok = qs_module._write_quickstart_maintenance_marker(
-        kometa_root, "paused", window="02:00-05:00"
-    )
+    ok = qs_module._write_quickstart_maintenance_marker(kometa_root, "paused", window="02:00-05:00")
 
     assert ok is True
     pending_path = qs_module._get_kometa_pending_marker_path(kometa_root)
@@ -647,9 +610,7 @@ def test_write_quickstart_maintenance_marker_writes_pending_journal_without_touc
     assert "window=02:00-05:00" in pending_text
 
 
-def test_read_logscan_text_flushes_pending_markers_into_meta_log_when_stopped(
-    monkeypatch, tmp_path, qs_module
-):
+def test_read_logscan_text_flushes_pending_markers_into_meta_log_when_stopped(monkeypatch, tmp_path, qs_module):
     log_dir = tmp_path / "config" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     meta_path = log_dir / "meta.log"
@@ -671,9 +632,7 @@ def test_read_logscan_text_flushes_pending_markers_into_meta_log_when_stopped(
     )
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
 
-    content = qs_module._read_logscan_text(
-        meta_path, encoding="utf-8", errors="replace"
-    )
+    content = qs_module._read_logscan_text(meta_path, encoding="utf-8", errors="replace")
 
     assert "# [Quickstart] Marker replay start" in content
     assert "[Quickstart] Maintenance marker: event=paused" in content
