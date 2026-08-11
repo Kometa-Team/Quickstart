@@ -157,7 +157,7 @@ jobs:
           {
             echo "## Commits"
             echo ""
-            git log v${{ needs.increment-build.outputs.version }}..HEAD --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)'
+            git log v${{ needs.increment-build.outputs.version }}..HEAD --pretty=format:"* [\`%h\`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)"
             echo ""
             echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/v${{ needs.increment-build.outputs.version }}...prerelease)"
           } > changelog.md
