@@ -127,7 +127,7 @@ export default defineConfig({
     sourcemap: true
   },
   server: {
-    host: '0.0.0.0',
+    host: process.env.QS_VITE_DEV_HOST ?? 'localhost',
     port: 5173,
     strictPort: false,
     // Surface stack traces in the terminal in dev so refactor-time errors
