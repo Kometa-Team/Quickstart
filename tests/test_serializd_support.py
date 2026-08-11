@@ -1,4 +1,5 @@
 import json
+import re
 from unittest.mock import MagicMock, patch
 
 from modules import database, importer, validations_services
@@ -76,7 +77,10 @@ def test_serializd_page_renders(client, isolated_config_dir):
     assert 'id="serializd_email"' in html
     assert 'id="serializd_password"' in html
     assert 'id="serializd_timeout"' in html
-    assert 'src="/static/dist/065-serializd-' in html
+    # asset_url() serves the hashed Vite bundle when a build exists
+    # (static/dist/.vite/manifest.json) and falls back to the raw source
+    # file otherwise -- static/dist is gitignored, so accept either form.
+    assert re.search(r'src="/static/(?:dist/065-serializd-[^"]+\.js|local-js/065-serializd\.js)"', html)
     assert 'src="/static/images/service-icons/serializd.png"' in html
 
 
