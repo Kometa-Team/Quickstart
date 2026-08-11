@@ -54,7 +54,7 @@ jobs:
           {
             echo "## Commits"
             echo ""
-            git log "${latest_tag}..${{ needs.get-version.outputs.version }}" --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)'
+            git log "${latest_tag}..${{ needs.get-version.outputs.version }}" --pretty=format:"* [\`%h\`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)"
             echo ""
             echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...${{ needs.get-version.outputs.version }})"
           } > changelog.md
