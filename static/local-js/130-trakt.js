@@ -1,3 +1,14 @@
+import { refreshValidationCallout } from './modules/validationPageBase.js'
+import {
+  STATUS_COLOR_SUCCESS,
+  STATUS_COLOR_ERROR,
+  wireSecretToggle,
+  showStatusMessage,
+  performValidationRequest
+} from './modules/oauthValidationHelpers.js'
+
+console.log('[Trakt] 130-trakt.js loaded')
+
 function setTraktAuthFields (traktPayload) {
   if (!traktPayload) return
 
@@ -45,40 +56,84 @@ function setTraktAuthFields (traktPayload) {
   }
 }
 
-function showTraktStatus (message, type = 'info') {
-  const statusEl = document.getElementById('traktYamlImportStatus')
+function markTraktValidated () {
+  const validatedField = document.getElementById('trakt_validated')
+  const validatedAtField = document.getElementById('trakt_validated_at')
 
-  if (!statusEl) {
-    console.error('[Trakt] Status element not found')
+  if (validatedField) {
+    validatedField.value = 'true'
+  }
+
+  if (validatedAtField) {
+    validatedAtField.value = new Date().toISOString()
+  }
+
+  refreshValidationCallout('trakt_validated')
+}
+
+function markTraktInvalid () {
+  const validatedField = document.getElementById('trakt_validated')
+  const validatedAtField = document.getElementById('trakt_validated_at')
+
+  if (validatedField) {
+    validatedField.value = 'false'
+  }
+
+  if (validatedAtField) {
+    validatedAtField.value = ''
+  }
+
+  refreshValidationCallout('trakt_validated')
+}
+
+function showYamlImportStatus (message, type = 'info') {
+  const statusElement = document.getElementById('traktYamlImportStatus')
+
+  if (!statusElement) {
+    console.error('[Trakt] YAML import status element not found')
     return
   }
 
-  statusEl.className = `alert alert-${type} py-2 small mt-3`
-  statusEl.textContent = message
-  statusEl.classList.remove('d-none')
+  statusElement.className = `alert alert-${type} py-2 small mt-3`
+  statusElement.textContent = message
+  statusElement.classList.remove('d-none')
+}
+
+function resetYamlImportStatus () {
+  const statusElement = document.getElementById('traktYamlImportStatus')
+
+  if (!statusElement) return
+
+  statusElement.textContent = ''
+  statusElement.className = 'alert alert-info py-2 small mt-3 d-none'
 }
 
 async function importTraktYaml () {
+  const importText = document.getElementById('traktYamlImportText')
+  const importButton = document.getElementById('traktYamlImportSubmit')
+
   console.log('[Trakt] Import YAML handler called')
 
-  const importText = document.getElementById('traktYamlImportText')
-
   if (!importText) {
-    console.error('[Trakt] traktYamlImportText was not found')
+    console.error('[Trakt] traktYamlImportText not found')
     return
   }
 
   const yaml = importText.value.trim()
 
   if (!yaml) {
-    showTraktStatus(
+    showYamlImportStatus(
       'Paste the YAML export before importing.',
       'danger'
     )
     return
   }
 
-  showTraktStatus(
+  if (importButton) {
+    importButton.disabled = true
+  }
+
+  showYamlImportStatus(
     'Importing Trakt credentials...',
     'info'
   )
@@ -107,24 +162,21 @@ async function importTraktYaml () {
       data = await response.json()
     } catch (error) {
       console.error(
-        '[Trakt] Unable to parse import response:',
+        '[Trakt] Unable to parse YAML import response:',
         error
       )
 
-      showTraktStatus(
+      showYamlImportStatus(
         `The server returned an invalid response (${response.status}).`,
         'danger'
       )
       return
     }
 
-    console.log(
-      '[Trakt] Import response:',
-      data
-    )
+    console.log('[Trakt] Import response:', data)
 
     if (!response.ok || !data.valid) {
-      showTraktStatus(
+      showYamlImportStatus(
         data.error || 'The YAML import failed.',
         'danger'
       )
@@ -132,36 +184,48 @@ async function importTraktYaml () {
     }
 
     setTraktAuthFields(data.trakt)
+    markTraktValidated()
 
-    showTraktStatus(
+    showYamlImportStatus(
       'Trakt credentials imported successfully.',
       'success'
     )
 
-    const modalEl =
-      document.getElementById('traktYamlImportModal')
+    const checkTokenButton =
+      document.getElementById('trakt_check_token')
 
-    if (modalEl && window.bootstrap) {
-      const modal =
-        window.bootstrap.Modal.getOrCreateInstance(modalEl)
-
-      modal.hide()
+    if (checkTokenButton) {
+      checkTokenButton.disabled = false
     }
+
+    /*
+     * Keep the success message visible briefly in the modal rather than
+     * immediately hiding it. The user can close the modal manually.
+     *
+     * We intentionally do not call modal.hide() here because hiding the
+     * modal immediately makes a successful import appear as though
+     * nothing happened.
+     */
   } catch (error) {
     console.error(
       '[Trakt] YAML import request failed:',
       error
     )
 
-    showTraktStatus(
+    showYamlImportStatus(
       'Unable to import the Trakt YAML right now.',
       'danger'
     )
+  } finally {
+    if (importButton) {
+      importButton.disabled = false
+    }
   }
 }
 
-async function checkTraktToken () {
-  console.log('[Trakt] Check Token handler called')
+function checkTraktToken () {
+  const statusMessage =
+    document.getElementById('statusMessage')
 
   const accessToken =
     document.getElementById('access_token')?.value || ''
@@ -176,126 +240,143 @@ async function checkTraktToken () {
     document.getElementById('refresh_token')?.value || ''
 
   if (
-    !accessToken ||
-    !clientId ||
-    !clientSecret ||
-    !refreshToken
+    !accessToken.trim() ||
+    !clientId.trim() ||
+    !clientSecret.trim() ||
+    !refreshToken.trim()
   ) {
-    showTraktStatus(
+    showStatusMessage(
+      statusMessage,
       'Missing access token, client ID, client secret, or refresh token.',
-      'danger'
+      STATUS_COLOR_ERROR
     )
     return
   }
 
-  showTraktStatus(
-    'Checking Trakt token...',
-    'info'
-  )
+  console.log('[Trakt] POST /validate_trakt_token')
 
-  try {
-    console.log('[Trakt] POST /validate_trakt_token')
+  performValidationRequest({
+    endpoint: '/validate_trakt_token',
+    payload: {
+      access_token: accessToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      debug: true
+    },
+    spinnerKey: 'check_trakt',
+    statusElement: statusMessage,
 
-    const response = await fetch(
-      '/validate_trakt_token',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          access_token: accessToken,
+    onSuccess: (data) => {
+      console.log('[Trakt] Token validation succeeded:', data)
+
+      if (data.authorization) {
+        setTraktAuthFields({
           client_id: clientId,
           client_secret: clientSecret,
-          refresh_token: refreshToken,
-          debug: true
+          authorization: data.authorization
         })
       }
-    )
 
-    console.log(
-      '[Trakt] Token response status:',
-      response.status
-    )
+      markTraktValidated()
 
-    let data
+      showStatusMessage(
+        statusMessage,
+        'Trakt token is valid.',
+        STATUS_COLOR_SUCCESS
+      )
+    },
 
-    try {
-      data = await response.json()
-    } catch (error) {
+    onFailure: (data) => {
       console.error(
-        '[Trakt] Unable to parse token response:',
+        '[Trakt] Token validation failed:',
+        data
+      )
+
+      markTraktInvalid()
+    },
+
+    onError: (error) => {
+      console.error(
+        '[Trakt] Token validation request error:',
         error
       )
 
-      showTraktStatus(
-        `The server returned an invalid response (${response.status}).`,
-        'danger'
+      markTraktInvalid()
+
+      showStatusMessage(
+        statusMessage,
+        'An error occurred while validating the Trakt token.',
+        STATUS_COLOR_ERROR
       )
-      return
     }
+  })
+}
 
-    console.log(
-      '[Trakt] Token response:',
-      data
+function wireTraktPage () {
+  const clientSecretInput =
+    document.getElementById('trakt_client_secret')
+
+  const secretToggleButton =
+    document.getElementById('toggleClientSecretVisibility')
+
+  const importButton =
+    document.getElementById('traktYamlImportSubmit')
+
+  const importText =
+    document.getElementById('traktYamlImportText')
+
+  const importModal =
+    document.getElementById('traktYamlImportModal')
+
+  const checkTokenButton =
+    document.getElementById('trakt_check_token')
+
+  console.log('[Trakt] Wiring page', {
+    clientSecretInput: !!clientSecretInput,
+    importButton: !!importButton,
+    importText: !!importText,
+    importModal: !!importModal,
+    checkTokenButton: !!checkTokenButton
+  })
+
+  if (clientSecretInput) {
+    wireSecretToggle(
+      clientSecretInput,
+      secretToggleButton
     )
+  }
 
-    if (!response.ok || !data.valid) {
-      showTraktStatus(
-        data.error || 'Token check failed.',
-        'danger'
-      )
-      return
-    }
-
-    if (data.authorization) {
-      setTraktAuthFields({
-        client_id: clientId,
-        client_secret: clientSecret,
-        authorization: data.authorization
-      })
-    }
-
-    showTraktStatus(
-      'Trakt token is valid.',
-      'success'
+  if (importButton) {
+    importButton.addEventListener(
+      'click',
+      importTraktYaml
     )
-  } catch (error) {
+  } else {
     console.error(
-      '[Trakt] Token validation request failed:',
-      error
+      '[Trakt] traktYamlImportSubmit not found'
+    )
+  }
+
+  if (importModal) {
+    importModal.addEventListener(
+      'show.bs.modal',
+      resetYamlImportStatus
+    )
+  }
+
+  if (checkTokenButton) {
+    checkTokenButton.addEventListener(
+      'click',
+      checkTraktToken
     )
 
-    showTraktStatus(
-      'Unable to validate the Trakt token right now.',
-      'danger'
-    )
+    const accessToken =
+      document.getElementById('access_token')?.value || ''
+
+    checkTokenButton.disabled =
+      !accessToken.trim()
   }
 }
 
-console.log('[Trakt] 130-trakt.js loaded')
-
-document.addEventListener('click', async (event) => {
-  const importButton =
-    event.target.closest('#traktYamlImportSubmit')
-
-  if (importButton) {
-    event.preventDefault()
-
-    console.log('[Trakt] Import YAML button clicked')
-
-    await importTraktYaml()
-    return
-  }
-
-  const checkTokenButton =
-    event.target.closest('#trakt_check_token')
-
-  if (checkTokenButton) {
-    event.preventDefault()
-
-    console.log('[Trakt] Check Token button clicked')
-
-    await checkTraktToken()
-  }
-})
+wireTraktPage()
