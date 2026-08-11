@@ -279,6 +279,8 @@ from modules.logscan_cache import (
 )
 from modules.logscan_resume import (
     build_resume_library_scope as _build_resume_library_scope,  # noqa: F401 (used directly by tests as qs_module._build_resume_library_scope)
+    build_recovery_command as _build_recovery_command,
+    extract_selected_libraries as _extract_selected_libraries,
     extract_first_log_timestamp as _extract_first_log_timestamp,
     build_incomplete_run_timing_summary as _build_incomplete_run_timing_summary,  # noqa: F401 (used directly by tests as qs_module._build_incomplete_run_timing_summary)
     build_incomplete_scope_summary as _build_incomplete_scope_summary,  # noqa: F401 (used directly by tests as qs_module._build_incomplete_scope_summary)
@@ -286,6 +288,13 @@ from modules.logscan_resume import (
     build_recovery_suggestions as _build_recovery_suggestions,  # noqa: F401 (used directly by tests as qs_module._build_recovery_suggestions)
     build_resume_explanation as _build_resume_explanation,  # noqa: F401 (used directly by tests as qs_module._build_resume_explanation)
 )
+
+build_resume_library_scope = _build_resume_library_scope
+build_recovery_command = _build_recovery_command
+extract_selected_libraries = _extract_selected_libraries
+build_recovery_suggestions = _build_recovery_suggestions
+build_resume_explanation = _build_resume_explanation
+
 from modules.logscan_imagemaid_analysis import (
     resolve_imagemaid_run_config_name as _resolve_imagemaid_run_config_name,
 )
