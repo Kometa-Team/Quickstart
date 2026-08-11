@@ -142,7 +142,10 @@ def vite_dev_origin() -> str:
     if not vite_dev_mode():
         return ""
     host = os.getenv("QS_VITE_DEV_HOST", "localhost")
-    port = int(os.getenv("QS_VITE_DEV_PORT", "5173"))
+    try:
+        port = int(os.getenv("QS_VITE_DEV_PORT", "5173"))
+    except (TypeError, ValueError):
+        port = 5173
     return f"http://{host}:{port}"
 
 
