@@ -16,6 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Build JS Bundles
+        run: |
+          npm ci --no-fund --no-audit
+          npm run build
+
       - name: Set Up Python
         uses: actions/setup-python@v7
         with:
