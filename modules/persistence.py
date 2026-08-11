@@ -531,8 +531,11 @@ def migrate_library_keys_to_plex_ids(config_name, all_plex_libraries):
         norm = normalize_id(lib["name"].strip(), existing_ids)
         norm_to_plex_id[norm] = str(lib["id"])
 
-    settings = retrieve_settings("025-libraries")
-    libraries = settings.get("libraries", {})
+    try:
+        _validated, _user_entered, stored_payload = database.retrieve_section_data(config_name, "libraries")
+    except Exception:
+        return 0
+    libraries = stored_payload.get("libraries", {}) if isinstance(stored_payload, dict) else {}
     if not libraries:
         return 0
 
