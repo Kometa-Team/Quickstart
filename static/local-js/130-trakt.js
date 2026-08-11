@@ -204,7 +204,7 @@ async function importTraktYaml () {
      *
      * We intentionally do not call modal.hide() here because hiding the
      * modal immediately makes a successful import appear as though
-     * nothing happened.
+     * nothing happened at all.
      */
   } catch (error) {
     console.error(
