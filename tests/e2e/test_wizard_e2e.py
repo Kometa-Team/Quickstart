@@ -1293,6 +1293,27 @@ def test_import_config_modal_suggests_next_available_name(page, live_server):
 
 
 @pytest.mark.e2e
+def test_config_workspace_modal_uses_clear_orphaned_bundle_labels(page, live_server):
+    """The orphaned-artifact workflow should use wording that matches the
+    underlying action of reviewing orphaned config bundles on disk.
+    """
+    page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
+
+    page.evaluate("""
+        const modalEl = document.getElementById('configSwitchModal')
+        if (modalEl) {
+            modalEl.classList.add('show')
+            modalEl.style.display = 'block'
+            modalEl.removeAttribute('aria-hidden')
+        }
+    """)
+
+    expect(page.locator("#orphanedArtifactsButton")).to_have_text("Review Orphaned Config Bundles")
+    expect(page.locator("#orphanedArtifactsModalLabel")).to_contain_text("Review Orphaned Config Bundles")
+    expect(page.locator("#cancelOrphanedArtifactsDelete")).to_have_text("Cancel")
+
+
+@pytest.mark.e2e
 def test_config_workspace_reset_dispatches_to_clear_session(page, live_server):
     """Clicking the Reset button in the config workspace modal, then
     confirming, should POST to /clear_session with the selected config
