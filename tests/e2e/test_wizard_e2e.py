@@ -895,120 +895,179 @@ def test_tmdb_dropdown_change_alone_does_not_enable_navigation(page, live_server
     expect(page.locator('button[data-nav-action="next"]')).to_be_disabled()
 
 
-# Trakt OAuth-PIN tests (#1334 Step 6 PR 4d). A real Trakt validate
-# requires `trakt_client_id` to be exactly 64 chars for the
-# updateTraktURL() function to generate a non-empty authorization URL.
-TRAKT_CLIENT_ID_64 = "a" * 64
+# Trakt Utilities/YAML import tests.
+#
+# Trakt authentication is now completed through the external Kometa Utilities
+# page. Quickstart imports the resulting YAML, stores the credentials, populates
+# the six hidden authorization fields, and keeps Check Token available for
+# validating/refreshing an already-imported token set.
 
 
 @pytest.mark.e2e
-def test_trakt_pin_validator_success_populates_six_token_fields(page, live_server):
-    """After a successful Trakt PIN validate, the six hidden
-    authorization fields must contain the values from the response,
-    the PIN+URL fields are cleared, the PIN-flow buttons disabled,
-    and the Check Token button enabled.
+def test_trakt_yaml_import_success_populates_six_token_fields(page, live_server):
+    """A successful YAML import populates Trakt credentials and all six
+    authorization fields, marks the section validated, and enables Check Token.
     """
 
-    def handle_validate(route):
+    def handle_import(route):
         route.fulfill(
             status=200,
             json={
                 "valid": True,
-                "trakt_authorization_access_token": "AT-123",
-                "trakt_authorization_token_type": "Bearer",
-                "trakt_authorization_expires_in": 7200,
-                "trakt_authorization_refresh_token": "RT-456",
-                "trakt_authorization_scope": "public",
-                "trakt_authorization_created_at": 1700000000,
+                "trakt": {
+                    "client_id": "CLIENT-ID-123",
+                    "client_secret": "CLIENT-SECRET-456",
+                    "authorization": {
+                        "access_token": "AT-123",
+                        "token_type": "Bearer",
+                        "expires_in": 7200,
+                        "refresh_token": "RT-456",
+                        "scope": "public",
+                        "created_at": 1700000000,
+                    },
+                },
             },
         )
 
-    page.route("**/validate_trakt", handle_validate)
+    page.route("**/import_trakt_yaml", handle_import)
     page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
 
-    page.locator("#trakt_client_id").fill(TRAKT_CLIENT_ID_64)
-    page.locator("#trakt_client_secret").fill("my-secret")
-    page.locator("#trakt_pin").fill("12345678")
-    page.locator("#validate_trakt_pin").click()
+    page.locator('button[data-bs-target="#traktYamlImportModal"]').click()
+    expect(page.locator("#traktYamlImportModal")).to_be_visible()
 
-    # All six access-token fields populated.
+    page.locator("#traktYamlImportText").fill("""trakt:
+  client_id: CLIENT-ID-123
+  client_secret: CLIENT-SECRET-456
+  authorization:
+    access_token: AT-123
+""")
+    page.locator("#traktYamlImportSubmit").click()
+
+    expect(page.locator("#trakt_client_id")).to_have_value("CLIENT-ID-123")
+    expect(page.locator("#trakt_client_secret")).to_have_value("CLIENT-SECRET-456")
     expect(page.locator("#access_token")).to_have_value("AT-123")
     expect(page.locator("#token_type")).to_have_value("Bearer")
     expect(page.locator("#expires_in")).to_have_value("7200")
     expect(page.locator("#refresh_token")).to_have_value("RT-456")
     expect(page.locator("#scope")).to_have_value("public")
     expect(page.locator("#created_at")).to_have_value("1700000000")
-    # PIN + URL cleared.
-    expect(page.locator("#trakt_pin")).to_have_value("")
-    expect(page.locator("#trakt_url")).to_have_value("")
-    # PIN-flow buttons disabled, Check Token enabled.
-    expect(page.locator("#trakt_open_url")).to_be_disabled()
-    expect(page.locator("#validate_trakt_pin")).to_be_disabled()
-    expect(page.locator("#trakt_check_token")).to_be_enabled()
-    # Validated state flipped to true.
+
     expect(page.locator("#trakt_validated")).to_have_value("true")
-    expect(page.locator("#statusMessage")).to_contain_text("Trakt credentials validated successfully!")
+    expect(page.locator("#trakt_check_token")).to_be_enabled()
+    expect(page.locator("#traktYamlImportStatus")).to_contain_text("Trakt credentials imported successfully.")
 
 
 @pytest.mark.e2e
-def test_trakt_pin_validator_missing_fields_shows_required_message(page, live_server):
-    """With one of id/secret/pin missing, the client-side guard short-
-    circuits before the network call and shows the static required-
-    fields message.
-    """
+def test_trakt_yaml_import_missing_content_shows_required_message(page, live_server):
+    """Empty YAML is rejected client-side before /import_trakt_yaml is called."""
     requests_made = {"n": 0}
 
-    def handle_validate(route):
+    def handle_import(route):
         requests_made["n"] += 1
         route.fulfill(status=200, json={"valid": True})
 
-    page.route("**/validate_trakt", handle_validate)
+    page.route("**/import_trakt_yaml", handle_import)
     page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
 
-    page.locator("#trakt_client_id").fill(TRAKT_CLIENT_ID_64)
-    page.locator("#trakt_client_secret").fill("my-secret")
-    # PIN is intentionally empty. The pin field's checkPinField() will
-    # have left the validate button disabled, so we force-enable it.
-    page.evaluate("document.getElementById('validate_trakt_pin').disabled = false")
-    page.locator("#validate_trakt_pin").click()
+    page.locator('button[data-bs-target="#traktYamlImportModal"]').click()
+    expect(page.locator("#traktYamlImportModal")).to_be_visible()
 
-    expect(page.locator("#statusMessage")).to_contain_text("ID, secret, and PIN are all required.")
-    assert requests_made["n"] == 0, "no network call should fire when fields are missing"
+    page.locator("#traktYamlImportSubmit").click()
+
+    expect(page.locator("#traktYamlImportStatus")).to_contain_text("Paste the YAML export before importing.")
+    assert requests_made["n"] == 0, "no network call should fire when YAML is empty"
 
 
 @pytest.mark.e2e
-def test_trakt_url_button_enabled_when_client_id_is_exactly_64_chars(page, live_server):
-    """Verifies the updateTraktURL() inline handler builds the
-    authorization URL only when client_id.length === 64, and the
-    Retrieve PIN button enables itself when the URL is non-empty.
-    """
+def test_trakt_utilities_link_points_to_external_oauth_utility(page, live_server):
+    """The old Retrieve PIN button is replaced by a direct external Utilities link."""
     page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
 
-    # Initially disabled (page just loaded).
-    expect(page.locator("#trakt_open_url")).to_be_disabled()
-
-    # Wrong length: still disabled.
-    page.locator("#trakt_client_id").fill("a" * 32)
-    expect(page.locator("#trakt_url")).to_have_value("")
-    expect(page.locator("#trakt_open_url")).to_be_disabled()
-
-    # Right length: URL constructed, button enabled.
-    page.locator("#trakt_client_id").fill(TRAKT_CLIENT_ID_64)
-    expect(page.locator("#trakt_url")).to_contain_text("")  # readonly so use to_have_value
-    trakt_url_value = page.locator("#trakt_url").input_value()
-    assert "trakt.tv/oauth/authorize" in trakt_url_value
-    assert TRAKT_CLIENT_ID_64 in trakt_url_value
-    expect(page.locator("#trakt_open_url")).to_be_enabled()
+    utilities_link = page.locator("#trakt_open_url")
+    expect(utilities_link).to_have_attribute("href", "https://utilities.kometa.wiki/trakt-oauth/")
+    expect(utilities_link).to_have_attribute("target", "_blank")
+    expect(utilities_link).to_have_attribute("rel", "noopener noreferrer")
 
 
 @pytest.mark.e2e
-def test_trakt_check_token_button_initially_disabled_when_no_access_token(page, live_server):
-    """isBlankTokenValue treats blank/None/Null as blank. On a fresh
-    page where access_token is empty (or the literal string 'None' from
-    the persisted state), the Check Token button must start disabled.
-    """
+def test_trakt_check_token_button_initially_disabled_when_no_access_token(page, live_server, app):
+    """A Trakt page backed by an explicitly empty config starts with Check Token disabled."""
+    import modules.database as database
+
+    config_name = "pytest_trakt_empty_token"
+    _seed_config(config_name)
+
+    with app.app_context():
+        database.save_section_data(
+            name=config_name,
+            section="trakt",
+            validated=False,
+            user_entered=False,
+            data={
+                "trakt": {
+                    "client_id": "",
+                    "client_secret": "",
+                    "authorization": {
+                        "access_token": "",
+                        "token_type": "",
+                        "expires_in": "",
+                        "refresh_token": "",
+                        "scope": "",
+                        "created_at": "",
+                    },
+                },
+                "validated_at": "",
+            },
+        )
+
+    _activate_config(page, live_server, config_name)
     page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+
+    expect(page.locator("#access_token")).to_have_value("")
     expect(page.locator("#trakt_check_token")).to_be_disabled()
+
+
+@pytest.mark.e2e
+def test_trakt_check_token_success_updates_rotated_authorization(page, live_server):
+    """Check Token copies a rotated authorization payload returned by the server."""
+
+    def handle_check(route):
+        route.fulfill(
+            status=200,
+            json={
+                "valid": True,
+                "authorization": {
+                    "access_token": "AT-ROTATED",
+                    "token_type": "Bearer",
+                    "expires_in": 9999,
+                    "refresh_token": "RT-ROTATED",
+                    "scope": "public",
+                    "created_at": 1800000000,
+                },
+            },
+        )
+
+    page.route("**/validate_trakt_token", handle_check)
+    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
+
+    page.evaluate("""() => {
+          document.getElementById('trakt_client_id').value = 'CLIENT-ID'
+          document.getElementById('trakt_client_secret').value = 'CLIENT-SECRET'
+          document.getElementById('access_token').value = 'AT-OLD'
+          document.getElementById('refresh_token').value = 'RT-OLD'
+          document.getElementById('trakt_check_token').disabled = false
+        }""")
+
+    page.locator("#trakt_check_token").click()
+
+    expect(page.locator("#access_token")).to_have_value("AT-ROTATED")
+    expect(page.locator("#token_type")).to_have_value("Bearer")
+    expect(page.locator("#expires_in")).to_have_value("9999")
+    expect(page.locator("#refresh_token")).to_have_value("RT-ROTATED")
+    expect(page.locator("#scope")).to_have_value("public")
+    expect(page.locator("#created_at")).to_have_value("1800000000")
+    expect(page.locator("#trakt_validated")).to_have_value("true")
+    expect(page.locator("#statusMessage")).to_contain_text("Trakt token is valid.")
 
 
 # MAL OAuth tests. MAL's client_id must be exactly 32 chars for the
@@ -1109,24 +1168,6 @@ def test_mal_authorize_button_enabled_when_client_id_is_exactly_32_chars(page, l
 # oninput="checkPinField" / oninput="checkURLField" attributes in
 # the templates and are now driven by addEventListener('input', ...)
 # in the JS modules. (Inline-handler-cleanup follow-up to Step 6 PR 4d.)
-
-
-@pytest.mark.e2e
-def test_trakt_validate_button_enables_when_user_types_in_pin_field(page, live_server):
-    """Typing into the PIN field should enable the Validate PIN button;
-    clearing it should disable it again. Previously wired via inline
-    oninput="checkPinField(this)", now via addEventListener.
-    """
-    page.goto(f"{live_server}/step/130-trakt", wait_until="domcontentloaded")
-
-    # Initially disabled (the page just loaded with no PIN entered).
-    expect(page.locator("#validate_trakt_pin")).to_be_disabled()
-
-    page.locator("#trakt_pin").fill("12345678")
-    expect(page.locator("#validate_trakt_pin")).to_be_enabled()
-
-    page.locator("#trakt_pin").fill("")
-    expect(page.locator("#validate_trakt_pin")).to_be_disabled()
 
 
 @pytest.mark.e2e
