@@ -1324,7 +1324,12 @@ def test_import_config_modal_suggests_next_available_name(page, live_server):
     _activate_config(page, live_server, source_config)
     page.reload(wait_until="domcontentloaded")
 
+    # configSelector now lives inside the Manage Configs Bootstrap modal.
+    # Open the modal before interacting with the selector, matching the current UI.
+    page.locator(".qs-config-switch-trigger").click()
+    expect(page.locator("#configSwitchModal")).to_be_visible()
     page.locator("#configSelector").select_option(source_config)
+
     page.evaluate("""() => {
         document.getElementById('importConfigModal').dispatchEvent(new Event('show.bs.modal'))
     }""")
