@@ -3878,16 +3878,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function getWindowScrollPosition () {
+    return {
+      x: window.scrollX || window.pageXOffset || 0,
+      y: window.scrollY || window.pageYOffset || 0
+    }
+  }
+
+  function restoreWindowScrollPosition (position) {
+    if (!position || typeof window.scrollTo !== 'function') return
+    window.scrollTo(position.x, position.y)
+  }
+
+  function focusWithoutScrolling (element) {
+    if (!element || typeof element.focus !== 'function') return
+    try {
+      element.focus({ preventScroll: true })
+    } catch {
+      element.focus()
+    }
+  }
+
   function fallbackCopy (text, opts = {}) {
     const showFailureToast = opts.showFailureToast !== false
     const showSuccessToast = opts.showSuccessToast !== false
+    const windowScroll = getWindowScrollPosition()
+    const activeElement = document.activeElement
     const textarea = document.createElement('textarea')
     textarea.value = text
     textarea.setAttribute('readonly', '')
-    textarea.style.position = 'absolute'
-    textarea.style.left = '-9999px'
+    textarea.setAttribute('aria-hidden', 'true')
+    textarea.style.position = 'fixed'
+    textarea.style.top = '0'
+    textarea.style.left = '0'
+    textarea.style.width = '1px'
+    textarea.style.height = '1px'
+    textarea.style.opacity = '0'
+    textarea.style.pointerEvents = 'none'
     document.body.appendChild(textarea)
-    textarea.focus()
+    focusWithoutScrolling(textarea)
     textarea.select()
     textarea.setSelectionRange(0, textarea.value.length)
     try {
@@ -3901,21 +3930,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
     } finally {
       document.body.removeChild(textarea)
+      restoreWindowScrollPosition(windowScroll)
+      if (activeElement && document.contains(activeElement)) {
+        focusWithoutScrolling(activeElement)
+        restoreWindowScrollPosition(windowScroll)
+      }
     }
     return false
   }
 
   function selectSupportInfoText () {
     if (!output) return
+    const windowScroll = getWindowScrollPosition()
+    const outputScroll = output.scrollTop
+    const modalBody = output.closest('.modal-body')
+    const modalBodyScroll = modalBody ? modalBody.scrollTop : 0
     try {
       const selection = window.getSelection()
       const range = document.createRange()
       range.selectNodeContents(output)
       selection.removeAllRanges()
       selection.addRange(range)
-      if (typeof output.focus === 'function') output.focus()
+      focusWithoutScrolling(output)
     } catch {
       // No-op: selection best-effort only.
+    } finally {
+      output.scrollTop = outputScroll
+      if (modalBody) modalBody.scrollTop = modalBodyScroll
+      restoreWindowScrollPosition(windowScroll)
     }
   }
 
