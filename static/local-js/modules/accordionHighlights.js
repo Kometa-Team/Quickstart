@@ -21,7 +21,7 @@
 // The functions are exported as named exports so consumers can import
 // exactly what they need. eventHandler.js still monkey-patches these
 // onto `window.EventHandler` for now to preserve the existing public
-// contract; new code should prefer the imports.
+// contract; new code should prefer the imports!
 
 /**
  * Returns true when the accordion body has at least one enabled
