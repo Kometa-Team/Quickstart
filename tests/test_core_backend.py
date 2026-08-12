@@ -4087,6 +4087,15 @@ def test_validate_all_services_flags_invalid_library_arr_overrides(client, monke
     assert libraries_result["status"] == "failed"
     assert libraries_result["reason"] == "invalid_arr_overrides"
     assert any("/bad-root" in detail for detail in libraries_result["details"])
+    assert payload["progress"]["phase"] == "complete"
+    assert payload["progress"]["completed"] == payload["progress"]["total"]
+    assert payload["progress"]["results"]["025-libraries"]["reason"] == "invalid_arr_overrides"
+
+    status = client.get(f"/validate_all_services/status?run_id={payload['run_id']}")
+    assert status.status_code == 200
+    status_payload = status.get_json()
+    assert status_payload["progress"]["run_id"] == payload["run_id"]
+    assert status_payload["progress"]["phase"] == "complete"
 
 
 def test_validate_all_services_flags_invalid_external_kometa_paths(client, monkeypatch, qs_module, tmp_path):
@@ -4131,6 +4140,8 @@ def test_validate_all_services_flags_invalid_external_kometa_paths(client, monke
     assert start_result["status"] == "failed"
     assert start_result["reason"] == "invalid_paths"
     assert any(str(missing_external) in detail for detail in start_result["details"])
+    assert payload["progress"]["phase"] == "complete"
+    assert payload["progress"]["results"]["001-start"]["reason"] == "invalid_paths"
 
 
 def test_step_post_from_libraries_rejects_invalid_collection_files(client, isolated_config_dir, monkeypatch, qs_module):
