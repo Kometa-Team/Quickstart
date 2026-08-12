@@ -1331,6 +1331,8 @@ os.makedirs(flask_cache_dir, exist_ok=True)
 
 logscan_reingest_lock = threading.Lock()
 logscan_ingest_lock = threading.Lock()
+BULK_VALIDATION_PROGRESS = {}
+BULK_VALIDATION_PROGRESS_LOCK = threading.Lock()
 logscan_reingest_state = {
     "status": "idle",
     "job_id": None,
@@ -3006,8 +3008,63 @@ def lookup_template_string_value():
     return jsonify({"error": f"Unsupported lookup preset: {preset}"}), 400
 
 
+def _bulk_validation_progress_key(config_name):
+    return str(config_name or "__default__").strip() or "__default__"
+
+
+def _clone_bulk_validation_progress(progress):
+    if not isinstance(progress, dict):
+        return {}
+    snapshot = dict(progress)
+    snapshot["steps"] = [dict(step) for step in progress.get("steps", []) if isinstance(step, dict)]
+    snapshot["results"] = {str(key): dict(value) if isinstance(value, dict) else value for key, value in (progress.get("results") or {}).items()}
+    snapshot["summary"] = dict(progress.get("summary") or {})
+    return snapshot
+
+
+def _set_bulk_validation_progress(config_name, **updates):
+    progress_key = _bulk_validation_progress_key(config_name)
+    with BULK_VALIDATION_PROGRESS_LOCK:
+        progress = dict(BULK_VALIDATION_PROGRESS.get(progress_key) or {})
+        progress.update(updates)
+        progress["config_name"] = progress_key
+        progress["updated_at"] = utc_now_iso()
+        BULK_VALIDATION_PROGRESS[progress_key] = progress
+        return _clone_bulk_validation_progress(progress)
+
+
+def _get_bulk_validation_progress(config_name):
+    progress_key = _bulk_validation_progress_key(config_name)
+    with BULK_VALIDATION_PROGRESS_LOCK:
+        return _clone_bulk_validation_progress(BULK_VALIDATION_PROGRESS.get(progress_key) or {})
+
+
+@app.route("/validate_all_services/status", methods=["GET"])
+def validate_all_services_status():
+    config_name = session.get("config_name") or persistence.ensure_session_config_name()
+    requested_run_id = str(request.args.get("run_id") or "").strip()
+    progress = _get_bulk_validation_progress(config_name)
+    if requested_run_id and progress.get("run_id") != requested_run_id:
+        progress = {}
+    if not progress:
+        progress = {
+            "config_name": _bulk_validation_progress_key(config_name),
+            "run_id": requested_run_id,
+            "phase": "idle",
+            "total": 0,
+            "completed": 0,
+            "current_key": "",
+            "current_label": "",
+            "results": {},
+            "summary": {"validated": 0, "failed": 0, "skipped": 0},
+        }
+    return jsonify({"success": True, "progress": progress})
+
+
 @app.route("/validate_all_services", methods=["POST"])
 def validate_all_services():
+    request_data = request.get_json(silent=True) or {}
+    run_id = str(request_data.get("run_id") or secrets.token_urlsafe(8)).strip()
     config_name = session.get("config_name") or persistence.ensure_session_config_name()
     floppy_token_required = bool(_config_floppy_dependency_reasons(database.retrieve_config_sections(config_name)))
 
@@ -3157,10 +3214,69 @@ def validate_all_services():
         ),
     ]
 
+    label_map = {}
+    try:
+        for file, display_name in helpers.get_menu_list():
+            label_map[file.rsplit(".", 1)[0]] = display_name
+    except Exception:
+        label_map = {}
+
+    def label_for_key(key):
+        return label_map.get(key, key)
+
     results = {}
     summary = {"validated": 0, "failed": 0, "skipped": 0}
+    manual_progress_keys = ["001-start", "025-libraries", "150-settings", "100-anidb", "090-webhooks", "130-trakt", "140-mal"]
+    progress_steps = [{"key": template_key, "label": label_for_key(template_key)} for template_key, *_rest in targets]
+    progress_steps.extend({"key": key, "label": label_for_key(key)} for key in manual_progress_keys)
+    progress_completed = 0
+    _set_bulk_validation_progress(
+        config_name,
+        run_id=run_id,
+        phase="running",
+        total=len(progress_steps),
+        completed=0,
+        current_key="",
+        current_label="Preparing validation",
+        current_status="pending",
+        steps=progress_steps,
+        results={},
+        summary=summary,
+    )
+
+    def start_progress_step(template_key):
+        _set_bulk_validation_progress(
+            config_name,
+            phase="running",
+            total=len(progress_steps),
+            completed=progress_completed,
+            current_key=template_key,
+            current_label=label_for_key(template_key),
+            current_status="running",
+            steps=progress_steps,
+            results=results,
+            summary=summary,
+        )
+
+    def finish_progress_step(template_key):
+        nonlocal progress_completed
+        progress_completed += 1
+        result = results.get(template_key) or {}
+        _set_bulk_validation_progress(
+            config_name,
+            phase="running",
+            total=len(progress_steps),
+            completed=progress_completed,
+            current_key=template_key,
+            current_label=label_for_key(template_key),
+            current_status=result.get("status", "complete") if isinstance(result, dict) else "complete",
+            steps=progress_steps,
+            results=results,
+            summary=summary,
+        )
 
     for template_key, section, validator, payload_builder, required_keys in targets:
+        start_progress_step(template_key)
         settings = persistence.retrieve_settings(template_key)
         validated_at = settings.get("validated_at")
         payload = payload_builder(settings) or {}
@@ -3175,6 +3291,7 @@ def validate_all_services():
                 }
                 persist_validation_metadata(section, "skipped", reason="missing_location")
                 summary["skipped"] += 1
+                finish_progress_step(template_key)
                 continue
         if not has_required_credentials(payload, required_keys):
             results[template_key] = {
@@ -3184,6 +3301,7 @@ def validate_all_services():
             }
             persist_validation_metadata(section, "skipped", reason="missing_credentials")
             summary["skipped"] += 1
+            finish_progress_step(template_key)
             continue
         try:
             response = validator(payload)
@@ -3215,6 +3333,8 @@ def validate_all_services():
             )
             results[template_key] = {"status": "validated", "validated_at": new_validated_at}
             summary["validated"] += 1
+            finish_progress_step(template_key)
+            continue
         else:
             stored_data["validated"] = False
             if existing_validated_at:
@@ -3237,6 +3357,7 @@ def validate_all_services():
             if message:
                 results[template_key]["details"] = message
             summary["failed"] += 1
+            finish_progress_step(template_key)
 
     def update_section_validation(template_key, section, is_valid, reason=None, details=None):
         stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
@@ -3300,6 +3421,7 @@ def validate_all_services():
         results[template_key] = result
         summary["skipped"] += 1
 
+    start_progress_step("001-start")
     kometa_settings, kometa_section = _get_kometa_settings_section(config_name)
     del kometa_settings
     kometa_valid, kometa_reason, kometa_details = _validate_saved_kometa_selection(kometa_section)
@@ -3310,8 +3432,10 @@ def validate_all_services():
         reason=kometa_reason,
         details=kometa_details,
     )
+    finish_progress_step("001-start")
 
     # Validate All checks for libraries
+    start_progress_step("025-libraries")
     plex_settings = persistence.retrieve_settings("010-plex") or {}
     plex_is_valid = helpers.booler(plex_settings.get("validated", False)) if isinstance(plex_settings, dict) else False
     if not plex_is_valid:
@@ -3432,8 +3556,10 @@ def validate_all_services():
                     else arr_override_errors if libraries_reason == "invalid_arr_overrides" else auto_sort_hubs_errors if libraries_reason == "invalid_library_settings" else None
                 ),
             )
+    finish_progress_step("025-libraries")
 
     # Validate All checks for settings
+    start_progress_step("150-settings")
     settings_settings = persistence.retrieve_settings("150-settings") or {}
     settings_section = settings_settings.get("settings", {}) if isinstance(settings_settings, dict) else {}
     if not isinstance(settings_section, dict) or not settings_section:
@@ -3495,8 +3621,10 @@ def validate_all_services():
             update_section_validation("150-settings", "settings", False, reason="invalid_fields")
         else:
             update_section_validation("150-settings", "settings", True)
+    finish_progress_step("150-settings")
 
     # Validate All checks for AniDB
+    start_progress_step("100-anidb")
     anidb_settings = persistence.retrieve_settings("100-anidb") or {}
     anidb_data = anidb_settings.get("anidb", {}) if isinstance(anidb_settings, dict) else {}
     anidb_enabled = helpers.booler(anidb_data.get("enable")) if isinstance(anidb_data, dict) else False
@@ -3504,8 +3632,10 @@ def validate_all_services():
         update_section_validation("100-anidb", "anidb", True)
     else:
         skip_section_validation("100-anidb", "anidb", reason="disabled")
+    finish_progress_step("100-anidb")
 
     # Validate All checks for Webhooks
+    start_progress_step("090-webhooks")
     webhooks_settings = persistence.retrieve_settings("090-webhooks") or {}
     webhooks_data = webhooks_settings.get("webhooks", {}) if isinstance(webhooks_settings, dict) else {}
     configured_webhooks = False
@@ -3519,8 +3649,10 @@ def validate_all_services():
         update_section_validation("090-webhooks", "webhooks", True)
     else:
         skip_section_validation("090-webhooks", "webhooks", reason="no_webhooks")
+    finish_progress_step("090-webhooks")
 
     # Validate All checks for Trakt (token check if present)
+    start_progress_step("130-trakt")
     trakt_settings = persistence.retrieve_settings("130-trakt") or {}
     trakt_data = trakt_settings.get("trakt", {}) if isinstance(trakt_settings, dict) else {}
     trakt_auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
@@ -3550,8 +3682,10 @@ def validate_all_services():
                 update_section_validation("130-trakt", "trakt", False, reason="validation_error")
         except requests.exceptions.RequestException:
             update_section_validation("130-trakt", "trakt", False, reason="validation_error")
+    finish_progress_step("130-trakt")
 
     # Validate All checks for MAL (token check if present)
+    start_progress_step("140-mal")
     mal_settings = persistence.retrieve_settings("140-mal") or {}
     mal_data = mal_settings.get("mal", {}) if isinstance(mal_settings, dict) else {}
     mal_auth = mal_data.get("authorization", {}) if isinstance(mal_data, dict) else {}
@@ -3573,6 +3707,7 @@ def validate_all_services():
                 update_section_validation("140-mal", "mal", False, reason="validation_error")
         except requests.exceptions.RequestException:
             update_section_validation("140-mal", "mal", False, reason="validation_error")
+    finish_progress_step("140-mal")
 
     reason_labels = {
         "missing_credentials": "Missing credentials",
@@ -3643,7 +3778,32 @@ def validate_all_services():
         user_entered=True,
         data=summary_payload,
     )
-    return jsonify({"success": True, "results": results, "summary": summary, "summary_text": summary_text, "summary_updated_at": summary_updated_at})
+    progress_snapshot = _set_bulk_validation_progress(
+        config_name,
+        run_id=run_id,
+        phase="complete",
+        total=len(progress_steps),
+        completed=len(progress_steps),
+        current_key="",
+        current_label="Validation complete",
+        current_status="complete",
+        steps=progress_steps,
+        results=results,
+        summary=summary,
+        summary_text=summary_text,
+        summary_updated_at=summary_updated_at,
+    )
+    return jsonify(
+        {
+            "success": True,
+            "results": results,
+            "summary": summary,
+            "summary_text": summary_text,
+            "summary_updated_at": summary_updated_at,
+            "progress": progress_snapshot,
+            "run_id": run_id,
+        }
+    )
 
 
 @app.route("/shutdown", methods=["POST"])

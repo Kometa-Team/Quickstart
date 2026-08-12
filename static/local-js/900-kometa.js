@@ -804,8 +804,14 @@ const validateAllBtn = document.getElementById('validate-all-services')
 const validateAllStatus = document.getElementById('validate-all-status')
 const validateAllStatusBulk = document.getElementById('validate-all-status-bulk')
 const validateAllStatusBulkTime = document.getElementById('validate-all-status-bulk-time')
+const validateAllProgress = document.getElementById('validate-all-progress')
+const validateAllProgressLabel = document.getElementById('validate-all-progress-label')
+const validateAllProgressCount = document.getElementById('validate-all-progress-count')
+const validateAllProgressBar = document.getElementById('validate-all-progress-bar')
 let previouslyBlocked = false
 let previousStatuses = {}
+let validateAllProgressTimer = null
+let validateAllProgressRunId = ''
 
 function getValidateAllCompleteMessage (summary) {
   const counts = window.QSBulkValidation && typeof window.QSBulkValidation.getSummaryCounts === 'function'
@@ -835,8 +841,106 @@ function reloadAfterBulkValidationRefresh (data, summary) {
   setTimeout(() => window.location.reload(), 300)
 }
 
+function stopValidateAllProgressPolling () {
+  if (!validateAllProgressTimer) return
+  clearInterval(validateAllProgressTimer)
+  validateAllProgressTimer = null
+}
+
+function setValidateAllProgressVisibility (visible) {
+  if (validateAllProgress) validateAllProgress.classList.toggle('d-none', !visible)
+}
+
+function formatProgressStatus (status) {
+  const normalized = String(status || '').trim().toLowerCase()
+  if (normalized === 'validated') return 'validated'
+  if (normalized === 'failed') return 'failed'
+  if (normalized === 'skipped') return 'skipped'
+  if (normalized === 'complete') return 'complete'
+  return ''
+}
+
+function syncValidateAllProgressRows (progress) {
+  const results = (progress && progress.results && typeof progress.results === 'object') ? progress.results : {}
+  Object.keys(results).forEach(key => updateValidationRow(key, results[key]))
+
+  const currentKey = String((progress && progress.current_key) || '')
+  document.querySelectorAll('[data-validation-key]').forEach(row => {
+    row.classList.toggle('qs-validation-row-active', Boolean(currentKey && row.dataset.validationKey === currentKey && progress.phase === 'running'))
+  })
+}
+
+function renderValidateAllProgress (progress) {
+  if (!validateAllProgress) return
+  const payload = (progress && typeof progress === 'object') ? progress : {}
+  const phase = String(payload.phase || 'running')
+  const total = Number(payload.total || 0)
+  const completed = Number(payload.completed || 0)
+  const percent = total > 0 ? Math.max(0, Math.min(100, Math.round((completed / total) * 100))) : 0
+  const currentLabel = String(payload.current_label || '').trim()
+  const currentStatus = formatProgressStatus(payload.current_status)
+
+  setValidateAllProgressVisibility(phase !== 'idle')
+  if (validateAllProgressBar) {
+    validateAllProgressBar.style.width = `${percent}%`
+    validateAllProgressBar.setAttribute('aria-valuenow', String(percent))
+    validateAllProgressBar.classList.toggle('bg-danger', phase === 'error')
+    validateAllProgressBar.classList.toggle('bg-success', phase === 'complete')
+  }
+  if (validateAllProgressCount) {
+    validateAllProgressCount.textContent = total > 0 ? `${Math.min(completed, total)} / ${total}` : ''
+  }
+  if (validateAllProgressLabel) {
+    if (phase === 'complete') {
+      validateAllProgressLabel.textContent = 'Validation complete'
+    } else if (phase === 'error') {
+      validateAllProgressLabel.textContent = 'Validation failed'
+    } else if (currentLabel) {
+      const statusSuffix = currentStatus && currentStatus !== 'complete' ? ` (${currentStatus})` : ''
+      validateAllProgressLabel.textContent = `Validating ${currentLabel}${statusSuffix}...`
+    } else {
+      validateAllProgressLabel.textContent = 'Preparing validation...'
+    }
+  }
+  syncValidateAllProgressRows(payload)
+}
+
+function fetchValidateAllProgress () {
+  const query = validateAllProgressRunId ? `?run_id=${encodeURIComponent(validateAllProgressRunId)}` : ''
+  return fetch(`/validate_all_services/status${query}`, { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.success) return null
+      const progress = data.progress || {}
+      if (progress.phase === 'idle' && validateAllProgressTimer) return progress
+      renderValidateAllProgress(progress)
+      if (progress.phase === 'complete' || progress.phase === 'error') {
+        stopValidateAllProgressPolling()
+      }
+      return progress
+    })
+    .catch(() => null)
+}
+
+function startValidateAllProgressPolling () {
+  stopValidateAllProgressPolling()
+  renderValidateAllProgress({
+    phase: 'running',
+    total: 0,
+    completed: 0,
+    current_label: '',
+    current_status: 'running',
+    results: {},
+    summary: {}
+  })
+  fetchValidateAllProgress()
+  validateAllProgressTimer = setInterval(fetchValidateAllProgress, 700)
+}
+
 if (validateAllBtn) {
-  document.addEventListener('qs:bulk-validation-start', function () {
+  document.addEventListener('qs:bulk-validation-start', function (event) {
+    const detail = (event && event.detail) ? event.detail : {}
+    validateAllProgressRunId = String(detail.runId || '')
     previouslyBlocked = !kometaState.showYAML
     previousStatuses = {}
     document.querySelectorAll('[data-validation-key]').forEach(row => {
@@ -846,6 +950,7 @@ if (validateAllBtn) {
         previousStatuses[key] = pill.classList.contains('rating-mapping-option-via--validated')
       }
     })
+    startValidateAllProgressPolling()
 
     if (validateAllStatus) {
       validateAllStatus.classList.add('d-none')
@@ -859,6 +964,15 @@ if (validateAllBtn) {
     const data = (event && event.detail) ? event.detail : {}
     const finalGateState = getFinalGateState()
     const results = data.results || {}
+    stopValidateAllProgressPolling()
+    renderValidateAllProgress(data.progress || {
+      phase: 'complete',
+      total: Object.keys(results).length,
+      completed: Object.keys(results).length,
+      current_label: 'Validation complete',
+      current_status: 'complete',
+      results
+    })
     const gateTargets = {
       '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
       '020-tmdb': { id: 'tmdb_valid', datasetKey: 'tmdbValid', attrKey: 'tmdb-valid' },
@@ -922,6 +1036,15 @@ if (validateAllBtn) {
   document.addEventListener('qs:bulk-validation-error', function (event) {
     const detail = (event && event.detail) ? event.detail : {}
     const message = detail.message || 'Validate all failed. Please try again.'
+    stopValidateAllProgressPolling()
+    renderValidateAllProgress({
+      phase: 'error',
+      total: 0,
+      completed: 0,
+      current_label: message,
+      current_status: 'failed',
+      results: {}
+    })
     if (validateAllStatus) {
       validateAllStatus.classList.remove('d-none', 'text-success', 'text-warning')
       validateAllStatus.classList.add('text-danger')

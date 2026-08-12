@@ -4903,12 +4903,9 @@ body {
     flex: 0 0 auto;
 }
 
-.qs-sidebar-validate {
-    gap: 0.3rem;
-}
-
-.qs-sidebar-validate .bi-check2-circle {
-    flex: 0 0 auto;
+.qs-validation-row-active > td,
+.qs-validation-row-active > th {
+    box-shadow: inset 3px 0 0 var(--theme-primary);
 }
 
 .qs-sidebar-text {

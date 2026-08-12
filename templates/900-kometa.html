@@ -168,6 +168,17 @@
           Validate All completed:
           <span id="validate-all-status-bulk-time" data-validation-iso="{{ validation_bulk_rollup_at | default('', true) }}">—</span>
         </div>
+        <div id="validate-all-progress" class="d-none mb-2" aria-live="polite">
+          <div class="d-flex flex-wrap justify-content-between gap-2 mb-1">
+            <span id="validate-all-progress-label" class="small text-info">Preparing validation...</span>
+            <span id="validate-all-progress-count" class="small text-muted">0 / 0</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div id="validate-all-progress-bar" class="progress-bar" role="progressbar" style="width: 0%"
+              aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+          </div>
+          <div id="validate-all-status" class="small text-info mt-1 d-none"></div>
+        </div>
         <div class="table-responsive" data-qs-sticky-first="true">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
             <thead>

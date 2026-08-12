@@ -2232,10 +2232,15 @@ function qsSetBulkValidationLoading (isLoading) {
 function qsRunBulkValidation (options = {}) {
   if (qsBulkValidationRequest) return qsBulkValidationRequest
 
-  document.dispatchEvent(new CustomEvent('qs:bulk-validation-start', { detail: { source: options.source || null } }))
+  const runId = options.runId || `bulk-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  document.dispatchEvent(new CustomEvent('qs:bulk-validation-start', { detail: { source: options.source || null, runId } }))
   qsSetBulkValidationLoading(true)
 
-  qsBulkValidationRequest = fetch('/validate_all_services', { method: 'POST' })
+  qsBulkValidationRequest = fetch('/validate_all_services', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ run_id: runId })
+  })
     .then(async (res) => {
       let data = null
       try {
@@ -2254,6 +2259,7 @@ function qsRunBulkValidation (options = {}) {
 
       const results = data.results || {}
       const summary = data.summary || {}
+      data.run_id = data.run_id || runId
       qsApplyBulkValidationResults(results, summary)
       document.dispatchEvent(new CustomEvent('qs:bulk-validation-complete', { detail: data }))
 
