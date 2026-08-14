@@ -663,6 +663,20 @@ npm run lint:eslint    # ESLint over static/local-js/
 - You want to see the production bundle in your browser (path validation, cache-busting behavior, minification impact).
 - You want to verify your change doesn't break the Vite build before pushing (CI will catch this anyway, but faster locally).
 
+**Before pushing, use the repo-local CI gate:**
+
+```
+python scripts/run_local_ci_gate.py
+```
+
+This mirrors the important GitHub checks locally: full repo pre-commit validation, the project unit-test runner, and the production Vite build. If you prefer the explicit raw commands, the equivalent checks are:
+
+```
+python -m pre_commit run --all-files --show-diff-on-failure --color=always
+python scripts/run_tests.py --unit
+npm run build
+```
+
 **When you can skip it:**
 
 - Regular development. `python quickstart.py` serves your edits directly from `/static/local-js/` via the fallback path — no build step, no rebuild loop.

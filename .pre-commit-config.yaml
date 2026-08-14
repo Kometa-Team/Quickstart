@@ -1,25 +1,25 @@
 exclude: '^.*bootstrap.bundle.js$|^tests/fixtures/|^PART$'
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-    -   id: check-yaml
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
-    -   id: check-case-conflict
-    -   id: check-json
-    -   id: check-merge-conflict
-    -   id: no-commit-to-branch
-    -   id: requirements-txt-fixer
--   repo: local
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: no-commit-to-branch
+      - id: requirements-txt-fixer
+  - repo: local
     hooks:
-    -   id: eslint
+      - id: eslint
         name: eslint
         entry: npm run lint:eslint --
         language: system
         pass_filenames: false
         files: ^static/local-js/.*\.js$
-    -   id: spellcheck
+      - id: spellcheck
         name: spellcheck (pyspelling)
         # Mirrors the .github/workflows/validate-pull.yml "Run Spellcheck
         # on Changed Files" job so that the same class of failure that
@@ -31,18 +31,23 @@ repos:
         # the hook exits with a clear error if it's missing.
         entry: scripts/run_spellcheck.py
         language: python
-        additional_dependencies: ['pyspelling==2.12.1']
+        additional_dependencies: [ 'pyspelling==2.12.1' ]
         # Only trigger on .md changes. pyspelling reads .spellcheck.yml
         # for its own file list (currently just top-level *.md), so we
         # pass no filenames and let the config do the scoping.
         files: '\.md$'
         pass_filenames: false
--   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.2
+      - id: repo-ci-gate
+        name: repo CI gate
+        entry: python scripts/run_local_ci_gate.py
+        language: system
+        pass_filenames: false
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.3
     hooks:
       - id: ruff
         args: [ --fix ]
--   repo: https://github.com/psf/black
+  - repo: https://github.com/psf/black
     rev: 26.5.1
     hooks:
       - id: black
