@@ -281,7 +281,9 @@ def get_library_summaries(configured_library_id_map):
         return "\n".join(output_lines).strip()
 
     except Exception as e:
-        return f"Plex library summary unavailable: {str(e)}"
+        message = f"Plex library summary unavailable: {str(e)}"
+        ts_log(message, level="WARNING")
+        return message
 
 
 def get_plex_metadata(plex_url=None, plex_token=None):

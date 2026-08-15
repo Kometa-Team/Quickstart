@@ -6342,23 +6342,36 @@ def support_info():
     if not plex_summary or plex_summary.lower().startswith("plex summary unavailable"):
         plex_summary = "Plex info unavailable."
 
-    library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
+    library_settings = (persistence.retrieve_settings("025-libraries") or {}).get("libraries", {})
+    lib_name_map = persistence.get_library_names("010-plex") or {}
+
+    selected_library_id_map = {}
     movie_libraries = []
     show_libraries = []
     for key, value in library_settings.items():
-        if not key.endswith("-library") or value in [None, "", False]:
+        if not isinstance(key, str) or not key.endswith("-library"):
             continue
+        if value in [None, "", False]:
+            continue
+        lib_id = None
         if key.startswith("mov-library_"):
-            movie_libraries.append(str(value))
+            lib_id = key[len("mov-library_") : -len("-library")]
+            movie_libraries.append(str(lib_id))
         elif key.startswith("sho-library_"):
-            show_libraries.append(str(value))
+            lib_id = key[len("sho-library_") : -len("-library")]
+            show_libraries.append(str(lib_id))
+        if not lib_id:
+            continue
+        selected_library_id_map[str(lib_id)] = lib_name_map.get(str(lib_id), str(lib_id))
 
-    movie_libraries = sorted((name.strip() for name in movie_libraries if str(name).strip()), key=lambda value: value.casefold())
-    show_libraries = sorted((name.strip() for name in show_libraries if str(name).strip()), key=lambda value: value.casefold())
-    library_names = movie_libraries + show_libraries
+    library_names = dict(sorted(selected_library_id_map.items(), key=lambda item: str(item[1]).casefold()))
     if library_names:
         library_details = helpers.get_library_summaries(library_names)
         if library_details.lower().startswith("plex library summary unavailable"):
+            helpers.ts_log(
+                f"Support-info library summary unavailable for config '{config_name}' " f"with libraries {list(library_names.keys())}: {library_details}",
+                level="WARNING",
+            )
             library_details = "Library details unavailable."
     else:
         library_details = "No libraries configured."
