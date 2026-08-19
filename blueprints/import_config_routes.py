@@ -49,7 +49,10 @@ from blueprints.import_config_helpers import (  # noqa: F401 (re-exports for tes
     _import_preview_json_default,
     _map_playlist_libraries,
     _parse_base_plex_libraries,
+    _parse_base_plex_library_id_maps,
+    _parse_csv_or_list_to_id_map,
     _parse_csv_or_list_to_set,
+    _plex_library_id_maps,
     _plex_library_name_sets,
     _parse_plex_credentials_from_base,
     _parse_plex_credentials_from_config,
@@ -64,6 +67,7 @@ from blueprints.import_config_report_builder import (
     compute_line_counts,
 )
 from blueprints.import_config_validators import (
+    _sorted_plex_libraries,
     apply_library_mapping_for_preview,
     validate_confirm_plex_credentials,
     validate_confirm_tmdb_credentials,
@@ -138,8 +142,9 @@ def import_config_preview():
     needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
     needs_tmdb = isinstance(parsed, dict) and bool(parsed.get("tmdb") or parsed.get("libraries") or parsed.get("collections") or parsed.get("overlays"))
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
-    movie_names, show_names = _plex_library_name_sets(plex_data)
-    plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
+    movie_id_map, show_id_map = _plex_library_id_maps(plex_data)
+    movie_names, show_names = set(movie_id_map.values()), set(show_id_map.values())
+    plex_libraries = _sorted_plex_libraries(movie_id_map, show_id_map)
 
     if needs_plex:
         plex_outcome = validate_plex_credentials(
@@ -151,12 +156,16 @@ def import_config_preview():
             default_movie_names=movie_names,
             default_show_names=show_names,
             default_plex_libraries=plex_libraries,
+            default_movie_id_map=movie_id_map,
+            default_show_id_map=show_id_map,
         )
         if plex_outcome.error_response:
             return plex_outcome.error_response
         movie_names = plex_outcome.movie_names
         show_names = plex_outcome.show_names
         plex_libraries = plex_outcome.plex_libraries
+        movie_id_map = plex_outcome.movie_id_map
+        show_id_map = plex_outcome.show_id_map
 
     if needs_tmdb:
         tmdb_error = validate_tmdb_credentials(
@@ -238,6 +247,7 @@ def import_config_preview():
                     "line_counts": line_counts,
                     "plex_movie_names": sorted(movie_names) if isinstance(movie_names, (set, list)) else [],
                     "plex_show_names": sorted(show_names) if isinstance(show_names, (set, list)) else [],
+                    "plex_library_ids": {"movie": movie_id_map, "show": show_id_map},
                     "merge_mode": merge_mode,
                     "base_config": base_config,
                     "importable_sections": importable_sections,
@@ -377,6 +387,15 @@ def import_config_preview_mapped():
 
     movie_names = _parse_csv_or_list_to_set(cached.get("plex_movie_names") or [])
     show_names = _parse_csv_or_list_to_set(cached.get("plex_show_names") or [])
+    cached_library_ids = cached.get("plex_library_ids") or {}
+    movie_id_map = dict(cached_library_ids.get("movie") or {}) if isinstance(cached_library_ids, dict) else {}
+    show_id_map = dict(cached_library_ids.get("show") or {}) if isinstance(cached_library_ids, dict) else {}
+    if not movie_id_map and not show_id_map:
+        # Cache predates plex_library_ids (or was written before a mid-deploy
+        # backend upgrade) -- degrade to a name self-map so ID-shaped lookups
+        # still resolve for the common "name already matches" case.
+        movie_id_map = {name: name for name in movie_names}
+        show_id_map = {name: name for name in show_names}
     needs_plex = isinstance(config_data.get("libraries"), dict) and bool(config_data.get("libraries"))
 
     if needs_plex and not movie_names and not show_names:
@@ -386,12 +405,16 @@ def import_config_preview_mapped():
             plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
             plex_result = _coerce_validation_response_payload(plex_response)
             if plex_result and plex_result.get("validated"):
-                movie_names = _parse_csv_or_list_to_set(plex_result.get("movie_libraries", []))
-                show_names = _parse_csv_or_list_to_set(plex_result.get("show_libraries", []))
+                movie_id_map = _parse_csv_or_list_to_id_map(plex_result.get("movie_libraries", []))
+                show_id_map = _parse_csv_or_list_to_id_map(plex_result.get("show_libraries", []))
+                movie_names = set(movie_id_map.values())
+                show_names = set(show_id_map.values())
 
     plex_lookup = {name: name for name in movie_names}
     plex_lookup.update({name: name for name in show_names})
     plex_names = set(plex_lookup.values())
+    id_lookup = {str(k): v for k, v in movie_id_map.items()}
+    id_lookup.update({str(k): v for k, v in show_id_map.items()})
 
     mapping_skip_reasons = {}
     alias_map = {}
@@ -402,6 +425,8 @@ def import_config_preview_mapped():
             library_mapping=library_mapping,
             movie_names=movie_names,
             show_names=show_names,
+            movie_id_map=movie_id_map,
+            show_id_map=show_id_map,
         )
         mapping_skip_reasons = mapping_result.skip_reasons
         alias_map = mapping_result.alias_map
@@ -415,7 +440,7 @@ def import_config_preview_mapped():
     else:
         config_copy = config_data
 
-    _map_playlist_libraries(config_copy, library_mapping, plex_names)
+    _map_playlist_libraries(config_copy, library_mapping, plex_names, id_lookup)
 
     payload, report = importer.prepare_import_payload(config_copy, movie_names, show_names)
     importable_sections = sorted(payload.keys()) if isinstance(payload, dict) else []
@@ -455,6 +480,7 @@ def import_config_preview_mapped():
     cached["line_counts"] = line_counts
     cached["plex_movie_names"] = sorted(movie_names)
     cached["plex_show_names"] = sorted(show_names)
+    cached["plex_library_ids"] = {"movie": movie_id_map, "show": show_id_map}
     cached["importable_sections"] = importable_sections
 
     with open(cache_path, "w", encoding="utf-8") as handle:
@@ -561,6 +587,8 @@ def import_config_confirm():
 
     movie_names = set()
     show_names = set()
+    movie_id_map = {}
+    show_id_map = {}
     if config_data:
         libraries_payload = config_data.get("libraries")
         needs_plex = isinstance(libraries_payload, dict) and bool(libraries_payload)
@@ -570,10 +598,12 @@ def import_config_confirm():
         if needs_plex:
             skip_plex_validation = False
             if merge_mode and base_config:
-                base_movie_names, base_show_names = _parse_base_plex_libraries(base_config)
-                if base_movie_names or base_show_names:
-                    movie_names = base_movie_names
-                    show_names = base_show_names
+                base_movie_id_map, base_show_id_map = _parse_base_plex_library_id_maps(base_config)
+                if base_movie_id_map or base_show_id_map:
+                    movie_id_map = base_movie_id_map
+                    show_id_map = base_show_id_map
+                    movie_names = set(movie_id_map.values())
+                    show_names = set(show_id_map.values())
                     skip_plex_validation = True
 
             if skip_plex_validation:
@@ -589,9 +619,12 @@ def import_config_confirm():
                     return plex_outcome.error_response
                 movie_names = plex_outcome.movie_names
                 show_names = plex_outcome.show_names
+                movie_id_map = plex_outcome.movie_id_map
+                show_id_map = plex_outcome.show_id_map
         else:
             plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
-            movie_names, show_names = _plex_library_name_sets(plex_data)
+            movie_id_map, show_id_map = _plex_library_id_maps(plex_data)
+            movie_names, show_names = set(movie_id_map.values()), set(show_id_map.values())
 
         if needs_tmdb:
             tmdb_error = validate_confirm_tmdb_credentials()
@@ -601,6 +634,8 @@ def import_config_confirm():
         plex_lookup = {name: name for name in movie_names}
         plex_lookup.update({name: name for name in show_names})
         plex_names = set(plex_lookup.values())
+        id_lookup = {str(k): v for k, v in movie_id_map.items()}
+        id_lookup.update({str(k): v for k, v in show_id_map.items()})
 
         if isinstance(libraries_payload, dict):
             mapped_libraries, mapping_error = validate_library_mapping(
@@ -609,6 +644,8 @@ def import_config_confirm():
                 movie_names=movie_names,
                 show_names=show_names,
                 needs_plex=needs_plex,
+                movie_id_map=movie_id_map,
+                show_id_map=show_id_map,
             )
             if mapping_error:
                 return mapping_error
@@ -618,7 +655,7 @@ def import_config_confirm():
             else:
                 config_data.pop("libraries", None)
 
-        _map_playlist_libraries(config_data, library_mapping, plex_names)
+        _map_playlist_libraries(config_data, library_mapping, plex_names, id_lookup)
 
         payload, report = importer.prepare_import_payload(config_data, movie_names, show_names)
         if merge_mode and selected_sections:

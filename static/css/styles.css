@@ -3384,6 +3384,12 @@ div#loading {
     color: var(--theme-text);
 }
 
+#run-command-output,
+.qs-recovery-command-output {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+}
+
 .btn.nav-button:disabled,
 .btn.nav-button.disabled {
     background-color: var(--theme-bg-dark) !important;

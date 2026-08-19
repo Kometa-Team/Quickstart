@@ -7,6 +7,7 @@
 // so we import it directly here instead of relying on `window.loading`,
 // which was retired in PR #1383 (chore/retire-jumpto-loading-shims).
 import { loading } from './000-base.js'
+import { nbspLeadingSpaces } from './modules/kometa/_util.js'
 
 function toggleConfigInput (selectElement) {
   const box = document.getElementById('newConfigInput')
@@ -1731,21 +1732,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (importMappingNote) importMappingNote.classList.remove('d-none')
 
-    const movieNames = Array.isArray(plexLibraries?.movie) ? plexLibraries.movie.map(name => String(name)) : []
-    const showNames = Array.isArray(plexLibraries?.show) ? plexLibraries.show.map(name => String(name)) : []
-    const plexNameMap = {}
-    movieNames.concat(showNames).forEach(name => {
-      plexNameMap[name.toLowerCase()] = name
+    const toLib = entry => (entry && entry.id != null && entry.name != null) ? { id: String(entry.id), name: String(entry.name) } : null
+    const movieLibs = Array.isArray(plexLibraries?.movie) ? plexLibraries.movie.map(toLib).filter(Boolean) : []
+    const showLibs = Array.isArray(plexLibraries?.show) ? plexLibraries.show.map(toLib).filter(Boolean) : []
+    const plexLibraryByName = {}
+    movieLibs.concat(showLibs).forEach(lib => {
+      plexLibraryByName[lib.name.toLowerCase()] = lib
     })
 
-    function suggestPlexName (item) {
+    function formatLibraryOptionLabel (name) {
+      return `[${nbspLeadingSpaces(name)}]`
+    }
+
+    function suggestPlexTarget (item) {
       const rawName = String(item?.name || '').trim()
-      if (!rawName) return ''
-      const match = plexNameMap[rawName.toLowerCase()]
-      if (match) return match
-      if (item?.inferred_type === 'movie' && movieNames.length === 1) return movieNames[0]
-      if (item?.inferred_type === 'show' && showNames.length === 1) return showNames[0]
-      return ''
+      if (rawName) {
+        const match = plexLibraryByName[rawName.toLowerCase()]
+        if (match) return match
+      }
+      if (item?.inferred_type === 'movie' && movieLibs.length === 1) return movieLibs[0]
+      if (item?.inferred_type === 'show' && showLibs.length === 1) return showLibs[0]
+      return null
     }
 
     pending.forEach((item, idx) => {
@@ -1763,9 +1770,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const confidence = item.confidence || 'unknown'
       const inferred = item.inferred_type || 'unknown'
       const scoreText = `movie ${item.movie_score || 0} / show ${item.show_score || 0}`
-      const suggested = suggestPlexName(item)
+      const suggested = suggestPlexTarget(item)
       let metaText = `inferred: ${inferred} • confidence: ${confidence} (${scoreText})`
-      if (suggested) metaText += ` • suggested: ${suggested}`
+      if (suggested) metaText += ` • suggested: ${suggested.name}`
       meta.textContent = metaText
       left.appendChild(title)
       left.appendChild(meta)
@@ -1785,31 +1792,33 @@ document.addEventListener('DOMContentLoaded', function () {
       ignoreOption.textContent = 'Ignore this library'
       select.appendChild(ignoreOption)
 
-      if (movieNames.length) {
+      if (movieLibs.length) {
         const group = document.createElement('optgroup')
         group.label = 'Movies'
-        movieNames.forEach(name => {
+        movieLibs.forEach(lib => {
           const option = document.createElement('option')
-          option.value = name
-          option.textContent = name
+          option.value = lib.id
+          option.title = lib.name
+          option.textContent = formatLibraryOptionLabel(lib.name)
           group.appendChild(option)
         })
         select.appendChild(group)
       }
 
-      if (showNames.length) {
+      if (showLibs.length) {
         const group = document.createElement('optgroup')
         group.label = 'Shows'
-        showNames.forEach(name => {
+        showLibs.forEach(lib => {
           const option = document.createElement('option')
-          option.value = name
-          option.textContent = name
+          option.value = lib.id
+          option.title = lib.name
+          option.textContent = formatLibraryOptionLabel(lib.name)
           group.appendChild(option)
         })
         select.appendChild(group)
       }
 
-      if (suggested) select.value = suggested
+      if (suggested) select.value = suggested.id
 
       select.addEventListener('change', () => {
         updateImportConfirmState()
@@ -2347,14 +2356,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return window.QSBulkValidation.run({ source: 'import-confirm', silentToast: true })
       }
       try {
-        const libraryMapping = {}
-        if (importLibraryMappingList) {
-          importLibraryMappingList.querySelectorAll('.import-library-map').forEach(select => {
-            if (select.dataset.libraryName && select.value) {
-              libraryMapping[select.dataset.libraryName] = select.value
-            }
-          })
-        }
+        const libraryMapping = collectLibraryMapping()
         const isMerge = getImportMode() === 'merge'
         const mergePayload = {
           merge_mode: isMerge,

@@ -2292,7 +2292,7 @@ function updateLibraryFilter (runs) {
   const selected = libraryFilter.value || ''
   const options = ['<option value="">All libraries</option>']
   names.forEach(name => {
-    options.push(`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    options.push(`<option value="${escapeHtml(name)}" title="${escapeHtml(name)}">[${escapeHtml(nbspLeadingSpaces(name))}]</option>`)
   })
   libraryFilter.setHTML(options.join(''))
   const nextValue = selected && names.includes(selected) ? selected : ''

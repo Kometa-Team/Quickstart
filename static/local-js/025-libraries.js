@@ -6025,9 +6025,10 @@ function updateConfiguredCounts () {
 function refreshPickerLabels () {
   if (!libraryPicker) return
   libraryPicker.querySelectorAll('option[value]').forEach(opt => {
-    const base = opt.dataset.label || opt.textContent.replace(/\s+\(configured\)$/, '')
+    const base = opt.dataset.label || opt.textContent.replace(/\s+\(configured\)$/, '').replace(/^\[|\]$/g, '')
     const configured = opt.dataset.configured === 'true'
-    const displayBase = nbspLeadingSpaces(base)
+    const displayBase = `[${nbspLeadingSpaces(base)}]`
+    opt.title = base
     opt.textContent = configured ? `${displayBase} (configured)` : displayBase
   })
   updateConfiguredCounts()

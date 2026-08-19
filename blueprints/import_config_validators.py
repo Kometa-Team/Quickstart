@@ -51,8 +51,8 @@ from flask import jsonify, session
 from blueprints.import_config_bundle import cleanup_bundle_dir
 from blueprints.import_config_helpers import (
     _coerce_validation_response_payload,
-    _parse_base_plex_libraries,
-    _parse_csv_or_list_to_set,
+    _parse_base_plex_library_id_maps,
+    _parse_csv_or_list_to_id_map,
     _parse_plex_credentials_from_base,
     _parse_plex_credentials_from_config,
     _parse_plex_credentials_from_form,
@@ -61,6 +61,14 @@ from blueprints.import_config_helpers import (
     _parse_tmdb_credentials_from_form,
 )
 from modules import validations
+
+
+def _sorted_plex_libraries(movie_id_map, show_id_map):
+    """Build the ``{"movie": [{"id","name"}], "show": [...]}`` frontend shape, sorted by name."""
+    return {
+        "movie": [{"id": lib_id, "name": name} for lib_id, name in sorted(movie_id_map.items(), key=lambda kv: kv[1])],
+        "show": [{"id": lib_id, "name": name} for lib_id, name in sorted(show_id_map.items(), key=lambda kv: kv[1])],
+    }
 
 
 @dataclass(slots=True)
@@ -78,6 +86,8 @@ class PlexValidationOutcome:
     movie_names: set = field(default_factory=set)
     show_names: set = field(default_factory=set)
     plex_libraries: dict = field(default_factory=lambda: {"movie": [], "show": []})
+    movie_id_map: dict = field(default_factory=dict)
+    show_id_map: dict = field(default_factory=dict)
 
 
 def validate_plex_credentials(
@@ -90,6 +100,8 @@ def validate_plex_credentials(
     default_movie_names: set,
     default_show_names: set,
     default_plex_libraries: dict,
+    default_movie_id_map: dict | None = None,
+    default_show_id_map: dict | None = None,
 ) -> PlexValidationOutcome:
     """Validate Plex credentials for the /import-config/preview flow.
 
@@ -111,18 +123,24 @@ def validate_plex_credentials(
         validation is skipped or the outcome is unchanged.
     :param default_show_names: fallback show library names.
     :param default_plex_libraries: fallback plex_libraries dict.
+    :param default_movie_id_map: fallback ``{id: name}`` movie map.
+    :param default_show_id_map: fallback ``{id: name}`` show map.
     :returns: :class:`PlexValidationOutcome`.
     """
     movie_names = default_movie_names
     show_names = default_show_names
     plex_libraries = default_plex_libraries
+    movie_id_map = dict(default_movie_id_map or {})
+    show_id_map = dict(default_show_id_map or {})
     skip_plex_validation = False
     if merge_mode and base_config:
-        base_movie_names, base_show_names = _parse_base_plex_libraries(base_config)
-        if base_movie_names or base_show_names:
-            movie_names = base_movie_names
-            show_names = base_show_names
-            plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
+        base_movie_id_map, base_show_id_map = _parse_base_plex_library_id_maps(base_config)
+        if base_movie_id_map or base_show_id_map:
+            movie_id_map = base_movie_id_map
+            show_id_map = base_show_id_map
+            movie_names = set(movie_id_map.values())
+            show_names = set(show_id_map.values())
+            plex_libraries = _sorted_plex_libraries(movie_id_map, show_id_map)
             skip_plex_validation = True
 
     form_plex_url, form_plex_token = _parse_plex_credentials_from_form(form_data or {})
@@ -216,9 +234,11 @@ def validate_plex_credentials(
         plex_block["url"] = used_plex_url
         plex_block["token"] = used_plex_token
     if not skip_plex_validation:
-        movie_names = _parse_csv_or_list_to_set(plex_result.get("movie_libraries", []))
-        show_names = _parse_csv_or_list_to_set(plex_result.get("show_libraries", []))
-        plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
+        movie_id_map = _parse_csv_or_list_to_id_map(plex_result.get("movie_libraries", []))
+        show_id_map = _parse_csv_or_list_to_id_map(plex_result.get("show_libraries", []))
+        movie_names = set(movie_id_map.values())
+        show_names = set(show_id_map.values())
+        plex_libraries = _sorted_plex_libraries(movie_id_map, show_id_map)
         if not movie_names and not show_names:
             cleanup_bundle_dir(extracted_dir)
             return PlexValidationOutcome(
@@ -235,6 +255,8 @@ def validate_plex_credentials(
         movie_names=movie_names,
         show_names=show_names,
         plex_libraries=plex_libraries,
+        movie_id_map=movie_id_map,
+        show_id_map=show_id_map,
     )
 
 
@@ -364,6 +386,8 @@ class ConfirmPlexOutcome:
     error_response: tuple | None = None
     movie_names: set = field(default_factory=set)
     show_names: set = field(default_factory=set)
+    movie_id_map: dict = field(default_factory=dict)
+    show_id_map: dict = field(default_factory=dict)
 
 
 def validate_confirm_plex_credentials() -> ConfirmPlexOutcome:
@@ -400,8 +424,10 @@ def validate_confirm_plex_credentials() -> ConfirmPlexOutcome:
                 400,
             )
         )
-    movie_names = _parse_csv_or_list_to_set(plex_result.get("movie_libraries", []))
-    show_names = _parse_csv_or_list_to_set(plex_result.get("show_libraries", []))
+    movie_id_map = _parse_csv_or_list_to_id_map(plex_result.get("movie_libraries", []))
+    show_id_map = _parse_csv_or_list_to_id_map(plex_result.get("show_libraries", []))
+    movie_names = set(movie_id_map.values())
+    show_names = set(show_id_map.values())
     if not movie_names and not show_names:
         return ConfirmPlexOutcome(
             error_response=(
@@ -412,7 +438,7 @@ def validate_confirm_plex_credentials() -> ConfirmPlexOutcome:
                 400,
             )
         )
-    return ConfirmPlexOutcome(movie_names=movie_names, show_names=show_names)
+    return ConfirmPlexOutcome(movie_names=movie_names, show_names=show_names, movie_id_map=movie_id_map, show_id_map=show_id_map)
 
 
 def validate_confirm_tmdb_credentials() -> tuple | None:
@@ -457,6 +483,8 @@ def validate_library_mapping(
     movie_names,
     show_names,
     needs_plex: bool,
+    movie_id_map: dict | None = None,
+    show_id_map: dict | None = None,
 ) -> tuple[dict | None, tuple | None]:
     """Validate + apply a library-mapping dict to a libraries payload.
 
@@ -466,7 +494,10 @@ def validate_library_mapping(
     * The library name matches an existing Plex library -- passes through.
     * The library name has an entry in ``library_mapping`` -- gets
       renamed to the mapping target (or dropped if the target is the
-      ``__ignore__`` sentinel).
+      ``__ignore__`` sentinel).  The mapping value is a Plex library ID
+      (resolved via ``movie_id_map``/``show_id_map``); a raw name is
+      also accepted as a fallback for stale clients / callers that
+      haven't switched to ID-valued mappings.
     * The library name has no mapping -- reported as "missing".
     * The library name maps to something not in Plex -- reported as
       "invalid targets".
@@ -483,6 +514,9 @@ def validate_library_mapping(
     plex_lookup = {name: name for name in movie_names}
     plex_lookup.update({name: name for name in show_names})
     plex_names = set(plex_lookup.values())
+
+    id_lookup = {str(k): v for k, v in (movie_id_map or {}).items()}
+    id_lookup.update({str(k): v for k, v in (show_id_map or {}).items()})
 
     if needs_plex and not plex_names:
         return None, (
@@ -514,10 +548,10 @@ def validate_library_mapping(
                 continue
             if mapped == "__ignore__":
                 continue
-            if mapped not in plex_lookup:
+            target = id_lookup.get(mapped) or plex_lookup.get(mapped)
+            if target is None:
                 invalid_targets.append(mapped)
                 continue
-            target = plex_lookup[mapped]
 
         if target in used_targets:
             duplicates.append(target)
@@ -588,6 +622,8 @@ def apply_library_mapping_for_preview(
     library_mapping: dict,
     movie_names,
     show_names,
+    movie_id_map: dict | None = None,
+    show_id_map: dict | None = None,
 ) -> PreviewMappingResult:
     """Apply library mapping to a preview-mapped payload, accumulating stats.
 
@@ -597,9 +633,12 @@ def apply_library_mapping_for_preview(
     preview report shown to the user before they hit "Import".
 
     :param libraries_payload: dict of imported library name -> config.
-    :param library_mapping: dict of imported name -> Plex target name.
+    :param library_mapping: dict of imported name -> Plex target library ID
+        (a raw name is also accepted as a fallback).
     :param movie_names: known Plex movie library names.
     :param show_names: known Plex show library names.
+    :param movie_id_map: known ``{id: name}`` Plex movie libraries.
+    :param show_id_map: known ``{id: name}`` Plex show libraries.
     :returns: :class:`PreviewMappingResult` with mapped_libraries,
               alias_map (source -> target rename), skip_reasons (per
               library name), and stats counters.
@@ -607,6 +646,9 @@ def apply_library_mapping_for_preview(
     plex_lookup = {name: name for name in movie_names}
     plex_lookup.update({name: name for name in show_names})
     plex_names = set(plex_lookup.values())
+
+    id_lookup = {str(k): v for k, v in (movie_id_map or {}).items()}
+    id_lookup.update({str(k): v for k, v in (show_id_map or {}).items()})
 
     result = PreviewMappingResult()
     used_targets: set = set()
@@ -626,11 +668,11 @@ def apply_library_mapping_for_preview(
                 result.skip_reasons[name] = "Mapping set to ignore library."
                 result.stats["ignored"] += 1
                 continue
-            if mapped not in plex_lookup:
+            target = id_lookup.get(mapped) or plex_lookup.get(mapped)
+            if target is None:
                 result.skip_reasons[name] = "Mapped library not found in Plex."
                 result.stats["invalid"] += 1
                 continue
-            target = plex_lookup[mapped]
 
         if target != name:
             result.alias_map[name] = target

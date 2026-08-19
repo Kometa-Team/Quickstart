@@ -93,12 +93,40 @@ def _parse_csv_or_list_to_set(value):
     return set()
 
 
-def _plex_library_name_sets(plex_data):
-    """Return ``(movie_name_set, show_name_set)`` from stored Plex data.
+def _parse_csv_or_list_to_id_map(value):
+    """Coerce a library-list value into a ``{id: name}`` map.
+
+    Sibling to :func:`_parse_csv_or_list_to_set`, accepting the same four
+    shapes.  Dict items key by their Plex section ID (``{"id": 10, "name":
+    "Movies"} -> {"10": "Movies"}``).  Plain-string items (the shape every
+    mocked ``validate_plex_server`` in the test suite returns, and the
+    legacy stored-settings format) self-map by name, since no ID is known
+    for them -- the caller degrades to name-based resolution for those.
+    """
+    if isinstance(value, list):
+        if value and isinstance(value[0], dict):
+            return {str(v.get("id", "")): str(v.get("name", "")) for v in value if str(v.get("name", "")).strip()}
+        return {str(v): str(v) for v in value if str(v).strip()}
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, list):
+                if parsed and isinstance(parsed[0], dict):
+                    return {str(v.get("id", "")): str(v.get("name", "")) for v in parsed if str(v.get("name", "")).strip()}
+                return {str(v): str(v) for v in parsed if str(v).strip()}
+        except (json.JSONDecodeError, ValueError):
+            pass
+        return {v.strip(): v.strip() for v in value.split(",") if v.strip()}
+    return {}
+
+
+def _plex_library_id_maps(plex_data):
+    """Return ``(movie_id_map, show_id_map)`` as ``{str(id): name}`` from stored Plex data.
 
     Handles both the new ID-based format (where ``tmp_library_names`` holds the
     ID→name dict) and the legacy format (where names are stored directly in
-    ``tmp_movie_libraries`` / ``tmp_show_libraries``).
+    ``tmp_movie_libraries`` / ``tmp_show_libraries``, with no ID available --
+    self-mapped by name so callers can degrade gracefully).
     """
     name_map_raw = plex_data.get("tmp_library_names", "")
     if name_map_raw:
@@ -110,14 +138,39 @@ def _plex_library_name_sets(plex_data):
 
         movie_ids = decode_library_ids(plex_data.get("tmp_movie_libraries", ""))
         show_ids = decode_library_ids(plex_data.get("tmp_show_libraries", ""))
-        movie_names = {name_map[i] for i in movie_ids if i in name_map}
-        show_names = {name_map[i] for i in show_ids if i in name_map}
-        return movie_names, show_names
-    # Legacy: names stored directly
-    return (
-        _parse_csv_or_list_to_set(plex_data.get("tmp_movie_libraries", "")),
-        _parse_csv_or_list_to_set(plex_data.get("tmp_show_libraries", "")),
-    )
+        movie_id_map = {i: name_map[i] for i in movie_ids if i in name_map}
+        show_id_map = {i: name_map[i] for i in show_ids if i in name_map}
+        return movie_id_map, show_id_map
+    # Legacy: names stored directly, no IDs known -- self-map.
+    movie_names = _parse_csv_or_list_to_set(plex_data.get("tmp_movie_libraries", ""))
+    show_names = _parse_csv_or_list_to_set(plex_data.get("tmp_show_libraries", ""))
+    return {name: name for name in movie_names}, {name: name for name in show_names}
+
+
+def _plex_library_name_sets(plex_data):
+    """Return ``(movie_name_set, show_name_set)`` from stored Plex data.
+
+    Thin wrapper over :func:`_plex_library_id_maps` for the many callers
+    that only need names, not IDs.
+    """
+    movie_id_map, show_id_map = _plex_library_id_maps(plex_data)
+    return set(movie_id_map.values()), set(show_id_map.values())
+
+
+def _parse_base_plex_library_id_maps(base_name: str):
+    """Look up cached movie/show library ``{id: name}`` maps from a saved base config."""
+    if not base_name:
+        return {}, {}
+    try:
+        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
+    except Exception:
+        return {}, {}
+    if not isinstance(stored, dict):
+        return {}, {}
+    plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
+    if not isinstance(plex_block, dict):
+        return {}, {}
+    return _plex_library_id_maps(plex_block)
 
 
 def _parse_base_plex_libraries(base_name: str):
@@ -127,19 +180,12 @@ def _parse_base_plex_libraries(base_name: str):
     ``parse_base_plex_libraries`` in TWO routes (import_config_preview,
     import_config_confirm) with byte-for-byte identical 13-line bodies
     (26 lines of literal duplication).  Hoisted to module scope.
+
+    Thin wrapper over :func:`_parse_base_plex_library_id_maps` for callers
+    that only need names, not IDs.
     """
-    if not base_name:
-        return set(), set()
-    try:
-        _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
-    except Exception:
-        return set(), set()
-    if not isinstance(stored, dict):
-        return set(), set()
-    plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
-    if not isinstance(plex_block, dict):
-        return set(), set()
-    return _plex_library_name_sets(plex_block)
+    movie_id_map, show_id_map = _parse_base_plex_library_id_maps(base_name)
+    return set(movie_id_map.values()), set(show_id_map.values())
 
 
 # --- credential parsers ---------------------------------------------------
@@ -241,7 +287,7 @@ def count_annotated_lines(text: str) -> dict:
     return {"imported": imported, "not_imported": not_imported}
 
 
-def _map_playlist_libraries(payload, library_mapping, plex_names):
+def _map_playlist_libraries(payload, library_mapping, plex_names, id_lookup=None):
     if not isinstance(payload, dict):
         return
     playlist_payload = payload.get("playlist_files")
@@ -265,6 +311,10 @@ def _map_playlist_libraries(payload, library_mapping, plex_names):
                     if mapped_name is None:
                         mapped_name = name
                     mapped_name = str(mapped_name).strip()
+                    # Explicit mapping selections are Plex library IDs; resolve
+                    # to the current display name.  Passes through unchanged
+                    # when mapped_name isn't a known ID (e.g. an exact-name match).
+                    mapped_name = (id_lookup or {}).get(mapped_name, mapped_name)
                     if not mapped_name or mapped_name == "__ignore__":
                         continue
                     mapped.append(mapped_name)
