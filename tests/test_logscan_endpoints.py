@@ -1355,6 +1355,113 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
     assert runs[0]["start_mode"] == "recovery"
 
 
+def test_logscan_missing_people_export_combines_tracked_kometa_logs(client, isolated_config_dir, qs_module):
+    log_dir = isolated_config_dir / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    first_log = log_dir / "meta-people-1.log"
+    second_log = log_dir / "meta-people-2.log"
+    first_log.write_text("header\nLocating config...\nmissing alice\n", encoding="utf-8")
+    second_log.write_text("header\nLocating config...\nmissing bob\n", encoding="utf-8")
+    first_stats = first_log.stat()
+    second_stats = second_log.stat()
+
+    class FakeAnalyzer:
+        _people_index = set()
+
+        def collect_missing_people_lines(self, content, **_kwargs):
+            items = []
+            if "alice" in content:
+                items.append({"names": {"alice"}, "block": "Alice missing block"})
+            if "bob" in content:
+                items.append({"names": {"bob"}, "block": "Bob missing block"})
+            return items
+
+    cache_logs = {
+        str(first_log.resolve()): {
+            "mtime": first_stats.st_mtime,
+            "size": first_stats.st_size,
+            "run_key": "run-alice",
+            "tool_name": "kometa",
+            "run_complete": True,
+            "content_md5": "alice-md5",
+        },
+        str(second_log.resolve()): {
+            "mtime": second_stats.st_mtime,
+            "size": second_stats.st_size,
+            "run_key": "run-bob",
+            "tool_name": "kometa",
+            "run_complete": True,
+            "content_md5": "bob-md5",
+        },
+    }
+
+    result = qs_module._rebuild_logscan_missing_people_export(cache_logs, analyzer=FakeAnalyzer())
+
+    assert result["missing_people_log_ready"] is True
+    assert result["missing_people_unique"] == 2
+    assert result["missing_people_logs"] == 2
+    missing_log = isolated_config_dir / "cache" / "logscan" / "meta_people_missing.log"
+    output = missing_log.read_text(encoding="utf-8")
+    assert "Alice missing block" in output
+    assert "Bob missing block" in output
+
+    status = client.get("/logscan/trends/people-missing/status")
+    assert status.status_code == 200
+    payload = status.get_json()
+    assert payload["exists"] is True
+    assert payload["missing_people_unique"] == 2
+    assert payload["missing_people_logs"] == 2
+
+
+def test_logscan_delta_reingest_rebuilds_missing_people_export_from_cache(client, isolated_config_dir, monkeypatch, qs_module):
+    log_dir = isolated_config_dir / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archived_log = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa" / "meta-people.log"
+    archived_log.parent.mkdir(parents=True, exist_ok=True)
+    archived_log.write_text("header\nLocating config...\nmissing alice\n", encoding="utf-8")
+    stats = archived_log.stat()
+
+    class FakeAnalyzer:
+        _people_index = set()
+
+        def preload_people_index(self, *_args, **_kwargs):
+            return None
+
+        def collect_missing_people_lines(self, content, **_kwargs):
+            if "alice" not in content:
+                return []
+            return [{"names": {"alice"}, "block": "Alice missing block"}]
+
+    cache = {
+        "version": 1,
+        "logs": {
+            str(archived_log.resolve()): {
+                "mtime": stats.st_mtime,
+                "size": stats.st_size,
+                "run_key": "run-alice",
+                "tool_name": "kometa",
+                "run_complete": True,
+                "content_md5": "alice-md5",
+            }
+        },
+    }
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", FakeAnalyzer)
+    monkeypatch.setattr(qs_module, "_get_logscan_delta_files", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: copy.deepcopy(cache))
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+
+    result = qs_module._perform_logscan_reingest(reset=False, update_state=False)
+
+    assert result["success"] is True
+    assert result["scanned"] == 0
+    assert result["missing_people_log_ready"] is True
+    assert result["missing_people_unique"] == 1
+    assert result["missing_people_logs"] == 1
+    missing_log = isolated_config_dir / "cache" / "logscan" / "meta_people_missing.log"
+    assert missing_log.exists()
+    assert "Alice missing block" in missing_log.read_text(encoding="utf-8")
+
+
 def test_logscan_reingest_flushes_ingest_cache_incrementally(isolated_config_dir, monkeypatch, qs_module):
     class FakeAnalyzer:
         _people_index = {}
