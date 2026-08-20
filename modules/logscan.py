@@ -19,6 +19,8 @@ from modules import (
 from modules.logscan_people import (  # noqa: F401
     PEOPLE_MISSING_WARNING_RE,
     PEOPLE_MISSING_WARNING_REGEX,
+    PEOPLE_POSTER_README_URLS,
+    PEOPLE_POSTER_UPDATE_RE,
     PEOPLE_README_URLS,
     PEOPLE_SECTION_END_PATTERNS,
     PEOPLE_SECTION_START_STRONG,
@@ -45,6 +47,7 @@ class LogscanAnalyzer:
         self.server_versions = []
         self.people_index_available = False
         self._people_index = None
+        self._people_poster_index = None
         self.validation_summary = {}
 
     def reset_server_versions(self):
@@ -128,6 +131,9 @@ class LogscanAnalyzer:
     def _get_people_cache_path(self, log_path):
         return logscan_people.get_people_cache_path(log_path)
 
+    def _get_people_poster_cache_path(self, log_path):
+        return logscan_people.get_people_poster_cache_path(log_path)
+
     def _load_people_cache(self, cache_path):
         return logscan_people.load_people_cache(cache_path)
 
@@ -137,13 +143,17 @@ class LogscanAnalyzer:
     def _fetch_people_readme(self, cache_path):
         return logscan_people.fetch_people_readme(cache_path)
 
+    def _fetch_people_poster_readme(self, cache_path):
+        return logscan_people.fetch_people_poster_readme(cache_path)
+
     def _build_people_index(self, readme_text):
         return logscan_people.build_people_index(readme_text)
 
     def preload_people_index(self, log_path=None):
-        cache_path = logscan_people.get_people_cache_path(log_path)
-        readme_text, _used_cache = logscan_people.fetch_people_readme(cache_path)
+        cache_path = logscan_people.get_people_poster_cache_path(log_path)
+        readme_text, _used_cache = logscan_people.fetch_people_poster_readme(cache_path)
         self._people_index = logscan_people.build_people_index(readme_text)
+        self._people_poster_index = self._people_index
         self.people_index_available = bool(self._people_index)
         return self._people_index
 
