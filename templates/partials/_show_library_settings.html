@@ -15,7 +15,7 @@
                     Collections
                     <span class="small accordion-override-summary ms-3{% if collections_lazy_count <= 0 %} d-none{% endif %}"
                         data-accordion-override-summary>
-                        {{ collections_lazy_count }} {{ 'override' if collections_lazy_count == 1 else 'overrides' }}
+                        {{ collections_lazy_count }} {{ 'modification' if collections_lazy_count == 1 else 'modifications' }}
                     </span>
                 </button>
             </h2>
@@ -48,7 +48,7 @@
                     Overlays
                     <span class="small accordion-override-summary ms-3{% if overlays_lazy_count <= 0 %} d-none{% endif %}"
                         data-accordion-override-summary>
-                        {{ overlays_lazy_count }} {{ 'override' if overlays_lazy_count == 1 else 'overrides' }}
+                        {{ overlays_lazy_count }} {{ 'modification' if overlays_lazy_count == 1 else 'modifications' }}
                     </span>
                 </button>
             </h2>

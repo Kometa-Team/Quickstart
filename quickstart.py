@@ -514,7 +514,7 @@ VALIDATION_REASON_LABELS = {
     "missing_plex_validation": "Plex not validated",
     "no_libraries": "No libraries selected",
     "invalid_paths": "Invalid paths",
-    "invalid_arr_overrides": "Invalid Arr overrides",
+    "invalid_arr_overrides": "Invalid Arr modifications",
     "missing_library_defaults": "Missing library defaults",
     "missing_separator_placeholder": "Missing separator placeholder",
     "invalid_metadata_files": "Invalid metadata files",
@@ -896,7 +896,7 @@ def _validate_library_service_overrides(library_id, libraries_data, force_valida
             "skipped": False,
             "service": service_name,
             "overrides": overrides,
-            "errors": [f"{scoped_label}: URL and token are required after applying overrides."],
+            "errors": [f"{scoped_label}: URL and token are required after applying modifications."],
         }
 
     if service_name == "radarr":
@@ -3715,7 +3715,7 @@ def validate_all_services():
         "no_libraries": "No libraries selected",
         "missing_location": "Missing location",
         "invalid_paths": "Invalid paths",
-        "invalid_arr_overrides": "Invalid Arr overrides",
+        "invalid_arr_overrides": "Invalid Arr modifications",
         "missing_library_defaults": "Missing library defaults",
         "missing_separator_placeholder": "Missing separator placeholder",
         "invalid_fields": "Invalid fields",

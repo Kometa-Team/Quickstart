@@ -2293,6 +2293,7 @@ function updateValidationCallouts (inputId) {
       const targetId = inputId || wrapper.dataset.qsValidatedInput
       const validatedInput = targetId ? document.getElementById(targetId) : getValidatedInput()
       const isConfigured = qsIsCurrentStepConfigured(validatedInput)
+      const state = qsGetCalloutAccordionState(isConfigured)
 
       const alert = wrapper.querySelector('.qs-validation-callout')
       if (alert) {
@@ -2303,7 +2304,7 @@ function updateValidationCallouts (inputId) {
       const button = wrapper.querySelector('.accordion-button')
       if (!collapse || !button) return
 
-      const shouldCollapse = isConfigured && wrapper.dataset.qsAutoCollapsed !== 'true'
+      const shouldCollapse = state === 'ok' && wrapper.dataset.qsAutoCollapsed !== 'true'
       if (shouldCollapse) {
         button.classList.add('collapsed')
         button.setAttribute('aria-expanded', 'false')
@@ -2315,6 +2316,17 @@ function updateValidationCallouts (inputId) {
           collapse.classList.remove('show')
         }
         wrapper.dataset.qsAutoCollapsed = 'true'
+      } else if (state !== 'ok') {
+        button.classList.remove('collapsed')
+        button.setAttribute('aria-expanded', 'true')
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+          const instance = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
+          instance.show()
+        } else {
+          collapse.classList.add('show')
+        }
+        delete wrapper.dataset.qsAutoCollapsed
       }
 
       refreshValidationAccordionTitle(wrapper, isConfigured)
@@ -2345,6 +2357,22 @@ function getCurrentTemplateGroup () {
   return 'optional'
 }
 
+function qsCurrentValidationCalloutState (isConfigured) {
+  const inputState = qsStateFromValidatedInput(getValidatedInput())
+  const currentState = qsGetCurrentStepStatus()
+  if (currentState === 'error' || inputState === 'error') return 'error'
+  if (currentState === 'warn' || inputState === 'warn') return 'warn'
+  if (isConfigured || currentState === 'ok' || inputState === 'ok') return 'ok'
+  if (currentState === 'unknown' || inputState === 'unknown') return 'unknown'
+  return null
+}
+
+function qsRequiredCalloutHeading (isConfigured, state) {
+  if (state === 'ok') return 'This required page passed validation'
+  if (state === 'error' && isConfigured) return 'This required page failed validation'
+  return 'This required page needs validation'
+}
+
 function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null) {
   if (!alert) return
 
@@ -2360,6 +2388,7 @@ function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null)
   const isConfigured = isConfiguredOverride === null
     ? qsIsCurrentStepConfigured(getValidatedInput())
     : Boolean(isConfiguredOverride)
+  const state = qsCurrentValidationCalloutState(isConfigured)
 
   let html = alert.dataset.qsOriginalHtml
 
@@ -2375,16 +2404,16 @@ function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null)
   const heading = alert.querySelector('h6, h4')
   if (heading && !isReview) {
     heading.innerHTML = `<b>${
-      isConfigured
-        ? (isRequired ? 'This required page passed validation' : 'This optional page is configured')
-        : (isRequired ? 'This required page needs validation' : 'This page is optional')
+      isRequired
+        ? qsRequiredCalloutHeading(isConfigured, state)
+        : (state === 'ok' ? 'This optional page is configured' : 'This page is optional')
     }</b>`
   }
 
   alert.classList.remove('alert-info', 'alert-danger', 'alert-warning', 'alert-success')
-  if (isConfigured || isReview) {
+  if (state === 'ok' || isReview) {
     alert.classList.add('alert-success')
-  } else if (isRequired) {
+  } else if (isRequired || state === 'error') {
     alert.classList.add('alert-danger')
   } else if (isOptional) {
     alert.classList.add('alert-info')
@@ -2433,11 +2462,8 @@ function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null)
 }
 
 function qsGetCalloutAccordionState (isConfigured) {
-  if (isConfigured) return 'ok'
-  const inputState = qsStateFromValidatedInput(getValidatedInput())
-  if (inputState) return inputState
-  const currentState = qsGetCurrentStepStatus()
-  if (currentState) return currentState
+  const state = qsCurrentValidationCalloutState(isConfigured)
+  if (state) return state
   const group = getCurrentTemplateGroup()
   if (group === 'required') return 'error'
   if (group === 'optional') return 'unknown'
@@ -2471,11 +2497,17 @@ function refreshValidationAccordionTitle (wrapper, isValidated) {
 
   let title = baseTitle
   const state = qsGetCalloutAccordionState(isValidated)
-  if (isValidated) {
-    const group = getCurrentTemplateGroup()
-    if (group === 'required') {
+  const group = getCurrentTemplateGroup()
+  if (group === 'required') {
+    if (state === 'ok') {
       title = 'Required page validated'
-    } else if (group === 'optional') {
+    } else if (state === 'error' && isValidated) {
+      title = 'Required page failed validation'
+    } else {
+      title = 'Required page needs validation'
+    }
+  } else if (state === 'ok') {
+    if (group === 'optional') {
       title = 'Optional page guidance'
     } else if (group === 'review') {
       title = 'Review page guidance'
@@ -2509,6 +2541,8 @@ function setupValidationCallouts () {
 
     const validatedInput = getValidatedInput()
     const isValidated = qsIsCurrentStepConfigured(validatedInput)
+    const initialState = qsGetCalloutAccordionState(isValidated)
+    const shouldExpand = initialState !== 'ok'
 
     applyDynamicValidationCalloutState(alert, isValidated)
     const heading = alert.querySelector('h6, h4')
@@ -2529,11 +2563,11 @@ function setupValidationCallouts () {
     header.id = headingId
 
     const button = document.createElement('button')
-    button.className = `accordion-button ${isValidated ? 'collapsed' : ''}`
+    button.className = `accordion-button ${shouldExpand ? '' : 'collapsed'}`
     button.type = 'button'
     button.setAttribute('data-bs-toggle', 'collapse')
     button.setAttribute('data-bs-target', `#${collapseId}`)
-    button.setAttribute('aria-expanded', isValidated ? 'false' : 'true')
+    button.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false')
     button.setAttribute('aria-controls', collapseId)
     button.textContent = title
 
@@ -2541,7 +2575,7 @@ function setupValidationCallouts () {
 
     const collapse = document.createElement('div')
     collapse.id = collapseId
-    collapse.className = `accordion-collapse collapse ${isValidated ? '' : 'show'}`
+    collapse.className = `accordion-collapse collapse ${shouldExpand ? 'show' : ''}`
     collapse.setAttribute('aria-labelledby', headingId)
 
     const body = document.createElement('div')
