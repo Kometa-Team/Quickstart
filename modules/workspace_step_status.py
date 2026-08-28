@@ -251,6 +251,8 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
         if validation_status == "skipped":
             if template_key == "027-playlist_files" and validation_reason == "no_libraries":
                 return "unknown"
+            if template_key == "025-libraries" and validation_reason == "no_libraries":
+                return "error"
             if validation_reason in QS_ERROR_REASONS:
                 return "error"
             if group == "optional":
