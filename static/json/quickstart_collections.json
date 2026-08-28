@@ -54,7 +54,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -1720,7 +1720,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -3297,7 +3297,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -4874,7 +4874,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -6451,7 +6451,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -8029,7 +8029,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -9712,7 +9712,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -11395,7 +11395,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -13165,7 +13165,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -14742,7 +14742,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -16320,7 +16320,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -18002,7 +18002,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -19579,7 +19579,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -21156,7 +21156,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -22733,7 +22733,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -24310,7 +24310,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -25888,7 +25888,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -27130,7 +27130,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -28442,7 +28442,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -29037,7 +29037,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -31573,7 +31573,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -35191,7 +35191,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -38806,7 +38806,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -41592,7 +41592,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -44682,7 +44682,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -48337,7 +48337,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -60821,7 +60821,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "type": "toggle",
             "default": true,
             "section": "child_defaults"
@@ -62687,7 +62687,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "scope"
           },
@@ -64951,7 +64951,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -67759,7 +67759,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "child_defaults"
@@ -70376,7 +70376,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -71263,7 +71263,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -72151,7 +72151,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -73050,7 +73050,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -73949,7 +73949,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -74848,7 +74848,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -75747,7 +75747,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -76646,7 +76646,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -77600,7 +77600,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "defaults"
@@ -78720,7 +78720,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "defaults"
@@ -79875,7 +79875,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "defaults"
@@ -82877,7 +82877,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "continents"
@@ -84507,7 +84507,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -86049,7 +86049,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Child use_* settings can change this default.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Child use_* settings can make per-child modifications to this default.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -87197,7 +87197,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -88307,7 +88307,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -90003,7 +90003,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "scope"
           },
@@ -91082,7 +91082,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "scope"
           },
@@ -92173,7 +92173,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "scope"
           },
@@ -93264,7 +93264,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "scope"
           },
@@ -93806,7 +93806,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -99369,7 +99369,7 @@
           {
             "key": "use_all",
             "label": "Use All Child Collections",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting: if Use All is on and a specific child is off, that child stays off; if Use All is off and a specific child is on, that child stays on.",
             "type": "toggle",
             "default": true,
             "section": "basics"
@@ -103067,7 +103067,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "basics"
           },
@@ -104132,7 +104132,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "basics"
           },
@@ -105128,7 +105128,7 @@
             "key": "use_all",
             "label": "Use All Child Collections",
             "type": "toggle",
-            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can change this setting.",
+            "tooltip": "Set the default on/off state for all child collections in this Defaults File. Individual child toggles can make per-child modifications to this setting.",
             "default": true,
             "section": "basics"
           },
