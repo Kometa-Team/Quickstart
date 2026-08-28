@@ -2,15 +2,15 @@
     <h2 class="accordion-header">
         <button class="accordion-button" type="button" data-bs-toggle="collapse"
             data-bs-target="#{{ library.id }}-radarr-overrides">
-            Radarr Overrides
+            Radarr Modifications
         </button>
     </h2>
     <div id="{{ library.id }}-radarr-overrides" class="accordion-collapse collapse"
-        data-library-override-scope="true" data-library-override-label="Radarr Overrides">
+        data-library-override-scope="true" data-library-override-label="Radarr Modifications">
         <div class="accordion-body">
             <div class="alert alert-success small mb-3" role="alert">
-                Enter your Radarr URL and token override only if this library should use a different Radarr instance than the global
-                Radarr page. Then validate the override and complete the rest of the form. The token can be found in
+                Enter custom Radarr URL and token values only if this library should use a different Radarr instance than the global
+                Radarr page. Then validate the custom values and complete the rest of the form. The token can be found in
                 Radarr &gt; Settings &gt; General &gt; Security &gt; API Key.
                 <div class="mt-2">
                     <a href="https://kometa.wiki/en/nightly/config/radarr/" target="_blank" rel="noopener noreferrer">
@@ -23,7 +23,7 @@
                 <div class="small text-muted">Blank values inherit the global Radarr page setting.</div>
                 <button type="button" class="btn btn-success btn-sm" data-validate-library-service="radarr"
                     data-library-id="{{ library.id }}">
-                    Validate Radarr Overrides
+                    Validate Radarr Modifications
                 </button>
             </div>
             <input type="hidden" name="{{ library.id }}-library_service_radarr_validated"
@@ -36,7 +36,7 @@
             <div class="input-group mb-2">
                 <span class="input-group-text" id="{{ library.id }}-attribute_radarr_url_text"
                     style="width: 560px; justify-content: space-between;">
-                    Radarr URL Override
+                    Radarr URL Modification
                     <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         title="Enter your Radarr URL including the port. If Radarr is running in Docker, ensure it&#39;s on the same network as Kometa.">
                         <i class="bi bi-info-circle-fill"></i>
@@ -52,7 +52,7 @@
             <div class="input-group mb-2">
                 <span class="input-group-text" id="{{ library.id }}-attribute_radarr_token_text"
                     style="width: 560px; justify-content: space-between;">
-                    Radarr API Key Override
+                    Radarr API Key Modification
                     <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         title="Enter your Radarr API Key to allow Quickstart to authenticate with Radarr.">
                         <i class="bi bi-info-circle-fill"></i>

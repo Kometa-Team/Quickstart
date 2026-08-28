@@ -2,15 +2,15 @@
     <h2 class="accordion-header">
         <button class="accordion-button" type="button" data-bs-toggle="collapse"
             data-bs-target="#{{ library.id }}-sonarr-overrides">
-            Sonarr Overrides
+            Sonarr Modifications
         </button>
     </h2>
     <div id="{{ library.id }}-sonarr-overrides" class="accordion-collapse collapse"
-        data-library-override-scope="true" data-library-override-label="Sonarr Overrides">
+        data-library-override-scope="true" data-library-override-label="Sonarr Modifications">
         <div class="accordion-body">
             <div class="alert alert-success small mb-3" role="alert">
-                Enter your Sonarr URL and token override only if this library should use a different Sonarr instance than the global
-                Sonarr page. Then validate the override and complete the rest of the form. The token can be found in
+                Enter custom Sonarr URL and token values only if this library should use a different Sonarr instance than the global
+                Sonarr page. Then validate the custom values and complete the rest of the form. The token can be found in
                 Sonarr &gt; Settings &gt; General &gt; Security &gt; API Key.
                 <div class="mt-2">
                     <a href="https://kometa.wiki/en/nightly/config/sonarr/" target="_blank" rel="noopener noreferrer">
@@ -23,7 +23,7 @@
                 <div class="small text-muted">Blank values inherit the global Sonarr page setting.</div>
                 <button type="button" class="btn btn-success btn-sm" data-validate-library-service="sonarr"
                     data-library-id="{{ library.id }}">
-                    Validate Sonarr Overrides
+                    Validate Sonarr Modifications
                 </button>
             </div>
             <input type="hidden" name="{{ library.id }}-library_service_sonarr_validated"
@@ -36,7 +36,7 @@
             <div class="input-group mb-2">
                 <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_url_text"
                     style="width: 560px; justify-content: space-between;">
-                    Sonarr URL Override
+                    Sonarr URL Modification
                     <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         title="You must provide the direct address you use to access your Sonarr server, including the port.">
                         <i class="bi bi-info-circle-fill"></i>
@@ -52,7 +52,7 @@
             <div class="input-group mb-2">
                 <span class="input-group-text" id="{{ library.id }}-attribute_sonarr_token_text"
                     style="width: 560px; justify-content: space-between;">
-                    Sonarr API Key Override
+                    Sonarr API Key Modification
                     <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         title="Enter your Sonarr API Key to allow Quickstart to authenticate with Sonarr.">
                         <i class="bi bi-info-circle-fill"></i>

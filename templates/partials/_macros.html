@@ -2573,15 +2573,15 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                         data-language-input-id="{{ input_id }}"
                                                         data-options='{{ var_details.options | tojson }}'
                                                         data-existing='{{ weight_ns.values | tojson }}'>
-                                                        <label class="form-label fw-semibold mb-1">Weight Overrides</label>
+                                                        <label class="form-label fw-semibold mb-1">Weight Modifications</label>
                                                         <div class="form-text mb-2">
-                                                            Override priority for specific language flags. Default weights are omitted from YAML.
+                                                            Change priority for specific language flags. Default weights are omitted from YAML.
                                                         </div>
                                                         <div class="d-flex flex-column gap-2" data-overlay-language-weight-rows></div>
                                                         <div class="mt-2">
                                                             <button type="button" class="btn btn-outline-secondary btn-sm"
                                                                 data-overlay-language-weight-add>
-                                                                Add Weight Override
+                                                                Add Weight Modification
                                                             </button>
                                                         </div>
                                                         <div data-overlay-language-weight-hidden></div>
