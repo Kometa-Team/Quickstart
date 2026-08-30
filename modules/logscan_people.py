@@ -1,9 +1,8 @@
 """People-poster detection helpers extracted from ``modules.logscan``.
 
-These functions scan a Kometa log for ``Collection Warning: No Poster Found
-at <people-images-url>`` lines, look up the names against a cached copy of the
-People-Images repo README, and surface the genuinely-missing people for the
-recommendation panel.
+These functions scan a Kometa log for people-poster signals, look up the names
+against a cached copy of the styled People-Images repo README, and surface the
+genuinely-missing people for the recommendation panel.
 
 The functions are pure (no analyzer state); ``LogscanAnalyzer`` retains thin
 wrapper methods that delegate here and manage the cached people index on the
@@ -31,6 +30,7 @@ _logger = logging.getLogger("logscan")
 # ---------------------------------------------------------------------------
 
 PEOPLE_README_URLS = ("https://raw.githubusercontent.com/Kometa-Team/People-Images/refs/heads/master/README.md",)
+PEOPLE_POSTER_README_URLS = ("https://raw.githubusercontent.com/Kometa-Team/People-Images-bw/master/README.md",)
 
 PEOPLE_MISSING_WARNING_REGEX = (
     r"Collection Warning: No Poster Found at "
@@ -39,6 +39,10 @@ PEOPLE_MISSING_WARNING_REGEX = (
     r"/[^\s\]]+)"
 )
 PEOPLE_MISSING_WARNING_RE = re.compile(PEOPLE_MISSING_WARNING_REGEX, re.IGNORECASE)
+PEOPLE_POSTER_UPDATE_RE = re.compile(
+    r"Metadata:\s+tmdb_person\s+updated\s+poster\s+to\s+\[URL\]\s+https?://\S+",
+    re.IGNORECASE,
+)
 
 PEOPLE_SECTION_START_STRONG = (
     r"^(.+?) Collection in .+$",
@@ -51,6 +55,7 @@ PEOPLE_SECTION_START_WEAK = (
 PEOPLE_SECTION_END_PATTERNS = (r"^Finished .+ Collection$",)
 
 _PEOPLE_README_FILENAME_RE = re.compile(r"([A-Za-z0-9_./%\-]+\.(?:jpg|jpeg|png|webp))", re.IGNORECASE)
+_PEOPLE_ROLE_SUFFIX_RE = re.compile(r"\s+\((?:Director|Producer|Writer)\)\s*$", re.IGNORECASE)
 _KEY_NAME_PATTERNS = (
     r"^Validating\s+(.+?)\s+Attributes$",
     r"^Running\s+(.+?)\s+Collection$",
@@ -69,13 +74,20 @@ def extract_filename_from_url(url: str) -> str:
     return unquote(os.path.splitext(os.path.basename(url))[0])
 
 
+def normalize_people_name(name: str | None) -> str:
+    """Normalize a person name for poster-index comparison."""
+    if not name:
+        return ""
+    return _PEOPLE_ROLE_SUFFIX_RE.sub("", str(name).strip()).strip()
+
+
 # ---------------------------------------------------------------------------
 # People cache (README mirror) management
 # ---------------------------------------------------------------------------
 
 
-def get_people_cache_path(log_path=None) -> Path:
-    """Return the on-disk path used to cache the People-Images README.
+def _get_cache_path(filename: str, log_path=None) -> Path:
+    """Return the on-disk path used to cache a people-poster README.
 
     Prefers the project-wide ``config/cache/logscan/`` directory; falls back to
     a sidecar in the log's directory, and finally to the current working
@@ -84,17 +96,25 @@ def get_people_cache_path(log_path=None) -> Path:
     cache_dir = Path(__file__).resolve().parent.parent / "config" / "cache" / "logscan"
     try:
         cache_dir.mkdir(parents=True, exist_ok=True)
-        return cache_dir / "logscan_people_readme.json"
+        return cache_dir / filename
     except Exception:
         pass
     if log_path:
         try:
             log_path = Path(log_path)
             if log_path.is_file():
-                return log_path.parent / ".logscan_people_cache.json"
+                return log_path.parent / f".{filename}"
         except Exception:
             pass
-    return Path.cwd() / ".logscan_people_cache.json"
+    return Path.cwd() / f".{filename}"
+
+
+def get_people_cache_path(log_path=None) -> Path:
+    return _get_cache_path("logscan_people_readme.json", log_path=log_path)
+
+
+def get_people_poster_cache_path(log_path=None) -> Path:
+    return _get_cache_path("logscan_people_posters_readme.json", log_path=log_path)
 
 
 def load_people_cache(cache_path) -> dict:
@@ -119,7 +139,7 @@ def save_people_cache(cache_path, payload: dict) -> None:
         return
 
 
-def fetch_people_readme(cache_path) -> tuple[str | None, bool]:
+def fetch_people_readme(cache_path, readme_urls: Iterable[str] = PEOPLE_README_URLS) -> tuple[str | None, bool]:
     """Fetch the People-Images README, honoring HTTP cache headers stored in
     ``cache_path``. Returns ``(text, used_cache)``.
 
@@ -130,7 +150,7 @@ def fetch_people_readme(cache_path) -> tuple[str | None, bool]:
     cache = load_people_cache(cache_path)
     cached_content = cache.get("content")
 
-    for url in PEOPLE_README_URLS:
+    for url in readme_urls:
         headers = {"User-Agent": "Quickstart-Logscan"}
         if cache.get("url") == url:
             if cache.get("etag"):
@@ -159,6 +179,10 @@ def fetch_people_readme(cache_path) -> tuple[str | None, bool]:
             continue
 
     return cached_content, True if cached_content else False
+
+
+def fetch_people_poster_readme(cache_path) -> tuple[str | None, bool]:
+    return fetch_people_readme(cache_path, readme_urls=PEOPLE_POSTER_README_URLS)
 
 
 def build_people_index(readme_text: str | None) -> set[str]:
@@ -330,10 +354,36 @@ def extract_missing_people_names(lines: Iterable[str], available: set[str] | Non
             name = extract_filename_from_url(url)
         if not name:
             continue
-        key = name.lower()
+        key = normalize_people_name(name).lower()
+        if not key:
+            continue
         if available and key in available:
             continue
         names.add(key)
+    return names
+
+
+def extract_people_poster_candidate_names(lines: Iterable[str], available: set[str] | None, name_hint: str | None = None) -> set[str]:
+    """Return people-poster candidates that are absent from ``available``.
+
+    Warning URLs supply their own filename-derived name. TMDB poster-update
+    lines need the surrounding collection key, so they are only considered when
+    ``name_hint`` is available.
+    """
+    names = extract_missing_people_names(lines, available, name_hint=name_hint)
+    if not name_hint:
+        return names
+
+    key = normalize_people_name(name_hint).lower()
+    if not key:
+        return names
+    if available and key in available:
+        return names
+
+    for line in lines:
+        if PEOPLE_POSTER_UPDATE_RE.search(line):
+            names.add(key)
+            break
     return names
 
 
@@ -366,7 +416,7 @@ def collect_missing_people_lines(
     seen_blocks: set[str] = set()
 
     for idx, line in enumerate(raw_lines):
-        if not PEOPLE_MISSING_WARNING_RE.search(line):
+        if not (PEOPLE_MISSING_WARNING_RE.search(line) or PEOPLE_POSTER_UPDATE_RE.search(line)):
             continue
 
         if idx < len(cleaned_lines):
@@ -379,7 +429,7 @@ def collect_missing_people_lines(
         name_hint = None
         if idx < len(cleaned_lines):
             name_hint = extract_key_name_from_block(cleaned_lines, start, end)
-        names = extract_missing_people_names(block_lines, available, name_hint=name_hint)
+        names = extract_people_poster_candidate_names(block_lines, available, name_hint=name_hint)
         if not names:
             continue
 

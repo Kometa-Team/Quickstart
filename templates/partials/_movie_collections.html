@@ -29,7 +29,7 @@
         {{ group.accordion }}
         <span class="small accordion-override-summary ms-3{% if group_count <= 0 %} d-none{% endif %}"
           data-accordion-override-summary>
-          {{ group_count }} {{ 'override' if group_count == 1 else 'overrides' }}
+          {{ group_count }} {{ 'modification' if group_count == 1 else 'modifications' }}
         </span>
       </button>
     </h2>
