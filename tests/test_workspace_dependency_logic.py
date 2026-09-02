@@ -942,6 +942,23 @@ def test_optional_skipped_with_user_input_stays_unknown(qs_module):
     assert state == "unknown"
 
 
+def test_required_no_libraries_skip_beats_stale_validated_flag(qs_module):
+    section_rows = {
+        "libraries": {
+            "validated": True,
+            "user_entered": True,
+            "data": {
+                "validation_status": "skipped",
+                "validation_reason": "no_libraries",
+                "validated_at": "2026-04-20T10:00:00Z",
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("025-libraries", "required", section_rows, config_exists=True)
+    assert state == "error"
+
+
 def test_anidb_enabled_and_bulk_validated_is_ok(qs_module):
     section_rows = {
         "anidb": {

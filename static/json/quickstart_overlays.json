@@ -13,8 +13,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ribbon.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/yellow/oscars.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in ribbon image for a specific ribbon key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in ribbon image for a specific ribbon key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -22,7 +22,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 0,
@@ -250,8 +250,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/mediastinger.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Mediastinger.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in Mediastinger image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in Mediastinger image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -260,7 +260,7 @@
           ],
           "key_mode": "fixed_key",
           "fixed_key": "Mediastinger",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 200,
@@ -816,8 +816,8 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in rating image for a specific rating image key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in rating image for a specific rating image key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -1345,8 +1345,8 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in rating image for a specific rating image key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in rating image for a specific rating image key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -1707,8 +1707,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/usgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_movie.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -1716,7 +1716,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -1882,8 +1882,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/ustv-pgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_show.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -1891,7 +1891,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -2080,8 +2080,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/uk18c.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_uk.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -2089,7 +2089,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -2291,8 +2291,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/de16c.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_de.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -2300,7 +2300,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -2496,8 +2496,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/au_pgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_au.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -2505,7 +2505,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -2701,8 +2701,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/nz_mc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_nz.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific content rating key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -2710,7 +2710,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -2936,8 +2936,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Commonsense.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/commonsense.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in Common Sense base image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in Common Sense base image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -2946,7 +2946,7 @@
           ],
           "key_mode": "fixed_key",
           "fixed_key": "commonsense",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -3700,8 +3700,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/audio_codec.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/audio_codec/compact/plus_atmos.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -3709,7 +3709,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 0,
@@ -3961,8 +3961,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/language_count.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/multi_audio.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in language count image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in language count image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -3973,7 +3973,7 @@
           "exclude_toggle_keys": [
             "use_subtitles"
           ],
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 0,
@@ -4145,8 +4145,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in flag image for a specific language key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in flag image for a specific language key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -4154,7 +4154,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -5221,8 +5221,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in flag image for a specific language key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in flag image for a specific language key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -5230,7 +5230,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -6303,8 +6303,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/resolution/4kdvhdrplus.png",
         "edition_overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/edition/enhanced.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -6316,7 +6316,7 @@
             "use_resolution",
             "use_edition"
           ],
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -7457,8 +7457,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/versions.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/versions.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in Versions image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in Versions image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -7467,7 +7467,7 @@
           ],
           "key_mode": "fixed_key",
           "fixed_key": "versions",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -7933,8 +7933,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/streaming.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/streaming/color/Crave.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific badge key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -7942,7 +7942,7 @@
             "repo"
           ],
           "key_mode": "from_use_toggles",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -8246,8 +8246,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/standard/8bit.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific studio key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific studio key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -8256,7 +8256,7 @@
           ],
           "key_mode": "bundled_preview_keys",
           "key_placeholder": "8bit",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -8409,8 +8409,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/network/color/BBC%20One.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in badge image for a specific network key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in badge image for a specific network key using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -8419,7 +8419,7 @@
           ],
           "key_mode": "bundled_preview_keys",
           "key_placeholder": "BBC One",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 15,
@@ -8580,8 +8580,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/direct_play.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Direct-Play.png",
         "source_overrides": {
-          "title": "Image Source Overrides",
-          "description": "Advanced: override the built-in Direct Play image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
+          "title": "Image Source Modifications",
+          "description": "Advanced: change the built-in Direct Play image using a local file, URL, Community-Configs git path, or custom_repo repo path.",
           "source_types": [
             "file",
             "url",
@@ -8590,7 +8590,7 @@
           ],
           "key_mode": "fixed_key",
           "fixed_key": "Direct-Play",
-          "add_label": "Add override"
+          "add_label": "Add modification"
         },
         "default_offsets": {
           "horizontal": 0,

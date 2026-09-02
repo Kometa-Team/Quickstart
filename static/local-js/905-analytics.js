@@ -3031,9 +3031,11 @@ function setControlsDisabled (disabled) {
   tableDeleteSelected.disabled = disabled || selectedRunKeys.size === 0
 }
 
-function setMissingDownloadVisible (visible, count) {
+function setMissingDownloadVisible (visible, count, logCount) {
   if (visible) {
-    if (typeof count === 'number') {
+    if (typeof count === 'number' && typeof logCount === 'number' && logCount > 1) {
+      missingDownload.textContent = `Download missing people log (${count} from ${logCount} logs)`
+    } else if (typeof count === 'number') {
       missingDownload.textContent = `Download missing people log (${count})`
     } else {
       missingDownload.textContent = 'Download missing people log'
@@ -3052,7 +3054,10 @@ function checkMissingDownload () {
       const count = data && typeof data.missing_people_unique === 'number'
         ? data.missing_people_unique
         : undefined
-      setMissingDownloadVisible(exists, count)
+      const logCount = data && typeof data.missing_people_logs === 'number'
+        ? data.missing_people_logs
+        : undefined
+      setMissingDownloadVisible(exists, count, logCount)
     })
     .catch(() => {
       setMissingDownloadVisible(false)
@@ -3100,7 +3105,7 @@ function applyReingestSummary (data) {
   const isStartupMigration = data && data.trigger === 'startup_migration'
   updateStatus(`${isStartupMigration ? 'Startup Analytics migration complete.' : 'Reingest complete.'} ${summary}`)
   fetchRuns({ suppressStatus: true })
-  setMissingDownloadVisible(Boolean(data.missing_people_log_ready), data.missing_people_unique)
+  setMissingDownloadVisible(Boolean(data.missing_people_log_ready), data.missing_people_unique, data.missing_people_logs)
   setProgressVisible(false)
   setControlsDisabled(false)
   setReingestButtonLabel(defaultReingestButtonLabel)

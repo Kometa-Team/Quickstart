@@ -3436,7 +3436,7 @@ function setupOverlayLanguageWeightBuilders (scope) {
       if (!weightText) return 'Using Kometa default weight'
       if (!/^-?\d+$/.test(weightText)) return 'Enter a whole number'
       if (defaultWeight !== null && Number(weightText) === defaultWeight) return 'Matches default weight, so it will not be emitted'
-      return 'Custom override will be emitted'
+      return 'Custom value will be emitted'
     }
 
     function currentOptionsForRow (row) {
@@ -6221,7 +6221,7 @@ function updateLibraryServiceValidateButton (card, serviceName, state = null) {
   if (effectiveState === 'loading') {
     button.disabled = true
     button.classList.add('btn-secondary')
-    button.textContent = `Validating ${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} Overrides...`
+    button.textContent = `Validating ${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} Modifications...`
     return
   }
 
@@ -6234,7 +6234,7 @@ function updateLibraryServiceValidateButton (card, serviceName, state = null) {
 
   button.disabled = false
   button.classList.add('btn-success')
-  button.textContent = `Validate ${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} Overrides`
+  button.textContent = `Validate ${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} Modifications`
 }
 
 function setLibraryServiceValidatedState (card, serviceName, isValidated) {
@@ -6325,7 +6325,7 @@ function validateLibraryServiceOverrides (button) {
 
   const payload = buildPayloadFromCard(card)
   updateLibraryServiceValidateButton(card, serviceName, 'loading')
-  setLibraryServiceStatus(card, serviceName, 'info', `Validating ${serviceName} overrides...`)
+  setLibraryServiceStatus(card, serviceName, 'info', `Validating ${serviceName} modifications...`)
 
   fetch(`/validate_library_service_overrides/${encodeURIComponent(libraryId)}`, {
     method: 'POST',
@@ -6352,7 +6352,7 @@ function validateLibraryServiceOverrides (button) {
       }
       setAdvancedVisibility(card, true)
       setLibraryServiceValidatedState(card, serviceName, true)
-      setLibraryServiceStatus(card, serviceName, 'success', `${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} overrides validated.`)
+      setLibraryServiceStatus(card, serviceName, 'success', `${serviceName === 'radarr' ? 'Radarr' : 'Sonarr'} modifications validated.`)
     })
     .catch((error) => {
       setAdvancedVisibility(card, true)
@@ -7417,7 +7417,7 @@ function markCollectionSectionModalCustomOrder (modalEl) {
   if (!modalEl) return
   modalEl.dataset.collectionSectionResetMode = 'false'
   const status = modalEl.querySelector('[data-collection-section-modal-status]')
-  if (status) status.textContent = 'Custom order pending. Save Order will write collection_section overrides.'
+  if (status) status.textContent = 'Custom order pending. Save Order will write collection_section modifications.'
 }
 
 function ensureCollectionSectionModalRoot (modalEl) {
@@ -7539,7 +7539,7 @@ function saveCollectionSectionModalOrder (modalEl) {
       })
     }
     if (typeof showToast === 'function') {
-      showToast(resetMode ? 'info' : 'success', resetMode ? 'Collection section overrides cleared. JSON defaults will be used.' : 'Collection section order updated.')
+      showToast(resetMode ? 'info' : 'success', resetMode ? 'Collection section modifications cleared. JSON defaults will be used.' : 'Collection section order updated.')
     }
     refreshCollectionSectionPreviewNumbers(list)
     const modal = typeof bootstrap !== 'undefined' && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalEl) : null
@@ -7565,9 +7565,9 @@ function resetCollectionSectionModalOrder (modalEl) {
     renderCollectionSectionModalList(modalEl)
     modalEl.dataset.collectionSectionResetMode = 'true'
     const status = modalEl.querySelector('[data-collection-section-modal-status]')
-    if (status) status.textContent = 'Defaults pending. Save Order will clear collection_section overrides and use JSON defaults.'
+    if (status) status.textContent = 'Defaults pending. Save Order will clear collection_section modifications and use JSON defaults.'
     if (typeof showToast === 'function') {
-      showToast('info', 'Collection section overrides cleared. Save Order to use JSON defaults.')
+      showToast('info', 'Collection section modifications cleared. Save Order to use JSON defaults.')
     }
     setCollectionSectionActionBusy(resetButton, false)
   }, 120)
@@ -9212,7 +9212,7 @@ function isCollectionSectionFieldConfigured (fields) {
 }
 
 function formatTemplateOverrideCount (count) {
-  return count === 1 ? '1 override' : `${count} overrides`
+  return count === 1 ? '1 modification' : `${count} modifications`
 }
 
 function isTrueDatasetValue (value) {
@@ -9639,11 +9639,7 @@ function updateCollectionVariableSectionSummary (section) {
 
   updateTemplateVariableFieldOverrideStates(body, fieldsByName)
 
-  summary.textContent = configuredCount === 0
-    ? 'Defaults'
-    : configuredCount === 1
-      ? '1 override'
-      : `${configuredCount} overrides`
+  summary.textContent = configuredCount === 0 ? 'Defaults' : formatTemplateOverrideCount(configuredCount)
   section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
   section.dataset.overrideCount = String(configuredCount)
   updateTemplateGroupOverrideSummary(section)
@@ -9678,11 +9674,7 @@ function updateOverlayVariableSectionSummary (section) {
     updateTemplateVariableFieldOverrideStates(body, fieldsByName)
   }
 
-  summary.textContent = configuredCount === 0
-    ? 'Defaults'
-    : configuredCount === 1
-      ? '1 override'
-      : `${configuredCount} overrides`
+  summary.textContent = configuredCount === 0 ? 'Defaults' : formatTemplateOverrideCount(configuredCount)
   section.classList.toggle('template-variable-section-has-overrides', configuredCount > 0)
   section.dataset.overrideCount = String(configuredCount)
   updateTemplateGroupOverrideSummary(section)

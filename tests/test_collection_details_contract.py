@@ -334,7 +334,7 @@ def test_attributes_and_playlists_have_override_scope_counts_and_resets():
     assert 'data-library-override-label="Playlist Files"' in playlists
     assert 'id="{{ library.id }}-playlist-accordion"' in playlists
     assert 'data-library-override-label="Shared Playlist Defaults"' in playlist_vars
-    assert 'data-library-override-label="Per-Playlist Overrides"' in playlist_vars
+    assert 'data-library-override-label="Per-Playlist Modifications"' in playlist_vars
     for label in ("Separators", "Overlay Operations", "Library Operations", "Miscellaneous"):
         assert f'data-library-override-label="{label}"' in movie_attributes
         assert f'data-library-override-label="{label}"' in show_attributes
@@ -381,8 +381,8 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     assert 'data-library-override-label="Collection Files"' in collection_files_accordion
     assert 'data-library-override-label="Metadata Files"' in metadata_files
     assert 'data-library-override-label="Overlay Files"' in overlay_files
-    assert 'data-library-override-label="Radarr Overrides"' in radarr_overrides
-    assert 'data-library-override-label="Sonarr Overrides"' in sonarr_overrides
+    assert 'data-library-override-label="Radarr Modifications"' in radarr_overrides
+    assert 'data-library-override-label="Sonarr Modifications"' in sonarr_overrides
     assert radarr_overrides.count('data-default=""') >= 10
     assert sonarr_overrides.count('data-default=""') >= 10
     assert 'data-library-service-validated="radarr"' in radarr_overrides

@@ -523,7 +523,7 @@ VALIDATION_REASON_LABELS = {
     "missing_plex_validation": "Plex not validated",
     "no_libraries": "No libraries selected",
     "invalid_paths": "Invalid paths",
-    "invalid_arr_overrides": "Invalid Arr overrides",
+    "invalid_arr_overrides": "Invalid Arr modifications",
     "missing_library_defaults": "Missing library defaults",
     "missing_separator_placeholder": "Missing separator placeholder",
     "invalid_metadata_files": "Invalid metadata files",
@@ -905,7 +905,7 @@ def _validate_library_service_overrides(library_id, libraries_data, force_valida
             "skipped": False,
             "service": service_name,
             "overrides": overrides,
-            "errors": [f"{scoped_label}: URL and token are required after applying overrides."],
+            "errors": [f"{scoped_label}: URL and token are required after applying modifications."],
         }
 
     if service_name == "radarr":
@@ -3726,7 +3726,7 @@ def validate_all_services():
         "no_libraries": "No libraries selected",
         "missing_location": "Missing location",
         "invalid_paths": "Invalid paths",
-        "invalid_arr_overrides": "Invalid Arr overrides",
+        "invalid_arr_overrides": "Invalid Arr modifications",
         "missing_library_defaults": "Missing library defaults",
         "missing_separator_placeholder": "Missing separator placeholder",
         "invalid_fields": "Invalid fields",
@@ -5489,6 +5489,150 @@ def _prune_logscan_archive(archive_dir):
     return removed
 
 
+def _extract_logscan_missing_people_header(text, max_lines=200):
+    header_lines = []
+    for line in text.splitlines():
+        header_lines.append(line)
+        if "Locating config..." in line:
+            break
+        if len(header_lines) >= max_lines:
+            break
+    return "\n".join(header_lines).rstrip()
+
+
+def _iter_logscan_missing_people_export_paths(cache_logs):
+    if not isinstance(cache_logs, dict):
+        return []
+    candidates = []
+    seen_paths = set()
+    seen_md5s = set()
+    for raw_path, entry in cache_logs.items():
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("run_complete") is not True:
+            continue
+        if _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(raw_path)) != "kometa":
+            continue
+        content_md5 = str(entry.get("content_md5") or "").strip()
+        if content_md5:
+            if content_md5 in seen_md5s:
+                continue
+            seen_md5s.add(content_md5)
+        try:
+            path = Path(raw_path)
+            resolved = path.resolve()
+        except Exception:
+            continue
+        if resolved in seen_paths:
+            continue
+        seen_paths.add(resolved)
+        try:
+            if not resolved.exists() or not resolved.is_file():
+                continue
+            stats = resolved.stat()
+        except Exception:
+            continue
+        candidates.append((stats.st_mtime, resolved))
+    candidates.sort(key=lambda item: item[0])
+    return [path for _mtime, path in candidates]
+
+
+def _rebuild_logscan_missing_people_export(cache_logs, analyzer=None):
+    cache_dir = _get_logscan_cache_dir()
+    missing_people_log = cache_dir / "meta_people_missing.log"
+    missing_people_meta = cache_dir / "meta_people_missing.json"
+    missing_people_unique = set()
+    missing_people_logs = 0
+    missing_people_blocks = []
+    missing_people_seen_blocks = set()
+    missing_people_seen_names = set()
+    missing_people_header = None
+    sample_errors = []
+
+    analyzer = analyzer or logscan.LogscanAnalyzer()
+    for path in _iter_logscan_missing_people_export_paths(cache_logs):
+        try:
+            content = _read_logscan_text(path, encoding="utf-8", errors="replace")
+            people_items = analyzer.collect_missing_people_lines(
+                content,
+                available_index=getattr(analyzer, "_people_index", None),
+                log_path=path,
+            )
+        except Exception as exc:
+            if len(sample_errors) < 5:
+                sample_errors.append(f"{path.name}: {exc}")
+            continue
+        if not people_items:
+            continue
+        log_names = set()
+        for item in people_items:
+            names = {str(name).strip().lower() for name in item.get("names", set()) if str(name).strip()}
+            if not names:
+                continue
+            log_names.update(names)
+            if names.issubset(missing_people_seen_names):
+                continue
+            block = item.get("block")
+            if block and block not in missing_people_seen_blocks:
+                missing_people_blocks.append(block)
+                missing_people_seen_blocks.add(block)
+            missing_people_seen_names.update(names)
+        if log_names:
+            missing_people_logs += 1
+            missing_people_unique.update(log_names)
+            if missing_people_header is None:
+                missing_people_header = _extract_logscan_missing_people_header(content)
+
+    missing_people_log_ready = False
+    missing_people_log_lines = 0
+    if missing_people_blocks:
+        try:
+            missing_people_log_lines = sum(len(block.splitlines()) for block in missing_people_blocks)
+            output_parts = []
+            if missing_people_header:
+                output_parts.append(missing_people_header)
+                missing_people_log_lines += len(missing_people_header.splitlines())
+            output_parts.extend(missing_people_blocks)
+            missing_people_log.write_text("\n".join(output_parts).rstrip() + "\n", encoding="utf-8")
+            missing_people_log_ready = True
+            try:
+                missing_people_meta.write_text(
+                    json.dumps(
+                        {
+                            "missing_people_unique": len(missing_people_unique),
+                            "missing_people_logs": missing_people_logs,
+                            "missing_people_log_lines": missing_people_log_lines,
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        },
+                        ensure_ascii=True,
+                        indent=2,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+            except Exception:
+                pass
+        except Exception as exc:
+            if len(sample_errors) < 5:
+                sample_errors.append(f"{missing_people_log.name}: {exc}")
+    else:
+        try:
+            if missing_people_log.exists():
+                missing_people_log.unlink()
+            if missing_people_meta.exists():
+                missing_people_meta.unlink()
+        except Exception:
+            pass
+
+    return {
+        "missing_people_unique": len(missing_people_unique),
+        "missing_people_logs": missing_people_logs,
+        "missing_people_log_ready": missing_people_log_ready,
+        "missing_people_log_lines": missing_people_log_lines,
+        "sample_errors": sample_errors,
+    }
+
+
 def _perform_logscan_reingest(reset, job_id=None, update_state=True):
     if not logscan_ingest_lock.acquire(blocking=False):
         message = "Logscan ingest already running."
@@ -5517,16 +5661,6 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
             sample_incomplete=[],
             sample_errors=[],
         )
-
-    def _extract_fake_people_header(text, max_lines=200):
-        header_lines = []
-        for line in text.splitlines():
-            header_lines.append(line)
-            if "Locating config..." in line:
-                break
-            if len(header_lines) >= max_lines:
-                break
-        return "\n".join(header_lines).rstrip()
 
     try:
         ingest_cache = _load_logscan_ingest_cache()
@@ -5560,12 +5694,6 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         skipped_incomplete = 0
         skipped_invalid = 0
         errors = 0
-        missing_people_unique = set()
-        missing_people_logs = 0
-        missing_people_blocks = []
-        missing_people_seen_blocks = set()
-        missing_people_seen_names = set()
-        missing_people_header = None
         sample_incomplete = []
         sample_errors = []
 
@@ -5715,25 +5843,6 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         if archived_path:
                             cache_dirty = True
                     continue
-                missing_people = result.get("missing_people") if tool_name == "kometa" and isinstance(result, dict) else None
-                if missing_people:
-                    missing_people_logs += 1
-                    missing_people_unique.update({name.lower() for name in missing_people})
-                    if missing_people_header is None:
-                        missing_people_header = _extract_fake_people_header(content)
-                people_items = analyzer.collect_missing_people_lines(content, available_index=analyzer._people_index)
-                if people_items:
-                    for item in people_items:
-                        names = {name for name in item.get("names", set()) if name in missing_people_unique}
-                        if not names:
-                            continue
-                        if names.issubset(missing_people_seen_names):
-                            continue
-                        block = item.get("block")
-                        if block and block not in missing_people_seen_blocks:
-                            missing_people_blocks.append(block)
-                            missing_people_seen_blocks.add(block)
-                        missing_people_seen_names.update(names)
                 if skip_save_if_cached and cached_run_key == summary.get("run_key"):
                     duplicates += 1
                 else:
@@ -5790,57 +5899,17 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     skipped_incomplete=skipped_incomplete,
                     skipped_invalid=skipped_invalid,
                     errors=errors,
-                    missing_people_unique=len(missing_people_unique),
-                    missing_people_logs=missing_people_logs,
                     sample_incomplete=sample_incomplete,
                     sample_errors=sample_errors,
                 )
             if idx % LOGSCAN_INGEST_CACHE_FLUSH_INTERVAL == 0:
                 _flush_ingest_cache_progress(force=True)
 
-        cache_dir = _get_logscan_cache_dir()
-        missing_people_log = cache_dir / "meta_people_missing.log"
-        missing_people_meta = cache_dir / "meta_people_missing.json"
-        missing_people_log_ready = False
-        missing_people_log_lines = 0
-        if missing_people_blocks:
-            try:
-                missing_people_log_lines = sum(len(block.splitlines()) for block in missing_people_blocks)
-                output_parts = []
-                if missing_people_header:
-                    output_parts.append(missing_people_header)
-                    missing_people_log_lines += len(missing_people_header.splitlines())
-                output_parts.extend(missing_people_blocks)
-                missing_people_log.write_text("\n".join(output_parts).rstrip() + "\n", encoding="utf-8")
-                missing_people_log_ready = True
-                try:
-                    missing_people_meta.write_text(
-                        json.dumps(
-                            {
-                                "missing_people_unique": len(missing_people_unique),
-                                "missing_people_logs": missing_people_logs,
-                                "updated_at": datetime.now(timezone.utc).isoformat(),
-                            },
-                            ensure_ascii=True,
-                            indent=2,
-                        )
-                        + "\n",
-                        encoding="utf-8",
-                    )
-                except Exception:
-                    pass
-            except Exception as exc:
-                errors += 1
-                if len(sample_errors) < 5:
-                    sample_errors.append(f"{missing_people_log.name}: {exc}")
-        else:
-            try:
-                if missing_people_log.exists():
-                    missing_people_log.unlink()
-                if missing_people_meta.exists():
-                    missing_people_meta.unlink()
-            except Exception:
-                pass
+        missing_people_export = _rebuild_logscan_missing_people_export(cache_logs, analyzer=analyzer)
+        missing_export_errors = missing_people_export.get("sample_errors") if isinstance(missing_people_export, dict) else []
+        if missing_export_errors:
+            errors += len(missing_export_errors)
+            sample_errors.extend(error for error in missing_export_errors if len(sample_errors) < 5)
 
         result = {
             "success": True,
@@ -5850,10 +5919,10 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
             "skipped_incomplete": skipped_incomplete,
             "skipped_invalid": skipped_invalid,
             "errors": errors,
-            "missing_people_unique": len(missing_people_unique),
-            "missing_people_logs": missing_people_logs,
-            "missing_people_log_ready": missing_people_log_ready,
-            "missing_people_log_lines": missing_people_log_lines,
+            "missing_people_unique": missing_people_export.get("missing_people_unique", 0),
+            "missing_people_logs": missing_people_export.get("missing_people_logs", 0),
+            "missing_people_log_ready": missing_people_export.get("missing_people_log_ready", False),
+            "missing_people_log_lines": missing_people_export.get("missing_people_log_lines", 0),
             "sample_incomplete": sample_incomplete,
             "sample_errors": sample_errors,
         }
@@ -6269,6 +6338,8 @@ def logscan_trends_people_missing_status():
         {
             "exists": True,
             "missing_people_unique": meta.get("missing_people_unique"),
+            "missing_people_logs": meta.get("missing_people_logs"),
+            "missing_people_log_lines": meta.get("missing_people_log_lines"),
             "updated_at": meta.get("updated_at"),
         }
     )

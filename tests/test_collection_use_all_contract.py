@@ -89,4 +89,4 @@ def test_use_all_field_matches_the_shared_collection_contract():
             field = next(item for item in collection.get("template_variables", []) if isinstance(item, dict) and item.get("key") == "use_all")
             assert field["type"] == "toggle"
             assert field["default"] is True
-            assert "override" in field["tooltip"].lower()
+            assert "modification" in field["tooltip"].lower()
