@@ -1184,7 +1184,7 @@ function performStopKometa () {
 function fetchKometaLog () {
   if (logPollingPaused) return
 
-  const logEl = runLog[0]
+  const logEl = runLog
   const wasAtBottom = logEl ? (logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 5) : true
 
   logStatsPollCounter += 1
