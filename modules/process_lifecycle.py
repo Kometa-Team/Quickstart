@@ -40,6 +40,7 @@ import os
 import shlex
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -56,6 +57,8 @@ from modules.process_markers import (
 from modules.process_run_context import update_imagemaid_run_context
 
 _KOMETA_RUNTIME_BRANCHES = {"master", "develop", "nightly"}
+_LAUNCHED_PROCESSES = {}
+_LAUNCHED_PROCESSES_LOCK = threading.Lock()
 
 
 def _normalize_kometa_runtime_branch(value):
@@ -111,6 +114,28 @@ def stop_process_tree(proc):
     return alive
 
 
+def stop_launched_processes():
+    """Stop only Kometa/ImageMaid processes launched by this Quickstart process."""
+    with _LAUNCHED_PROCESSES_LOCK:
+        launched = list(_LAUNCHED_PROCESSES.items())
+        _LAUNCHED_PROCESSES.clear()
+
+    alive = []
+    for pid, child in launched:
+        if child.poll() is not None:
+            continue
+        try:
+            alive.extend(stop_process_tree(psutil.Process(pid)))
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return alive
+
+
+def _track_launched_process(proc):
+    with _LAUNCHED_PROCESSES_LOCK:
+        _LAUNCHED_PROCESSES[proc.pid] = proc
+
+
 def launch_kometa_command(command, config_name=None, start_mode="current"):
     if not command:
         return False, "No command provided"
@@ -161,6 +186,7 @@ def launch_kometa_command(command, config_name=None, start_mode="current"):
         start_new_session=True,
         env=runtime_env,
     )
+    _track_launched_process(proc)
 
     with open(helpers.get_kometa_pid_file(), "w", encoding="utf-8") as f:
         f.write(str(proc.pid))
@@ -225,6 +251,7 @@ def launch_imagemaid_command(command, mode=None, config_name=None):
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
+        _track_launched_process(proc)
 
         with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
             f.write(str(proc.pid))
@@ -232,6 +259,8 @@ def launch_imagemaid_command(command, mode=None, config_name=None):
         time.sleep(1.0)
         return_code = proc.poll()
         if return_code is not None:
+            with _LAUNCHED_PROCESSES_LOCK:
+                _LAUNCHED_PROCESSES.pop(proc.pid, None)
             launch_log.flush()
             try:
                 os.remove(helpers.get_imagemaid_pid_file())

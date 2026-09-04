@@ -136,6 +136,7 @@ from modules.process_lifecycle import (  # noqa: F401
     reset_imagemaid_runtime_env,
     resume_process_tree,
     stop_process_tree,
+    stop_launched_processes,
     suspend_process_tree,
 )
 

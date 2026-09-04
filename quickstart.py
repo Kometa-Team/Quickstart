@@ -26,6 +26,7 @@ import platform
 import psutil
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -365,6 +366,7 @@ from modules.process_control import (
     find_running_imagemaid_processes as _find_running_imagemaid_processes,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     find_running_imagemaid_process as _find_running_imagemaid_process,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     stop_process_tree as _stop_process_tree,
+    stop_launched_processes as _stop_launched_processes,
     launch_kometa_command as _launch_kometa_command,
     launch_imagemaid_command as _launch_imagemaid_command,  # noqa: F401 (load-bearing: tests + blueprints/imagemaid_routes.py access via qs_module)
     reset_imagemaid_runtime_env as _reset_imagemaid_runtime_env,  # noqa: F401 (used directly by tests as qs_module._reset_imagemaid_runtime_env)
@@ -3846,6 +3848,9 @@ def shutdown():
 
         shutdown_event.set()
 
+        if not app.config.get("QUICKSTART_DOCKER"):
+            _stop_launched_processes()
+
         try:
             from PyQt5.QtCore import QTimer
             from PyQt5.QtWidgets import QApplication
@@ -6927,6 +6932,23 @@ if __name__ == "__main__":
     except (ModuleNotFoundError, ImportError):
         has_tray = False
 
+    def handle_sigint(signum, frame):
+        if app.config["QUICKSTART_DOCKER"]:
+            signal.default_int_handler(signum, frame)
+            return
+        helpers.ts_log("\nShutting down Quickstart...", level="INFO")
+        _stop_launched_processes()
+        shutdown_event.set()
+        if has_tray:
+            qt_app = QApplication.instance()
+            if qt_app:
+                qt_app.quit()
+            return
+        raise KeyboardInterrupt
+
+    if not app.config["QUICKSTART_DOCKER"]:
+        signal.signal(signal.SIGINT, handle_sigint)
+
     if not has_tray:
         # Headless mode: skip system tray
         helpers.ts_log("Running in headless mode — no system tray will be shown...", level="INFO")
@@ -6952,9 +6974,11 @@ if __name__ == "__main__":
                 time.sleep(1)  # Keep main thread alive
         except KeyboardInterrupt:
             helpers.ts_log("\nShutting down Quickstart...", level="INFO")
+            _stop_launched_processes()
             sys.exit(0)
 
         helpers.ts_log("Shutting down Quickstart...", level="INFO")
+        _stop_launched_processes()
         sys.exit(0)
 
     else:
@@ -7116,6 +7140,8 @@ if __name__ == "__main__":
                 global server_thread, update_thread
 
                 helpers.ts_log("Shutting down Quickstart...", level="INFO")
+                shutdown_event.set()
+                _stop_launched_processes()
 
                 # Stop tray icon
                 self.tray.hide()

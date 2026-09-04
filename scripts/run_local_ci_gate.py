@@ -27,6 +27,7 @@ def run(command: list[str], *, env: dict[str, str] | None = None) -> int:
 def main() -> int:
     env = os.environ.copy()
     env["SKIP"] = "repo-ci-gate"
+    npm_command = "npm.cmd" if os.name == "nt" else "npm"
 
     # Mirror the repo's lint workflow exactly, but skip the current custom hook so
     # that the nested invocation does not recursively invoke itself. This keeps the
@@ -39,11 +40,11 @@ def main() -> int:
     if result != 0:
         return result
 
-    result = run(["npm", "ci", "--no-fund", "--no-audit"], env=env)
+    result = run([npm_command, "ci", "--no-fund", "--no-audit"], env=env)
     if result != 0:
         return result
 
-    result = run(["npm", "run", "build"], env=env)
+    result = run([npm_command, "run", "build"], env=env)
     if result != 0:
         return result
 
