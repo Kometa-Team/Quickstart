@@ -4,8 +4,15 @@ from pathlib import Path
 from ruamel.yaml import YAML
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXTURES_ROOT = ROOT / "tests" / "fixtures"
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
+
+# `config/kometa/defaults` is a gitignored local cache populated by a real Kometa
+# install. A fresh checkout does not have it, so fall back to the checked-in
+# fixtures so this contract remains reproducible in CI.
 STREAMING_DEFAULT_PATH = ROOT / "config" / "kometa" / "defaults" / "both" / "streaming.yml"
+if not STREAMING_DEFAULT_PATH.exists():
+    STREAMING_DEFAULT_PATH = FIXTURES_ROOT / "kometa" / "defaults" / "both" / "streaming.yml"
 
 
 def _load_streaming_collection():

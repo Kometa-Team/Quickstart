@@ -4390,17 +4390,18 @@ def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):
             return [FakeUser()]
 
     class FakeSection:
-        def __init__(self, title, section_type):
+        def __init__(self, title, section_type, key=1):
             self.title = title
             self.type = section_type
+            self.key = key
 
     class FakeLibrary:
         def sections(self):
             calls["sections"] += 1
             return [
-                FakeSection("Movies", "movie"),
-                FakeSection("Shows", "show"),
-                FakeSection("Music", "artist"),
+                FakeSection("Movies", "movie", key=1),
+                FakeSection("Shows", "show", key=2),
+                FakeSection("Music", "artist", key=3),
             ]
 
     class FakePlex:
@@ -4425,9 +4426,9 @@ def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):
 
     payload = resp.get_json()
     assert payload["validated"] is True
-    assert payload["movie_libraries"] == ["Movies"]
-    assert payload["show_libraries"] == ["Shows"]
-    assert payload["music_libraries"] == ["Music"]
+    assert payload["movie_libraries"] == [{"id": 1, "name": "Movies"}]
+    assert payload["show_libraries"] == [{"id": 2, "name": "Shows"}]
+    assert payload["music_libraries"] == [{"id": 3, "name": "Music"}]
     assert calls["sections"] == 1
 
 
@@ -6160,6 +6161,158 @@ def test_import_config_confirm_rehomes_bundled_overlay_source_images(client, iso
     bundled_image = isolated_config_dir.parent / Path(normalized_location)
     assert bundled_image.exists()
     assert bundled_image.read_bytes() == b"\x89PNG\r\n\x1a\nimported-overlay"
+
+
+def test_parse_csv_or_list_to_id_map_handles_all_shapes():
+    from blueprints.import_config_helpers import _parse_csv_or_list_to_id_map
+
+    # list of dicts (fresh Plex validation response)
+    assert _parse_csv_or_list_to_id_map([{"id": 10, "name": "Movies"}, {"id": 11, "name": " Shows "}]) == {
+        "10": "Movies",
+        "11": " Shows ",
+    }
+    # list of plain strings (legacy stored data / mocked tests) -- self-mapped
+    assert _parse_csv_or_list_to_id_map(["Movies", "Shows"]) == {"Movies": "Movies", "Shows": "Shows"}
+    # JSON string of dicts
+    assert _parse_csv_or_list_to_id_map(json.dumps([{"id": 5, "name": "Movies"}])) == {"5": "Movies"}
+    # CSV string (legacy stored format)
+    assert _parse_csv_or_list_to_id_map("Movies, Shows") == {"Movies": "Movies", "Shows": "Shows"}
+    # empty / unrecognized input
+    assert _parse_csv_or_list_to_id_map([]) == {}
+    assert _parse_csv_or_list_to_id_map("") == {}
+
+
+def test_import_config_preview_plex_libraries_include_ids(client, monkeypatch, qs_module):
+    import io
+
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_plex_server",
+        lambda _payload: {"validated": True, "movie_libraries": [{"id": 1, "name": "Movies"}], "show_libraries": [{"id": 2, "name": "Shows"}]},
+    )
+    monkeypatch.setattr(qs_module.validations, "validate_tmdb_server", lambda _payload: {"valid": True})
+
+    yaml_text = "plex:\n  url: http://plex.local\n  token: test-token\ntmdb:\n  apikey: test-key\n" "libraries:\n  Movies:\n    metadata_files:\n      - default: basic\n"
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_import_plex_ids", "file": (io.BytesIO(yaml_text.encode("utf-8")), "config.yml")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 200, resp.get_json()
+    payload = resp.get_json()
+    assert payload["plex_libraries"] == {
+        "movie": [{"id": "1", "name": "Movies"}],
+        "show": [{"id": "2", "name": "Shows"}],
+    }
+
+
+def _mock_import_id_mapping_deps(monkeypatch, qs_module, captured):
+    def _fake_prepare_import_payload(config_data, *_args, **_kwargs):
+        captured["libraries"] = config_data.get("libraries")
+
+        class _Report:
+            lines = ["imported: libraries.Movies.library"]
+
+            def summary(self):
+                return {"imported": 1, "unmapped": 0, "skipped": 0}
+
+        payload = {"libraries": {"libraries": {"mov-library_movies-library": "Movies"}}}
+        return payload, _Report()
+
+    monkeypatch.setattr(qs_module.importer, "prepare_import_payload", _fake_prepare_import_payload)
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_plex_server",
+        lambda _payload: {"validated": True, "movie_libraries": [{"id": 1, "name": "Movies"}], "show_libraries": []},
+    )
+    monkeypatch.setattr(qs_module.validations, "validate_tmdb_server", lambda _payload: {"valid": True})
+
+
+def _post_import_id_mapping_preview(client, config_name):
+    import io
+
+    yaml_text = "plex:\n  url: http://plex.local\n  token: test-token\n" "tmdb:\n  apikey: test-key\n" "libraries:\n  My Movies:\n    metadata_files:\n      - default: basic\n"
+    return client.post(
+        "/import-config/preview",
+        data={"config_name": config_name, "file": (io.BytesIO(yaml_text.encode("utf-8")), "config.yml")},
+        content_type="multipart/form-data",
+    )
+
+
+def test_import_config_confirm_resolves_library_id_mapping(client, isolated_config_dir, monkeypatch, qs_module):
+    captured = {}
+    _mock_import_id_mapping_deps(monkeypatch, qs_module, captured)
+
+    config_name = "pytest_import_id_mapping_confirm"
+    preview = _post_import_id_mapping_preview(client, config_name)
+    assert preview.status_code == 200, preview.get_json()
+    token = preview.get_json()["token"]
+
+    # "My Movies" doesn't match the live Plex library "Movies" -- the user
+    # picks it from the dropdown, which posts its Plex section ID ("1"),
+    # not its name.
+    confirm = client.post("/import-config/confirm", json={"token": token, "library_mapping": {"My Movies": "1"}})
+    assert confirm.status_code == 200, confirm.get_json()
+    assert confirm.get_json()["success"] is True
+
+    # The ID must have been resolved to the current Plex display name
+    # before the library config was handed off for saving.
+    assert captured["libraries"] == {"Movies": {"metadata_files": [{"default": "basic"}]}}
+
+
+def test_import_config_preview_mapped_resolves_library_id_mapping(client, monkeypatch, qs_module):
+    captured = {}
+    _mock_import_id_mapping_deps(monkeypatch, qs_module, captured)
+
+    config_name = "pytest_import_id_mapping_preview_mapped"
+    preview = _post_import_id_mapping_preview(client, config_name)
+    assert preview.status_code == 200, preview.get_json()
+    token = preview.get_json()["token"]
+
+    resp = client.post("/import-config/preview-mapped", json={"token": token, "library_mapping": {"My Movies": "1"}})
+    assert resp.status_code == 200, resp.get_json()
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["mapping_summary"]["mapped"] == 1
+    assert payload["mapping_summary"].get("missing", 0) == 0
+    assert payload["mapping_summary"].get("invalid", 0) == 0
+
+
+def test_import_config_confirm_rejects_unknown_library_mapping_id(client, monkeypatch, qs_module):
+    captured = {}
+    _mock_import_id_mapping_deps(monkeypatch, qs_module, captured)
+
+    config_name = "pytest_import_id_mapping_invalid"
+    preview = _post_import_id_mapping_preview(client, config_name)
+    assert preview.status_code == 200, preview.get_json()
+    token = preview.get_json()["token"]
+
+    confirm = client.post("/import-config/confirm", json={"token": token, "library_mapping": {"My Movies": "999"}})
+    assert confirm.status_code == 400
+    payload = confirm.get_json()
+    assert payload["success"] is False
+    assert "Invalid Plex libraries selected" in payload["message"]
+
+
+def test_import_config_confirm_resolves_legacy_name_only_library_mapping(client, isolated_config_dir, monkeypatch, qs_module):
+    """A mapping value that's a raw name (not an ID) still resolves.
+
+    Covers stored Plex settings predating the ID-keyed format (no
+    ``tmp_library_names``), where the id-map degrades to a name self-map,
+    and any stale client still posting name-valued mappings.
+    """
+    captured = {}
+    _mock_import_id_mapping_deps(monkeypatch, qs_module, captured)
+
+    config_name = "pytest_import_legacy_name_mapping"
+    preview = _post_import_id_mapping_preview(client, config_name)
+    assert preview.status_code == 200, preview.get_json()
+    token = preview.get_json()["token"]
+
+    confirm = client.post("/import-config/confirm", json={"token": token, "library_mapping": {"My Movies": "Movies"}})
+    assert confirm.status_code == 200, confirm.get_json()
+    assert confirm.get_json()["success"] is True
+    assert captured["libraries"] == {"Movies": {"metadata_files": [{"default": "basic"}]}}
 
 
 def test_build_libraries_section_emits_schedule_overlays(app):

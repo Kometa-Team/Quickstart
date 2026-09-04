@@ -134,9 +134,9 @@
               </tr>
             </thead>
             <tbody>
-              {% for lib_name, lib_info in page_info.telemetry.libraries.items() %}
+              {% for lib_id, lib_info in page_info.telemetry.libraries.items() %}
               <tr>
-                <td>{{ lib_name }}</td>
+                <td><code>{{ (lib_info.name or lib_id) | nbsp_leading_spaces }}</code></td>
                 <td><span class="badge bg-secondary text-uppercase">{{ lib_info.type }}</span></td>
                 <td><code>{{ lib_info.scanner }}</code></td>
                 <td><code>{{ lib_info.agent }}</code></td>
@@ -181,8 +181,8 @@
       <optgroup label="Movie Libraries">
         {% for library in movie_libraries %}
         <option value="{{ library.id }}" data-library-type="{{ library.type }}"
-          data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
-          {{ library.name }}{% if library.id in configured_ids %} (configured){% endif %}
+          data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}" title="{{ library.name | e }}">
+          [{{ library.name | nbsp_leading_spaces }}]{% if library.id in configured_ids %} (configured){% endif %}
         </option>
         {% endfor %}
       </optgroup>
@@ -191,8 +191,8 @@
       <optgroup label="Show Libraries">
         {% for library in show_libraries %}
         <option value="{{ library.id }}" data-library-type="{{ library.type }}"
-          data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
-          {{ library.name }}{% if library.id in configured_ids %} (configured){% endif %}
+          data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}" title="{{ library.name | e }}">
+          [{{ library.name | nbsp_leading_spaces }}]{% if library.id in configured_ids %} (configured){% endif %}
         </option>
         {% endfor %}
       </optgroup>

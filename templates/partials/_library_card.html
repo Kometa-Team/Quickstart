@@ -6,7 +6,7 @@
     role="button">
 
     <h4 class="mb-0 text-white">
-      <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name }}
+      <i class="bi bi-film text-muted me-2" title="Movie"></i>[{{ library.name | nbsp_leading_spaces }}]
       <span class="small accordion-override-summary ms-2 d-none" data-library-total-summary></span>
     </h4>
     {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
@@ -14,9 +14,9 @@
     <div class="d-flex align-items-center gap-2">
       <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
         <input type="hidden" id="{{ library.id }}-library-value" name="{{ library.id }}-library"
-          value="{{ include_checked or '' }}">
+          value="{{ 'true' if include_checked else '' }}">
         <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
-          data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
+          data-target-input="{{ library.id }}-library-value" value="true"
           {% if include_checked %}checked{% endif %}>
         <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
           title="Controls whether this library is written to the final config and validated.">Include in config</label>
@@ -48,7 +48,7 @@
     role="button">
 
     <h4 class="mb-0 text-white">
-      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name }}
+      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>[{{ library.name | nbsp_leading_spaces }}]
       <span class="small accordion-override-summary ms-2 d-none" data-library-total-summary></span>
     </h4>
     {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
@@ -56,9 +56,9 @@
     <div class="d-flex align-items-center gap-2">
       <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
         <input type="hidden" id="{{ library.id }}-library-value" name="{{ library.id }}-library"
-          value="{{ include_checked or '' }}">
+          value="{{ 'true' if include_checked else '' }}">
         <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
-          data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
+          data-target-input="{{ library.id }}-library-value" value="true"
           {% if include_checked %}checked{% endif %}>
         <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
           title="Controls whether this library is written to the final config and validated.">Include in config</label>

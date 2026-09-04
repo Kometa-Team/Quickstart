@@ -236,19 +236,28 @@ def get_plex_maintenance_hours(plex_url, plex_token):
         return None, None
 
 
-def get_library_summaries(configured_library_names):
+def get_library_summaries(configured_library_id_map):
+    """Build the per-library comment block for the config header.
+
+    ``configured_library_id_map`` is a ``{section_id_str: display_name}``
+    dict for the selected libraries, sorted by display name.  Each entry
+    is looked up in the Plex metadata by section ID (the canonical key),
+    so the lookup is unambiguous even when display names contain spaces
+    or clash after stripping.
+    """
     try:
         metadata = get_plex_metadata()
         lib_metadata = metadata.get("libraries", {})
 
         output_lines = []
-        for lib_name in configured_library_names:
-            info = lib_metadata.get(lib_name)
+        for lib_id, display_name in configured_library_id_map.items():
+            info = lib_metadata.get(str(lib_id))
             if not info:
-                output_lines.append(f"Library '{lib_name}' not found on Plex server.")
+                output_lines.append(f"Library '{display_name}' (ID {lib_id}) not found on Plex server.")
                 continue
 
-            output_lines.append(f"Information on library: {lib_name}")
+            lib_name = info.get("name", display_name)
+            output_lines.append(f"Information on library: [{lib_name}]")
             output_lines.append(f"Type: {info.get('type', 'Unknown').capitalize()}")
             output_lines.append(f"Agent: {info.get('agent', 'Unknown')}")
             output_lines.append(f"Scanner: {info.get('scanner', 'Unknown')}")
@@ -272,7 +281,9 @@ def get_library_summaries(configured_library_names):
         return "\n".join(output_lines).strip()
 
     except Exception as e:
-        return f"Plex library summary unavailable: {str(e)}"
+        message = f"Plex library summary unavailable: {str(e)}"
+        ts_log(message, level="WARNING")
+        return message
 
 
 def get_plex_metadata(plex_url=None, plex_token=None):
@@ -366,8 +377,10 @@ def get_library_metadata(plex=None, sections=None, plex_url=None, plex_token=Non
             sections = plex.library.sections()
 
         for section in sections:
+            section_id = str(section.key)
             try:
                 lib_info = {
+                    "name": section.title,
                     "agent": section.agent,
                     "scanner": section.scanner,
                     "type": section.type,
@@ -399,10 +412,11 @@ def get_library_metadata(plex=None, sections=None, plex_url=None, plex_token=Non
                 except Exception as e:
                     lib_info["error"] = str(e)
 
-                library_data[section.title] = lib_info
+                library_data[section_id] = lib_info
 
             except Exception as lib_err:
-                library_data[section.title] = {
+                library_data[section_id] = {
+                    "name": section.title,
                     "agent": "Unknown",
                     "scanner": "Unknown",
                     "type": "Unknown",

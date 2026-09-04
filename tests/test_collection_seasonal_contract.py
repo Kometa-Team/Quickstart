@@ -4,8 +4,15 @@ from pathlib import Path
 from ruamel.yaml import YAML
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXTURES_ROOT = ROOT / "tests" / "fixtures"
 QS_COLLECTIONS_PATH = ROOT / "static" / "json" / "quickstart_collections.json"
+
+# `config/kometa/defaults` is a gitignored local cache populated by a real Kometa
+# install. A fresh checkout does not have it, so fall back to the checked-in
+# fixtures so this contract remains reproducible in CI.
 SEASONAL_DEFAULT_PATH = ROOT / "config" / "kometa" / "defaults" / "movie" / "seasonal.yml"
+if not SEASONAL_DEFAULT_PATH.exists():
+    SEASONAL_DEFAULT_PATH = FIXTURES_ROOT / "kometa" / "defaults" / "movie" / "seasonal.yml"
 
 
 def _load_seasonal_collection():

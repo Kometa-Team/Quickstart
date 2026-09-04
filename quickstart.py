@@ -279,6 +279,8 @@ from modules.logscan_cache import (
 )
 from modules.logscan_resume import (
     build_resume_library_scope as _build_resume_library_scope,  # noqa: F401 (used directly by tests as qs_module._build_resume_library_scope)
+    build_recovery_command as _build_recovery_command,
+    extract_selected_libraries as _extract_selected_libraries,
     extract_first_log_timestamp as _extract_first_log_timestamp,
     build_incomplete_run_timing_summary as _build_incomplete_run_timing_summary,  # noqa: F401 (used directly by tests as qs_module._build_incomplete_run_timing_summary)
     build_incomplete_scope_summary as _build_incomplete_scope_summary,  # noqa: F401 (used directly by tests as qs_module._build_incomplete_scope_summary)
@@ -286,6 +288,13 @@ from modules.logscan_resume import (
     build_recovery_suggestions as _build_recovery_suggestions,  # noqa: F401 (used directly by tests as qs_module._build_recovery_suggestions)
     build_resume_explanation as _build_resume_explanation,  # noqa: F401 (used directly by tests as qs_module._build_resume_explanation)
 )
+
+build_resume_library_scope = _build_resume_library_scope
+build_recovery_command = _build_recovery_command
+extract_selected_libraries = _extract_selected_libraries
+build_recovery_suggestions = _build_recovery_suggestions
+build_resume_explanation = _build_resume_explanation
+
 from modules.logscan_imagemaid_analysis import (
     resolve_imagemaid_run_config_name as _resolve_imagemaid_run_config_name,
 )
@@ -1149,6 +1158,20 @@ app = Flask(__name__)
 # so ``python quickstart.py`` after a fresh clone still works.
 # Roadmap #1334 Step 4 activation. See modules/helpers/_vite_manifest.py.
 app.jinja_env.globals["asset_url"] = helpers.asset_url
+app.jinja_env.globals["vite_dev_origin"] = helpers.vite_dev_origin
+
+
+def _nbsp_leading_spaces(s: str) -> str:
+    """Replace leading/trailing ASCII spaces with EM SPACE (U+2003) so they are visible in dropdowns."""
+    s = str(s)
+    lstripped = s.lstrip(" ")
+    leading = len(s) - len(lstripped)
+    rstripped = lstripped.rstrip(" ")
+    trailing = len(lstripped) - len(rstripped)
+    return " " * leading + rstripped + " " * trailing
+
+
+app.jinja_env.filters["nbsp_leading_spaces"] = _nbsp_leading_spaces
 
 app.register_blueprint(validation_routes_bp)
 app.register_blueprint(asset_routes_bp)
@@ -2289,6 +2312,9 @@ def step(name):
             refresh_plex_libraries()
             all_libraries = persistence.retrieve_settings("010-plex")
             plex_data = all_libraries.get("plex", {})
+            if name == "025-libraries":
+                # Re-read after migration may have renamed old name-based keys to ID-based keys.
+                data = persistence.retrieve_settings(name)
 
     telemetry_payload = {}
     try:
@@ -2321,48 +2347,33 @@ def step(name):
 
     page_info["telemetry"] = telemetry_data
 
-    # Extract the movie and show libraries
+    # Extract the movie and show libraries by Plex section ID with display-name lookup.
+    _lib_name_map = persistence.get_library_names("010-plex")
     movie_libraries_raw = plex_data.get("tmp_movie_libraries", "")
     show_libraries_raw = plex_data.get("tmp_show_libraries", "")
 
-    # Debugging extracted values
     if app.config["QS_DEBUG"]:
         helpers.ts_log("Extracted movie libraries:", movie_libraries_raw, level="DEBUG")
         helpers.ts_log("Extracted show libraries:", show_libraries_raw, level="DEBUG")
 
-    # Ensure it's a string before splitting
-    if not isinstance(movie_libraries_raw, str):
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("tmp_movie_libraries is not a string!", level="ERROR")
-
-        movie_libraries_raw = ""
-
-    if not isinstance(show_libraries_raw, str):
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log("tmp_show_libraries is not a string!", level="ERROR")
-
-        show_libraries_raw = ""
-
-    existing_ids = set()  # Track used IDs to prevent duplicates
-
     movie_libraries = [
         {
-            "id": f"mov-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
-            "name": lib.strip(),
+            "id": f"mov-library_{lib_id}",
+            "name": _lib_name_map.get(str(lib_id), f"Library {lib_id}"),
             "type": "movie",
         }
-        for lib in movie_libraries_raw.split(",")
-        if lib.strip()
+        for lib_id in persistence.decode_library_ids(movie_libraries_raw)
+        if lib_id
     ]
 
     show_libraries = [
         {
-            "id": f"sho-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
-            "name": lib.strip(),
+            "id": f"sho-library_{lib_id}",
+            "name": _lib_name_map.get(str(lib_id), f"Library {lib_id}"),
             "type": "show",
         }
-        for lib in show_libraries_raw.split(",")
-        if lib.strip()
+        for lib_id in persistence.decode_library_ids(show_libraries_raw)
+        if lib_id
     ]
 
     # Ensure `libraries` dictionary exists
@@ -2401,9 +2412,10 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
-    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
-    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
+    plex_data["tmp_movie_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_movie_libraries", ""))
+    plex_data["tmp_show_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_show_libraries", ""))
+    plex_data["tmp_music_libraries"] = persistence.decode_library_ids(plex_data.get("tmp_music_libraries", ""))
+    plex_data["tmp_library_names"] = persistence.get_library_names("010-plex")
     plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
 
     # Ensure correct rendering for the Kometa page
@@ -2647,7 +2659,6 @@ def step(name):
         movie_libraries = []
         show_libraries = []
         library_dropdown = []
-        existing_ids = set()
 
         for key, value in library_settings.items():
             if key.startswith("mov-library_") and key.endswith("-library"):
@@ -6402,23 +6413,36 @@ def support_info():
     if not plex_summary or plex_summary.lower().startswith("plex summary unavailable"):
         plex_summary = "Plex info unavailable."
 
-    library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
+    library_settings = (persistence.retrieve_settings("025-libraries") or {}).get("libraries", {})
+    lib_name_map = persistence.get_library_names("010-plex") or {}
+
+    selected_library_id_map = {}
     movie_libraries = []
     show_libraries = []
     for key, value in library_settings.items():
-        if not key.endswith("-library") or value in [None, "", False]:
+        if not isinstance(key, str) or not key.endswith("-library"):
             continue
+        if value in [None, "", False]:
+            continue
+        lib_id = None
         if key.startswith("mov-library_"):
-            movie_libraries.append(str(value))
+            lib_id = key[len("mov-library_") : -len("-library")]
+            movie_libraries.append(str(lib_id))
         elif key.startswith("sho-library_"):
-            show_libraries.append(str(value))
+            lib_id = key[len("sho-library_") : -len("-library")]
+            show_libraries.append(str(lib_id))
+        if not lib_id:
+            continue
+        selected_library_id_map[str(lib_id)] = lib_name_map.get(str(lib_id), str(lib_id))
 
-    movie_libraries = sorted((name.strip() for name in movie_libraries if str(name).strip()), key=lambda value: value.casefold())
-    show_libraries = sorted((name.strip() for name in show_libraries if str(name).strip()), key=lambda value: value.casefold())
-    library_names = movie_libraries + show_libraries
+    library_names = dict(sorted(selected_library_id_map.items(), key=lambda item: str(item[1]).casefold()))
     if library_names:
         library_details = helpers.get_library_summaries(library_names)
         if library_details.lower().startswith("plex library summary unavailable"):
+            helpers.ts_log(
+                f"Support-info library summary unavailable for config '{config_name}' " f"with libraries {list(library_names.keys())}: {library_details}",
+                level="WARNING",
+            )
             library_details = "Library details unavailable."
     else:
         library_details = "No libraries configured."

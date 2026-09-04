@@ -116,29 +116,26 @@ def _build_library_lists():
     if not isinstance(telemetry_data, dict) or "plex_pass" not in telemetry_data:
         telemetry_data = telemetry.get("plex_telemetry", {})
 
-    movie_raw = plex_data.get("tmp_movie_libraries", "") if isinstance(plex_data.get("tmp_movie_libraries"), str) else ""
-    show_raw = plex_data.get("tmp_show_libraries", "") if isinstance(plex_data.get("tmp_show_libraries"), str) else ""
-
-    existing_ids = set()
+    lib_name_map = persistence.get_library_names("010-plex")
 
     movie_libraries = [
         {
-            "id": f"mov-library_{helpers.normalize_id(lib, existing_ids)}",
-            "name": lib,
+            "id": f"mov-library_{lib_id}",
+            "name": lib_name_map.get(str(lib_id), f"Library {lib_id}"),
             "type": "movie",
         }
-        for lib in movie_raw.split(",")
-        if lib
+        for lib_id in persistence.decode_library_ids(plex_data.get("tmp_movie_libraries", ""))
+        if lib_id
     ]
 
     show_libraries = [
         {
-            "id": f"sho-library_{helpers.normalize_id(lib, existing_ids)}",
-            "name": lib,
+            "id": f"sho-library_{lib_id}",
+            "name": lib_name_map.get(str(lib_id), f"Library {lib_id}"),
             "type": "show",
         }
-        for lib in show_raw.split(",")
-        if lib
+        for lib_id in persistence.decode_library_ids(plex_data.get("tmp_show_libraries", ""))
+        if lib_id
     ]
 
     return movie_libraries, show_libraries, telemetry_data

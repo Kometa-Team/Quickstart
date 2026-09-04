@@ -119,12 +119,15 @@ def analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=No
         progress = {}
 
     phase_current = (progress.get("phase_current") or "").strip().lower() or None
-    current_library = (progress.get("current_library") or "").strip() or None
-    if not current_library:
+    current_library = progress.get("current_library") if isinstance(progress.get("current_library"), str) else None
+    if current_library is None or not current_library.strip():
+        current_library = None
         for entry in progress.get("libraries", []) or []:
             if entry.get("status") == "In progress" and entry.get("name"):
-                current_library = str(entry.get("name")).strip()
+                current_library = str(entry.get("name"))
                 break
+    if current_library is not None and not current_library.strip():
+        current_library = None
 
     current_collection = None
     collection_in_library_re = re.compile(r"^\s*(.+?)\s+Collection\s+in\s+.+$", re.IGNORECASE)

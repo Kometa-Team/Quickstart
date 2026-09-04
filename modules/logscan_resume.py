@@ -8,7 +8,38 @@ from modules.process_control import extract_selected_libraries
 
 
 def normalize_cli_whitespace(command):
-    return re.sub(r"\s+", " ", str(command or "")).strip()
+    text = str(command or "")
+    if not text:
+        return ""
+
+    parts = []
+    current = []
+    quote = None
+
+    for char in text:
+        if quote:
+            current.append(char)
+            if char == quote:
+                quote = None
+            continue
+
+        if char in ('"', "'"):
+            quote = char
+            current.append(char)
+            continue
+
+        if char.isspace():
+            if current:
+                parts.append("".join(current))
+                current = []
+            continue
+
+        current.append(char)
+
+    if current:
+        parts.append("".join(current))
+
+    return " ".join(parts)
 
 
 def command_has_flag(command, flag):
@@ -38,19 +69,36 @@ def quote_cli_value(value):
     return f'"{escaped}"'
 
 
+def quote_library_scope_for_cli(library_scope=None):
+    values = normalize_library_scope_values(library_scope=library_scope)
+    if not values:
+        return ""
+    quoted_parts = [value for value in values]
+    return quote_cli_value("|".join(quoted_parts))
+
+
+def normalize_library_scope_name(value):
+    text = str(value or "")
+    if len(text) >= 2 and ((text[0] == '"' and text[-1] == '"') or (text[0] == "'" and text[-1] == "'")):
+        text = text[1:-1]
+    return text
+
+
+def normalize_library_scope_key(value):
+    return normalize_library_scope_name(value).strip().casefold()
+
+
 def normalize_library_scope_values(current_library=None, library_scope=None):
     values = []
-    seen = set()
 
     def add_value(raw):
-        candidate = str(raw or "").strip()
+        candidate = str(raw or "")
         if not candidate:
             return
-        normalized = candidate.casefold()
-        if normalized in seen:
+        normalized = normalize_library_scope_name(candidate)
+        if not normalized:
             return
-        seen.add(normalized)
-        values.append(candidate)
+        values.append(normalized)
 
     if isinstance(library_scope, (list, tuple, set)):
         for item in library_scope:
@@ -76,36 +124,33 @@ def build_resume_library_scope(original_command, progress_libraries=None, curren
     for entry in progress_libraries:
         if not isinstance(entry, dict):
             continue
-        name = str(entry.get("name") or "").strip()
-        if not name:
+        name = str(entry.get("name") or "")
+        if not name.strip():
             continue
         ordered_library_names.append(name)
-        status_by_name[name.casefold()] = str(entry.get("status") or "").strip()
+        status_by_name[normalize_library_scope_key(name)] = str(entry.get("status") or "").strip()
 
     base_scope = []
     if isinstance(selected_libraries, list) and selected_libraries:
-        base_scope = [str(name).strip() for name in selected_libraries if str(name).strip()]
+        base_scope = [str(name) for name in selected_libraries if str(name).strip()]
     elif run_option != "--run-libraries":
         base_scope = ordered_library_names[:]
 
     remaining = []
-    seen = set()
     for name in base_scope:
-        key = name.casefold()
+        key = normalize_library_scope_key(name)
         status = status_by_name.get(key, "")
         if status in ("Done", "Skipped"):
             continue
-        if key in seen:
-            continue
-        seen.add(key)
         remaining.append(name)
 
-    current_name = str(current_library or "").strip()
+    current_name = str(current_library or "")
     if current_name:
-        current_key = current_name.casefold()
-        if current_key not in seen:
+        current_key = normalize_library_scope_key(current_name)
+        existing_keys = {normalize_library_scope_key(str(name)) for name in remaining}
+        if current_key not in existing_keys:
             current_status = status_by_name.get(current_key, "")
-            current_in_base_scope = (not base_scope) or any(str(name).strip().casefold() == current_key for name in base_scope)
+            current_in_base_scope = (not base_scope) or any(normalize_library_scope_key(str(name)) == current_key for name in base_scope)
             if current_in_base_scope and current_status not in ("Done", "Skipped"):
                 if current_key in status_by_name or allow_current_fallback:
                     remaining.insert(0, current_name)
@@ -184,7 +229,7 @@ def build_recovery_command(base_command, phase=None, current_library=None, libra
     if library_scope is not None and not library_values:
         return ""
     if library_values:
-        command = f"{command} --run-libraries {quote_cli_value('|'.join(library_values))}"
+        command = f"{command} --run-libraries {quote_library_scope_for_cli(library_values)}"
     if not command_has_flag(command, "--run") and not command_has_flag(command, "--times"):
         command = f"{command} --run"
 
@@ -341,16 +386,11 @@ def build_incomplete_run_timing_summary(started_at=None, last_log_at=None, maint
 
 
 def dedupe_preserve_order(values):
-    seen = set()
     ordered = []
     for value in values or []:
-        name = str(value or "").strip()
-        if not name:
+        name = str(value or "")
+        if not name.strip():
             continue
-        lowered = name.casefold()
-        if lowered in seen:
-            continue
-        seen.add(lowered)
         ordered.append(name)
     return ordered
 
@@ -366,8 +406,8 @@ def build_incomplete_scope_summary(original_command="", suggested_command="", pr
     recovery_scope = dedupe_preserve_order(recovery_selected or original_scope)
     pruned = []
     if original_scope and recovery_scope:
-        recovery_lookup = {name.casefold() for name in recovery_scope}
-        pruned = [name for name in original_scope if name.casefold() not in recovery_lookup]
+        recovery_lookup = {normalize_library_scope_key(name) for name in recovery_scope}
+        pruned = [name for name in original_scope if normalize_library_scope_key(name) not in recovery_lookup]
 
     return {
         "original_scope": original_scope,

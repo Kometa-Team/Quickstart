@@ -2,6 +2,10 @@ from pathlib import Path
 import pytest
 from flask import session
 
+from modules.logscan_resume import dedupe_preserve_order
+from modules.process_control import extract_selected_libraries
+from modules import process_run_context
+
 
 def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(tmp_path, monkeypatch, qs_module):
     latest_candidate = tmp_path / "meta-latest.log"
@@ -98,7 +102,9 @@ def test_build_incomplete_run_timing_summary_accounts_for_maintenance_pause(qs_m
     assert summary["window"] == "02:00-05:00"
 
 
-def test_build_incomplete_run_timing_summary_marks_missing_maintenance_as_not_observed(qs_module):
+def test_build_incomplete_run_timing_summary_marks_missing_maintenance_as_not_observed(
+    qs_module,
+):
     summary = qs_module._build_incomplete_run_timing_summary(
         started_at="2026-05-05 01:00:00",
         last_log_at="2026-05-05 03:30:00",
@@ -108,7 +114,9 @@ def test_build_incomplete_run_timing_summary_marks_missing_maintenance_as_not_ob
     assert summary["pause_display"] == "Not observed"
 
 
-def test_build_incomplete_scope_summary_reports_completed_and_pruned_libraries(qs_module):
+def test_build_incomplete_scope_summary_reports_completed_and_pruned_libraries(
+    qs_module,
+):
     summary = qs_module._build_incomplete_scope_summary(
         original_command="kometa.py --run --config <config>",
         suggested_command='kometa.py --run --run-libraries "Movies|TV Shows" --resume "Top Picks" --config <config>',
@@ -149,15 +157,130 @@ def test_build_incomplete_progress_snapshot_exposes_rows_and_totals(qs_module):
             ],
         },
         last_log_at="2026-05-05 03:30:00",
-        config_data={"playlists": {"daily": {}}, "settings": {"run_order": ["operations", "metadata", "collections", "overlays"]}},
+        config_data={
+            "playlists": {"daily": {}},
+            "settings": {"run_order": ["operations", "metadata", "collections", "overlays"]},
+        },
         original_command="kometa.py --run --config <config>",
     )
 
-    assert [column["key"] for column in snapshot["columns"]] == ["operations", "metadata", "collections", "overlays", "playlists"]
+    assert [column["key"] for column in snapshot["columns"]] == [
+        "operations",
+        "metadata",
+        "collections",
+        "overlays",
+        "playlists",
+    ]
     assert snapshot["preparation_label"] == "30s"
     assert snapshot["rows"][0]["phase_cells"][0]["label"] == "2m"
     assert snapshot["rows"][1]["phase_cells"][2]["label"] == "1m 30s"
     assert snapshot["total_label"] == "7m 30s"
+
+
+def test_build_incomplete_progress_snapshot_preserves_library_name_whitespace(
+    qs_module,
+):
+    snapshot = qs_module._build_incomplete_progress_snapshot(
+        {
+            "phase_current": "collections",
+            "current_library": "  Movies  ",
+            "completed_count": 0,
+            "total_count": 1,
+            "libraries": [
+                {
+                    "name": "  Movies  ",
+                    "type": "movie",
+                    "status": "In progress",
+                    "durations": {},
+                }
+            ],
+        },
+        last_log_at="2026-05-05 03:30:00",
+        config_data={
+            "playlists": {"daily": {}},
+            "settings": {"run_order": ["operations", "collections"]},
+        },
+        original_command="kometa.py --run --config <config>",
+    )
+
+    assert snapshot["rows"][0]["name"] == "  Movies  "
+
+
+def test_resume_hint_metric_style_preserves_whitespace():
+    css_text = Path("static/css/styles.css").read_text(encoding="utf-8")
+
+    assert "white-space: pre-wrap" in css_text
+    assert "font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;" in css_text
+    assert "#incomplete-run-alert .qs-incomplete-run-metric-value" in css_text
+
+
+def test_extract_selected_libraries_preserves_whitespace_in_library_names():
+    command = 'kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>'
+
+    run_option, selected = extract_selected_libraries(command)
+
+    assert run_option == "--run-libraries"
+    assert selected == ["  Movies  ", "  TV Shows  "]
+
+
+def test_build_resume_library_scope_preserves_original_label_when_equivalent_by_whitespace(
+    qs_module,
+):
+    scope = qs_module._build_resume_library_scope(
+        original_command='kometa.py --run --run-libraries "  Movies  " --config <config>',
+        progress_libraries=[
+            {"name": "  Movies  ", "status": "In progress"},
+        ],
+        current_library="Movies",
+        allow_current_fallback=True,
+    )
+
+    assert scope == ["  Movies  "]
+
+
+def test_build_incomplete_scope_summary_preserves_leading_spaces_in_scope_labels(
+    qs_module,
+):
+    summary = qs_module._build_incomplete_scope_summary(
+        original_command='kometa.py --run --run-libraries "  Movies  " --config <config>',
+        suggested_command='kometa.py --run --run-libraries "  Movies  " --resume "Top Picks" --config <config>',
+        progress_libraries=[
+            {"name": "  Movies  ", "status": "In progress"},
+        ],
+    )
+
+    assert summary["original_scope_label"] == "  Movies  "
+    assert summary["recovery_scope_label"] == "  Movies  "
+    assert summary["pruned_label"] == ""
+
+
+def test_dedupe_preserve_order_keeps_whitespace_distinct_names():
+    values = ["Movies", " Movies ", "  Movies  ", "Movies"]
+
+    assert dedupe_preserve_order(values) == [
+        "Movies",
+        " Movies ",
+        "  Movies  ",
+        "Movies",
+    ]
+
+
+def test_build_resume_library_scope_matches_progress_libraries_whitespace_insensitively(
+    qs_module,
+):
+    scope = qs_module._build_resume_library_scope(
+        original_command='kometa.py --run --run-libraries " Movies| Movies| Movies | Movies| Movies | Movies L| Movies L-T | Movies | Movies |5YO-TMDB-Agent" --config <config>',
+        progress_libraries=[
+            {"name": "Movies", "status": "Done"},
+            {"name": "Movies L", "status": "Done"},
+            {"name": "Movies L-T", "status": "Done"},
+            {"name": "5YO-TMDB-Agent", "status": "Pending"},
+        ],
+        current_library="5YO-TMDB-Agent",
+        allow_current_fallback=True,
+    )
+
+    assert scope == ["5YO-TMDB-Agent"]
 
 
 def test_build_completed_log_progress_snapshot_does_not_require_request_context(qs_module, isolated_config_dir, monkeypatch):
@@ -214,7 +337,9 @@ def test_resume_explanation_calls_out_resume_not_used_for_operations(qs_module):
     assert "operations-phase" in joined
 
 
-def test_build_recovery_suggestions_preserves_full_run_scope_for_collection_resume(qs_module):
+def test_build_recovery_suggestions_preserves_full_run_scope_for_collection_resume(
+    qs_module,
+):
     suggestions = qs_module._build_recovery_suggestions(
         original_command="kometa.py --run --config <config>",
         phase_current="collections",
@@ -227,7 +352,60 @@ def test_build_recovery_suggestions_preserves_full_run_scope_for_collection_resu
     assert "--collections-only" not in suggestions[0]
 
 
-def test_build_recovery_suggestions_preserves_collections_only_scope_when_original_was_collections_only(qs_module):
+def test_build_recovery_command_preserves_library_name_whitespace(qs_module):
+    command = qs_module.build_recovery_command(
+        "kometa.py --run --config <config>",
+        phase="collections",
+        current_library="  Movies  ",
+    )
+
+    assert '--run-libraries "  Movies  "' in command
+
+
+def test_build_recovery_command_quotes_each_library_name_in_pipe_delimited_scope(
+    qs_module,
+):
+    command = qs_module.build_recovery_command(
+        "kometa.py --run --config <config>",
+        phase="collections",
+        library_scope=[" Movies", " Movies ", "Movies L", "5YO-TMDB-Agent"],
+    )
+
+    assert '--run-libraries " Movies| Movies |Movies L|5YO-TMDB-Agent"' in command
+
+
+def test_extract_selected_libraries_preserves_library_name_whitespace(qs_module):
+    run_option, selected_libraries = qs_module.extract_selected_libraries('kometa.py --run --run-libraries "  Movies  |  TV Shows  " --config <config>')
+
+    assert run_option == "--run-libraries"
+    assert selected_libraries == ["  Movies  ", "  TV Shows  "]
+
+
+def test_extract_selected_libraries_uses_windows_shlex_rules(monkeypatch):
+    monkeypatch.setattr(process_run_context.sys, "platform", "win32")
+
+    run_option, selected_libraries = process_run_context.extract_selected_libraries('kometa.py --run --run-libraries "Movies" --config "C:\\temp\\"')
+
+    assert run_option == "--run-libraries"
+    assert selected_libraries == ["Movies"]
+
+
+def test_extract_selected_libraries_strips_quotes_after_split_fallback(monkeypatch):
+    monkeypatch.setattr(
+        process_run_context.shlex,
+        "split",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(ValueError("boom")),
+    )
+
+    run_option, selected_libraries = process_run_context.extract_selected_libraries('kometa.py --run --run-libraries "Movies"')
+
+    assert run_option == "--run-libraries"
+    assert selected_libraries == ["Movies"]
+
+
+def test_build_recovery_suggestions_preserves_collections_only_scope_when_original_was_collections_only(
+    qs_module,
+):
     suggestions = qs_module._build_recovery_suggestions(
         original_command="kometa.py --run --collections-only --config <config>",
         phase_current="collections",
@@ -241,7 +419,9 @@ def test_build_recovery_suggestions_preserves_collections_only_scope_when_origin
     assert "--collections-only" in suggestions[0]
 
 
-def test_build_resume_library_scope_for_collections_only_without_run_libraries_uses_remaining_order(qs_module):
+def test_build_resume_library_scope_for_collections_only_without_run_libraries_uses_remaining_order(
+    qs_module,
+):
     scope = qs_module._build_resume_library_scope(
         original_command="kometa.py --run --collections-only --config <config>",
         progress_libraries=[
@@ -255,7 +435,9 @@ def test_build_resume_library_scope_for_collections_only_without_run_libraries_u
     assert scope == ["TV Shows", "Anime"]
 
 
-def test_build_resume_library_scope_for_collections_only_with_run_libraries_uses_selected_minus_completed(qs_module):
+def test_build_resume_library_scope_for_collections_only_with_run_libraries_uses_selected_minus_completed(
+    qs_module,
+):
     scope = qs_module._build_resume_library_scope(
         original_command='kometa.py --run --collections-only --run-libraries "Movies|TV Shows|Anime" --config <config>',
         progress_libraries=[
@@ -270,7 +452,9 @@ def test_build_resume_library_scope_for_collections_only_with_run_libraries_uses
     assert scope == ["TV Shows", "Anime"]
 
 
-def test_build_recovery_suggestions_for_collections_only_scopes_to_remaining_libraries(qs_module):
+def test_build_recovery_suggestions_for_collections_only_scopes_to_remaining_libraries(
+    qs_module,
+):
     suggestions = qs_module._build_recovery_suggestions(
         original_command="kometa.py --run --collections-only --config <config>",
         phase_current="collections",
@@ -316,7 +500,9 @@ def test_build_recovery_suggestions_for_phase_only_runs_prune_completed_librarie
     assert "--resume" not in suggestions[0]
 
 
-def test_build_recovery_suggestions_for_full_run_prune_completed_libraries_without_changing_scope(qs_module):
+def test_build_recovery_suggestions_for_full_run_prune_completed_libraries_without_changing_scope(
+    qs_module,
+):
     suggestions = qs_module._build_recovery_suggestions(
         original_command="kometa.py --run --config <config>",
         phase_current="operations",
@@ -334,7 +520,9 @@ def test_build_recovery_suggestions_for_full_run_prune_completed_libraries_witho
     assert "--resume" not in suggestions[0]
 
 
-def test_build_recovery_suggestions_returns_no_recovery_when_pruning_leaves_zero_libraries(qs_module):
+def test_build_recovery_suggestions_returns_no_recovery_when_pruning_leaves_zero_libraries(
+    qs_module,
+):
     suggestions = qs_module._build_recovery_suggestions(
         original_command="kometa.py --run --collections-only --config <config>",
         phase_current="collections",
@@ -391,7 +579,10 @@ def test_read_logscan_text_appends_live_kometa_maintenance_sidecar(tmp_path, qs_
     meta_path = log_dir / "meta.log"
     sidecar_path = log_dir / "meta.quickstart-maintenance.log"
     meta_path.write_text("[2026-05-05 01:00:00,000] [kometa.py:1] [INFO] | Start\n", encoding="utf-8")
-    sidecar_path.write_text("[Quickstart] Maintenance marker: event=paused at=2026-05-05T06:00:00Z local_at=2026-05-05T02:00:00 window=02:00-05:00\n", encoding="utf-8")
+    sidecar_path.write_text(
+        "[Quickstart] Maintenance marker: event=paused at=2026-05-05T06:00:00Z local_at=2026-05-05T02:00:00 window=02:00-05:00\n",
+        encoding="utf-8",
+    )
 
     content = qs_module._read_logscan_text(meta_path, encoding="utf-8", errors="replace")
 

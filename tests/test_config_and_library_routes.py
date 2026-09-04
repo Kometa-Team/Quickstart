@@ -53,6 +53,51 @@ def test_activate_config_sanitises_name(client, isolated_config_dir):
     assert data["name"] == "myconfig"
 
 
+def test_support_info_uses_library_ids_not_boolean_toggles(client, isolated_config_dir, qs_module, monkeypatch):
+    import modules.helpers as helpers
+    import modules.persistence as persistence
+
+    captured = {}
+
+    def fake_retrieve_settings(section_name):
+        if section_name == "010-plex":
+            return {
+                "validated": True,
+                "plex": {
+                    "tmp_movie_libraries": "1,2",
+                    "tmp_show_libraries": "5",
+                    "tmp_library_names": '{"1": "Movies", "2": "TV Movies", "5": "Shows"}',
+                },
+            }
+        if section_name == "025-libraries":
+            return {
+                "validated": True,
+                "libraries": {
+                    "mov-library_1-library": "true",
+                    "mov-library_2-library": "true",
+                    "sho-library_5-library": "true",
+                },
+            }
+        return {}
+
+    def fake_get_library_summaries(value):
+        captured["value"] = value
+        return "OK"
+
+    monkeypatch.setattr(persistence, "retrieve_settings", fake_retrieve_settings)
+    monkeypatch.setattr(helpers, "get_plex_summary", lambda: "Connected to Plex server Test")
+    monkeypatch.setattr(helpers, "get_library_summaries", fake_get_library_summaries)
+    monkeypatch.setattr(helpers, "get_quickstart_settings_summary", lambda: ["# Quickstart Settings: test"])
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "support_info_test"
+
+    resp = client.get("/support-info")
+
+    assert resp.status_code == 200
+    assert captured["value"] == {"1": "Movies", "2": "TV Movies", "5": "Shows"}
+
+
 # ===========================================================================
 # /clear_session
 # ===========================================================================

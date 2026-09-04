@@ -52,6 +52,8 @@
     value="{{ data['plex']['tmp_movie_libraries'] }}" title="">
 <input type="hidden" class="form-control" id="tmp_show_libraries" name="tmp_show_libraries"
     value="{{ data['plex']['tmp_show_libraries'] }}" title="">
+<input type="hidden" class="form-control" id="tmp_library_names" name="tmp_library_names"
+    value="{{ data['plex']['tmp_library_names'] | default('') }}" title="">
 <div class="form-floating" style="display:none;">
     <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}"
         title="">

@@ -468,6 +468,10 @@ code {
     border-color: var(--theme-border);
 }
 
+#library-multiselect option {
+    white-space: pre;
+}
+
 /* -------------------- */
 /* HEADER STYLES        */
 /* -------------------- */
@@ -3380,6 +3384,12 @@ div#loading {
     color: var(--theme-text);
 }
 
+#run-command-output,
+.qs-recovery-command-output {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+}
+
 .btn.nav-button:disabled,
 .btn.nav-button.disabled {
     background-color: var(--theme-bg-dark) !important;
@@ -3872,6 +3882,8 @@ div#loading {
     display: block;
     margin-top: 0.2rem;
     color: #f5e4a8;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
 }

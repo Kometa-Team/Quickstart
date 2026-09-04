@@ -179,6 +179,8 @@
           </div>
           <div id="validate-all-status" class="small text-info mt-1 d-none"></div>
         </div>
+        {% set interactive_pages = [] %}
+        {% set nonservice_pages = ['001-start','900-kometa','910-sponsor','905-analytics'] %}
         <div class="table-responsive" data-qs-sticky-first="true">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
             <thead>
@@ -610,7 +612,7 @@
               <select multiple class="form-select" id="library-multiselect">
                 {% set dropdown_libraries = library_dropdown if library_dropdown else (movie_libraries + show_libraries) %}
                 {% for lib in dropdown_libraries %}
-                <option value="{{ lib.name }}">{{ lib.name }}</option>
+                <option value="{{ lib.name | e }}" title="{{ lib.name | e }}">[{{ lib.name | nbsp_leading_spaces }}]</option>
                 {% endfor %}
               </select>
             </div>
@@ -1032,7 +1034,7 @@
                         <tbody>
                           {% for row in incomplete_resume_hint.progress_snapshot.rows %}
                           <tr>
-                            <td>{{ row.name }}</td>
+                            <td><code>{{ row.name | nbsp_leading_spaces }}</code></td>
                             <td>{{ row.type }}</td>
                             <td><span class="badge {{ row.status_class }}">{{ row.status }}</span></td>
                             {% for cell in row.phase_cells %}
