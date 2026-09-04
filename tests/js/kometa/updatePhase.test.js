@@ -376,6 +376,13 @@ describe('setKometaStatusLog', () => {
     expect(box.textContent).toBe('fresh line\n')
   })
 
+  it('scrolls to the bottom after replacing the log', () => {
+    const box = installLogBox()
+    Object.defineProperty(box, 'scrollHeight', { configurable: true, value: 500 })
+    setKometaStatusLog('fresh line')
+    expect(box.scrollTop).toBe(500)
+  })
+
   it('updates the phase badge when a phase is passed', () => {
     installLogBox()
     installBadge()  // add badge alongside log box

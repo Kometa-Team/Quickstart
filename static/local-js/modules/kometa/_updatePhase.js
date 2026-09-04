@@ -376,14 +376,7 @@ export function setKometaStatusLog (lines, phase = null) {
   if (!logBox) return
   const text = Array.isArray(lines) ? lines.join('\n') : String(lines || '')
   logBox.textContent = text ? `${text}\n` : ''
-  // NOTE: the original code did `if (logBox[0]) logBox[0].scrollTop = ...`
-  // which is jQuery-style indexing on a plain DOM node -- always
-  // undefined, so the scroll-to-bottom never actually happened here.
-  // Preserving that (non-)behavior verbatim to keep this refactor
-  // 100% behavior-compatible. If you WANT the scroll (which
-  // appendKometaStatusLine below does correctly), fix it in a
-  // follow-up so the diff stays clear.
-  if (logBox[0]) logBox[0].scrollTop = logBox[0].scrollHeight
+  logBox.scrollTop = logBox.scrollHeight
   if (phase) setKometaUpdatePhaseBadge(phase)
 }
 
