@@ -2418,7 +2418,7 @@ function renderLibraryInventory (runs) {
 }
 
 function renderIngestHealth (state) {
-  if (!ingest.length) return
+  if (!ingest) return
   const invalidArchivedCount = Number.isFinite(state && state.invalid_archived_count) ? state.invalid_archived_count : 0
   const invalidArchivedSample = Array.isArray(state && state.invalid_archived_sample) ? state.invalid_archived_sample : []
 
@@ -2908,12 +2908,12 @@ function updateStatus (message) {
 }
 
 function setReingestButtonLabel (label) {
-  if (!reingest.length) return
+  if (!reingest) return
   reingest.textContent = label || defaultReingestButtonLabel
 }
 
 function setProgressVisible (visible) {
-  if (!progress.length) return
+  if (!progress) return
   if (visible) {
     progress.classList.remove('d-none')
   } else {
@@ -2922,7 +2922,7 @@ function setProgressVisible (visible) {
 }
 
 function updateProgressFromState (state) {
-  if (!state || !progressBar.length) return
+  if (!state || !progressBar) return
   lastIngestState = state
   renderIngestHealth(lastIngestState)
   const total = Number.isFinite(state.total) ? state.total : 0
@@ -2932,7 +2932,7 @@ function updateProgressFromState (state) {
   const skippedInvalid = Number.isFinite(state.skipped_invalid) ? state.skipped_invalid : 0
   const errors = Number.isFinite(state.errors) ? state.errors : 0
   const pct = total ? Math.min(100, Math.round((scanned / total) * 100)) : 0
-  progressBar.css('width', `${pct}%`)
+  progressBar.style.width = `${pct}%`
   const pieces = [
     `Scanned: ${scanned}/${total}`,
     `Ingested: ${ingested}`,
@@ -2942,7 +2942,7 @@ function updateProgressFromState (state) {
   if (state.current_file) {
     pieces.unshift(`Processing: ${formatProcessingFileLabel(state.current_file)}`)
   }
-  if (progressText.length) {
+  if (progressText) {
     progressText.textContent = pieces.join(' | ')
   }
 }
@@ -3278,10 +3278,10 @@ function buildKometaDetailsBlock (run) {
 
 function showRunDetails (runKey) {
   if (!runKey) return
-  if (runDetailsBody.length) {
+  if (runDetailsBody) {
     runDetailsBody.innerHTML = 'Loading recommendations...'
   }
-  if (runDetailsTitle.length) {
+  if (runDetailsTitle) {
     runDetailsTitle.textContent = 'Run Recommendations'
   }
   if (runDetailsModalEl) {
@@ -3291,7 +3291,7 @@ function showRunDetails (runKey) {
     .then(res => res.json().then(data => ({ ok: res.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) {
-        if (runDetailsBody.length) {
+        if (runDetailsBody) {
           runDetailsBody.textContent = data && data.error ? data.error : 'Unable to load recommendations.'
         }
         return
@@ -3299,7 +3299,7 @@ function showRunDetails (runKey) {
       const detailsBlock = `${buildKometaDetailsBlock(data && data.run)}${buildImagemaidDetailsBlock(data && data.run)}`
       const recs = Array.isArray(data.recommendations) ? data.recommendations : []
       if (!recs.length) {
-        if (runDetailsBody.length) {
+        if (runDetailsBody) {
           runDetailsBody.innerHTML = detailsBlock || 'No recommendations recorded for this run.'
         }
         return
@@ -3314,12 +3314,12 @@ function showRunDetails (runKey) {
           </div>
         `
       })
-      if (runDetailsBody.length) {
+      if (runDetailsBody) {
         runDetailsBody.innerHTML = `${detailsBlock}${blocks.join('')}`
       }
     })
     .catch(() => {
-      if (runDetailsBody.length) {
+      if (runDetailsBody) {
         runDetailsBody.textContent = 'Unable to load recommendations.'
       }
     })
@@ -3426,10 +3426,10 @@ function fetchIncompleteRuns (safeLimit) {
 function showSectionDetails (runKey) {
   const payload = sectionDetailsByRunKey.get(runKey)
   if (!payload) return
-  if (runDetailsTitle.length) {
+  if (runDetailsTitle) {
     runDetailsTitle.textContent = 'Section Runtimes'
   }
-  if (runDetailsBody.length) {
+  if (runDetailsBody) {
     const summary = payload.summary || 'n/a'
     const details = Array.isArray(payload.details) ? payload.details : []
     let bodyHtml = `
@@ -3459,10 +3459,10 @@ function showQuietPeriodDetails (runKey) {
   const run = allTableRuns.find(entry => entry && entry.run_key === runKey)
   const summary = getQuietPeriodSummary(run)
   if (!run || summary.longestGapSeconds <= 0) return
-  if (runDetailsTitle.length) {
+  if (runDetailsTitle) {
     runDetailsTitle.textContent = 'Quiet Period Details'
   }
-  if (runDetailsBody.length) {
+  if (runDetailsBody) {
     const renderGapBlock = (title, gapSeconds, startedAtRaw, endedAtRaw, startLine, endLine, overlap, lastLine, firstLine) => {
       if (!(gapSeconds > 0)) {
         return `
@@ -3651,7 +3651,7 @@ function openCompressLogModal (runKeys, runLabel) {
     runLabel,
     bulk: normalizedRunKeys.length > 1
   }
-  if (compressLogBody.length) {
+  if (compressLogBody) {
     if (normalizedRunKeys.length === 1) {
       compressLogBody.innerHTML = `Compress archived log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> as <code>.log.gz</code>?`
     } else {
@@ -3680,7 +3680,7 @@ function openDeleteLogModal (runKeys, runLabel) {
     runLabel,
     bulk: normalizedRunKeys.length > 1
   }
-  if (deleteLogBody.length) {
+  if (deleteLogBody) {
     if (normalizedRunKeys.length === 1) {
       deleteLogBody.innerHTML = `Delete log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> from disk and remove it from Analytics?`
     } else {
