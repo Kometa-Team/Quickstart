@@ -356,7 +356,11 @@ def _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loade
 
 
 def _has_saved_value(value):
-    return value not in [None, "", [], {}, "[]", "{}"]
+    if value in [None, "", [], {}, "[]", "{}"]:
+        return False
+    if isinstance(value, str) and value.strip().lower() in {"none", "null"}:
+        return False
+    return True
 
 
 def _coerce_bool(value):

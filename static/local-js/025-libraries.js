@@ -4240,7 +4240,7 @@ function initScheduleBuilders (scope) {
 
     function parseSchedule (rawValue) {
       const raw = String(rawValue || '').trim()
-      if (!raw) return { mode: 'range', raw: '' }
+      if (!raw || ['none', 'null'].includes(raw.toLowerCase())) return { mode: 'range', raw: '' }
       const lower = raw.toLowerCase()
       if (['daily', 'never', 'non_existing'].includes(lower)) {
         return { mode: lower, raw }
@@ -4373,7 +4373,10 @@ function initScheduleBuilders (scope) {
       updatePreview(parsed.raw || '')
     }
 
-    const initialRaw = String(hidden.value || defaultValue || '').trim()
+    const rawHiddenValue = String(hidden.value || '').trim()
+    const initialRaw = ['none', 'null'].includes(rawHiddenValue.toLowerCase())
+      ? String(defaultValue || '').trim()
+      : (rawHiddenValue || String(defaultValue || '').trim())
     const parsed = parseSchedule(initialRaw)
     applyParsed(parsed)
     updateFromBuilder()
@@ -9162,6 +9165,10 @@ function isInternalTemplateMetadataField (field) {
     name.endsWith('__lookup_labels')
 }
 
+function isBlankSavedSentinel (value) {
+  return ['none', 'null'].includes(String(value ?? '').trim().toLowerCase())
+}
+
 function isCollectionSectionFieldConfigured (fields) {
   const enabledFields = Array.from(fields || []).filter(field => field && !field.disabled && !isInternalTemplateMetadataField(field))
   if (!enabledFields.length) return false
@@ -9205,6 +9212,7 @@ function isCollectionSectionFieldConfigured (fields) {
 
   const value = String(primaryField.value ?? '').trim()
   const defaultValue = String(primaryField.dataset.default || '').trim()
+  if (isBlankSavedSentinel(value)) return false
   if (primaryField.closest('[data-schedule-builder]')) {
     return normalizeScheduleOverrideValue(value) !== normalizeScheduleOverrideValue(defaultValue)
   }
