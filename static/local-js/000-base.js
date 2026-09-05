@@ -2360,9 +2360,10 @@ function getCurrentTemplateGroup () {
 function qsCurrentValidationCalloutState (isConfigured) {
   const inputState = qsStateFromValidatedInput(getValidatedInput())
   const currentState = qsGetCurrentStepStatus()
+  if (inputState === 'ok') return 'ok'
   if (currentState === 'error' || inputState === 'error') return 'error'
   if (currentState === 'warn' || inputState === 'warn') return 'warn'
-  if (isConfigured || currentState === 'ok' || inputState === 'ok') return 'ok'
+  if (isConfigured || currentState === 'ok') return 'ok'
   if (currentState === 'unknown' || inputState === 'unknown') return 'unknown'
   return null
 }
