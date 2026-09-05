@@ -14,12 +14,20 @@ Covers:
 
 
 def test_activate_config_creates_new_config_and_sets_session(client, isolated_config_dir):
+    from modules import database, persistence
+
     resp = client.post("/activate-config", json={"name": "myprofile"})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["success"] is True
     assert data["name"] == "myprofile"
     assert data["created"] is True  # brand-new config
+
+    validated, user_entered, stored = database.retrieve_section_data("myprofile", "settings")
+    assert validated is True
+    assert user_entered is False
+    assert stored["settings"] == persistence.get_dummy_data("settings")
+    assert stored["validated_at"]
 
 
 def test_activate_config_existing_config_not_flagged_as_created(client, isolated_config_dir):

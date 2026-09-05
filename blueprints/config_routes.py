@@ -82,9 +82,10 @@ def activate_config():
     session["config_name"] = name
 
     if created:
+        created_at = helpers.utc_now_iso()
         seed_payload = {
             "start": {"config_name": name},
-            "validated_at": helpers.utc_now_iso(),
+            "validated_at": created_at,
         }
         database.save_section_data(
             name=name,
@@ -92,6 +93,14 @@ def activate_config():
             validated=True,
             user_entered=True,
             data=seed_payload,
+        )
+        settings_defaults = persistence.get_dummy_data("settings")
+        database.save_section_data(
+            name=name,
+            section="settings",
+            validated=True,
+            user_entered=False,
+            data={"settings": settings_defaults, "validated_at": created_at},
         )
 
     return jsonify(success=True, name=name, created=created)
