@@ -447,6 +447,11 @@ def test_lazy_overlay_count_uses_rendered_ratings_defaults(library_routes_module
     assert library_routes_module._count_overlay_overrides_for_library(library, libraries_data, overlay_config) == 6
 
 
+def test_lazy_override_count_ignores_none_sentinels(library_routes_module):
+    assert library_routes_module._template_value_is_configured("None", "") is False
+    assert library_routes_module._template_value_is_configured(" null ", "") is False
+
+
 def test_library_fragment_section_renders_requested_heavy_section(client, monkeypatch, qs_module, library_routes_module):
     monkeypatch.setattr(
         library_routes_module,

@@ -821,7 +821,7 @@ select_input.key if yml_location == "top_level" else
                             <input type="text" class="form-control"
                                 id="{{ library.id }}-attribute_{{ section.prefix }}_path"
                                 name="{{ library.id }}-attribute_{{ section.prefix }}_path"
-                                value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_path'] | default('') }}"
+                                value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_path'] | default('', true) if data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_path'] | string | lower not in ['none', 'null'] else '' }}"
                                 data-default=""
                                 placeholder="{{ section.text_input.placeholder }}">
                         </div>
@@ -1830,7 +1830,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 {% endif %}
                             </span>
                             <input type="{{ 'number' if is_number_input else 'text' }}" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
-                                value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
+                                value="{{ data['libraries'].get(input_name, item.default) | default('', true) if data['libraries'].get(input_name, item.default) | string | lower not in ['none', 'null'] else '' }}"
                                 data-default="{{ item.default | default('', true) }}"
                                 {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
                                 {% if item.validation_preset %}data-template-scalar-lookup="true" data-library-name="{{ library.name }}" data-media-type="{{ library.type }}"{% endif %}
