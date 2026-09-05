@@ -245,14 +245,18 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
         if group == "optional" and not _has_meaningful_optional_input(template_key, payload):
             return "unknown"
 
+        if template_key == "025-libraries" and validation_status == "skipped" and validation_reason == "no_libraries":
+            return "error"
+
+        if validated or validation_status == "validated":
+            return "ok"
+
         if validation_status == "failed":
             return "error"
 
         if validation_status == "skipped":
             if template_key == "027-playlist_files" and validation_reason == "no_libraries":
                 return "unknown"
-            if template_key == "025-libraries" and validation_reason == "no_libraries":
-                return "error"
             if validation_reason in QS_ERROR_REASONS:
                 return "error"
             if group == "optional":
@@ -262,9 +266,6 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
             if validation_reason in QS_WARN_REASONS:
                 return "warn"
             return "warn" if group == "required" else ("warn" if user_entered else "ok")
-
-        if validated or validation_status == "validated":
-            return "ok"
 
         if group == "required":
             if not user_entered:
