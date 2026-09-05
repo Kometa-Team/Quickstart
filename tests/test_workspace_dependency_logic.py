@@ -959,6 +959,27 @@ def test_required_no_libraries_skip_beats_stale_validated_flag(qs_module):
     assert state == "error"
 
 
+def test_validated_step_stays_ok_when_skip_metadata_is_stale(qs_module):
+    section_rows = {
+        "tautulli": {
+            "validated": True,
+            "user_entered": True,
+            "data": {
+                "validation_status": "skipped",
+                "validation_reason": "missing_credentials",
+                "validated_at": "2026-04-20T10:00:00Z",
+                "tautulli": {
+                    "url": "https://tautulli.example.com",
+                    "apikey": "secret",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("030-tautulli", "optional", section_rows, config_exists=True)
+    assert state == "ok"
+
+
 def test_anidb_enabled_and_bulk_validated_is_ok(qs_module):
     section_rows = {
         "anidb": {
