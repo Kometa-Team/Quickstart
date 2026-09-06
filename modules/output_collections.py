@@ -723,4 +723,9 @@ def build_collection_files(
     if raw_collection_entries:
         collection_files.extend(raw_collection_entries)
 
+    collectionless_entries = [entry for entry in collection_files if _is_collectionless_entry(entry)]
+    if collectionless_entries:
+        collection_files = [entry for entry in collection_files if not _is_collectionless_entry(entry)]
+        collection_files.extend(collectionless_entries)
+
     return collection_files, has_collectionless

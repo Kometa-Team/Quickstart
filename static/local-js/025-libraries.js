@@ -7358,6 +7358,7 @@ function getCollectionSectionEntries (libraryId) {
     entries.push({
       collectionId,
       label,
+      isCollectionless: collectionId.toLowerCase().endsWith('collectionless'),
       inputId: input.id,
       defaultValue: String(input.dataset.default || '').trim(),
       currentValue: String(input.value || '').trim(),
@@ -7366,6 +7367,7 @@ function getCollectionSectionEntries (libraryId) {
     })
   })
   entries.sort((left, right) => {
+    if (left.isCollectionless !== right.isCollectionless) return left.isCollectionless ? 1 : -1
     const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)
     if (byValue !== 0) return byValue
     return left.domIndex - right.domIndex
