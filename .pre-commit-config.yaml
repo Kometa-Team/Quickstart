@@ -42,6 +42,7 @@ repos:
         entry: python scripts/run_local_ci_gate.py
         language: system
         pass_filenames: false
+        stages: [manual]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.5
     hooks:

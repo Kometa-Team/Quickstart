@@ -667,6 +667,8 @@ npm run lint:eslint    # ESLint over static/local-js/
 
 ```
 python scripts/run_local_ci_gate.py
+# or
+python -m pre_commit run repo-ci-gate --hook-stage manual
 ```
 
 This mirrors the important GitHub checks locally: full repo pre-commit validation, the project unit-test runner, and the production Vite build. If you prefer the explicit raw commands, the equivalent checks are:

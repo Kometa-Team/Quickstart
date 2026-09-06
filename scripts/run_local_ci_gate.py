@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Run the repo-local checks that most closely mirror the GitHub CI gate.
 
-This is intended to be used as a local pre-commit hook so developers catch the
-same classes of issues that would fail the repo's lint and build jobs before
-pushing.
+This is intended to be run manually before pushing when developers want to catch
+the same classes of issues that would fail the repo's lint and build jobs.
 """
 
 from __future__ import annotations

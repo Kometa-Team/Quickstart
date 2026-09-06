@@ -69839,6 +69839,15 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "999",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier.",
+            "section": "basics"
+          },
+          {
             "key": "sort_title",
             "label": "Sort Title",
             "type": "text_input",

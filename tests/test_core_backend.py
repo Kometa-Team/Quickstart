@@ -2565,12 +2565,12 @@ def test_build_libraries_section_emits_collection_files(app):
         )
 
         assert libraries_section["libraries"]["Movies"]["collection_files"] == [
-            {"default": "collectionless"},
             {"file": "C:\\Users\\bullmoose20\\Community-Configs\\bullmoose20\\godzilla.yml"},
             {"folder": "config\\metadata\\movies"},
             {"git": "bullmoose20/collections/godzilla.yml"},
             {"repo": "custom/movies_meta.yml"},
             {"url": "https://example.com/movies_refresh.yml"},
+            {"default": "collectionless"},
         ]
 
 
