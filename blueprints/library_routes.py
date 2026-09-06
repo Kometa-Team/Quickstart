@@ -470,6 +470,75 @@ def _has_active_collection_selection_for_library(library, libraries_data, collec
     return any(_collection_group_active_states_for_library(library, libraries_data, collection_config).values())
 
 
+def _collection_section_sort_key(value):
+    value = str(value or "").strip()
+    if value.isdigit():
+        return (0, int(value), "")
+    if value:
+        return (1, 0, value)
+    return (2, 0, "")
+
+
+def _collection_section_reorder_entries(library, libraries_data, collection_config=None):
+    if not isinstance(library, dict) or not isinstance(libraries_data, dict):
+        return []
+    library_id = library.get("id")
+    library_type = library.get("type")
+    if not library_id or not library_type:
+        return []
+
+    collection_config = collection_config if isinstance(collection_config, list) else helpers.load_quickstart_config("quickstart_collections.json")
+    entries = []
+    for group_index, group in enumerate(collection_config or []):
+        collections = group.get("collections", []) if isinstance(group, dict) else []
+        for collection_index, collection in enumerate(collections):
+            if not isinstance(collection, dict):
+                continue
+            media_types = collection.get("media_types") or []
+            if media_types and library_type not in media_types:
+                continue
+            collection_id = str(collection.get("id") or "").strip()
+            if not collection_id:
+                continue
+            if not _is_truthy_setting_value(libraries_data.get(f"{library_id}-{collection_id}")):
+                continue
+
+            section_item = None
+            for item in collection.get("template_variables", []) or []:
+                if isinstance(item, dict) and item.get("key") == "collection_section":
+                    section_item = item
+                    break
+            if not section_item:
+                continue
+
+            clean_id = collection_id.replace("collection_", "")
+            input_name = f"{library_id}-template_collection_{clean_id}_collection_section"
+            current_value = str(libraries_data.get(input_name) or "").strip()
+            default_value = str(section_item.get("default") or "").strip()
+            effective_value = current_value or default_value
+            entries.append(
+                {
+                    "collectionId": collection_id,
+                    "label": collection.get("label") or collection_id,
+                    "inputId": input_name,
+                    "inputName": input_name,
+                    "defaultValue": default_value,
+                    "currentValue": current_value,
+                    "effectiveValue": effective_value,
+                    "groupIndex": group_index,
+                    "collectionIndex": collection_index,
+                }
+            )
+
+    entries.sort(key=lambda entry: (_collection_section_sort_key(entry["effectiveValue"]), entry["groupIndex"], entry["collectionIndex"]))
+    return entries
+
+
+def _library_for_id(library_id):
+    movie_libraries, show_libraries, _telemetry_data = _build_library_lists()
+    return {lib["id"]: lib for lib in movie_libraries + show_libraries}.get(library_id)
+
+
 def _iter_overlay_template_items(template_variables):
     if isinstance(template_variables, dict):
         for key, details in template_variables.items():
@@ -934,6 +1003,92 @@ def library_fragment_collection_group(library_id, group_index):
     return render_template("partials/_collection_group_fragment.html", **context)
 
 
+@bp.route("/library_fragment/<library_id>/collection_section_entries", methods=["GET", "POST"])
+def library_collection_section_entries(library_id):
+    """Return enabled collection-section rows without hydrating lazy accordions."""
+    library = _library_for_id(library_id)
+    if not library:
+        return jsonify({"success": False, "error": "Library not found"}), 404
+
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+        source_payload = payload.get("source_payload") if isinstance(payload.get("source_payload"), dict) else {}
+        libraries_data = _build_merged_libraries_hint_payload(
+            {
+                "source_library_id": library_id,
+                "source_payload": source_payload,
+            }
+        )
+    else:
+        settings = persistence.retrieve_settings("025-libraries")
+        libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    entries = _collection_section_reorder_entries(library, libraries_data)
+    return jsonify({"success": True, "entries": entries})
+
+
+@bp.route("/library_fragment/<library_id>/collection_section_order", methods=["POST"])
+def save_library_collection_section_order(library_id):
+    """Persist collection_section order without requiring hidden DOM sections."""
+    library = _library_for_id(library_id)
+    if not library:
+        return jsonify({"success": False, "error": "Library not found"}), 404
+
+    payload = request.get_json(silent=True) or {}
+    reset = helpers.booler(payload.get("reset"))
+    ordered_ids = payload.get("collection_ids") or []
+    if not reset and not isinstance(ordered_ids, list):
+        return jsonify({"success": False, "error": "Invalid collection order payload."}), 400
+
+    settings = persistence.retrieve_settings("025-libraries")
+    libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    if not isinstance(libraries_data, dict):
+        libraries_data = {}
+
+    entries = _collection_section_reorder_entries(library, libraries_data)
+    entries_by_id = {entry["collectionId"]: entry for entry in entries}
+    if not reset:
+        ordered_ids = [str(item or "").strip() for item in ordered_ids if str(item or "").strip()]
+        missing_ids = sorted(set(entries_by_id) - set(ordered_ids))
+        unknown_ids = sorted(set(ordered_ids) - set(entries_by_id))
+        if missing_ids or unknown_ids:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Collection order does not match the enabled collection set.",
+                        "missing": missing_ids,
+                        "unknown": unknown_ids,
+                    }
+                ),
+                400,
+            )
+
+    updated_libraries = dict(libraries_data)
+    if reset:
+        for entry in entries:
+            updated_libraries.pop(entry["inputName"], None)
+    else:
+        for index, collection_id in enumerate(ordered_ids, start=1):
+            updated_libraries[entries_by_id[collection_id]["inputName"]] = f"{index * 10:03d}"
+
+    config_name = persistence.resolve_request_config_name(payload if isinstance(payload, dict) else {})
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=helpers.booler(settings.get("validated", False)) if isinstance(settings, dict) else False,
+        user_entered=True,
+        data={
+            "libraries": updated_libraries,
+            "validated": helpers.booler(settings.get("validated", False)) if isinstance(settings, dict) else False,
+            "validated_at": settings.get("validated_at") if isinstance(settings, dict) else None,
+        },
+    )
+    refreshed_settings = persistence.retrieve_settings("025-libraries")
+    refreshed_libraries = refreshed_settings.get("libraries", {}) if isinstance(refreshed_settings, dict) else updated_libraries
+    refreshed_entries = _collection_section_reorder_entries(library, refreshed_libraries)
+    return jsonify({"success": True, "entries": refreshed_entries, "reset": reset})
+
+
 @bp.route("/autosave_library/<library_id>", methods=["POST"])
 def autosave_library(library_id):
     """Merge-save a single library when switching cards without requiring full navigation submit."""
@@ -1013,7 +1168,12 @@ def _build_merged_libraries_hint_payload(payload):
     if not source_payload:
         return merged
 
-    clean_payload = persistence.clean_form_data(MultiDict(source_payload))
+    source_payload_for_merge = dict(source_payload)
+    loaded_sections = _coerce_loaded_library_sections(source_payload_for_merge.pop("__loaded_sections", []))
+    loaded_collection_groups_raw = source_payload_for_merge.pop("__loaded_collection_groups", None)
+    loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
+
+    clean_payload = persistence.clean_form_data(MultiDict(source_payload_for_merge))
     incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
     incoming_dict = incoming_dict if isinstance(incoming_dict, dict) else {}
 
@@ -1027,6 +1187,15 @@ def _build_merged_libraries_hint_payload(payload):
         prefix = _library_prefix_from_key(key)
         if prefix:
             prefixes.add(prefix)
+
+    for prefix in list(prefixes):
+        prefix_loaded_sections = _loaded_sections_with_payload_evidence(prefix, incoming_dict, loaded_sections)
+        incoming_dict = _preserve_unloaded_lazy_section_values(
+            prefix,
+            incoming_dict,
+            prefix_loaded_sections,
+            loaded_collection_groups,
+        )
 
     for prefix in prefixes:
         for existing_key in list(merged.keys()):

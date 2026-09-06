@@ -137,7 +137,8 @@ def normalize_overlay_source_override_file_location(location, *, config_name, li
     overlay_slug = _safe_overlay_image_slug(overlay_id, "overlay")
     template_slug = _safe_overlay_image_slug(template_key, "image")
     stem_slug = _safe_overlay_image_slug(source_path.stem, "image")
-    digest_source = f"{str(source_path).replace('\\', '/').lower()}|{library_slug}|{overlay_slug}|{template_slug}"
+    source_key = str(source_path).replace("\\", "/").lower()
+    digest_source = f"{source_key}|{library_slug}|{overlay_slug}|{template_slug}"
     digest = hashlib.sha1(digest_source.encode("utf-8", errors="ignore")).hexdigest()[:10]
     suffix = source_path.suffix or ".png"
 

@@ -6583,9 +6583,12 @@ function markLazyCollectionGroupLoaded (card, groupIndex) {
   marker.value = Array.from(values).sort((a, b) => Number(a) - Number(b)).join(',')
 }
 
-function loadLazyCollectionGroup (collapse, card) {
+function loadLazyCollectionGroup (collapse, card, options = {}) {
   if (!collapse || collapse.dataset?.collectionGroupLazyCollapse !== 'true') {
     return Promise.resolve(collapse?.closest('[data-collection-group-shell="true"]') || null)
+  }
+  if (collapse._collectionGroupLoadPromise) {
+    return collapse._collectionGroupLoadPromise
   }
   if (collapse.dataset.lazyState === 'loading') {
     return Promise.reject(new Error('Collection group is already loading.'))
@@ -6605,7 +6608,7 @@ function loadLazyCollectionGroup (collapse, card) {
   spinner?.classList.remove('d-none')
   if (status) status.textContent = 'Loading collection group settings...'
 
-  return fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/collections/group/${encodeURIComponent(groupIndex)}`, {
+  const loadPromise = fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/collections/group/${encodeURIComponent(groupIndex)}`, {
     credentials: 'same-origin'
   })
     .then(res => {
@@ -6623,20 +6626,31 @@ function loadLazyCollectionGroup (collapse, card) {
       replacement.dataset.collectionGroupIndex = String(groupIndex)
       const replacementCollapse = replacement.querySelector('.accordion-collapse')
       const replacementButton = replacement.querySelector('.accordion-button')
-      if (replacementCollapse) {
+      const expand = options.expand !== false
+      if (replacementCollapse && expand) {
         replacementCollapse.classList.add('show')
         replacementCollapse.dataset.collectionGroupLoaded = 'true'
         replacementCollapse.dataset.collectionGroupIndex = String(groupIndex)
       }
-      if (replacementButton) {
+      if (replacementButton && expand) {
         replacementButton.classList.remove('collapsed')
         replacementButton.setAttribute('aria-expanded', 'true')
+      }
+      if (replacementCollapse && !expand) {
+        replacementCollapse.dataset.collectionGroupLoaded = 'true'
+        replacementCollapse.dataset.collectionGroupIndex = String(groupIndex)
       }
       markLazyCollectionGroupLoaded(card, groupIndex)
       initializeLibraryCardControls(card, libraryId)
       refreshTemplateOverrideState(card)
       return replacement
     })
+    .finally(() => {
+      delete collapse._collectionGroupLoadPromise
+    })
+
+  collapse._collectionGroupLoadPromise = loadPromise
+  return loadPromise
 }
 
 function wireLazyCollectionGroups (card) {
@@ -7358,7 +7372,6 @@ function getCollectionSectionEntries (libraryId) {
     entries.push({
       collectionId,
       label,
-      isCollectionless: collectionId.toLowerCase().endsWith('collectionless'),
       inputId: input.id,
       defaultValue: String(input.dataset.default || '').trim(),
       currentValue: String(input.value || '').trim(),
@@ -7367,12 +7380,75 @@ function getCollectionSectionEntries (libraryId) {
     })
   })
   entries.sort((left, right) => {
-    if (left.isCollectionless !== right.isCollectionless) return left.isCollectionless ? 1 : -1
     const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)
     if (byValue !== 0) return byValue
     return left.domIndex - right.domIndex
   })
   return entries
+}
+
+function getActiveLibraryCardForId (libraryId) {
+  const container = document.getElementById(`${libraryId}-container`)
+  return container?.closest('.library-settings-card') ||
+    (activeLibraryId === libraryId ? libraryContainer?.querySelector('.library-settings-card') : null)
+}
+
+function fetchCollectionSectionEntries (libraryId) {
+  const card = getActiveLibraryCardForId(libraryId)
+  const sourcePayload = card ? buildPayloadFromCard(card) : {}
+  return fetch(`/library_fragment/${encodeURIComponent(libraryId)}/collection_section_entries`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source_payload: sourcePayload })
+  })
+    .then(res => {
+      if (!res.ok) {
+        return res.json().catch(() => ({})).then(body => {
+          throw new Error(body?.error || `Failed to load collection order (${res.status})`)
+        })
+      }
+      return res.json()
+    })
+    .then(data => {
+      if (!data || data.success !== true || !Array.isArray(data.entries)) {
+        throw new Error(data?.error || 'Invalid collection order response.')
+      }
+      return data.entries
+    })
+}
+
+function saveCollectionSectionOrderToServer (libraryId, collectionIds, reset) {
+  return fetch(`/library_fragment/${encodeURIComponent(libraryId)}/collection_section_order`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collection_ids: collectionIds, reset })
+  })
+    .then(res => {
+      if (!res.ok) {
+        return res.json().catch(() => ({})).then(body => {
+          throw new Error(body?.error || `Failed to save collection order (${res.status})`)
+        })
+      }
+      return res.json()
+    })
+    .then(data => {
+      if (!data || data.success !== true) {
+        throw new Error(data?.error || 'Invalid collection order save response.')
+      }
+      return Array.isArray(data.entries) ? data.entries : []
+    })
+}
+
+function syncHydratedCollectionSectionInputs (entries) {
+  ;(entries || []).forEach(entry => {
+    const input = entry.inputId ? document.getElementById(entry.inputId) : null
+    if (!input) return
+    input.value = String(entry.currentValue || '')
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
 }
 
 function buildCollectionSectionListItem (entry, position) {
@@ -7483,13 +7559,14 @@ function prepareCollectionSectionModal (modalEl) {
   return modalEl
 }
 
-function renderCollectionSectionModalList (modalEl) {
+function renderCollectionSectionModalList (modalEl, providedEntries = null) {
   if (!modalEl) return []
   const libraryId = modalEl.dataset.libraryId
   const list = modalEl.querySelector('[data-collection-section-sortable]')
   const status = modalEl.querySelector('[data-collection-section-modal-status]')
   const saveButton = modalEl.querySelector('[data-collection-section-save]')
-  const entries = getCollectionSectionEntries(libraryId)
+  const entries = Array.isArray(providedEntries) ? providedEntries : getCollectionSectionEntries(libraryId)
+  modalEl._collectionSectionEntries = entries
   list.replaceChildren()
   if (!entries.length) {
     if (status) status.textContent = 'No enabled collections with a collection_section field are available to reorder in this library.'
@@ -7518,40 +7595,37 @@ function renderCollectionSectionModalList (modalEl) {
   return entries
 }
 
-function saveCollectionSectionModalOrder (modalEl) {
+async function saveCollectionSectionModalOrder (modalEl) {
   if (!modalEl) return
   modalEl = prepareCollectionSectionModal(modalEl)
+  const libraryId = modalEl.dataset.libraryId
   const saveButton = modalEl.querySelector('[data-collection-section-save]')
   setCollectionSectionActionBusy(saveButton, true)
   const list = modalEl.querySelector('[data-collection-section-sortable]')
   const items = Array.from(list ? list.children : [])
   const resetMode = modalEl.dataset.collectionSectionResetMode === 'true'
-  window.setTimeout(() => {
+  try {
     if (!items.length) {
-      setCollectionSectionActionBusy(saveButton, false)
       return
     }
-    if (!resetMode) {
-      items.forEach((item, index) => {
-        const inputId = item.dataset.inputId
-        const input = inputId ? document.getElementById(inputId) : null
-        if (!input) return
-        const nextValue = String((index + 1) * 10).padStart(3, '0')
-        input.value = nextValue
-        input.dispatchEvent(new Event('input', { bubbles: true }))
-        input.dispatchEvent(new Event('change', { bubbles: true }))
-        const current = item.querySelector('[data-collection-section-current]')
-        if (current) current.textContent = nextValue
-      })
-    }
+    const orderedIds = items.map(item => item.dataset.collectionId).filter(Boolean)
+    const savedEntries = await saveCollectionSectionOrderToServer(libraryId, orderedIds, resetMode)
+    syncHydratedCollectionSectionInputs(savedEntries)
     if (typeof showToast === 'function') {
       showToast(resetMode ? 'info' : 'success', resetMode ? 'Collection section modifications cleared. JSON defaults will be used.' : 'Collection section order updated.')
     }
-    refreshCollectionSectionPreviewNumbers(list)
     const modal = typeof bootstrap !== 'undefined' && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalEl) : null
     if (modal) modal.hide()
+    refreshTemplateOverrideState(getActiveLibraryCardForId(libraryId) || document)
+    document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'collection-section-order', delayMs: 80 } }))
+  } catch (error) {
+    console.error('[Libraries] Failed to save collection section order', error)
+    if (typeof showToast === 'function') {
+      showToast('error', error.message || 'Unable to save collection section order.')
+    }
+  } finally {
     setCollectionSectionActionBusy(saveButton, false)
-  }, 120)
+  }
 }
 
 function resetCollectionSectionModalOrder (modalEl) {
@@ -7559,16 +7633,20 @@ function resetCollectionSectionModalOrder (modalEl) {
   modalEl = prepareCollectionSectionModal(modalEl)
   const resetButton = modalEl.querySelector('[data-collection-section-reset]')
   setCollectionSectionActionBusy(resetButton, true)
-  const entries = getCollectionSectionEntries(modalEl.dataset.libraryId)
   window.setTimeout(() => {
-    entries.forEach(entry => {
-      const input = entry.inputId ? document.getElementById(entry.inputId) : null
-      if (!input) return
-      input.value = ''
-      input.dispatchEvent(new Event('input', { bubbles: true }))
-      input.dispatchEvent(new Event('change', { bubbles: true }))
-    })
-    renderCollectionSectionModalList(modalEl)
+    const entries = Array.from(modalEl._collectionSectionEntries || [])
+      .map(entry => ({
+        ...entry,
+        currentValue: '',
+        effectiveValue: String(entry.defaultValue || '').trim()
+      }))
+      .sort((left, right) => {
+        const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)
+        if (byValue !== 0) return byValue
+        return (Number(left.groupIndex || 0) - Number(right.groupIndex || 0)) ||
+          (Number(left.collectionIndex || 0) - Number(right.collectionIndex || 0))
+      })
+    renderCollectionSectionModalList(modalEl, entries)
     modalEl.dataset.collectionSectionResetMode = 'true'
     const status = modalEl.querySelector('[data-collection-section-modal-status]')
     if (status) status.textContent = 'Defaults pending. Save Order will clear collection_section modifications and use JSON defaults.'
@@ -7579,15 +7657,29 @@ function resetCollectionSectionModalOrder (modalEl) {
   }, 120)
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const trigger = event.target.closest('[data-collection-section-modal-trigger]')
   if (trigger) {
     const libraryId = trigger.dataset.libraryId
     let modalEl = libraryId ? document.getElementById(`${libraryId}-collection-section-modal`) : null
     if (!modalEl || !bootstrap || !bootstrap.Modal) return
     modalEl = prepareCollectionSectionModal(modalEl)
-    renderCollectionSectionModalList(modalEl)
-    bootstrap.Modal.getOrCreateInstance(modalEl).show()
+    const status = modalEl.querySelector('[data-collection-section-modal-status]')
+    try {
+      setCollectionSectionActionBusy(trigger, true)
+      if (status) status.textContent = 'Loading collection defaults...'
+      const entries = await fetchCollectionSectionEntries(libraryId)
+      renderCollectionSectionModalList(modalEl, entries)
+      bootstrap.Modal.getOrCreateInstance(modalEl).show()
+    } catch (error) {
+      console.error('[Libraries] Failed to load collection section order', error)
+      if (status) status.textContent = 'Unable to load all collection defaults. Try again.'
+      if (typeof showToast === 'function') {
+        showToast('error', error.message || 'Unable to load collection defaults for reordering. Try again.')
+      }
+    } finally {
+      setCollectionSectionActionBusy(trigger, false)
+    }
     return
   }
 

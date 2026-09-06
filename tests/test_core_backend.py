@@ -367,6 +367,146 @@ def test_library_fragment_lazy_overlay_count_ignores_inactive_overlay_values(cli
     assert 'data-lazy-override-count="0"' in html
 
 
+def test_collection_section_entries_endpoint_uses_server_data(client, monkeypatch, qs_module, library_routes_module):
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": True}),
+    )
+    monkeypatch.setattr(
+        library_routes_module.helpers,
+        "load_quickstart_config",
+        lambda _filename: [
+            {
+                "accordion": "Awards",
+                "collections": [
+                    {
+                        "id": "collection_oscars",
+                        "label": "Academy Awards",
+                        "media_types": ["movie"],
+                        "template_variables": [{"key": "collection_section", "type": "text_input", "default": "130"}],
+                    }
+                ],
+            },
+            {
+                "accordion": "Other",
+                "collections": [
+                    {
+                        "id": "collection_collectionless",
+                        "label": "Collectionless",
+                        "media_types": ["movie", "show"],
+                        "template_variables": [{"key": "collection_section", "type": "text_input", "default": "999"}],
+                    }
+                ],
+            },
+        ],
+    )
+    monkeypatch.setattr(
+        qs_module.persistence,
+        "retrieve_settings",
+        lambda _target: {
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_collectionless": True,
+                "mov-library_movies-template_collection_collectionless_collection_section": "010",
+            }
+        },
+    )
+
+    resp = client.post(
+        "/library_fragment/mov-library_movies/collection_section_entries",
+        json={
+            "source_payload": {
+                "__loaded_sections": [],
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_oscars": "true",
+                "mov-library_movies-template_collection_oscars_collection_section": "020",
+            }
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert [entry["collectionId"] for entry in payload["entries"]] == ["collection_collectionless", "collection_oscars"]
+    assert [entry["currentValue"] for entry in payload["entries"]] == ["010", "020"]
+
+
+def test_collection_section_order_endpoint_saves_and_resets_without_dom(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+    from modules import database
+
+    config_name = "pytest_collection_section_order"
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_collectionless": True,
+                "mov-library_movies-collection_oscars": True,
+                "mov-library_movies-template_collection_collectionless_collection_section": "010",
+            },
+            "validated": False,
+        },
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: ([{"id": "mov-library_movies", "name": "Movies", "type": "movie"}], [], {"plex_pass": True}),
+    )
+    monkeypatch.setattr(
+        library_routes_module.helpers,
+        "load_quickstart_config",
+        lambda _filename: [
+            {
+                "accordion": "Awards",
+                "collections": [
+                    {
+                        "id": "collection_oscars",
+                        "label": "Academy Awards",
+                        "media_types": ["movie"],
+                        "template_variables": [{"key": "collection_section", "type": "text_input", "default": "130"}],
+                    },
+                    {
+                        "id": "collection_collectionless",
+                        "label": "Collectionless",
+                        "media_types": ["movie", "show"],
+                        "template_variables": [{"key": "collection_section", "type": "text_input", "default": "999"}],
+                    },
+                ],
+            }
+        ],
+    )
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/library_fragment/mov-library_movies/collection_section_order",
+        json={"collection_ids": ["collection_oscars", "collection_collectionless"]},
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    libraries = stored["libraries"]
+    assert libraries["mov-library_movies-template_collection_oscars_collection_section"] == "010"
+    assert libraries["mov-library_movies-template_collection_collectionless_collection_section"] == "020"
+
+    reset_resp = client.post(
+        "/library_fragment/mov-library_movies/collection_section_order",
+        json={"collection_ids": ["collection_oscars", "collection_collectionless"], "reset": True},
+    )
+
+    assert reset_resp.status_code == 200
+    _validated, _user_entered, reset_stored = database.retrieve_section_data(config_name, "libraries")
+    reset_libraries = reset_stored["libraries"]
+    assert "mov-library_movies-template_collection_oscars_collection_section" not in reset_libraries
+    assert "mov-library_movies-template_collection_collectionless_collection_section" not in reset_libraries
+
+
 def test_lazy_overlay_count_uses_rendered_ratings_defaults(library_routes_module):
     library = {"id": "mov-library_movies", "name": "Movies", "type": "movie"}
     libraries_data = {

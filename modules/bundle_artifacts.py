@@ -392,7 +392,8 @@ def iter_overlay_source_bundle_artifacts(config_data, config_name):
                     overlay_slug = safe_overlay_bundle_slug(overlay_name, "overlay")
                     template_slug = safe_overlay_bundle_slug(template_key, "image")
                     stem_slug = safe_overlay_bundle_slug(source_path.stem, "image")
-                    digest_source = f"{str(source_path).replace('\\', '/').lower()}|{library_slug}|{overlay_slug}|{template_slug}"
+                    source_key = str(source_path).replace("\\", "/").lower()
+                    digest_source = f"{source_key}|{library_slug}|{overlay_slug}|{template_slug}"
                     digest = hashlib.sha1(digest_source.encode("utf-8", errors="ignore")).hexdigest()[:10]
                     suffix = source_path.suffix or ".png"
                     archive_path = Path(
