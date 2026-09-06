@@ -50,6 +50,43 @@ def test_prepare_import_payload_accepts_mass_metadata_update():
     assert any("libraries.Movies.operations.mass_metadata_update" in line for line in report.lines)
 
 
+def test_mass_metadata_update_source_lines_annotate_as_imported():
+    raw_yaml = (
+        "libraries:\n"
+        "  Movies:\n"
+        "    operations:\n"
+        "      mass_metadata_update:\n"
+        "        genre:\n"
+        "          source:\n"
+        "          - tmdb\n"
+        "          - imdb\n"
+        "          - tvdb\n"
+        "        content_rating:\n"
+        "          source:\n"
+        "          - plex_csm\n"
+        "          - mdb_commonsense\n"
+        "          - omdb\n"
+    )
+    payload, report = importer.prepare_import_payload(
+        importer.load_yaml_config(raw_yaml),
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-attribute_mass_genre_update_order"] == '["tmdb", "imdb", "tvdb"]'
+    assert libraries["mov-library_movies-attribute_mass_content_rating_update_order"] == '["plex_csm", "mdb_commonsense", "omdb"]'
+    assert "imported: libraries.Movies.operations.mass_metadata_update.genre.source" in report.lines
+    assert "imported: libraries.Movies.operations.mass_metadata_update.content_rating.source" in report.lines
+
+    annotated = importer.annotate_yaml_with_report(raw_yaml, report.lines, binary=True)
+
+    assert "source:  # imported" in annotated
+    assert "- tmdb  # imported" in annotated
+    assert "- plex_csm  # imported" in annotated
+    assert "not imported - No matching Quickstart mapping" not in annotated
+
+
 def test_prepare_import_payload_accepts_legacy_metadata_backup():
     payload, report = importer.prepare_import_payload(
         {

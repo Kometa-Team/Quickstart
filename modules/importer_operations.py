@@ -427,6 +427,19 @@ def _mass_metadata_dict_keys_as_sources(value: dict, ignored_keys: set[str]) -> 
     return [str(key) for key in value if str(key) not in ignored_keys]
 
 
+def _record_mass_metadata_source_import(
+    report: ImportReport,
+    lib_name: str,
+    op_key: str,
+    path_suffix: str,
+    raw_value: Any,
+    imported: bool,
+) -> None:
+    """Record the original grouped `.source` path when it imported."""
+    if imported and isinstance(raw_value, dict) and "source" in raw_value:
+        report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{path_suffix}.source")
+
+
 def handle_mass_image_update_operation(
     lib_id: str,
     lib_name: str,
@@ -502,6 +515,7 @@ def handle_mass_metadata_update_operation(
         )
         imported_any = imported_any or imported
         if imported:
+            _record_mass_metadata_source_import(report, lib_name, op_key, new_key, op_value[new_key], imported)
             report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{new_key}")
 
     if "genre" in op_value:
@@ -528,6 +542,7 @@ def handle_mass_metadata_update_operation(
             )
             imported_any = imported_any or imported
             if imported:
+                _record_mass_metadata_source_import(report, lib_name, op_key, "genre", genre_value, imported)
                 report.add("imported", f"libraries.{lib_name}.operations.{op_key}.genre")
 
     if "content_rating" in op_value:
@@ -554,6 +569,7 @@ def handle_mass_metadata_update_operation(
             )
             imported_any = imported_any or imported
             if imported:
+                _record_mass_metadata_source_import(report, lib_name, op_key, "content_rating", rating_value, imported)
                 report.add("imported", f"libraries.{lib_name}.operations.{op_key}.content_rating")
 
     labels = op_value.get("labels")
@@ -588,6 +604,7 @@ def handle_mass_metadata_update_operation(
             )
             imported_any = imported_any or imported
             if imported:
+                _record_mass_metadata_source_import(report, lib_name, op_key, f"ratings.{new_key}", ratings[new_key], imported)
                 report.add("imported", f"libraries.{lib_name}.operations.{op_key}.ratings.{new_key}")
     elif ratings is not None:
         report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.ratings", "Unsupported ratings format.")
