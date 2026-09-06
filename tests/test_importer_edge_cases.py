@@ -224,6 +224,23 @@ def test_prepare_import_payload_maps_apprise_config_to_location():
     assert report.counts["imported"] >= 1
 
 
+def test_prepare_import_payload_skips_redacted_credential_placeholders():
+    payload, report = importer.prepare_import_payload(
+        {
+            "plex": {"url": "(redacted)", "token": "(redacted)"},
+            "tmdb": {"apikey": "<redacted>"},
+        },
+        set(),
+        set(),
+    )
+
+    assert "plex" not in payload
+    assert "tmdb" not in payload
+    assert "skipped: plex.url :: Redacted credential placeholder ignored." in report.lines
+    assert "skipped: plex.token :: Redacted credential placeholder ignored." in report.lines
+    assert "skipped: tmdb.apikey :: Redacted credential placeholder ignored." in report.lines
+
+
 def test_annotate_yaml_marks_apprise_config_as_imported():
     raw = "apprise:\n  config: /config/apprise.yml\n"
     _, report = importer.prepare_import_payload({"apprise": {"config": "/config/apprise.yml"}}, set(), set())

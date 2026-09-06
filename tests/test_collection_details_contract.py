@@ -137,6 +137,15 @@ def test_start_import_confirm_is_single_bound_and_in_flight_guarded():
     assert "importConfirmInFlight = false" in script
 
 
+def test_start_import_preview_clear_state_can_preserve_credential_panels():
+    script = START_JS_PATH.read_text(encoding="utf-8")
+    clear_fn = script.split("function clearImportPreviewState", 1)[1].split("function applyImportReportFilter", 1)[0]
+
+    assert "if (!options.keepCredentials)" in clear_fn
+    assert "if (importPlexCredentials) importPlexCredentials.classList.add('d-none')" in clear_fn
+    assert "if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')" in clear_fn
+
+
 def test_libraries_lookup_label_autosave_uses_narrow_payload():
     script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
 
