@@ -251,6 +251,9 @@ def test_libraries_lazy_loads_heavy_collection_and_overlay_sections():
     assert "clearLazyCollectionShellOverrideSummaries(sectionBody)" in script
     assert "await autosaveActiveLibrary({ quiet: true })" in script
     assert "await loadAllLazyCollectionGroups(sectionBody, card)" not in script
+    assert "async function loadAllCollectionGroupsForReorder (libraryId)" in script
+    assert "await loadLazyCollectionGroup(collapse, card, { expand: false })" in script
+    assert "await loadAllCollectionGroupsForReorder(libraryId)" in script
     assert "await loadLazyCollectionGroup(lazyCollapse, card)" in script
     assert "initializeLibraryCardControls(card, libraryId)" in script
     assert "wireLazyLibrarySections(card)" in script
@@ -285,6 +288,33 @@ def test_collection_section_partials_lazy_load_parent_groups():
         assert "macros.collection_group_section" not in partial
 
     assert "macros.collection_group_section(library, data, version_info, group, telemetry)" in group_fragment
+
+
+def test_collection_section_reorder_modal_sorts_by_saved_section_value():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    entries_body = script.split("function getCollectionSectionEntries (libraryId) {", 1)[1].split(
+        "function buildCollectionSectionListItem",
+        1,
+    )[0]
+    sort_body = entries_body.split("entries.sort((left, right) => {", 1)[1].split("  })\n  return entries", 1)[0]
+
+    assert "const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)" in sort_body
+    assert "if (byValue !== 0) return byValue" in sort_body
+    assert "return left.domIndex - right.domIndex" in sort_body
+    assert "isCollectionless" not in sort_body
+
+
+def test_collection_section_reorder_modal_hydrates_lazy_collection_groups_before_render():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    click_body = script.split("const trigger = event.target.closest('[data-collection-section-modal-trigger]')", 1)[1].split(
+        "const resetButton = event.target.closest('[data-collection-section-reset]')",
+        1,
+    )[0]
+
+    assert "await loadAllCollectionGroupsForReorder(libraryId)" in click_body
+    assert click_body.index("await loadAllCollectionGroupsForReorder(libraryId)") < click_body.index("renderCollectionSectionModalList(modalEl)")
+    assert "Loading collection defaults..." in click_body
+    assert "Unable to load all collection defaults for reordering. Try again." in click_body
 
 
 def test_cached_library_cards_do_not_submit_stale_form_fields():

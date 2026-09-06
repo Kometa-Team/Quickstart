@@ -1562,6 +1562,37 @@ def test_libraries_radarr_dependency_hint_endpoint_template_collection_returns_r
     assert any("radarr_add_missing_best_picture enabled" in reason for reason in payload["reasons"])
 
 
+def test_libraries_radarr_dependency_hint_preserves_unloaded_lazy_collection_values(client, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module.persistence,
+        "retrieve_settings",
+        lambda _target: {
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                RADARR_TEMPLATE_COLLECTION_KEY: "true",
+            }
+        },
+    )
+
+    resp = client.post(
+        "/libraries_radarr_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                "__loaded_sections": [],
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-playlist": "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("radarr_add_missing_best_picture enabled" in reason for reason in payload["reasons"])
+
+
 def test_libraries_radarr_dependency_hint_endpoint_inactive_library_returns_empty(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
 

@@ -6583,9 +6583,12 @@ function markLazyCollectionGroupLoaded (card, groupIndex) {
   marker.value = Array.from(values).sort((a, b) => Number(a) - Number(b)).join(',')
 }
 
-function loadLazyCollectionGroup (collapse, card) {
+function loadLazyCollectionGroup (collapse, card, options = {}) {
   if (!collapse || collapse.dataset?.collectionGroupLazyCollapse !== 'true') {
     return Promise.resolve(collapse?.closest('[data-collection-group-shell="true"]') || null)
+  }
+  if (collapse._collectionGroupLoadPromise) {
+    return collapse._collectionGroupLoadPromise
   }
   if (collapse.dataset.lazyState === 'loading') {
     return Promise.reject(new Error('Collection group is already loading.'))
@@ -6605,7 +6608,7 @@ function loadLazyCollectionGroup (collapse, card) {
   spinner?.classList.remove('d-none')
   if (status) status.textContent = 'Loading collection group settings...'
 
-  return fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/collections/group/${encodeURIComponent(groupIndex)}`, {
+  const loadPromise = fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/collections/group/${encodeURIComponent(groupIndex)}`, {
     credentials: 'same-origin'
   })
     .then(res => {
@@ -6623,20 +6626,44 @@ function loadLazyCollectionGroup (collapse, card) {
       replacement.dataset.collectionGroupIndex = String(groupIndex)
       const replacementCollapse = replacement.querySelector('.accordion-collapse')
       const replacementButton = replacement.querySelector('.accordion-button')
-      if (replacementCollapse) {
+      const expand = options.expand !== false
+      if (replacementCollapse && expand) {
         replacementCollapse.classList.add('show')
         replacementCollapse.dataset.collectionGroupLoaded = 'true'
         replacementCollapse.dataset.collectionGroupIndex = String(groupIndex)
       }
-      if (replacementButton) {
+      if (replacementButton && expand) {
         replacementButton.classList.remove('collapsed')
         replacementButton.setAttribute('aria-expanded', 'true')
+      }
+      if (replacementCollapse && !expand) {
+        replacementCollapse.dataset.collectionGroupLoaded = 'true'
+        replacementCollapse.dataset.collectionGroupIndex = String(groupIndex)
       }
       markLazyCollectionGroupLoaded(card, groupIndex)
       initializeLibraryCardControls(card, libraryId)
       refreshTemplateOverrideState(card)
       return replacement
     })
+    .finally(() => {
+      delete collapse._collectionGroupLoadPromise
+    })
+
+  collapse._collectionGroupLoadPromise = loadPromise
+  return loadPromise
+}
+
+async function loadAllCollectionGroupsForReorder (libraryId) {
+  const container = document.getElementById(`${libraryId}-container`)
+  const card = container?.closest('.library-settings-card') ||
+    (activeLibraryId === libraryId ? libraryContainer?.querySelector('.library-settings-card') : null)
+  if (!card) return
+
+  const collapses = Array.from(card.querySelectorAll('[data-collection-group-lazy-collapse="true"]'))
+    .filter(collapse => collapse.dataset.lazyState !== 'loaded')
+  for (const collapse of collapses) {
+    await loadLazyCollectionGroup(collapse, card, { expand: false })
+  }
 }
 
 function wireLazyCollectionGroups (card) {
@@ -7358,7 +7385,6 @@ function getCollectionSectionEntries (libraryId) {
     entries.push({
       collectionId,
       label,
-      isCollectionless: collectionId.toLowerCase().endsWith('collectionless'),
       inputId: input.id,
       defaultValue: String(input.dataset.default || '').trim(),
       currentValue: String(input.value || '').trim(),
@@ -7367,7 +7393,6 @@ function getCollectionSectionEntries (libraryId) {
     })
   })
   entries.sort((left, right) => {
-    if (left.isCollectionless !== right.isCollectionless) return left.isCollectionless ? 1 : -1
     const byValue = compareCollectionSectionValues(left.effectiveValue, right.effectiveValue)
     if (byValue !== 0) return byValue
     return left.domIndex - right.domIndex
@@ -7579,15 +7604,29 @@ function resetCollectionSectionModalOrder (modalEl) {
   }, 120)
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const trigger = event.target.closest('[data-collection-section-modal-trigger]')
   if (trigger) {
     const libraryId = trigger.dataset.libraryId
     let modalEl = libraryId ? document.getElementById(`${libraryId}-collection-section-modal`) : null
     if (!modalEl || !bootstrap || !bootstrap.Modal) return
     modalEl = prepareCollectionSectionModal(modalEl)
-    renderCollectionSectionModalList(modalEl)
-    bootstrap.Modal.getOrCreateInstance(modalEl).show()
+    const status = modalEl.querySelector('[data-collection-section-modal-status]')
+    try {
+      setCollectionSectionActionBusy(trigger, true)
+      if (status) status.textContent = 'Loading collection defaults...'
+      await loadAllCollectionGroupsForReorder(libraryId)
+      renderCollectionSectionModalList(modalEl)
+      bootstrap.Modal.getOrCreateInstance(modalEl).show()
+    } catch (error) {
+      console.error('[Libraries] Failed to load collection groups for reorder', error)
+      if (status) status.textContent = 'Unable to load all collection defaults. Try again.'
+      if (typeof showToast === 'function') {
+        showToast('error', 'Unable to load all collection defaults for reordering. Try again.')
+      }
+    } finally {
+      setCollectionSectionActionBusy(trigger, false)
+    }
     return
   }
 

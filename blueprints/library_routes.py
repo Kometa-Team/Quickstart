@@ -1013,7 +1013,12 @@ def _build_merged_libraries_hint_payload(payload):
     if not source_payload:
         return merged
 
-    clean_payload = persistence.clean_form_data(MultiDict(source_payload))
+    source_payload_for_merge = dict(source_payload)
+    loaded_sections = _coerce_loaded_library_sections(source_payload_for_merge.pop("__loaded_sections", []))
+    loaded_collection_groups_raw = source_payload_for_merge.pop("__loaded_collection_groups", None)
+    loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
+
+    clean_payload = persistence.clean_form_data(MultiDict(source_payload_for_merge))
     incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
     incoming_dict = incoming_dict if isinstance(incoming_dict, dict) else {}
 
@@ -1027,6 +1032,15 @@ def _build_merged_libraries_hint_payload(payload):
         prefix = _library_prefix_from_key(key)
         if prefix:
             prefixes.add(prefix)
+
+    for prefix in list(prefixes):
+        prefix_loaded_sections = _loaded_sections_with_payload_evidence(prefix, incoming_dict, loaded_sections)
+        incoming_dict = _preserve_unloaded_lazy_section_values(
+            prefix,
+            incoming_dict,
+            prefix_loaded_sections,
+            loaded_collection_groups,
+        )
 
     for prefix in prefixes:
         for existing_key in list(merged.keys()):
