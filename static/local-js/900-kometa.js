@@ -5,6 +5,9 @@ import {
   formatRunSeconds,
   applyLogFilter,
   computeLogStats,
+  filterLogLines,
+  findYamlMajorSections,
+  renderLogRows,
   copyTextToClipboard,
   setMetaFlag
 } from './modules/kometa/_util.js'
@@ -102,6 +105,7 @@ let tailSize = '2000'
 let logPollingPaused = false
 let logFilter = ''
 let lastLogText = ''
+let lastLogStartLine = 1
 let lastLogStatsTotal = null
 let logStatsPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
@@ -126,6 +130,9 @@ const runStatusTimer = document.getElementById('run-status-timer')
 const runStatusMetrics = document.getElementById('run-status-metrics')
 const runStatusLog = document.getElementById('run-status-log')
 const yamlOutput = document.getElementById('final-yaml')
+const yamlViewer = document.getElementById('final-yaml-viewer')
+const yamlSectionJumpWrap = document.getElementById('final-yaml-section-jump-wrap')
+const yamlSectionJump = document.getElementById('final-yaml-section-jump')
 const yamlLineCount = document.getElementById('yaml-line-count')
 const stopModalEl = document.getElementById('stop-kometa-modal')
 const stopModal = (stopModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(stopModalEl) : null
@@ -138,6 +145,90 @@ const finalContentWrapper = document.getElementById('final-content-wrapper')
 const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
 const runCommandCollapse = document.getElementById('run-command-output-collapse')
 let headerStyleSubmitting = false
+
+function getYamlText () {
+  return yamlOutput ? String(yamlOutput.value || '') : ''
+}
+
+function syncYamlSectionJump (text = getYamlText()) {
+  if (!yamlSectionJump || !yamlSectionJumpWrap) return
+  const sections = findYamlMajorSections(text)
+  yamlSectionJumpWrap.hidden = sections.length === 0
+  yamlSectionJumpWrap.classList.toggle('d-none', sections.length === 0)
+  const previous = yamlSectionJump.value
+  yamlSectionJump.replaceChildren()
+  const placeholder = document.createElement('option')
+  placeholder.value = ''
+  placeholder.textContent = sections.length ? 'Select a section' : 'No sections found'
+  yamlSectionJump.append(placeholder)
+  sections.forEach((section) => {
+    const option = document.createElement('option')
+    option.value = String(section.line)
+    option.textContent = `${section.label} - line ${section.line.toLocaleString()}`
+    yamlSectionJump.append(option)
+  })
+  if (previous && sections.some(section => String(section.line) === previous)) {
+    yamlSectionJump.value = previous
+  }
+}
+
+function renderYamlViewer () {
+  if (!yamlViewer) return
+  const text = getYamlText()
+  renderLogRows(yamlViewer, text, { highlightLevels: false })
+  syncYamlSectionJump(text)
+}
+
+function getDisplayedLogLineCount (text) {
+  return String(text || '').split(/\r?\n/).length
+}
+
+function getTailStartLine (data, text) {
+  const totalLines = Number(data?.stats?.total_lines ?? data?.total_lines ?? lastLogStatsTotal?.total_lines)
+  if (!Number.isFinite(totalLines) || totalLines < 1) return 1
+  const sizeLabel = String(tailSize || '').trim().toLowerCase()
+  if (sizeLabel === 'all' || sizeLabel === 'full') return 1
+  const displayedLines = getDisplayedLogLineCount(text)
+  return Math.max(1, totalLines - displayedLines + 1)
+}
+
+function renderRunLogText (text, opts = {}) {
+  if (!runLog) return
+  const content = String(text || '')
+  if (opts.numbered === false) {
+    runLog.textContent = content
+    return
+  }
+  renderLogRows(runLog, content, {
+    startLine: opts.startLine || 1,
+    lineNumbers: opts.lineNumbers
+  })
+}
+
+function renderFilteredRunLog () {
+  const result = filterLogLines(lastLogText, logFilter, { startLine: lastLogStartLine })
+  const noMatchText = lastLogText ? 'No lines matched the current filter.' : ''
+  renderRunLogText(result.text || noMatchText, {
+    startLine: result.text ? undefined : 1,
+    lineNumbers: result.text ? result.lineNumbers : undefined
+  })
+}
+
+function appendRunLogText (text) {
+  if (!runLog) return
+  lastLogText = `${lastLogText || ''}${text}`
+  renderFilteredRunLog()
+}
+
+yamlSectionJump?.addEventListener('change', function () {
+  const lineNumber = Number(this.value)
+  if (!yamlViewer || !Number.isFinite(lineNumber) || lineNumber < 1) return
+  const row = yamlViewer.querySelector(`[data-line="${lineNumber}"]`)
+  if (!row) return
+  yamlViewer.scrollTop = row.offsetTop - yamlViewer.offsetTop
+  row.classList.add('qs-log-line--jumped')
+  window.setTimeout(() => row.classList.remove('qs-log-line--jumped'), 1400)
+})
 
 function syncKometaMaintenancePageBadge (data) {
   if (!kometaMaintenancePageBadge) return
@@ -186,8 +277,9 @@ if (tailSelect) {
 
 function updateYamlLineCount () {
   if (!yamlLineCount || !yamlOutput) return
-  const lineCount = computeYamlLineCount(yamlOutput.value)
+  const lineCount = computeYamlLineCount(getYamlText())
   yamlLineCount.textContent = `Line count (includes comments and blank lines): ${lineCount}`
+  renderYamlViewer()
   updateConfigOutputHeaderBadges()
 }
 
@@ -376,7 +468,9 @@ function startKometaCommand (command, opts = {}) {
   if (recoveryBtn) recoveryBtn.disabled = true
   document.getElementById('stop-now').classList.remove('d-none')
   document.getElementById('run-output').classList.remove('d-none')
-  document.getElementById('run-output-log').textContent = startMessage
+  lastLogText = startMessage
+  lastLogStartLine = 1
+  renderFilteredRunLog()
   fetch('/start-kometa', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -387,7 +481,9 @@ function startKometaCommand (command, opts = {}) {
       if (data.error) {
         clearActiveRunCommandState()
         try { buildCommand() } catch {}
-        document.getElementById('run-output-log').textContent = `❌ ${data.error}`
+        lastLogText = `❌ ${data.error}`
+        lastLogStartLine = 1
+        renderFilteredRunLog()
         document.getElementById('run-now').disabled = false
         document.getElementById('run-now-label').textContent = 'Run Now'
         document.getElementById('stop-now').classList.add('d-none')
@@ -402,7 +498,9 @@ function startKometaCommand (command, opts = {}) {
         const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
         const message = `Plex maintenance active${windowLabel} at ${nowLabel}. Kometa will start automatically when it ends.`
         showToast('warning', message)
-        document.getElementById('run-output-log').textContent = `${message}\n`
+        lastLogText = `${message}\n`
+        lastLogStartLine = 1
+        renderFilteredRunLog()
         {
           const runNowBtn = document.getElementById('run-now')
           if (runNowBtn) {
@@ -427,7 +525,7 @@ function startKometaCommand (command, opts = {}) {
     .catch(() => {
       clearActiveRunCommandState()
       try { buildCommand() } catch {}
-      document.getElementById('run-output-log').insertAdjacentHTML('beforeend', '\n⚠️ Failed to start Kometa.')
+      appendRunLogText('\n⚠️ Failed to start Kometa.')
       document.getElementById('run-now').disabled = false
       document.getElementById('run-now-label').textContent = 'Run Now'
       document.getElementById('stop-now').classList.add('d-none')
@@ -635,8 +733,7 @@ function updateClearFilterButton () {
 
 filterInput?.addEventListener('input', function() {
   logFilter = this.value.trim()
-  const filtered = applyLogFilter(lastLogText, logFilter)
-  runLog.textContent = filtered
+  renderFilteredRunLog()
   updateClearFilterButton()
   renderLogStats()
 })
@@ -644,8 +741,7 @@ filterInput?.addEventListener('input', function() {
 clearFilterBtn?.addEventListener('click', function() {
   logFilter = ''
   filterInput.value = ''
-  const filtered = applyLogFilter(lastLogText, logFilter)
-  runLog.textContent = filtered
+  renderFilteredRunLog()
   updateClearFilterButton()
   renderLogStats()
   if (filterInput) filterInput.focus()
@@ -656,8 +752,7 @@ if (levelButtons && levelButtons.length) {
     const val = this.dataset.level || ''
     logFilter = val
     if (filterInput) filterInput.value = val
-    const filtered = applyLogFilter(lastLogText, logFilter)
-    if (runLog) runLog.textContent = filtered
+    renderFilteredRunLog()
     updateClearFilterButton()
     renderLogStats()
   }))
@@ -697,6 +792,8 @@ if (!kometaCanReadLogs() && downloadLogBtn) {
   downloadLogBtn.disabled = true
 }
 updateClearFilterButton()
+renderYamlViewer()
+renderRunLogText(runLog ? runLog.textContent : '')
 document.addEventListener('visibilitychange', function () {
   if (!document.hidden) {
     resumeKometaLiveView()
@@ -1132,11 +1229,11 @@ function performStopKometa () {
     .then(res => res.json())
     .then(data => {
       if (data.error) {
-        document.getElementById('run-output-log').insertAdjacentHTML('beforeend', `\n⚠️ ${data.error}`)
+        appendRunLogText(`\n⚠️ ${data.error}`)
         showToast('error', data.error)
       } else {
         const msg = data.message || data.warning || 'Kometa process stopped.'
-        document.getElementById('run-output-log').insertAdjacentHTML('beforeend', `\n🟥 ${msg}`)
+        appendRunLogText(`\n🟥 ${msg}`)
         if (data.warning) {
           showToast('warning', data.warning)
         } else {
@@ -1173,7 +1270,7 @@ function performStopKometa () {
     })
     .catch(err => {
       console.error('Error stopping Kometa process:', err) // Optional for debugging
-      document.getElementById('run-output-log').insertAdjacentHTML('beforeend', '\n⚠️ Error stopping process.')
+      appendRunLogText('\n⚠️ Error stopping process.')
       showToast('error', 'Error stopping Kometa process.')
     })
     .finally(() => {
@@ -1196,17 +1293,19 @@ function fetchKometaLog () {
     .then(data => {
       if (!runLog) return
       if (data.error) {
-        runLog.textContent = `❌ ${data.error}`
+        lastLogText = `❌ ${data.error}`
+        lastLogStartLine = 1
+        renderFilteredRunLog()
         updateLogRecency(null)
         return
       }
       lastLogText = data.log || ''
+      lastLogStartLine = getTailStartLine(data, lastLogText)
       updateLogRecency(data)
       if (data.stats) {
         lastLogStatsTotal = data.stats
       }
-      const filtered = applyLogFilter(lastLogText, logFilter)
-      runLog.textContent = filtered
+      renderFilteredRunLog()
       renderLogStats()
       fetchLogscanAnalysis(false, { updateHeaderBadge: updateLogscanHeaderBadge, kometaState })
       const shouldStick = autoScrollEnabled || wasAtBottom
@@ -1216,7 +1315,7 @@ function fetchKometaLog () {
     })
     .catch(err => {
       console.error('Error fetching Kometa log:', err)
-      if (runLog) runLog.textContent = (runLog.textContent || '') + '\n⚠️ Error fetching log.'
+      appendRunLogText('\n⚠️ Error fetching log.')
     })
 }
 
@@ -1272,8 +1371,8 @@ function checkKometaStatus () {
         runNow.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Waiting...'
         stopNow.classList.add('d-none')
         document.getElementById('run-output').classList.remove('d-none')
-        if (!document.getElementById('run-output-log').textContent.includes('Plex maintenance')) {
-          document.getElementById('run-output-log').insertAdjacentHTML('beforeend', `\n${message}`)
+        if (!String(runLog?.textContent || '').includes('Plex maintenance')) {
+          appendRunLogText(`\n${message}`)
         }
         syncIncompleteRunActions()
         if (kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
@@ -1334,20 +1433,18 @@ function checkKometaStatus () {
           fetchLogscanAnalysis(true, { updateHeaderBadge: updateLogscanHeaderBadge, kometaState })
         }
         if (data.return_code === 0) {
-          document.getElementById('run-output-log').insertAdjacentHTML('beforeend', '\n✅ Kometa finished successfully.')
+          appendRunLogText('\n✅ Kometa finished successfully.')
         } else {
-          document.getElementById('run-output-log').insertAdjacentHTML('beforeend', `\n⚠️ Kometa exited with code ${data.return_code}. Check logs for details.`)
+          appendRunLogText(`\n⚠️ Kometa exited with code ${data.return_code}. Check logs for details.`)
         }
       } else if (data.status === 'not started') {
         kometaState.kometaPendingStart = false
-        const outLog = document.getElementById('run-output-log')
-        if (outLog) outLog.insertAdjacentHTML('beforeend', '\n🟥 Kometa is not running.')
+        appendRunLogText('\n🟥 Kometa is not running.')
       }
     })
     .catch(err => {
       kometaState.kometaPendingStart = false
       console.error('Error checking Kometa status:', err)
-      const outLog = document.getElementById('run-output-log')
-      if (outLog) outLog.insertAdjacentHTML('beforeend', '\n️  Failed to check Kometa status.')
+      appendRunLogText('\n️  Failed to check Kometa status.')
     })
 }

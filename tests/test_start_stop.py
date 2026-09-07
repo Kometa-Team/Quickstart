@@ -1,6 +1,44 @@
 import time
 
 
+def test_tail_log_stats_count_exact_level_markers(client, tmp_path, monkeypatch, qs_module):
+    log_dir = tmp_path / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / "meta.log").write_text(
+        "\n".join(
+            [
+                "loaded from cache",
+                "[CACHE] direct marker",
+                "DEBUG plain",
+                "[INFO] bracketed",
+                "[WARNING] marked warning",
+                "ERROR plain",
+                "[CRITICAL] marked critical",
+                "[TRACE] should not count as a trace marker",
+                "Traceback (most recent call last):",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    qs_module.LOG_STATS_CACHE.clear()
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+
+    resp = client.get("/tail-log?size=all&stats=1")
+
+    assert resp.status_code == 200
+    stats = resp.get_json()["stats"]
+    assert stats["total_lines"] == 9
+    assert stats["cache"] == 2
+    assert stats["debug"] == 0
+    assert stats["info"] == 1
+    assert stats["warning"] == 1
+    assert stats["error"] == 0
+    assert stats["critical"] == 1
+    assert stats["trace"] == 1
+
+
 def test_start_kometa_queues_during_maintenance(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)

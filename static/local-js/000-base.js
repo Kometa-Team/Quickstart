@@ -1,4 +1,8 @@
 import { getAppConfig, setAppConfig } from './modules/appConfig.js'
+import {
+  findYamlMajorSections,
+  renderLogRows
+} from './modules/kometa/_util.js'
 
 (function () {
   const isDebug = String(getAppConfig('QS_DEBUG', false)).toLowerCase() === 'true'
@@ -3884,7 +3888,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const refreshBtn = modalEl.querySelector('#supportInfoRefresh')
   const copyBtn = modalEl.querySelector('#supportInfoCopy')
   const status = modalEl.querySelector('#supportInfoStatus')
+  const jumpWrap = modalEl.querySelector('#supportInfoJumpWrap')
+  const jumpSelect = modalEl.querySelector('#supportInfoJump')
+  const copyFallback = modalEl.querySelector('#supportInfoCopyFallback')
+  const copyFallbackMessage = modalEl.querySelector('#supportInfoCopyFallbackMessage')
+  const copyFallbackText = modalEl.querySelector('#supportInfoCopyText')
   const isSecureContext = window.isSecureContext
+  let supportInfoText = ''
 
   function setStatus (text, isError) {
     if (!status) return
@@ -3897,11 +3907,91 @@ document.addEventListener('DOMContentLoaded', () => {
     copyBtn.textContent = 'Select'
   }
 
+  function findSupportInfoSections (text) {
+    const sections = [...findYamlMajorSections(text)]
+    String(text || '').split(/\r?\n/).forEach((line, index) => {
+      const headingMatch = line.match(/^#\s+(.+?)\s*$/)
+      if (!headingMatch) return
+      const label = headingMatch[1].trim()
+      const lower = label.toLowerCase()
+      if (
+        lower === 'system information' ||
+        lower.startsWith('libraries configured with quickstart') ||
+        lower.startsWith('quickstart log tail')
+      ) {
+        sections.push({ line: index + 1, label })
+      }
+    })
+    const seen = new Set()
+    return sections
+      .sort((a, b) => a.line - b.line)
+      .filter((section) => {
+        const key = `${section.line}:${section.label}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+  }
+
+  function syncSupportInfoJump (text) {
+    if (!jumpWrap || !jumpSelect) return
+    const sections = findSupportInfoSections(text)
+    const previous = jumpSelect.value
+    jumpWrap.hidden = sections.length === 0
+    jumpWrap.classList.toggle('d-none', sections.length === 0)
+    jumpSelect.replaceChildren()
+    const placeholder = document.createElement('option')
+    placeholder.value = ''
+    placeholder.textContent = sections.length ? 'Select a section' : 'No sections found'
+    jumpSelect.append(placeholder)
+    sections.forEach((section) => {
+      const option = document.createElement('option')
+      option.value = String(section.line)
+      option.textContent = `${section.label} - line ${section.line.toLocaleString()}`
+      jumpSelect.append(option)
+    })
+    if (previous && sections.some(section => String(section.line) === previous)) {
+      jumpSelect.value = previous
+    }
+  }
+
+  function renderSupportInfoText (text, opts = {}) {
+    if (!output) return
+    const content = String(text || '')
+    if (opts.copyable !== false) supportInfoText = content
+    renderLogRows(output, content, { highlightLevels: false })
+    syncSupportInfoJump(content)
+  }
+
+  function hideCopyFallback () {
+    if (copyFallback) copyFallback.classList.add('d-none')
+    if (copyFallbackText) copyFallbackText.value = ''
+  }
+
+  function showCopyFallback (text, message) {
+    if (!copyFallback || !copyFallbackText) return
+    if (copyFallbackMessage) {
+      copyFallbackMessage.textContent = message || 'Clipboard access is blocked. The raw support info is selected below.'
+    }
+    copyFallbackText.value = text
+    copyFallback.classList.remove('d-none')
+    try {
+      copyFallback.scrollIntoView({ block: 'nearest' })
+    } catch {
+      // No-op: older mobile browsers may not support scroll options.
+    }
+    focusWithoutScrolling(copyFallbackText)
+    copyFallbackText.select()
+    copyFallbackText.setSelectionRange(0, copyFallbackText.value.length)
+  }
+
   async function loadSupportInfo () {
     if (!output) return
     if (copyBtn) copyBtn.disabled = true
     setStatus('Loading...', false)
-    output.textContent = 'Loading support info...'
+    supportInfoText = ''
+    hideCopyFallback()
+    renderSupportInfoText('Loading support info...', { copyable: false })
 
     try {
       const res = await fetch('/support-info')
@@ -3909,11 +3999,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok || !data || !data.text) {
         throw new Error((data && data.error) || 'Failed to load support info.')
       }
-      output.textContent = data.text
+      renderSupportInfoText(data.text)
       setStatus(data.generated_at ? `Updated ${data.generated_at}` : 'Updated', false)
       if (copyBtn) copyBtn.disabled = !data.text.trim()
     } catch (err) {
-      output.textContent = `Unable to load support info.\n${err.message || String(err)}`
+      supportInfoText = ''
+      hideCopyFallback()
+      renderSupportInfoText(`Unable to load support info.\n${err.message || String(err)}`, { copyable: false })
       setStatus('Error loading support info', true)
       if (copyBtn) copyBtn.disabled = true
     }
@@ -3940,9 +4032,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function fallbackCopy (text, opts = {}) {
-    const showFailureToast = opts.showFailureToast !== false
-    const showSuccessToast = opts.showSuccessToast !== false
+  function fallbackCopy (text) {
     const windowScroll = getWindowScrollPosition()
     const activeElement = document.activeElement
     const textarea = document.createElement('textarea')
@@ -3961,14 +4051,9 @@ document.addEventListener('DOMContentLoaded', () => {
     textarea.select()
     textarea.setSelectionRange(0, textarea.value.length)
     try {
-      const success = document.execCommand('copy')
-      if (success) {
-        if (showSuccessToast) showToast('success', 'Support info copied to clipboard.')
-        return true
-      }
-      if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
+      return document.execCommand('copy')
     } catch {
-      if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
+      return false
     } finally {
       document.body.removeChild(textarea)
       restoreWindowScrollPosition(windowScroll)
@@ -3977,60 +4062,56 @@ document.addEventListener('DOMContentLoaded', () => {
         restoreWindowScrollPosition(windowScroll)
       }
     }
-    return false
-  }
-
-  function selectSupportInfoText () {
-    if (!output) return
-    const windowScroll = getWindowScrollPosition()
-    const outputScroll = output.scrollTop
-    const modalBody = output.closest('.modal-body')
-    const modalBodyScroll = modalBody ? modalBody.scrollTop : 0
-    try {
-      const selection = window.getSelection()
-      const range = document.createRange()
-      range.selectNodeContents(output)
-      selection.removeAllRanges()
-      selection.addRange(range)
-      focusWithoutScrolling(output)
-    } catch {
-      // No-op: selection best-effort only.
-    } finally {
-      output.scrollTop = outputScroll
-      if (modalBody) modalBody.scrollTop = modalBodyScroll
-      restoreWindowScrollPosition(windowScroll)
-    }
   }
 
   async function copySupportInfo () {
     if (!output) return
-    const text = output.textContent || ''
+    const text = supportInfoText || ''
     if (!text.trim()) {
-      showToast('warning', 'Nothing to copy yet.')
+      hideCopyFallback()
+      setStatus('Nothing to copy yet.', true)
       return
     }
     const canUseClipboard = isSecureContext && navigator.clipboard && navigator.clipboard.writeText
     if (canUseClipboard) {
       try {
         await navigator.clipboard.writeText(text)
-        showToast('success', 'Support info copied to clipboard.')
+        hideCopyFallback()
+        setStatus('Copied', false)
         return
       } catch {
         // Fall back to execCommand below.
       }
     }
-    if (canUseClipboard) {
-      fallbackCopy(text, { showFailureToast: true })
+
+    if (!canUseClipboard) {
+      showCopyFallback(text, 'Clipboard blocked on non-HTTPS. The raw support info is selected below.')
       return
     }
-    fallbackCopy(text, { showFailureToast: false, showSuccessToast: false })
-    selectSupportInfoText()
-    showToast('warning', 'Clipboard blocked on non-HTTPS. Text selected; press Ctrl+C to copy.')
+
+    if (fallbackCopy(text)) {
+      hideCopyFallback()
+      setStatus('Copied', false)
+      return
+    }
+    showCopyFallback(text, 'Copy failed. The raw support info is selected below.')
   }
 
   modalEl.addEventListener('show.bs.modal', () => {
     loadSupportInfo()
   })
+
+  if (jumpSelect) {
+    jumpSelect.addEventListener('change', function () {
+      const lineNumber = Number(this.value)
+      if (!output || !Number.isFinite(lineNumber) || lineNumber < 1) return
+      const row = output.querySelector(`[data-line="${lineNumber}"]`)
+      if (!row) return
+      output.scrollTop = row.offsetTop - output.offsetTop
+      row.classList.add('qs-log-line--jumped')
+      window.setTimeout(() => row.classList.remove('qs-log-line--jumped'), 1400)
+    })
+  }
 
   if (refreshBtn) refreshBtn.addEventListener('click', loadSupportInfo)
   if (copyBtn) copyBtn.addEventListener('click', copySupportInfo)

@@ -683,8 +683,8 @@ function syncExternalYamlEditorLineNumbers (modalEl) {
     const lineEl = document.createElement('button')
     lineEl.type = 'button'
     lineEl.className = 'external-yaml-editor-line'
-    lineEl.textContent = String(line)
     lineEl.dataset.externalYamlLine = String(line)
+    lineEl.setAttribute('aria-label', `Line ${line}`)
     if (markedLines.has(line)) lineEl.classList.add('external-yaml-editor-line--issue')
     gutter.appendChild(lineEl)
   }

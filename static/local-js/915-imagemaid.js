@@ -1,3 +1,9 @@
+import {
+  computeLogStats as computeSharedLogStats,
+  filterLogLines as sharedFilterLogLines,
+  renderLogRows
+} from './modules/kometa/_util.js'
+
 const metaEl = document.getElementById('imagemaid-page-meta')
 const rootPath = metaEl ? String(metaEl.dataset.root || '').trim() : ''
 let imagemaidSupportsNoVerifySsl = metaEl ? String(metaEl.dataset.supportsNoVerifySsl || '').toLowerCase() === 'true' : false
@@ -220,9 +226,14 @@ function updateModeHelp () {
 }
 
 function setBadge (el, tone, text) {
+  if (!el) return
   el.classList.remove('text-bg-secondary', 'text-bg-success', 'text-bg-warning', 'text-bg-danger', 'text-bg-primary')
   el.classList.add(tone)
   el.textContent = text
+}
+
+function setText (el, text) {
+  if (el) el.textContent = text
 }
 
 function shortSha (value) {
@@ -282,23 +293,23 @@ function syncPrepareSummary (body, options = {}) {
 
   const localVersion = String((body && body.local_version) || '').trim()
   const remoteVersion = String((body && body.remote_version) || '').trim()
-  els.localVersionStatus.textContent = localVersion || 'Unknown'
-  els.remoteVersionStatus.textContent = remoteVersion || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked')
-  els.localBranchStatus.textContent = (body && body.local_branch) || 'Unknown'
-  els.localShaStatus.textContent = shortSha(body && body.local_sha) || 'Unknown'
-  els.remoteShaStatus.textContent = shortSha(body && body.remote_sha) || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked')
-  els.branchSourceUrl.textContent = (body && body.branch_source_url) || ''
-  els.zipSourceUrl.textContent = (body && body.zip_source_url) || ''
+  setText(els.localVersionStatus, localVersion || 'Unknown')
+  setText(els.remoteVersionStatus, remoteVersion || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked'))
+  setText(els.localBranchStatus, (body && body.local_branch) || 'Unknown')
+  setText(els.localShaStatus, shortSha(body && body.local_sha) || 'Unknown')
+  setText(els.remoteShaStatus, shortSha(body && body.remote_sha) || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked'))
+  setText(els.branchSourceUrl, (body && body.branch_source_url) || '')
+  setText(els.zipSourceUrl, (body && body.zip_source_url) || '')
 
   const localBranch = (body && body.local_branch) || 'unknown'
   const localSha = shortSha(body && body.local_sha) || 'unknown'
   const remoteSha = shortSha(body && body.remote_sha) || 'unknown'
-  els.localVersionInline.textContent = localVersion || 'unknown'
-  els.localBranchInline.textContent = localBranch
-  els.localShaInline.textContent = localSha
-  els.remoteVersionInline.textContent = remoteVersion || 'unknown'
-  els.remoteShaInline.textContent = remoteSha
-  els.updateBox.classList.toggle('d-none', !imagemaidUpdateAvailable)
+  setText(els.localVersionInline, localVersion || 'unknown')
+  setText(els.localBranchInline, localBranch)
+  setText(els.localShaInline, localSha)
+  setText(els.remoteVersionInline, remoteVersion || 'unknown')
+  setText(els.remoteShaInline, remoteSha)
+  if (els.updateBox) els.updateBox.classList.toggle('d-none', !imagemaidUpdateAvailable)
 
   if (options.phaseTone && options.phaseText) {
     setUpdatePhase(options.phaseTone, options.phaseText)
@@ -765,23 +776,43 @@ function updateMaintenanceRow (data) {
   els.runMaintenanceRow.replaceChildren()
 }
 
-function computeLogStats (text, matcher) {
-  const stats = { filter: 0, cache: 0, debug: 0, info: 0, warn: 0, error: 0, crit: 0, trace: 0 }
-  const lines = String(text || '').split(/\r?\n/)
-  lines.forEach(line => {
-    if (!line) return
-    if (matcher && !matcher(line)) return
-    stats.filter += 1
-    const upper = line.toUpperCase()
-    if (upper.includes('[CACHE]') || /\bCACHE\b/.test(upper)) stats.cache += 1
-    if (upper.includes('[DEBUG]')) stats.debug += 1
-    if (upper.includes('[INFO]')) stats.info += 1
-    if (upper.includes('[WARNING]') || upper.includes('[WARN]')) stats.warn += 1
-    if (upper.includes('[ERROR]')) stats.error += 1
-    if (upper.includes('[CRITICAL]') || upper.includes('[CRIT]')) stats.crit += 1
-    if (upper.includes('[TRACE]')) stats.trace += 1
+function computeLogStats (text) {
+  const baseStats = computeSharedLogStats(text)
+  return {
+    filter: String(text || '').split(/\r?\n/).filter(Boolean).length,
+    cache: baseStats.cache || 0,
+    debug: baseStats.debug || 0,
+    info: baseStats.info || 0,
+    warn: baseStats.warning || 0,
+    error: baseStats.error || 0,
+    crit: baseStats.critical || 0,
+    trace: baseStats.trace || 0
+  }
+}
+
+function getDisplayedLogLineCount (text) {
+  return String(text || '').split(/\r?\n/).length
+}
+
+function getImageMaidLogStartLine (payload, text) {
+  const totalLines = Number(payload && payload.total_lines)
+  if (!Number.isFinite(totalLines) || totalLines < 1) return 1
+  const requested = String((payload && payload.requested_lines) || imagemaidTailSize || '').trim().toLowerCase()
+  if (requested === 'all' || requested === 'full') return 1
+  return Math.max(1, totalLines - getDisplayedLogLineCount(text) + 1)
+}
+
+function renderRunLogText (text, opts = {}) {
+  if (!els.runLog) return
+  const content = String(text || '')
+  if (opts.numbered === false) {
+    els.runLog.textContent = content
+    return
+  }
+  renderLogRows(els.runLog, content, {
+    startLine: opts.startLine || 1,
+    lineNumbers: opts.lineNumbers
   })
-  return stats
 }
 
 function updateLogStatBadges (stats) {
@@ -806,23 +837,14 @@ function applyLogFilter () {
   const payload = lastImageMaidLogPayload || {}
   const rawText = String(payload.text || lastImageMaidLogText || '')
   const filterText = String(els.logFilter.value || '').trim()
-  let filteredText = rawText
-  let textMatcher = null
-  if (filterText) {
-    try {
-      const regex = new RegExp(filterText, 'i')
-      textMatcher = line => regex.test(line)
-    } catch {
-      const lowered = filterText.toLowerCase()
-      textMatcher = line => String(line || '').toLowerCase().includes(lowered)
-    }
-  }
-  const matcher = textMatcher || null
-  if (matcher) {
-    filteredText = rawText.split(/\r?\n/).filter(line => matcher(line)).join('\n')
-  }
-  els.runLog.textContent = filteredText || (rawText ? 'No lines matched the current filter.' : 'ImageMaid log is empty.')
-  updateLogStatBadges(computeLogStats(rawText, matcher))
+  const startLine = getImageMaidLogStartLine(payload, rawText)
+  const result = sharedFilterLogLines(rawText, filterText, { startLine })
+  const filteredText = result.text || (rawText ? 'No lines matched the current filter.' : 'ImageMaid log is empty.')
+  renderRunLogText(filteredText, {
+    startLine: result.text ? undefined : 1,
+    lineNumbers: result.text ? result.lineNumbers : undefined
+  })
+  updateLogStatBadges(computeLogStats(result.text))
   syncLogLevelButtons()
   if (imagemaidLogAutoScroll && els.runLog) {
     els.runLog.scrollTop = els.runLog.scrollHeight
@@ -1109,7 +1131,7 @@ function loadLog (force = false) {
         lastImageMaidLogPayload = null
         lastImageMaidLogText = ''
         lastImageMaidLogPath = ''
-        els.runLog.textContent = (body && body.error) || 'No ImageMaid log found yet.'
+        renderRunLogText((body && body.error) || 'No ImageMaid log found yet.')
         updateLogStatBadges({ filter: 0, cache: 0, debug: 0, info: 0, warn: 0, error: 0, crit: 0, trace: 0 })
         updateLogRecency(null)
         return
@@ -1124,7 +1146,7 @@ function loadLog (force = false) {
     })
     .catch(() => {
       lastImageMaidLogPayload = null
-      els.runLog.textContent = 'Failed to load the ImageMaid log.'
+      renderRunLogText('Failed to load the ImageMaid log.')
       updateLogRecency(null)
     })
     .finally(() => {
@@ -1211,7 +1233,7 @@ function submitRun () {
       if (status >= 400) {
         setRunState('error', body.error || 'ImageMaid failed to start.')
         if (body && body.error) {
-          els.runLog.textContent = body.error
+          renderRunLogText(body.error)
         }
         loadLog(true)
         showToast('error', body.error || 'ImageMaid failed to start.')
@@ -1389,6 +1411,7 @@ syncUpdateButtonLabel()
 imagemaidLastPayloadSignature = buildPayloadSignature()
 els.tailLabel.textContent = imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize
 imagemaidLogAutoScroll = els.logAutoscroll.checked
+renderRunLogText(els.runLog ? els.runLog.textContent : 'No ImageMaid log loaded.')
 syncLogLevelButtons()
 setValidationState(imagemaidValidated ? 'ok' : 'idle', String(els.validationStatus.textContent || '').trim())
 probeRoot()

@@ -25,6 +25,12 @@ import {
   isTimeWithinRange,
   applyLogFilter,
   computeLogStats,
+  filterLogLines,
+  findYamlMajorSections,
+  buildLineNumberText,
+  buildLineNumberedText,
+  getLogLineLevel,
+  renderLogRows,
   SPARKLINE_WIDTH,
   SPARKLINE_HEIGHT,
   SPARKLINE_PADDING,
@@ -337,6 +343,15 @@ describe('applyLogFilter', () => {
     const log = 'foo.bar\nfoo_bar'
     expect(applyLogFilter(log, 'foo.bar')).toBe('foo.bar')
   })
+  it('treats bracketed level shortcuts as named filters, not raw regex character classes', () => {
+    const log = '[ERROR] actual failure\nordinary row\nrecipe row'
+    expect(applyLogFilter(log, '[ERROR]')).toBe('[ERROR] actual failure')
+  })
+  it('matches exact warning and critical level markers', () => {
+    const log = '[WARNING] marked warning\nWARNING plain text\n[CRITICAL] marked critical\n[CRIT] short text'
+    expect(applyLogFilter(log, 'warning')).toBe('[WARNING] marked warning')
+    expect(applyLogFilter(log, 'critical')).toBe('[CRITICAL] marked critical')
+  })
   it('treats /.../ as a case-insensitive regex', () => {
     const log = 'AAA\nbbb\nCcC'
     expect(applyLogFilter(log, '/a|b/')).toBe('AAA\nbbb')
@@ -347,6 +362,14 @@ describe('applyLogFilter', () => {
   })
   it('returns empty string when no lines match', () => {
     expect(applyLogFilter('AAA\nbbb', 'zzz')).toBe('')
+  })
+})
+
+describe('filterLogLines', () => {
+  it('keeps source line numbers when filtering a tailed log', () => {
+    const result = filterLogLines('[INFO] one\n[ERROR] two\n[WARNING] three', 'warning', { startLine: 98 })
+    expect(result.text).toBe('[WARNING] three')
+    expect(result.lineNumbers).toEqual([100])
   })
 })
 
@@ -370,9 +393,9 @@ describe('computeLogStats', () => {
     const log = 'loaded FROM CACHE\nSomething from cache\nnope'
     expect(computeLogStats(log).cache).toBe(2)
   })
-  it('counts "traceback" (case-insensitive) as trace lines', () => {
-    const log = 'Traceback (most recent call last):\ntraceback: nope\nfine'
-    expect(computeLogStats(log).trace).toBe(2)
+  it('counts traceback markers for trace stats', () => {
+    const log = '[TRACE] enabled\nTraceback (most recent call last):\ntrace detail'
+    expect(computeLogStats(log).trace).toBe(1)
   })
   it('handles CRLF line endings', () => {
     const log = '[DEBUG] a\r\n[INFO] b\r\n'
@@ -383,6 +406,143 @@ describe('computeLogStats', () => {
   it('skips empty lines', () => {
     const log = '\n\n[INFO] one\n\n'
     expect(computeLogStats(log).info).toBe(1)
+  })
+  it('does not count unbracketed and short log-level-looking text as level markers', () => {
+    const log = 'ERROR plain\n[WARN] short\n[CRIT] short\ntrace detail\ncached lookup'
+    const stats = computeLogStats(log)
+    expect(stats.error).toBe(0)
+    expect(stats.warning).toBe(0)
+    expect(stats.critical).toBe(0)
+    expect(stats.trace).toBe(0)
+    expect(stats.cache).toBe(0)
+  })
+})
+
+describe('getLogLineLevel', () => {
+  it('returns exact marker severity classes', () => {
+    expect(getLogLineLevel('[CRITICAL] no api key')).toBe('critical')
+    expect(getLogLineLevel('[ERROR] failed')).toBe('error')
+    expect(getLogLineLevel('[WARNING] check config')).toBe('warning')
+    expect(getLogLineLevel('[TRACE] detail')).toBe('')
+    expect(getLogLineLevel('Traceback (most recent call last):')).toBe('trace')
+    expect(getLogLineLevel('loaded from cache')).toBe('cache')
+  })
+  it('ignores loose or shortened marker text', () => {
+    expect(getLogLineLevel('WARNING plain text')).toBe('')
+    expect(getLogLineLevel('[WARN] short marker')).toBe('')
+    expect(getLogLineLevel('[CRIT] short marker')).toBe('')
+  })
+})
+
+describe('findYamlMajorSections', () => {
+  it('finds generated divider comment sections', () => {
+    const yaml = [
+      '#==================== Libraries ====================#',
+      'libraries:',
+      '  Movies:',
+      '',
+      '#==================== Settings ====================#',
+      'settings:',
+      '  cache: true'
+    ].join('\n')
+    expect(findYamlMajorSections(yaml)).toEqual([
+      { line: 1, label: 'Libraries' },
+      { line: 5, label: 'Settings' }
+    ])
+  })
+
+  it('uses top-level keys when no nearby divider is present', () => {
+    const yaml = [
+      'plex:',
+      '  url: http://example.test',
+      'tmdb:',
+      '  apikey: redacted'
+    ].join('\n')
+    expect(findYamlMajorSections(yaml)).toEqual([
+      { line: 1, label: 'plex:' },
+      { line: 3, label: 'tmdb:' }
+    ])
+  })
+
+  it('includes parent library context for repeated library subsections', () => {
+    const yaml = [
+      '#==================== Libraries ====================#',
+      'libraries:',
+      '#==================== Movies ====================#',
+      '  Movies:',
+      '#==================== Metadata Files ====================#',
+      '    metadata_files:',
+      '#==================== Collections ====================#',
+      '    collection_files:',
+      '#==================== Overlays ====================#',
+      '    overlay_files:',
+      '#==================== TV Shows ====================#',
+      '  TV Shows:',
+      '#==================== Overlays ====================#',
+      '    overlay_files:'
+    ].join('\n')
+    expect(findYamlMajorSections(yaml)).toEqual([
+      { line: 1, label: 'Libraries' },
+      { line: 3, label: 'Movies' },
+      { line: 5, label: 'Movies > Metadata Files' },
+      { line: 7, label: 'Movies > Collections' },
+      { line: 9, label: 'Movies > Overlays' },
+      { line: 11, label: 'TV Shows' },
+      { line: 13, label: 'TV Shows > Overlays' }
+    ])
+  })
+})
+
+describe('buildLineNumberText', () => {
+  it('builds padded line numbers from text and a start line', () => {
+    expect(buildLineNumberText('a\nb\nc', { startLine: 98 })).toBe(' 98\n 99\n100')
+  })
+  it('can render sparse source line numbers from a filtered result', () => {
+    expect(buildLineNumberText('a\nb', { lineNumbers: [7, 120] })).toBe('  7\n120')
+  })
+})
+
+describe('buildLineNumberedText', () => {
+  it('prefixes line numbers inside the log text', () => {
+    expect(buildLineNumberedText('alpha\nbeta', { startLine: 9 })).toBe(' 9 | alpha\n10 | beta')
+  })
+  it('uses sparse source line numbers from filtered results', () => {
+    expect(buildLineNumberedText('[ERROR] a\n[ERROR] b', { lineNumbers: [12, 48] })).toBe('12 | [ERROR] a\n48 | [ERROR] b')
+  })
+})
+
+describe('renderLogRows', () => {
+  it('renders source-numbered log rows without prefixing the log content', () => {
+    const container = document.createElement('div')
+    renderLogRows(container, '[INFO] one\n[WARNING] two', { startLine: 41 })
+
+    const rows = container.querySelectorAll('.qs-log-line')
+    expect(rows).toHaveLength(2)
+    expect(rows[0].dataset.line).toBe('41')
+    expect(rows[0].querySelector('.qs-log-line-number').dataset.line).toBe('41')
+    expect(rows[0].querySelector('.qs-log-line-number').textContent).toBe('')
+    expect(rows[0].querySelector('.qs-log-line-content').textContent).toBe('[INFO] one')
+    expect(rows[1].dataset.line).toBe('42')
+    expect(rows[1].classList.contains('qs-log-line--warning')).toBe(true)
+    expect(rows[1].querySelector('.qs-log-line-content').textContent).toBe('[WARNING] two')
+  })
+
+  it('renders sparse filtered source line numbers', () => {
+    const container = document.createElement('div')
+    renderLogRows(container, '[ERROR] one\n[ERROR] two', { lineNumbers: [12, 48] })
+
+    expect(Array.from(container.querySelectorAll('.qs-log-line-number')).map(el => el.dataset.line))
+      .toEqual(['12', '48'])
+    expect(container.textContent).toBe('[ERROR] one[ERROR] two')
+  })
+
+  it('can render numbered config rows without log-level highlighting', () => {
+    const container = document.createElement('div')
+    renderLogRows(container, '[ERROR] allowed yaml value', { highlightLevels: false })
+
+    const row = container.querySelector('.qs-log-line')
+    expect(row.classList.contains('qs-log-line--error')).toBe(false)
+    expect(row.querySelector('.qs-log-line-content').textContent).toBe('[ERROR] allowed yaml value')
   })
 })
 
