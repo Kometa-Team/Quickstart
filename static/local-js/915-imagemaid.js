@@ -226,9 +226,14 @@ function updateModeHelp () {
 }
 
 function setBadge (el, tone, text) {
+  if (!el) return
   el.classList.remove('text-bg-secondary', 'text-bg-success', 'text-bg-warning', 'text-bg-danger', 'text-bg-primary')
   el.classList.add(tone)
   el.textContent = text
+}
+
+function setText (el, text) {
+  if (el) el.textContent = text
 }
 
 function shortSha (value) {
@@ -288,23 +293,23 @@ function syncPrepareSummary (body, options = {}) {
 
   const localVersion = String((body && body.local_version) || '').trim()
   const remoteVersion = String((body && body.remote_version) || '').trim()
-  els.localVersionStatus.textContent = localVersion || 'Unknown'
-  els.remoteVersionStatus.textContent = remoteVersion || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked')
-  els.localBranchStatus.textContent = (body && body.local_branch) || 'Unknown'
-  els.localShaStatus.textContent = shortSha(body && body.local_sha) || 'Unknown'
-  els.remoteShaStatus.textContent = shortSha(body && body.remote_sha) || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked')
-  els.branchSourceUrl.textContent = (body && body.branch_source_url) || ''
-  els.zipSourceUrl.textContent = (body && body.zip_source_url) || ''
+  setText(els.localVersionStatus, localVersion || 'Unknown')
+  setText(els.remoteVersionStatus, remoteVersion || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked'))
+  setText(els.localBranchStatus, (body && body.local_branch) || 'Unknown')
+  setText(els.localShaStatus, shortSha(body && body.local_sha) || 'Unknown')
+  setText(els.remoteShaStatus, shortSha(body && body.remote_sha) || (imagemaidUpdateCheckCompleted ? 'Unavailable' : 'Not checked'))
+  setText(els.branchSourceUrl, (body && body.branch_source_url) || '')
+  setText(els.zipSourceUrl, (body && body.zip_source_url) || '')
 
   const localBranch = (body && body.local_branch) || 'unknown'
   const localSha = shortSha(body && body.local_sha) || 'unknown'
   const remoteSha = shortSha(body && body.remote_sha) || 'unknown'
-  els.localVersionInline.textContent = localVersion || 'unknown'
-  els.localBranchInline.textContent = localBranch
-  els.localShaInline.textContent = localSha
-  els.remoteVersionInline.textContent = remoteVersion || 'unknown'
-  els.remoteShaInline.textContent = remoteSha
-  els.updateBox.classList.toggle('d-none', !imagemaidUpdateAvailable)
+  setText(els.localVersionInline, localVersion || 'unknown')
+  setText(els.localBranchInline, localBranch)
+  setText(els.localShaInline, localSha)
+  setText(els.remoteVersionInline, remoteVersion || 'unknown')
+  setText(els.remoteShaInline, remoteSha)
+  if (els.updateBox) els.updateBox.classList.toggle('d-none', !imagemaidUpdateAvailable)
 
   if (options.phaseTone && options.phaseText) {
     setUpdatePhase(options.phaseTone, options.phaseText)
