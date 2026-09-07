@@ -14,7 +14,8 @@ def test_tail_log_stats_count_exact_level_markers(client, tmp_path, monkeypatch,
                 "[WARNING] marked warning",
                 "ERROR plain",
                 "[CRITICAL] marked critical",
-                "[TRACE] marked trace",
+                "[TRACE] should not count as a trace marker",
+                "Traceback (most recent call last):",
             ]
         )
         + "\n",
@@ -28,7 +29,7 @@ def test_tail_log_stats_count_exact_level_markers(client, tmp_path, monkeypatch,
 
     assert resp.status_code == 200
     stats = resp.get_json()["stats"]
-    assert stats["total_lines"] == 8
+    assert stats["total_lines"] == 9
     assert stats["cache"] == 2
     assert stats["debug"] == 0
     assert stats["info"] == 1

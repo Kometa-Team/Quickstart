@@ -4271,7 +4271,7 @@ def tail_log():
                             counts["error"] += 1
                         if "[CRITICAL]" in upper:
                             counts["critical"] += 1
-                        if "[TRACE]" in upper:
+                        if "TRACEBACK" in upper:
                             counts["trace"] += 1
             except Exception:
                 return None

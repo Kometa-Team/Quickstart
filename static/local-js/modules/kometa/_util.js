@@ -212,7 +212,7 @@ const LOG_LEVEL_PATTERNS = {
   warning: [/\[WARNING\]/i],
   error: [/\[ERROR\]/i],
   critical: [/\[CRITICAL\]/i],
-  trace: [/\[TRACE\]/i]
+  trace: [/\btraceback\b/i]
 }
 
 const LOG_FILTER_ALIASES = new Map([
@@ -300,8 +300,8 @@ export function filterLogLines (text, filter, opts = {}) {
 /**
  * Count log lines by level marker.
  * Recognises bracketed and plain level tags used by Kometa and ImageMaid.
- * `cache` accepts "from cache", "cached", and "[CACHE]"; `trace` accepts
- * trace/traceback lines.
+ * `cache` accepts "from cache", "cached", and "[CACHE]"; `trace` counts
+ * traceback markers rather than a `[TRACE]` log level.
  */
 export function computeLogStats (text) {
   const stats = {

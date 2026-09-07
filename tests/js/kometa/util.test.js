@@ -393,7 +393,7 @@ describe('computeLogStats', () => {
     const log = 'loaded FROM CACHE\nSomething from cache\nnope'
     expect(computeLogStats(log).cache).toBe(2)
   })
-  it('counts exact trace level markers', () => {
+  it('counts traceback markers for trace stats', () => {
     const log = '[TRACE] enabled\nTraceback (most recent call last):\ntrace detail'
     expect(computeLogStats(log).trace).toBe(1)
   })
@@ -423,14 +423,14 @@ describe('getLogLineLevel', () => {
     expect(getLogLineLevel('[CRITICAL] no api key')).toBe('critical')
     expect(getLogLineLevel('[ERROR] failed')).toBe('error')
     expect(getLogLineLevel('[WARNING] check config')).toBe('warning')
-    expect(getLogLineLevel('[TRACE] detail')).toBe('trace')
+    expect(getLogLineLevel('[TRACE] detail')).toBe('')
+    expect(getLogLineLevel('Traceback (most recent call last):')).toBe('trace')
     expect(getLogLineLevel('loaded from cache')).toBe('cache')
   })
   it('ignores loose or shortened marker text', () => {
     expect(getLogLineLevel('WARNING plain text')).toBe('')
     expect(getLogLineLevel('[WARN] short marker')).toBe('')
     expect(getLogLineLevel('[CRIT] short marker')).toBe('')
-    expect(getLogLineLevel('trace detail')).toBe('')
   })
 })
 
