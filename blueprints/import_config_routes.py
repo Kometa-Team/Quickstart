@@ -81,6 +81,62 @@ from modules.library_file_entries import _normalize_imported_libraries_payload
 bp = Blueprint("import_config_routes", __name__)
 
 
+def _missing_import_preview_credentials(parsed: dict, form_data, *, merge_mode: bool, base_config: str, needs_plex: bool, needs_tmdb: bool) -> dict[str, bool]:
+    """Return which required import credentials have no usable source."""
+    missing = {"plex": False, "tmdb": False}
+    if needs_plex:
+        base_movie_id_map, base_show_id_map = _parse_base_plex_library_id_maps(base_config) if merge_mode else ({}, {})
+        has_base_library_cache = bool(base_movie_id_map or base_show_id_map)
+        form_plex_url, form_plex_token = _parse_plex_credentials_from_form(form_data or {})
+        imported_plex_url, imported_plex_token = _parse_plex_credentials_from_config(parsed)
+        base_plex_url, base_plex_token = _parse_plex_credentials_from_base(base_config) if merge_mode else ("", "")
+        has_plex_credentials = any(
+            bool(url and token)
+            for url, token in (
+                (form_plex_url, form_plex_token),
+                (base_plex_url, base_plex_token),
+                (imported_plex_url, imported_plex_token),
+            )
+        )
+        missing["plex"] = not has_base_library_cache and not has_plex_credentials
+    if needs_tmdb:
+        form_tmdb_key = _parse_tmdb_credentials_from_form(form_data or {})
+        imported_tmdb_key = _parse_tmdb_credentials_from_config(parsed)
+        base_tmdb_key = _parse_tmdb_credentials_from_base(base_config) if merge_mode else ""
+        missing["tmdb"] = not any((form_tmdb_key, base_tmdb_key, imported_tmdb_key))
+    return missing
+
+
+def _missing_import_preview_credentials_response(missing: dict[str, bool], extracted_dir):
+    needs_plex = bool(missing.get("plex"))
+    needs_tmdb = bool(missing.get("tmdb"))
+    if not needs_plex and not needs_tmdb:
+        return None
+    if needs_plex and needs_tmdb:
+        message = "Plex credentials and a TMDb API key are required to preview this import."
+    elif needs_plex:
+        message = "Plex credentials are required to import library settings. Enter a Plex URL and token to continue."
+    else:
+        message = "TMDb API key is required to import metadata settings. Enter a valid TMDb API key to continue."
+    if extracted_dir:
+        try:
+            shutil.rmtree(extracted_dir)
+        except OSError:
+            pass
+    return (
+        jsonify(
+            success=False,
+            needs_plex_credentials=needs_plex,
+            needs_tmdb_credentials=needs_tmdb,
+            message=message,
+            plex_url="",
+            plex_token="",
+            tmdb_apikey="",
+        ),
+        400,
+    )
+
+
 # --- routes ---------------------------------------------------------------
 
 
@@ -145,6 +201,20 @@ def import_config_preview():
     movie_id_map, show_id_map = _plex_library_id_maps(plex_data)
     movie_names, show_names = set(movie_id_map.values()), set(show_id_map.values())
     plex_libraries = _sorted_plex_libraries(movie_id_map, show_id_map)
+
+    missing_credentials = _missing_import_preview_credentials(
+        parsed,
+        request.form,
+        merge_mode=merge_mode,
+        base_config=base_config,
+        needs_plex=needs_plex,
+        needs_tmdb=needs_tmdb,
+    )
+    missing_credentials_response = None
+    if missing_credentials.get("plex") or (missing_credentials.get("tmdb") and not needs_plex):
+        missing_credentials_response = _missing_import_preview_credentials_response(missing_credentials, extracted_dir)
+    if missing_credentials_response:
+        return missing_credentials_response
 
     if needs_plex:
         plex_outcome = validate_plex_credentials(

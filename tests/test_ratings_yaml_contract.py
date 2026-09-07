@@ -233,6 +233,27 @@ def test_playlist_files_follow_library_output_order(monkeypatch, qs_module):
     assert playlist_order == library_order
 
 
+def test_playlist_files_resolve_true_library_toggle_through_plex_id_name_map(monkeypatch, qs_module):
+    payload = {
+        "validated": True,
+        "libraries": {
+            "mov-library_1-library": "true",
+            "mov-library_1-playlist": "true",
+            "mov-library_1-collection_collectionless": True,
+        },
+    }
+    monkeypatch.setattr(qs_module.output.persistence, "get_library_names", lambda *_args, **_kwargs: {"1": " Movies "})
+
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+
+    library_order = list(parsed["libraries"].keys())
+    playlist_order = parsed["playlist_files"][0]["template_variables"]["libraries"]
+
+    assert library_order == [" Movies "]
+    assert playlist_order == [" Movies "]
+    assert playlist_order != ["True"]
+
+
 def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs_module):
     payload = {
         "validated": True,

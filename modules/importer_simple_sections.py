@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from modules.import_redaction import is_redacted_credential_value
+
 if TYPE_CHECKING:
     from modules.importer import ImportReport
 
@@ -172,6 +174,22 @@ def _normalize_anidb_section(section_payload: dict) -> dict:
     return updated
 
 
+def _strip_redacted_credentials(section: str, section_payload: dict, report: ImportReport) -> dict:
+    credential_keys = {
+        "plex": {"url", "plex_url", "token", "plex_token"},
+        "tmdb": {"apikey", "api_key", "tmdb_apikey", "token"},
+    }.get(section)
+    if not credential_keys:
+        return section_payload
+
+    cleaned = dict(section_payload)
+    for key in list(cleaned):
+        if str(key) in credential_keys and is_redacted_credential_value(cleaned.get(key)):
+            cleaned.pop(key, None)
+            report.add("skipped", f"{section}.{key}", "Redacted credential placeholder ignored.")
+    return cleaned
+
+
 def process_simple_sections(
     config_data: dict,
     *,
@@ -210,7 +228,9 @@ def process_simple_sections(
                 section_payload = _normalize_settings_section(section_payload)
             if section == "anidb":
                 section_payload = _normalize_anidb_section(section_payload)
-            payload[section] = {section: section_payload}
-            _flatten_dict(section, section_payload, report)
+            section_payload = _strip_redacted_credentials(section, section_payload, report)
+            if section_payload:
+                payload[section] = {section: section_payload}
+                _flatten_dict(section, section_payload, report)
         else:
             report.add("unmapped", section, "Unsupported section format.")

@@ -91,10 +91,31 @@ def test_prepare_import_payload_maps_playlist_files_to_library_toggles():
     )
 
     libraries = payload["libraries"]["libraries"]
-    assert libraries["mov-library_movies-library"] == "true"
+    assert libraries["mov-library_movies-library"] == "Movies"
     assert libraries["mov-library_movies-playlist"] == "true"
     assert "playlist_files" not in payload
     assert any("libraries.Movies.playlist_files" in line for line in report.lines)
+
+
+def test_prepare_import_payload_matches_playlist_library_names_with_edge_spaces():
+    payload, report = importer.prepare_import_payload(
+        {
+            "libraries": {"  Movies ": {}},
+            "playlist_files": [
+                {
+                    "default": "playlist",
+                    "template_variables": {"libraries": ["  Movies "]},
+                }
+            ],
+        },
+        {"  Movies "},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-library"] == "  Movies "
+    assert libraries["mov-library_movies-playlist"] == "true"
+    assert any("libraries.  Movies .playlist_files" in line for line in report.lines)
 
 
 def test_prepare_import_payload_accepts_comma_separated_playlist_libraries():
@@ -113,9 +134,9 @@ def test_prepare_import_payload_accepts_comma_separated_playlist_libraries():
     )
 
     libraries = payload["libraries"]["libraries"]
-    assert libraries["mov-library_movies-library"] == "true"
+    assert libraries["mov-library_movies-library"] == "Movies"
     assert libraries["mov-library_movies-playlist"] == "true"
-    assert libraries["mov-library_tvshows-library"] == "true"
+    assert libraries["mov-library_tvshows-library"] == "TV Shows"
     assert libraries["mov-library_tvshows-playlist"] == "true"
     assert any("playlist_files[0].template_variables.libraries" in line for line in report.lines)
 
@@ -156,7 +177,7 @@ def test_prepare_import_payload_maps_playlist_template_variables_into_libraries_
     )
 
     libraries = payload["libraries"]["libraries"]
-    assert libraries["mov-library_movies-library"] == "true"
+    assert libraries["mov-library_movies-library"] == "Movies"
     assert libraries["mov-library_movies-playlist"] == "true"
     assert libraries["playlist-template_variables[sync_to_users]"] == "alice, bob"
     assert libraries["playlist-template_variables[delete_playlist]"] is True
@@ -222,6 +243,23 @@ def test_prepare_import_payload_maps_apprise_config_to_location():
     assert payload["apprise"]["apprise"]["location"] == "/config/apprise.yml"
     assert any(line == "imported: apprise.config" for line in report.lines)
     assert report.counts["imported"] >= 1
+
+
+def test_prepare_import_payload_skips_redacted_credential_placeholders():
+    payload, report = importer.prepare_import_payload(
+        {
+            "plex": {"url": "(redacted)", "token": "(redacted)"},
+            "tmdb": {"apikey": "<redacted>"},
+        },
+        set(),
+        set(),
+    )
+
+    assert "plex" not in payload
+    assert "tmdb" not in payload
+    assert "skipped: plex.url :: Redacted credential placeholder ignored." in report.lines
+    assert "skipped: plex.token :: Redacted credential placeholder ignored." in report.lines
+    assert "skipped: tmdb.apikey :: Redacted credential placeholder ignored." in report.lines
 
 
 def test_annotate_yaml_marks_apprise_config_as_imported():

@@ -32,8 +32,8 @@
                 <input class="form-check-input playlist-library-toggle" type="checkbox" id="{{ library.id }}-playlist"
                   name="{{ library.id }}-playlist" value="true" data-include-toggle="{{ library.id }}-include"
                   data-default="false" {% if playlist_checked %}checked{% endif %}>
-                <label class="form-check-label mb-0" for="{{ library.id }}-playlist">
-                  Include {{ library.name }}
+                <label class="form-check-label mb-0" for="{{ library.id }}-playlist" title="{{ library.name | e }}">
+                  Include [{{ library.name | nbsp_leading_spaces }}]
                 </label>
               </div>
               <div class="form-text text-muted mt-2">

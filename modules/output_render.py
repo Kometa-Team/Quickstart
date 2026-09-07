@@ -144,7 +144,19 @@ def process_libraries_block(config_data, *, debug=False):
     libraries_section = build_libraries_section(**bundle.to_section_kwargs())
 
     config_data["libraries"] = libraries_section.get("libraries", {}) if isinstance(libraries_section, dict) else {}
-    apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section)
+    library_names_by_prefix = {
+        helpers.strip_library_suffix(key): name
+        for key, name in {
+            **bundle.movie_libraries,
+            **bundle.show_libraries,
+        }.items()
+    }
+    apply_playlist_libraries_toggle(
+        config_data,
+        nested_libraries_data,
+        libraries_section,
+        library_names_by_prefix=library_names_by_prefix,
+    )
 
     if debug:
         helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")

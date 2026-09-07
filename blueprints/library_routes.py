@@ -141,6 +141,33 @@ def _build_library_lists():
     return movie_libraries, show_libraries, telemetry_data
 
 
+def _normalize_library_toggle_names(libraries_data):
+    """Replace selected checkbox placeholder values with exact Plex names."""
+    if not isinstance(libraries_data, dict):
+        return {}
+
+    try:
+        library_names = persistence.get_library_names("010-plex")
+    except Exception:
+        library_names = {}
+    library_names = library_names if isinstance(library_names, dict) else {}
+
+    normalized = dict(libraries_data)
+    for key, value in list(normalized.items()):
+        if not isinstance(key, str) or not key.endswith("-library"):
+            continue
+        if not _is_truthy_setting_value(value):
+            continue
+        text = str(value).strip().lower()
+        if value is not True and text not in {"true", "yes", "on", "1"}:
+            continue
+        prefix = key[: -len("-library")]
+        library_id = prefix.split("_", 1)[1] if "_" in prefix else ""
+        if library_id in library_names:
+            normalized[key] = library_names[library_id]
+    return normalized
+
+
 def _legacy_playlist_library_names():
     settings = persistence.retrieve_settings("027-playlist_files") or {}
     playlist_payload = settings.get("playlist_files", {}) if isinstance(settings, dict) else {}
@@ -148,7 +175,7 @@ def _legacy_playlist_library_names():
         playlist_payload = playlist_payload.get("playlist_files", {})
     raw_libraries = playlist_payload.get("libraries", "") if isinstance(playlist_payload, dict) else ""
     if isinstance(raw_libraries, list):
-        return {str(item).strip() for item in raw_libraries if str(item).strip()}
+        return {str(item) for item in raw_libraries if str(item).strip()}
     return {item.strip() for item in str(raw_libraries or "").split(",") if item.strip()}
 
 
@@ -834,7 +861,7 @@ def _merge_active_library_payload_with_saved_libraries(library_id, incoming_libr
             continue
         merged[key] = value
 
-    return merged
+    return _normalize_library_toggle_names(merged)
 
 
 def _is_library_file_entry_key(library_id, key):

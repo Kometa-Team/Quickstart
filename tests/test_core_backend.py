@@ -4955,6 +4955,104 @@ def test_import_config_preview_handles_tuple_validation_response(client, monkeyp
     assert "Bad Plex credentials from tuple response." in payload["message"]
 
 
+def test_import_config_preview_requests_all_missing_redacted_credentials(client, monkeypatch, qs_module):
+    import io
+
+    def _unexpected_plex_validation(_payload):
+        raise AssertionError("redacted Plex credentials should be treated as missing")
+
+    def _unexpected_tmdb_validation(_payload):
+        raise AssertionError("redacted TMDb credentials should be treated as missing")
+
+    monkeypatch.setattr(qs_module.validations, "validate_plex_server", _unexpected_plex_validation)
+    monkeypatch.setattr(qs_module.validations, "validate_tmdb_server", _unexpected_tmdb_validation)
+
+    yaml_text = (
+        "plex:\n" "  url: (redacted)\n" "  token: (redacted)\n" "tmdb:\n" "  apikey: (redacted)\n" "libraries:\n" "  Movies:\n" "    metadata_files:\n" "      - default: basic\n"
+    )
+
+    resp = client.post(
+        "/import-config/preview",
+        data={"config_name": "pytest_import_redacted_creds", "file": (io.BytesIO(yaml_text.encode("utf-8")), "config.yml")},
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 400
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert payload["needs_plex_credentials"] is True
+    assert payload["needs_tmdb_credentials"] is True
+    assert payload["plex_url"] == ""
+    assert payload["plex_token"] == ""
+    assert payload["tmdb_apikey"] == ""
+
+
+def test_import_config_preview_merge_uses_base_credentials_over_redacted_import(client, isolated_config_dir, monkeypatch, qs_module):
+    import io
+    import json
+
+    from modules import database
+
+    base_name = "pytest_import_base_creds"
+    database.save_section_data(
+        name=base_name,
+        section="plex",
+        validated=True,
+        user_entered=True,
+        data={
+            "plex": {
+                "url": "http://base-plex.local",
+                "token": "base-plex-token",
+                "tmp_movie_libraries": "1",
+                "tmp_show_libraries": "",
+                "tmp_library_names": json.dumps({"1": "Movies"}),
+            }
+        },
+    )
+    database.save_section_data(
+        name=base_name,
+        section="tmdb",
+        validated=True,
+        user_entered=True,
+        data={"tmdb": {"apikey": "base-tmdb-key"}},
+    )
+
+    def _unexpected_plex_validation(_payload):
+        raise AssertionError("base Plex library cache should avoid a Plex credential prompt")
+
+    tmdb_payloads = []
+
+    monkeypatch.setattr(qs_module.validations, "validate_plex_server", _unexpected_plex_validation)
+    monkeypatch.setattr(
+        qs_module.validations,
+        "validate_tmdb_server",
+        lambda payload: tmdb_payloads.append(dict(payload)) or {"valid": True},
+    )
+
+    yaml_text = (
+        "plex:\n" "  url: (redacted)\n" "  token: (redacted)\n" "tmdb:\n" "  apikey: (redacted)\n" "libraries:\n" "  Movies:\n" "    metadata_files:\n" "      - default: basic\n"
+    )
+
+    resp = client.post(
+        "/import-config/preview",
+        data={
+            "config_name": "pytest_import_merge_redacted",
+            "merge_mode": "merge",
+            "base_config": base_name,
+            "file": (io.BytesIO(yaml_text.encode("utf-8")), "config.yml"),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert resp.status_code == 200, resp.get_json()
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload.get("needs_plex_credentials") is None
+    assert payload.get("needs_tmdb_credentials") is None
+    assert tmdb_payloads == [{"tmdb_apikey": "base-tmdb-key"}]
+    assert "plex" not in payload["importable_sections"]
+
+
 def test_yaml_generation_missing_sections_shows_error(client, isolated_config_dir, monkeypatch, qs_module):
     monkeypatch.setattr(
         qs_module,

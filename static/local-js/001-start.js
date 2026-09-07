@@ -1903,7 +1903,10 @@ document.addEventListener('DOMContentLoaded', function () {
       importSummary.classList.add('d-none')
     }
     if (confirmImportButton) confirmImportButton.classList.add('d-none')
-    if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
+    if (!options.keepCredentials) {
+      if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
+      if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
+    }
     clearMergeSections()
     if (importReportFilters) {
       importReportFilters.querySelectorAll('button[data-filter]').forEach(btn => {

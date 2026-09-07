@@ -31,6 +31,7 @@ from modules.output_grouping import group_movie_and_show_libraries
 # unset checkboxes as ``False`` while some older rows may still be
 # ``None`` or the empty string.
 _UNSELECTED_LIBRARY_VALUES = (None, "", False)
+_SELECTED_LIBRARY_PLACEHOLDERS = {"true", "yes", "on"}
 
 
 @dataclass(frozen=True)
@@ -116,6 +117,24 @@ def _select_libraries(nested_libraries_data, prefix):
     return {key: value for key, value in nested_libraries_data.items() if _is_selected_library_key(key, prefix) and value not in _UNSELECTED_LIBRARY_VALUES}
 
 
+def _resolve_library_display_names(libraries, plex_name_map):
+    resolved = {}
+    for key, value in libraries.items():
+        lib_id = helpers.extract_library_name(key)
+        if plex_name_map and lib_id in plex_name_map:
+            resolved[key] = plex_name_map[lib_id]
+            continue
+        if isinstance(value, bool):
+            resolved[key] = lib_id or str(value)
+            continue
+        text = str(value).strip()
+        if text.lower() in _SELECTED_LIBRARY_PLACEHOLDERS:
+            resolved[key] = lib_id or text
+        else:
+            resolved[key] = value
+    return resolved
+
+
 def _debug_log_extracted(bundle, debug):
     """Emit the 18-line 'Extracted X:' debug dump when *debug* is truthy."""
     if not debug:
@@ -165,9 +184,8 @@ def extract_libraries_bundle(nested_libraries_data, *, debug=False):
     from modules import persistence  # local import to avoid load-order cycle
 
     plex_name_map = persistence.get_library_names()
-    if plex_name_map:
-        movie_libraries = {k: plex_name_map.get(helpers.extract_library_name(k), v) for k, v in movie_libraries.items()}
-        show_libraries = {k: plex_name_map.get(helpers.extract_library_name(k), v) for k, v in show_libraries.items()}
+    movie_libraries = _resolve_library_display_names(movie_libraries, plex_name_map)
+    show_libraries = _resolve_library_display_names(show_libraries, plex_name_map)
 
     movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}
     show_library_names = {helpers.extract_library_name(k) for k in show_libraries}

@@ -36,6 +36,7 @@ import json
 import re
 from pathlib import Path
 
+from modules.import_redaction import clean_import_credential_value
 from modules import database
 
 
@@ -211,7 +212,7 @@ def _parse_plex_credentials_from_config(config_data):
         return "", ""
     url = plex_block.get("url") or plex_block.get("plex_url") or ""
     token = plex_block.get("token") or plex_block.get("plex_token") or ""
-    return str(url).strip(), str(token).strip()
+    return clean_import_credential_value(url), clean_import_credential_value(token)
 
 
 def _parse_plex_credentials_from_base(base_name: str):
@@ -227,13 +228,13 @@ def _parse_plex_credentials_from_base(base_name: str):
         return _parse_plex_credentials_from_config(stored)
     url = stored.get("url") or stored.get("plex_url") or ""
     token = stored.get("token") or stored.get("plex_token") or ""
-    return str(url).strip(), str(token).strip()
+    return clean_import_credential_value(url), clean_import_credential_value(token)
 
 
 def _parse_plex_credentials_from_form(form_data):
     url = form_data.get("plex_url", "") or ""
     token = form_data.get("plex_token", "") or ""
-    return str(url).strip(), str(token).strip()
+    return clean_import_credential_value(url), clean_import_credential_value(token)
 
 
 def _parse_tmdb_credentials_from_config(config_data):
@@ -241,7 +242,7 @@ def _parse_tmdb_credentials_from_config(config_data):
     if not isinstance(tmdb_block, dict):
         return ""
     api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
-    return str(api_key).strip()
+    return clean_import_credential_value(api_key)
 
 
 def _parse_tmdb_credentials_from_base(base_name: str):
@@ -256,12 +257,12 @@ def _parse_tmdb_credentials_from_base(base_name: str):
     if "tmdb" in stored:
         return _parse_tmdb_credentials_from_config(stored)
     api_key = stored.get("apikey") or stored.get("api_key") or stored.get("tmdb_apikey") or stored.get("token") or ""
-    return str(api_key).strip()
+    return clean_import_credential_value(api_key)
 
 
 def _parse_tmdb_credentials_from_form(form_data):
     api_key = form_data.get("tmdb_apikey", "") or ""
-    return str(api_key).strip()
+    return clean_import_credential_value(api_key)
 
 
 def count_annotated_lines(text: str) -> dict:
