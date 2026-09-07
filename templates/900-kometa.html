@@ -299,7 +299,7 @@
         </div>
 
         <!-- YAML Output -->
-        <div class="form-floating mb-2">
+        <div class="mb-2">
           <div class="form-text" id="yaml-content">
             <br>
             <h5>Here is the YAML that was generated as a result of your inputs.</h5>
@@ -309,10 +309,14 @@
               As a reminder, this will most likely <b>NOT</b> work with Kometa as it has not passed validation.
             </div>
           </div>
-          <div class="qs-line-viewer qs-line-viewer--textarea" id="final-yaml-line-viewer">
-            <pre id="final-yaml-line-numbers" class="qs-line-viewer-gutter qs-line-viewer-gutter--textarea" aria-hidden="true"></pre>
-            <textarea readonly id="final-yaml" class="form-control qs-line-viewer-content" rows="20" wrap="off">{{ yaml_content }}</textarea>
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2 d-none" id="final-yaml-section-jump-wrap">
+            <label class="form-label small text-muted mb-0" for="final-yaml-section-jump">Jump to section</label>
+            <select id="final-yaml-section-jump" class="form-select form-select-sm w-auto">
+              <option value="">Select a section</option>
+            </select>
           </div>
+          <textarea readonly id="final-yaml" class="d-none" aria-hidden="true">{{ yaml_content }}</textarea>
+          <div id="final-yaml-viewer" class="form-control qs-log-code qs-yaml-code" role="region" aria-label="Generated YAML output" tabindex="0"></div>
         </div>
 
         <!-- Download Buttons -->
@@ -1263,8 +1267,8 @@
             </div>
           </div>
         </div>
-        <pre class="bg-dark text-light p-2 rounded" id="run-output-log"
-          style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;"></pre>
+        <div class="bg-dark text-light rounded qs-log-code" id="run-output-log"
+          style="height: 300px;" role="log" aria-label="Kometa log output"></div>
         <div class="accordion mt-3" id="logscan-accordion">
           <div class="accordion-item">
             <h2 class="accordion-header" id="logscan-accordion-heading">

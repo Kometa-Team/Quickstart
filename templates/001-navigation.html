@@ -382,7 +382,17 @@
             <p class="text-muted small mb-2">
               Share this info with support in Discord. We made every effort to redact secrets, but please review before posting.
             </p>
-            <pre id="supportInfoOutput" class="form-control bg-dark text-light" tabindex="0" style="height: 320px; overflow: auto; white-space: pre;">Loading support info...</pre>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2 d-none" id="supportInfoJumpWrap">
+              <label class="form-label small text-muted mb-0" for="supportInfoJump">Jump to section</label>
+              <select id="supportInfoJump" class="form-select form-select-sm w-auto">
+                <option value="">Select a section</option>
+              </select>
+            </div>
+            <div id="supportInfoOutput" class="form-control qs-log-code qs-support-info-code" role="region" aria-label="Support information" tabindex="0">Loading support info...</div>
+            <div id="supportInfoCopyFallback" class="alert alert-warning mt-2 d-none" role="status">
+              <div class="small mb-2" id="supportInfoCopyFallbackMessage">Clipboard access is blocked. The raw support info is selected below.</div>
+              <textarea id="supportInfoCopyText" class="form-control qs-support-info-copy-text" readonly spellcheck="false" aria-label="Raw support information for copying"></textarea>
+            </div>
           </div>
         </div>
       </div>

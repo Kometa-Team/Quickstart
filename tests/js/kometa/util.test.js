@@ -26,8 +26,11 @@ import {
   applyLogFilter,
   computeLogStats,
   filterLogLines,
+  findYamlMajorSections,
   buildLineNumberText,
   buildLineNumberedText,
+  getLogLineLevel,
+  renderLogRows,
   SPARKLINE_WIDTH,
   SPARKLINE_HEIGHT,
   SPARKLINE_PADDING,
@@ -415,6 +418,53 @@ describe('computeLogStats', () => {
   })
 })
 
+describe('getLogLineLevel', () => {
+  it('returns exact marker severity classes', () => {
+    expect(getLogLineLevel('[CRITICAL] no api key')).toBe('critical')
+    expect(getLogLineLevel('[ERROR] failed')).toBe('error')
+    expect(getLogLineLevel('[WARNING] check config')).toBe('warning')
+    expect(getLogLineLevel('[TRACE] detail')).toBe('trace')
+    expect(getLogLineLevel('loaded from cache')).toBe('cache')
+  })
+  it('ignores loose or shortened marker text', () => {
+    expect(getLogLineLevel('WARNING plain text')).toBe('')
+    expect(getLogLineLevel('[WARN] short marker')).toBe('')
+    expect(getLogLineLevel('[CRIT] short marker')).toBe('')
+    expect(getLogLineLevel('trace detail')).toBe('')
+  })
+})
+
+describe('findYamlMajorSections', () => {
+  it('finds generated divider comment sections', () => {
+    const yaml = [
+      '#==================== Libraries ====================#',
+      'libraries:',
+      '  Movies:',
+      '',
+      '#==================== Settings ====================#',
+      'settings:',
+      '  cache: true'
+    ].join('\n')
+    expect(findYamlMajorSections(yaml)).toEqual([
+      { line: 1, label: 'Libraries' },
+      { line: 5, label: 'Settings' }
+    ])
+  })
+
+  it('uses top-level keys when no nearby divider is present', () => {
+    const yaml = [
+      'plex:',
+      '  url: http://example.test',
+      'tmdb:',
+      '  apikey: redacted'
+    ].join('\n')
+    expect(findYamlMajorSections(yaml)).toEqual([
+      { line: 1, label: 'plex:' },
+      { line: 3, label: 'tmdb:' }
+    ])
+  })
+})
+
 describe('buildLineNumberText', () => {
   it('builds padded line numbers from text and a start line', () => {
     expect(buildLineNumberText('a\nb\nc', { startLine: 98 })).toBe(' 98\n 99\n100')
@@ -430,6 +480,41 @@ describe('buildLineNumberedText', () => {
   })
   it('uses sparse source line numbers from filtered results', () => {
     expect(buildLineNumberedText('[ERROR] a\n[ERROR] b', { lineNumbers: [12, 48] })).toBe('12 | [ERROR] a\n48 | [ERROR] b')
+  })
+})
+
+describe('renderLogRows', () => {
+  it('renders source-numbered log rows without prefixing the log content', () => {
+    const container = document.createElement('div')
+    renderLogRows(container, '[INFO] one\n[WARNING] two', { startLine: 41 })
+
+    const rows = container.querySelectorAll('.qs-log-line')
+    expect(rows).toHaveLength(2)
+    expect(rows[0].dataset.line).toBe('41')
+    expect(rows[0].querySelector('.qs-log-line-number').dataset.line).toBe('41')
+    expect(rows[0].querySelector('.qs-log-line-number').textContent).toBe('')
+    expect(rows[0].querySelector('.qs-log-line-content').textContent).toBe('[INFO] one')
+    expect(rows[1].dataset.line).toBe('42')
+    expect(rows[1].classList.contains('qs-log-line--warning')).toBe(true)
+    expect(rows[1].querySelector('.qs-log-line-content').textContent).toBe('[WARNING] two')
+  })
+
+  it('renders sparse filtered source line numbers', () => {
+    const container = document.createElement('div')
+    renderLogRows(container, '[ERROR] one\n[ERROR] two', { lineNumbers: [12, 48] })
+
+    expect(Array.from(container.querySelectorAll('.qs-log-line-number')).map(el => el.dataset.line))
+      .toEqual(['12', '48'])
+    expect(container.textContent).toBe('[ERROR] one[ERROR] two')
+  })
+
+  it('can render numbered config rows without log-level highlighting', () => {
+    const container = document.createElement('div')
+    renderLogRows(container, '[ERROR] allowed yaml value', { highlightLevels: false })
+
+    const row = container.querySelector('.qs-log-line')
+    expect(row.classList.contains('qs-log-line--error')).toBe(false)
+    expect(row.querySelector('.qs-log-line-content').textContent).toBe('[ERROR] allowed yaml value')
   })
 })
 

@@ -6464,6 +6464,7 @@ def support_info():
     lines.append(f"# Python: {python_version}")
     lines.append(f"# Git: {git_version}")
     lines.append(f"# Browser: {browser_line}")
+    lines.append("# Viewers: enhanced line numbers and section jump controls enabled")
     lines.extend(helpers.get_quickstart_settings_summary())
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")

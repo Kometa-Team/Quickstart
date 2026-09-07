@@ -357,6 +357,78 @@ export function buildLineNumberedText (text, opts = {}) {
   }).join('\n')
 }
 
+export function findYamlMajorSections (text) {
+  const lines = String(text || '').split(/\r?\n/)
+  const sections = []
+  let recentDividerLine = 0
+
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1
+    const dividerMatch = line.match(/^\s*#\s*=+\s*([^=#][^#=]*?)\s*=+\s*#?\s*$/)
+    if (dividerMatch) {
+      const label = dividerMatch[1].trim()
+      if (label) {
+        sections.push({ line: lineNumber, label })
+        recentDividerLine = lineNumber
+      }
+      return
+    }
+
+    const keyMatch = line.match(/^([A-Za-z0-9_-][^:#]*):(?:\s.*)?$/)
+    if (!keyMatch || (recentDividerLine > 0 && lineNumber - recentDividerLine <= 3)) return
+    const key = keyMatch[1].trim()
+    if (key) sections.push({ line: lineNumber, label: `${key}:` })
+  })
+
+  return sections
+}
+
+export function getLogLineLevel (line) {
+  const text = String(line || '')
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.critical)) return 'critical'
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.error)) return 'error'
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.warning)) return 'warning'
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.trace)) return 'trace'
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.cache)) return 'cache'
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.debug)) return 'debug'
+  if (lineMatchesAny(text, LOG_LEVEL_PATTERNS.info)) return 'info'
+  return ''
+}
+
+export function renderLogRows (container, text, opts = {}) {
+  if (!container) return
+  const content = String(text || '')
+  const lines = content.split(/\r?\n/)
+  const explicitNumbers = Array.isArray(opts.lineNumbers) ? opts.lineNumbers : null
+  const startLine = Math.max(1, Number(opts.startLine || 1) || 1)
+  const highlightLevels = opts.highlightLevels !== false
+  const fragment = document.createDocumentFragment()
+
+  lines.forEach((line, index) => {
+    const row = document.createElement('div')
+    const number = explicitNumbers && explicitNumbers.length
+      ? Math.max(1, Number(explicitNumbers[index]) || 1)
+      : startLine + index
+    const level = highlightLevels ? getLogLineLevel(line) : ''
+    row.className = `qs-log-line${level ? ` qs-log-line--${level}` : ''}`
+    row.dataset.line = String(number)
+
+    const lineNumber = document.createElement('span')
+    lineNumber.className = 'qs-log-line-number'
+    lineNumber.dataset.line = String(number)
+    lineNumber.setAttribute('aria-hidden', 'true')
+
+    const lineContent = document.createElement('span')
+    lineContent.className = 'qs-log-line-content'
+    lineContent.textContent = line || ' '
+
+    row.append(lineNumber, lineContent)
+    fragment.append(row)
+  })
+
+  container.replaceChildren(fragment)
+}
+
 export function syncLineNumberGutter (gutter, text, opts = {}) {
   if (!gutter) return
   gutter.textContent = buildLineNumberText(text, opts)

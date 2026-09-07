@@ -1,7 +1,7 @@
 import {
-  buildLineNumberedText,
   computeLogStats as computeSharedLogStats,
-  filterLogLines as sharedFilterLogLines
+  filterLogLines as sharedFilterLogLines,
+  renderLogRows
 } from './modules/kometa/_util.js'
 
 const metaEl = document.getElementById('imagemaid-page-meta')
@@ -800,12 +800,14 @@ function getImageMaidLogStartLine (payload, text) {
 function renderRunLogText (text, opts = {}) {
   if (!els.runLog) return
   const content = String(text || '')
-  els.runLog.textContent = opts.numbered === false
-    ? content
-    : buildLineNumberedText(content, {
-      startLine: opts.startLine || 1,
-      lineNumbers: opts.lineNumbers
-    })
+  if (opts.numbered === false) {
+    els.runLog.textContent = content
+    return
+  }
+  renderLogRows(els.runLog, content, {
+    startLine: opts.startLine || 1,
+    lineNumbers: opts.lineNumbers
+  })
 }
 
 function updateLogStatBadges (stats) {

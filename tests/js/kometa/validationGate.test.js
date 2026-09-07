@@ -118,7 +118,7 @@ function installGateDom ({
   const downloadIds = ['download-btn', 'download-redacted-btn']
   downloadIds.forEach(id => { if (has(id)) parts.push(`<div id="${id}"></div>`) })
 
-  const yamlIds = ['yaml-content', 'final-yaml']
+  const yamlIds = ['yaml-content', 'final-yaml-viewer', 'final-yaml-section-jump-wrap']
   yamlIds.forEach(id => { if (has(id)) parts.push(`<div id="${id}" class="d-none"></div>`) })
 
   document.body.innerHTML = parts.join('\n')
@@ -257,7 +257,7 @@ describe('updateValidationGate stage=config, all flags valid', () => {
     expect(document.getElementById('validation-messages').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('no-validation-warning').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('yaml-content').classList.contains('d-none')).toBe(false)
-    expect(document.getElementById('final-yaml').classList.contains('d-none')).toBe(false)
+    expect(document.getElementById('final-yaml-viewer').classList.contains('d-none')).toBe(false)
     expect(document.getElementById('run-controls-container').classList.contains('d-none')).toBe(false)
   })
 

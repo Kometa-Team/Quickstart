@@ -6,9 +6,8 @@ import {
   applyLogFilter,
   computeLogStats,
   filterLogLines,
-  buildLineNumberedText,
-  syncLineNumberGutter,
-  syncLineNumberGutterScroll,
+  findYamlMajorSections,
+  renderLogRows,
   copyTextToClipboard,
   setMetaFlag
 } from './modules/kometa/_util.js'
@@ -131,7 +130,9 @@ const runStatusTimer = document.getElementById('run-status-timer')
 const runStatusMetrics = document.getElementById('run-status-metrics')
 const runStatusLog = document.getElementById('run-status-log')
 const yamlOutput = document.getElementById('final-yaml')
-const yamlLineNumbers = document.getElementById('final-yaml-line-numbers')
+const yamlViewer = document.getElementById('final-yaml-viewer')
+const yamlSectionJumpWrap = document.getElementById('final-yaml-section-jump-wrap')
+const yamlSectionJump = document.getElementById('final-yaml-section-jump')
 const yamlLineCount = document.getElementById('yaml-line-count')
 const stopModalEl = document.getElementById('stop-kometa-modal')
 const stopModal = (stopModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(stopModalEl) : null
@@ -145,11 +146,37 @@ const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
 const runCommandCollapse = document.getElementById('run-command-output-collapse')
 let headerStyleSubmitting = false
 
-function renderYamlLineNumbers () {
-  if (!yamlOutput || !yamlLineNumbers) return
-  syncLineNumberGutter(yamlLineNumbers, yamlOutput.value)
-  yamlLineNumbers.style.height = `${yamlOutput.clientHeight}px`
-  syncLineNumberGutterScroll(yamlOutput, yamlLineNumbers)
+function getYamlText () {
+  return yamlOutput ? String(yamlOutput.value || '') : ''
+}
+
+function syncYamlSectionJump (text = getYamlText()) {
+  if (!yamlSectionJump || !yamlSectionJumpWrap) return
+  const sections = findYamlMajorSections(text)
+  yamlSectionJumpWrap.hidden = sections.length === 0
+  yamlSectionJumpWrap.classList.toggle('d-none', sections.length === 0)
+  const previous = yamlSectionJump.value
+  yamlSectionJump.replaceChildren()
+  const placeholder = document.createElement('option')
+  placeholder.value = ''
+  placeholder.textContent = sections.length ? 'Select a section' : 'No sections found'
+  yamlSectionJump.append(placeholder)
+  sections.forEach((section) => {
+    const option = document.createElement('option')
+    option.value = String(section.line)
+    option.textContent = `${section.label} - line ${section.line.toLocaleString()}`
+    yamlSectionJump.append(option)
+  })
+  if (previous && sections.some(section => String(section.line) === previous)) {
+    yamlSectionJump.value = previous
+  }
+}
+
+function renderYamlViewer () {
+  if (!yamlViewer) return
+  const text = getYamlText()
+  renderLogRows(yamlViewer, text, { highlightLevels: false })
+  syncYamlSectionJump(text)
 }
 
 function getDisplayedLogLineCount (text) {
@@ -168,12 +195,14 @@ function getTailStartLine (data, text) {
 function renderRunLogText (text, opts = {}) {
   if (!runLog) return
   const content = String(text || '')
-  runLog.textContent = opts.numbered === false
-    ? content
-    : buildLineNumberedText(content, {
-      startLine: opts.startLine || 1,
-      lineNumbers: opts.lineNumbers
-    })
+  if (opts.numbered === false) {
+    runLog.textContent = content
+    return
+  }
+  renderLogRows(runLog, content, {
+    startLine: opts.startLine || 1,
+    lineNumbers: opts.lineNumbers
+  })
 }
 
 function renderFilteredRunLog () {
@@ -191,11 +220,15 @@ function appendRunLogText (text) {
   renderFilteredRunLog()
 }
 
-yamlOutput?.addEventListener('scroll', () => syncLineNumberGutterScroll(yamlOutput, yamlLineNumbers))
-if (yamlOutput && yamlLineNumbers && typeof ResizeObserver !== 'undefined') {
-  const yamlResizeObserver = new ResizeObserver(renderYamlLineNumbers)
-  yamlResizeObserver.observe(yamlOutput)
-}
+yamlSectionJump?.addEventListener('change', function () {
+  const lineNumber = Number(this.value)
+  if (!yamlViewer || !Number.isFinite(lineNumber) || lineNumber < 1) return
+  const row = yamlViewer.querySelector(`[data-line="${lineNumber}"]`)
+  if (!row) return
+  yamlViewer.scrollTop = row.offsetTop - yamlViewer.offsetTop
+  row.classList.add('qs-log-line--jumped')
+  window.setTimeout(() => row.classList.remove('qs-log-line--jumped'), 1400)
+})
 
 function syncKometaMaintenancePageBadge (data) {
   if (!kometaMaintenancePageBadge) return
@@ -244,9 +277,9 @@ if (tailSelect) {
 
 function updateYamlLineCount () {
   if (!yamlLineCount || !yamlOutput) return
-  const lineCount = computeYamlLineCount(yamlOutput.value)
+  const lineCount = computeYamlLineCount(getYamlText())
   yamlLineCount.textContent = `Line count (includes comments and blank lines): ${lineCount}`
-  renderYamlLineNumbers()
+  renderYamlViewer()
   updateConfigOutputHeaderBadges()
 }
 
@@ -759,7 +792,7 @@ if (!kometaCanReadLogs() && downloadLogBtn) {
   downloadLogBtn.disabled = true
 }
 updateClearFilterButton()
-renderYamlLineNumbers()
+renderYamlViewer()
 renderRunLogText(runLog ? runLog.textContent : '')
 document.addEventListener('visibilitychange', function () {
   if (!document.hidden) {
