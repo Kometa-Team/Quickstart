@@ -463,6 +463,34 @@ describe('findYamlMajorSections', () => {
       { line: 3, label: 'tmdb:' }
     ])
   })
+
+  it('includes parent library context for repeated library subsections', () => {
+    const yaml = [
+      '#==================== Libraries ====================#',
+      'libraries:',
+      '#==================== Movies ====================#',
+      '  Movies:',
+      '#==================== Metadata Files ====================#',
+      '    metadata_files:',
+      '#==================== Collections ====================#',
+      '    collection_files:',
+      '#==================== Overlays ====================#',
+      '    overlay_files:',
+      '#==================== TV Shows ====================#',
+      '  TV Shows:',
+      '#==================== Overlays ====================#',
+      '    overlay_files:'
+    ].join('\n')
+    expect(findYamlMajorSections(yaml)).toEqual([
+      { line: 1, label: 'Libraries' },
+      { line: 3, label: 'Movies' },
+      { line: 5, label: 'Movies > Metadata Files' },
+      { line: 7, label: 'Movies > Collections' },
+      { line: 9, label: 'Movies > Overlays' },
+      { line: 11, label: 'TV Shows' },
+      { line: 13, label: 'TV Shows > Overlays' }
+    ])
+  })
 })
 
 describe('buildLineNumberText', () => {

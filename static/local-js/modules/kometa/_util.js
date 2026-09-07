@@ -360,7 +360,20 @@ export function buildLineNumberedText (text, opts = {}) {
 export function findYamlMajorSections (text) {
   const lines = String(text || '').split(/\r?\n/)
   const sections = []
+  let keyStack = []
+  let pendingDivider = null
   let recentDividerLine = 0
+
+  function formatKeyLabel (key) {
+    return String(key || '').trim().replace(/^['"]|['"]$/g, '')
+  }
+
+  function contextualDividerLabel (label, indent) {
+    const parent = keyStack.filter(item => item.indent < indent).at(-1)
+    if (!parent || parent.label.toLowerCase() === 'libraries') return label
+    if (parent.label === label) return label
+    return `${parent.label} > ${label}`
+  }
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1
@@ -369,15 +382,28 @@ export function findYamlMajorSections (text) {
       const label = dividerMatch[1].trim()
       if (label) {
         sections.push({ line: lineNumber, label })
+        pendingDivider = { index: sections.length - 1, label, line: lineNumber }
         recentDividerLine = lineNumber
       }
       return
     }
 
-    const keyMatch = line.match(/^([A-Za-z0-9_-][^:#]*):(?:\s.*)?$/)
-    if (!keyMatch || (recentDividerLine > 0 && lineNumber - recentDividerLine <= 3)) return
-    const key = keyMatch[1].trim()
-    if (key) sections.push({ line: lineNumber, label: `${key}:` })
+    const trimmed = line.trim()
+    const keyMatch = line.match(/^(\s*)([^#:\n][^:\n]*):(?:\s.*)?$/)
+    if (!keyMatch || trimmed.startsWith('- ')) return
+
+    const indent = keyMatch[1].length
+    const key = formatKeyLabel(keyMatch[2])
+    if (!key) return
+
+    keyStack = keyStack.filter(item => item.indent < indent)
+    if (pendingDivider && lineNumber - pendingDivider.line <= 3) {
+      sections[pendingDivider.index].label = contextualDividerLabel(pendingDivider.label, indent)
+      pendingDivider = null
+    } else if (indent === 0 && (!recentDividerLine || lineNumber - recentDividerLine > 3)) {
+      sections.push({ line: lineNumber, label: `${key}:` })
+    }
+    keyStack.push({ indent, label: key })
   })
 
   return sections
