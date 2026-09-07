@@ -169,6 +169,8 @@ def test_playlist_toggle_preserves_mirrored_state_when_excluded():
     partial = PLAYLIST_PARTIAL_PATH.read_text(encoding="utf-8")
 
     assert "{% if playlist_checked %}checked{% endif %}" in partial
+    assert 'title="{{ library.name | e }}"' in partial
+    assert "Include [{{ library.name | nbsp_leading_spaces }}]" in partial
     assert "playlistToggle.checked = false" not in script
     assert "payload[el.name] = el.checked ? (el.value || 'true') : 'false'" in script
 

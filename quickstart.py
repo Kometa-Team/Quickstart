@@ -219,6 +219,7 @@ from blueprints.library_routes import (
     _configured_library_ids,  # noqa: F401 (used internally + by tests)
     _legacy_playlist_library_names,  # noqa: F401
     _migrate_legacy_playlist_libraries_to_library_toggles,  # noqa: F401 (patched in tests)
+    _normalize_library_toggle_names,  # noqa: F401
     _build_merged_libraries_hint_payload,  # noqa: F401
     _libraries_dependency_hint_response,  # noqa: F401
 )
@@ -1134,7 +1135,7 @@ def _merge_libraries_payload_for_partial_step_save(incoming_libraries):
         elif shared in existing_libraries and shared not in merged_libraries:
             merged_libraries[shared] = existing_libraries[shared]
 
-    return merged_libraries
+    return _normalize_library_toggle_names(merged_libraries)
 
 
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))

@@ -2,7 +2,6 @@ import namesgenerator
 import os
 import secrets
 import json
-import datetime
 import copy
 import re
 
@@ -410,7 +409,7 @@ def save_settings(raw_source, form_data):
             except Exception:
                 existing_validated_at = None
         if helpers.booler(data.get("validated")) and not existing_validated_at:
-            data["validated_at"] = datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+            data["validated_at"] = helpers.utc_now_iso()
         elif existing_validated_at and "validated_at" not in data:
             data["validated_at"] = existing_validated_at
 
@@ -426,7 +425,7 @@ def save_settings(raw_source, form_data):
             data["validated"] = user_entered
     validated = data.get("validated", False)
     if source_name == "anidb" and validated and not data.get("validated_at"):
-        data["validated_at"] = datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+        data["validated_at"] = helpers.utc_now_iso()
 
     # Save to DB
     database.save_section_data(

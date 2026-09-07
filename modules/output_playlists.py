@@ -180,10 +180,11 @@ def _library_names_in_output_order(libraries_section):
     return []
 
 
-def _playlist_libraries_from_library_toggles(nested_libraries_data, ordered_library_names=None):
+def _playlist_libraries_from_library_toggles(nested_libraries_data, ordered_library_names=None, library_names_by_prefix=None):
     if not isinstance(nested_libraries_data, dict):
         return False, []
 
+    library_names_by_prefix = library_names_by_prefix or {}
     has_playlist_toggle = any(isinstance(key, str) and key.endswith("-playlist") for key in nested_libraries_data)
     playlist_libraries = []
 
@@ -196,8 +197,12 @@ def _playlist_libraries_from_library_toggles(nested_libraries_data, ordered_libr
         include_playlist = _coerce_bool(nested_libraries_data.get(f"{prefix}-playlist"))
         if include_playlist is not True:
             continue
-        library_name = str(value).strip()
-        if library_name:
+        mapped_name = library_names_by_prefix.get(prefix)
+        if mapped_name is not None:
+            library_name = str(mapped_name)
+        else:
+            library_name = str(value).strip()
+        if library_name.strip():
             playlist_libraries.append(library_name)
 
     return has_playlist_toggle, _ordered_selected_libraries(playlist_libraries, ordered_library_names)
@@ -338,7 +343,7 @@ def _collect_playlist_file_entries_from_libraries_data(nested_libraries_data):
     return _parse_playlist_file_entries_value(nested_libraries_data.get("playlist_files_entries"))
 
 
-def apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section):
+def apply_playlist_libraries_toggle(config_data, nested_libraries_data, libraries_section, library_names_by_prefix=None):
     """Compute ``config_data['playlist_files']`` from library-level toggles.
 
     Runs AFTER :func:`build_libraries_section` has produced the ordered
@@ -364,6 +369,7 @@ def apply_playlist_libraries_toggle(config_data, nested_libraries_data, librarie
     has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(
         nested_libraries_data,
         ordered_library_names=ordered_library_names,
+        library_names_by_prefix=library_names_by_prefix,
     )
     playlist_template_variables = _collect_playlist_template_variables_from_libraries_data(nested_libraries_data)
     playlist_file_entries = _collect_playlist_file_entries_from_libraries_data(nested_libraries_data)

@@ -98,6 +98,15 @@ class PlaylistImportState:
         return bool(self.libraries or self.file_entries)
 
 
+def _coerce_playlist_library_names(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text:
+        return []
+    return [item.strip() for item in text.split(",") if item.strip()]
+
+
 def parse_playlist_config(config_data: dict, report: ImportReport) -> PlaylistImportState:
     """Read ``config_data['playlist_files']`` into a :class:`PlaylistImportState`.
 
@@ -150,7 +159,7 @@ def parse_playlist_config(config_data: dict, report: ImportReport) -> PlaylistIm
             )
             continue
         libs = tv.get("libraries")
-        entry_libs = _coerce_import_string_list(libs)
+        entry_libs = _coerce_playlist_library_names(libs)
         if not entry_libs:
             report.add(
                 "unmapped",
