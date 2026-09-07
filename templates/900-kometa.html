@@ -309,7 +309,10 @@
               As a reminder, this will most likely <b>NOT</b> work with Kometa as it has not passed validation.
             </div>
           </div>
-          <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
+          <div class="qs-line-viewer qs-line-viewer--textarea" id="final-yaml-line-viewer">
+            <pre id="final-yaml-line-numbers" class="qs-line-viewer-gutter qs-line-viewer-gutter--textarea" aria-hidden="true"></pre>
+            <textarea readonly id="final-yaml" class="form-control qs-line-viewer-content" rows="20" wrap="off">{{ yaml_content }}</textarea>
+          </div>
         </div>
 
         <!-- Download Buttons -->
@@ -1154,7 +1157,7 @@
                   <div class="d-flex align-items-center gap-2 flex-wrap log-filter-row">
                     <label for="run-log-filter" class="form-label mb-0">Filter</label>
                     <div class="input-group input-group-sm" style="width: 210px;">
-                      <input id="run-log-filter" class="form-control" placeholder="Regex or text">
+                      <input id="run-log-filter" class="form-control" placeholder="/regex/ or text">
               <button class="btn btn-outline-secondary d-none" type="button" id="clear-log-filter"
                 aria-label="Clear filter" title="Clear filter">
                 <i class="bi bi-x-lg"></i>
@@ -1261,8 +1264,7 @@
           </div>
         </div>
         <pre class="bg-dark text-light p-2 rounded" id="run-output-log"
-          style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
-        </pre>
+          style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;"></pre>
         <div class="accordion mt-3" id="logscan-accordion">
           <div class="accordion-item">
             <h2 class="accordion-header" id="logscan-accordion-heading">

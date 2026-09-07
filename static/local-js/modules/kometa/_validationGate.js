@@ -125,7 +125,7 @@ export function updateValidationGate () {
   const runNowLabelEl = document.getElementById('run-now-label')
   const warningIds = ['no-validation-warning', 'yaml-warnings', 'yaml-warning-msg', 'validation-error']
   const downloadIds = ['download-btn', 'download-redacted-btn']
-  const yamlIds = ['yaml-content', 'final-yaml', 'download-btn', 'download-redacted-btn']
+  const yamlIds = ['yaml-content', 'final-yaml-line-viewer', 'final-yaml', 'download-btn', 'download-redacted-btn']
 
   const finalGate = getFinalGateState()
   if (finalGate.stage === 'todo' || finalGate.stage === 'freshness') {

@@ -25,6 +25,9 @@ import {
   isTimeWithinRange,
   applyLogFilter,
   computeLogStats,
+  filterLogLines,
+  buildLineNumberText,
+  buildLineNumberedText,
   SPARKLINE_WIDTH,
   SPARKLINE_HEIGHT,
   SPARKLINE_PADDING,
@@ -337,6 +340,15 @@ describe('applyLogFilter', () => {
     const log = 'foo.bar\nfoo_bar'
     expect(applyLogFilter(log, 'foo.bar')).toBe('foo.bar')
   })
+  it('treats bracketed level shortcuts as named filters, not raw regex character classes', () => {
+    const log = '[ERROR] actual failure\nordinary row\nrecipe row'
+    expect(applyLogFilter(log, '[ERROR]')).toBe('[ERROR] actual failure')
+  })
+  it('matches exact warning and critical level markers', () => {
+    const log = '[WARNING] marked warning\nWARNING plain text\n[CRITICAL] marked critical\n[CRIT] short text'
+    expect(applyLogFilter(log, 'warning')).toBe('[WARNING] marked warning')
+    expect(applyLogFilter(log, 'critical')).toBe('[CRITICAL] marked critical')
+  })
   it('treats /.../ as a case-insensitive regex', () => {
     const log = 'AAA\nbbb\nCcC'
     expect(applyLogFilter(log, '/a|b/')).toBe('AAA\nbbb')
@@ -347,6 +359,14 @@ describe('applyLogFilter', () => {
   })
   it('returns empty string when no lines match', () => {
     expect(applyLogFilter('AAA\nbbb', 'zzz')).toBe('')
+  })
+})
+
+describe('filterLogLines', () => {
+  it('keeps source line numbers when filtering a tailed log', () => {
+    const result = filterLogLines('[INFO] one\n[ERROR] two\n[WARNING] three', 'warning', { startLine: 98 })
+    expect(result.text).toBe('[WARNING] three')
+    expect(result.lineNumbers).toEqual([100])
   })
 })
 
@@ -370,9 +390,9 @@ describe('computeLogStats', () => {
     const log = 'loaded FROM CACHE\nSomething from cache\nnope'
     expect(computeLogStats(log).cache).toBe(2)
   })
-  it('counts "traceback" (case-insensitive) as trace lines', () => {
-    const log = 'Traceback (most recent call last):\ntraceback: nope\nfine'
-    expect(computeLogStats(log).trace).toBe(2)
+  it('counts exact trace level markers', () => {
+    const log = '[TRACE] enabled\nTraceback (most recent call last):\ntrace detail'
+    expect(computeLogStats(log).trace).toBe(1)
   })
   it('handles CRLF line endings', () => {
     const log = '[DEBUG] a\r\n[INFO] b\r\n'
@@ -383,6 +403,33 @@ describe('computeLogStats', () => {
   it('skips empty lines', () => {
     const log = '\n\n[INFO] one\n\n'
     expect(computeLogStats(log).info).toBe(1)
+  })
+  it('does not count unbracketed and short log-level-looking text as level markers', () => {
+    const log = 'ERROR plain\n[WARN] short\n[CRIT] short\ntrace detail\ncached lookup'
+    const stats = computeLogStats(log)
+    expect(stats.error).toBe(0)
+    expect(stats.warning).toBe(0)
+    expect(stats.critical).toBe(0)
+    expect(stats.trace).toBe(0)
+    expect(stats.cache).toBe(0)
+  })
+})
+
+describe('buildLineNumberText', () => {
+  it('builds padded line numbers from text and a start line', () => {
+    expect(buildLineNumberText('a\nb\nc', { startLine: 98 })).toBe(' 98\n 99\n100')
+  })
+  it('can render sparse source line numbers from a filtered result', () => {
+    expect(buildLineNumberText('a\nb', { lineNumbers: [7, 120] })).toBe('  7\n120')
+  })
+})
+
+describe('buildLineNumberedText', () => {
+  it('prefixes line numbers inside the log text', () => {
+    expect(buildLineNumberedText('alpha\nbeta', { startLine: 9 })).toBe(' 9 | alpha\n10 | beta')
+  })
+  it('uses sparse source line numbers from filtered results', () => {
+    expect(buildLineNumberedText('[ERROR] a\n[ERROR] b', { lineNumbers: [12, 48] })).toBe('12 | [ERROR] a\n48 | [ERROR] b')
   })
 })
 

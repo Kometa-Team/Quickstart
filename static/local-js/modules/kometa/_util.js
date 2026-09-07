@@ -202,36 +202,106 @@ export function isTimeWithinRange (time, rangeStart, rangeEnd) {
 // Log helpers (pure text -> text / text -> counts)
 // ---------------------------------------------------------------------
 
+const LOG_LEVEL_PATTERNS = {
+  cache: [
+    /\bfrom cache\b/i,
+    /\[CACHE\]/i
+  ],
+  debug: [/\[DEBUG\]/i],
+  info: [/\[INFO\]/i],
+  warning: [/\[WARNING\]/i],
+  error: [/\[ERROR\]/i],
+  critical: [/\[CRITICAL\]/i],
+  trace: [/\[TRACE\]/i]
+}
+
+const LOG_FILTER_ALIASES = new Map([
+  ['cache', 'cache'],
+  ['from cache', 'cache'],
+  ['cached', 'cache'],
+  ['debug', 'debug'],
+  ['info', 'info'],
+  ['warning', 'warning'],
+  ['warn', 'warning'],
+  ['error', 'error'],
+  ['critical', 'critical'],
+  ['crit', 'critical'],
+  ['trace', 'trace'],
+  ['traceback', 'trace']
+])
+
+function normalizeLogFilterAlias (value) {
+  return String(value || '')
+    .trim()
+    .replace(/^\[+|\]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+}
+
+function lineMatchesAny (line, patterns) {
+  return patterns.some(pattern => pattern.test(line))
+}
+
+export function buildLogFilterMatcher (filter) {
+  if (!filter) return null
+  const trimmed = String(filter).trim()
+  if (!trimmed) return null
+  const alias = LOG_FILTER_ALIASES.get(normalizeLogFilterAlias(trimmed))
+  if (alias && LOG_LEVEL_PATTERNS[alias]) {
+    return line => lineMatchesAny(String(line || ''), LOG_LEVEL_PATTERNS[alias])
+  }
+  try {
+    if (trimmed.length > 2 && trimmed.startsWith('/') && trimmed.endsWith('/')) {
+      const regex = new RegExp(trimmed.slice(1, -1), 'i')
+      return line => regex.test(line)
+    }
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escaped, 'i')
+    return line => regex.test(line)
+  } catch {
+    return null
+  }
+}
+
 /**
  * Filter a multi-line log string, returning only lines matching
  * `filter`. If the filter is empty, the input is returned unchanged.
  * A filter wrapped in `/.../` is treated as a case-insensitive
  * regex; otherwise it's literal (with all regex metacharacters
- * escaped). Invalid regex silently falls back to returning the
- * unfiltered text.
+ * escaped). Known level names such as `error`, `[ERROR]`, and `warn`
+ * use the same broadened patterns as the log-stat badges. Invalid
+ * regex silently falls back to returning the unfiltered text.
  */
 export function applyLogFilter (text, filter) {
-  if (!filter) return text
-  const trimmed = filter.trim()
-  let re
-  try {
-    if (trimmed.length > 2 && trimmed.startsWith('/') && trimmed.endsWith('/')) {
-      re = new RegExp(trimmed.slice(1, -1), 'i')
-    } else {
-      const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      re = new RegExp(escaped, 'i')
+  return filterLogLines(text, filter).text
+}
+
+export function filterLogLines (text, filter, opts = {}) {
+  const content = String(text || '')
+  const startLine = Math.max(1, Number(opts.startLine || 1) || 1)
+  const lines = content.split(/\r?\n/)
+  const matcher = buildLogFilterMatcher(filter)
+  if (!matcher) {
+    return {
+      text: content,
+      lineNumbers: lines.map((_line, index) => startLine + index)
     }
-  } catch {
-    return text
   }
-  return text.split('\n').filter(line => re.test(line)).join('\n')
+  const matches = []
+  const lineNumbers = []
+  lines.forEach((line, index) => {
+    if (!matcher(line)) return
+    matches.push(line)
+    lineNumbers.push(startLine + index)
+  })
+  return { text: matches.join('\n'), lineNumbers }
 }
 
 /**
  * Count log lines by level marker.
- * Recognises Kometa's bracketed level tags: [DEBUG] [INFO] [WARNING]
- * [ERROR] [CRITICAL]. `cache` counts lines containing "from cache"
- * (case-insensitive) and `trace` counts lines containing "traceback".
+ * Recognises bracketed and plain level tags used by Kometa and ImageMaid.
+ * `cache` accepts "from cache", "cached", and "[CACHE]"; `trace` accepts
+ * trace/traceback lines.
  */
 export function computeLogStats (text) {
   const stats = {
@@ -247,15 +317,54 @@ export function computeLogStats (text) {
   const lines = text.split(/\r?\n/)
   lines.forEach(line => {
     if (!line) return
-    if (line.toLowerCase().includes('from cache')) stats.cache += 1
-    if (line.includes('[DEBUG]')) stats.debug += 1
-    if (line.includes('[INFO]')) stats.info += 1
-    if (line.includes('[WARNING]')) stats.warning += 1
-    if (line.includes('[ERROR]')) stats.error += 1
-    if (line.includes('[CRITICAL]')) stats.critical += 1
-    if (line.toLowerCase().includes('traceback')) stats.trace += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.cache)) stats.cache += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.debug)) stats.debug += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.info)) stats.info += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.warning)) stats.warning += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.error)) stats.error += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.critical)) stats.critical += 1
+    if (lineMatchesAny(line, LOG_LEVEL_PATTERNS.trace)) stats.trace += 1
   })
   return stats
+}
+
+export function buildLineNumberText (text, opts = {}) {
+  const minLines = Math.max(1, Number(opts.minLines || 1) || 1)
+  const startLine = Math.max(1, Number(opts.startLine || 1) || 1)
+  const explicitNumbers = Array.isArray(opts.lineNumbers) ? opts.lineNumbers : null
+  const numbers = explicitNumbers && explicitNumbers.length
+    ? explicitNumbers.map(value => Math.max(1, Number(value) || 1))
+    : Array.from(
+      { length: Math.max(minLines, String(text || '').split(/\r?\n/).length) },
+      (_value, index) => startLine + index
+    )
+  const width = Math.max(1, ...numbers.map(value => String(value).length))
+  return numbers.map(value => String(value).padStart(width, ' ')).join('\n')
+}
+
+export function buildLineNumberedText (text, opts = {}) {
+  const content = String(text || '')
+  const lines = content.split(/\r?\n/)
+  const explicitNumbers = Array.isArray(opts.lineNumbers) ? opts.lineNumbers : null
+  const startLine = Math.max(1, Number(opts.startLine || 1) || 1)
+  const numbers = explicitNumbers && explicitNumbers.length
+    ? explicitNumbers.map(value => Math.max(1, Number(value) || 1))
+    : lines.map((_line, index) => startLine + index)
+  const width = Math.max(1, ...numbers.map(value => String(value).length))
+  return lines.map((line, index) => {
+    const number = numbers[index] ?? (startLine + index)
+    return `${String(number).padStart(width, ' ')} | ${line}`
+  }).join('\n')
+}
+
+export function syncLineNumberGutter (gutter, text, opts = {}) {
+  if (!gutter) return
+  gutter.textContent = buildLineNumberText(text, opts)
+}
+
+export function syncLineNumberGutterScroll (scroller, gutter) {
+  if (!scroller || !gutter) return
+  gutter.scrollTop = scroller.scrollTop
 }
 
 // ---------------------------------------------------------------------

@@ -4259,7 +4259,7 @@ def tail_log():
                     for line in handle:
                         counts["total_lines"] += 1
                         upper = line.upper()
-                        if "FROM CACHE" in upper:
+                        if "FROM CACHE" in upper or "[CACHE]" in upper:
                             counts["cache"] += 1
                         if "[DEBUG]" in upper:
                             counts["debug"] += 1
@@ -4271,7 +4271,7 @@ def tail_log():
                             counts["error"] += 1
                         if "[CRITICAL]" in upper:
                             counts["critical"] += 1
-                        if "TRACEBACK" in upper:
+                        if "[TRACE]" in upper:
                             counts["trace"] += 1
             except Exception:
                 return None

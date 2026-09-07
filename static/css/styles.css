@@ -1677,6 +1677,52 @@ form,
     font-family: monospace;
 }
 
+.qs-line-viewer {
+    --qs-line-number-bg: rgba(0, 0, 0, 0.18);
+    --qs-line-number-color: var(--theme-text-muted);
+    --qs-line-number-border: var(--theme-border);
+    display: grid;
+    grid-template-columns: minmax(3.25rem, auto) minmax(0, 1fr);
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+}
+
+.qs-line-viewer-gutter {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    user-select: none;
+    text-align: right;
+    color: var(--qs-line-number-color);
+    background: var(--qs-line-number-bg);
+    border: 1px solid var(--qs-line-number-border);
+    border-right: 0;
+    border-radius: var(--bs-border-radius) 0 0 var(--bs-border-radius);
+    font-family: monospace;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+    white-space: pre;
+}
+
+.qs-line-viewer-content {
+    min-width: 0;
+    margin: 0;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    font-family: monospace;
+    line-height: 1.5;
+}
+
+.qs-line-viewer--textarea .qs-line-viewer-gutter {
+    padding: 0.375rem 0.55rem;
+}
+
+.qs-line-viewer--textarea textarea {
+    white-space: pre;
+    overflow: auto;
+}
+
 label {
     display: block;
     margin-bottom: 10px;
