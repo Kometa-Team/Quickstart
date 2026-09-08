@@ -454,6 +454,7 @@ ACTIVE_WORK_POLICIES = {
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE_VERSION = 3
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "version": LOGSCAN_ANALYSIS_CACHE_VERSION, "data": None}
+LOGSCAN_PROGRESS_SNAPSHOT_VERSION = 1
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "aux_signature": None, "data": None}
 
 VALIDATION_DOC_BASE = "/step/"
@@ -3920,6 +3921,7 @@ def start_kometa():
             payload["phase"] = job.get("phase")
         return jsonify(payload), 409
 
+    _clear_logscan_progress_snapshot()
     _update_run_context(command, start_mode=start_mode)
 
     maintenance_config_name = session.get("config_name")
@@ -4200,8 +4202,6 @@ def tail_log():
         return jsonify({"error": f"Log file not found at: {log_path}"}), 404
 
     try:
-        from collections import deque
-
         size_param = request.args.get("size", "2000")
         download = request.args.get("download")
         stats_param = request.args.get("stats", "")
@@ -4220,11 +4220,9 @@ def tail_log():
             log_stats = None
 
         if max_lines:
-            with log_path.open("r", encoding="utf-8", errors="replace") as f:
-                lines = deque(f, maxlen=max_lines)
-            log_content = "".join(lines)
+            log_content = _read_text_tail(log_path, max_lines)
         else:
-            log_content = log_path.read_text(encoding="utf-8", errors="replace")
+            log_content = _read_text_tail(log_path, None)
 
         if download:
             return send_file(
@@ -4317,6 +4315,161 @@ def tail_log():
         return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
 
 
+def _read_text_tail(path, max_lines, encoding="utf-8", errors="replace", block_size=64 * 1024):
+    if max_lines is None:
+        return path.read_text(encoding=encoding, errors=errors)
+
+    max_lines = max(1, int(max_lines))
+    chunks = []
+    newline_count = 0
+    with path.open("rb") as handle:
+        handle.seek(0, os.SEEK_END)
+        offset = handle.tell()
+        while offset > 0 and newline_count <= max_lines:
+            read_size = min(block_size, offset)
+            offset -= read_size
+            handle.seek(offset)
+            chunk = handle.read(read_size)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            newline_count += chunk.count(b"\n")
+
+    data = b"".join(reversed(chunks))
+    if newline_count > max_lines:
+        data = b"".join(data.splitlines(keepends=True)[-max_lines:])
+    return data.decode(encoding, errors=errors)
+
+
+def _json_safe_progress_value(value):
+    if isinstance(value, dict):
+        return {str(key): _json_safe_progress_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_progress_value(item) for item in value]
+    try:
+        json.dumps(value)
+        return value
+    except TypeError:
+        if hasattr(value, "isoformat"):
+            try:
+                return value.isoformat()
+            except Exception:
+                pass
+        return str(value)
+
+
+def _normalize_progress_identity_value(value):
+    if value in (None, ""):
+        return None
+    if hasattr(value, "isoformat"):
+        try:
+            return value.isoformat()
+        except Exception:
+            pass
+    return str(value)
+
+
+def _progress_data_matches_run(data, started_at):
+    if not isinstance(data, dict):
+        return False
+    if started_at in (None, ""):
+        return True
+    return _normalize_progress_identity_value(data.get("run_started_at")) == _normalize_progress_identity_value(started_at)
+
+
+def _get_logscan_progress_snapshot_path():
+    snapshot_dir = _get_logscan_cache_dir() / "progress"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    return snapshot_dir / "kometa-progress.json"
+
+
+def _build_logscan_progress_snapshot_metadata(log_path, log_stats=None, aux_signature=None, started_at=None, config_path=None, run_mode=None):
+    try:
+        resolved_log_path = str(Path(log_path).resolve())
+    except Exception:
+        resolved_log_path = str(log_path)
+    return {
+        "version": LOGSCAN_PROGRESS_SNAPSHOT_VERSION,
+        "log_path": resolved_log_path,
+        "log_mtime": float(log_stats.st_mtime) if log_stats else None,
+        "log_size": int(log_stats.st_size) if log_stats else None,
+        "aux_signature": _json_safe_progress_value(aux_signature or ()),
+        "run_started_at": _normalize_progress_identity_value(started_at),
+        "config_path": str(config_path or "") or None,
+        "run_mode": str(run_mode or "") or None,
+    }
+
+
+def _load_logscan_progress_snapshot(log_path, log_stats=None, started_at=None):
+    path = _get_logscan_progress_snapshot_path()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(payload, dict) or payload.get("version") != LOGSCAN_PROGRESS_SNAPSHOT_VERSION:
+        return None
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return None
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    try:
+        current_log_path = str(Path(log_path).resolve())
+    except Exception:
+        current_log_path = str(log_path)
+    if metadata.get("log_path") != current_log_path:
+        return None
+    if log_stats and metadata.get("log_size") is not None:
+        try:
+            if int(metadata.get("log_size")) > int(log_stats.st_size):
+                return None
+        except Exception:
+            return None
+    snapshot_started_at = metadata.get("run_started_at") or data.get("run_started_at")
+    if started_at not in (None, "") and _normalize_progress_identity_value(snapshot_started_at) != _normalize_progress_identity_value(started_at):
+        return None
+    return data
+
+
+def _save_logscan_progress_snapshot(log_path, log_stats=None, aux_signature=None, started_at=None, config_path=None, run_mode=None, data=None):
+    if not isinstance(data, dict) or not log_stats:
+        return False
+    path = _get_logscan_progress_snapshot_path()
+    payload = {
+        "version": LOGSCAN_PROGRESS_SNAPSHOT_VERSION,
+        "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "metadata": _build_logscan_progress_snapshot_metadata(
+            log_path,
+            log_stats=log_stats,
+            aux_signature=aux_signature,
+            started_at=started_at,
+            config_path=config_path,
+            run_mode=run_mode,
+        ),
+        "data": _json_safe_progress_value(data),
+    }
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n", encoding="utf-8")
+        os.replace(tmp_path, path)
+        return True
+    except Exception:
+        try:
+            tmp_path.unlink()
+        except Exception:
+            pass
+        return False
+
+
+def _clear_logscan_progress_snapshot():
+    LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
+    try:
+        _get_logscan_progress_snapshot_path().unlink()
+    except FileNotFoundError:
+        pass
+    except Exception:
+        pass
+
+
 @app.route("/logscan/analyze", methods=["GET"])
 def logscan_analyze():
     log_path = helpers.get_kometa_log_dir() / "meta.log"
@@ -4405,7 +4558,6 @@ def logscan_progress():
         return jsonify({"error": f"Log file not found at: {log_path}"}), 404
 
     try:
-        from collections import deque
         from copy import deepcopy
 
         size_arg = request.args.get("size")
@@ -4451,14 +4603,15 @@ def logscan_progress():
                 return False
             if cached.get("mtime") != log_stats.st_mtime or cached.get("size") != log_stats.st_size:
                 return False
-            return cached.get("aux_signature") == aux_signature
+            cached_aux_signature = cached.get("aux_signature")
+            if not aux_signature and cached_aux_signature in (None, ()):
+                return True
+            return cached_aux_signature == aux_signature
 
         def _read_progress_log_content():
             if force_full_read:
                 return _read_logscan_text(log_path)
-            with log_path.open("r", encoding="utf-8", errors="replace") as handle:
-                lines = deque(handle, maxlen=max_lines)
-            content = "".join(lines)
+            content = _read_text_tail(log_path, max_lines)
             try:
                 aux_content = []
                 for aux_path in (pending_path, sidecar_path):
@@ -4547,7 +4700,13 @@ def logscan_progress():
         run_mode = ctx.get("run_mode") or "all"
         stopped_requested = bool(ctx.get("stop_requested_at"))
         cached_data = LOGSCAN_PROGRESS_CACHE.get("data")
-        cache_matches_run = bool(cached_data and cached_data.get("run_started_at") == started_at)
+        cache_matches_run = _progress_data_matches_run(cached_data, started_at)
+        if not cache_matches_run:
+            persisted_data = _load_logscan_progress_snapshot(log_path, log_stats=log_stats, started_at=started_at)
+            if persisted_data:
+                cached_data = persisted_data
+                LOGSCAN_PROGRESS_CACHE["data"] = cached_data
+                cache_matches_run = True
 
         # Seed progress from the full log when no explicit size was requested and
         # the current run has no matching cached progress state yet. After the
@@ -4562,8 +4721,9 @@ def logscan_progress():
             data = normalize_progress_for_stopped(data, running, stopped_requested)
             return jsonify(data)
 
-        if cached_data and cached_data.get("run_started_at") != started_at:
+        if cached_data and not _progress_data_matches_run(cached_data, started_at):
             LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
+            cached_data = None
         analyzer = logscan.LogscanAnalyzer()
         config_data = _load_progress_config(config_path)
         log_content = _read_progress_log_content()
@@ -4575,7 +4735,7 @@ def logscan_progress():
                 config_data=config_data,
             ),
             selected_libraries=selected,
-            previous=LOGSCAN_PROGRESS_CACHE.get("data"),
+            previous=cached_data,
             run_started_at=started_at,
             now_ts=datetime.now(timezone.utc),
             is_running=running,
@@ -4606,6 +4766,15 @@ def logscan_progress():
                     "aux_signature": aux_signature,
                     "data": progress,
                 }
+            )
+            _save_logscan_progress_snapshot(
+                log_path,
+                log_stats=log_stats,
+                aux_signature=aux_signature,
+                started_at=started_at,
+                config_path=config_path,
+                run_mode=run_mode,
+                data=progress,
             )
         return jsonify(progress)
     except Exception as e:

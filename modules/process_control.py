@@ -218,6 +218,7 @@ def maintenance_guard_loop(app_in):
                     pending = quickstart._pop_pending_kometa_start()
                     if pending:
                         start_mode = quickstart._normalize_kometa_start_mode(pending.get("start_mode"))
+                        quickstart._clear_logscan_progress_snapshot()
                         quickstart._update_run_context(pending.get("command"), config_name=pending.get("config_name"), start_mode=start_mode)
                         ok, result = quickstart._launch_kometa_command(pending.get("command"), pending.get("config_name"), start_mode=start_mode)
                         if ok:

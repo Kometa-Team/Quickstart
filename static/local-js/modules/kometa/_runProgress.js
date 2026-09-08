@@ -94,6 +94,9 @@ export function renderRunProgress (payload) {
   }
 
   kometaState.lastRunProgressPayload = payload
+  if (typeof window !== 'undefined' && typeof window.QS_handleKometaRunProgress === 'function') {
+    window.QS_handleKometaRunProgress(payload)
+  }
   const libraries = payload.libraries
   const total = payload.total_count || libraries.length
   const completed = payload.completed_count != null

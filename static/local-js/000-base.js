@@ -600,6 +600,8 @@ let qsLastMaintenancePaused = false
 let qsLastQueuedStartedAt = null
 const QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS = 15000
 const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 15000
+const QS_BULK_VALIDATION_POLL_INTERVAL_MS = 7000
+const QS_KOMETA_PROGRESS_POLL_INTERVAL_MS = 15000
 const qsCurrentTemplate = String(window.QS_CURRENT_TEMPLATE || document.documentElement.dataset.qsTemplate || '').trim()
 const qsSkipMaintenancePoll = qsCurrentTemplate === '900-kometa'
 const qsSkipImageMaidPoll = qsCurrentTemplate === '915-imagemaid'
@@ -608,12 +610,16 @@ const QS_APP_READINESS_POLL_INTERVAL_MS = 12000
 let qsLatestKometaStatus = null
 let qsLatestImageMaidStatus = null
 let qsLatestAppReadiness = null
+let qsLatestBulkValidationProgress = null
+let qsLatestKometaRunProgress = null
 let qsActiveBackgroundJobs = []
 let qsMaintenancePollInFlight = false
 let qsLogscanReingestPollInFlight = false
 let qsImageMaidPollInFlight = false
 let qsBackgroundJobsPollInFlight = false
 let qsAppReadinessPollInFlight = false
+let qsBulkValidationPollInFlight = false
+let qsKometaProgressPollInFlight = false
 
 function qsShouldPollBackgroundState () {
   return !document.hidden
@@ -654,6 +660,121 @@ function qsFormatElapsedLabel (seconds) {
   return parts.join(' ')
 }
 
+function qsFormatActiveNumber (value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return ''
+  return numeric.toLocaleString()
+}
+
+function qsFormatActivePercent (value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return ''
+  return `${numeric.toFixed(1)}%`
+}
+
+function qsFormatActiveMb (value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return ''
+  if (numeric >= 1024) return `${(numeric / 1024).toFixed(1)} GB`
+  return `${numeric.toFixed(1)} MB`
+}
+
+function qsFormatActiveRate (value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return ''
+  return `${Math.max(0, numeric).toFixed(2)} MB/s`
+}
+
+function qsPushActiveDetail (details, label, value) {
+  const text = String(value || '').trim()
+  if (!text) return
+  details.push(label ? `${label}: ${text}` : text)
+}
+
+function qsBuildRuntimeActiveDetails (data, processLabel) {
+  const details = []
+  const cpu = qsFormatActivePercent(data.cpu_percent)
+  const memory = qsFormatActiveMb(data.memory_rss_mb)
+  if (cpu || memory) qsPushActiveDetail(details, processLabel, [cpu ? `CPU ${cpu}` : '', memory ? `RAM ${memory}` : ''].filter(Boolean).join(' | '))
+
+  const systemCpu = qsFormatActivePercent(data.system_cpu_percent)
+  const systemMemoryUsed = qsFormatActiveMb(data.system_memory_used_mb)
+  const systemMemoryTotal = qsFormatActiveMb(data.system_memory_total_mb)
+  if (systemCpu || systemMemoryUsed || systemMemoryTotal) {
+    const memoryText = systemMemoryUsed && systemMemoryTotal ? `${systemMemoryUsed}/${systemMemoryTotal}` : (systemMemoryUsed || systemMemoryTotal)
+    qsPushActiveDetail(details, 'System', [systemCpu ? `CPU ${systemCpu}` : '', memoryText ? `RAM ${memoryText}` : ''].filter(Boolean).join(' | '))
+  }
+
+  const readRate = qsFormatActiveRate(data.disk_read_rate_mb_s)
+  const writeRate = qsFormatActiveRate(data.disk_write_rate_mb_s)
+  if (readRate || writeRate) qsPushActiveDetail(details, 'Disk rate', [readRate ? `R ${readRate}` : '', writeRate ? `W ${writeRate}` : ''].filter(Boolean).join(' | '))
+
+  const readTotal = qsFormatActiveMb(data.disk_read_mb)
+  const writeTotal = qsFormatActiveMb(data.disk_write_mb)
+  if (readTotal || writeTotal) qsPushActiveDetail(details, 'Disk total', [readTotal ? `${readTotal} read` : '', writeTotal ? `${writeTotal} written` : ''].filter(Boolean).join(' | '))
+
+  if (data.started_at) qsPushActiveDetail(details, 'Started', qsFormatTimestamp(data.started_at))
+  if (Number.isFinite(Number(data.log_age_seconds))) {
+    const age = qsFormatElapsedLabel(data.log_age_seconds)
+    qsPushActiveDetail(details, data.log_is_stale ? 'Log stale' : 'Log updated', age ? `${age} ago` : '')
+  }
+  return details
+}
+
+function qsBuildActiveTitleAttr (label, meta, details) {
+  return [label, meta, ...(Array.isArray(details) ? details : [])].filter(Boolean).join(' | ')
+}
+
+function qsFormatKometaPhaseLabel (phase) {
+  const normalized = String(phase || '').trim().toLowerCase()
+  const labels = {
+    operations: 'Operations',
+    metadata: 'Metadata',
+    collections: 'Collections',
+    overlays: 'Overlays',
+    playlists: 'Playlists'
+  }
+  return labels[normalized] || (normalized ? normalized.replaceAll('_', ' ') : '')
+}
+
+function qsBuildKometaProgressDetails () {
+  const progress = qsLatestKometaRunProgress
+  if (!progress || typeof progress !== 'object') return []
+
+  const details = []
+  const currentLibrary = String(progress.current_library || '').trim()
+  const phase = qsFormatKometaPhaseLabel(progress.phase_current)
+  const totalCount = Number(progress.total_count || 0)
+  const completedCount = Number(progress.completed_count || 0)
+  const phaseOrder = Array.isArray(progress.phase_order) && progress.phase_order.length
+    ? progress.phase_order
+    : ['operations', 'metadata', 'collections', 'overlays', 'playlists']
+  const phaseIndex = progress.phase_current ? Math.max(0, phaseOrder.indexOf(progress.phase_current)) : 0
+  const totalSteps = totalCount > 0 ? totalCount * Math.max(1, phaseOrder.length) : 0
+  const completedSteps = currentLibrary && totalSteps > 0
+    ? Math.min(totalSteps, (Math.max(0, completedCount) * Math.max(1, phaseOrder.length)) + phaseIndex)
+    : Math.max(0, completedCount) * Math.max(1, phaseOrder.length)
+
+  if (currentLibrary) {
+    qsPushActiveDetail(details, 'Current', phase ? `${currentLibrary} | ${phase}` : currentLibrary)
+  } else if (progress.playlist_running) {
+    qsPushActiveDetail(details, 'Current', 'Playlists')
+  } else if (phase) {
+    qsPushActiveDetail(details, 'Current phase', phase)
+  }
+  if (totalCount > 0) qsPushActiveDetail(details, 'Libraries', `${Math.min(Math.max(0, completedCount), totalCount)}/${totalCount} complete`)
+  if (totalSteps > 0) qsPushActiveDetail(details, 'Matrix step', `${completedSteps}/${totalSteps}`)
+  if (Number.isFinite(Number(progress.current_phase_elapsed_seconds))) {
+    const elapsed = qsFormatElapsedLabel(progress.current_phase_elapsed_seconds)
+    qsPushActiveDetail(details, 'Phase elapsed', elapsed)
+  }
+  if (Number.isFinite(Number(progress.preparation_elapsed_seconds))) {
+    const elapsed = qsFormatElapsedLabel(progress.preparation_elapsed_seconds)
+    qsPushActiveDetail(details, 'Preparation', elapsed)
+  }
+  return details
+}
+
 function qsBuildKometaActiveWorkEntry () {
   const data = qsLatestKometaStatus
   if (!data || typeof data !== 'object') return null
@@ -662,63 +783,70 @@ function qsBuildKometaActiveWorkEntry () {
   const href = '/step/900-kometa'
   const status = String(data.status || '').trim().toLowerCase()
   const running = status === 'running'
+  const runtimeDetails = qsBuildRuntimeActiveDetails(data, 'Kometa')
+  const progressDetails = qsBuildKometaProgressDetails()
   const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || running)
 
   if (unavailableBlocksWork) {
     const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window data unavailable'
+    const details = [...progressDetails, ...runtimeDetails]
+    if (windowLabel) qsPushActiveDetail(details, 'Window', windowLabel)
     return {
       key: 'kometa-window-unavailable',
       title: 'Maintenance window data unavailable',
       chip: 'Waiting',
       state: 'warn',
       meta: windowLabel ? `${since} • Window ${windowLabel}` : since,
+      details,
       href,
-      titleAttr: windowLabel
-        ? `Quickstart cannot read the configured Plex maintenance window ${windowLabel} while work is active.`
-        : 'Quickstart cannot read the configured Plex maintenance window while work is active.'
+      titleAttr: qsBuildActiveTitleAttr('Quickstart cannot read the configured Plex maintenance window while work is active.', since, details)
     }
   }
 
   if (data.pending_start) {
     const requested = data.pending_requested_at ? `Requested ${qsFormatTimestamp(data.pending_requested_at)}` : 'Queued for next available window'
+    const details = []
+    if (windowLabel) qsPushActiveDetail(details, 'Window', windowLabel)
     return {
       key: 'kometa-queued',
       title: 'Kometa queued',
       chip: 'Queued',
       state: 'warn',
       meta: windowLabel ? `${requested} • Window ${windowLabel}` : requested,
+      details,
       href,
-      titleAttr: windowLabel
-        ? `Kometa will start automatically when the maintenance window ${windowLabel} opens.`
-        : 'Kometa start has been queued.'
+      titleAttr: qsBuildActiveTitleAttr('Kometa start has been queued.', requested, details)
     }
   }
 
   if (data.maintenance_paused) {
     const pausedSince = data.maintenance_paused_since ? `Paused ${qsFormatTimestamp(data.maintenance_paused_since)}` : 'Paused for Plex maintenance'
+    const details = [...progressDetails, ...runtimeDetails]
+    if (windowLabel) qsPushActiveDetail(details, 'Window', windowLabel)
     return {
       key: 'kometa-paused',
       title: 'Kometa run',
       chip: 'Paused',
       state: 'warn',
       meta: windowLabel ? `${pausedSince} • Window ${windowLabel}` : pausedSince,
+      details,
       href,
-      titleAttr: windowLabel
-        ? `Kometa is paused for Plex maintenance during ${windowLabel}.`
-        : 'Kometa is paused for Plex maintenance.'
+      titleAttr: qsBuildActiveTitleAttr('Kometa is paused for Plex maintenance.', pausedSince, details)
     }
   }
 
   if (running) {
     const elapsed = qsFormatElapsedLabel(data.elapsed_seconds)
+    const details = [...progressDetails, ...runtimeDetails]
     return {
       key: 'kometa-running',
       title: 'Kometa run',
       chip: 'Running',
       state: 'unknown',
       meta: elapsed ? `Elapsed ${elapsed}` : 'Kometa is currently running.',
+      details,
       href,
-      titleAttr: elapsed ? `Kometa has been running for ${elapsed}.` : 'Kometa is currently running.'
+      titleAttr: qsBuildActiveTitleAttr('Kometa run', elapsed ? `Elapsed ${elapsed}` : 'Kometa is currently running.', details)
     }
   }
 
@@ -728,17 +856,57 @@ function qsBuildKometaActiveWorkEntry () {
 function qsBuildImageMaidActiveWorkEntry () {
   const data = qsLatestImageMaidStatus
   if (!data || typeof data !== 'object') return null
-  if (String(data.status || '').trim().toLowerCase() !== 'running') return null
+  const status = String(data.status || '').trim().toLowerCase()
+  if (status !== 'running' && status !== 'starting') return null
 
   const elapsed = qsFormatElapsedLabel(data.elapsed_seconds)
+  const details = qsBuildRuntimeActiveDetails(data, 'ImageMaid')
   return {
     key: 'imagemaid-running',
     title: 'ImageMaid run',
-    chip: 'Running',
+    chip: status === 'starting' ? 'Starting' : 'Running',
     state: 'unknown',
-    meta: elapsed ? `Elapsed ${elapsed}` : 'ImageMaid is currently running.',
+    meta: elapsed ? `Elapsed ${elapsed}` : (status === 'starting' ? 'ImageMaid is starting.' : 'ImageMaid is currently running.'),
+    details,
     href: '/step/915-imagemaid',
-    titleAttr: elapsed ? `ImageMaid has been running for ${elapsed}.` : 'ImageMaid is currently running.'
+    titleAttr: qsBuildActiveTitleAttr('ImageMaid run', elapsed ? `Elapsed ${elapsed}` : '', details)
+  }
+}
+
+function qsBuildBulkValidationActiveWorkEntry () {
+  const progress = qsLatestBulkValidationProgress
+  if (!progress || typeof progress !== 'object') return null
+  const phase = String(progress.phase || '').trim().toLowerCase()
+  if (phase !== 'running' && phase !== 'queued' && phase !== 'starting') return null
+
+  const total = Number(progress.total || 0)
+  const completed = Number(progress.completed || 0)
+  const currentLabel = String(progress.current_label || '').trim()
+  const currentStatus = String(progress.current_status || '').trim().toLowerCase()
+  const summary = progress.summary && typeof progress.summary === 'object' ? progress.summary : {}
+  const safeCompleted = Number.isFinite(completed) ? Math.max(0, completed) : 0
+  const safeTotal = Number.isFinite(total) ? Math.max(0, total) : 0
+  const pct = safeTotal > 0 ? Math.max(0, Math.min(100, Math.round((safeCompleted / safeTotal) * 100))) : null
+  const counts = qsGetBulkSummaryCounts(summary)
+  const details = []
+
+  if (currentLabel) qsPushActiveDetail(details, 'Current', currentStatus && currentStatus !== 'running' ? `${currentLabel} (${currentStatus})` : currentLabel)
+  if (safeTotal > 0) qsPushActiveDetail(details, 'Steps', `${Math.min(safeCompleted, safeTotal)}/${safeTotal}${pct !== null ? ` (${pct}%)` : ''}`)
+  qsPushActiveDetail(details, 'Results', `Validated ${counts.validated} | Failed ${counts.failed} | Skipped ${counts.skipped}`)
+  if (progress.updated_at) qsPushActiveDetail(details, 'Updated', qsFormatTimestamp(progress.updated_at))
+
+  const meta = safeTotal > 0
+    ? `Validating ${Math.min(safeCompleted, safeTotal)}/${safeTotal}${currentLabel ? ` - ${currentLabel}` : ''}`
+    : (currentLabel ? `Validating ${currentLabel}` : 'Validating services')
+  return {
+    key: `bulk-validation-${progress.run_id || 'active'}`,
+    title: 'Validate All',
+    chip: phase === 'queued' ? 'Queued' : 'Validating',
+    state: 'unknown',
+    meta,
+    details,
+    href: '/step/900-kometa',
+    titleAttr: qsBuildActiveTitleAttr('Validate All', meta, details)
   }
 }
 
@@ -792,10 +960,21 @@ function qsGetBackgroundJobMeta (job) {
   if (!job || typeof job !== 'object') return ''
 
   const parts = []
+  const jobType = String(job.job_type || '').trim()
   const pct = Number(job.pct)
   const text = String(job.text || '').trim()
   const currentFile = String(job.current_file || '').trim()
   const summary = job.summary && typeof job.summary === 'object' ? job.summary : {}
+
+  if (jobType === 'kometa_update') {
+    if (job.force) parts.push('Forced update')
+    else parts.push('Standard update')
+    if (job.kometa_branch) parts.push(`Branch ${job.kometa_branch}`)
+  } else if (jobType === 'imagemaid_update') {
+    if (job.force) parts.push('Forced update')
+    else parts.push('Standard update')
+    if (job.imagemaid_branch) parts.push(`Branch ${job.imagemaid_branch}`)
+  }
 
   if (text) parts.push(text)
   if (currentFile) parts.push(`File ${currentFile}`)
@@ -811,6 +990,62 @@ function qsGetBackgroundJobMeta (job) {
   return parts.filter(Boolean).slice(0, 3).join(' • ')
 }
 
+function qsGetLastBackgroundJobLogLine (job) {
+  const logs = Array.isArray(job && job.logs) ? job.logs : []
+  for (let index = logs.length - 1; index >= 0; index -= 1) {
+    const line = String(logs[index] || '').trim()
+    if (line) return line
+  }
+  return ''
+}
+
+function qsGetBackgroundJobDetails (job) {
+  if (!job || typeof job !== 'object') return []
+
+  const details = []
+  const jobType = String(job.job_type || '').trim()
+  const phase = String(job.phase || '').trim()
+  const trigger = String(job.trigger || '').trim()
+  const pct = Number(job.pct)
+  const started = job.started_at || (Number.isFinite(Number(job.started_epoch)) ? new Date(Number(job.started_epoch) * 1000).toISOString() : '')
+
+  if (phase) qsPushActiveDetail(details, 'Phase', phase.replaceAll('_', ' '))
+  if (Number.isFinite(pct)) qsPushActiveDetail(details, 'Progress', `${Math.max(0, Math.min(100, Math.round(pct)))}%`)
+  if (trigger && trigger !== 'manual') qsPushActiveDetail(details, 'Trigger', trigger.replaceAll('_', ' '))
+  if (started) qsPushActiveDetail(details, 'Started', qsFormatTimestamp(started))
+
+  if (jobType === 'logscan_reingest') {
+    if (Number.isFinite(Number(job.scanned)) && Number.isFinite(Number(job.total))) {
+      qsPushActiveDetail(details, 'Scanned', `${qsFormatActiveNumber(job.scanned)}/${qsFormatActiveNumber(job.total)}`)
+    }
+    qsPushActiveDetail(details, 'Ingested', qsFormatActiveNumber(job.ingested))
+    qsPushActiveDetail(details, 'Duplicates', qsFormatActiveNumber(job.duplicates))
+    const skipped = Number(job.skipped_incomplete || 0) + Number(job.skipped_invalid || 0)
+    if (skipped > 0) qsPushActiveDetail(details, 'Skipped', qsFormatActiveNumber(skipped))
+    if (job.current_file) qsPushActiveDetail(details, 'File', job.current_file)
+  } else if (jobType === 'kometa_update') {
+    qsPushActiveDetail(details, 'Mode', job.force ? 'Forced update' : 'Standard update')
+    qsPushActiveDetail(details, 'Kometa branch', job.kometa_branch)
+    qsPushActiveDetail(details, 'Quickstart branch', job.qs_branch)
+    qsPushActiveDetail(details, 'Last log', qsGetLastBackgroundJobLogLine(job))
+  } else if (jobType === 'imagemaid_update') {
+    qsPushActiveDetail(details, 'Mode', job.force ? 'Forced update' : 'Standard update')
+    qsPushActiveDetail(details, 'ImageMaid branch', job.imagemaid_branch)
+    qsPushActiveDetail(details, 'Last log', qsGetLastBackgroundJobLogLine(job))
+  } else if (jobType === 'test_library_install') {
+    if (Number.isFinite(Number(job.downloaded)) && Number.isFinite(Number(job.total))) {
+      qsPushActiveDetail(details, 'Download', `${qsFormatActiveMb(Number(job.downloaded) / (1024 * 1024))}/${qsFormatActiveMb(Number(job.total) / (1024 * 1024))}${job.estimated ? ' estimated' : ''}`)
+    }
+    if (Number.isFinite(Number(job.files_done)) && Number.isFinite(Number(job.files_total))) {
+      qsPushActiveDetail(details, 'Files', `${qsFormatActiveNumber(job.files_done)}/${qsFormatActiveNumber(job.files_total)}`)
+    }
+    qsPushActiveDetail(details, 'Target', job.target_path)
+  }
+
+  if (job.error) qsPushActiveDetail(details, 'Error', job.error)
+  return details.filter(Boolean).slice(0, 6)
+}
+
 function qsBuildBackgroundJobEntries () {
   if (!Array.isArray(qsActiveBackgroundJobs)) return []
   return qsActiveBackgroundJobs
@@ -820,6 +1055,7 @@ function qsBuildBackgroundJobEntries () {
       const chip = qsGetBackgroundJobChip(job)
       const meta = qsGetBackgroundJobMeta(job)
       const href = String(job.target_page || '').trim() || '#'
+      const details = qsGetBackgroundJobDetails(job)
       return {
         key: `job-${job.job_id || label}`,
         jobId: String(job.job_id || '').trim() || null,
@@ -828,8 +1064,9 @@ function qsBuildBackgroundJobEntries () {
         state: qsGetBackgroundJobState(job),
         badgeClasses: qsGetBackgroundJobBadgeClasses(job),
         meta: meta || 'In progress.',
+        details,
         href,
-        titleAttr: meta ? `${label}: ${meta}` : label
+        titleAttr: qsBuildActiveTitleAttr(label, meta || 'In progress.', details)
       }
     })
 }
@@ -859,6 +1096,8 @@ function qsRenderActiveWorkCard () {
   if (kometaEntry) entries.push(kometaEntry)
   const imageMaidEntry = qsBuildImageMaidActiveWorkEntry()
   if (imageMaidEntry) entries.push(imageMaidEntry)
+  const bulkValidationEntry = qsBuildBulkValidationActiveWorkEntry()
+  if (bulkValidationEntry) entries.push(bulkValidationEntry)
   entries.push(...qsBuildBackgroundJobEntries())
 
   const rollupState = qsComputeActiveWorkRollupState(entries)
@@ -896,6 +1135,10 @@ function qsRenderActiveWorkCard () {
       : ' href="#"'
     const titleAttr = entry.titleAttr ? ` title="${escapeHtml(entry.titleAttr)}"` : ''
     const targetLabelAttr = ` data-qs-target-label="${escapeHtml(entry.title)}"`
+    const detailRows = Array.isArray(entry.details)
+      ? entry.details.filter(Boolean).slice(0, 6).map((line) => `<div class="qs-active-work-detail-line">${escapeHtml(line)}</div>`).join('')
+      : ''
+    const detailsHtml = detailRows ? `<div class="qs-active-work-detail-list">${detailRows}</div>` : ''
     return `
       <a class="qs-active-work-item qs-active-work-item--${escapeHtml(entry.state)}"${hrefAttr}${titleAttr}${targetLabelAttr}>
         <div class="qs-active-work-item-head">
@@ -903,6 +1146,7 @@ function qsRenderActiveWorkCard () {
           <span class="qs-active-work-chip qs-active-work-chip--${escapeHtml(entry.state)}">${escapeHtml(entry.chip)}</span>
         </div>
         <div class="qs-active-work-item-meta">${escapeHtml(entry.meta || '')}</div>
+        ${detailsHtml}
       </a>`
   }).join('')
 }
@@ -935,6 +1179,8 @@ function qsRenderBackgroundJobPills () {
 function qsHandleMaintenanceStatus (data) {
   if (!data) return
   qsLatestKometaStatus = data
+  const active = String(data.status || '').trim().toLowerCase() === 'running' || Boolean(data.maintenance_paused)
+  if (!active) qsLatestKometaRunProgress = null
   const paused = Boolean(data.maintenance_paused)
   const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
   const status = String(data.status || '').trim().toLowerCase()
@@ -1040,6 +1286,13 @@ function qsHandleMaintenanceStatus (data) {
 
 window.QS_handleMaintenanceStatus = qsHandleMaintenanceStatus
 window.QS_formatTimestamp = qsFormatTimestamp
+
+function qsHandleKometaRunProgress (data) {
+  qsLatestKometaRunProgress = data && typeof data === 'object' ? data : null
+  qsRenderActiveWorkCard()
+}
+
+window.QS_handleKometaRunProgress = qsHandleKometaRunProgress
 
 function qsHandleImageMaidStatus (data) {
   qsLatestImageMaidStatus = data
@@ -1353,6 +1606,50 @@ window.QS_refreshAppReadiness = qsRefreshAppReadiness
   }
   setTimeout(poll, 1500)
   setInterval(poll, QS_BACKGROUND_JOBS_POLL_INTERVAL_MS)
+})()
+
+;(function qsKometaProgressPoll () {
+  if (qsSkipMaintenancePoll) return
+  const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsKometaProgressPollInFlight) return
+    const active = qsLatestKometaStatus && (
+      String(qsLatestKometaStatus.status || '').trim().toLowerCase() === 'running' ||
+      Boolean(qsLatestKometaStatus.maintenance_paused)
+    )
+    if (!active) return
+    qsKometaProgressPollInFlight = true
+    fetch('/logscan/progress', { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) return null
+        return res.json()
+      })
+      .then(data => qsHandleKometaRunProgress(data))
+      .catch(() => {})
+      .finally(() => {
+        qsKometaProgressPollInFlight = false
+      })
+  }
+  setTimeout(poll, 2600)
+  setInterval(poll, QS_KOMETA_PROGRESS_POLL_INTERVAL_MS)
+})()
+
+;(function qsBulkValidationPoll () {
+  const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsBulkValidationPollInFlight) return
+    qsBulkValidationPollInFlight = true
+    fetch('/validate_all_services/status', { cache: 'no-store' })
+      .then(res => res.json())
+      .then((data) => {
+        qsLatestBulkValidationProgress = data && data.success ? (data.progress || null) : null
+        qsRenderActiveWorkCard()
+      })
+      .catch(() => {})
+      .finally(() => {
+        qsBulkValidationPollInFlight = false
+      })
+  }
+  setTimeout(poll, 2200)
+  setInterval(poll, QS_BULK_VALIDATION_POLL_INTERVAL_MS)
 })()
 
 document.addEventListener('click', (event) => {
@@ -2237,6 +2534,19 @@ function qsRunBulkValidation (options = {}) {
   if (qsBulkValidationRequest) return qsBulkValidationRequest
 
   const runId = options.runId || `bulk-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  qsLatestBulkValidationProgress = {
+    run_id: runId,
+    phase: 'running',
+    total: 0,
+    completed: 0,
+    current_key: '',
+    current_label: 'Preparing validation',
+    current_status: 'running',
+    results: {},
+    summary: { validated: 0, failed: 0, skipped: 0 },
+    updated_at: new Date().toISOString()
+  }
+  qsRenderActiveWorkCard()
   document.dispatchEvent(new CustomEvent('qs:bulk-validation-start', { detail: { source: options.source || null, runId } }))
   qsSetBulkValidationLoading(true)
 
@@ -2264,6 +2574,8 @@ function qsRunBulkValidation (options = {}) {
       const results = data.results || {}
       const summary = data.summary || {}
       data.run_id = data.run_id || runId
+      qsLatestBulkValidationProgress = data.progress || null
+      qsRenderActiveWorkCard()
       qsApplyBulkValidationResults(results, summary)
       document.dispatchEvent(new CustomEvent('qs:bulk-validation-complete', { detail: data }))
 
@@ -2279,6 +2591,19 @@ function qsRunBulkValidation (options = {}) {
       if (typeof showToast === 'function') {
         showToast('error', message)
       }
+      qsLatestBulkValidationProgress = {
+        run_id: runId,
+        phase: 'error',
+        total: 0,
+        completed: 0,
+        current_key: '',
+        current_label: message,
+        current_status: 'failed',
+        results: {},
+        summary: { validated: 0, failed: 0, skipped: 0 },
+        updated_at: new Date().toISOString()
+      }
+      qsRenderActiveWorkCard()
       document.dispatchEvent(new CustomEvent('qs:bulk-validation-error', { detail: { message } }))
       throw err
     })

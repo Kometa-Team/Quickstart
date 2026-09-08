@@ -1736,6 +1736,12 @@ form,
     tab-size: 4;
 }
 
+.qs-log-code--plain {
+    padding-left: 0.65rem;
+    padding-right: 1.25rem;
+    white-space: pre;
+}
+
 .qs-log-line {
     display: grid;
     grid-template-columns: minmax(3.75rem, auto) minmax(max-content, 1fr);
@@ -5993,6 +5999,20 @@ body {
     font-size: 0.64rem;
     line-height: 1.35;
     color: var(--theme-text-muted);
+}
+
+.qs-active-work-detail-list {
+    display: grid;
+    gap: 0.08rem;
+    padding-top: 0.05rem;
+}
+
+.qs-active-work-detail-line {
+    min-width: 0;
+    font-size: 0.59rem;
+    line-height: 1.32;
+    color: rgba(226, 232, 240, 0.7);
+    overflow-wrap: anywhere;
 }
 
 .qs-active-work-chip {
