@@ -53,6 +53,7 @@ import { formatRunSeconds, linkifyText } from './_util.js'
 // Module-local state (was in 900-kometa.js before extraction).
 let pollCounter = 0
 let analyzeInFlight = false
+let lastAnalyzeAt = 0
 
 /**
  * Resolve the panel DOM references. Called lazily so this module
@@ -121,10 +122,14 @@ export function fetchLogscanAnalysis (force = false, opts = {}) {
   const dom = resolvePanel()
   if (!dom.panel) return
   pollCounter += 1
-  const shouldFetch = force || (pollCounter % 5 === 0) || !(kometaState && kometaState.lastLogscanPayload)
+  const now = Date.now()
+  const minIntervalMs = Math.max(0, Number(opts.minIntervalMs || 0) || 0)
+  const intervalDue = !lastAnalyzeAt || minIntervalMs <= 0 || (now - lastAnalyzeAt) >= minIntervalMs
+  const shouldFetch = force || ((pollCounter % 5 === 0) && intervalDue) || !(kometaState && kometaState.lastLogscanPayload)
   if (!shouldFetch || analyzeInFlight) return
 
   analyzeInFlight = true
+  lastAnalyzeAt = now
 
   fetch('/logscan/analyze')
     .then(res => res.json())
@@ -151,6 +156,7 @@ export function fetchLogscanAnalysis (force = false, opts = {}) {
 export function resetLogscanStateForTests () {
   pollCounter = 0
   analyzeInFlight = false
+  lastAnalyzeAt = 0
 }
 
 // ---------------------------------------------------------------------

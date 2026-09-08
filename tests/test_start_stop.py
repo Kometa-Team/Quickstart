@@ -39,6 +39,20 @@ def test_tail_log_stats_count_exact_level_markers(client, tmp_path, monkeypatch,
     assert stats["trace"] == 1
 
 
+def test_tail_log_size_reads_only_requested_tail(client, tmp_path, monkeypatch, qs_module):
+    log_dir = tmp_path / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / "meta.log").write_text("".join(f"line {idx}\n" for idx in range(1, 51)), encoding="utf-8")
+    qs_module.LOG_STATS_CACHE.clear()
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+
+    resp = client.get("/tail-log?size=5")
+
+    assert resp.status_code == 200
+    assert resp.get_json()["log"].splitlines() == ["line 46", "line 47", "line 48", "line 49", "line 50"]
+
+
 def test_start_kometa_queues_during_maintenance(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)

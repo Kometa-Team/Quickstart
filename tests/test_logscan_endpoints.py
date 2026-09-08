@@ -1188,6 +1188,73 @@ def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isol
     assert payload["playlist_elapsed_seconds"] == 305
 
 
+def test_logscan_progress_uses_persisted_snapshot_after_memory_cache_clear(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text(
+        "[2026-04-24 21:00:00,000] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|\n"
+        + "".join(f"[2026-04-24 21:00:01,000] [kometa.py:730] [INFO] noise {idx}\n" for idx in range(5000)),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: True)
+    monkeypatch.setattr(qs_module, "_load_progress_config", lambda *_args, **_kwargs: {})
+    qs_module._clear_logscan_progress_snapshot()
+
+    started_at = datetime.fromisoformat("2026-04-24T21:00:00")
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["started_at"] = started_at
+        qs_module.RUN_CONTEXT["selected_libraries"] = ["Movies"]
+        qs_module.RUN_CONTEXT["config_path"] = None
+        qs_module.RUN_CONTEXT["run_mode"] = "all"
+        qs_module.RUN_CONTEXT["stop_requested_at"] = None
+
+    analyzer_calls = []
+
+    class _FakeProgressAnalyzer:
+        def extract_progress(self, content, **kwargs):
+            previous = kwargs.get("previous") if isinstance(kwargs.get("previous"), dict) else {}
+            analyzer_calls.append({"content": content, "previous": previous})
+            return {
+                "phase_current": "operations",
+                "phases_completed": [],
+                "phase_starts": previous.get("phase_starts") or {"Movies||operations": "2026-04-24T21:00:00"},
+                "libraries": previous.get("libraries") or [{"name": "Movies", "type": "movie", "status": "In progress", "durations": {"operations": 12}}],
+                "current_library": "Movies",
+                "completed_count": 0,
+                "total_count": 1,
+            }
+
+        def extract_maintenance_summary(self, content):
+            return {"had_pause": "Maintenance marker:" in content, "pause_count": 1 if "Maintenance marker:" in content else 0}
+
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", _FakeProgressAnalyzer)
+
+    first = client.get("/logscan/progress")
+    assert first.status_code == 200
+    assert analyzer_calls[-1]["previous"] == {}
+
+    qs_module.LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
+    (log_dir / "meta.quickstart-maintenance.log").write_text(
+        "[Quickstart] Maintenance marker: event=paused at=2026-04-24T21:10:00Z local_at=2026-04-24T17:10:00 window=03:00-05:00\n",
+        encoding="utf-8",
+    )
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write("[2026-04-24 21:15:00,000] [kometa.py:730] [INFO] still running\n")
+    monkeypatch.setattr(qs_module, "_read_logscan_text", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("full log read should not be used")))
+
+    second = client.get("/logscan/progress")
+
+    assert second.status_code == 200
+    payload = second.get_json()
+    assert payload["maintenance_had_pause"] is True
+    assert analyzer_calls[-1]["previous"]["libraries"][0]["name"] == "Movies"
+    assert analyzer_calls[-1]["previous"]["current_library"] == "Movies"
+
+
 def test_logscan_progress_size_all_bypasses_matching_stale_cache(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"

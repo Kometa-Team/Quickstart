@@ -3,10 +3,10 @@ import {
   computeYamlLineCount,
   formatTimestampLocal,
   formatRunSeconds,
-  applyLogFilter,
   computeLogStats,
   filterLogLines,
   findYamlMajorSections,
+  buildLineNumberedText,
   renderLogRows,
   copyTextToClipboard,
   setMetaFlag
@@ -108,6 +108,11 @@ let lastLogText = ''
 let lastLogStartLine = 1
 let lastLogStatsTotal = null
 let logStatsPollCounter = 0
+let kometaLogInFlight = false
+let lastRenderedLogRawText = null
+let lastRenderedLogFilter = null
+let lastRenderedLogStartLine = null
+let lastFilteredLogResult = null
 let finalLogscanAnalyzeTriggered = false
 
 const runLog = document.getElementById('run-output-log')
@@ -196,22 +201,47 @@ function renderRunLogText (text, opts = {}) {
   if (!runLog) return
   const content = String(text || '')
   if (opts.numbered === false) {
+    runLog.classList.add('qs-log-code--plain')
     runLog.textContent = content
     return
   }
+  const lineCount = getDisplayedLogLineCount(content)
+  if (opts.compact !== false && lineCount > 800) {
+    runLog.classList.add('qs-log-code--plain')
+    runLog.textContent = buildLineNumberedText(content, {
+      startLine: opts.startLine || 1,
+      lineNumbers: opts.lineNumbers
+    })
+    return
+  }
+  runLog.classList.remove('qs-log-code--plain')
   renderLogRows(runLog, content, {
     startLine: opts.startLine || 1,
     lineNumbers: opts.lineNumbers
   })
 }
 
-function renderFilteredRunLog () {
+function renderFilteredRunLog (opts = {}) {
+  if (
+    !opts.force &&
+    lastFilteredLogResult &&
+    lastRenderedLogRawText === lastLogText &&
+    lastRenderedLogFilter === logFilter &&
+    lastRenderedLogStartLine === lastLogStartLine
+  ) {
+    return lastFilteredLogResult
+  }
   const result = filterLogLines(lastLogText, logFilter, { startLine: lastLogStartLine })
   const noMatchText = lastLogText ? 'No lines matched the current filter.' : ''
   renderRunLogText(result.text || noMatchText, {
     startLine: result.text ? undefined : 1,
     lineNumbers: result.text ? result.lineNumbers : undefined
   })
+  lastRenderedLogRawText = lastLogText
+  lastRenderedLogFilter = logFilter
+  lastRenderedLogStartLine = lastLogStartLine
+  lastFilteredLogResult = result
+  return result
 }
 
 function appendRunLogText (text) {
@@ -667,11 +697,12 @@ function updateStatRow (row, stats) {
   })
 }
 
-function renderLogStats () {
+function renderLogStats (filteredResult = lastFilteredLogResult) {
   if (!logStats && !logStatsFiltered) return
   const totalStats = lastLogStatsTotal || computeLogStats(lastLogText)
-  const filteredText = applyLogFilter(lastLogText, logFilter)
-  const filteredStats = computeLogStats(filteredText)
+  const filteredStats = logFilter
+    ? computeLogStats((filteredResult || renderFilteredRunLog()).text || '')
+    : totalStats
   updateStatRow(logStats, totalStats)
   updateStatRow(logStatsFiltered, filteredStats)
 }
@@ -733,17 +764,17 @@ function updateClearFilterButton () {
 
 filterInput?.addEventListener('input', function() {
   logFilter = this.value.trim()
-  renderFilteredRunLog()
+  const filteredResult = renderFilteredRunLog({ force: true })
   updateClearFilterButton()
-  renderLogStats()
+  renderLogStats(filteredResult)
 })
 
 clearFilterBtn?.addEventListener('click', function() {
   logFilter = ''
   filterInput.value = ''
-  renderFilteredRunLog()
+  const filteredResult = renderFilteredRunLog({ force: true })
   updateClearFilterButton()
-  renderLogStats()
+  renderLogStats(filteredResult)
   if (filterInput) filterInput.focus()
 })
 
@@ -752,9 +783,9 @@ if (levelButtons && levelButtons.length) {
     const val = this.dataset.level || ''
     logFilter = val
     if (filterInput) filterInput.value = val
-    renderFilteredRunLog()
+    const filteredResult = renderFilteredRunLog({ force: true })
     updateClearFilterButton()
-    renderLogStats()
+    renderLogStats(filteredResult)
   }))
 }
 
@@ -762,6 +793,7 @@ tailSelect?.addEventListener('change', function() {
   tailSize = this.value || '2000'
   const label = tailSize === 'all' ? 'entire log' : `last ${tailSize} lines of the log`
   if (tailNotice) tailNotice.innerHTML = `<i class="bi bi-info-circle"></i> Showing ${label}`
+  lastRenderedLogRawText = null
   fetchKometaLog()
 })
 
@@ -1280,6 +1312,8 @@ function performStopKometa () {
 
 function fetchKometaLog () {
   if (logPollingPaused) return
+  if (kometaLogInFlight) return
+  kometaLogInFlight = true
 
   const logEl = runLog
   const wasAtBottom = logEl ? (logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 5) : true
@@ -1299,15 +1333,26 @@ function fetchKometaLog () {
         updateLogRecency(null)
         return
       }
-      lastLogText = data.log || ''
-      lastLogStartLine = getTailStartLine(data, lastLogText)
+      const nextLogText = data.log || ''
+      const nextLogStartLine = getTailStartLine(data, nextLogText)
+      const logChanged = nextLogText !== lastLogText || nextLogStartLine !== lastLogStartLine
+      lastLogText = nextLogText
+      lastLogStartLine = nextLogStartLine
       updateLogRecency(data)
       if (data.stats) {
         lastLogStatsTotal = data.stats
       }
-      renderFilteredRunLog()
-      renderLogStats()
-      fetchLogscanAnalysis(false, { updateHeaderBadge: updateLogscanHeaderBadge, kometaState })
+      const filteredResult = logChanged ? renderFilteredRunLog() : lastFilteredLogResult
+      if (logChanged || data.stats || logFilter) {
+        renderLogStats(filteredResult)
+      }
+      if (logChanged) {
+        fetchLogscanAnalysis(false, {
+          updateHeaderBadge: updateLogscanHeaderBadge,
+          kometaState,
+          minIntervalMs: 60000
+        })
+      }
       const shouldStick = autoScrollEnabled || wasAtBottom
       if (shouldStick && logEl) {
         logEl.scrollTop = logEl.scrollHeight
@@ -1316,6 +1361,9 @@ function fetchKometaLog () {
     .catch(err => {
       console.error('Error fetching Kometa log:', err)
       appendRunLogText('\n⚠️ Error fetching log.')
+    })
+    .finally(() => {
+      kometaLogInFlight = false
     })
 }
 

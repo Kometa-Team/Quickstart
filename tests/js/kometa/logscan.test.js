@@ -248,6 +248,37 @@ describe('fetchLogscanAnalysis', () => {
     expect(global.fetch).toHaveBeenCalledTimes(2)
   })
 
+  it('honors minIntervalMs for non-forced cadence fetches', async () => {
+    const state = { lastLogscanPayload: null }
+    vi.spyOn(Date, 'now')
+      .mockReturnValueOnce(1000)
+      .mockReturnValueOnce(2000)
+      .mockReturnValueOnce(3000)
+      .mockReturnValueOnce(4000)
+      .mockReturnValueOnce(5000)
+      .mockReturnValueOnce(61000)
+      .mockReturnValueOnce(62000)
+      .mockReturnValueOnce(63000)
+      .mockReturnValueOnce(64000)
+      .mockReturnValueOnce(65000)
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 })
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 2
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 3
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 4
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 5, below interval
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 6
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 7
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 8
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 9
+    fetchLogscanAnalysis(false, { kometaState: state, minIntervalMs: 60000 }) // 10, interval due
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+  })
+
   it('stashes payload into kometaState.lastLogscanPayload on success', async () => {
     const state = {}
     fetchLogscanAnalysis(true, { kometaState: state })
