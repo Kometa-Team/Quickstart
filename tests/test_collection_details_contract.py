@@ -61,6 +61,23 @@ def test_libraries_script_wires_collection_detail_toggles():
     assert "[data-collection-field-wrapper]" in script
 
 
+def test_child_toggle_sections_have_bulk_select_controls():
+    macros = MACROS_PATH.read_text(encoding="utf-8")
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert 'data-child-toggle-bulk-action="select"' in macros
+    assert 'data-child-toggle-bulk-action="unselect"' in macros
+    assert "render_group.id in ['included_items', 'child_collections', 'child_defaults', 'child_override_maps']" in macros
+    assert "Select all" in macros
+    assert "Unselect all" in macros
+    assert "function runChildToggleBulkAction" in script
+    assert "function wireChildToggleBulkActions" in script
+    assert 'input.template-child-toggle[type="checkbox"]' in script
+    assert "btn.dataset.childToggleBulkAction === 'select'" in script
+    assert "wireChildToggleBulkActions(card)" in script
+    assert "wireChildToggleBulkActions()" in script
+
+
 def test_event_handler_does_not_scan_selects_inside_input_loop():
     script = EVENT_HANDLER_JS_PATH.read_text(encoding="utf-8")
     attach_section = script.split("initializeOverlays(libraryId, isMovie)", 1)[1]

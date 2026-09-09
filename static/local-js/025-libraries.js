@@ -6494,6 +6494,7 @@ function initializeLibraryCardControls (card, libraryId) {
     initRelativeYearInputs(card)
     initScheduleBuilders(card)
     initLibraryAssetDirectoryInputs(card)
+    wireChildToggleBulkActions(card)
     wireOffsetReset(card)
     wireRatingsOffsetSync(card)
     initSortablesInScope(card)
@@ -7409,6 +7410,7 @@ wireOverlayTemplateSections()
 wireCollectionTemplateSections()
 wireOverlayVariableSections()
 wireCollectionVariableSections()
+wireChildToggleBulkActions()
 wireRatingsOffsetSync()
 
 document.addEventListener('click', (e) => {
@@ -8260,6 +8262,70 @@ async function runCollectionGroupReset (btn, group, options = {}) {
     btn.dataset.resetBusy = 'false'
     setLibrariesButtonPersistentBusy(btn, false)
   }
+}
+
+async function runChildToggleBulkAction (btn, checked) {
+  if (!btn || btn.dataset.bulkBusy === 'true') return
+
+  const section = btn.closest('[data-collection-variable-section="true"], [data-overlay-variable-section="true"]')
+  const sectionBody = section?.querySelector('.collection-variable-section-body, .overlay-variable-section-body') || section
+  if (!sectionBody) return
+
+  const toggles = Array.from(sectionBody.querySelectorAll('input.template-child-toggle[type="checkbox"]'))
+    .filter(input => !input.disabled)
+  if (!toggles.length) return
+
+  const sectionLabel = section?.querySelector('.fw-semibold')?.textContent?.trim() || 'section'
+  const idleLabel = btn.dataset.bulkIdleLabel || btn.textContent.trim()
+  btn.dataset.bulkIdleLabel = idleLabel
+  btn.dataset.bulkBusy = 'true'
+  setLibrariesButtonPersistentBusy(btn, true, checked ? 'Selecting...' : 'Clearing...')
+
+  try {
+    await new Promise(resolve => requestAnimationFrame(() => resolve()))
+
+    const changed = []
+    for (let index = 0; index < toggles.length; index += 1) {
+      const input = toggles[index]
+      if (input.checked === checked) continue
+      input.checked = checked
+      changed.push(input)
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+      if (index > 0 && index % 25 === 0) {
+        await new Promise(resolve => window.setTimeout(resolve, 0))
+      }
+    }
+
+    refreshTemplateOverrideState(section.closest('.template-toggle-group') || section)
+    updateAccordionHighlights()
+    if (typeof ValidationHandler !== 'undefined' && typeof ValidationHandler.updateValidationState === 'function') {
+      ValidationHandler.updateValidationState()
+    }
+    if (typeof showToast === 'function') {
+      const action = checked ? 'Selected' : 'Unselected'
+      showToast('info', `${action} ${changed.length} item${changed.length === 1 ? '' : 's'} in ${sectionLabel}.`)
+    }
+  } finally {
+    btn.dataset.bulkBusy = 'false'
+    setLibrariesButtonPersistentBusy(btn, false)
+  }
+}
+
+function wireChildToggleBulkActions (scope) {
+  const root = scope || document
+  root.querySelectorAll('[data-child-toggle-bulk-action]').forEach(btn => {
+    if (btn.dataset.listenerAdded === 'true') return
+    btn.addEventListener('click', () => {
+      runChildToggleBulkAction(btn, btn.dataset.childToggleBulkAction === 'select').catch(error => {
+        console.error('[child toggle bulk action failed]', error)
+        if (typeof showToast === 'function') {
+          showToast('error', 'Bulk toggle action failed.')
+        }
+      })
+    })
+    btn.dataset.listenerAdded = 'true'
+  })
 }
 
 function wireOffsetReset (scope) {

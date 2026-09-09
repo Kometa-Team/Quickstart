@@ -1351,6 +1351,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% for render_group in render_groups.items %}
                         {% if not render_group.flat %}
                         {% set section_body_id = collection_details_id ~ '-section-' ~ render_group.id %}
+                        {% set has_child_bulk_actions = render_group.id in ['included_items', 'child_collections', 'child_defaults', 'child_override_maps'] %}
                         <div class="border rounded p-2 mb-3 collection-variable-section" data-collection-variable-section="true"
                             data-section-id="{{ render_group.id }}">
                             <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
@@ -1375,7 +1376,19 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 data-detail-section="true"
                                 data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
                                 style="display: {{ 'block' if render_group.default_open else 'none' }};">
-                                <div class="d-flex justify-content-end mb-2">
+                                <div class="d-flex justify-content-end gap-2 flex-wrap mb-2">
+                                    {% if has_child_bulk_actions %}
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-overlay"
+                                        data-child-toggle-bulk-action="select">
+                                        Select all
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-overlay"
+                                        data-child-toggle-bulk-action="unselect">
+                                        Unselect all
+                                    </button>
+                                    {% endif %}
                                     <button type="button"
                                         class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
                                         data-collection-variable-section-reset="true">
@@ -2229,6 +2242,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 {% for render_group in overlay_render_groups %}
                                                 {% if not render_group.flat %}
                                                 {% set render_group_body_id = template_name ~ '-' ~ render_group.id ~ '-section-body' %}
+                                                {% set has_child_bulk_actions = render_group.id in ['included_items', 'child_collections', 'child_defaults', 'child_override_maps'] %}
                                                 <div class="border rounded p-2 mb-3 collection-variable-section overlay-variable-section"
                                                     data-overlay-variable-section="true"
                                                     data-overlay-variable-section-id="{{ render_group.id }}">
@@ -2254,7 +2268,19 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                         data-detail-section="true"
                                                         data-default-open="{{ 'true' if render_group.default_open else 'false' }}"
                                                         style="display: {{ 'block' if render_group.default_open else 'none' }};">
-                                                        <div class="d-flex justify-content-end mb-2">
+                                                        <div class="d-flex justify-content-end gap-2 flex-wrap mb-2">
+                                                            {% if has_child_bulk_actions %}
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary btn-overlay"
+                                                                data-child-toggle-bulk-action="select">
+                                                                Select all
+                                                            </button>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary btn-overlay"
+                                                                data-child-toggle-bulk-action="unselect">
+                                                                Unselect all
+                                                            </button>
+                                                            {% endif %}
                                                             <button type="button"
                                                                 class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
                                                                 data-overlay-variable-section-reset="true">
