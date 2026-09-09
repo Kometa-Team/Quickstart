@@ -71,6 +71,12 @@ function readValidationFlag (id, key) {
   return el ? el.dataset[key] : ''
 }
 
+function refreshSidebarAppReadiness () {
+  if (typeof window !== 'undefined' && typeof window.QS_refreshAppReadiness === 'function') {
+    window.QS_refreshAppReadiness({ fetch: true })
+  }
+}
+
 /**
  * Check whether Kometa is validated. See module docstring for full
  * contract.
@@ -241,6 +247,7 @@ export function validateKometaRoot (options = {}) {
     updateRunNowState()
     syncUpdateButtonLabel()
     syncKometaRollupBadge()
+    refreshSidebarAppReadiness()
     if (typeof hideNavigationLoadingOverlay === 'function') {
       hideNavigationLoadingOverlay()
     }

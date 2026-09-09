@@ -174,7 +174,7 @@ def _build_workspace_app_readiness_from_status(config_name, workspace_status, te
             installed = bool(runtime_state.get("kometa_installed"))
             prepared = bool(runtime_state.get("venv_python_exists"))
             kometa.update(
-                state="ready" if installed and prepared else "review",
+                state="ready" if installed and prepared else "needs_prepare",
                 summary="Ready to run" if installed and prepared else ("Prepare Kometa" if installed else "Install Kometa"),
                 detail=(
                     "Open Kometa to review the command preview and run this config."

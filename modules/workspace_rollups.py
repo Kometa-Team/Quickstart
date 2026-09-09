@@ -295,8 +295,8 @@ def _workspace_step_status_from_app_readiness(state):
     normalized = str(state or "").strip().lower()
     if normalized in {"ready", "review", "running", "queued"}:
         return "ok"
-    if normalized == "needs_validation":
+    if normalized in {"needs_validation", "needs_prepare"}:
         return "warn"
-    if normalized in {"needs_prepare", "needs_setup", "blocked", "error"}:
+    if normalized in {"needs_setup", "blocked", "error"}:
         return "error"
     return "unknown"
