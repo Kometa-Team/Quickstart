@@ -236,6 +236,12 @@ function setText (el, text) {
   if (el) el.textContent = text
 }
 
+function refreshSidebarAppReadiness () {
+  if (typeof window !== 'undefined' && typeof window.QS_refreshAppReadiness === 'function') {
+    window.QS_refreshAppReadiness({ fetch: true })
+  }
+}
+
 function shortSha (value) {
   const text = String(value || '').trim()
   return text ? text.slice(0, 12) : ''
@@ -940,6 +946,7 @@ function probeRoot () {
         updateCheckCompleted: imagemaidUpdateCheckCompleted,
         updateCheckSkipped: imagemaidUpdateCheckSkipped
       })
+      refreshSidebarAppReadiness()
     })
     .catch(() => {
       setInstallState('error', 'ImageMaid probe failed.')
@@ -1101,9 +1108,11 @@ function validateImageMaid () {
       updateModeHelp()
       if (ok && body.validated) {
         setValidationState('ok', 'ImageMaid is ready to run.')
+        refreshSidebarAppReadiness()
         return true
       } else {
         setValidationState('error', body.details || body.error || 'ImageMaid validation failed.')
+        refreshSidebarAppReadiness()
         return false
       }
     })
@@ -1113,6 +1122,7 @@ function validateImageMaid () {
       restoreFolderModeConflict = false
       updateModeHelp()
       setValidationState('error', 'ImageMaid validation failed.')
+      refreshSidebarAppReadiness()
       return false
     })
     .finally(() => {
