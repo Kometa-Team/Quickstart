@@ -64,6 +64,7 @@ from modules.imagemaid import (
 )
 from modules.kometa_install import (
     build_kometa_install_context as _build_kometa_install_context,
+    probe_kometa_root_state as _probe_kometa_root_state,
 )
 
 # Constants extracted to modules.workspace_status_constants. Re-exported here.
@@ -152,14 +153,44 @@ def _build_workspace_app_readiness_from_status(config_name, workspace_status, te
         detail = "Open Kometa to validate, review, download, prepare, or run this config."
         if install_context.get("kometa_is_external_install"):
             detail = "Open Kometa to validate, review, download, and sync this config for your external Kometa install."
-        kometa.update(
-            state="ready",
-            summary="Ready",
-            detail=detail,
-            action_label="Open Kometa",
-            href=_step_href("900-kometa"),
-            target_step="900-kometa",
-        )
+            kometa.update(
+                state="review",
+                summary="Sync config",
+                detail=detail,
+                action_label="Open Kometa",
+                href=_step_href("900-kometa"),
+                target_step="900-kometa",
+                installed=False,
+                prepared=False,
+            )
+        else:
+            root_path = install_context.get("kometa_selected_root") or install_context.get("kometa_primary_path")
+            runtime_state = {}
+            if root_path:
+                try:
+                    runtime_state = _probe_kometa_root_state(root_path)
+                except Exception:
+                    runtime_state = {}
+            installed = bool(runtime_state.get("kometa_installed"))
+            prepared = bool(runtime_state.get("venv_python_exists"))
+            kometa.update(
+                state="ready" if installed and prepared else "review",
+                summary="Ready to run" if installed and prepared else ("Prepare Kometa" if installed else "Install Kometa"),
+                detail=(
+                    "Open Kometa to review the command preview and run this config."
+                    if installed and prepared
+                    else (
+                        "Open Kometa to prepare the Python environment before running this config."
+                        if installed
+                        else "Open Kometa to download/install Kometa before running this config."
+                    )
+                ),
+                action_label="Open Kometa",
+                href=_step_href("900-kometa"),
+                target_step="900-kometa",
+                installed=installed,
+                prepared=prepared,
+            )
 
     imagemaid_settings, imagemaid_section = _get_imagemaid_settings_section(config_name)
     imagemaid_state = _probe_imagemaid_root_state(helpers.get_imagemaid_root_path())

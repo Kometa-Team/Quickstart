@@ -1,4 +1,10 @@
+from pathlib import Path
+
 import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE_JS_PATH = ROOT / "static" / "local-js" / "000-base.js"
+START_TEMPLATE_PATH = ROOT / "templates" / "001-start.html"
 
 TAUTULLI_COLLECTION_KEY = "mov-library_movies-collection_tautulli"
 TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
@@ -602,7 +608,20 @@ def test_workspace_app_readiness_kometa_freshness_stays_ready(monkeypatch, qs_mo
             "todo_blockers": [],
         },
     )
-    monkeypatch.setattr(workspace_status_module, "_build_kometa_install_context", lambda _name: {})
+    monkeypatch.setattr(
+        workspace_status_module,
+        "_build_kometa_install_context",
+        lambda _name: {
+            "kometa_selected_root": "/srv/kometa",
+            "kometa_primary_path": "/srv/kometa",
+            "kometa_is_external_install": False,
+        },
+    )
+    monkeypatch.setattr(
+        workspace_status_module,
+        "_probe_kometa_root_state",
+        lambda _path: {"kometa_installed": True, "venv_python_exists": True},
+    )
     monkeypatch.setattr(workspace_status_module, "_get_imagemaid_settings_section", lambda _name: ({}, {}))
     monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: "")
     monkeypatch.setattr(workspace_status_module, "_probe_imagemaid_root_state", lambda _path: {})
@@ -612,8 +631,53 @@ def test_workspace_app_readiness_kometa_freshness_stays_ready(monkeypatch, qs_mo
     payload = qs_module._build_workspace_app_readiness("cfg")
 
     assert payload["kometa"]["state"] == "ready"
-    assert payload["kometa"]["summary"] == "Ready"
+    assert payload["kometa"]["summary"] == "Ready to run"
+    assert payload["kometa"]["installed"] is True
+    assert payload["kometa"]["prepared"] is True
     assert payload["kometa"]["action_label"] == "Open Kometa"
+    assert payload["kometa"]["href"] == "/step/900-kometa"
+
+
+def test_workspace_app_readiness_kometa_managed_not_installed_says_install(monkeypatch, qs_module, workspace_status_module):
+    monkeypatch.setattr(qs_module.helpers, "get_menu_list", _template_list)
+    monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
+    monkeypatch.setattr(workspace_status_module, "_build_workspace_status_context", lambda *_args, **_kwargs: {"readiness": {}})
+    monkeypatch.setattr(
+        workspace_status_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "freshness",
+            "todo_count": 0,
+            "todo_blockers": [],
+        },
+    )
+    monkeypatch.setattr(
+        workspace_status_module,
+        "_build_kometa_install_context",
+        lambda _name: {
+            "kometa_selected_root": "/srv/kometa",
+            "kometa_primary_path": "/srv/kometa",
+            "kometa_is_external_install": False,
+        },
+    )
+    monkeypatch.setattr(
+        workspace_status_module,
+        "_probe_kometa_root_state",
+        lambda _path: {"kometa_installed": False, "venv_python_exists": False},
+    )
+    monkeypatch.setattr(workspace_status_module, "_get_imagemaid_settings_section", lambda _name: ({}, {}))
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: "")
+    monkeypatch.setattr(workspace_status_module, "_probe_imagemaid_root_state", lambda _path: {})
+    monkeypatch.setattr(qs_module.database, "retrieve_section_data", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(workspace_status_module, "_validate_imagemaid_settings", lambda *_args, **_kwargs: (False, "", ""))
+
+    payload = qs_module._build_workspace_app_readiness("cfg")
+
+    assert payload["kometa"]["state"] == "review"
+    assert payload["kometa"]["summary"] == "Install Kometa"
+    assert payload["kometa"]["installed"] is False
+    assert payload["kometa"]["prepared"] is False
+    assert "download/install Kometa" in payload["kometa"]["detail"]
     assert payload["kometa"]["href"] == "/step/900-kometa"
 
 
@@ -658,6 +722,19 @@ def test_workspace_app_readiness_route_returns_app_payload(client, monkeypatch, 
     assert payload["config_name"] == "cfg"
     assert payload["apps"]["kometa"]["summary"] == "Config cfg ready"
     assert payload["apps"]["imagemaid"]["summary"] == "Prepare ImageMaid"
+
+
+def test_app_readiness_menu_uses_available_and_app_summaries():
+    script = BASE_JS_PATH.read_text(encoding="utf-8")
+    start_template = START_TEMPLATE_PATH.read_text(encoding="utf-8")
+
+    assert "return `${name}: ${summary || 'available'}`" in script
+    assert "entries.map(qsFormatAppReadinessSnippet).join('; ')" in script
+    assert "`${availableEntries.length} Available`" in script
+    assert "Apps: ${entries[0].name} is ready" not in script
+    assert "Apps: ${entries.map(entry => entry.name).join(' and ')} are ready" not in script
+    assert "{{ 'Available' if kometa_ready else 'Setup needed' }}" in start_template
+    assert "{{ 'Ready to run' if imagemaid_ready else 'Setup needed' }}" in start_template
 
 
 def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):

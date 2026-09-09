@@ -1383,10 +1383,11 @@ function qsHydrateImageMaidReadiness (entry) {
 function qsFormatAppReadinessSnippet (entry) {
   const state = qsGetAppReadinessState(entry)
   const name = String((entry && entry.name) || 'App').trim()
+  const summary = String((entry && entry.summary) || '').trim()
   switch (state) {
     case 'ready':
     case 'review':
-      return `${name} ready`
+      return `${name}: ${summary || 'available'}`
     case 'running':
       return `${name} running`
     case 'queued':
@@ -1398,9 +1399,9 @@ function qsFormatAppReadinessSnippet (entry) {
     case 'blocked':
     case 'needs_setup':
     case 'error':
-      return `${name}: ${String((entry && entry.summary) || 'needs attention').trim()}`
+      return `${name}: ${summary || 'needs attention'}`
     default:
-      return `${name}: ${String((entry && entry.summary) || 'checking status').trim()}`
+      return `${name}: ${summary || 'checking status'}`
   }
 }
 
@@ -1470,16 +1471,12 @@ function qsRenderAppReadiness () {
 
   if (availableEntries.length === entries.length) {
     lineState = 'ok'
-    if (entries.length === 1) {
-      lineText = `Apps: ${entries[0].name} is ready.`
-    } else {
-      lineText = `Apps: ${entries.map(entry => entry.name).join(' and ')} are ready.`
-    }
-    groupMetaText = runningEntries.length > 0 ? `${runningEntries.length} Running` : `${availableEntries.length} Ready`
+    lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`
+    groupMetaText = runningEntries.length > 0 ? `${runningEntries.length} Running` : `${availableEntries.length} Available`
   } else if (availableEntries.length > 0) {
     lineState = 'warn'
     lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`
-    groupMetaText = `${availableEntries.length} Ready`
+    groupMetaText = `${availableEntries.length} Available`
   } else if (validationEntries.length > 0) {
     lineState = 'warn'
     lineText = `Apps: ${entries.map(qsFormatAppReadinessSnippet).join('; ')}.`

@@ -47,13 +47,13 @@
                     <div class="fw-semibold">Kometa workflow</div>
                   </div>
                   <span class="start-app-state start-app-state-{{ 'ready' if kometa_ready else 'pending' }}">
-                    {{ 'Ready' if kometa_ready else 'Setup needed' }}
+                    {{ 'Available' if kometa_ready else 'Setup needed' }}
                   </span>
                 </div>
                 {% if kometa_ready %}
-                <p class="small text-muted mb-3">This config has a saved, valid Kometa workflow choice. Open Kometa when you want to validate, review, download, prepare, or run it.</p>
+                <p class="small text-muted mb-3">This config can continue on the Kometa page. Open Kometa to validate, review, download, prepare, or run it.</p>
                 {% else %}
-                <p class="small text-muted mb-3">Save a valid Kometa install ownership choice and finish required setup before this workflow is ready.</p>
+                <p class="small text-muted mb-3">Save a valid Kometa install ownership choice and finish required setup before opening the Kometa workflow.</p>
                 {% endif %}
                 <div class="border rounded p-3 mb-3" id="start-kometa-install-settings"
                   data-install-mode="{{ page_info.kometa_install_mode }}"
@@ -144,7 +144,7 @@
                     <div class="fw-semibold">ImageMaid workflow</div>
                   </div>
                   <span class="start-app-state start-app-state-{{ 'ready' if imagemaid_ready else 'pending' }}">
-                    {{ 'Ready' if imagemaid_ready else 'Setup needed' }}
+                    {{ 'Ready to run' if imagemaid_ready else 'Setup needed' }}
                   </span>
                 </div>
                 {% if imagemaid_ready %}
