@@ -155,13 +155,38 @@ def test_libraries_lookup_label_autosave_uses_narrow_payload():
     assert "lookupLabelsOnly ? buildLookupLabelPayloadFromCard(card) : buildPayloadFromCard(card)" in script
 
 
-def test_mirror_modal_explains_targets_stay_excluded():
+def test_mirror_modal_explains_auto_include_report():
     template = LIBRARIES_TEMPLATE_PATH.read_text(encoding="utf-8")
 
-    assert "does not include target libraries in the final config automatically" in template
-    assert "runs the normal library validation flow" in template
+    assert "If the source library is excluded, mirrored targets stay excluded" in template
+    assert "tries to include safe targets automatically" in template
+    assert "reports any target-specific values that need review" in template
     assert "placeholder IDs" in template
-    assert "enable <strong>Include in config</strong>" in template
+    assert 'id="copyLibraryReport"' in template
+
+
+def test_libraries_advanced_toggle_derives_initial_state_from_modifications():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    partial = LIBRARY_CARD_PARTIAL_PATH.read_text(encoding="utf-8")
+
+    assert "function getPreferredAdvancedVisibility" in script
+    get_preferred = script.split("function getPreferredAdvancedVisibility", 1)[1].split("function wireAdvancedToggle", 1)[0]
+    assert "return hasConfiguredAdvancedValues(card)" in get_preferred
+    assert "localStorage" not in get_preferred
+    assert "advancedUserChoice" not in get_preferred
+    assert "setAdvancedVisibility(card, getPreferredAdvancedVisibility(card))" in script
+    assert "if (card.dataset.advancedToggleBound === 'true') return" in script
+    assert "toggle.addEventListener('change'" in script
+    assert "const nextVisible = toggle.checked" in script
+    assert "toggle.checked = !!visible" in script
+    assert "advancedVisibilityStorageKey" not in script
+    assert "advancedUserChoice" not in script
+    assert "MutationObserver(() => syncAdvancedToggleLabel(card))" not in script
+    assert "syncAdvancedToggleLabels(root)" not in script
+    assert 'type="checkbox"' in partial
+    assert 'role="switch"' in partial
+    assert "Show Advanced" in partial
+    assert "Hide Advanced" not in partial
 
 
 def test_playlist_toggle_preserves_mirrored_state_when_excluded():

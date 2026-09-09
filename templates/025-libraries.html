@@ -271,16 +271,15 @@
       <div class="modal-body">
         <p class="text-muted small mb-2" id="copyLibrarySubtitle"></p>
         <div class="alert alert-info small mb-3" role="alert">
-          Mirroring copies the selected library settings, but it does not include target libraries in the final config automatically.
-          Target libraries stay excluded because enabling <strong>Include in config</strong> runs the normal library validation flow.
-          That gives Quickstart a chance to catch library-specific mirrored values that may not apply to the target, such as placeholder IDs.
-          After mirroring, open each target library, review the copied settings, and enable <strong>Include in config</strong> if you want that mirrored library in the final config.
+          Mirroring copies the selected library settings. If the source library is excluded, mirrored targets stay excluded.
+          If the source library is included, Quickstart tries to include safe targets automatically and reports any target-specific values that need review, such as placeholder IDs.
         </div>
         <div class="d-flex justify-content-end gap-2 mb-2">
           <button type="button" class="btn btn-sm btn-outline-secondary" id="copySelectAll">Select all</button>
           <button type="button" class="btn btn-sm btn-outline-secondary" id="copyDeselectAll">Deselect all</button>
         </div>
         <div id="copyLibraryTargets" class="list-group"></div>
+        <div class="alert alert-secondary mt-3 mb-0 d-none" id="copyLibraryReport" role="status"></div>
         <div class="alert alert-warning mt-3 mb-0" id="copyLibraryWarning" style="display:none;">
           Select at least one target library.
         </div>

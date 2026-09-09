@@ -168,6 +168,127 @@ def _normalize_library_toggle_names(libraries_data):
     return normalized
 
 
+def _is_blank_library_value(value):
+    if value is None:
+        return True
+    if value is False:
+        return True
+    if isinstance(value, str):
+        return value.strip().lower() in {"", "none", "null"}
+    return False
+
+
+def _find_library_value(libraries_data, library_id, suffixes):
+    if not isinstance(libraries_data, dict):
+        return None
+    for suffix in suffixes:
+        direct = f"{library_id}-{suffix}"
+        if direct in libraries_data:
+            return libraries_data.get(direct)
+    for key, value in libraries_data.items():
+        if not isinstance(key, str) or not key.startswith(f"{library_id}-"):
+            continue
+        if any(key.endswith(suffix) for suffix in suffixes):
+            return value
+    return None
+
+
+def _mirror_separator_placeholder_issues(libraries_data, library_id, library_name, source_type, quickstart_module):
+    use_separator = _find_library_value(
+        libraries_data,
+        library_id,
+        ["template_variables[use_separator]", "attribute_use_separator"],
+    )
+    if not _is_truthy_setting_value(use_separator):
+        return []
+
+    media_type = "movie" if source_type == "mov" else "show"
+    placeholder_keys = [
+        "attribute_template_variables[placeholder_imdb_id]",
+        "template_variables[placeholder_imdb_id]",
+    ]
+    if media_type == "movie":
+        placeholder_keys = [
+            "attribute_template_variables[placeholder_tmdb_movie]",
+            "template_variables[placeholder_tmdb_movie]",
+        ] + placeholder_keys
+    else:
+        placeholder_keys = [
+            "attribute_template_variables[placeholder_tvdb_show]",
+            "template_variables[placeholder_tvdb_show]",
+        ] + placeholder_keys
+
+    placeholder = _find_library_value(libraries_data, library_id, placeholder_keys)
+    if _is_blank_library_value(placeholder):
+        return [f"{library_name}: separator placeholders are enabled but no placeholder ID is selected."]
+
+    placeholder_text = str(placeholder).strip()
+    if media_type == "show" and placeholder_text.isdigit():
+        return [f"{library_name}: TVDb placeholder {placeholder_text} cannot be verified automatically against Plex; review this library before including it."]
+
+    if placeholder_text.isdigit():
+        try:
+            tmdb_result = quickstart_module._lookup_tmdb_numeric_id(placeholder_text, media_type=media_type)
+        except Exception as exc:
+            return [f"{library_name}: TMDb placeholder {placeholder_text} could not be verified: {exc}."]
+        if not tmdb_result.get("valid") or not tmdb_result.get("verified"):
+            message = str(tmdb_result.get("message") or "").strip()
+            return [f"{library_name}: TMDb placeholder {placeholder_text} could not be verified. {message}".strip()]
+        result_type = str(tmdb_result.get("result_type") or "").strip().lower()
+        if result_type and result_type != media_type:
+            return [f"{library_name}: TMDb placeholder {placeholder_text} resolves to {result_type}, not {media_type}."]
+        tmdb_label = str(tmdb_result.get("label") or "").strip()
+        if tmdb_label:
+            try:
+                plex_match = quickstart_module.helpers.find_item_by_title(library_name, tmdb_label)
+            except Exception as exc:
+                return [f"{library_name}: Plex lookup for placeholder '{tmdb_label}' failed: {exc}."]
+            if plex_match and plex_match.get("title"):
+                return []
+        return [f"{library_name}: placeholder '{tmdb_label or placeholder_text}' was not found in this Plex library."]
+
+    try:
+        tmdb_result = quickstart_module._lookup_tmdb_by_imdb_id(placeholder_text, media_type=media_type)
+    except Exception:
+        tmdb_result = {}
+    tmdb_label = str(tmdb_result.get("label") or "").strip()
+    try:
+        plex_match = quickstart_module.helpers.find_item_by_imdb_id(library_name, placeholder_text, media_type, fallback_title=tmdb_label)
+    except TypeError:
+        plex_match = quickstart_module.helpers.find_item_by_imdb_id(library_name, placeholder_text, media_type)
+    except Exception as exc:
+        return [f"{library_name}: Plex lookup for placeholder {placeholder_text} failed: {exc}."]
+    if plex_match and plex_match.get("title"):
+        return []
+    if tmdb_result.get("valid") and tmdb_result.get("verified"):
+        return [f"{library_name}: placeholder '{tmdb_label or placeholder_text}' was not found in this Plex library."]
+    return [f"{library_name}: placeholder {placeholder_text} could not be verified against Plex."]
+
+
+def _build_mirror_include_report(libraries_data, target_id, target_name, source_type, quickstart_module):
+    candidate = dict(libraries_data)
+    candidate[f"{target_id}-library"] = target_name
+    target_items = {k: v for k, v in candidate.items() if isinstance(k, str) and k.startswith(f"{target_id}-")}
+    issues = []
+    issues.extend(path_validation.validate_payload(target_items))
+    issues.extend(quickstart_module._validate_library_collection_files(candidate, [target_id]))
+    issues.extend(quickstart_module._validate_library_metadata_files(candidate, [target_id]))
+    issues.extend(quickstart_module._validate_library_overlay_files(candidate, [target_id]))
+    issues.extend(quickstart_module._validate_library_auto_sort_hubs(candidate, [target_id]))
+    override_result = quickstart_module._validate_library_service_overrides(target_id, candidate)
+    if not override_result.get("valid") and not override_result.get("skipped"):
+        issues.extend(list(override_result.get("errors") or []))
+    issues.extend(_mirror_separator_placeholder_issues(candidate, target_id, target_name, source_type, quickstart_module))
+
+    return {
+        "target_id": target_id,
+        "target_name": target_name,
+        "included": not issues,
+        "status": "included" if not issues else "needs_review",
+        "issues": issues,
+    }
+
+
 def _legacy_playlist_library_names():
     settings = persistence.retrieve_settings("027-playlist_files") or {}
     playlist_payload = settings.get("playlist_files", {}) if isinstance(settings, dict) else {}
@@ -1353,6 +1474,24 @@ def copy_library_settings():
             try:
                 clean_payload = persistence.clean_form_data(MultiDict(source_payload_for_merge))
                 incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+                for raw_key, raw_value in source_payload_for_merge.items():
+                    if not isinstance(raw_key, str) or not raw_key.startswith(f"{source_prefix}-"):
+                        continue
+                    if not raw_key.endswith(("-attribute_use_separator", "-template_variables[use_separator]")):
+                        continue
+                    if isinstance(raw_value, str):
+                        raw_text = raw_value.strip()
+                        raw_lc = raw_text.lower()
+                        if raw_lc in {"", "none", "null"}:
+                            incoming_dict[raw_key] = None
+                        elif raw_lc in {"false", "off", "0"}:
+                            incoming_dict[raw_key] = False
+                        elif raw_lc in {"true", "on", "1"}:
+                            incoming_dict[raw_key] = True
+                        else:
+                            incoming_dict[raw_key] = raw_value
+                    else:
+                        incoming_dict[raw_key] = raw_value
                 normalized_incoming, normalization_errors, _ = _qs._normalize_library_file_entries_payload(
                     incoming_dict,
                     session.get("config_name") or source_payload_for_merge.get("config_name"),
@@ -1464,6 +1603,7 @@ def copy_library_settings():
         if not source_items:
             helpers.ts_log(f"Copy aborted: no saved settings found for source {source_prefix}", level="ERROR")
             return jsonify({"success": False, "error": "No saved settings found for source library"}), 404
+        source_included = _is_truthy_setting_value(source_items.get(f"{source_prefix}-library"))
 
         movie_libraries, show_libraries, _telemetry = _build_library_lists()
         name_map = {lib["id"]: lib["name"] for lib in (movie_libraries + show_libraries)}
@@ -1502,12 +1642,11 @@ def copy_library_settings():
                 if existing_key.startswith(f"{target_id}-"):
                     merged.pop(existing_key, None)
 
+            if target_id != source_prefix:
+                merged[f"{target_id}-library"] = ""
+
             for key, value in source_items.items():
                 if target_id != source_prefix and key.endswith("-library"):
-                    # Do not opt target libraries into YAML automatically.
-                    # Mirrored settings remain saved and become active if the
-                    # user explicitly includes the target later.
-                    merged[f"{target_id}-library"] = ""
                     continue
                 new_key = key.replace(source_prefix, target_id, 1)
                 new_value = value
@@ -1521,6 +1660,42 @@ def copy_library_settings():
                     elif key.endswith("-overlay_files"):
                         new_value = _qs._clone_library_file_entries_for_target("overlay_files", value, config_name, target_id)
                 merged[new_key] = new_value
+
+        mirror_report = []
+        included_targets = []
+        review_targets = []
+        for target_id in filtered_targets:
+            if target_id == source_prefix:
+                continue
+            target_name = name_map.get(target_id, "")
+            if not source_included:
+                mirror_report.append(
+                    {
+                        "target_id": target_id,
+                        "target_name": target_name,
+                        "included": False,
+                        "status": "source_excluded",
+                        "issues": ["Source library is excluded, so the mirrored target was left excluded."],
+                    }
+                )
+                continue
+            if not target_name:
+                report = {
+                    "target_id": target_id,
+                    "target_name": target_id,
+                    "included": False,
+                    "status": "needs_review",
+                    "issues": ["Target library name could not be resolved from Plex."],
+                }
+            else:
+                report = _build_mirror_include_report(merged, target_id, target_name, source_type, _qs)
+            if report.get("included"):
+                merged[f"{target_id}-library"] = target_name
+                included_targets.append(target_id)
+            else:
+                merged[f"{target_id}-library"] = ""
+                review_targets.append(target_id)
+            mirror_report.append(report)
 
         # Update the aggregated libraries list to include all configured library names
         configured_names = []
@@ -1543,7 +1718,16 @@ def copy_library_settings():
             level="DEBUG",
         )
 
-        return jsonify({"success": True, "updated": target_ids})
+        return jsonify(
+            {
+                "success": True,
+                "updated": filtered_targets,
+                "source_included": source_included,
+                "included_targets": included_targets,
+                "review_targets": review_targets,
+                "mirror_report": mirror_report,
+            }
+        )
 
     except Exception as e:
         helpers.ts_log(f"Failed to copy library settings: {e}", level="ERROR")

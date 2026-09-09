@@ -30,6 +30,7 @@ const copyModalEl = document.getElementById('copyLibraryModal')
 const copyTargetsContainer = document.getElementById('copyLibraryTargets')
 const copySubtitle = document.getElementById('copyLibrarySubtitle')
 const copyWarning = document.getElementById('copyLibraryWarning')
+const copyReport = document.getElementById('copyLibraryReport')
 const copyConfirmBtn = document.getElementById('copyLibraryConfirm')
 const copySelectAllBtn = document.getElementById('copySelectAll')
 const copyDeselectAllBtn = document.getElementById('copyDeselectAll')
@@ -152,7 +153,6 @@ const dependencyHintConfigs = {
 }
 let dependencyHintRefreshTimer = null
 let dependencyHintRequestToken = 0
-const advancedVisibilityStorageKey = 'qsLibrariesAdvancedVisible'
 
 function normalizeMetadataFileEntry (entry) {
   if (!entry || typeof entry !== 'object') return null
@@ -6037,6 +6037,68 @@ function refreshPickerLabels () {
   updateConfiguredCounts()
 }
 
+function clearCopyLibraryReport () {
+  if (!copyReport) return
+  copyReport.classList.add('d-none')
+  copyReport.replaceChildren()
+}
+
+function renderCopyLibraryReport (data) {
+  if (!copyReport) return false
+  clearCopyLibraryReport()
+  const report = Array.isArray(data?.mirror_report) ? data.mirror_report : []
+  if (!report.length) return false
+
+  const included = report.filter(item => item && item.status === 'included')
+  const sourceExcluded = report.filter(item => item && item.status === 'source_excluded')
+  const needsReview = report.filter(item => item && item.status === 'needs_review')
+  const heading = document.createElement('div')
+  heading.className = 'fw-semibold mb-2'
+  if (sourceExcluded.length && !included.length && !needsReview.length) {
+    heading.textContent = 'Mirror complete. Targets stayed excluded because the source library is excluded.'
+  } else {
+    const parts = []
+    if (included.length) parts.push(`${included.length} included`)
+    if (needsReview.length) parts.push(`${needsReview.length} need review`)
+    heading.textContent = `Mirror complete: ${parts.join(', ') || 'no target changes'}.`
+  }
+  copyReport.appendChild(heading)
+
+  report.forEach(item => {
+    const row = document.createElement('div')
+    row.className = 'mb-2'
+    const label = document.createElement('div')
+    label.className = 'fw-semibold'
+    const name = item?.target_name || item?.target_id || 'Target library'
+    if (item?.status === 'included') {
+      label.textContent = `${name}: included in config`
+    } else if (item?.status === 'source_excluded') {
+      label.textContent = `${name}: left excluded`
+    } else {
+      label.textContent = `${name}: needs review`
+    }
+    row.appendChild(label)
+
+    const issues = Array.isArray(item?.issues) ? item.issues.filter(Boolean) : []
+    issues.slice(0, 4).forEach(issue => {
+      const issueEl = document.createElement('div')
+      issueEl.className = 'small text-muted'
+      issueEl.textContent = issue
+      row.appendChild(issueEl)
+    })
+    if (issues.length > 4) {
+      const more = document.createElement('div')
+      more.className = 'small text-muted'
+      more.textContent = `${issues.length - 4} more issue(s).`
+      row.appendChild(more)
+    }
+    copyReport.appendChild(row)
+  })
+
+  copyReport.classList.remove('d-none')
+  return needsReview.length > 0 || sourceExcluded.length > 0
+}
+
 function isLibraryCardInitializing (card) {
   return libraryCardInitializing > 0 || card?.dataset?.libraryInitializing === 'true'
 }
@@ -6157,30 +6219,28 @@ function setAdvancedVisibility (card, visible) {
   })
   const toggle = card.querySelector('.library-advanced-toggle')
   if (toggle) {
-    toggle.textContent = visible ? 'Hide Advanced' : 'Show Advanced'
+    toggle.checked = !!visible
     toggle.setAttribute('aria-expanded', visible ? 'true' : 'false')
   }
   card.dataset.advancedVisible = visible ? 'true' : 'false'
 }
 
+function getPreferredAdvancedVisibility (card) {
+  return hasConfiguredAdvancedValues(card)
+}
+
 function wireAdvancedToggle (card) {
-  if (!card || card.dataset.advancedToggleBound === 'true') return
+  if (!card) return
   const toggle = card.querySelector('.library-advanced-toggle')
   if (!toggle) return
 
-  let persisted = null
-  try {
-    persisted = window.localStorage ? window.localStorage.getItem(advancedVisibilityStorageKey) : null
-  } catch {}
-  const initialVisible = persisted === 'true' || (persisted !== 'false' && hasConfiguredAdvancedValues(card))
-  setAdvancedVisibility(card, initialVisible)
+  setAdvancedVisibility(card, getPreferredAdvancedVisibility(card))
 
-  toggle.addEventListener('click', () => {
-    const nextVisible = card.dataset.advancedVisible !== 'true'
+  if (card.dataset.advancedToggleBound === 'true') return
+
+  toggle.addEventListener('change', () => {
+    const nextVisible = toggle.checked
     setAdvancedVisibility(card, nextVisible)
-    try {
-      if (window.localStorage) window.localStorage.setItem(advancedVisibilityStorageKey, nextVisible ? 'true' : 'false')
-    } catch {}
   })
 
   card.dataset.advancedToggleBound = 'true'
@@ -7056,6 +7116,7 @@ function autosaveActiveLibrary (options = {}) {
 function openCopyModal (sourceId, sourceName, sourceType) {
   if (!copyModal) return
   copyWarning.style.display = 'none'
+  clearCopyLibraryReport()
   copySubtitle.textContent = `Mirror settings from "${sourceName}" to other ${sourceType === 'movie' ? 'movie' : 'show'} libraries`
   copyTargetsContainer.replaceChildren()
 
@@ -7089,7 +7150,10 @@ function openCopyModal (sourceId, sourceName, sourceType) {
   }
 
   const checkboxes = () => Array.from(copyTargetsContainer.querySelectorAll('.copy-target-checkbox'))
-  const clearWarning = () => { copyWarning.style.display = 'none' }
+  const clearWarning = () => {
+    copyWarning.style.display = 'none'
+    clearCopyLibraryReport()
+  }
   checkboxes().forEach(cb => cb.addEventListener('change', clearWarning))
 
   if (copySelectAllBtn) {
@@ -7108,6 +7172,7 @@ function openCopyModal (sourceId, sourceName, sourceType) {
   copyModal.show()
 
   const onConfirm = () => {
+    let keepCopyModalOpen = false
     const selected = Array.from(copyTargetsContainer.querySelectorAll('.copy-target-checkbox:checked')).map(cb => cb.value)
     const prefix = sourceType === 'movie' ? 'mov-' : 'sho-'
     const filtered = selected.filter(id => id.startsWith(prefix))
@@ -7147,9 +7212,11 @@ function openCopyModal (sourceId, sourceName, sourceType) {
         return res.json()
       })
       .then((data) => {
+        keepCopyModalOpen = renderCopyLibraryReport(data)
         // Clear all cached cards to avoid stale data
         libraryCache.replaceChildren()
 
+        const includedTargets = new Set(Array.isArray(data?.included_targets) ? data.included_targets : [])
         filtered.forEach(id => {
           const cached = libraryCache.querySelector(`[data-library-id="${id}"]`)
           if (cached && cached.parentElement === libraryCache) {
@@ -7160,7 +7227,7 @@ function openCopyModal (sourceId, sourceName, sourceType) {
           }
           const opt = libraryPicker.querySelector(`option[value="${id}"]`)
           if (opt) {
-            opt.dataset.configured = 'false'
+            opt.dataset.configured = includedTargets.has(id) ? 'true' : 'false'
           }
         })
         refreshPickerLabels()
@@ -7171,7 +7238,15 @@ function openCopyModal (sourceId, sourceName, sourceType) {
         refreshTemplateOverrideState(libraryContainer?.firstElementChild || document)
         if (typeof showToast === 'function') {
           const label = filtered.length === 1 ? 'library' : 'libraries'
-          showToast('success', `Mirrored settings to ${filtered.length} ${label}.`)
+          const reviewCount = Array.isArray(data?.review_targets) ? data.review_targets.length : 0
+          const includedCount = includedTargets.size
+          if (data?.source_included === false) {
+            showToast('success', `Mirrored settings to ${filtered.length} ${label}; targets stayed excluded.`)
+          } else if (reviewCount > 0) {
+            showToast('warning', `Mirrored settings to ${filtered.length} ${label}; included ${includedCount}, ${reviewCount} need review.`)
+          } else {
+            showToast('success', `Mirrored settings to ${filtered.length} ${label}; included ${includedCount}.`)
+          }
         }
         scheduleDependencyRequirementHintRefresh(0)
         document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'libraries-copy', delayMs: 80 } }))
@@ -7186,7 +7261,9 @@ function openCopyModal (sourceId, sourceName, sourceType) {
         if (copyConfirmBtn && typeof copyConfirmBtn.blur === 'function') {
           copyConfirmBtn.blur()
         }
-        copyModal.hide()
+        if (!keepCopyModalOpen) {
+          copyModal.hide()
+        }
       })
   }
 

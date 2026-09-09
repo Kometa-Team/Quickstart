@@ -5951,7 +5951,7 @@ def test_copy_library_settings_mirrors_metadata_files(client, isolated_config_di
     assert target_file.read_text(encoding="utf-8") == managed_file.read_text(encoding="utf-8")
 
 
-def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_rating(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+def test_copy_library_settings_keeps_target_excluded_when_source_is_excluded(client, isolated_config_dir, monkeypatch, app, library_routes_module):
     from modules import database
     from flask import session
 
@@ -6001,7 +6001,7 @@ def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_ra
             "source_library_id": "mov-library_movies",
             "target_library_ids": ["mov-library_target"],
             "source_payload": {
-                "mov-library_movies-library": "Movies",
+                "mov-library_movies-library": "false",
                 "mov-library_movies-playlist": "true",
                 "mov-library_movies-collection_content_rating_us": True,
                 "mov-library_movies-template_collection_content_rating_us_limit": "40",
@@ -6014,6 +6014,10 @@ def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_ra
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["success"] is True
+    assert payload["source_included"] is False
+    assert payload["included_targets"] == []
+    assert payload["review_targets"] == []
+    assert payload["mirror_report"][0]["status"] == "source_excluded"
 
     _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
     libraries = stored["libraries"]
@@ -6023,6 +6027,140 @@ def test_copy_library_settings_keeps_target_excluded_for_playlist_and_content_ra
     assert libraries["mov-library_target-template_collection_content_rating_us_limit"] == 40
     assert libraries["mov-library_target-movie-overlay_content_rating"] == "uk"
     assert libraries["mov-library_target-movie-template_overlay_content_rating_uk[color]"] == "white"
+
+
+def test_copy_library_settings_auto_includes_safe_targets_when_source_is_included(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+    from modules import database
+    from flask import session
+
+    config_name = "pytest_copy_auto_include"
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_content_rating_us": True,
+                "mov-library_target-library": "",
+                "libraries": "Movies",
+            },
+            "validated": False,
+        },
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: (
+            [
+                {"id": "mov-library_movies", "name": "Movies"},
+                {"id": "mov-library_target", "name": "Other Movies"},
+            ],
+            [],
+            {},
+        ),
+    )
+
+    with app.test_request_context("/copy_library_settings"):
+        session["config_name"] = config_name
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/copy_library_settings",
+        json={
+            "source_library_id": "mov-library_movies",
+            "target_library_ids": ["mov-library_target"],
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-collection_content_rating_us": True,
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["source_included"] is True
+    assert payload["included_targets"] == ["mov-library_target"]
+    assert payload["review_targets"] == []
+    assert payload["mirror_report"][0]["status"] == "included"
+
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    libraries = stored["libraries"]
+    assert libraries["mov-library_target-library"] == "Other Movies"
+    assert "Other Movies" in libraries["libraries"]
+
+
+def test_copy_library_settings_reports_placeholder_missing_from_target(client, isolated_config_dir, monkeypatch, app, qs_module, library_routes_module):
+    from modules import database
+    from flask import session
+
+    config_name = "pytest_copy_placeholder_report"
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_use_separator": "gray",
+                "mov-library_movies-attribute_template_variables[placeholder_tmdb_movie]": "603",
+                "libraries": "Movies",
+            },
+            "validated": False,
+        },
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: (
+            [
+                {"id": "mov-library_movies", "name": "Movies"},
+                {"id": "mov-library_target", "name": "Movies 4K"},
+            ],
+            [],
+            {},
+        ),
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_lookup_tmdb_numeric_id",
+        lambda value, media_type="": {"valid": True, "verified": True, "label": "The Matrix", "result_type": "movie"},
+    )
+    monkeypatch.setattr(qs_module.helpers, "find_item_by_title", lambda library_name, title: None)
+
+    with app.test_request_context("/copy_library_settings"):
+        session["config_name"] = config_name
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/copy_library_settings",
+        json={
+            "source_library_id": "mov-library_movies",
+            "target_library_ids": ["mov-library_target"],
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_use_separator": "gray",
+                "mov-library_movies-attribute_template_variables[placeholder_tmdb_movie]": "603",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["included_targets"] == []
+    assert payload["review_targets"] == ["mov-library_target"]
+    assert payload["mirror_report"][0]["status"] == "needs_review"
+    assert "The Matrix" in payload["mirror_report"][0]["issues"][0]
+
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    assert stored["libraries"]["mov-library_target-library"] == ""
 
 
 def test_copy_library_settings_preserves_unloaded_lazy_source_sections(client, isolated_config_dir, monkeypatch, app, library_routes_module):
@@ -6091,7 +6229,7 @@ def test_copy_library_settings_preserves_unloaded_lazy_source_sections(client, i
     assert libraries["mov-library_movies-attribute_language"] == "fr"
     assert libraries["mov-library_movies-template_collection_award_style"] == "signature"
     assert libraries["mov-library_movies-movie-template_overlay_resolution[horizontal_align]"] == "right"
-    assert libraries["mov-library_target-library"] == ""
+    assert libraries["mov-library_target-library"] == "Other Movies"
     assert libraries["mov-library_target-playlist"] is True
     assert libraries["mov-library_target-attribute_language"] == "fr"
     assert libraries["mov-library_target-collection_award"] is True

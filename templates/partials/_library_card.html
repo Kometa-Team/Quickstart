@@ -34,9 +34,13 @@
       <div class="small text-muted">
         Advanced reveals library-level file imports and per-library Arr modifications.
       </div>
-      <button type="button" class="btn btn-outline-secondary btn-sm library-advanced-toggle">
-        Show Advanced
-      </button>
+      <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+        <input class="form-check-input library-advanced-toggle" type="checkbox"
+          id="{{ library.id }}-advanced-toggle" role="switch">
+        <label class="form-check-label small mb-0" for="{{ library.id }}-advanced-toggle">
+          Show Advanced
+        </label>
+      </div>
     </div>
     {% include "partials/_movie_library_settings.html" %}
   </div>
@@ -76,9 +80,13 @@
       <div class="small text-muted">
         Advanced reveals library-level file imports and per-library Arr modifications.
       </div>
-      <button type="button" class="btn btn-outline-secondary btn-sm library-advanced-toggle">
-        Show Advanced
-      </button>
+      <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+        <input class="form-check-input library-advanced-toggle" type="checkbox"
+          id="{{ library.id }}-advanced-toggle" role="switch">
+        <label class="form-check-label small mb-0" for="{{ library.id }}-advanced-toggle">
+          Show Advanced
+        </label>
+      </div>
     </div>
     {% include "partials/_show_library_settings.html" %}
   </div>
