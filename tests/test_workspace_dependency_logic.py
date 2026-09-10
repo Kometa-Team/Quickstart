@@ -7,6 +7,7 @@ BASE_JS_PATH = ROOT / "static" / "local-js" / "000-base.js"
 START_TEMPLATE_PATH = ROOT / "templates" / "001-start.html"
 IMAGEMAID_JS_PATH = ROOT / "static" / "local-js" / "915-imagemaid.js"
 KOMETA_VALIDATE_JS_PATH = ROOT / "static" / "local-js" / "modules" / "kometa" / "_validateRoot.js"
+KOMETA_TEMPLATE_PATH = ROOT / "templates" / "900-kometa.html"
 
 TAUTULLI_COLLECTION_KEY = "mov-library_movies-collection_tautulli"
 TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
@@ -60,6 +61,25 @@ def _section_row(section, *, validated=False, user_entered=False, data=None):
         "user_entered": user_entered,
         "data": data or {},
     }
+
+
+def test_kometa_run_command_accordion_allows_multiple_panels_open():
+    template = KOMETA_TEMPLATE_PATH.read_text(encoding="utf-8")
+    start = template.index('id="run-command-accordion"')
+    end = template.index('id="run-command-output-accordion"', start)
+    run_command_markup = template[start:end]
+
+    for collapse_id in [
+        "collapse-mode",
+        "collapse-runopt",
+        "collapse-modeflags",
+        "collapse-logflags",
+        "collapse-validationflags",
+        "collapse-otherflags",
+    ]:
+        collapse_start = run_command_markup.index(f'id="{collapse_id}"')
+        collapse_snippet = run_command_markup[collapse_start : collapse_start + 220]
+        assert 'data-bs-parent="#run-command-accordion"' not in collapse_snippet
 
 
 @pytest.mark.parametrize(
