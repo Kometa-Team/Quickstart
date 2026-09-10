@@ -450,6 +450,16 @@ def _coerce_loaded_collection_groups(raw_value):
     return loaded
 
 
+def _coerce_loaded_collection_details(raw_value):
+    values = raw_value
+    if isinstance(raw_value, str):
+        values = raw_value.split(",")
+    if not isinstance(values, (list, tuple, set)):
+        return set()
+
+    return {str(item).strip() for item in values if str(item).strip()}
+
+
 def _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loaded_sections):
     """Ignore lazy-section loaded markers when their form fields are absent.
 
@@ -931,11 +941,36 @@ def _collection_key_group_indexes(library_id, collection_config, library_type):
     return indexes_by_key
 
 
+def _collection_detail_key_indexes(library_id, collection_config, library_type):
+    indexes_by_key = {}
+    if not library_id or not isinstance(collection_config, list):
+        return indexes_by_key
+    for group_index, group in enumerate(collection_config):
+        for collection in group.get("collections", []) if isinstance(group, dict) else []:
+            if library_type not in collection.get("media_types", []):
+                continue
+            collection_id = str(collection.get("id", "")).strip()
+            if not collection_id:
+                continue
+            clean_id = collection_id.replace("collection_", "")
+            indexes_by_key[f"{library_id}-template_collection_{clean_id}_"] = (group_index, collection_id)
+    return indexes_by_key
+
+
 def _collection_key_belongs_to_unloaded_group(key, collection_key_indexes, loaded_collection_groups):
     if loaded_collection_groups is None:
         return False
     for prefix, group_index in collection_key_indexes.items():
         if (key == prefix or key.startswith(prefix)) and group_index not in loaded_collection_groups:
+            return True
+    return False
+
+
+def _collection_key_belongs_to_unloaded_detail(key, collection_detail_indexes, loaded_collection_groups, loaded_collection_details):
+    if loaded_collection_details is None:
+        return False
+    for prefix, (group_index, collection_id) in collection_detail_indexes.items():
+        if key.startswith(prefix) and group_index in loaded_collection_groups and collection_id not in loaded_collection_details:
             return True
     return False
 
@@ -993,15 +1028,22 @@ def _is_library_file_entry_key(library_id, key):
     }
 
 
-def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections, loaded_collection_groups=None):
+def _preserve_unloaded_lazy_section_values(
+    library_id,
+    incoming_libraries,
+    loaded_sections,
+    loaded_collection_groups=None,
+    loaded_collection_details=None,
+):
     """Keep persisted values for omitted lazy/partial library sections."""
     incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
     unloaded_sections = {"collections", "overlays"} - set(loaded_sections or set())
     should_preserve_unloaded_collection_groups = "collections" in set(loaded_sections or set()) and loaded_collection_groups is not None
+    should_preserve_unloaded_collection_details = should_preserve_unloaded_collection_groups and loaded_collection_details is not None
     missing_partial_fields = {
         f"{library_id}-{suffix}" for suffix in ("collection_files", "metadata_files", "overlay_files", "playlist") if f"{library_id}-{suffix}" not in incoming_libraries
     }
-    if not unloaded_sections and not should_preserve_unloaded_collection_groups and not missing_partial_fields:
+    if not unloaded_sections and not should_preserve_unloaded_collection_groups and not should_preserve_unloaded_collection_details and not missing_partial_fields:
         return incoming_libraries
 
     settings = persistence.retrieve_settings("025-libraries")
@@ -1013,12 +1055,20 @@ def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loade
     prefix = f"{library_id}-"
     library_type = "movie" if str(library_id).startswith("mov-") else "show"
     collection_key_indexes = {}
+    collection_detail_indexes = {}
     if should_preserve_unloaded_collection_groups:
+        collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         collection_key_indexes = _collection_key_group_indexes(
             library_id,
-            helpers.load_quickstart_config("quickstart_collections.json"),
+            collection_config,
             library_type,
         )
+        if should_preserve_unloaded_collection_details:
+            collection_detail_indexes = _collection_detail_key_indexes(
+                library_id,
+                collection_config,
+                library_type,
+            )
 
     def should_preserve(key):
         if not isinstance(key, str) or not key.startswith(prefix):
@@ -1026,6 +1076,13 @@ def _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loade
         if key in missing_partial_fields and (_is_library_file_entry_key(library_id, key) or key == f"{library_id}-playlist"):
             return True
         if should_preserve_unloaded_collection_groups and _collection_key_belongs_to_unloaded_group(key, collection_key_indexes, loaded_collection_groups):
+            return True
+        if should_preserve_unloaded_collection_details and _collection_key_belongs_to_unloaded_detail(
+            key,
+            collection_detail_indexes,
+            loaded_collection_groups,
+            loaded_collection_details,
+        ):
             return True
         if "collections" in unloaded_sections and _is_collection_default_key(library_id, key):
             return True
@@ -1148,6 +1205,38 @@ def library_fragment_collection_group(library_id, group_index):
 
     context = dict(context)
     context["group"] = collection_config[group_index]
+    context["group_index"] = group_index
+    context["defer_collection_details"] = True
+    return render_template("partials/_collection_group_fragment.html", **context)
+
+
+@bp.route("/library_fragment/<library_id>/section/collections/group/<int:group_index>/detail/<collection_id>")
+def library_fragment_collection_detail(library_id, group_index, collection_id):
+    """Return one collection detail fragment on demand."""
+    context = _library_fragment_context(
+        library_id,
+        include_attributes=False,
+        include_collections=True,
+        include_overlays=False,
+    )
+
+    if not context:
+        return jsonify({"error": "Library not found"}), 404
+
+    collection_config = context.get("collection_config") or []
+    if group_index < 0 or group_index >= len(collection_config):
+        return jsonify({"error": "Collection group not found"}), 404
+
+    group = collection_config[group_index]
+    collections = group.get("collections", []) if isinstance(group, dict) else []
+    collection = next((item for item in collections if str(item.get("id", "")).strip() == collection_id), None)
+    if not collection:
+        return jsonify({"error": "Collection not found"}), 404
+
+    context = dict(context)
+    context["group"] = {**group, "collections": [collection]}
+    context["group_index"] = group_index
+    context["defer_collection_details"] = False
     return render_template("partials/_collection_group_fragment.html", **context)
 
 
@@ -1251,6 +1340,8 @@ def autosave_library(library_id):
         loaded_sections = _coerce_loaded_library_sections(incoming.get("__loaded_sections") if hasattr(incoming, "get") else None)
         loaded_collection_groups_raw = incoming.get("__loaded_collection_groups") if hasattr(incoming, "get") else None
         loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
+        loaded_collection_details_raw = incoming.get("__loaded_collection_details") if hasattr(incoming, "get") else None
+        loaded_collection_details = _coerce_loaded_collection_details(loaded_collection_details_raw) if loaded_collection_details_raw is not None else None
         reset_collection_defaults = helpers.booler(incoming.get("__reset_collection_defaults") if hasattr(incoming, "get") else None)
         config_name = persistence.resolve_request_config_name(incoming if isinstance(incoming, dict) else {})
         errors = path_validation.validate_payload(incoming)
@@ -1260,6 +1351,7 @@ def autosave_library(library_id):
         if isinstance(clean_source, dict):
             clean_source.pop("__loaded_sections", None)
             clean_source.pop("__loaded_collection_groups", None)
+            clean_source.pop("__loaded_collection_details", None)
             clean_source.pop("__reset_collection_defaults", None)
         clean_payload = persistence.clean_form_data(MultiDict(clean_source))
         incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
@@ -1267,7 +1359,13 @@ def autosave_library(library_id):
         if reset_collection_defaults:
             loaded_sections.add("collections")
             incoming_libraries = _drop_collection_default_keys(library_id, incoming_libraries)
-        incoming_libraries = _preserve_unloaded_lazy_section_values(library_id, incoming_libraries, loaded_sections, loaded_collection_groups)
+        incoming_libraries = _preserve_unloaded_lazy_section_values(
+            library_id,
+            incoming_libraries,
+            loaded_sections,
+            loaded_collection_groups,
+            loaded_collection_details,
+        )
         if reset_collection_defaults:
             incoming_libraries = _drop_collection_default_keys(library_id, incoming_libraries)
         settings = persistence.retrieve_settings("025-libraries")
@@ -1320,6 +1418,8 @@ def _build_merged_libraries_hint_payload(payload):
     loaded_sections = _coerce_loaded_library_sections(source_payload_for_merge.pop("__loaded_sections", []))
     loaded_collection_groups_raw = source_payload_for_merge.pop("__loaded_collection_groups", None)
     loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
+    loaded_collection_details_raw = source_payload_for_merge.pop("__loaded_collection_details", None)
+    loaded_collection_details = _coerce_loaded_collection_details(loaded_collection_details_raw) if loaded_collection_details_raw is not None else None
 
     clean_payload = persistence.clean_form_data(MultiDict(source_payload_for_merge))
     incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
@@ -1343,6 +1443,7 @@ def _build_merged_libraries_hint_payload(payload):
             incoming_dict,
             prefix_loaded_sections,
             loaded_collection_groups,
+            loaded_collection_details,
         )
 
     for prefix in prefixes:
@@ -1459,6 +1560,8 @@ def copy_library_settings():
             loaded_sections = _coerce_loaded_library_sections(source_payload_for_merge.pop("__loaded_sections", []))
             loaded_collection_groups_raw = source_payload_for_merge.pop("__loaded_collection_groups", None)
             loaded_collection_groups = _coerce_loaded_collection_groups(loaded_collection_groups_raw) if loaded_collection_groups_raw is not None else None
+            loaded_collection_details_raw = source_payload_for_merge.pop("__loaded_collection_details", None)
+            loaded_collection_details = _coerce_loaded_collection_details(loaded_collection_details_raw) if loaded_collection_details_raw is not None else None
             payload_errors = path_validation.validate_payload(source_payload_for_merge)
             if payload_errors:
                 return (
@@ -1514,6 +1617,7 @@ def copy_library_settings():
                     normalized_incoming,
                     loaded_sections,
                     loaded_collection_groups,
+                    loaded_collection_details,
                 )
 
                 merged = libraries_data.copy()

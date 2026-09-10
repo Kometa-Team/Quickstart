@@ -1,2 +1,10 @@
 {% import 'partials/_macros.html' as macros %}
-{{ macros.collection_group_section(library, data, version_info, group, telemetry) }}
+{{ macros.collection_group_section(
+    library,
+    data,
+    version_info,
+    group,
+    telemetry,
+    group_index=group_index if group_index is defined else none,
+    defer_collection_details=defer_collection_details if defer_collection_details is defined else false
+) }}

@@ -1122,12 +1122,13 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 </div>
 {% endmacro %}
 
-{% macro collection_group_section(library, data, version_info, group, telemetry) %}
+{% macro collection_group_section(library, data, version_info, group, telemetry, group_index=none, defer_collection_details=false) %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
 <!-- Plex Pass: {{ telemetry.plex_pass }} -->
 <!-- {{ group.accordion }} Collection Accordion -->
 <div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion"
-    data-collection-group-shell="true" data-library-id="{{ library.id }}">
+    data-collection-group-shell="true" data-library-id="{{ library.id }}"
+    {% if group_index is not none %}data-collection-group-index="{{ group_index }}"{% endif %}>
     <div class="accordion-item">
         <h2 class="accordion-header overlay-accordion-header d-flex align-items-center">
             <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse"
@@ -1219,6 +1220,9 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                     </div>
 
                     {% if collection.template_variables %}
+                    {% set clean_id = collection.id.replace('collection_', '') %}
+                    {% set collection_details_id = library.id ~ '-template_collection_' ~ clean_id ~ '-details' %}
+                    {% if not defer_collection_details %}
                     {% set is_seasonal = collection.id == 'collection_seasonal' %}
                     {% set priority_use_key_collection_ids = [
                         'collection_oscars',
@@ -1329,6 +1333,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         'flat': true
                     }) %}
                     {% endif %}
+                    {% endif %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
                         <div class="d-flex align-items-center gap-2 flex-wrap mb-2 collection-detail-actions">
@@ -1347,7 +1352,19 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         <div class="collection-template-section mt-2"
                             id="{{ collection_details_id }}"
                             data-detail-section="true"
+                            data-collection-detail-lazy-section="{{ 'true' if defer_collection_details else 'false' }}"
+                            data-library-id="{{ library.id }}"
+                            data-collection-group-index="{{ group_index if group_index is not none else '' }}"
+                            data-collection-id="{{ collection.id }}"
                             style="display: none;">
+                        {% if defer_collection_details %}
+                            <div class="library-section-lazy-placeholder text-muted d-flex align-items-center gap-2"
+                                data-collection-detail-lazy-placeholder="true">
+                                <div class="spinner-border spinner-border-sm text-info d-none" role="status"
+                                    aria-hidden="true"></div>
+                                <span>Open details to load {{ collection.label }} settings.</span>
+                            </div>
+                        {% else %}
                         {% for render_group in render_groups.items %}
                         {% if not render_group.flat %}
                         {% set section_body_id = collection_details_id ~ '-section-' ~ render_group.id %}
@@ -1889,6 +1906,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         </div>
                         {% endif %}
                         {% endfor %}
+                        {% endif %}
                         </div>
                     </div>
                     {% endif %}

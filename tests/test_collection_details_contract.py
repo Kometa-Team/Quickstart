@@ -292,14 +292,18 @@ def test_libraries_lazy_loads_heavy_collection_and_overlay_sections():
     assert "function wireLazyLibrarySections" in script
     assert "function wireLazyCollectionGroups" in script
     assert "function loadLazyCollectionGroup" in script
+    assert "function loadLazyCollectionDetail" in script
     assert "function markLazyCollectionGroupLoaded" in script
+    assert "function markLazyCollectionDetailLoaded" in script
     assert "function markCollectionDefaultsReset" in script
     assert "function clearLazyCollectionShellOverrideSummaries" in script
     assert "function updateLazySectionOverrideSummaries" in script
     assert "shown.bs.collapse" in script
     assert "/section/${encodeURIComponent(sectionName)}" in script
     assert "/section/collections/group/${encodeURIComponent(groupIndex)}" in script
+    assert "/detail/${encodeURIComponent(collectionId)}" in script
     assert "__loaded_collection_groups" in script
+    assert "__loaded_collection_details" in script
     assert "__reset_collection_defaults" in script
     assert "clearLazyCollectionShellOverrideSummaries(sectionBody)" in script
     assert "await autosaveActiveLibrary({ quiet: true })" in script
@@ -322,6 +326,7 @@ def test_libraries_lazy_loads_heavy_collection_and_overlay_sections():
     assert "defer_heavy_sections=True" in routes
     assert '@bp.route("/library_fragment/<library_id>/section/<section_name>")' in routes
     assert '@bp.route("/library_fragment/<library_id>/section/collections/group/<int:group_index>")' in routes
+    assert '@bp.route("/library_fragment/<library_id>/section/collections/group/<int:group_index>/detail/<collection_id>")' in routes
 
 
 def test_collection_section_partials_lazy_load_parent_groups():
@@ -341,7 +346,11 @@ def test_collection_section_partials_lazy_load_parent_groups():
         assert "Open this group to load" in partial
         assert "macros.collection_group_section" not in partial
 
-    assert "macros.collection_group_section(library, data, version_info, group, telemetry)" in group_fragment
+    assert "macros.collection_group_section(" in group_fragment
+    assert "defer_collection_details" in group_fragment
+    assert "group_index" in group_fragment
+    assert 'data-collection-detail-lazy-section="{{' in MACROS_PATH.read_text(encoding="utf-8")
+    assert "data-collection-detail-lazy-placeholder" in MACROS_PATH.read_text(encoding="utf-8")
 
 
 def test_collection_section_reorder_modal_sorts_by_saved_section_value():

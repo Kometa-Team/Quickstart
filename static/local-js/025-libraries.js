@@ -6618,6 +6618,19 @@ function loadedCollectionGroupMarker (card) {
   return marker
 }
 
+function loadedCollectionDetailMarker (card) {
+  if (!card) return null
+  let marker = card.querySelector('input[type="hidden"][name="__loaded_collection_details"]')
+  if (marker) return marker
+
+  marker = document.createElement('input')
+  marker.type = 'hidden'
+  marker.name = '__loaded_collection_details'
+  marker.value = ''
+  card.appendChild(marker)
+  return marker
+}
+
 function resetCollectionDefaultsMarker (card) {
   if (!card) return null
   let marker = card.querySelector('input[type="hidden"][name="__reset_collection_defaults"]')
@@ -6642,6 +6655,21 @@ function markLazyCollectionGroupLoaded (card, groupIndex) {
   const values = new Set(String(marker.value || '').split(',').map(value => value.trim()).filter(Boolean))
   values.add(String(groupIndex))
   marker.value = Array.from(values).sort((a, b) => Number(a) - Number(b)).join(',')
+}
+
+function markLazyCollectionDetailLoaded (card, collectionId) {
+  const marker = loadedCollectionDetailMarker(card)
+  if (!marker) return
+  const values = new Set(String(marker.value || '').split(',').map(value => value.trim()).filter(Boolean))
+  values.add(String(collectionId))
+  marker.value = Array.from(values).sort().join(',')
+}
+
+function escapeDomId (id) {
+  if (window.CSS && typeof window.CSS.escape === 'function') {
+    return window.CSS.escape(id)
+  }
+  return String(id || '').replace(/([ #.;?%&,.+*~':"!^$[\]()=>|/@])/g, '\\$1')
 }
 
 function loadLazyCollectionGroup (collapse, card, options = {}) {
@@ -6711,6 +6739,71 @@ function loadLazyCollectionGroup (collapse, card, options = {}) {
     })
 
   collapse._collectionGroupLoadPromise = loadPromise
+  return loadPromise
+}
+
+function loadLazyCollectionDetail (section, toggle, card) {
+  if (!section || section.dataset?.collectionDetailLazySection !== 'true') {
+    return Promise.resolve(section)
+  }
+  if (section.dataset.lazyState === 'loaded') {
+    return Promise.resolve(section)
+  }
+  if (section._collectionDetailLoadPromise) {
+    return section._collectionDetailLoadPromise
+  }
+  if (section.dataset.lazyState === 'loading') {
+    return Promise.reject(new Error('Collection details are already loading.'))
+  }
+
+  const libraryId = section.dataset.libraryId || card?.dataset?.libraryId || activeLibraryId
+  const groupIndex = section.dataset.collectionGroupIndex
+  const collectionId = section.dataset.collectionId
+  if (!libraryId || groupIndex === undefined || !collectionId) {
+    return Promise.reject(new Error('Missing collection detail identifiers.'))
+  }
+
+  const placeholder = section.querySelector('[data-collection-detail-lazy-placeholder]')
+  const spinner = placeholder?.querySelector('.spinner-border')
+  const status = placeholder?.querySelector('span')
+  section.dataset.lazyState = 'loading'
+  spinner?.classList.remove('d-none')
+  if (status) status.textContent = 'Loading collection detail settings...'
+  if (toggle) toggle.disabled = true
+
+  const loadPromise = fetch(`/library_fragment/${encodeURIComponent(libraryId)}/section/collections/group/${encodeURIComponent(groupIndex)}/detail/${encodeURIComponent(collectionId)}`, {
+    credentials: 'same-origin'
+  })
+    .then(res => {
+      if (!res.ok) throw new Error(`Failed to load collection details (${res.status})`)
+      return res.text()
+    })
+    .then(html => {
+      const template = document.createElement('template')
+      template.innerHTML = String(html || '').trim()
+      const loadedSection = template.content.querySelector(`#${escapeDomId(section.id)}`)
+      if (!loadedSection) throw new Error('Empty collection detail fragment')
+      section.innerHTML = loadedSection.innerHTML
+      section.dataset.collectionDetailLazySection = 'false'
+      section.dataset.lazyState = 'loaded'
+      section.dataset.collectionDetailLoaded = 'true'
+      markLazyCollectionDetailLoaded(card, collectionId)
+      initializeLibraryCardControls(card, libraryId)
+      refreshTemplateOverrideState(section.closest('.template-toggle-group') || section)
+      return section
+    })
+    .catch(err => {
+      section.dataset.lazyState = 'error'
+      spinner?.classList.add('d-none')
+      if (status) status.textContent = 'Unable to load these collection details. Try again.'
+      throw err
+    })
+    .finally(() => {
+      if (toggle) toggle.disabled = false
+      delete section._collectionDetailLoadPromise
+    })
+
+  section._collectionDetailLoadPromise = loadPromise
   return loadPromise
 }
 
@@ -6821,6 +6914,23 @@ function buildPayloadFromCard (card) {
   payload.__loaded_collection_groups = Array.from(loadedCollectionGroups)
     .filter(Boolean)
     .sort((a, b) => Number(a) - Number(b))
+  const loadedCollectionDetails = new Set()
+  const collectionDetailMarker = card.querySelector('input[type="hidden"][name="__loaded_collection_details"]')
+  String(collectionDetailMarker?.value || '').split(',').forEach(value => {
+    const trimmed = value.trim()
+    if (trimmed) loadedCollectionDetails.add(trimmed)
+  })
+  card.querySelectorAll('[data-collection-detail-loaded="true"][data-collection-id]').forEach(section => {
+    loadedCollectionDetails.add(String(section.dataset.collectionId || '').trim())
+  })
+  card.querySelectorAll('.collection-template-section[data-collection-id]').forEach(section => {
+    if (section.dataset.collectionDetailLazySection !== 'true') {
+      loadedCollectionDetails.add(String(section.dataset.collectionId || '').trim())
+    }
+  })
+  payload.__loaded_collection_details = Array.from(loadedCollectionDetails)
+    .filter(Boolean)
+    .sort()
   const resetCollectionDefaults = card.querySelector('input[type="hidden"][name="__reset_collection_defaults"]')
   if (resetCollectionDefaults && resetCollectionDefaults.value === 'true') {
     payload.__reset_collection_defaults = 'true'
@@ -6843,7 +6953,7 @@ function buildPayloadFromCard (card) {
   })
   card.querySelectorAll('input, select, textarea').forEach(el => {
     if (!el.name || el.disabled) return
-    if (el.name === '__loaded_collection_groups' || el.name === '__reset_collection_defaults') return
+    if (el.name === '__loaded_collection_groups' || el.name === '__loaded_collection_details' || el.name === '__reset_collection_defaults') return
     if (el.dataset && el.dataset.skipYaml === 'true') return
     if (el.type === 'file') return
 
@@ -9326,7 +9436,40 @@ function wireOverlayVariableSectionToggles (scope) {
 }
 
 function wireCollectionDetailToggles (scope) {
-  wireDetailToggles('.collection-details-toggle', scope)
+  const root = scope || document
+  root.querySelectorAll('.collection-details-toggle').forEach(btn => {
+    if (btn.dataset.listenerAdded === 'true') return
+    const targetId = btn.dataset.sectionId
+    const section = targetId ? document.getElementById(targetId) : null
+    if (!section) return
+
+    btn.addEventListener('click', () => {
+      const isHidden = section.style.display === 'none'
+      if (!isHidden) {
+        setDetailSectionExpanded(section, btn, false)
+        updateAccordionHighlights()
+        return
+      }
+
+      const card = btn.closest('.library-settings-card') || libraryContainer?.firstElementChild || document
+      loadLazyCollectionDetail(section, btn, card)
+        .then(() => {
+          setDetailSectionExpanded(section, btn, true)
+          updateAccordionHighlights()
+        })
+        .catch(err => {
+          console.error('[Libraries] Failed to load lazy collection details', err)
+          setDetailSectionExpanded(section, btn, false)
+          if (typeof showToast === 'function') {
+            showToast('error', 'Unable to load collection details. Try again.')
+          }
+        })
+    })
+
+    const defaultOpen = section.dataset.detailVisible === 'true' || section.dataset.defaultOpen === 'true'
+    setDetailSectionExpanded(section, btn, defaultOpen)
+    btn.dataset.listenerAdded = 'true'
+  })
 }
 
 function wireCollectionVariableSectionToggles (scope) {
