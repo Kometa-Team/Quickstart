@@ -4449,7 +4449,8 @@ def test_validate_plex_bad_token(client, monkeypatch, qs_module):
 
 
 def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch, qs_module):
-    calls = {"save_settings": 0, "save_section": 0}
+    calls = {"save_settings": 0, "save_section": 0, "update_libraries": 0}
+    captured = {}
 
     def fake_validate(_data):
         return qs_module.jsonify(
@@ -4458,8 +4459,8 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
                 "db_cache": 2048,
                 "user_list": ["User One"],
                 "music_libraries": [],
-                "movie_libraries": ["Movies"],
-                "show_libraries": ["Shows"],
+                "movie_libraries": [{"id": 1, "name": "Movies"}],
+                "show_libraries": [{"id": 2, "name": "Shows"}],
                 "has_plex_pass": True,
             }
         )
@@ -4476,6 +4477,18 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
     monkeypatch.setattr(qs_module.persistence, "save_settings", lambda *_args, **_kwargs: calls.__setitem__("save_settings", calls["save_settings"] + 1))
     monkeypatch.setattr(qs_module.database, "save_section_data", lambda **_kwargs: calls.__setitem__("save_section", calls["save_section"] + 1))
 
+    def fake_update_stored_plex_libraries(section_name, movie_libraries, show_libraries, music_libraries, user_list):
+        calls["update_libraries"] += 1
+        captured["update_libraries"] = {
+            "section_name": section_name,
+            "movie_libraries": movie_libraries,
+            "show_libraries": show_libraries,
+            "music_libraries": music_libraries,
+            "user_list": user_list,
+        }
+
+    monkeypatch.setattr(qs_module.persistence, "update_stored_plex_libraries", fake_update_stored_plex_libraries)
+
     with client.session_transaction() as sess:
         sess["config_name"] = "pytest_validate_plex"
 
@@ -4485,7 +4498,14 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
     assert payload["validated"] is True
     assert payload["db_cache"] == 2048
     assert payload["maintenance_window"] == "02:00 – 05:00"
-    assert calls == {"save_settings": 1, "save_section": 1}
+    assert calls == {"save_settings": 1, "save_section": 1, "update_libraries": 1}
+    assert captured["update_libraries"] == {
+        "section_name": "010-plex",
+        "movie_libraries": [{"id": 1, "name": "Movies"}],
+        "show_libraries": [{"id": 2, "name": "Shows"}],
+        "music_libraries": [],
+        "user_list": ["User One"],
+    }
 
 
 def test_plex_page_normalizes_formatted_db_cache_on_load(client, isolated_config_dir):
@@ -4517,6 +4537,77 @@ def test_plex_page_normalizes_formatted_db_cache_on_load(client, isolated_config
     match = re.search(r'id="plex_db_cache"[^>]+value="([^"]*)"', html)
     assert match is not None
     assert match.group(1) == "2048"
+
+
+def test_libraries_picker_falls_back_to_plex_telemetry_when_tmp_library_ids_missing(client, isolated_config_dir, monkeypatch, qs_module):
+    from modules import database
+
+    config_name = "pytest_telemetry_library_picker"
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    database.save_section_data(
+        name=config_name,
+        section="plex",
+        validated=True,
+        user_entered=True,
+        data={
+            "validated": True,
+            "plex": {
+                "url": "http://localhost:32400",
+                "token": "token",
+                "tmp_movie_libraries": "",
+                "tmp_show_libraries": "",
+                "tmp_music_libraries": "",
+                "tmp_library_names": "{}",
+            },
+        },
+    )
+    database.save_section_data(
+        name=config_name,
+        section="plex_telemetry",
+        validated=True,
+        user_entered=False,
+        data={
+            "plex_telemetry": {
+                "plex_pass": True,
+                "server_name": "Test Plex",
+                "version": "1.0",
+                "platform": "Linux",
+                "update_channel": "Public update channel",
+                "libraries": {
+                    "1": {
+                        "name": "Movies",
+                        "type": "movie",
+                        "scanner": "Plex Movie",
+                        "agent": "tv.plex.agents.movie",
+                        "ratings_source": "Rotten Tomatoes",
+                        "movie_count": 10,
+                    },
+                    "2": {
+                        "name": "TV Shows",
+                        "type": "show",
+                        "scanner": "Plex TV Series",
+                        "agent": "tv.plex.agents.series",
+                        "ratings_source": "N/A",
+                        "show_count": 3,
+                        "episode_count": 12,
+                    },
+                },
+            }
+        },
+    )
+    monkeypatch.setattr(qs_module.helpers, "load_quickstart_config", lambda _filename: [])
+    monkeypatch.setattr(qs_module.helpers, "load_quickstart_overlay_config", lambda: [])
+
+    resp = client.get("/step/025-libraries")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert 'value="mov-library_1"' in html
+    assert "[Movies]" in html
+    assert 'value="sho-library_2"' in html
+    assert "[TV Shows]" in html
 
 
 def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):

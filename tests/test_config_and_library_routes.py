@@ -106,6 +106,23 @@ def test_support_info_uses_library_ids_not_boolean_toggles(client, isolated_conf
     assert captured["value"] == {"1": "Movies", "2": "TV Movies", "5": "Shows"}
 
 
+def test_library_lists_from_telemetry_builds_movie_and_show_descriptors():
+    from blueprints import library_routes
+
+    movie_libraries, show_libraries = library_routes._library_lists_from_telemetry(
+        {
+            "libraries": {
+                "1": {"name": "Movies", "type": "movie"},
+                "2": {"name": "TV Shows", "type": "show"},
+                "3": {"name": "Music", "type": "artist"},
+            }
+        }
+    )
+
+    assert movie_libraries == [{"id": "mov-library_1", "name": "Movies", "type": "movie"}]
+    assert show_libraries == [{"id": "sho-library_2", "name": "TV Shows", "type": "show"}]
+
+
 # ===========================================================================
 # /clear_session
 # ===========================================================================

@@ -2402,6 +2402,25 @@ def step(name):
         if lib_id
     ]
 
+    if name == "025-libraries" and not movie_libraries and not show_libraries:
+        telemetry_libraries = telemetry_data.get("libraries", {}) if isinstance(telemetry_data, dict) else {}
+        if isinstance(telemetry_libraries, dict):
+            for lib_id, lib_info in telemetry_libraries.items():
+                if not isinstance(lib_info, dict):
+                    continue
+                lib_type = str(lib_info.get("type") or "").strip().lower()
+                if lib_type not in {"movie", "show"}:
+                    continue
+                entry = {
+                    "id": f"{'mov' if lib_type == 'movie' else 'sho'}-library_{lib_id}",
+                    "name": str(lib_info.get("name") or lib_id).strip() or str(lib_id),
+                    "type": lib_type,
+                }
+                if lib_type == "movie":
+                    movie_libraries.append(entry)
+                else:
+                    show_libraries.append(entry)
+
     # Ensure `libraries` dictionary exists
     if "libraries" not in data:
         data["libraries"] = {}
