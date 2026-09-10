@@ -7,6 +7,14 @@ from modules import database, helpers, persistence, url_validation, validations
 bp = Blueprint("validation_routes", __name__)
 
 
+def _telemetry_with_validated_plex_pass(telemetry, plex_data):
+    """Keep Libraries telemetry aligned with the authoritative Plex validation result."""
+    normalized = dict(telemetry) if isinstance(telemetry, dict) else {}
+    if isinstance(plex_data, dict) and "has_plex_pass" in plex_data:
+        normalized["plex_pass"] = bool(plex_data.get("has_plex_pass"))
+    return normalized
+
+
 def _unpack_validation_result(result):
     """Normalise a validator return value into ``(flask_response, status_code)``.
 
@@ -98,6 +106,7 @@ def validate_plex():
     try:
         telemetry = helpers.get_plex_metadata(plex_url=data.get("plex_url"), plex_token=data.get("plex_token")) or {}
         if telemetry:
+            telemetry = _telemetry_with_validated_plex_pass(telemetry, plex_data)
             persistence.save_settings("plex_telemetry", telemetry)
             if config_name:
                 try:
@@ -166,6 +175,9 @@ def refresh_plex_libraries():
         cached_refresh = helpers.get_cached_plex_refresh(plex_url, plex_token)
         if cached_refresh:
             helpers.ts_log("Using cached Plex library refresh payload.", level="DEBUG")
+            cached_refresh = dict(cached_refresh)
+            if "has_plex_pass" in cached_refresh:
+                cached_refresh["plex_pass"] = bool(cached_refresh.get("has_plex_pass"))
             all_libs = list(cached_refresh.get("movie_libraries") or []) + list(cached_refresh.get("show_libraries") or []) + list(cached_refresh.get("music_libraries") or [])
             if all_libs and isinstance(all_libs[0], dict):
                 persistence.migrate_library_keys_to_plex_ids(config_name, all_libs)
@@ -189,6 +201,7 @@ def refresh_plex_libraries():
                     "has_plex_pass",
                 }
             }
+            cached_telemetry = _telemetry_with_validated_plex_pass(cached_telemetry, cached_refresh)
             persistence.save_settings("plex_telemetry", cached_telemetry)
             try:
                 database.save_section_data(
@@ -223,6 +236,7 @@ def refresh_plex_libraries():
 
         # Get fresh telemetry using helpers and store it
         telemetry = helpers.get_plex_metadata(plex_url=plex_url, plex_token=plex_token)
+        telemetry = _telemetry_with_validated_plex_pass(telemetry, plex_data)
         persistence.save_settings("plex_telemetry", telemetry)
         try:
             database.save_section_data(
