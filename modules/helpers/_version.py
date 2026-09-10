@@ -23,6 +23,9 @@ def get_remote_version(branch):
         version = response.text.strip()
     except requests.RequestException:
         return None  # If request fails, return None
+    if branch == "master":
+        return version
+
     try:
         response = requests.get(
             f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/BUILDNUM",
@@ -31,8 +34,11 @@ def get_remote_version(branch):
         response.raise_for_status()
         build_num = response.text.strip()
     except requests.RequestException:
-        build_num = "0"
-    return version if branch == "master" else f"{version}-build{build_num}"
+        return None
+
+    if not build_num or not build_num.isdigit():
+        return None
+    return f"{version}-build{build_num}"
 
 
 def get_branch():

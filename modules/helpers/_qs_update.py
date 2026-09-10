@@ -2,6 +2,7 @@
 
 import copy
 import os
+import re
 import subprocess
 import sys
 import time
@@ -66,6 +67,37 @@ def get_version(branch):
     return "unknown"
 
 
+def _parse_quickstart_version(value):
+    match = re.fullmatch(r"v?(\d+(?:\.\d+)*)(?:-build(\d+))?", str(value or "").strip(), re.IGNORECASE)
+    if not match:
+        return None
+    base = tuple(int(part) for part in match.group(1).split("."))
+    return base, int(match.group(2) or 0), bool(match.group(2))
+
+
+def _is_remote_quickstart_version_newer(local_version, remote_version):
+    if not remote_version:
+        return False
+    if str(local_version or "").strip().lower() in {"", "unknown"}:
+        return True
+
+    local = _parse_quickstart_version(local_version)
+    remote = _parse_quickstart_version(remote_version)
+    if not local or not remote:
+        return str(remote_version).strip() != str(local_version or "").strip()
+
+    local_base, local_build, local_has_build = local
+    remote_base, remote_build, remote_has_build = remote
+    max_len = max(len(local_base), len(remote_base))
+    padded_local_base = local_base + (0,) * (max_len - len(local_base))
+    padded_remote_base = remote_base + (0,) * (max_len - len(remote_base))
+    if padded_remote_base != padded_local_base:
+        return padded_remote_base > padded_local_base
+    if local_has_build or remote_has_build:
+        return remote_build > local_build
+    return False
+
+
 def check_for_update():
     """Compare the local version with the remote version and determine Kometa branch."""
     from modules.helpers._version import get_branch, get_remote_version
@@ -82,7 +114,7 @@ def check_for_update():
 
     remote_version = get_remote_version(branch)
 
-    update_available = remote_version and remote_version != local_version
+    update_available = _is_remote_quickstart_version_newer(local_version, remote_version)
     update_remote = get_quickstart_update_remote()
 
     # Determine Kometa branch
