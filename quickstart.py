@@ -1386,9 +1386,21 @@ app.config["SESSION_USE_SIGNER"] = False
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB, adjust as needed
 app.config["MAX_FORM_MEMORY_SIZE"] = 16 * 1024 * 1024  # 16 MB
 
+SESSIONLESS_HEALTHCHECK_ENDPOINTS = {"kometa_status"}
+SESSIONLESS_HEALTHCHECK_PATHS = {"/kometa-status"}
+
+
+def _is_sessionless_healthcheck_request():
+    if request.method != "GET":
+        return False
+    return request.endpoint in SESSIONLESS_HEALTHCHECK_ENDPOINTS or request.path in SESSIONLESS_HEALTHCHECK_PATHS
+
 
 @app.before_request
 def before_request():
+    if _is_sessionless_healthcheck_request():
+        return None
+
     # Assign user UUID if not already present
     if "qs_session_id" not in session:
         session["qs_session_id"] = str(uuid.uuid4())[:8]
@@ -1473,6 +1485,16 @@ def check_quickstart_update():
 
 # Initialize Flask-Session
 server_session = Session(app)
+_save_server_session = app.session_interface.save_session
+
+
+def _save_session_unless_sessionless_healthcheck(app_obj, session_obj, response):
+    if has_request_context() and _is_sessionless_healthcheck_request():
+        return None
+    return _save_server_session(app_obj, session_obj, response)
+
+
+app.session_interface.save_session = _save_session_unless_sessionless_healthcheck
 server_thread = None
 shutdown_event = threading.Event()
 
