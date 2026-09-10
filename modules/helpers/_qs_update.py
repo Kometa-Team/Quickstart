@@ -100,7 +100,7 @@ def _is_remote_quickstart_version_newer(local_version, remote_version):
 
 def check_for_update():
     """Compare the local version with the remote version and determine Kometa branch."""
-    from modules.helpers._version import get_branch, get_remote_version
+    from modules.helpers._version import get_branch, get_remote_version_status
     from modules.helpers._os import get_running_os
 
     branch = get_branch()
@@ -112,7 +112,8 @@ def check_for_update():
         if age <= QS_UPDATE_CACHE_TTL_SECONDS:
             return copy.deepcopy(cached.get("payload") or {})
 
-    remote_version = get_remote_version(branch)
+    remote_status = get_remote_version_status(branch)
+    remote_version = remote_status.get("version")
 
     update_available = _is_remote_quickstart_version_newer(local_version, remote_version)
     update_remote = get_quickstart_update_remote()
@@ -125,9 +126,13 @@ def check_for_update():
     payload = {
         "local_version": local_version,
         "remote_version": remote_version,
+        "remote_base_version": remote_status.get("base_version"),
+        "remote_buildnum": remote_status.get("buildnum"),
         "branch": branch,
         "kometa_branch": kometa_branch,
         "update_available": update_available,
+        "update_check_status": remote_status.get("status") or "ok",
+        "update_message": remote_status.get("message") or "",
         "update_remote": update_remote,
         "update_command": build_quickstart_update_command(branch, remote=update_remote),
         "running_on": os_name,

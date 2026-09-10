@@ -57,7 +57,9 @@ def test_quickstart_update_alert_uses_shared_update_command_contract():
     script = BASE_JS_PATH.read_text(encoding="utf-8")
 
     assert "{{ version_info.update_command }}" in template
+    assert 'qs_update_status == "build_pending"' in template
     assert "info?.update_command" in script
+    assert "isQuickstartBuildPending" in script
     assert "window.QS_renderQuickstartUpdateAlert = renderQuickstartUpdateAlert" in script
     assert "git checkout ${branch}" not in script
     assert "git fetch && git checkout {{ version_info.branch }}" not in template
@@ -74,12 +76,26 @@ def test_develop_remote_version_is_unknown_when_buildnum_is_unavailable(monkeypa
     monkeypatch.setattr(_version.requests, "get", fake_get)
 
     assert helpers.get_remote_version("develop") is None
+    status = helpers.get_remote_version_status("develop")
+    assert status["status"] == "build_pending"
+    assert status["base_version"] == "0.10.6"
+    assert status["version"] is None
 
 
 def test_quickstart_update_ignores_lower_remote_develop_build(monkeypatch):
     _qs_update._QS_UPDATE_CACHE.clear()
     monkeypatch.setattr(_version, "get_branch", lambda: "develop")
-    monkeypatch.setattr(_version, "get_remote_version", lambda _branch: "0.10.6-build0")
+    monkeypatch.setattr(
+        _version,
+        "get_remote_version_status",
+        lambda _branch: {
+            "version": "0.10.6-build0",
+            "base_version": "0.10.6",
+            "buildnum": "0",
+            "status": "ok",
+            "message": "",
+        },
+    )
     monkeypatch.setattr(_qs_update, "get_version", lambda _branch: "0.10.6-build29")
     monkeypatch.setattr(_qs_update, "get_quickstart_update_remote", lambda *_args, **_kwargs: "origin")
 
@@ -93,7 +109,17 @@ def test_quickstart_update_ignores_lower_remote_develop_build(monkeypatch):
 def test_quickstart_update_detects_higher_remote_develop_build(monkeypatch):
     _qs_update._QS_UPDATE_CACHE.clear()
     monkeypatch.setattr(_version, "get_branch", lambda: "develop")
-    monkeypatch.setattr(_version, "get_remote_version", lambda _branch: "0.10.6-build30")
+    monkeypatch.setattr(
+        _version,
+        "get_remote_version_status",
+        lambda _branch: {
+            "version": "0.10.6-build30",
+            "base_version": "0.10.6",
+            "buildnum": "30",
+            "status": "ok",
+            "message": "",
+        },
+    )
     monkeypatch.setattr(_qs_update, "get_version", lambda _branch: "0.10.6-build29")
     monkeypatch.setattr(_qs_update, "get_quickstart_update_remote", lambda *_args, **_kwargs: "origin")
 
@@ -101,6 +127,32 @@ def test_quickstart_update_detects_higher_remote_develop_build(monkeypatch):
 
     assert info["remote_version"] == "0.10.6-build30"
     assert info["update_available"] is True
+
+
+def test_quickstart_update_reports_pending_develop_build(monkeypatch):
+    _qs_update._QS_UPDATE_CACHE.clear()
+    monkeypatch.setattr(_version, "get_branch", lambda: "develop")
+    monkeypatch.setattr(
+        _version,
+        "get_remote_version_status",
+        lambda _branch: {
+            "version": None,
+            "base_version": "0.10.6",
+            "buildnum": None,
+            "status": "build_pending",
+            "message": "Quickstart build metadata is still publishing. Try again in a few minutes.",
+        },
+    )
+    monkeypatch.setattr(_qs_update, "get_version", lambda _branch: "0.10.6-build29")
+    monkeypatch.setattr(_qs_update, "get_quickstart_update_remote", lambda *_args, **_kwargs: "origin")
+
+    info = _qs_update.check_for_update()
+
+    assert info["remote_version"] is None
+    assert info["remote_base_version"] == "0.10.6"
+    assert info["update_available"] is False
+    assert info["update_check_status"] == "build_pending"
+    assert "publishing" in info["update_message"]
 
 
 def test_cached_kometa_update_reuses_lookup(tmp_path, monkeypatch):
