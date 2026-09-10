@@ -637,6 +637,7 @@ def test_library_fragment_section_renders_requested_heavy_section(client, monkey
 
     collections = client.get("/library_fragment/mov-library_movies/section/collections")
     collection_group = client.get("/library_fragment/mov-library_movies/section/collections/group/0")
+    collection_detail = client.get("/library_fragment/mov-library_movies/section/collections/group/0/detail/collection_award")
     overlays = client.get("/library_fragment/mov-library_movies/section/overlays")
 
     assert collections.status_code == 200
@@ -645,7 +646,11 @@ def test_library_fragment_section_renders_requested_heavy_section(client, monkey
     assert "Awards Default Row" not in collections.get_data(as_text=True)
     assert collection_group.status_code == 200
     assert "Awards Default Row" in collection_group.get_data(as_text=True)
-    assert 'data-template-variable-key="style"' in collection_group.get_data(as_text=True)
+    assert "data-collection-detail-lazy-placeholder" in collection_group.get_data(as_text=True)
+    assert 'data-template-variable-key="style"' not in collection_group.get_data(as_text=True)
+    assert collection_detail.status_code == 200
+    assert "Awards Default Row" in collection_detail.get_data(as_text=True)
+    assert 'data-template-variable-key="style"' in collection_detail.get_data(as_text=True)
     assert overlays.status_code == 200
     assert "Preview Overlays" in overlays.get_data(as_text=True)
 
