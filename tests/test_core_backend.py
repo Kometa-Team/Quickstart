@@ -4466,6 +4466,7 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
         )
 
     telemetry = {
+        "plex_pass": False,
         "server_name": "Test Plex",
         "db_cache": "2048 MB",
         "maintenance_window": "02:00 – 05:00",
@@ -4474,8 +4475,17 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
 
     monkeypatch.setattr(qs_module.validations, "validate_plex_server", fake_validate)
     monkeypatch.setattr(qs_module.helpers, "get_plex_metadata", lambda **_kwargs: telemetry)
-    monkeypatch.setattr(qs_module.persistence, "save_settings", lambda *_args, **_kwargs: calls.__setitem__("save_settings", calls["save_settings"] + 1))
-    monkeypatch.setattr(qs_module.database, "save_section_data", lambda **_kwargs: calls.__setitem__("save_section", calls["save_section"] + 1))
+
+    def fake_save_settings(section_name, payload):
+        calls["save_settings"] += 1
+        captured["save_settings"] = {"section_name": section_name, "payload": payload}
+
+    def fake_save_section_data(**kwargs):
+        calls["save_section"] += 1
+        captured["save_section"] = kwargs
+
+    monkeypatch.setattr(qs_module.persistence, "save_settings", fake_save_settings)
+    monkeypatch.setattr(qs_module.database, "save_section_data", fake_save_section_data)
 
     def fake_update_stored_plex_libraries(section_name, movie_libraries, show_libraries, music_libraries, user_list):
         calls["update_libraries"] += 1
@@ -4497,8 +4507,12 @@ def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch
     payload = resp.get_json()
     assert payload["validated"] is True
     assert payload["db_cache"] == 2048
+    assert payload["plex_pass"] is True
     assert payload["maintenance_window"] == "02:00 – 05:00"
     assert calls == {"save_settings": 1, "save_section": 1, "update_libraries": 1}
+    assert captured["save_settings"]["section_name"] == "plex_telemetry"
+    assert captured["save_settings"]["payload"]["plex_pass"] is True
+    assert captured["save_section"]["data"]["plex_telemetry"]["plex_pass"] is True
     assert captured["update_libraries"] == {
         "section_name": "010-plex",
         "movie_libraries": [{"id": 1, "name": "Movies"}],
@@ -4720,6 +4734,40 @@ def test_refresh_plex_libraries_reuses_short_lived_cache(client, monkeypatch, qs
     assert second.status_code == 200
     assert first.get_json() == second.get_json()
     assert calls == {"validate": 1, "metadata": 1, "update": 2, "save": 2}
+
+
+def test_refresh_plex_libraries_cached_payload_uses_validation_plex_pass(client, monkeypatch, qs_module):
+    cached_refresh = {
+        "validated": True,
+        "has_plex_pass": True,
+        "plex_pass": False,
+        "server_name": "Test Plex",
+        "movie_libraries": [{"id": 1, "name": "Movies"}],
+        "show_libraries": [],
+        "music_libraries": [],
+        "user_list": ["User One"],
+        "libraries": {"1": {"name": "Movies", "type": "movie"}},
+    }
+    saved = {}
+
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda _name: ("http://localhost:32400", "token"))
+    monkeypatch.setattr(qs_module.persistence, "get_dummy_data", lambda _name: {"url": "http://placeholder", "token": "placeholder"})
+    monkeypatch.setattr(qs_module.helpers, "get_cached_plex_refresh", lambda *_args, **_kwargs: cached_refresh)
+    monkeypatch.setattr(qs_module.persistence, "migrate_library_keys_to_plex_ids", lambda *_args, **_kwargs: 0)
+    monkeypatch.setattr(qs_module.persistence, "update_stored_plex_libraries", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module.persistence, "save_settings", lambda section_name, payload: saved.update({"section_name": section_name, "payload": payload}))
+    monkeypatch.setattr(qs_module.database, "save_section_data", lambda **kwargs: saved.update({"section": kwargs}))
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "pytest_plex_cached_pass"
+
+    resp = client.post("/refresh_plex_libraries")
+
+    assert resp.status_code == 200
+    assert resp.get_json()["plex_pass"] is True
+    assert saved["section_name"] == "plex_telemetry"
+    assert saved["payload"]["plex_pass"] is True
+    assert saved["section"]["data"]["plex_telemetry"]["plex_pass"] is True
 
 
 def test_yaml_generation_sets_session_and_redacts(client, isolated_config_dir, monkeypatch, qs_module):
