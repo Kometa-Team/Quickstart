@@ -1,10 +1,56 @@
 import io
 import shutil
 import zipfile
+from pathlib import Path
 
 import requests
 
 from modules import helpers
+from modules.helpers import _qs_update
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE_TEMPLATE_PATH = ROOT / "templates" / "000-base.html"
+BASE_JS_PATH = ROOT / "static" / "local-js" / "000-base.js"
+
+
+class _RemoteResult:
+    def __init__(self, stdout):
+        self.stdout = stdout
+
+
+def test_quickstart_update_remote_prefers_official_remote(monkeypatch):
+    monkeypatch.setattr(_qs_update, "_run_git_remote", lambda *_args, **_kwargs: _RemoteResult("origin\nkometa-team\n"))
+
+    assert helpers.get_quickstart_update_remote() == "kometa-team"
+
+
+def test_quickstart_update_remote_falls_back_to_origin(monkeypatch):
+    monkeypatch.setattr(_qs_update, "_run_git_remote", lambda *_args, **_kwargs: _RemoteResult("origin\nfork\n"))
+
+    assert helpers.get_quickstart_update_remote() == "origin"
+
+
+def test_quickstart_update_command_matches_backend_update_flow():
+    command = helpers.build_quickstart_update_command("fix/plex-section-id-library-identity", remote="kometa-team")
+
+    assert command == (
+        "git fetch kometa-team --prune && "
+        "git switch -C fix/plex-section-id-library-identity --track kometa-team/fix/plex-section-id-library-identity && "
+        "git reset --hard kometa-team/fix/plex-section-id-library-identity && "
+        "python -m pip install --upgrade pip && "
+        "python -m pip install --no-cache-dir --upgrade -r requirements.txt"
+    )
+
+
+def test_quickstart_update_alert_uses_shared_update_command_contract():
+    template = BASE_TEMPLATE_PATH.read_text(encoding="utf-8")
+    script = BASE_JS_PATH.read_text(encoding="utf-8")
+
+    assert "{{ version_info.update_command }}" in template
+    assert "info?.update_command" in script
+    assert "window.QS_renderQuickstartUpdateAlert = renderQuickstartUpdateAlert" in script
+    assert "git checkout ${branch}" not in script
+    assert "git fetch && git checkout {{ version_info.branch }}" not in template
 
 
 def test_cached_kometa_update_reuses_lookup(tmp_path, monkeypatch):
