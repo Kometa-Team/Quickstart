@@ -3142,9 +3142,10 @@ function restartQuickstart (reason) {
 
 function getQuickstartUpdateCommand (info) {
   const branch = String(info?.branch || 'master')
-  if (branch === 'master') return 'git pull && pip install -r requirements.txt'
-  if (branch === 'develop') return 'git fetch && git reset --hard kometa-team/develop && pip install -r requirements.txt'
-  return `git fetch && git checkout ${branch} && pip install -r requirements.txt`
+  if (info?.update_command) return String(info.update_command)
+  const remote = String(info?.update_remote || 'kometa-team')
+  const remoteRef = `${remote}/${branch}`
+  return `git fetch ${remote} --prune && git switch -C ${branch} --track ${remoteRef} && git reset --hard ${remoteRef} && python -m pip install --upgrade pip && python -m pip install --no-cache-dir --upgrade -r requirements.txt`
 }
 
 function renderQuickstartUpdateAlert (info) {

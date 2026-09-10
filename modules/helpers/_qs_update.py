@@ -11,6 +11,40 @@ from pathlib import Path
 from modules.helpers._constants import BUILDNUM_FILE, QS_UPDATE_CACHE_TTL_SECONDS, VERSION_FILE, _QS_UPDATE_CACHE
 
 
+def _run_git_remote(qs_root):
+    qs_root = Path(qs_root or ".").resolve()
+    is_windows = sys.platform.startswith("win")
+    return subprocess.run(
+        ["git", "remote"],
+        cwd=qs_root,
+        capture_output=True,
+        text=True,
+        shell=is_windows,
+    )
+
+
+def get_quickstart_update_remote(qs_root=None):
+    try:
+        remotes_out = _run_git_remote(qs_root or ".")
+        remotes = (remotes_out.stdout or "").split()
+    except Exception:
+        remotes = []
+    return "kometa-team" if "kometa-team" in remotes else "origin"
+
+
+def build_quickstart_update_command(branch="master", qs_root=None, remote=None):
+    branch = str(branch or "master").strip() or "master"
+    remote = str(remote or get_quickstart_update_remote(qs_root)).strip() or "origin"
+    remote_ref = f"{remote}/{branch}"
+    return (
+        f"git fetch {remote} --prune && "
+        f"git switch -C {branch} --track {remote_ref} && "
+        f"git reset --hard {remote_ref} && "
+        "python -m pip install --upgrade pip && "
+        "python -m pip install --no-cache-dir --upgrade -r requirements.txt"
+    )
+
+
 def get_kometa_branch():
     """Fetch the correct branch (master or nightly)."""
     version_info = check_for_update()
@@ -49,6 +83,7 @@ def check_for_update():
     remote_version = get_remote_version(branch)
 
     update_available = remote_version and remote_version != local_version
+    update_remote = get_quickstart_update_remote()
 
     # Determine Kometa branch
     kometa_branch = "nightly"
@@ -61,6 +96,8 @@ def check_for_update():
         "branch": branch,
         "kometa_branch": kometa_branch,
         "update_available": update_available,
+        "update_remote": update_remote,
+        "update_command": build_quickstart_update_command(branch, remote=update_remote),
         "running_on": os_name,
         "file_ext": os_ext,
     }
@@ -88,16 +125,7 @@ def perform_quickstart_update(qs_root, branch="master"):
         qs_root = Path(qs_root).resolve()
         is_windows = sys.platform.startswith("win")
 
-        # pick upstream remote (prefer official)
-        remotes_out = subprocess.run(
-            ["git", "remote"],
-            cwd=qs_root,
-            capture_output=True,
-            text=True,
-            shell=is_windows,
-        )
-        remotes = (remotes_out.stdout or "").split()
-        upstream = "kometa-team" if "kometa-team" in remotes else "origin"
+        upstream = get_quickstart_update_remote(qs_root)
         logs.append(f"🔗 Using Quickstart remote: {upstream}")
         logs.append(f"⚙️ Target Quickstart branch: {branch}")
 
