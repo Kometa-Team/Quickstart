@@ -138,7 +138,38 @@ def _build_library_lists():
         if lib_id
     ]
 
+    if not movie_libraries and not show_libraries:
+        movie_libraries, show_libraries = _library_lists_from_telemetry(telemetry_data)
+
     return movie_libraries, show_libraries, telemetry_data
+
+
+def _library_lists_from_telemetry(telemetry_data):
+    """Build picker library descriptors from Plex telemetry when tmp IDs are missing."""
+    libraries = telemetry_data.get("libraries", {}) if isinstance(telemetry_data, dict) else {}
+    if not isinstance(libraries, dict):
+        return [], []
+
+    movie_libraries = []
+    show_libraries = []
+    for lib_id, lib_info in libraries.items():
+        if not isinstance(lib_info, dict):
+            continue
+        lib_type = str(lib_info.get("type") or "").strip().lower()
+        if lib_type not in {"movie", "show"}:
+            continue
+        name = str(lib_info.get("name") or lib_id).strip() or str(lib_id)
+        entry = {
+            "id": f"{'mov' if lib_type == 'movie' else 'sho'}-library_{lib_id}",
+            "name": name,
+            "type": lib_type,
+        }
+        if lib_type == "movie":
+            movie_libraries.append(entry)
+        else:
+            show_libraries.append(entry)
+
+    return movie_libraries, show_libraries
 
 
 def _normalize_library_toggle_names(libraries_data):

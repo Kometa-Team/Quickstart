@@ -120,6 +120,16 @@ def validate_plex():
             persistence.migrate_library_keys_to_plex_ids(config_name, all_libs)
         except Exception as e:
             helpers.ts_log(f"Library key migration failed during validate_plex: {e}", level="WARNING")
+    try:
+        persistence.update_stored_plex_libraries(
+            "010-plex",
+            plex_data.get("movie_libraries", []),
+            plex_data.get("show_libraries", []),
+            plex_data.get("music_libraries", []),
+            plex_data.get("user_list", []),
+        )
+    except Exception as e:
+        helpers.ts_log(f"Failed to persist Plex library lists during validation: {e}", level="WARNING")
 
     # Keep validator fields authoritative for the Plex page contract. Telemetry
     # uses display strings like "2048 MB", while the page's db_cache input needs
