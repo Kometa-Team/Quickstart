@@ -89,7 +89,18 @@
     <div class="qs-page-container">
       <div class="content-wrapper qs-content-wrapper">
       <!-- New Version Available Message for user-->
-      {% if version_info and version_info.update_available %}
+      {% set qs_update_status = version_info.update_check_status | default('') if version_info else '' %}
+      {% if version_info and qs_update_status == "build_pending" %}
+      <div class="alert alert-warning text-center qs-wide-alert" id="quickstart-update-alert" data-qs-update-alert role="alert">
+        <i class="bi bi-hourglass-split"></i>
+        {{ version_info.update_message or "Quickstart build metadata is still publishing. Try again in a few minutes." }}
+        {% if version_info.remote_base_version %}
+        <br>
+        <span>Remote version detected: <strong>{{ version_info.remote_base_version }}</strong></span>
+        {% endif %}
+      </div>
+      <br data-qs-update-alert-spacer>
+      {% elif version_info and version_info.update_available %}
       <div class="alert alert-danger text-center qs-wide-alert" id="quickstart-update-alert" data-qs-update-alert role="alert">
         <i class="bi bi-arrow-up-circle"></i>
         A new version of Quickstart (<strong>{{ version_info.remote_version }}</strong>) is available!

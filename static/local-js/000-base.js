@@ -3148,25 +3148,49 @@ function getQuickstartUpdateCommand (info) {
   return `git fetch ${remote} --prune && git switch -C ${branch} --track ${remoteRef} && git reset --hard ${remoteRef} && python -m pip install --upgrade pip && python -m pip install --no-cache-dir --upgrade -r requirements.txt`
 }
 
+function isQuickstartBuildPending (info) {
+  return String(info?.update_check_status || '') === 'build_pending'
+}
+
+function getQuickstartBuildPendingMessage (info) {
+  return String(info?.update_message || 'Quickstart build metadata is still publishing. Try again in a few minutes.')
+}
+
 function renderQuickstartUpdateAlert (info) {
   const existingAlerts = document.querySelectorAll('[data-qs-update-alert]')
   existingAlerts.forEach(el => el.remove())
   document.querySelectorAll('[data-qs-update-alert-spacer]').forEach(el => el.remove())
 
-  if (!info || !info.update_available) return
+  const buildPending = isQuickstartBuildPending(info)
+  if (!info || (!info.update_available && !buildPending)) return
 
   const anchor = document.querySelector('[data-qs-update-alert-anchor]') || document.querySelector('.early-warning')
   const wrapper = anchor?.parentElement || document.querySelector('.qs-content-wrapper')
   if (!wrapper) return
 
   const alert = document.createElement('div')
-  alert.className = 'alert alert-danger text-center qs-wide-alert'
+  alert.className = `alert ${buildPending ? 'alert-warning' : 'alert-danger'} text-center qs-wide-alert`
   alert.id = 'quickstart-update-alert'
   alert.dataset.qsUpdateAlert = 'true'
   alert.setAttribute('role', 'alert')
 
   const icon = document.createElement('i')
-  icon.className = 'bi bi-arrow-up-circle'
+  icon.className = `bi ${buildPending ? 'bi-hourglass-split' : 'bi-arrow-up-circle'}`
+  if (buildPending) {
+    alert.append(icon, document.createTextNode(` ${getQuickstartBuildPendingMessage(info)}`))
+    if (info.remote_base_version) {
+      alert.append(document.createElement('br'))
+      const version = document.createElement('strong')
+      version.textContent = info.remote_base_version
+      alert.append(document.createTextNode('Remote version detected: '), version)
+    }
+    const spacer = document.createElement('br')
+    spacer.dataset.qsUpdateAlertSpacer = 'true'
+    wrapper.insertBefore(alert, anchor || wrapper.firstChild)
+    wrapper.insertBefore(spacer, anchor || alert.nextSibling)
+    return
+  }
+
   alert.append(icon, document.createTextNode(' A new version of Quickstart ('))
 
   const version = document.createElement('strong')
@@ -3230,6 +3254,8 @@ async function runQuickstartUpdateCheck (options = {}) {
   if (!options.silent && typeof showToast === 'function') {
     if (data.version_info?.update_available) {
       showToast('warning', `Quickstart update available: ${data.version_info.remote_version || 'unknown'}`)
+    } else if (isQuickstartBuildPending(data.version_info)) {
+      showToast('info', getQuickstartBuildPendingMessage(data.version_info))
     } else {
       showToast('success', 'Quickstart is up to date.')
     }
@@ -3359,6 +3385,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (info?.update_available) {
           setUpdateStatus(`${info.local_version || 'unknown'} -> ${info.remote_version || 'unknown'}`, false)
           showToast('warning', `Quickstart update available: ${info.remote_version || 'unknown'}`)
+        } else if (isQuickstartBuildPending(info)) {
+          setUpdateStatus('Build publishing; try again soon.', false)
+          showToast('info', getQuickstartBuildPendingMessage(info))
         } else {
           setUpdateStatus(`Up to date (${info?.local_version || 'unknown'})`, false)
           showToast('success', 'Quickstart is up to date.')
