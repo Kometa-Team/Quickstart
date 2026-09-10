@@ -50,9 +50,12 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Library Telemetry:** Pulls real Plex server data (Plex Pass status, library types, agent/scanner compatibility)
 - **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
 - **Organized Library Defaults:** Collections, overlays, attributes, and playlists are grouped into logical accordions with override counters, visual override indicators, and scoped reset-to-defaults actions.
+- **Lazy Library Rendering:** Library cards, heavy collection/overlay sections, collection groups, and collection detail controls load on demand so large Plex installs remain usable while preserving saved override counts.
+- **Bulk Child Toggles:** Long child/included-item sections such as languages, resolutions, content ratings, streaming services, and chart lists include scoped select-all and unselect-all controls.
 - **Library Mirroring:** Copy compatible library selections from one Plex library to another, then explicitly include the destination library in the generated config after validation.
 - **Dependency-Aware Optional Pages:** Optional pages such as GitHub, Tautulli, OMDb, MDBList, Notifiarr, Gotify, ntfy, Apprise, Yamtrack, Webhooks, AniDB, Radarr, Sonarr, Trakt, and MyAnimeList become required when selected library features need them
 - **TODO Sidebar:** Outstanding dependency and validation tasks are grouped into clickable cards that save the current page and open the affected setup page
+- **Active Work Sidebar:** Long-running work such as Validate All, Kometa runs, Kometa/ImageMaid install or update jobs, and Analytics reingest appears in the sidebar with current status and elapsed time.
 - **Library-Scoped Playlists:** Playlist file selection now lives on the Libraries page so playlists stay tied to the libraries included in the generated YAML
 - **Library Collection Files:** Add multiple raw `collection_files` entries per library with mixed `file`, `folder`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to non-empty YAML with a non-empty top-level `collections:` mapping before output
 - **Library Metadata Files:** Add multiple `metadata_files` entries per library with mixed `file`, `folder`, `url`, `git`, and `repo` sources, import them from existing configs, and validate that each entry resolves to non-empty YAML with a non-empty top-level `metadata:` mapping before output
@@ -90,11 +93,31 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Runtime Flags & Environment Variables:** Supported Kometa runtime flags are grouped on the final page, including validation/schema options, logging options, run modes, and related environment variable guidance.
 - **Validation Levels:** Kometa validation commands support `syntax`, `structure`, and `full` validate-level choices from the UI.
 - **Process Management:** In `managed` and `existing direct` modes, start, stop, and monitor Kometa runs directly from the web interface
+- **Health status endpoint:** `GET /kometa-status` returns lightweight JSON for Kometa runtime state, pending starts, maintenance state, and resource metrics when Kometa is running. The endpoint is safe for Docker/Unraid health polling because it does not create or write a browser session.
 - **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
 - **Incomplete Run Recovery:** If a Kometa run stops early, Quickstart preserves the run context and surfaces resume or recovery guidance when it can determine the affected scope
 - **Mode-aware final page:** In `managed` mode, the final Kometa page includes install/update controls and run controls. In `existing direct` mode, the same page can validate the install, check version/update availability, and launch runs, but updates must be done manually outside Quickstart. In `external` mode, the page becomes a sync/status view that shows the external config target, log availability, and mode limitations instead of runtime controls.
 
 This reduces the chance of Plex background maintenance colliding with long Kometa runs, keeps Plex more responsive during the window, and avoids wasting time starting a run that would immediately pause.
+
+Health/status checks:
+
+```bash
+curl -fsS http://localhost:7171/kometa-status
+wget -qO- http://localhost:7171/kometa-status
+```
+
+For Unraid, replace `localhost` with the host/IP and port mapped to the Quickstart container, for example:
+
+```bash
+curl -fsS http://192.168.1.10:7171/kometa-status
+```
+
+Quickstart's Docker images include a built-in container healthcheck against `http://127.0.0.1:${QS_PORT:-7171}/kometa-status`. This uses the container's internal port, so host mappings such as `8008:7171` do not affect the healthcheck. You can inspect Docker's health state with:
+
+```bash
+docker inspect --format='{{json .State.Health}}' quickstart
+```
 
 #### ImageMaid
 - **Prepare / install / update flow:** Quickstart can install or update ImageMaid in its own managed directory before running it

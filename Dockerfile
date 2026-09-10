@@ -67,4 +67,6 @@ COPY . /
 # in the final image.
 COPY --from=jsbuild /jsbuild/static/dist/ /static/dist/
 VOLUME /config
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+ CMD curl -fsS "http://127.0.0.1:${QS_PORT:-7171}/kometa-status" >/dev/null || exit 1
 ENTRYPOINT ["/tini", "-s", "python3", "quickstart.py", "--"]
