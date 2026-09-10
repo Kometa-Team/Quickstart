@@ -48,6 +48,7 @@ def test_quickstart_update_alert_uses_shared_update_command_contract():
 
     assert "{{ version_info.update_command }}" in template
     assert "info?.update_command" in script
+    assert "window.QS_renderQuickstartUpdateAlert = renderQuickstartUpdateAlert" in script
     assert "git checkout ${branch}" not in script
     assert "git fetch && git checkout {{ version_info.branch }}" not in template
 

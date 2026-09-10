@@ -4944,6 +4944,7 @@ window.showNavigationLoadingOverlay = showNavigationLoadingOverlay
 window.showSpinner = showSpinner
 window.showToast = showToast
 window.qsQueueFlashToast = qsQueueFlashToast
+window.QS_renderQuickstartUpdateAlert = renderQuickstartUpdateAlert
 
 // ES module exports for other modules. Currently consumed by
 // static/local-js/001-start.js (which is also loaded as type="module").
