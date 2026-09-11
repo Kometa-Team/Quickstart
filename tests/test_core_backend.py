@@ -3094,6 +3094,35 @@ def test_runtime_config_schema_accepts_playlist_exclude_users_keyed_override(iso
     assert errors == []
 
 
+def test_runtime_config_schema_accepts_seasonal_child_radarr_add_missing(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "default": "seasonal",
+                        "template_variables": {
+                            "radarr_add_missing_christmas": True,
+                        },
+                    }
+                ]
+            }
+        },
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
+
+
 def test_build_libraries_section_emits_collection_hub_priority(app):
     from modules import output
 
@@ -3121,6 +3150,30 @@ def test_build_libraries_section_emits_collection_hub_priority(app):
     assert movie_entry["template_variables"]["hub_priority"] == "2"
     assert movie_entry["template_variables"]["visible_home_12A"] is True
     assert movie_entry["template_variables"]["hub_priority_12A"] == "1"
+
+
+def test_build_libraries_section_prunes_default_seasonal_schedule_and_keeps_child_radarr(app):
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collections={
+                "movies": {
+                    "mov-library_movies-collection_seasonal": True,
+                    "mov-library_movies-template_collection_seasonal_schedule_memorial": "range(05/18-06/07)",
+                    "mov-library_movies-template_collection_seasonal_radarr_add_missing_christmas": "true",
+                }
+            },
+        )
+
+    seasonal_entry = next(
+        (entry for entry in libraries_section["libraries"]["Movies"]["collection_files"] if entry.get("default") == "seasonal"),
+        None,
+    )
+
+    assert seasonal_entry is not None
+    assert seasonal_entry["template_variables"] == {"radarr_add_missing_christmas": True}
 
 
 def test_build_libraries_section_expands_franchise_dynamic_child_override_maps(app):

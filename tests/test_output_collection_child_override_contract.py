@@ -122,6 +122,30 @@ def test_apply_template_var_normalizers_expands_seasonal_dynamic_child_override_
     assert "child_imdb_search_overrides" not in template_vars
 
 
+def test_apply_template_var_normalizers_drops_unchanged_seasonal_child_schedule_defaults():
+    template_vars = {
+        "schedule_memorial": "range(05/18-06/07)",
+        "schedule_christmas": "range(12/01-12/31)",
+        "radarr_add_missing_christmas": True,
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "seasonal")
+
+    assert "schedule_memorial" not in template_vars
+    assert "schedule_christmas" not in template_vars
+    assert template_vars["radarr_add_missing_christmas"] is True
+
+
+def test_apply_template_var_normalizers_keeps_custom_seasonal_child_schedule():
+    template_vars = {
+        "schedule_memorial": "weekly(sunday)",
+    }
+
+    output_collections._apply_template_var_normalizers(template_vars, "seasonal")
+
+    assert template_vars["schedule_memorial"] == "weekly(sunday)"
+
+
 def test_apply_template_var_normalizers_expands_region_dynamic_child_override_maps():
     template_vars = {
         "child_use_overrides": '{"North America": "false"}',

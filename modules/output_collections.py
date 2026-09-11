@@ -508,6 +508,51 @@ def _normalize_list_template_vars(template_vars):
             template_vars.pop(list_key, None)
 
 
+def _normalize_template_default_for_compare(value):
+    text = str(value or "").strip().lower()
+    if not text:
+        return ""
+    text = re.sub(r"\s+", "", text)
+    return re.sub(r"(?<=[(/,\-|])0+(\d)", r"\1", text)
+
+
+def _seasonal_child_schedule_defaults():
+    defaults = {}
+    try:
+        groups = helpers.load_quickstart_config("quickstart_collections.json")
+    except Exception as exc:
+        helpers.ts_log(f"Failed to load quickstart_collections.json for seasonal schedule defaults: {exc}", level="ERROR")
+        return defaults
+
+    for group in groups or []:
+        if not isinstance(group, dict):
+            continue
+        for collection in group.get("collections", []) or []:
+            if not isinstance(collection, dict) or collection.get("id") != "collection_seasonal":
+                continue
+            for item in collection.get("template_variables", []) or []:
+                if not isinstance(item, dict):
+                    continue
+                key = str(item.get("key") or "").strip()
+                if key.startswith("schedule_") and "default" in item:
+                    defaults[key] = _normalize_template_default_for_compare(item.get("default"))
+            return defaults
+    return defaults
+
+
+def _drop_default_seasonal_child_schedules(template_vars, raw_id):
+    if str(raw_id or "").strip().lower() != "seasonal":
+        return
+    defaults = _seasonal_child_schedule_defaults()
+    if not defaults:
+        return
+    for key in list(template_vars.keys()):
+        if key not in defaults:
+            continue
+        if _normalize_template_default_for_compare(template_vars.get(key)) == defaults[key]:
+            template_vars.pop(key, None)
+
+
 def _parse_template_lookup_labels(value):
     if isinstance(value, dict):
         return {str(k).strip(): str(v).strip() for k, v in value.items() if str(k).strip() and str(v).strip()}
@@ -557,6 +602,7 @@ def _apply_template_var_normalizers(template_vars, raw_id):
             template_vars.pop(template_key, None)
         else:
             template_vars[template_key] = normalized_value
+    _drop_default_seasonal_child_schedules(template_vars, raw_id)
 
 
 def _is_collectionless_entry(item):
