@@ -323,6 +323,14 @@ describe('isTimeWithinRange', () => {
   it('returns false when time is after the range', () => {
     expect(isTimeWithinRange('04:01', '02:00', '04:00')).toBe(false)
   })
+  it('handles overnight ranges that cross midnight', () => {
+    expect(isTimeWithinRange('23:30', '22:00', '02:00')).toBe(true)
+    expect(isTimeWithinRange('01:30', '22:00', '02:00')).toBe(true)
+    expect(isTimeWithinRange('12:00', '22:00', '02:00')).toBe(false)
+  })
+  it('treats equal start/end as an empty range', () => {
+    expect(isTimeWithinRange('05:00', '05:00', '05:00')).toBe(false)
+  })
 })
 
 // ---------------------------------------------------------------------

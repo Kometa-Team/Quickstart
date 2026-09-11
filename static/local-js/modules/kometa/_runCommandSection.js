@@ -23,7 +23,7 @@
 //
 //   hideRunCommandSectionUntilValidated()
 //     -- collapse the run-command accordion and swap in the
-//        placeholder. Also disables the "Run Now" button and puts it
+//        placeholder. Also disables the "Run" button and puts it
 //        into a "Waiting..." state. Called from many places (probe
 //        errors, install-needed states, update in progress, etc.).
 //
@@ -35,7 +35,7 @@
 //
 //   showRunCommandSectionAfterValidated()
 //     -- convenience wrapper that unhides the section, resets the
-//        "Run Now" button label to its default, rebuilds the run
+//        "Run" button label to its default, rebuilds the run
 //        command string, and refreshes the button's disabled state.
 //
 // STATE TOUCHED:
@@ -63,7 +63,7 @@
 //   #run-command-output-collapse -- the accordion collapsable body
 //   #run-command-output-heading .accordion-button
 //                                -- accordion toggle button
-//   #run-now                     -- the "Run Now" button
+//   #run-now                     -- the "Run" button
 //   #copy-command                -- the copy-to-clipboard button
 //   #run-command-box .form-label -- the label above the command
 //   #run-command-box pre         -- the <pre> that holds the command
@@ -170,7 +170,7 @@ export function clearRunCommandPlaceholderState () {
 
 /**
  * Collapse the run-command accordion and swap in the placeholder.
- * Also disables the "Run Now" button and puts it into a "Waiting..."
+ * Also disables the "Run" button and puts it into a "Waiting..."
  * state (so a distracted user can't click it while validation is
  * pending).
  *
@@ -226,7 +226,7 @@ export function revealRunCommandSection () {
 }
 
 /**
- * Convenience wrapper that unhides the section, resets the "Run Now"
+ * Convenience wrapper that unhides the section, resets the "Run"
  * button label to its default, rebuilds the run command string, and
  * refreshes the button's disabled state.
  *
@@ -238,7 +238,7 @@ export function showRunCommandSectionAfterValidated () {
   revealRunCommandSection()
   const runNowEl = document.getElementById('run-now')
   if (runNowEl) {
-    runNowEl.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>'
+    runNowEl.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run</span>'
   }
   try { buildCommand() } catch { /* swallow -- caller may not need a rebuild */ }
   updateRunNowState()

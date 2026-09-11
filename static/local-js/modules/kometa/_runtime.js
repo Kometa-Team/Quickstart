@@ -122,7 +122,7 @@ export function getConfiguredKometaRootDisplay () {
 
 /**
  * True iff Quickstart can invoke Kometa to run (as opposed to only
- * being able to write config files). Gates the "Run Now" button.
+ * being able to write config files). Gates the "Run" button.
  *
  * @returns {boolean}
  */

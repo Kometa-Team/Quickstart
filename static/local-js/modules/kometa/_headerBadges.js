@@ -50,6 +50,7 @@
 import { formatHeaderStyleLabel, isValidTimesFormat, computeYamlLineCount, isRunCommandValid } from './_util.js'
 import { kometaState } from './_state.js'
 import { syncKometaBranchRollupBadge } from './_kometaBranch.js'
+import { getMaintenanceScheduleConflict } from './_maintenanceWindow.js'
 
 // ---------------------------------------------------------------------
 // Core primitives
@@ -134,6 +135,10 @@ export function updateRunOptionHeaderBadge () {
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value || ''
   const libSelect = document.getElementById('library-multiselect')
   const selectedLibs = libSelect ? Array.from(libSelect.selectedOptions || []).map(o => o.value) : []
+  if (getMaintenanceScheduleConflict(mainOption)) {
+    setHeaderRollupBadge('heading-runopt-rollup-badge', 'error', 'Maintenance overlap')
+    return
+  }
   if (mainOption === '--run-libraries') {
     if (!selectedLibs.length) {
       setHeaderRollupBadge('heading-runopt-rollup-badge', 'warn', 'Libraries needed')

@@ -28,7 +28,7 @@
 //                                syncFinalAccordionRollups)
 //             fire exactly once at every exit point
 //     Path H: kometaState.showYAML is correctly toggled per branch
-//     Path I: run-now button label defaults to 'Run Now' in all branches
+//     Path I: run-now button label defaults to 'Run' in all branches
 //
 // updateRunNowState + syncFinalAccordionRollups are mocked via
 // vi.mock() so we can spy on invocation counts without needing to
@@ -207,7 +207,7 @@ describe('updateValidationGate stage=todo', () => {
     expect(document.getElementById('run-controls-container').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('download-btn').classList.contains('d-none')).toBe(true)
     expect(document.getElementById('run-now').disabled).toBe(true)
-    expect(document.getElementById('run-now-label').textContent).toBe('Run Now')
+    expect(document.getElementById('run-now-label').textContent).toBe('Run')
   })
 
   it('invokes both callbacks exactly once', () => {
@@ -269,7 +269,7 @@ describe('updateValidationGate stage=config, all flags valid', () => {
     updateValidationGate()
     // The gate itself doesn't enable the button -- that's updateRunNowState's job
     expect(document.getElementById('run-now').disabled).toBe(true)
-    expect(document.getElementById('run-now-label').textContent).toBe('Run Now')
+    expect(document.getElementById('run-now-label').textContent).toBe('Run')
   })
 })
 

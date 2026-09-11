@@ -78,6 +78,7 @@ function installRunCommandDom (opts = {}) {
     <div id="run-command-active-badge" class="d-none"></div>
 
     <input type="radio" name="run-option" value="" ${runOption === '' ? 'checked' : ''}>
+    <input type="radio" name="run-option" value="--run" ${runOption === '--run' ? 'checked' : ''}>
     <input type="radio" name="run-option" value="--collections-only" ${runOption === '--collections-only' ? 'checked' : ''}>
     <input type="radio" name="run-option" value="--times" ${runOption === '--times' ? 'checked' : ''}>
     <input type="radio" name="run-option" value="--run-libraries" ${runOption === '--run-libraries' ? 'checked' : ''}>
@@ -370,6 +371,28 @@ describe('buildCommand basic path (no flags)', () => {
     const out = document.getElementById('run-command-output').dataset.builtCommand
     expect(out.startsWith('python3 ')).toBe(true)
   })
+
+  it('blocks the implicit 05:00 default when it overlaps Plex maintenance', () => {
+    installRunCommandDom({ runOption: '' })
+    document.getElementById('plex-maintenance-window').dataset.window = '04:00–06:00'
+
+    const result = buildCommand()
+
+    expect(result).toBe(false)
+    expect(document.getElementById('run-command-output').textContent).toContain('default scheduled time 05:00')
+    expect(document.getElementById('times-warning').classList.contains('d-none')).toBe(false)
+  })
+
+  it('allows immediate --run even when the default scheduled time would overlap maintenance', () => {
+    installRunCommandDom({ runOption: '--run' })
+    document.getElementById('plex-maintenance-window').dataset.window = '04:00–06:00'
+
+    const result = buildCommand()
+
+    expect(result).toBe(true)
+    expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--run')
+    expect(document.getElementById('times-warning').classList.contains('d-none')).toBe(true)
+  })
 })
 
 describe('buildCommand mainOption --times', () => {
@@ -401,6 +424,30 @@ describe('buildCommand mainOption --times', () => {
     document.getElementById('times-error').classList.remove('d-none') // stale
     buildCommand()
     expect(document.getElementById('times-error').classList.contains('d-none')).toBe(true)
+  })
+
+  it('blocks scheduled --times values that overlap Plex maintenance', () => {
+    installRunCommandDom({ runOption: '--times' })
+    document.getElementById('plex-maintenance-window').dataset.window = '04:00–06:00'
+    document.getElementById('times-input').value = '05:00|17:00'
+
+    const result = buildCommand()
+
+    expect(result).toBe(false)
+    expect(document.getElementById('run-command-output').textContent).toContain('05:00')
+    expect(document.getElementById('times-warning').classList.contains('d-none')).toBe(false)
+  })
+
+  it('allows scheduled --times values outside Plex maintenance', () => {
+    installRunCommandDom({ runOption: '--times' })
+    document.getElementById('plex-maintenance-window').dataset.window = '04:00–06:00'
+    document.getElementById('times-input').value = '07:00'
+
+    const result = buildCommand()
+
+    expect(result).toBe(true)
+    expect(document.getElementById('run-command-output').dataset.builtCommand).toContain('--times "07:00"')
+    expect(document.getElementById('times-warning').classList.contains('d-none')).toBe(true)
   })
 })
 

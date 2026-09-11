@@ -21,6 +21,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   toggleTimesInputVisibility,
   getMaintenanceWindow,
+  getMaintenanceScheduleConflict,
   checkMaintenanceWarning
 } from '../../../static/local-js/modules/kometa/_maintenanceWindow.js'
 
@@ -125,12 +126,9 @@ describe('getMaintenanceWindow', () => {
     expect(getMaintenanceWindow()).toBeNull()
   })
 
-  it('returns null when the payload lacks the en-dash separator', () => {
-    // A hyphen (`-`) is NOT the same as the en-dash (`–`). The backend
-    // deliberately uses the en-dash to make the separator visually
-    // distinct in the maintenance summary UI.
+  it('returns { start, end } when the payload uses a plain hyphen separator', () => {
     installFixtureDom({ maintenanceWindow: '03:00-05:00' })
-    expect(getMaintenanceWindow()).toBeNull()
+    expect(getMaintenanceWindow()).toEqual({ start: '03:00', end: '05:00' })
   })
 
   it('returns null when the payload has garbage', () => {
@@ -140,10 +138,49 @@ describe('getMaintenanceWindow', () => {
 
   it('handles a payload that is just the en-dash (empty start/end)', () => {
     installFixtureDom({ maintenanceWindow: '–' })
-    // Splitting '–' by '–' produces ['', ''] which are trimmed to '' each.
-    // The contract is "the string included a separator", so this is a
-    // known-degenerate but non-null case. Both fields are empty strings.
-    expect(getMaintenanceWindow()).toEqual({ start: '', end: '' })
+    expect(getMaintenanceWindow()).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------
+// getMaintenanceScheduleConflict
+// ---------------------------------------------------------------------
+
+describe('getMaintenanceScheduleConflict', () => {
+  it('reports the implicit 05:00 default when it overlaps maintenance', () => {
+    installFixtureDom({ maintenanceWindow: '04:00–06:00' })
+    expect(getMaintenanceScheduleConflict('')).toEqual({
+      maintenance: { start: '04:00', end: '06:00' },
+      times: ['05:00'],
+      source: 'default'
+    })
+  })
+
+  it('reports only user-supplied --times values that overlap maintenance', () => {
+    installFixtureDom({ maintenanceWindow: '04:00–06:00' })
+    document.getElementById('times-input').value = '05:00|17:00'
+    expect(getMaintenanceScheduleConflict('--times')).toEqual({
+      maintenance: { start: '04:00', end: '06:00' },
+      times: ['05:00'],
+      source: 'times'
+    })
+  })
+
+  it('supports overnight maintenance windows', () => {
+    installFixtureDom({ maintenanceWindow: '22:00–02:00' })
+    document.getElementById('times-input').value = '01:00|12:00|23:00'
+    expect(getMaintenanceScheduleConflict('--times')).toEqual({
+      maintenance: { start: '22:00', end: '02:00' },
+      times: ['01:00', '23:00'],
+      source: 'times'
+    })
+  })
+
+  it('returns null when there is no overlap', () => {
+    installFixtureDom({ maintenanceWindow: '01:00–02:00' })
+    document.getElementById('times-input').value = '05:00|17:00'
+    expect(getMaintenanceScheduleConflict('')).toBeNull()
+    expect(getMaintenanceScheduleConflict('--times')).toBeNull()
   })
 })
 

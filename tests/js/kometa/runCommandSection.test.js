@@ -361,11 +361,11 @@ describe('revealRunCommandSection', () => {
 // ---------------------------------------------------------------------
 
 describe('showRunCommandSectionAfterValidated', () => {
-  it("resets the run-now button to the default Run Now state", () => {
+  it("resets the run-now button to the default Run state", () => {
     installFullSectionFixture()
     showRunCommandSectionAfterValidated()
     const btn = document.getElementById('run-now')
-    expect(btn.innerHTML).toContain('Run Now')
+    expect(btn.innerHTML).toContain('Run')
     expect(btn.innerHTML).toContain('bi-play-fill')
   })
 

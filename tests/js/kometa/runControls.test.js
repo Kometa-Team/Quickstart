@@ -4,7 +4,7 @@
 //
 //   getCurrentRunCommand    -- reads #run-command-output text
 //   getRecoveryRunCommand   -- reads #recovery-command-output text
-//   updateRunNowState       -- big state machine for the Run Now button
+//   updateRunNowState       -- big state machine for the Run button
 //   syncIncompleteRunActions -- recovery button visibility + tooltip
 //
 // COVERAGE STRATEGY:

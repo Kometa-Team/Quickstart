@@ -114,7 +114,7 @@ function rowFor (label, href) {
  * kometaState.showYAML as read-only after this returns.
  *
  * Side effects at the end of every path:
- *   - updateRunNowState() -- refresh the Run Now button state
+ *   - updateRunNowState() -- refresh the Run button state
  *   - syncFinalAccordionRollups() -- refresh every section-header
  *                                    rollup badge
  */
@@ -136,7 +136,7 @@ export function updateValidationGate () {
     toggleGroup(downloadIds, 'd-none', true)
     if (runControls) runControls.classList.add('d-none')
     if (runNowEl) runNowEl.disabled = true
-    if (runNowLabelEl) runNowLabelEl.textContent = 'Run Now'
+    if (runNowLabelEl) runNowLabelEl.textContent = 'Run'
     updateRunNowState()
     syncFinalAccordionRollups()
     return
@@ -162,7 +162,7 @@ export function updateValidationGate () {
   if (!settValid) validationMessages.push(rowFor('Settings page values have likely been skipped.', '/step/150-settings'))
 
   if (runNowEl) runNowEl.disabled = true
-  if (runNowLabelEl) runNowLabelEl.textContent = 'Run Now'
+  if (runNowLabelEl) runNowLabelEl.textContent = 'Run'
 
   if (!kometaState.showYAML) {
     // Show validation messages if any, else just hide the panel
@@ -181,7 +181,7 @@ export function updateValidationGate () {
     toggleGroup(yamlIds, 'd-none', false)
     if (runControls) runControls.classList.remove('d-none')
     // NOTE: runNowEl.disabled stays true here -- the actual "enable
-    // Run Now" call happens later in updateRunNowState after checking
+    // Run" call happens later in updateRunNowState after checking
     // the runtime-state (Kometa installed?, not currently running?, etc.)
   }
 

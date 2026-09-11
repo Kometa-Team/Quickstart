@@ -115,6 +115,48 @@ let lastRenderedLogStartLine = null
 let lastFilteredLogResult = null
 let finalLogscanAnalyzeTriggered = false
 
+const RUN_BUTTON_IDLE_HTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run</span>'
+
+function setRunButtonIdleLabel () {
+  const runNow = document.getElementById('run-now')
+  if (runNow) {
+    runNow.innerHTML = RUN_BUTTON_IDLE_HTML
+    return
+  }
+  const label = document.getElementById('run-now-label')
+  if (label) label.textContent = 'Run'
+}
+
+function buildQueuedKometaMessage (data = {}) {
+  const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
+  const launchLabel = data.queued_start_local ? ` at ${data.queued_start_local}` : ' when it ends'
+  let message = `Plex maintenance active${windowLabel}. Quickstart will launch Kometa${launchLabel}.`
+  if (data.scheduled_run_local) {
+    const scheduleLabel = data.uses_default_schedule_time ? 'Kometa default scheduled run' : 'Kometa scheduled run'
+    message += ` ${scheduleLabel}: ${data.scheduled_run_local}.`
+  } else if (Array.isArray(data.schedule_times) && data.schedule_times.length === 0) {
+    message += ' The selected command will run immediately after launch.'
+  }
+  return message
+}
+
+function buildWaitingForKometaLogMessage (data = {}) {
+  if (data.status === 'queued' || data.pending_start) return buildQueuedKometaMessage(data)
+  let message = data.message || 'Kometa is running but has not written a fresh meta.log for this run yet.'
+  if (data.scheduled_run_local) {
+    const scheduleLabel = data.uses_default_schedule_time ? 'Default scheduled run' : 'Scheduled run'
+    message += ` ${scheduleLabel}: ${data.scheduled_run_local}.`
+  }
+  return message
+}
+
+function rebuildRunCommandAfterControlChange () {
+  if (kometaState.kometaStatus !== 'running' && !kometaState.kometaPendingStart && !kometaState.kometaUpdating) {
+    clearActiveRunCommandState()
+  }
+  buildCommand()
+}
+
 const runLog = document.getElementById('run-output-log')
 const tailNotice = document.getElementById('run-output-notice')
 const tailSelect = document.getElementById('run-log-tail')
@@ -377,14 +419,14 @@ document.querySelectorAll('input[name="run-option"]').forEach(el => el.addEventL
   const value = this.value
   updateLibraryVisibility(value)
   checkMaintenanceWarning(value)
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 }))
 
-document.getElementById('times-input')?.addEventListener('input', buildCommand)
+document.getElementById('times-input')?.addEventListener('input', rebuildRunCommandAfterControlChange)
 
-document.getElementById('library-multiselect')?.addEventListener('change', buildCommand)
-document.querySelectorAll('input[name="mode-flag"]').forEach(el => el.addEventListener('change', buildCommand))
-document.querySelectorAll('input[name="log-flag"]').forEach(el => el.addEventListener('change', buildCommand))
+document.getElementById('library-multiselect')?.addEventListener('change', rebuildRunCommandAfterControlChange)
+document.querySelectorAll('input[name="mode-flag"]').forEach(el => el.addEventListener('change', rebuildRunCommandAfterControlChange))
+document.querySelectorAll('input[name="log-flag"]').forEach(el => el.addEventListener('change', rebuildRunCommandAfterControlChange))
 
 function syncValidationCommandOptions () {
   const validateMode = (document.querySelector('input[name="validate-mode"]:checked') || {}).value || ''
@@ -410,17 +452,17 @@ function syncValidationCommandOptions () {
 document.querySelectorAll('input[name="validate-mode"]').forEach(el => {
   el.addEventListener('change', function () {
     syncValidationCommandOptions()
-    buildCommand()
+    rebuildRunCommandAfterControlChange()
   })
 })
-document.getElementById('opt-validate-level')?.addEventListener('change', buildCommand)
+document.getElementById('opt-validate-level')?.addEventListener('change', rebuildRunCommandAfterControlChange)
 document.getElementById('opt-validate-schema')?.addEventListener('change', function () {
   syncValidationCommandOptions()
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
-document.getElementById('opt-validate-file-val')?.addEventListener('input', buildCommand)
-document.getElementById('opt-validate-dir-val')?.addEventListener('input', buildCommand)
-document.getElementById('opt-schema-path')?.addEventListener('input', buildCommand)
+document.getElementById('opt-validate-file-val')?.addEventListener('input', rebuildRunCommandAfterControlChange)
+document.getElementById('opt-validate-dir-val')?.addEventListener('input', rebuildRunCommandAfterControlChange)
+document.getElementById('opt-schema-path')?.addEventListener('input', rebuildRunCommandAfterControlChange)
 
 const checkboxFlags = [
   'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
@@ -430,7 +472,7 @@ const checkboxFlags = [
 
 checkboxFlags.forEach(opt => {
   const checkbox = document.getElementById(`opt-${opt}`)
-  if (checkbox) checkbox.addEventListener('change', buildCommand)
+  if (checkbox) checkbox.addEventListener('change', rebuildRunCommandAfterControlChange)
 })
 
 
@@ -515,7 +557,7 @@ function startKometaCommand (command, opts = {}) {
         lastLogStartLine = 1
         renderFilteredRunLog()
         document.getElementById('run-now').disabled = false
-        document.getElementById('run-now-label').textContent = 'Run Now'
+        setRunButtonIdleLabel()
         document.getElementById('stop-now').classList.add('d-none')
         syncIncompleteRunActions()
         return
@@ -524,9 +566,7 @@ function startKometaCommand (command, opts = {}) {
       if (data.status === 'queued') {
         applyActiveRunCommandState(command, startMode)
         kometaState.kometaPendingStart = true
-        const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
-        const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
-        const message = `Plex maintenance active${windowLabel} at ${nowLabel}. Kometa will start automatically when it ends.`
+        const message = buildQueuedKometaMessage(data)
         showToast('warning', message)
         lastLogText = `${message}\n`
         lastLogStartLine = 1
@@ -557,7 +597,7 @@ function startKometaCommand (command, opts = {}) {
       try { buildCommand() } catch {}
       appendRunLogText('\n⚠️ Failed to start Kometa.')
       document.getElementById('run-now').disabled = false
-      document.getElementById('run-now-label').textContent = 'Run Now'
+      setRunButtonIdleLabel()
       document.getElementById('stop-now').classList.add('d-none')
       syncIncompleteRunActions()
     })
@@ -569,11 +609,13 @@ function startPollingIfNeeded () {
   if (kometaState.kometaInterval) clearInterval(kometaState.kometaInterval)
   if (kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
   if (kometaState.kometaProgressInterval) clearInterval(kometaState.kometaProgressInterval)
-  fetchKometaLog()
-  fetchRunProgress()
-  kometaState.kometaInterval = setInterval(fetchKometaLog, 3000)
+  if (!kometaState.kometaPendingStart) {
+    fetchKometaLog()
+    fetchRunProgress()
+    kometaState.kometaInterval = setInterval(fetchKometaLog, 3000)
+    kometaState.kometaProgressInterval = setInterval(fetchRunProgress, 5000)
+  }
   kometaState.kometaStatusInterval = setInterval(checkKometaStatus, 5000)
-  kometaState.kometaProgressInterval = setInterval(fetchRunProgress, 5000)
 }
 
 function resumeKometaLiveView () {
@@ -584,8 +626,10 @@ function resumeKometaLiveView () {
       if (kometaState.kometaStatus === 'running' || kometaState.kometaPendingStart) {
         kometaState.kometaPollingStarted = false
         startPollingIfNeeded()
-        fetchRunProgress(true)
-        fetchKometaLog()
+        if (!kometaState.kometaPendingStart) {
+          fetchRunProgress(true)
+          fetchKometaLog()
+        }
       }
     })
 }
@@ -630,7 +674,7 @@ document.getElementById('opt-timeout')?.addEventListener('change', function() {
     document.getElementById('opt-timeout-val').value = ''
     document.getElementById('timeout-error').classList.add('d-none')
   }
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
 
 document.getElementById('opt-width')?.addEventListener('change', function() {
@@ -639,13 +683,13 @@ document.getElementById('opt-width')?.addEventListener('change', function() {
     document.getElementById('opt-width-val').value = ''
     document.getElementById('width-error').classList.add('d-none')
   }
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
 
 // Restrict divider input
 document.getElementById('opt-divider-val')?.addEventListener('input', function() {
   this.value = this.value.replace(/\s/g, '').slice(0, 1)
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
 
 // Prevent non-numeric input for Timeout
@@ -654,7 +698,7 @@ document.getElementById('opt-timeout-val')?.addEventListener('input', function()
   if (this.value !== sanitized) {
     this.value = sanitized
   }
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
 
 // Prevent non-numeric input for Width
@@ -663,7 +707,7 @@ document.getElementById('opt-width-val')?.addEventListener('input', function() {
   if (this.value !== sanitized) {
     this.value = sanitized
   }
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
 
 document.getElementById('opt-divider')?.addEventListener('change', function() {
@@ -672,7 +716,7 @@ document.getElementById('opt-divider')?.addEventListener('change', function() {
     document.getElementById('opt-divider-val').value = ''
     document.getElementById('divider-error').classList.add('d-none')
   }
-  buildCommand()
+  rebuildRunCommandAfterControlChange()
 })
 
 pauseLogBtn?.addEventListener('click', function() {
@@ -1296,7 +1340,7 @@ function performStopKometa () {
       }
       kometaState.kometaStatus = 'not started'
       document.getElementById('run-now').disabled = false
-      document.getElementById('run-now-label').textContent = 'Run Now'
+      setRunButtonIdleLabel()
       document.getElementById('stop-now').classList.add('d-none') // hide stop again
       updateRunNowState()
     })
@@ -1328,6 +1372,13 @@ function fetchKometaLog () {
       if (!runLog) return
       if (data.error) {
         lastLogText = `❌ ${data.error}`
+        lastLogStartLine = 1
+        renderFilteredRunLog()
+        updateLogRecency(null)
+        return
+      }
+      if (data.status === 'queued' || data.status === 'waiting_for_log' || data.pending_start) {
+        lastLogText = `${buildWaitingForKometaLogMessage(data)}\n`
         lastLogStartLine = 1
         renderFilteredRunLog()
         updateLogRecency(null)
@@ -1412,9 +1463,7 @@ function checkKometaStatus () {
           data.pending_command || kometaState.activeRunCommandOverride || getRecoveryRunCommand(),
           data.pending_start_mode || kometaState.activeRunCommandMode || 'recovery'
         )
-        const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
-        const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
-        const message = `Plex maintenance active${windowLabel} at ${nowLabel}. Kometa will start automatically when it ends.`
+        const message = buildQueuedKometaMessage(data)
         runNow.disabled = true
         runNow.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Waiting...'
         stopNow.classList.add('d-none')
@@ -1450,7 +1499,7 @@ function checkKometaStatus () {
         // Kometa is actively running → keep Run disabled, allow Stop
         revealRunCommandSection()
         runNow.disabled = true
-        runNow.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>'
+        setRunButtonIdleLabel()
         stopNow.classList.remove('d-none')
         stopNow.disabled = false
         document.getElementById('run-output').classList.remove('d-none')
@@ -1467,7 +1516,7 @@ function checkKometaStatus () {
       clearActiveRunCommandState()
       try { buildCommand() } catch {}
 
-      if (runNow) runNow.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>'
+      setRunButtonIdleLabel()
       if (stopNow) {
         stopNow.classList.add('d-none')
         stopNow.disabled = false

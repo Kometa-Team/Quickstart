@@ -26,6 +26,13 @@ def _write_log(kometa_root: Path, content: bytes):
     return log_path
 
 
+def _isolate_empty_imagemaid_root(base_dir: Path, monkeypatch, qs_module):
+    imagemaid_root = base_dir / "imagemaid-empty"
+    (imagemaid_root / "config" / "logs").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    return imagemaid_root
+
+
 def test_logscan_analyze_missing_log(client, isolated_config_dir):
     resp = client.get("/logscan/analyze")
     assert resp.status_code == 404
@@ -1090,6 +1097,58 @@ def test_prune_logscan_archive_uses_imagemaid_keep_limit(isolated_config_dir, mo
     assert newer.exists()
 
 
+def test_logscan_progress_returns_queued_without_parsing_old_meta_log(client, tmp_path, monkeypatch, qs_module):
+    kometa_root = tmp_path / "kometa"
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / "meta.log").write_text(
+        "[2026-04-01 01:13:24,670] [kometa.py:730] [INFO]     |================================== Mapping Old Library ===================================|\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
+
+    qs_module._set_pending_kometa_start("python kometa.py --times 07:00", "demo", start_mode="current")
+    try:
+        resp = client.get("/logscan/progress")
+    finally:
+        qs_module._clear_pending_kometa_start()
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["status"] == "queued"
+    assert payload["pending_start"] is True
+    assert payload["libraries"] == []
+    assert payload["total_count"] == 0
+
+
+def test_logscan_progress_waits_for_fresh_log_when_running_log_is_stale(client, tmp_path, monkeypatch, qs_module):
+    log_dir = tmp_path / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text(
+        "[2026-04-01 01:13:24,670] [kometa.py:730] [INFO]     |================================== Mapping Old Library ===================================|\n",
+        encoding="utf-8",
+    )
+    started_at = time.time()
+    os.utime(log_path, (started_at - 120, started_at - 120))
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+    monkeypatch.setattr(qs_module, "_peek_pending_kometa_start", lambda: None)
+    monkeypatch.setattr(qs_module, "_get_active_kometa_started_at_ts", lambda: started_at)
+
+    resp = client.get("/logscan/progress")
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["status"] == "waiting_for_log"
+    assert payload["libraries"] == []
+    assert payload["total_count"] == 0
+
+
 def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"
@@ -1409,6 +1468,7 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
     )
 
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    _isolate_empty_imagemaid_root(isolated_config_dir, monkeypatch, qs_module)
     monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
 
     resp = client.post("/logscan/trends/reingest", json={"reset": True})
@@ -1651,6 +1711,7 @@ def test_logscan_reingest_archives_incomplete_rotated_live_log(client, isolated_
     saved = {}
 
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    _isolate_empty_imagemaid_root(isolated_config_dir, monkeypatch, qs_module)
     monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
     monkeypatch.setattr(
         qs_module.logscan.LogscanAnalyzer,
@@ -1705,6 +1766,7 @@ def test_logscan_reingest_ingests_gzip_archived_log(client, isolated_config_dir,
         )
 
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    _isolate_empty_imagemaid_root(isolated_config_dir, monkeypatch, qs_module)
     monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
 
     resp = client.post("/logscan/trends/reingest", json={"reset": True})
