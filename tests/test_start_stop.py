@@ -51,7 +51,9 @@ def test_tail_log_size_reads_only_requested_tail(client, tmp_path, monkeypatch, 
     resp = client.get("/tail-log?size=5")
 
     assert resp.status_code == 200
-    assert resp.get_json()["log"].splitlines() == ["line 46", "line 47", "line 48", "line 49", "line 50"]
+    payload = resp.get_json()
+    assert payload["log"].splitlines() == ["line 46", "line 47", "line 48", "line 49", "line 50"]
+    assert payload["log_is_previous_run"] is True
 
 
 def test_tail_log_returns_queued_without_reading_old_meta_log(client, tmp_path, monkeypatch, qs_module):
@@ -349,6 +351,81 @@ def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatc
     assert data["disk_write_mb"] == 128.2
     assert data["disk_read_rate_mb_s"] == 12.5
     assert data["disk_write_rate_mb_s"] == 3.75
+
+
+def test_kometa_status_reports_scheduled_waiting_after_finished_times_run(client, tmp_path, monkeypatch, qs_module):
+    log_dir = tmp_path / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-09-11 15:23:37,000] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
+                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |                                            Finished Run                                            |",
+                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |   Start Time: 15:23:37 2026-09-11     Finished: 15:23:43 2026-09-11     Run Time: 0:00:06   |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    started_at_ts = time.time() - 120
+    os.utime(log_path, (time.time(), time.time()))
+
+    monkeypatch.setattr(qs_module, "_peek_pending_kometa_start", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: 4321)
+    monkeypatch.setattr(qs_module, "_calculate_process_cpu_percent", lambda proc: 0.0)
+    monkeypatch.setattr(qs_module, "_calculate_system_cpu_percent", lambda: 0.0)
+    monkeypatch.setattr(qs_module, "_calculate_process_io_stats", lambda proc, cache_name: {})
+
+    class _FakeMemInfo:
+        rss = 64 * 1024 * 1024
+
+    class _FakeVM:
+        total = 8 * 1024 * 1024 * 1024
+        available = 6 * 1024 * 1024 * 1024
+        percent = 25.0
+
+    class _FakeProc:
+        pid = 4321
+
+        def is_running(self):
+            return True
+
+        def status(self):
+            return qs_module.psutil.STATUS_SLEEPING
+
+        def cmdline(self):
+            return ["python", "kometa.py", "--times", "05:00"]
+
+        def create_time(self):
+            return started_at_ts
+
+        def memory_info(self):
+            return _FakeMemInfo()
+
+        def children(self, recursive=True):
+            return []
+
+    monkeypatch.setattr(qs_module.psutil, "Process", lambda pid: _FakeProc())
+    monkeypatch.setattr(qs_module.psutil, "virtual_memory", lambda: _FakeVM())
+
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["command"] = 'python kometa.py --times "05:00" --config config.yml'
+        qs_module.RUN_CONTEXT["start_mode"] = "current"
+
+    try:
+        resp = client.get("/kometa-status")
+    finally:
+        qs_module._clear_run_context()
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "scheduled_waiting"
+    assert data["scheduled_waiting"] is True
+    assert data["active_command"] == 'python kometa.py --times "05:00" --config config.yml'
+    assert data["schedule_times"] == ["05:00"]
+    assert data["scheduled_run_local"]
+    assert "waiting for the next scheduled time" in data["message"]
 
 
 def test_imagemaid_status_clears_stale_run_context_when_not_running(client, monkeypatch, qs_module):

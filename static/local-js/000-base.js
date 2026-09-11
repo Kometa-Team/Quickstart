@@ -784,9 +784,10 @@ function qsBuildKometaActiveWorkEntry () {
   const href = '/step/900-kometa'
   const status = String(data.status || '').trim().toLowerCase()
   const running = status === 'running'
+  const scheduledWaiting = status === 'scheduled_waiting'
   const runtimeDetails = qsBuildRuntimeActiveDetails(data, 'Kometa')
   const progressDetails = qsBuildKometaProgressDetails()
-  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || running)
+  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || running || scheduledWaiting)
 
   if (unavailableBlocksWork) {
     const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window data unavailable'
@@ -833,6 +834,21 @@ function qsBuildKometaActiveWorkEntry () {
       details,
       href,
       titleAttr: qsBuildActiveTitleAttr('Kometa is paused for Plex maintenance.', pausedSince, details)
+    }
+  }
+
+  if (scheduledWaiting) {
+    const details = [...progressDetails, ...runtimeDetails]
+    if (data.scheduled_run_local) qsPushActiveDetail(details, 'Next run', data.scheduled_run_local)
+    return {
+      key: 'kometa-scheduled-waiting',
+      title: 'Kometa scheduler',
+      chip: 'Waiting',
+      state: 'warn',
+      meta: data.scheduled_run_local ? `Next run ${data.scheduled_run_local}` : 'Current run finished; waiting for the next scheduled time.',
+      details,
+      href,
+      titleAttr: qsBuildActiveTitleAttr('Kometa scheduler', data.scheduled_run_local ? `Next run ${data.scheduled_run_local}` : 'Current run finished; waiting for the next scheduled time.', details)
     }
   }
 
@@ -1180,7 +1196,8 @@ function qsRenderBackgroundJobPills () {
 function qsHandleMaintenanceStatus (data) {
   if (!data) return
   qsLatestKometaStatus = data
-  const active = String(data.status || '').trim().toLowerCase() === 'running' || Boolean(data.maintenance_paused)
+  const activeStatus = String(data.status || '').trim().toLowerCase()
+  const active = activeStatus === 'running' || activeStatus === 'scheduled_waiting' || Boolean(data.maintenance_paused)
   if (!active) qsLatestKometaRunProgress = null
   const paused = Boolean(data.maintenance_paused)
   const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
@@ -1195,7 +1212,7 @@ function qsHandleMaintenanceStatus (data) {
   const queuedBadge = document.getElementById('qs-queued-badge')
 
   if (runningBadge) {
-    if (data.status === 'running') {
+    if (data.status === 'running' || data.status === 'scheduled_waiting') {
       const elapsed = typeof data.elapsed_seconds === 'number' ? data.elapsed_seconds : null
       let elapsedLabel = ''
       if (elapsed !== null) {
@@ -1211,7 +1228,11 @@ function qsHandleMaintenanceStatus (data) {
       runningBadge.classList.remove('d-none')
       const label = runningBadge.querySelector('span')
       if (label) {
-        label.innerHTML = `<i class="bi bi-play-circle me-1"></i> Kometa running${elapsedLabel}`
+        if (data.status === 'scheduled_waiting') {
+          label.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Kometa scheduler waiting'
+        } else {
+          label.innerHTML = `<i class="bi bi-play-circle me-1"></i> Kometa running${elapsedLabel}`
+        }
       }
     } else {
       runningBadge.classList.add('d-none')

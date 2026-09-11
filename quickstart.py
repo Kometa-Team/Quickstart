@@ -4222,6 +4222,41 @@ def stop_kometa():
         return jsonify({"error": f"Failed to stop Kometa: {str(e)}"}), 500
 
 
+def _kometa_command_has_schedule(command):
+    times, _uses_default = _extract_kometa_scheduled_times(command)
+    return bool(times)
+
+
+def _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=None):
+    try:
+        stats = log_path.stat()
+    except Exception:
+        return False
+    if started_at_ts is not None and stats.st_mtime < (started_at_ts - 30):
+        return False
+    try:
+        content = _read_text_tail(log_path, 4000)
+    except Exception:
+        return False
+    finished_idx = content.rfind("Finished Run")
+    if finished_idx < 0:
+        return False
+    after_finished = content[finished_idx + len("Finished Run") :]
+    if re.search(r"Mapping\s+.+?\s+Library|Starting\s+(Run|Library)|Processing\s+", after_finished, flags=re.IGNORECASE):
+        return False
+    return True
+
+
+def _build_scheduled_waiting_payload(command, log_path, started_at_ts=None):
+    if not _kometa_command_has_schedule(command):
+        return None
+    if not _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=started_at_ts):
+        return None
+    payload = _build_kometa_schedule_timing_payload(command, now=datetime.now())
+    payload["message"] = "Kometa finished the current scheduled run and is waiting for the next scheduled time."
+    return payload
+
+
 @app.route("/kometa-status", methods=["GET"])
 def kometa_status():
     try:
@@ -4311,8 +4346,10 @@ def kometa_status():
                     queued_started_at = MAINTENANCE_STATE["queued_started_at"]
                     window_unavailable = MAINTENANCE_STATE["window_unavailable"]
                     window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
+                active_command = ctx.get("command")
+                scheduled_waiting = _build_scheduled_waiting_payload(active_command, helpers.get_kometa_log_dir() / "meta.log", started_at_ts=started_at_ts)
                 return jsonify(
-                    status="running",
+                    status="scheduled_waiting" if scheduled_waiting else "running",
                     pid=pid,
                     started_at=started_at,
                     started_at_ts=started_at_ts,
@@ -4338,7 +4375,9 @@ def kometa_status():
                     pending_start=pending_start,
                     pending_requested_at=pending_requested_at,
                     start_mode=_normalize_kometa_start_mode(ctx.get("start_mode")),
-                    active_command=ctx.get("command"),
+                    active_command=active_command,
+                    scheduled_waiting=bool(scheduled_waiting),
+                    **(scheduled_waiting or {}),
                 )
         # If we're here, it likely ended; try to get a return code
         try:
@@ -4593,12 +4632,14 @@ def tail_log():
         log_is_stale = False
         if log_mtime is not None and kometa_started_at is not None:
             log_is_stale = log_mtime < (kometa_started_at - 30)
+        log_is_previous_run = kometa_started_at is None
 
         response = {
             "log": log_content,
             "log_mtime": log_mtime,
             "log_age_seconds": log_age_seconds,
             "log_is_stale": log_is_stale,
+            "log_is_previous_run": log_is_previous_run,
             "log_path": str(log_path),
         }
         if include_stats:
@@ -4999,6 +5040,27 @@ def logscan_progress():
                             entry["status"] = "Stopped"
             return data
 
+        def normalize_progress_for_finished(data):
+            if not isinstance(data, dict) or not data.get("run_finished"):
+                return data
+            data = deepcopy(data)
+            data["current_library"] = None
+            data["phase_current"] = None
+            data["playlist_running"] = False
+            libraries = data.get("libraries")
+            if isinstance(libraries, list):
+                completed = 0
+                for entry in libraries:
+                    if not isinstance(entry, dict):
+                        continue
+                    if entry.get("status") == "Skipped":
+                        continue
+                    entry["status"] = "Done"
+                    completed += 1
+                data["completed_count"] = completed
+                data["total_count"] = data.get("total_count") or len(libraries)
+            return data
+
         ctx = _get_run_context()
         selected = ctx.get("selected_libraries")
         started_at = ctx.get("started_at")
@@ -5024,6 +5086,7 @@ def logscan_progress():
         if not force_full_read and _cache_matches_progress_signature():
             data = cached.get("data") or {}
             data = refresh_live_progress_elapsed(data, running, started_at)
+            data = normalize_progress_for_finished(data)
             data = normalize_progress_for_stopped(data, running, stopped_requested)
             return jsonify(data)
 
@@ -5049,7 +5112,7 @@ def logscan_progress():
         phase_order = _get_progress_run_order(config_data=config_data)
         allowed_phases = phase_order or ["operations", "metadata", "collections", "overlays"]
         playlists_configured = bool(config_data.get("playlists")) if isinstance(config_data, dict) else False
-        if run_mode in ("collections", "overlays", "operations", "metadata", "playlists"):
+        if run_mode in ("collections", "overlays", "operations", "metadata", "playlists") and not progress.get("run_finished"):
             allowed_phases = [run_mode]
             progress["phase_current"] = run_mode
             progress["phases_completed"] = []
@@ -5061,6 +5124,7 @@ def logscan_progress():
         maintenance_summary = analyzer.extract_maintenance_summary(log_content)
         progress["maintenance_summary"] = maintenance_summary if isinstance(maintenance_summary, dict) else {}
         progress["maintenance_had_pause"] = bool((progress.get("maintenance_summary") or {}).get("had_pause"))
+        progress = normalize_progress_for_finished(progress)
         progress = normalize_progress_for_stopped(progress, running, stopped_requested)
         if log_stats:
             progress["last_log_at"] = datetime.fromtimestamp(log_stats.st_mtime, tz=timezone.utc).isoformat()

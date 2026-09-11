@@ -85,7 +85,7 @@ import { updateRunNowState } from './_runControls.js'
  *
  * Priority order (first match wins):
  *   1. !showYAML             -> "Fix validation before..."
- *   2. running               -> "Kometa is currently running"
+ *   2. running/waiting       -> "Kometa is currently running" or scheduler waiting
  *   3. kometaUpdating        -> "Kometa update in progress"
  *   4. validationInProgress  -> "Preparing Kometa"
  *   5. !localCheckCompleted  -> "Checking Kometa state"
@@ -120,6 +120,10 @@ export function setRunCommandPlaceholderState () {
   } else if (kometaState.kometaStatus === 'running') {
     title = 'Kometa is currently running'
     message = 'Run output and stop controls are active below. Prepare Kometa is locked until the current run finishes.'
+    showButton = false
+  } else if (kometaState.kometaStatus === 'scheduled_waiting') {
+    title = 'Kometa scheduler is waiting'
+    message = 'The scheduled run cycle has finished and the Kometa process is waiting for the next scheduled time. Stop it before changing the run command.'
     showButton = false
   } else if (kometaState.kometaUpdating) {
     title = 'Kometa update in progress'

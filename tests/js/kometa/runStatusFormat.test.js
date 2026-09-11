@@ -182,6 +182,18 @@ describe('buildRunStatusText', () => {
     expect(result.metricsText).toBe('')
   })
 
+  it('returns stage=scheduled_waiting with next scheduled run text', () => {
+    const result = buildRunStatusText({
+      status: 'scheduled_waiting',
+      scheduled_run_local: '2026-09-12 05:00 AM',
+      message: 'Kometa finished the current scheduled run and is waiting for the next scheduled time.'
+    }, opts)
+    expect(result.stage).toBe('scheduled_waiting')
+    expect(result.timerText).toContain('Kometa scheduler is waiting.')
+    expect(result.timerText).toContain('Next scheduled run: 2026-09-12 05:00 AM.')
+    expect(result.metricsText).toContain('waiting for the next scheduled time')
+  })
+
   it('returns stage=running for status=running', () => {
     const data = { status: 'running', started_at: 'T', elapsed_seconds: 30 }
     expect(buildRunStatusText(data, opts).stage).toBe('running')

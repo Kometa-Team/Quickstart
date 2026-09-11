@@ -106,7 +106,7 @@ export function updateRunNowState () {
     !kometaState.showYAML ||
     kometaState.kometaValidationInProgress ||
     kometaState.kometaUpdating ||
-    kometaState.kometaStatus === 'running' ||
+    (kometaState.kometaStatus === 'running' || kometaState.kometaStatus === 'scheduled_waiting') ||
     !kometaState.kometaValidated
   )
 
@@ -153,7 +153,8 @@ export function syncIncompleteRunActions () {
     !kometaState.kometaValidationInProgress &&
     !kometaState.kometaUpdating &&
     !kometaState.kometaPendingStart &&
-    kometaState.kometaStatus !== 'running'
+    kometaState.kometaStatus !== 'running' &&
+    kometaState.kometaStatus !== 'scheduled_waiting'
 
   runRecovery.classList.toggle('d-none', !alertVisible)
   runRecovery.disabled = !recoveryRunnable
@@ -173,6 +174,8 @@ export function syncIncompleteRunActions () {
     runRecovery.setAttribute('title', 'A Kometa start is already queued for the next Plex maintenance window.')
   } else if (kometaState.kometaStatus === 'running') {
     runRecovery.setAttribute('title', 'Kometa is already running.')
+  } else if (kometaState.kometaStatus === 'scheduled_waiting') {
+    runRecovery.setAttribute('title', 'Kometa scheduler is waiting. Stop it before starting a recovery run.')
   } else {
     // Alert is visible, no blockers, but no recovery command in the
     // panel. Unusual state (server said recovery is possible but the

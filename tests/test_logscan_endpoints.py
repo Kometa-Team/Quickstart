@@ -1187,6 +1187,62 @@ def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypa
     assert statuses["TV Shows"] == "In progress"
 
 
+def test_logscan_progress_marks_finished_scheduled_run_complete(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-09-11 15:23:37,000] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
+                "[2026-09-11 15:23:40,000] [kometa.py:730] [INFO]     |================================== Mapping TV Shows Library ===================================|",
+                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |                                            Finished Run                                            |",
+                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |   Start Time: 15:23:37 2026-09-11     Finished: 15:23:43 2026-09-11     Run Time: 0:00:06   |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    qs_module.LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: True)
+    monkeypatch.setattr(qs_module, "_load_progress_config", lambda *_args, **_kwargs: {})
+
+    def fake_retrieve_settings(section):
+        if section == "025-libraries":
+            return {
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    "sho-library_tv_shows-library": "TV Shows",
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["started_at"] = datetime.fromisoformat("2026-09-11T15:23:37")
+        qs_module.RUN_CONTEXT["selected_libraries"] = ["Movies", "TV Shows"]
+        qs_module.RUN_CONTEXT["config_path"] = None
+        qs_module.RUN_CONTEXT["run_mode"] = "operations"
+        qs_module.RUN_CONTEXT["stop_requested_at"] = None
+
+    try:
+        resp = client.get("/logscan/progress?size=all")
+    finally:
+        qs_module._clear_run_context()
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["run_finished"] is True
+    assert payload["current_library"] is None
+    assert payload["phase_current"] is None
+    assert payload["completed_count"] == 2
+    statuses = {entry["name"]: entry["status"] for entry in payload["libraries"]}
+    assert statuses == {"Movies": "Done", "TV Shows": "Done"}
+
+
 def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"

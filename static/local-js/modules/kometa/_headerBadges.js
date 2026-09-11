@@ -275,6 +275,7 @@ export function updateConfigOutputHeaderBadges () {
  *   kometaUpdating                    -- 'Updating Kometa' (unknown)
  *   !kometaValidated                  -- 'Validate Kometa' (warn)
  *   kometaStatus === 'running'        -- 'Run in progress' (warn)
+ *   kometaStatus === 'scheduled_waiting' -- 'Scheduler waiting' (warn)
  *   otherwise                         -- isRunCommandValid() ?
  *                                          'Ready' (ok) :
  *                                          'Incomplete' (warn)
@@ -298,6 +299,10 @@ export function updateRunCommandHeaderBadge () {
   }
   if (kometaState.kometaStatus === 'running') {
     setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Run in progress')
+    return
+  }
+  if (kometaState.kometaStatus === 'scheduled_waiting') {
+    setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Scheduler waiting')
     return
   }
   const valid = isRunCommandValid()

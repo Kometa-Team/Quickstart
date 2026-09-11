@@ -210,9 +210,12 @@ export function callUpdateKometa () {
     return
   }
 
-  // ---- Path 3: Kometa running -----------------------------------
-  if (kometaState.kometaStatus === 'running') {
-    showToast('info', 'Kometa is currently running; update skipped.')
+  // ---- Path 3: Kometa running or scheduler waiting ---------------
+  if (kometaState.kometaStatus === 'running' || kometaState.kometaStatus === 'scheduled_waiting') {
+    const message = kometaState.kometaStatus === 'scheduled_waiting'
+      ? 'Kometa scheduler is waiting; stop it before updating.'
+      : 'Kometa is currently running; update skipped.'
+    showToast('info', message)
     return
   }
 

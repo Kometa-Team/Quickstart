@@ -151,7 +151,7 @@ function buildWaitingForKometaLogMessage (data = {}) {
 }
 
 function rebuildRunCommandAfterControlChange () {
-  if (kometaState.kometaStatus !== 'running' && !kometaState.kometaPendingStart && !kometaState.kometaUpdating) {
+  if (kometaState.kometaStatus !== 'running' && kometaState.kometaStatus !== 'scheduled_waiting' && !kometaState.kometaPendingStart && !kometaState.kometaUpdating) {
     clearActiveRunCommandState()
   }
   buildCommand()
@@ -623,12 +623,16 @@ function resumeKometaLiveView () {
   checkKometaStatus()
     .catch(() => null)
     .finally(() => {
-      if (kometaState.kometaStatus === 'running' || kometaState.kometaPendingStart) {
+      if (kometaState.kometaStatus === 'running' || kometaState.kometaStatus === 'scheduled_waiting' || kometaState.kometaPendingStart) {
         kometaState.kometaPollingStarted = false
-        startPollingIfNeeded()
-        if (!kometaState.kometaPendingStart) {
+        if (kometaState.kometaStatus === 'scheduled_waiting') {
           fetchRunProgress(true)
-          fetchKometaLog()
+        } else {
+          startPollingIfNeeded()
+          if (!kometaState.kometaPendingStart) {
+            fetchRunProgress(true)
+            fetchKometaLog()
+          }
         }
       }
     })
@@ -751,10 +755,18 @@ function renderLogStats (filteredResult = lastFilteredLogResult) {
   updateStatRow(logStatsFiltered, filteredStats)
 }
 
-function updateTailNotice () {
+function updateTailNotice (data = null) {
   if (!tailNotice) return
   const sizeLabel = tailSize === 'all' ? 'all lines' : `last ${tailSize} lines`
+  if (data && data.log_is_previous_run) {
+    tailNotice.textContent = `Showing previous meta.log (${sizeLabel}). Kometa is not currently writing to this file.`
+    tailNotice.classList.add('text-warning')
+    tailNotice.classList.remove('text-muted')
+    return
+  }
   tailNotice.textContent = `Showing ${sizeLabel} from meta.log`
+  tailNotice.classList.remove('text-warning')
+  tailNotice.classList.add('text-muted')
 }
 
 function syncRunStatusVisibility () {
@@ -783,12 +795,16 @@ function updateLogRecency (data) {
     return
   }
   const ageText = formatRunSeconds(data.log_age_seconds) || 'n/a'
-  let logText = `meta.log updated ${ageText} ago`
+  let logText = data.log_is_previous_run ? `Previous meta.log updated ${ageText} ago` : `meta.log updated ${ageText} ago`
   const totalLines = data?.stats?.total_lines ?? lastLogStatsTotal?.total_lines
   if (typeof totalLines === 'number' && Number.isFinite(totalLines)) {
     logText += ` • ${totalLines.toLocaleString()} lines`
   }
-  if (data.log_is_stale && kometaState.kometaStatus === 'running') {
+  if (data.log_is_previous_run) {
+    logText += ' • Kometa is not running'
+    runStatusLog.classList.add('text-warning')
+    runStatusLog.classList.remove('text-muted')
+  } else if (data.log_is_stale && kometaState.kometaStatus === 'running') {
     logText += ' • waiting for new meta.log entries from this run'
     runStatusLog.classList.add('text-warning')
     runStatusLog.classList.remove('text-muted')
@@ -835,8 +851,7 @@ if (levelButtons && levelButtons.length) {
 
 tailSelect?.addEventListener('change', function() {
   tailSize = this.value || '2000'
-  const label = tailSize === 'all' ? 'entire log' : `last ${tailSize} lines of the log`
-  if (tailNotice) tailNotice.innerHTML = `<i class="bi bi-info-circle"></i> Showing ${label}`
+  updateTailNotice()
   lastRenderedLogRawText = null
   fetchKometaLog()
 })
@@ -1375,6 +1390,7 @@ function fetchKometaLog () {
         lastLogStartLine = 1
         renderFilteredRunLog()
         updateLogRecency(null)
+        updateTailNotice()
         return
       }
       if (data.status === 'queued' || data.status === 'waiting_for_log' || data.pending_start) {
@@ -1382,6 +1398,7 @@ function fetchKometaLog () {
         lastLogStartLine = 1
         renderFilteredRunLog()
         updateLogRecency(null)
+        updateTailNotice()
         return
       }
       const nextLogText = data.log || ''
@@ -1390,6 +1407,7 @@ function fetchKometaLog () {
       lastLogText = nextLogText
       lastLogStartLine = nextLogStartLine
       updateLogRecency(data)
+      updateTailNotice(data)
       if (data.stats) {
         lastLogStatsTotal = data.stats
       }
@@ -1422,19 +1440,23 @@ function checkKometaStatus () {
   return fetch('/kometa-status')
     .then(res => res.json())
     .then(data => {
+      const previousKometaStatus = kometaState.kometaStatus
       kometaState.latestKometaStatusPayload = data || null
       kometaState.kometaStatus = data.status || null
-      kometaState.kometaPendingStart = Boolean(data.pending_start && data.status !== 'running')
+      kometaState.kometaPendingStart = Boolean(data.pending_start && data.status !== 'running' && data.status !== 'scheduled_waiting')
       const updateBtn = updateKometaBtn
       const forceUpdate = forceUpdateToggle
       const runNow = document.getElementById('run-now')
       const stopNow = document.getElementById('stop-now')
       setKometaPrepareRunningState(data.status === 'running')
 
-      // Disable update if Kometa is running or an update is in progress
-      const shouldDisableUpdate = (data.status === 'running') || kometaState.kometaUpdating
+      // Disable update if a Kometa process is active or an update is in progress
+      const kometaProcessActive = data.status === 'running' || data.status === 'scheduled_waiting'
+      const shouldDisableUpdate = kometaProcessActive || kometaState.kometaUpdating
       if (shouldDisableUpdate) {
-        const why = kometaState.kometaUpdating ? 'Kometa is updating; wait for it to finish.' : 'Kometa is running; stop it before updating.'
+        const why = kometaState.kometaUpdating
+          ? 'Kometa is updating; wait for it to finish.'
+          : (data.status === 'scheduled_waiting' ? 'Kometa scheduler is waiting; stop it before updating.' : 'Kometa is running; stop it before updating.')
         if (updateBtn) {
           updateBtn.disabled = true
           updateBtn.setAttribute('title', why)
@@ -1454,7 +1476,7 @@ function checkKometaStatus () {
       if (typeof window.QS_handleMaintenanceStatus === 'function') {
         window.QS_handleMaintenanceStatus(data)
       }
-      if (kometaState.lastRunProgressPayload && data.status === 'running') {
+      if (kometaState.lastRunProgressPayload && (data.status === 'running' || data.status === 'scheduled_waiting')) {
         renderRunProgress(kometaState.lastRunProgressPayload)
       }
 
@@ -1484,6 +1506,37 @@ function checkKometaStatus () {
         stopNow.disabled = true
         syncIncompleteRunActions()
         return // don't do the rest while we're mid-update
+      }
+
+      if (data.status === 'scheduled_waiting') {
+        applyActiveRunCommandState(
+          data.active_command || kometaState.activeRunCommandOverride || getCurrentRunCommand(),
+          data.start_mode || kometaState.activeRunCommandMode || 'current'
+        )
+        kometaState.kometaPendingStart = false
+        revealRunCommandSection()
+        runNow.disabled = true
+        runNow.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Waiting...'
+        stopNow.classList.remove('d-none')
+        stopNow.disabled = false
+        document.getElementById('run-output').classList.remove('d-none')
+        syncIncompleteRunActions()
+        if (previousKometaStatus !== 'scheduled_waiting' || !kometaState.lastRunProgressPayload) {
+          fetchRunProgress(true)
+        }
+        if (!finalLogscanAnalyzeTriggered) {
+          finalLogscanAnalyzeTriggered = true
+          fetchLogscanAnalysis(true, { updateHeaderBadge: updateLogscanHeaderBadge, kometaState })
+        }
+        if (typeof kometaState.kometaInterval !== 'undefined' && kometaState.kometaInterval) {
+          clearInterval(kometaState.kometaInterval)
+          kometaState.kometaInterval = null
+        }
+        stopProgressPolling()
+        kometaState.kometaPollingStarted = false
+        if (kometaState.kometaStatusInterval) clearInterval(kometaState.kometaStatusInterval)
+        kometaState.kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+        return
       }
 
       // Handle Kometa process states
