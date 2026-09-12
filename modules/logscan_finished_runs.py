@@ -229,7 +229,7 @@ def find_last_run_time_index(lines: list[str]) -> tuple[Optional[int], bool]:
         if fallback_index is None:
             fallback_index = idx
         previous_line = lines[idx - 1] if idx > 0 else ""
-        previous_is_finished_run = re.search(r"\bFinished\s+Run\b", previous_line, re.IGNORECASE)
+        previous_is_finished_run = re.search(r"\bFinished(?:\s+(?:Libraries|\d{1,2}:\d{2}))?\s+Run\b", previous_line, re.IGNORECASE)
         if "Finished:" in line or "Start Time:" in line or previous_is_finished_run:
             run_time_index = idx
             return run_time_index, True

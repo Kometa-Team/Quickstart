@@ -361,7 +361,7 @@ def test_kometa_status_reports_scheduled_waiting_after_finished_times_run(client
         "\n".join(
             [
                 "[2026-09-11 15:23:37,000] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
-                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |                                            Finished Run                                            |",
+                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |                                            Finished 15:23 Run                                            |",
                 "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |   Start Time: 15:23:37 2026-09-11     Finished: 15:23:43 2026-09-11     Run Time: 0:00:06   |",
             ]
         ),

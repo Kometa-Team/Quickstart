@@ -4238,10 +4238,11 @@ def _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=None):
         content = _read_text_tail(log_path, 4000)
     except Exception:
         return False
-    finished_idx = content.rfind("Finished Run")
-    if finished_idx < 0:
+    finished_matches = list(re.finditer(r"\bFinished(?:\s+(?:Libraries|\d{1,2}:\d{2}))?\s+Run\b", content, flags=re.IGNORECASE))
+    if not finished_matches:
         return False
-    after_finished = content[finished_idx + len("Finished Run") :]
+    finished_match = finished_matches[-1]
+    after_finished = content[finished_match.end() :]
     if re.search(r"Mapping\s+.+?\s+Library|Starting\s+(Run|Library)|Processing\s+", after_finished, flags=re.IGNORECASE):
         return False
     return True
