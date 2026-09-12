@@ -2581,8 +2581,33 @@ function qsSetBulkValidationLoading (isLoading) {
   })
 }
 
+function qsShouldPromptForBulkValidationDuringScheduledKometa (options = {}) {
+  if (options.skipScheduledKometaPrompt) return false
+  if (options.silentToast || options.source === 'final-freshness') return false
+  const status = String((qsLatestKometaStatus && qsLatestKometaStatus.status) || '').trim().toLowerCase()
+  return status === 'scheduled_waiting'
+}
+
+function qsConfirmBulkValidationDuringScheduledKometa (options = {}) {
+  if (!qsShouldPromptForBulkValidationDuringScheduledKometa(options)) return true
+  const nextRun = String((qsLatestKometaStatus && qsLatestKometaStatus.scheduled_run_local) || '').trim()
+  const suffix = nextRun ? `
+
+Next scheduled run: ${nextRun}` : ''
+  const message = `Kometa is waiting for a scheduled run. Validate All can continue, but it will not stop the waiting scheduler. If validation finds critical issues, stop Kometa before the next scheduled run.${suffix}
+
+Continue Validate All?`
+  if (typeof window.confirm !== 'function') return true
+  const confirmed = window.confirm(message)
+  if (!confirmed && typeof showToast === 'function') {
+    showToast('info', 'Validate All cancelled. Kometa scheduler is still waiting for its next run.')
+  }
+  return confirmed
+}
+
 function qsRunBulkValidation (options = {}) {
   if (qsBulkValidationRequest) return qsBulkValidationRequest
+  if (!qsConfirmBulkValidationDuringScheduledKometa(options)) return Promise.resolve(null)
 
   const runId = options.runId || `bulk-${Date.now()}-${Math.random().toString(36).slice(2)}`
   qsLatestBulkValidationProgress = {
