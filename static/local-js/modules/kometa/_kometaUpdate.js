@@ -13,9 +13,9 @@
 //        job manually). Runs runKometaStatusPass, shows toast based
 //        on result, updates a note element if update is available.
 //
-//   3. Running short-circuit
-//        Kometa is currently running (mid-run). Show a toast and
-//        bail -- we can't update a live install.
+//   3. Running / scheduler safety
+//        Kometa is currently running (mid-run): show a toast and bail.
+//        Kometa scheduler is waiting: ask to stop it, then continue update.
 //
 //   4. Already-installed-no-force branch
 //        Kometa is installed and user didn't tick 'force update'
@@ -192,6 +192,43 @@ function handleAlreadyInstalledNoForceCheck () {
     })
 }
 
+function stopScheduledKometaForUpdate () {
+  const confirmed = typeof window.confirm === 'function'
+    ? window.confirm('Kometa is waiting for a scheduled run. Updating safely requires stopping that scheduler first. Stop the scheduler and continue with the update?')
+    : false
+  if (!confirmed) {
+    showToast('info', 'Kometa update cancelled. The scheduler is still waiting for its next run.')
+    return
+  }
+
+  const btn = getUpdateButton()
+  if (btn) {
+    btn.disabled = true
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Stopping scheduler...'
+  }
+  showToast('info', 'Stopping Kometa scheduler before updating...')
+
+  fetch('/stop-kometa', { method: 'POST' })
+    .then(async res => {
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) {
+        throw new Error(data.error || data.warning || `Stop request failed (${res.status}).`)
+      }
+      kometaState.kometaStatus = 'not started'
+      kometaState.kometaPendingStart = false
+      showToast(data.warning ? 'warning' : 'success', data.message || data.warning || 'Kometa scheduler stopped.')
+      callUpdateKometa()
+    })
+    .catch(err => {
+      const message = err && err.message ? err.message : 'Failed to stop Kometa scheduler before update.'
+      showToast('error', message)
+      if (btn) {
+        btn.disabled = false
+        syncUpdateButtonLabel()
+      }
+    })
+}
+
 /**
  * Main entry. See module docstring for the five execution paths.
  */
@@ -211,11 +248,13 @@ export function callUpdateKometa () {
   }
 
   // ---- Path 3: Kometa running or scheduler waiting ---------------
-  if (kometaState.kometaStatus === 'running' || kometaState.kometaStatus === 'scheduled_waiting') {
-    const message = kometaState.kometaStatus === 'scheduled_waiting'
-      ? 'Kometa scheduler is waiting; stop it before updating.'
-      : 'Kometa is currently running; update skipped.'
-    showToast('info', message)
+  if (kometaState.kometaStatus === 'running') {
+    showToast('info', 'Kometa is currently running; update skipped.')
+    return
+  }
+
+  if (kometaState.kometaStatus === 'scheduled_waiting') {
+    stopScheduledKometaForUpdate()
     return
   }
 

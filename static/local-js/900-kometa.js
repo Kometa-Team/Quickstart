@@ -1450,13 +1450,14 @@ function checkKometaStatus () {
       const stopNow = document.getElementById('stop-now')
       setKometaPrepareRunningState(data.status === 'running')
 
-      // Disable update if a Kometa process is active or an update is in progress
-      const kometaProcessActive = data.status === 'running' || data.status === 'scheduled_waiting'
+      // Disable update only while Kometa is actively running or an update is in progress.
+      // A waiting scheduler can be stopped safely by the update action after confirmation.
+      const kometaProcessActive = data.status === 'running'
       const shouldDisableUpdate = kometaProcessActive || kometaState.kometaUpdating
       if (shouldDisableUpdate) {
         const why = kometaState.kometaUpdating
           ? 'Kometa is updating; wait for it to finish.'
-          : (data.status === 'scheduled_waiting' ? 'Kometa scheduler is waiting; stop it before updating.' : 'Kometa is running; stop it before updating.')
+          : 'Kometa is running; stop it before updating.'
         if (updateBtn) {
           updateBtn.disabled = true
           updateBtn.setAttribute('title', why)

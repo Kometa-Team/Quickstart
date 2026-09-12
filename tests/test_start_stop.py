@@ -360,9 +360,9 @@ def test_kometa_status_reports_scheduled_waiting_after_finished_times_run(client
     log_path.write_text(
         "\n".join(
             [
-                "[2026-09-11 15:23:37,000] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
-                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |                                            Finished 15:23 Run                                            |",
-                "[2026-09-11 15:23:43,627] [kometa.py:874] [INFO]     |   Start Time: 15:23:37 2026-09-11     Finished: 15:23:43 2026-09-11     Run Time: 0:00:06   |",
+                "[2026-09-12 07:42:41,000] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
+                "[2026-09-12 07:42:47,627] [kometa.py:874] [INFO]     |                                            Finished 07:42 Run                                            |",
+                "[2026-09-12 07:42:47,627] [kometa.py:874] [INFO]     |   Start Time: 07:42:41 2026-09-12     Finished: 07:42:47 2026-09-12     Run Time: 0:00:06   |",
             ]
         ),
         encoding="utf-8",
@@ -410,7 +410,7 @@ def test_kometa_status_reports_scheduled_waiting_after_finished_times_run(client
     monkeypatch.setattr(qs_module.psutil, "virtual_memory", lambda: _FakeVM())
 
     with qs_module.RUN_CONTEXT_LOCK:
-        qs_module.RUN_CONTEXT["command"] = 'python kometa.py --times "05:00" --config config.yml'
+        qs_module.RUN_CONTEXT["command"] = 'python kometa.py --times "07:42|07:44" --config config.yml'
         qs_module.RUN_CONTEXT["start_mode"] = "current"
 
     try:
@@ -422,9 +422,9 @@ def test_kometa_status_reports_scheduled_waiting_after_finished_times_run(client
     data = resp.get_json()
     assert data["status"] == "scheduled_waiting"
     assert data["scheduled_waiting"] is True
-    assert data["active_command"] == 'python kometa.py --times "05:00" --config config.yml'
-    assert data["schedule_times"] == ["05:00"]
-    assert data["scheduled_run_local"]
+    assert data["active_command"] == 'python kometa.py --times "07:42|07:44" --config config.yml'
+    assert data["schedule_times"] == ["07:42", "07:44"]
+    assert data["scheduled_run_local"] == "2026-09-12 07:44 AM"
     assert "waiting for the next scheduled time" in data["message"]
 
 

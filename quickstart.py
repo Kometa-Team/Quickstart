@@ -3964,13 +3964,14 @@ def _extract_kometa_scheduled_times(command):
     return ["05:00"], True
 
 
-def _next_local_datetime_for_hhmm(value, now=None):
+def _next_local_datetime_for_hhmm(value, now=None, after=None):
     minutes = _hhmm_to_minutes(value)
     if minutes is None:
         return None
     now = now or datetime.now()
-    candidate = now.replace(hour=minutes // 60, minute=minutes % 60, second=0, microsecond=0)
-    if candidate < now:
+    reference = after or now
+    candidate = reference.replace(hour=minutes // 60, minute=minutes % 60, second=0, microsecond=0)
+    if candidate <= reference:
         candidate += timedelta(days=1)
     return candidate
 
@@ -3981,9 +3982,9 @@ def _format_local_datetime_payload(value):
     return value.isoformat(), value.strftime("%Y-%m-%d %I:%M %p").lstrip("0")
 
 
-def _build_kometa_schedule_timing_payload(command, now=None):
+def _build_kometa_schedule_timing_payload(command, now=None, after=None):
     times, uses_default = _extract_kometa_scheduled_times(command)
-    candidates = [_next_local_datetime_for_hhmm(value, now=now) for value in times]
+    candidates = [_next_local_datetime_for_hhmm(value, now=now, after=after) for value in times]
     candidates = [value for value in candidates if value is not None]
     if not candidates:
         return {"schedule_times": times, "scheduled_run_at": None, "scheduled_run_local": None, "uses_default_schedule_time": uses_default}
@@ -4245,15 +4246,29 @@ def _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=None):
     after_finished = content[finished_match.end() :]
     if re.search(r"Mapping\s+.+?\s+Library|Starting\s+(Run|Library)|Processing\s+", after_finished, flags=re.IGNORECASE):
         return False
-    return True
+    finished_at = None
+    line_start = content.rfind("\n", 0, finished_match.start()) + 1
+    line_end = content.find("\n", finished_match.end())
+    if line_end == -1:
+        line_end = len(content)
+    finished_line = content[line_start:line_end]
+    ts_match = re.search(r"\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})", finished_line)
+    if ts_match:
+        try:
+            finished_at = datetime.strptime(f"{ts_match.group(1)} {ts_match.group(2)}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            finished_at = None
+    return {"finished_at": finished_at}
 
 
 def _build_scheduled_waiting_payload(command, log_path, started_at_ts=None):
     if not _kometa_command_has_schedule(command):
         return None
-    if not _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=started_at_ts):
+    finished_info = _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=started_at_ts)
+    if not finished_info:
         return None
-    payload = _build_kometa_schedule_timing_payload(command, now=datetime.now())
+    now = datetime.now()
+    payload = _build_kometa_schedule_timing_payload(command, now=now, after=finished_info.get("finished_at") or now)
     payload["message"] = "Kometa finished the current scheduled run and is waiting for the next scheduled time."
     return payload
 

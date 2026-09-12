@@ -287,6 +287,52 @@ describe('callUpdateKometa -- path 3: Kometa running', () => {
 })
 
 // ---------------------------------------------------------------------
+// Path 3b: Kometa scheduler waiting
+// ---------------------------------------------------------------------
+
+describe('callUpdateKometa -- path 3b: Kometa scheduler waiting', () => {
+  it("asks before stopping a waiting scheduler and cancels cleanly", async () => {
+    const originalConfirm = window.confirm
+    window.confirm = vi.fn(() => false)
+    try {
+      kometaState.kometaStatus = 'scheduled_waiting'
+      installFixture()
+      global.fetch = vi.fn()
+      callUpdateKometa()
+      expect(window.confirm).toHaveBeenCalled()
+      expect(global.fetch).not.toHaveBeenCalled()
+      expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('cancelled'))).toBe(true)
+    } finally {
+      window.confirm = originalConfirm
+    }
+  })
+
+  it("stops a waiting scheduler before continuing with update", async () => {
+    const originalConfirm = window.confirm
+    window.confirm = vi.fn(() => true)
+    try {
+      kometaState.kometaStatus = 'scheduled_waiting'
+      kometaState.kometaUpdateAvailable = true
+      installFixture()
+      global.fetch = vi.fn((url) => {
+        if (url === '/stop-kometa') return Promise.resolve(okJson({ success: true, message: 'Kometa stopped and cleaned up.' }))
+        if (url === '/update-kometa') return Promise.resolve(okJson({ success: true }))
+        return Promise.reject(new Error(`unexpected fetch ${url}`))
+      })
+      callUpdateKometa()
+      await flush()
+      await flush()
+      expect(global.fetch).toHaveBeenNthCalledWith(1, '/stop-kometa', { method: 'POST' })
+      expect(global.fetch).toHaveBeenNthCalledWith(2, '/update-kometa', expect.objectContaining({ method: 'POST' }))
+      expect(kometaState.kometaStatus).toBe('not started')
+      expect(kometaState.kometaUpdating).toBe(true)
+    } finally {
+      window.confirm = originalConfirm
+    }
+  })
+})
+
+// ---------------------------------------------------------------------
 // Path 4: Already-installed-no-force
 // ---------------------------------------------------------------------
 

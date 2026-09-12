@@ -840,6 +840,7 @@ function qsBuildKometaActiveWorkEntry () {
   if (scheduledWaiting) {
     const details = [...progressDetails, ...runtimeDetails]
     if (data.scheduled_run_local) qsPushActiveDetail(details, 'Next run', data.scheduled_run_local)
+    if (Array.isArray(data.schedule_times) && data.schedule_times.length) qsPushActiveDetail(details, 'Schedule', data.schedule_times.join(' | '))
     return {
       key: 'kometa-scheduled-waiting',
       title: 'Kometa scheduler',
