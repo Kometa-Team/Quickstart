@@ -300,6 +300,7 @@ describe('callUpdateKometa -- path 3b: Kometa scheduler waiting', () => {
       global.fetch = vi.fn()
       callUpdateKometa()
       expect(window.confirm).toHaveBeenCalled()
+      await flush()
       expect(global.fetch).not.toHaveBeenCalled()
       expect(toastCalls.some(c => c[0] === 'info' && c[1].includes('cancelled'))).toBe(true)
     } finally {

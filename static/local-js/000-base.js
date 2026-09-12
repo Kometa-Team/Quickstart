@@ -541,6 +541,69 @@ function qsShowQueuedFlashToast () {
 }
 
 // Function to show toast messages
+function qsConfirmAction (options = {}) {
+  const title = String(options.title || 'Confirm action')
+  const message = String(options.message || 'Continue?')
+  const details = String(options.details || '').trim()
+  const confirmText = String(options.confirmText || 'Continue')
+  const cancelText = String(options.cancelText || 'Cancel')
+  const confirmClass = String(options.confirmClass || 'btn-primary')
+  const iconClass = String(options.iconClass || 'bi bi-exclamation-triangle text-warning')
+  const modalEl = document.getElementById('qs-confirm-modal')
+
+  const fallback = () => {
+    const fallbackMessage = [title, '', message, details ? `\n${details}` : ''].filter((part) => part !== '').join('\n')
+    return Promise.resolve(typeof window.confirm === 'function' ? window.confirm(fallbackMessage) : true)
+  }
+  if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) return fallback()
+
+  const titleEl = document.getElementById('qs-confirm-title')
+  const titleText = titleEl ? titleEl.querySelector('span') : null
+  const iconEl = document.getElementById('qs-confirm-icon')
+  const messageEl = document.getElementById('qs-confirm-message')
+  const detailsEl = document.getElementById('qs-confirm-details')
+  const confirmBtn = document.getElementById('qs-confirm-confirm')
+  const cancelBtn = document.getElementById('qs-confirm-cancel')
+  if (!titleEl || !messageEl || !confirmBtn || !cancelBtn) return fallback()
+
+  if (titleText) titleText.textContent = title
+  else titleEl.textContent = title
+  if (iconEl) iconEl.className = iconClass
+  messageEl.textContent = message
+  if (detailsEl) {
+    detailsEl.textContent = details
+    detailsEl.classList.toggle('d-none', !details)
+  }
+  confirmBtn.textContent = confirmText
+  cancelBtn.textContent = cancelText
+  confirmBtn.className = `btn ${confirmClass}`
+
+  return new Promise((resolve) => {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl)
+    let settled = false
+    const cleanup = () => {
+      confirmBtn.removeEventListener('click', onConfirm)
+      modalEl.removeEventListener('hidden.bs.modal', onHidden)
+    }
+    const settle = (value) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(value)
+    }
+    const onConfirm = () => {
+      settle(true)
+      modal.hide()
+    }
+    const onHidden = () => settle(false)
+    confirmBtn.addEventListener('click', onConfirm)
+    modalEl.addEventListener('hidden.bs.modal', onHidden)
+    modal.show()
+  })
+}
+
+window.QS_confirmAction = qsConfirmAction
+
 function showToast (type, message) {
   const toastId = `toast-${Date.now()}` // Unique ID for each toast
   const toastContainer = document.querySelector('.toast-container')
@@ -2589,26 +2652,25 @@ function qsShouldPromptForBulkValidationDuringScheduledKometa (options = {}) {
 }
 
 function qsConfirmBulkValidationDuringScheduledKometa (options = {}) {
-  if (!qsShouldPromptForBulkValidationDuringScheduledKometa(options)) return true
+  if (!qsShouldPromptForBulkValidationDuringScheduledKometa(options)) return Promise.resolve(true)
   const nextRun = String((qsLatestKometaStatus && qsLatestKometaStatus.scheduled_run_local) || '').trim()
-  const suffix = nextRun ? `
-
-Next scheduled run: ${nextRun}` : ''
-  const message = `Kometa is waiting for a scheduled run. Validate All can continue, but it will not stop the waiting scheduler. If validation finds critical issues, stop Kometa before the next scheduled run.${suffix}
-
-Continue Validate All?`
-  if (typeof window.confirm !== 'function') return true
-  const confirmed = window.confirm(message)
-  if (!confirmed && typeof showToast === 'function') {
-    showToast('info', 'Validate All cancelled. Kometa scheduler is still waiting for its next run.')
-  }
-  return confirmed
+  return qsConfirmAction({
+    title: 'Kometa scheduler is waiting',
+    message: 'Validate All can continue, but it will not stop the waiting scheduler. If validation finds critical issues, stop Kometa before the next scheduled run.',
+    details: nextRun ? `Next scheduled run: ${nextRun}` : '',
+    confirmText: 'Continue Validate All',
+    cancelText: 'Cancel',
+    confirmClass: 'btn-warning',
+    iconClass: 'bi bi-exclamation-triangle text-warning'
+  }).then((confirmed) => {
+    if (!confirmed && typeof showToast === 'function') {
+      showToast('info', 'Validate All cancelled. Kometa scheduler is still waiting for its next run.')
+    }
+    return confirmed
+  })
 }
 
-function qsRunBulkValidation (options = {}) {
-  if (qsBulkValidationRequest) return qsBulkValidationRequest
-  if (!qsConfirmBulkValidationDuringScheduledKometa(options)) return Promise.resolve(null)
-
+function qsStartBulkValidation (options = {}) {
   const runId = options.runId || `bulk-${Date.now()}-${Math.random().toString(36).slice(2)}`
   qsLatestBulkValidationProgress = {
     run_id: runId,
@@ -2689,6 +2751,12 @@ function qsRunBulkValidation (options = {}) {
     })
 
   return qsBulkValidationRequest
+}
+
+function qsRunBulkValidation (options = {}) {
+  if (qsBulkValidationRequest) return qsBulkValidationRequest
+  return qsConfirmBulkValidationDuringScheduledKometa(options)
+    .then((confirmed) => confirmed ? qsStartBulkValidation(options) : null)
 }
 
 function updateValidationCallouts (inputId) {

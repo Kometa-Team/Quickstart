@@ -196,6 +196,28 @@
 
   <!-- Global Toast Container -->
   <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
+
+  <div class="modal fade" id="qs-confirm-modal" tabindex="-1" aria-labelledby="qs-confirm-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="qs-confirm-title">
+            <i class="bi bi-exclamation-triangle text-warning" id="qs-confirm-icon" aria-hidden="true"></i>
+            <span>Confirm action</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0" id="qs-confirm-message"></p>
+          <p class="text-muted small mt-3 mb-0 d-none" id="qs-confirm-details"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" id="qs-confirm-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="qs-confirm-confirm">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
   {% if page_info and page_info.save_error %}
   <div id="qs-save-error" data-message="{{ page_info.save_error|e }}"></div>
   {% endif %}
