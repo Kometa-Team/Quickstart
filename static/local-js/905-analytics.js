@@ -3926,10 +3926,10 @@ tableNext.addEventListener('click', function () {
 })
 if (tableCollapseEl) {
   tableCollapseEl.addEventListener('shown.bs.collapse', function () {
-    tableToggle.textContent = 'Hide table'
+    tableToggle.textContent = 'Hide runs'
   })
   tableCollapseEl.addEventListener('hidden.bs.collapse', function () {
-    tableToggle.textContent = 'Show table'
+    tableToggle.textContent = 'Show runs'
   })
 }
 configFilter.on('change', function () {

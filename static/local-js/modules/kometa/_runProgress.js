@@ -464,6 +464,10 @@ export function fetchRunProgress (forceFull = false) {
         }
         return
       }
+      if (data.status === 'queued' || data.status === 'waiting_for_log' || data.pending_start) {
+        clearRunProgress(false)
+        return
+      }
       renderRunProgress(data)
     })
     .catch(() => {

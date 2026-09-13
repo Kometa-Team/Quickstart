@@ -541,6 +541,69 @@ function qsShowQueuedFlashToast () {
 }
 
 // Function to show toast messages
+function qsConfirmAction (options = {}) {
+  const title = String(options.title || 'Confirm action')
+  const message = String(options.message || 'Continue?')
+  const details = String(options.details || '').trim()
+  const confirmText = String(options.confirmText || 'Continue')
+  const cancelText = String(options.cancelText || 'Cancel')
+  const confirmClass = String(options.confirmClass || 'btn-primary')
+  const iconClass = String(options.iconClass || 'bi bi-exclamation-triangle text-warning')
+  const modalEl = document.getElementById('qs-confirm-modal')
+
+  const fallback = () => {
+    const fallbackMessage = [title, '', message, details ? `\n${details}` : ''].filter((part) => part !== '').join('\n')
+    return Promise.resolve(typeof window.confirm === 'function' ? window.confirm(fallbackMessage) : true)
+  }
+  if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) return fallback()
+
+  const titleEl = document.getElementById('qs-confirm-title')
+  const titleText = titleEl ? titleEl.querySelector('span') : null
+  const iconEl = document.getElementById('qs-confirm-icon')
+  const messageEl = document.getElementById('qs-confirm-message')
+  const detailsEl = document.getElementById('qs-confirm-details')
+  const confirmBtn = document.getElementById('qs-confirm-confirm')
+  const cancelBtn = document.getElementById('qs-confirm-cancel')
+  if (!titleEl || !messageEl || !confirmBtn || !cancelBtn) return fallback()
+
+  if (titleText) titleText.textContent = title
+  else titleEl.textContent = title
+  if (iconEl) iconEl.className = iconClass
+  messageEl.textContent = message
+  if (detailsEl) {
+    detailsEl.textContent = details
+    detailsEl.classList.toggle('d-none', !details)
+  }
+  confirmBtn.textContent = confirmText
+  cancelBtn.textContent = cancelText
+  confirmBtn.className = `btn ${confirmClass}`
+
+  return new Promise((resolve) => {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl)
+    let settled = false
+    const cleanup = () => {
+      confirmBtn.removeEventListener('click', onConfirm)
+      modalEl.removeEventListener('hidden.bs.modal', onHidden)
+    }
+    const settle = (value) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(value)
+    }
+    const onConfirm = () => {
+      settle(true)
+      modal.hide()
+    }
+    const onHidden = () => settle(false)
+    confirmBtn.addEventListener('click', onConfirm)
+    modalEl.addEventListener('hidden.bs.modal', onHidden)
+    modal.show()
+  })
+}
+
+window.QS_confirmAction = qsConfirmAction
+
 function showToast (type, message) {
   const toastId = `toast-${Date.now()}` // Unique ID for each toast
   const toastContainer = document.querySelector('.toast-container')
@@ -784,9 +847,10 @@ function qsBuildKometaActiveWorkEntry () {
   const href = '/step/900-kometa'
   const status = String(data.status || '').trim().toLowerCase()
   const running = status === 'running'
+  const scheduledWaiting = status === 'scheduled_waiting'
   const runtimeDetails = qsBuildRuntimeActiveDetails(data, 'Kometa')
   const progressDetails = qsBuildKometaProgressDetails()
-  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || running)
+  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || running || scheduledWaiting)
 
   if (unavailableBlocksWork) {
     const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window data unavailable'
@@ -833,6 +897,22 @@ function qsBuildKometaActiveWorkEntry () {
       details,
       href,
       titleAttr: qsBuildActiveTitleAttr('Kometa is paused for Plex maintenance.', pausedSince, details)
+    }
+  }
+
+  if (scheduledWaiting) {
+    const details = [...progressDetails, ...runtimeDetails]
+    if (data.scheduled_run_local) qsPushActiveDetail(details, 'Next run', data.scheduled_run_local)
+    if (Array.isArray(data.schedule_times) && data.schedule_times.length) qsPushActiveDetail(details, 'Schedule', data.schedule_times.join(' | '))
+    return {
+      key: 'kometa-scheduled-waiting',
+      title: 'Kometa scheduler',
+      chip: 'Waiting',
+      state: 'warn',
+      meta: data.scheduled_run_local ? `Next run ${data.scheduled_run_local}` : 'Current run finished; waiting for the next scheduled time.',
+      details,
+      href,
+      titleAttr: qsBuildActiveTitleAttr('Kometa scheduler', data.scheduled_run_local ? `Next run ${data.scheduled_run_local}` : 'Current run finished; waiting for the next scheduled time.', details)
     }
   }
 
@@ -1180,7 +1260,8 @@ function qsRenderBackgroundJobPills () {
 function qsHandleMaintenanceStatus (data) {
   if (!data) return
   qsLatestKometaStatus = data
-  const active = String(data.status || '').trim().toLowerCase() === 'running' || Boolean(data.maintenance_paused)
+  const activeStatus = String(data.status || '').trim().toLowerCase()
+  const active = activeStatus === 'running' || activeStatus === 'scheduled_waiting' || Boolean(data.maintenance_paused)
   if (!active) qsLatestKometaRunProgress = null
   const paused = Boolean(data.maintenance_paused)
   const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
@@ -1195,7 +1276,7 @@ function qsHandleMaintenanceStatus (data) {
   const queuedBadge = document.getElementById('qs-queued-badge')
 
   if (runningBadge) {
-    if (data.status === 'running') {
+    if (data.status === 'running' || data.status === 'scheduled_waiting') {
       const elapsed = typeof data.elapsed_seconds === 'number' ? data.elapsed_seconds : null
       let elapsedLabel = ''
       if (elapsed !== null) {
@@ -1211,7 +1292,11 @@ function qsHandleMaintenanceStatus (data) {
       runningBadge.classList.remove('d-none')
       const label = runningBadge.querySelector('span')
       if (label) {
-        label.innerHTML = `<i class="bi bi-play-circle me-1"></i> Kometa running${elapsedLabel}`
+        if (data.status === 'scheduled_waiting') {
+          label.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Kometa scheduler waiting'
+        } else {
+          label.innerHTML = `<i class="bi bi-play-circle me-1"></i> Kometa running${elapsedLabel}`
+        }
       }
     } else {
       runningBadge.classList.add('d-none')
@@ -2559,9 +2644,33 @@ function qsSetBulkValidationLoading (isLoading) {
   })
 }
 
-function qsRunBulkValidation (options = {}) {
-  if (qsBulkValidationRequest) return qsBulkValidationRequest
+function qsShouldPromptForBulkValidationDuringScheduledKometa (options = {}) {
+  if (options.skipScheduledKometaPrompt) return false
+  if (options.silentToast || options.source === 'final-freshness') return false
+  const status = String((qsLatestKometaStatus && qsLatestKometaStatus.status) || '').trim().toLowerCase()
+  return status === 'scheduled_waiting'
+}
 
+function qsConfirmBulkValidationDuringScheduledKometa (options = {}) {
+  if (!qsShouldPromptForBulkValidationDuringScheduledKometa(options)) return Promise.resolve(true)
+  const nextRun = String((qsLatestKometaStatus && qsLatestKometaStatus.scheduled_run_local) || '').trim()
+  return qsConfirmAction({
+    title: 'Kometa scheduler is waiting',
+    message: 'Validate All can continue, but it will not stop the waiting scheduler. If validation finds critical issues, stop Kometa before the next scheduled run.',
+    details: nextRun ? `Next scheduled run: ${nextRun}` : '',
+    confirmText: 'Continue Validate All',
+    cancelText: 'Cancel',
+    confirmClass: 'btn-warning',
+    iconClass: 'bi bi-exclamation-triangle text-warning'
+  }).then((confirmed) => {
+    if (!confirmed && typeof showToast === 'function') {
+      showToast('info', 'Validate All cancelled. Kometa scheduler is still waiting for its next run.')
+    }
+    return confirmed
+  })
+}
+
+function qsStartBulkValidation (options = {}) {
   const runId = options.runId || `bulk-${Date.now()}-${Math.random().toString(36).slice(2)}`
   qsLatestBulkValidationProgress = {
     run_id: runId,
@@ -2642,6 +2751,12 @@ function qsRunBulkValidation (options = {}) {
     })
 
   return qsBulkValidationRequest
+}
+
+function qsRunBulkValidation (options = {}) {
+  if (qsBulkValidationRequest) return qsBulkValidationRequest
+  return qsConfirmBulkValidationDuringScheduledKometa(options)
+    .then((confirmed) => confirmed ? qsStartBulkValidation(options) : null)
 }
 
 function updateValidationCallouts (inputId) {

@@ -585,6 +585,22 @@ describe('fetchRunProgress', () => {
     expect(kometaState.lastRunProgressPayload).toBe(payload)
   })
 
+  it("clears the panel when the server is waiting for a fresh live log", async () => {
+    installFixture()
+    const cached = makePayload({ total_count: 5 })
+    kometaState.lastRunProgressPayload = cached
+    document.getElementById('run-progress').classList.remove('d-none')
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ status: 'waiting_for_log', libraries: [], total_count: 0 })
+    }))
+
+    await fetchRunProgress()
+
+    expect(document.getElementById('run-progress').classList.contains('d-none')).toBe(true)
+    expect(kometaState.lastRunProgressPayload).toBe(cached)
+  })
+
   it("!ok response: falls to null branch (running+cached -> re-render)", async () => {
     installFixture()
     const cached = makePayload({ total_count: 5 })

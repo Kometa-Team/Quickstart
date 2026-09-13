@@ -68,6 +68,13 @@ def extract_mapping_library(message):
     return None
 
 
+def is_finished_run_marker(message):
+    """Return True for whole-run finished banners, including scheduled runs."""
+    if not message:
+        return False
+    return bool(re.search(r"\bFinished(?:\s+(?:Libraries|\d{1,2}:\d{2}))?\s+Run\b", str(message), re.IGNORECASE))
+
+
 def map_section_to_phase(section_name):
     """Map a section header like ``Overlays`` to a phase key like ``overlays``."""
     if not section_name:
@@ -539,15 +546,7 @@ def extract_progress(
                     current_library = None
             continue
 
-        if "Finished Libraries Run" in msg:
-            finished_run_seen = True
-            if current_library and current_library in statuses and statuses[current_library] != "Skipped":
-                statuses[current_library] = "Done"
-            current_library = None
-            playlist_running = False
-            continue
-
-        if "Finished Run" in msg:
+        if is_finished_run_marker(msg):
             if current_library and current_library in statuses and statuses[current_library] != "Skipped":
                 statuses[current_library] = "Done"
             current_library = None
@@ -675,7 +674,7 @@ def extract_progress(
         for phase in completed_from_sequence:
             if phase not in phases_completed:
                 phases_completed.append(phase)
-    if "Finished Run" in content and phase_current and phase_current not in phases_completed:
+    if is_finished_run_marker(content) and phase_current and phase_current not in phases_completed:
         phases_completed.append(phase_current)
 
     if finished_run_seen and phase_start:

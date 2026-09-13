@@ -248,6 +248,7 @@ describe('updateRunOptionHeaderBadge', () => {
         <option value="Anime">Anime</option>
       </select>
       <input type="text" id="times-input" value="${timesValue}" />
+      <div id="plex-maintenance-window" data-window=""></div>
     `
     const select = document.getElementById('library-multiselect')
     libraryValues.forEach(v => {
@@ -297,6 +298,15 @@ describe('updateRunOptionHeaderBadge', () => {
     expect(badge.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
   })
 
+  it('--times inside maintenance: shows "Maintenance overlap" (error)', () => {
+    installRunOptionDom('--times', [], '05:00|17:00')
+    document.getElementById('plex-maintenance-window').dataset.window = '04:00–06:00'
+    updateRunOptionHeaderBadge()
+    const badge = document.getElementById('heading-runopt-rollup-badge')
+    expect(badge.textContent).toBe('Maintenance overlap')
+    expect(badge.classList.contains('qs-validation-rollup-badge--error')).toBe(true)
+  })
+
   it('--times with garbage input: shows "Invalid times" (error)', () => {
     installRunOptionDom('--times', [], 'not-a-time')
     updateRunOptionHeaderBadge()
@@ -311,6 +321,15 @@ describe('updateRunOptionHeaderBadge', () => {
     const badge = document.getElementById('heading-runopt-rollup-badge')
     expect(badge.textContent).toBe('Scheduled')
     expect(badge.classList.contains('qs-validation-rollup-badge--unknown')).toBe(true)
+  })
+
+  it('scheduled default inside maintenance: shows "Maintenance overlap" (error)', () => {
+    installRunOptionDom('')
+    document.getElementById('plex-maintenance-window').dataset.window = '04:00–06:00'
+    updateRunOptionHeaderBadge()
+    const badge = document.getElementById('heading-runopt-rollup-badge')
+    expect(badge.textContent).toBe('Maintenance overlap')
+    expect(badge.classList.contains('qs-validation-rollup-badge--error')).toBe(true)
   })
 })
 

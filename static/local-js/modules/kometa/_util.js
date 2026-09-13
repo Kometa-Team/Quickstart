@@ -195,7 +195,11 @@ export function isTimeWithinRange (time, rangeStart, rangeEnd) {
     return h * 60 + m
   }
   const timeMin = toMinutes(time)
-  return timeMin >= toMinutes(rangeStart) && timeMin < toMinutes(rangeEnd)
+  const startMin = toMinutes(rangeStart)
+  const endMin = toMinutes(rangeEnd)
+  if (startMin === endMin) return false
+  if (startMin < endMin) return timeMin >= startMin && timeMin < endMin
+  return timeMin >= startMin || timeMin < endMin
 }
 
 // ---------------------------------------------------------------------

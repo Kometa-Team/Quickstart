@@ -23,7 +23,7 @@
 //
 //   hideRunCommandSectionUntilValidated()
 //     -- collapse the run-command accordion and swap in the
-//        placeholder. Also disables the "Run Now" button and puts it
+//        placeholder. Also disables the "Run" button and puts it
 //        into a "Waiting..." state. Called from many places (probe
 //        errors, install-needed states, update in progress, etc.).
 //
@@ -35,7 +35,7 @@
 //
 //   showRunCommandSectionAfterValidated()
 //     -- convenience wrapper that unhides the section, resets the
-//        "Run Now" button label to its default, rebuilds the run
+//        "Run" button label to its default, rebuilds the run
 //        command string, and refreshes the button's disabled state.
 //
 // STATE TOUCHED:
@@ -63,7 +63,7 @@
 //   #run-command-output-collapse -- the accordion collapsable body
 //   #run-command-output-heading .accordion-button
 //                                -- accordion toggle button
-//   #run-now                     -- the "Run Now" button
+//   #run-now                     -- the "Run" button
 //   #copy-command                -- the copy-to-clipboard button
 //   #run-command-box .form-label -- the label above the command
 //   #run-command-box pre         -- the <pre> that holds the command
@@ -85,7 +85,7 @@ import { updateRunNowState } from './_runControls.js'
  *
  * Priority order (first match wins):
  *   1. !showYAML             -> "Fix validation before..."
- *   2. running               -> "Kometa is currently running"
+ *   2. running/waiting       -> "Kometa is currently running" or scheduler waiting
  *   3. kometaUpdating        -> "Kometa update in progress"
  *   4. validationInProgress  -> "Preparing Kometa"
  *   5. !localCheckCompleted  -> "Checking Kometa state"
@@ -120,6 +120,10 @@ export function setRunCommandPlaceholderState () {
   } else if (kometaState.kometaStatus === 'running') {
     title = 'Kometa is currently running'
     message = 'Run output and stop controls are active below. Prepare Kometa is locked until the current run finishes.'
+    showButton = false
+  } else if (kometaState.kometaStatus === 'scheduled_waiting') {
+    title = 'Kometa scheduler is waiting'
+    message = 'The scheduled run cycle has finished and the Kometa process is waiting for the next scheduled time. Stop it before changing the run command.'
     showButton = false
   } else if (kometaState.kometaUpdating) {
     title = 'Kometa update in progress'
@@ -170,7 +174,7 @@ export function clearRunCommandPlaceholderState () {
 
 /**
  * Collapse the run-command accordion and swap in the placeholder.
- * Also disables the "Run Now" button and puts it into a "Waiting..."
+ * Also disables the "Run" button and puts it into a "Waiting..."
  * state (so a distracted user can't click it while validation is
  * pending).
  *
@@ -226,7 +230,7 @@ export function revealRunCommandSection () {
 }
 
 /**
- * Convenience wrapper that unhides the section, resets the "Run Now"
+ * Convenience wrapper that unhides the section, resets the "Run"
  * button label to its default, rebuilds the run command string, and
  * refreshes the button's disabled state.
  *
@@ -238,7 +242,7 @@ export function showRunCommandSectionAfterValidated () {
   revealRunCommandSection()
   const runNowEl = document.getElementById('run-now')
   if (runNowEl) {
-    runNowEl.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>'
+    runNowEl.innerHTML = '<i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run</span>'
   }
   try { buildCommand() } catch { /* swallow -- caller may not need a rebuild */ }
   updateRunNowState()

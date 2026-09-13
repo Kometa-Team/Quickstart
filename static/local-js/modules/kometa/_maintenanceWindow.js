@@ -39,17 +39,43 @@ export function toggleTimesInputVisibility (mainOption) {
  * Return the currently-configured Plex maintenance window, as
  * `{ start, end }` HH:MM strings. Reads from the
  * `#plex-maintenance-window` element's `data-window` attribute,
- * which the backend populates with a string like "03:00–05:00"
- * (note the EN-DASH separator, not a hyphen).
+ * which the backend populates with a string like "03:00–05:00".
+ * Plain hyphen payloads are accepted too, because older support
+ * payloads and tests may use "03:00-05:00".
  *
  * Returns null when the element is present but has no configured
  * window, or when the payload is malformed.
  */
 export function getMaintenanceWindow () {
-  const windowStr = document.getElementById('plex-maintenance-window').dataset.window
-  if (!windowStr || !windowStr.includes('–')) return null
-  const [start, end] = windowStr.split('–').map(t => t.trim())
-  return { start, end }
+  const windowStr = document.getElementById('plex-maintenance-window')?.dataset.window || ''
+  const matches = String(windowStr).match(/([01]\d|2[0-3]):[0-5]\d/g)
+  if (!matches || matches.length < 2) return null
+  return { start: matches[0], end: matches[1] }
+}
+
+export function getMaintenanceScheduleConflict (mainOption) {
+  const maintenance = getMaintenanceWindow()
+  if (!maintenance) return null
+
+  if (mainOption === '') {
+    const defaultTime = '05:00'
+    if (isTimeWithinRange(defaultTime, maintenance.start, maintenance.end)) {
+      return { maintenance, times: [defaultTime], source: 'default' }
+    }
+    return null
+  }
+
+  if (mainOption === '--times') {
+    const timesInput = document.getElementById('times-input')?.value.trim() || ''
+    if (!isValidTimesFormat(timesInput)) return null
+    const times = timesInput.split('|').map(t => t.trim())
+    const overlappingTimes = times.filter(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
+    if (overlappingTimes.length) {
+      return { maintenance, times: overlappingTimes, source: 'times' }
+    }
+  }
+
+  return null
 }
 
 /**
@@ -64,28 +90,14 @@ export function getMaintenanceWindow () {
  */
 export function checkMaintenanceWarning (mainOption) {
   const warningBox = document.getElementById('times-warning')
-  const maintenance = getMaintenanceWindow()
+  if (!warningBox) return null
   warningBox.classList.add('d-none')
 
-  if (!maintenance) return
-
-  if (mainOption === '') {
-    // Kometa's implicit default schedule fires at 05:00.
-    const defaultTime = '05:00'
-    if (isTimeWithinRange(defaultTime, maintenance.start, maintenance.end)) {
-      warningBox.classList.remove('d-none')
-    }
-    return
+  const conflict = getMaintenanceScheduleConflict(mainOption)
+  if (conflict) {
+    const label = conflict.source === 'default' ? 'Kometa default time 05:00' : `Selected time${conflict.times.length > 1 ? 's' : ''} ${conflict.times.join(', ')}`
+    warningBox.textContent = `${label} starts during Plex scheduled maintenance (${conflict.maintenance.start} - ${conflict.maintenance.end}). Choose a time after the window.`
+    warningBox.classList.remove('d-none')
   }
-
-  if (mainOption === '--times') {
-    const timesInput = document.getElementById('times-input').value.trim()
-    if (isValidTimesFormat(timesInput)) {
-      const times = timesInput.split('|').map(t => t.trim())
-      const overlaps = times.some(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
-      if (overlaps) {
-        warningBox.classList.remove('d-none')
-      }
-    }
-  }
+  return conflict
 }

@@ -25,6 +25,7 @@ import os
 import platform
 import psutil
 import re
+import shlex
 import shutil
 import signal
 import socket
@@ -3912,6 +3913,158 @@ def shutdown():
     return jsonify(success=True, message="Shutting down..."), 200
 
 
+def _hhmm_to_minutes(value):
+    match = re.match(r"^([01]\d|2[0-3]):([0-5]\d)$", str(value or "").strip())
+    if not match:
+        return None
+    return int(match.group(1)) * 60 + int(match.group(2))
+
+
+def _minutes_to_hhmm(value):
+    minutes = int(value or 0) % 1440
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+
+def _time_min_within_window(time_min, start_min, end_min):
+    if time_min is None or start_min is None or end_min is None or start_min == end_min:
+        return False
+    if start_min < end_min:
+        return start_min <= time_min < end_min
+    return time_min >= start_min or time_min < end_min
+
+
+def _split_kometa_command_parts(command):
+    try:
+        return shlex.split(str(command or ""), posix=not sys.platform.startswith("win"))
+    except Exception:
+        return str(command or "").split()
+
+
+def _strip_cli_value_quotes(value):
+    text = str(value or "").strip()
+    if len(text) >= 2 and ((text[0] == '"' and text[-1] == '"') or (text[0] == "'" and text[-1] == "'")):
+        return text[1:-1]
+    return text
+
+
+def _extract_kometa_scheduled_times(command):
+    parts = _split_kometa_command_parts(command)
+    if not parts:
+        return ["05:00"], True
+    for idx, part in enumerate(parts):
+        if part.startswith("--times="):
+            raw = _strip_cli_value_quotes(part.split("=", 1)[1])
+            return [item.strip() for item in raw.split("|") if item.strip()], False
+        if part == "--times" and idx + 1 < len(parts):
+            raw = _strip_cli_value_quotes(parts[idx + 1])
+            return [item.strip() for item in raw.split("|") if item.strip()], False
+    immediate_flags = {"--run", "--run-libraries", "--resume"}
+    if any(part in immediate_flags or part.startswith("--run-libraries=") or part.startswith("--resume=") for part in parts):
+        return [], False
+    return ["05:00"], True
+
+
+def _next_local_datetime_for_hhmm(value, now=None, after=None):
+    minutes = _hhmm_to_minutes(value)
+    if minutes is None:
+        return None
+    now = now or datetime.now()
+    reference = after or now
+    candidate = reference.replace(hour=minutes // 60, minute=minutes % 60, second=0, microsecond=0)
+    if candidate <= reference:
+        candidate += timedelta(days=1)
+    return candidate
+
+
+def _format_local_datetime_payload(value):
+    if not value:
+        return None, None
+    return value.isoformat(), value.strftime("%Y-%m-%d %I:%M %p").lstrip("0")
+
+
+def _build_kometa_schedule_timing_payload(command, now=None, after=None):
+    times, uses_default = _extract_kometa_scheduled_times(command)
+    candidates = [_next_local_datetime_for_hhmm(value, now=now, after=after) for value in times]
+    candidates = [value for value in candidates if value is not None]
+    if not candidates:
+        return {"schedule_times": times, "scheduled_run_at": None, "scheduled_run_local": None, "uses_default_schedule_time": uses_default}
+    scheduled = min(candidates)
+    scheduled_at, scheduled_local = _format_local_datetime_payload(scheduled)
+    return {
+        "schedule_times": times,
+        "scheduled_run_at": scheduled_at,
+        "scheduled_run_local": scheduled_local,
+        "uses_default_schedule_time": uses_default,
+    }
+
+
+def _maintenance_window_end_datetime(now, start_min, end_min):
+    if start_min is None or end_min is None or start_min == end_min:
+        return None
+    now = now or datetime.now()
+    end_dt = now.replace(hour=end_min // 60, minute=end_min % 60, second=0, microsecond=0)
+    if start_min < end_min:
+        if end_dt <= now:
+            end_dt += timedelta(days=1)
+        return end_dt
+    if (now.hour * 60 + now.minute) >= start_min:
+        end_dt += timedelta(days=1)
+    return end_dt
+
+
+def _build_kometa_queue_timing_payload(command, start_min, end_min, now=None):
+    now = now or datetime.now()
+    queued_start = _maintenance_window_end_datetime(now, start_min, end_min)
+    queued_start_at, queued_start_local = _format_local_datetime_payload(queued_start)
+    payload = {
+        "queued_start_at": queued_start_at,
+        "queued_start_local": queued_start_local,
+    }
+    payload.update(_build_kometa_schedule_timing_payload(command, now=now))
+    return payload
+
+
+def _get_pending_kometa_timing_payload(pending=None, now=None, include_window=True):
+    pending = pending if pending is not None else _peek_pending_kometa_start()
+    if not pending:
+        return {}
+    config_name = pending.get("config_name")
+    start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=config_name)
+    if start_min is None or end_min is None:
+        start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=config_name)
+    payload = _build_kometa_queue_timing_payload(pending.get("command"), start_min, end_min, now=now or datetime.now())
+    if include_window and window_str:
+        payload["maintenance_window"] = window_str
+    payload["queued_reason"] = "plex_maintenance"
+    return payload
+
+
+def _get_kometa_schedule_maintenance_conflict(command, start_min, end_min, window_str=None):
+    if start_min is None or end_min is None:
+        return None
+    times, uses_default = _extract_kometa_scheduled_times(command)
+    overlapping = []
+    for value in times:
+        minutes = _hhmm_to_minutes(value)
+        if _time_min_within_window(minutes, start_min, end_min):
+            overlapping.append(value)
+    if not overlapping:
+        return None
+    if uses_default:
+        message = f"Kometa default scheduled time 05:00 starts during Plex maintenance ({window_str or f'{_minutes_to_hhmm(start_min)}-{_minutes_to_hhmm(end_min)}'}). Choose --run to start immediately, or set --times after the maintenance window."
+    else:
+        label = ", ".join(overlapping)
+        message = f"Kometa scheduled time{'s' if len(overlapping) > 1 else ''} {label} start{'s' if len(overlapping) == 1 else ''} during Plex maintenance ({window_str or f'{_minutes_to_hhmm(start_min)}-{_minutes_to_hhmm(end_min)}'}). Choose a time after the maintenance window."
+    return {
+        "message": message,
+        "times": overlapping,
+        "maintenance_start": _minutes_to_hhmm(start_min),
+        "maintenance_end": _minutes_to_hhmm(end_min),
+        "maintenance_window": window_str,
+        "uses_default_schedule_time": uses_default,
+    }
+
+
 @app.route("/start-kometa", methods=["POST"])
 def start_kometa():
     data = request.get_json() or {}
@@ -3969,9 +4122,30 @@ def start_kometa():
     start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=maintenance_config_name)
     if start_min is None or end_min is None:
         start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=maintenance_config_name)
+    schedule_conflict = _get_kometa_schedule_maintenance_conflict(command, start_min, end_min, window_str)
+    if schedule_conflict:
+        return (
+            jsonify(
+                {
+                    "error": schedule_conflict["message"],
+                    "status": "blocked",
+                    "blocked_by": "maintenance_schedule",
+                    "maintenance_window": window_str,
+                    "schedule_conflict": schedule_conflict,
+                }
+            ),
+            400,
+        )
     if _is_within_maintenance_window(datetime.now(), start_min, end_min):
         _set_pending_kometa_start(command, session.get("config_name"), start_mode=start_mode)
-        return jsonify({"status": "queued", "maintenance_window": window_str, "start_mode": start_mode}), 202
+        payload = {
+            "status": "queued",
+            "maintenance_window": window_str,
+            "start_mode": start_mode,
+            "queued_reason": "plex_maintenance",
+        }
+        payload.update(_build_kometa_queue_timing_payload(command, start_min, end_min, now=datetime.now()))
+        return jsonify(payload), 202
 
     ok, result = _launch_kometa_command(command, session.get("config_name"), start_mode=start_mode)
     if ok:
@@ -4049,6 +4223,80 @@ def stop_kometa():
         return jsonify({"error": f"Failed to stop Kometa: {str(e)}"}), 500
 
 
+def _kometa_command_has_schedule(command):
+    times, _uses_default = _extract_kometa_scheduled_times(command)
+    return bool(times)
+
+
+def _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=None):
+    try:
+        stats = log_path.stat()
+    except Exception:
+        return False
+    if started_at_ts is not None and stats.st_mtime < (started_at_ts - 30):
+        return False
+    try:
+        content = _read_text_tail(log_path, 4000)
+    except Exception:
+        return False
+    finished_matches = list(re.finditer(r"\bFinished(?:\s+(?:Libraries|\d{1,2}:\d{2}))?\s+Run\b", content, flags=re.IGNORECASE))
+    if not finished_matches:
+        return False
+    finished_match = finished_matches[-1]
+    after_finished = content[finished_match.end() :]
+    if re.search(r"Mapping\s+.+?\s+Library|Starting\s+(Run|Library)|Processing\s+", after_finished, flags=re.IGNORECASE):
+        return False
+    finished_at = None
+    line_start = content.rfind("\n", 0, finished_match.start()) + 1
+    line_end = content.find("\n", finished_match.end())
+    if line_end == -1:
+        line_end = len(content)
+    finished_line = content[line_start:line_end]
+    ts_match = re.search(r"\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})", finished_line)
+    if ts_match:
+        try:
+            finished_at = datetime.strptime(f"{ts_match.group(1)} {ts_match.group(2)}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            finished_at = None
+    return {"finished_at": finished_at}
+
+
+def _build_scheduled_waiting_payload(command, log_path, started_at_ts=None):
+    if not _kometa_command_has_schedule(command):
+        return None
+    finished_info = _kometa_log_looks_waiting_after_finished(log_path, started_at_ts=started_at_ts)
+    if not finished_info:
+        return None
+    now = datetime.now()
+    payload = _build_kometa_schedule_timing_payload(command, now=now, after=finished_info.get("finished_at") or now)
+    payload["message"] = "Kometa finished the current scheduled run and is waiting for the next scheduled time."
+    payload["scheduled_waiting_reason"] = "between_runs"
+    return payload
+
+
+def _kometa_log_is_fresh_for_run(log_path, started_at_ts=None):
+    if started_at_ts is None:
+        return True
+    try:
+        stats = log_path.stat()
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return True
+    return stats.st_mtime >= (started_at_ts - 30)
+
+
+def _build_scheduled_waiting_for_log_payload(command, log_path, started_at_ts=None):
+    if not _kometa_command_has_schedule(command):
+        return None
+    if _kometa_log_is_fresh_for_run(log_path, started_at_ts=started_at_ts):
+        return None
+    payload = _build_kometa_schedule_timing_payload(command, now=datetime.now())
+    payload["message"] = "Kometa scheduler is waiting for the next scheduled run and has not written a fresh meta.log for this run yet."
+    payload["scheduled_waiting_reason"] = "waiting_for_log"
+    return payload
+
+
 @app.route("/kometa-status", methods=["GET"])
 def kometa_status():
     try:
@@ -4060,6 +4308,7 @@ def kometa_status():
     pending_requested_at = pending.get("requested_at") if pending else None
     pending_start_mode = _normalize_kometa_start_mode(pending.get("start_mode")) if pending else "current"
     pending_command = pending.get("command") if pending else None
+    pending_timing = _get_pending_kometa_timing_payload(pending, include_window=False) if pending else {}
     ctx = _get_run_context()
     pid = helpers.get_kometa_pid()
     if not pid:
@@ -4072,11 +4321,12 @@ def kometa_status():
             except Exception:
                 pid = None
     if not pid:
-        try:
-            _ingest_completed_live_logs("kometa")
-        except Exception:
-            pass
-        _clear_run_context()
+        if not pending_start:
+            try:
+                _ingest_completed_live_logs("kometa")
+            except Exception:
+                pass
+            _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -4086,7 +4336,7 @@ def kometa_status():
             window_unavailable = MAINTENANCE_STATE["window_unavailable"]
             window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
         return jsonify(
-            status="not started",
+            status="queued" if pending_start else "not started",
             maintenance_active=maintenance_active,
             maintenance_paused=maintenance_paused,
             maintenance_window=maintenance_window,
@@ -4098,6 +4348,7 @@ def kometa_status():
             pending_requested_at=pending_requested_at,
             pending_start_mode=pending_start_mode,
             pending_command=pending_command,
+            **pending_timing,
         )
 
     try:
@@ -4135,8 +4386,22 @@ def kometa_status():
                     queued_started_at = MAINTENANCE_STATE["queued_started_at"]
                     window_unavailable = MAINTENANCE_STATE["window_unavailable"]
                     window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
+                context_command = ctx.get("command")
+                active_command = context_command or cmdline
+                active_log_path = helpers.get_kometa_log_dir() / "meta.log"
+                scheduled_waiting = None
+                if context_command:
+                    scheduled_waiting = _build_scheduled_waiting_payload(
+                        context_command,
+                        active_log_path,
+                        started_at_ts=started_at_ts,
+                    ) or _build_scheduled_waiting_for_log_payload(
+                        context_command,
+                        active_log_path,
+                        started_at_ts=started_at_ts,
+                    )
                 return jsonify(
-                    status="running",
+                    status="scheduled_waiting" if scheduled_waiting else "running",
                     pid=pid,
                     started_at=started_at,
                     started_at_ts=started_at_ts,
@@ -4162,7 +4427,9 @@ def kometa_status():
                     pending_start=pending_start,
                     pending_requested_at=pending_requested_at,
                     start_mode=_normalize_kometa_start_mode(ctx.get("start_mode")),
-                    active_command=ctx.get("command"),
+                    active_command=active_command,
+                    scheduled_waiting=bool(scheduled_waiting),
+                    **(scheduled_waiting or {}),
                 )
         # If we're here, it likely ended; try to get a return code
         try:
@@ -4210,7 +4477,8 @@ def kometa_status():
             os.remove(helpers.get_kometa_pid_file())
         except Exception:
             pass
-        _clear_run_context()
+        if not pending_start:
+            _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -4220,7 +4488,7 @@ def kometa_status():
             window_unavailable = MAINTENANCE_STATE["window_unavailable"]
             window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
         return jsonify(
-            status="not started",
+            status="queued" if pending_start else "not started",
             maintenance_active=maintenance_active,
             maintenance_paused=maintenance_paused,
             maintenance_window=maintenance_window,
@@ -4232,12 +4500,90 @@ def kometa_status():
             pending_requested_at=pending_requested_at,
             pending_start_mode=pending_start_mode,
             pending_command=pending_command,
+            **pending_timing,
         )
+
+
+def _get_active_kometa_started_at_ts():
+    pid = helpers.get_kometa_pid()
+    candidates = []
+    if pid:
+        try:
+            candidates.append(psutil.Process(pid))
+        except Exception:
+            pass
+    try:
+        proc = _find_running_kometa_process()
+        if proc:
+            candidates.append(proc)
+    except Exception:
+        pass
+    for proc in candidates:
+        try:
+            if proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE:
+                cmdline = " ".join(proc.cmdline() or [])
+                if "kometa.py" in cmdline:
+                    return proc.create_time()
+        except Exception:
+            continue
+    return None
+
+
+def _build_waiting_for_kometa_log_payload(log_path, status="waiting_for_log", started_at_ts=None):
+    payload = {
+        "status": status,
+        "log": "",
+        "log_mtime": None,
+        "log_age_seconds": None,
+        "log_is_stale": True,
+        "log_path": str(log_path),
+    }
+    if status == "queued":
+        pending = _peek_pending_kometa_start()
+        payload.update(_get_pending_kometa_timing_payload(pending))
+        payload.update(
+            {
+                "pending_start": True,
+                "pending_requested_at": pending.get("requested_at") if pending else None,
+                "pending_start_mode": _normalize_kometa_start_mode(pending.get("start_mode")) if pending else "current",
+                "pending_command": pending.get("command") if pending else None,
+                "message": "Kometa is queued and has not started writing a log yet.",
+            }
+        )
+    else:
+        ctx = _get_run_context()
+        payload.update(_build_kometa_schedule_timing_payload(ctx.get("command"), now=datetime.now()))
+        payload["pending_start"] = False
+        payload["started_at_ts"] = started_at_ts
+        payload["message"] = "Kometa is running but has not written a fresh meta.log for this run yet."
+    return payload
+
+
+def _get_kometa_log_wait_payload(log_path):
+    pending = _peek_pending_kometa_start()
+    active_started_at = _get_active_kometa_started_at_ts()
+    if pending and active_started_at is None:
+        return _build_waiting_for_kometa_log_payload(log_path, status="queued")
+    if active_started_at is None:
+        return None
+    try:
+        log_stats = log_path.stat()
+    except FileNotFoundError:
+        return _build_waiting_for_kometa_log_payload(log_path, started_at_ts=active_started_at)
+    except Exception:
+        return None
+    if log_stats.st_mtime < (active_started_at - 30):
+        return _build_waiting_for_kometa_log_payload(log_path, started_at_ts=active_started_at)
+    return None
 
 
 @app.route("/tail-log")
 def tail_log():
     log_path = helpers.get_kometa_log_dir() / "meta.log"
+
+    wait_payload = _get_kometa_log_wait_payload(log_path)
+    if wait_payload:
+        return jsonify(wait_payload)
 
     if not log_path.exists():
         return jsonify({"error": f"Log file not found at: {log_path}"}), 404
@@ -4338,12 +4684,14 @@ def tail_log():
         log_is_stale = False
         if log_mtime is not None and kometa_started_at is not None:
             log_is_stale = log_mtime < (kometa_started_at - 30)
+        log_is_previous_run = kometa_started_at is None
 
         response = {
             "log": log_content,
             "log_mtime": log_mtime,
             "log_age_seconds": log_age_seconds,
             "log_is_stale": log_is_stale,
+            "log_is_previous_run": log_is_previous_run,
             "log_path": str(log_path),
         }
         if include_stats:
@@ -4518,6 +4866,11 @@ def logscan_analyze():
     normalized_name = (config_name or "").strip().lower().replace(" ", "_") or "default"
     config_path = helpers.get_kometa_config_dir() / f"{normalized_name}_config.yml"
 
+    wait_payload = _get_kometa_log_wait_payload(log_path)
+    if wait_payload:
+        wait_payload.update({"cached": False, "ingest_skipped": True, "summary": None, "recommendations": []})
+        return jsonify(wait_payload)
+
     if not log_path.exists():
         return jsonify({"error": f"Log file not found at: {log_path}"}), 404
 
@@ -4594,6 +4947,11 @@ def logscan_progress():
     log_path = helpers.get_kometa_log_dir() / "meta.log"
     sidecar_path = _get_kometa_maintenance_sidecar_path(kometa_root)
     pending_path = _get_kometa_pending_marker_path(kometa_root)
+
+    wait_payload = _get_kometa_log_wait_payload(log_path)
+    if wait_payload:
+        wait_payload.update({"libraries": [], "total_count": 0, "completed_count": 0})
+        return jsonify(wait_payload)
 
     if not log_path.exists():
         return jsonify({"error": f"Log file not found at: {log_path}"}), 404
@@ -4734,6 +5092,27 @@ def logscan_progress():
                             entry["status"] = "Stopped"
             return data
 
+        def normalize_progress_for_finished(data):
+            if not isinstance(data, dict) or not data.get("run_finished"):
+                return data
+            data = deepcopy(data)
+            data["current_library"] = None
+            data["phase_current"] = None
+            data["playlist_running"] = False
+            libraries = data.get("libraries")
+            if isinstance(libraries, list):
+                completed = 0
+                for entry in libraries:
+                    if not isinstance(entry, dict):
+                        continue
+                    if entry.get("status") == "Skipped":
+                        continue
+                    entry["status"] = "Done"
+                    completed += 1
+                data["completed_count"] = completed
+                data["total_count"] = data.get("total_count") or len(libraries)
+            return data
+
         ctx = _get_run_context()
         selected = ctx.get("selected_libraries")
         started_at = ctx.get("started_at")
@@ -4759,6 +5138,7 @@ def logscan_progress():
         if not force_full_read and _cache_matches_progress_signature():
             data = cached.get("data") or {}
             data = refresh_live_progress_elapsed(data, running, started_at)
+            data = normalize_progress_for_finished(data)
             data = normalize_progress_for_stopped(data, running, stopped_requested)
             return jsonify(data)
 
@@ -4784,7 +5164,7 @@ def logscan_progress():
         phase_order = _get_progress_run_order(config_data=config_data)
         allowed_phases = phase_order or ["operations", "metadata", "collections", "overlays"]
         playlists_configured = bool(config_data.get("playlists")) if isinstance(config_data, dict) else False
-        if run_mode in ("collections", "overlays", "operations", "metadata", "playlists"):
+        if run_mode in ("collections", "overlays", "operations", "metadata", "playlists") and not progress.get("run_finished"):
             allowed_phases = [run_mode]
             progress["phase_current"] = run_mode
             progress["phases_completed"] = []
@@ -4796,6 +5176,7 @@ def logscan_progress():
         maintenance_summary = analyzer.extract_maintenance_summary(log_content)
         progress["maintenance_summary"] = maintenance_summary if isinstance(maintenance_summary, dict) else {}
         progress["maintenance_had_pause"] = bool((progress.get("maintenance_summary") or {}).get("had_pause"))
+        progress = normalize_progress_for_finished(progress)
         progress = normalize_progress_for_stopped(progress, running, stopped_requested)
         if log_stats:
             progress["last_log_at"] = datetime.fromtimestamp(log_stats.st_mtime, tz=timezone.utc).isoformat()

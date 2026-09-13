@@ -70,6 +70,9 @@ export function formatPercent (value) {
  *     Renders the live snapshot: started-at, elapsed, CPU/mem/disk
  *     for both Kometa and the host system.
  *
+ *   data.status === 'scheduled_waiting'
+ *     Renders scheduler-waiting text after a scheduled run finishes.
+ *
  *   data.status === 'done'
  *     Renders "Kometa run complete." with empty metrics.
  *
@@ -85,10 +88,19 @@ export function formatPercent (value) {
  *   Format the elapsed-seconds count. Typically `formatRunSeconds`
  *   from _util.js. Falsy return value is replaced with 'n/a'.
  * @returns {{ timerText:string, metricsText:string, stage:string }}
- *   stage is 'running' | 'done' | 'idle'.
+ *   stage is 'running' | 'scheduled_waiting' | 'done' | 'idle'.
  */
 export function buildRunStatusText (data, opts) {
   const { formatStartedAt, formatElapsed } = opts
+
+  if (data && data.status === 'scheduled_waiting') {
+    const nextRun = data.scheduled_run_local ? ` Next scheduled run: ${data.scheduled_run_local}.` : ''
+    return {
+      timerText: `Kometa scheduler is waiting.${nextRun}`,
+      metricsText: data.message || '',
+      stage: 'scheduled_waiting'
+    }
+  }
 
   if (data && data.status === 'running') {
     const startedAt = formatStartedAt(data.started_at)

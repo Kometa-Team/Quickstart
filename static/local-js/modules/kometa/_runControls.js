@@ -1,10 +1,10 @@
-// Run controls: the "Run Now" button and the "Recovery Command" button.
+// Run controls: the "Run" button and the "Recovery Command" button.
 //
 // This module owns the two functions that decide whether these
 // buttons should be enabled / clickable, based on the current
 // kometaState:
 //
-//   updateRunNowState        -- enables/disables the primary Run Now
+//   updateRunNowState        -- enables/disables the primary Run
 //                               button based on the six-flag state
 //                               machine (validation + install +
 //                               running-status + run-command validity)
@@ -61,11 +61,11 @@ export function getRecoveryRunCommand () {
 }
 
 // ---------------------------------------------------------------------
-// Run Now button
+// Run button
 // ---------------------------------------------------------------------
 
 /**
- * Update the Run Now button's disabled state based on current
+ * Update the Run button's disabled state based on current
  * validation + install + running-status flags.
  *
  * Disable rules (any one triggers disable):
@@ -106,7 +106,7 @@ export function updateRunNowState () {
     !kometaState.showYAML ||
     kometaState.kometaValidationInProgress ||
     kometaState.kometaUpdating ||
-    kometaState.kometaStatus === 'running' ||
+    (kometaState.kometaStatus === 'running' || kometaState.kometaStatus === 'scheduled_waiting') ||
     !kometaState.kometaValidated
   )
 
@@ -153,7 +153,8 @@ export function syncIncompleteRunActions () {
     !kometaState.kometaValidationInProgress &&
     !kometaState.kometaUpdating &&
     !kometaState.kometaPendingStart &&
-    kometaState.kometaStatus !== 'running'
+    kometaState.kometaStatus !== 'running' &&
+    kometaState.kometaStatus !== 'scheduled_waiting'
 
   runRecovery.classList.toggle('d-none', !alertVisible)
   runRecovery.disabled = !recoveryRunnable
@@ -173,6 +174,8 @@ export function syncIncompleteRunActions () {
     runRecovery.setAttribute('title', 'A Kometa start is already queued for the next Plex maintenance window.')
   } else if (kometaState.kometaStatus === 'running') {
     runRecovery.setAttribute('title', 'Kometa is already running.')
+  } else if (kometaState.kometaStatus === 'scheduled_waiting') {
+    runRecovery.setAttribute('title', 'Kometa scheduler is waiting. Stop it before starting a recovery run.')
   } else {
     // Alert is visible, no blockers, but no recovery command in the
     // panel. Unusual state (server said recovery is possible but the

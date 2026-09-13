@@ -2,7 +2,7 @@
 //
 // The "run command" is the exact CLI Quickstart shows in the UI --
 // the one users can copy-paste to launch Kometa manually, or that
-// Quickstart itself invokes on "Run Now". It's assembled from:
+// Quickstart itself invokes on "Run". It's assembled from:
 //
 //   - the venv python + kometa.py paths (from #run-command-output dataset)
 //   - the currently-selected run option (radio: default, --times,
@@ -212,7 +212,7 @@ const CHECKBOX_FLAGS = [
  *   undefined    -- no run-command-output in the DOM (short-circuit)
  *
  * Side effects at every non-short-circuit exit:
- *   - updateRunNowState() -- refresh the Run Now button
+ *   - updateRunNowState() -- refresh the Run button
  *   - syncFinalAccordionRollups() -- refresh header badges
  *
  * @returns {boolean | undefined}
@@ -302,6 +302,17 @@ export function buildCommand () {
 
   if (mainOption) cli += ` ${mainOption}`
 
+  if (mainOption === '') {
+    const conflict = checkMaintenanceWarning(mainOption)
+    if (conflict) {
+      runCmdOutput.textContent = '⚠️ Kometa default scheduled time 05:00 starts during Plex maintenance. Choose --run to start immediately, or set --times after the maintenance window.'
+      notify()
+      return false
+    }
+  } else if (mainOption !== '--times') {
+    checkMaintenanceWarning(mainOption)
+  }
+
   // ---- --times: validate + append quoted value --------------------
   if (mainOption === '--times') {
     const timesInput = document.getElementById('times-input').value.trim()
@@ -314,7 +325,12 @@ export function buildCommand () {
       return false
     }
     document.getElementById('times-error').classList.add('d-none')
-    checkMaintenanceWarning(mainOption)
+    const conflict = checkMaintenanceWarning(mainOption)
+    if (conflict) {
+      runCmdOutput.textContent = `⚠️ Kometa scheduled time${conflict.times.length > 1 ? 's' : ''} ${conflict.times.join(', ')} start${conflict.times.length > 1 ? '' : 's'} during Plex maintenance. Choose a time after the maintenance window.`
+      notify()
+      return false
+    }
     cli += ` "${timesInput}"`
   } else {
     toggleTimesInputVisibility(mainOption)
