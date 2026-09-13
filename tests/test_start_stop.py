@@ -428,6 +428,73 @@ def test_kometa_status_reports_scheduled_waiting_after_finished_times_run(client
     assert "waiting for the next scheduled time" in data["message"]
 
 
+def test_kometa_status_reports_scheduled_waiting_before_fresh_log(client, tmp_path, monkeypatch, qs_module):
+    log_dir = tmp_path / "kometa" / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text("previous run content\n", encoding="utf-8")
+    started_at_ts = time.time()
+    os.utime(log_path, (started_at_ts - 120, started_at_ts - 120))
+
+    monkeypatch.setattr(qs_module, "_peek_pending_kometa_start", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: log_dir)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: 4321)
+    monkeypatch.setattr(qs_module, "_calculate_process_cpu_percent", lambda proc: 0.0)
+    monkeypatch.setattr(qs_module, "_calculate_system_cpu_percent", lambda: 0.0)
+    monkeypatch.setattr(qs_module, "_calculate_process_io_stats", lambda proc, cache_name: {})
+
+    class _FakeMemInfo:
+        rss = 64 * 1024 * 1024
+
+    class _FakeVM:
+        total = 8 * 1024 * 1024 * 1024
+        available = 6 * 1024 * 1024 * 1024
+        percent = 25.0
+
+    class _FakeProc:
+        pid = 4321
+
+        def is_running(self):
+            return True
+
+        def status(self):
+            return qs_module.psutil.STATUS_SLEEPING
+
+        def cmdline(self):
+            return ["python", "kometa.py", "--times", "09:02|09:04"]
+
+        def create_time(self):
+            return started_at_ts
+
+        def memory_info(self):
+            return _FakeMemInfo()
+
+        def children(self, recursive=True):
+            return []
+
+    monkeypatch.setattr(qs_module.psutil, "Process", lambda pid: _FakeProc())
+    monkeypatch.setattr(qs_module.psutil, "virtual_memory", lambda: _FakeVM())
+
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["command"] = 'python kometa.py --times "09:02|09:04" --config config.yml'
+        qs_module.RUN_CONTEXT["start_mode"] = "current"
+
+    try:
+        resp = client.get("/kometa-status")
+    finally:
+        qs_module._clear_run_context()
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "scheduled_waiting"
+    assert data["scheduled_waiting"] is True
+    assert data["scheduled_waiting_reason"] == "waiting_for_log"
+    assert data["active_command"] == 'python kometa.py --times "09:02|09:04" --config config.yml'
+    assert data["schedule_times"] == ["09:02", "09:04"]
+    assert data["scheduled_run_local"]
+    assert "fresh meta.log" in data["message"]
+
+
 def test_imagemaid_status_clears_stale_run_context_when_not_running(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: None)
     monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid_file", lambda: "missing.pid")

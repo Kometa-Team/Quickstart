@@ -4270,6 +4270,30 @@ def _build_scheduled_waiting_payload(command, log_path, started_at_ts=None):
     now = datetime.now()
     payload = _build_kometa_schedule_timing_payload(command, now=now, after=finished_info.get("finished_at") or now)
     payload["message"] = "Kometa finished the current scheduled run and is waiting for the next scheduled time."
+    payload["scheduled_waiting_reason"] = "between_runs"
+    return payload
+
+
+def _kometa_log_is_fresh_for_run(log_path, started_at_ts=None):
+    if started_at_ts is None:
+        return True
+    try:
+        stats = log_path.stat()
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return True
+    return stats.st_mtime >= (started_at_ts - 30)
+
+
+def _build_scheduled_waiting_for_log_payload(command, log_path, started_at_ts=None):
+    if not _kometa_command_has_schedule(command):
+        return None
+    if _kometa_log_is_fresh_for_run(log_path, started_at_ts=started_at_ts):
+        return None
+    payload = _build_kometa_schedule_timing_payload(command, now=datetime.now())
+    payload["message"] = "Kometa scheduler is waiting for the next scheduled run and has not written a fresh meta.log for this run yet."
+    payload["scheduled_waiting_reason"] = "waiting_for_log"
     return payload
 
 
@@ -4362,8 +4386,17 @@ def kometa_status():
                     queued_started_at = MAINTENANCE_STATE["queued_started_at"]
                     window_unavailable = MAINTENANCE_STATE["window_unavailable"]
                     window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
-                active_command = ctx.get("command")
-                scheduled_waiting = _build_scheduled_waiting_payload(active_command, helpers.get_kometa_log_dir() / "meta.log", started_at_ts=started_at_ts)
+                active_command = ctx.get("command") or cmdline
+                active_log_path = helpers.get_kometa_log_dir() / "meta.log"
+                scheduled_waiting = _build_scheduled_waiting_payload(
+                    active_command,
+                    active_log_path,
+                    started_at_ts=started_at_ts,
+                ) or _build_scheduled_waiting_for_log_payload(
+                    active_command,
+                    active_log_path,
+                    started_at_ts=started_at_ts,
+                )
                 return jsonify(
                     status="scheduled_waiting" if scheduled_waiting else "running",
                     pid=pid,
