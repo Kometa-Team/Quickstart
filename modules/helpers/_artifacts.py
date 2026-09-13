@@ -472,7 +472,7 @@ def list_orphaned_config_versions(config_name: str | None) -> dict:
                 "kind": kind,
                 "filename": path.name,
                 "mtime": stats.st_mtime,
-                "modified_at": datetime.datetime.fromtimestamp(stats.st_mtime, datetime.UTC).isoformat().replace("+00:00", "Z"),
+                "modified_at": datetime.datetime.fromtimestamp(stats.st_mtime, datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
                 "size": stats.st_size,
             }
         )

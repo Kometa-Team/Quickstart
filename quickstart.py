@@ -3958,8 +3958,8 @@ def _extract_kometa_scheduled_times(command):
         if part == "--times" and idx + 1 < len(parts):
             raw = _strip_cli_value_quotes(parts[idx + 1])
             return [item.strip() for item in raw.split("|") if item.strip()], False
-    immediate_flags = {"--run", "--run-libraries"}
-    if any(part in immediate_flags or part.startswith("--run-libraries=") for part in parts):
+    immediate_flags = {"--run", "--run-libraries", "--resume"}
+    if any(part in immediate_flags or part.startswith("--run-libraries=") or part.startswith("--resume=") for part in parts):
         return [], False
     return ["05:00"], True
 
@@ -4386,17 +4386,20 @@ def kometa_status():
                     queued_started_at = MAINTENANCE_STATE["queued_started_at"]
                     window_unavailable = MAINTENANCE_STATE["window_unavailable"]
                     window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
-                active_command = ctx.get("command") or cmdline
+                context_command = ctx.get("command")
+                active_command = context_command or cmdline
                 active_log_path = helpers.get_kometa_log_dir() / "meta.log"
-                scheduled_waiting = _build_scheduled_waiting_payload(
-                    active_command,
-                    active_log_path,
-                    started_at_ts=started_at_ts,
-                ) or _build_scheduled_waiting_for_log_payload(
-                    active_command,
-                    active_log_path,
-                    started_at_ts=started_at_ts,
-                )
+                scheduled_waiting = None
+                if context_command:
+                    scheduled_waiting = _build_scheduled_waiting_payload(
+                        context_command,
+                        active_log_path,
+                        started_at_ts=started_at_ts,
+                    ) or _build_scheduled_waiting_for_log_payload(
+                        context_command,
+                        active_log_path,
+                        started_at_ts=started_at_ts,
+                    )
                 return jsonify(
                     status="scheduled_waiting" if scheduled_waiting else "running",
                     pid=pid,

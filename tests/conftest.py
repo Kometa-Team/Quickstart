@@ -229,6 +229,38 @@ def _runtime_isolation(tmp_path, monkeypatch, app):
     return {"config_dir": config_dir, "kometa_root": kometa_root}
 
 
+def _reset_runtime_state(qs_module):
+    try:
+        qs_module._clear_pending_kometa_start()
+    except Exception:
+        pass
+    try:
+        qs_module._clear_run_context()
+    except Exception:
+        pass
+    try:
+        qs_module._clear_imagemaid_run_context()
+    except Exception:
+        pass
+    if hasattr(qs_module, "LOGSCAN_ANALYSIS_CACHE"):
+        qs_module.LOGSCAN_ANALYSIS_CACHE.update(
+            {
+                "mtime": None,
+                "size": None,
+                "version": getattr(qs_module, "LOGSCAN_ANALYSIS_CACHE_VERSION", None),
+                "data": None,
+            }
+        )
+    if hasattr(qs_module, "LOGSCAN_PROGRESS_CACHE"):
+        qs_module.LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "aux_signature": None, "data": None})
+    try:
+        qs_module._reset_logscan_reingest_state()
+    except Exception:
+        pass
+
+
 @pytest.fixture(autouse=True)
-def _auto_runtime_isolation(_runtime_isolation):
-    return _runtime_isolation
+def _auto_runtime_isolation(_runtime_isolation, qs_module):
+    _reset_runtime_state(qs_module)
+    yield _runtime_isolation
+    _reset_runtime_state(qs_module)
