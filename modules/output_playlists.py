@@ -89,6 +89,11 @@ PLAYLIST_KEYED_TEMPLATE_VAR_SPECS = {
 }
 
 
+def _schedule_for_playlist_file_entry(entry):
+    schedule = str(entry.get("schedule") or "").strip() if isinstance(entry, dict) else ""
+    return schedule or None
+
+
 def _normalize_playlist_file_entry_for_output(entry):
     if not isinstance(entry, dict):
         return None
@@ -97,13 +102,21 @@ def _normalize_playlist_file_entry_for_output(entry):
         entry_type, location = direct_entry
         location = str(location or "").strip()
         if location:
-            return {entry_type: location}
+            normalized = {entry_type: location}
+            schedule = _schedule_for_playlist_file_entry(entry)
+            if schedule:
+                normalized["schedule"] = schedule
+            return normalized
         return None
     entry_type = str(entry.get("type") or "").strip().lower()
     location = str(entry.get("location") or "").strip()
     if entry_type not in {"file", "url", "git", "repo"} or not location:
         return None
-    return {entry_type: location}
+    normalized = {entry_type: location}
+    schedule = _schedule_for_playlist_file_entry(entry)
+    if schedule:
+        normalized["schedule"] = schedule
+    return normalized
 
 
 def _parse_playlist_file_entries_value(value):

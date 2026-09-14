@@ -990,14 +990,17 @@ field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
         </div>
         <div class="schedule-builder-body">
             <div class="schedule-mode" data-schedule-mode="range">
-                <div class="schedule-grid">
-                    <input type="date" class="form-control" id="{{ full_id }}_schedule_range_start"
-                        data-schedule-range-start aria-label="Range start">
-                    <span class="schedule-range-sep">to</span>
-                    <input type="date" class="form-control" id="{{ full_id }}_schedule_range_end"
-                        data-schedule-range-end aria-label="Range end">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="{{ full_id }}_schedule_range_values"
+                        data-schedule-range-values placeholder="12/01-12/31" aria-label="Date range values">
+                    <button class="btn nav-button" type="button" data-schedule-add-option>
+                        Add range
+                    </button>
                 </div>
-                <div class="form-text">Month/day are used; year is ignored.</div>
+                <div class="form-text">Enter one MM/DD-MM/DD range. Use Add range for another range.</div>
+                <div class="invalid-feedback d-none" data-schedule-feedback="range">
+                    Use valid date ranges like <code>12/01-12/31</code>.
+                </div>
             </div>
             <div class="schedule-mode" data-schedule-mode="weekly">
                 <div class="schedule-weekly">
@@ -1011,25 +1014,46 @@ field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
                 </div>
             </div>
             <div class="schedule-mode" data-schedule-mode="monthly">
-                <input type="number" class="form-control" id="{{ full_id }}_schedule_month_day" min="1" max="31"
-                    step="1" data-schedule-month-day placeholder="Day of month">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="{{ full_id }}_schedule_month_values"
+                        data-schedule-month-values placeholder="1 or 1-7 or last">
+                    <button class="btn nav-button" type="button" data-schedule-add-option>
+                        Add option
+                    </button>
+                </div>
+                <div class="form-text">Enter one day, day range, or <code>last</code>. Use Add option for another value.</div>
+                <div class="invalid-feedback d-none" data-schedule-feedback="monthly">
+                    Use days 1-31, <code>last</code>, or ranges like <code>1-7</code> / <code>21-last</code>.
+                </div>
             </div>
             <div class="schedule-mode" data-schedule-mode="yearly">
-                <input type="date" class="form-control" id="{{ full_id }}_schedule_yearly" data-schedule-yearly
-                    aria-label="Yearly date">
-                <div class="form-text">Month/day are used; year is ignored.</div>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="{{ full_id }}_schedule_year_values"
+                        data-schedule-year-values placeholder="01/30" aria-label="Yearly date values">
+                    <button class="btn nav-button" type="button" data-schedule-add-option>
+                        Add option
+                    </button>
+                </div>
+                <div class="form-text">Enter one MM/DD date. Use Add option for another date.</div>
+                <div class="invalid-feedback d-none" data-schedule-feedback="yearly">
+                    Use valid MM/DD dates like <code>01/30</code>.
+                </div>
             </div>
             <div class="schedule-mode" data-schedule-mode="date">
                 <input type="date" class="form-control" id="{{ full_id }}_schedule_date" data-schedule-date
                     aria-label="Exact date">
             </div>
             <div class="schedule-mode" data-schedule-mode="hourly">
-                <div class="schedule-grid">
-                    <input type="number" class="form-control" id="{{ full_id }}_schedule_hour_start" min="0" max="23"
-                        step="1" data-schedule-hour-start placeholder="Start hour">
-                    <span class="schedule-range-sep">to</span>
-                    <input type="number" class="form-control" id="{{ full_id }}_schedule_hour_end" min="0" max="23"
-                        step="1" data-schedule-hour-end placeholder="End hour (optional)">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="{{ full_id }}_schedule_hour_values"
+                        data-schedule-hour-values placeholder="2 or 5-7">
+                    <button class="btn nav-button" type="button" data-schedule-add-option>
+                        Add option
+                    </button>
+                </div>
+                <div class="form-text">Enter one 24-hour value or range. Use Add option for another value.</div>
+                <div class="invalid-feedback d-none" data-schedule-feedback="hourly">
+                    Use hours 0-23 or ranges like <code>5-7</code> / <code>17-04</code>.
                 </div>
             </div>
             <div class="schedule-mode" data-schedule-mode="daily">
@@ -1755,18 +1779,18 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             </div>
                             <div class="schedule-builder-body">
                                 <div class="schedule-mode" data-schedule-mode="range">
-                                    <div class="schedule-grid">
-                                        <input type="date" class="form-control"
-                                            id="{{ input_name }}_schedule_range_start"
-                                            data-schedule-range-start
-                                            aria-label="Range start" {% if disable_toggle %}disabled{% endif %}>
-                                        <span class="schedule-range-sep">to</span>
-                                        <input type="date" class="form-control"
-                                            id="{{ input_name }}_schedule_range_end"
-                                            data-schedule-range-end
-                                            aria-label="Range end" {% if disable_toggle %}disabled{% endif %}>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control"
+                                            id="{{ input_name }}_schedule_range_values"
+                                            data-schedule-range-values placeholder="12/01-12/31" aria-label="Date range values" {% if disable_toggle %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            Add range
+                                        </button>
                                     </div>
-                                    <div class="form-text">Month/day are used; year is ignored.</div>
+                                    <div class="form-text">Enter one MM/DD-MM/DD range. Use Add range for another range.</div>
+                                    <div class="invalid-feedback d-none" data-schedule-feedback="range">
+                                        Use valid date ranges like <code>12/01-12/31</code>.
+                                    </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="weekly">
                                     <div class="schedule-weekly">
@@ -1781,17 +1805,33 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="monthly">
-                                    <input type="number" class="form-control"
-                                        id="{{ input_name }}_schedule_month_day"
-                                        min="1" max="31" step="1"
-                                        data-schedule-month-day placeholder="Day of month" {% if disable_toggle %}disabled{% endif %}>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control"
+                                            id="{{ input_name }}_schedule_month_values"
+                                            data-schedule-month-values placeholder="1 or 1-7 or last" {% if disable_toggle %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            Add option
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Enter one day, day range, or <code>last</code>. Use Add option for another value.</div>
+                                    <div class="invalid-feedback d-none" data-schedule-feedback="monthly">
+                                        Use days 1-31, <code>last</code>, or ranges like <code>1-7</code> / <code>21-last</code>.
+                                    </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="yearly">
-                                    <input type="date" class="form-control"
-                                        id="{{ input_name }}_schedule_yearly"
-                                        data-schedule-yearly
-                                        aria-label="Yearly date" {% if disable_toggle %}disabled{% endif %}>
-                                    <div class="form-text">Month/day are used; year is ignored.</div>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control"
+                                            id="{{ input_name }}_schedule_year_values"
+                                            data-schedule-year-values
+                                            placeholder="01/30" aria-label="Yearly date values" {% if disable_toggle %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            Add option
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Enter one MM/DD date. Use Add option for another date.</div>
+                                    <div class="invalid-feedback d-none" data-schedule-feedback="yearly">
+                                        Use valid MM/DD dates like <code>01/30</code>.
+                                    </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="date">
                                     <input type="date" class="form-control"
@@ -1800,16 +1840,17 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                         aria-label="Exact date" {% if disable_toggle %}disabled{% endif %}>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="hourly">
-                                    <div class="schedule-grid">
-                                        <input type="number" class="form-control"
-                                            id="{{ input_name }}_schedule_hour_start"
-                                            min="0" max="23" step="1"
-                                            data-schedule-hour-start placeholder="Start hour" {% if disable_toggle %}disabled{% endif %}>
-                                        <span class="schedule-range-sep">to</span>
-                                        <input type="number" class="form-control"
-                                            id="{{ input_name }}_schedule_hour_end"
-                                            min="0" max="23" step="1"
-                                            data-schedule-hour-end placeholder="End hour (optional)" {% if disable_toggle %}disabled{% endif %}>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control"
+                                            id="{{ input_name }}_schedule_hour_values"
+                                            data-schedule-hour-values placeholder="2 or 5-7" {% if disable_toggle %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            Add option
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Enter one 24-hour value or range. Use Add option for another value.</div>
+                                    <div class="invalid-feedback d-none" data-schedule-feedback="hourly">
+                                        Use hours 0-23 or ranges like <code>5-7</code> / <code>17-04</code>.
                                     </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="daily">

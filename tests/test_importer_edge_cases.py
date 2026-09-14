@@ -211,6 +211,7 @@ def test_prepare_import_payload_maps_direct_playlist_file_entries_into_libraries
                 },
                 {
                     "file": "config/extra_playlists.yml",
+                    "schedule": "weekly(friday)",
                 },
                 {
                     "repo": "bullmoose20/playlists.yml",
@@ -223,10 +224,11 @@ def test_prepare_import_payload_maps_direct_playlist_file_entries_into_libraries
 
     libraries = payload["libraries"]["libraries"]
     assert json.loads(libraries["playlist_files_entries"]) == [
-        {"type": "file", "location": "config/extra_playlists.yml"},
+        {"type": "file", "location": "config/extra_playlists.yml", "schedule": "weekly(friday)"},
         {"type": "repo", "location": "bullmoose20/playlists.yml"},
     ]
     assert any("playlist_files[1].file" in line for line in report.lines)
+    assert any("playlist_files[1].schedule" in line for line in report.lines)
     assert any("playlist_files[2].repo" in line for line in report.lines)
 
 
