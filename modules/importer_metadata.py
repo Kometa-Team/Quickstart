@@ -3,10 +3,11 @@
 Split out of ``modules.importer`` following the same pattern as
 :mod:`modules.importer_collections` and :mod:`modules.importer_overlays`.
 
-Unlike collections/overlays, ``metadata_files`` entries do not support
-Quickstart-bundled ``default`` references or ``template_variables``.
-Every entry is treated as a raw file reference and just written into
-a JSON blob under ``libraries_data[lib_id-metadata_files]``.
+Unlike collections/overlays, `metadata_files` entries do not support
+Quickstart-bundled `default` references. Every entry is treated as a
+raw file reference and written into a JSON blob under
+`libraries_data[lib_id-metadata_files]`. File-level
+`template_variables` are preserved for external metadata files.
 
 Accepted entry shapes:
 
