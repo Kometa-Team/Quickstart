@@ -4222,11 +4222,15 @@ function initScheduleBuilders (scope) {
     const modeSelect = builder.querySelector('[data-schedule-mode-select]')
     const preview = builder.querySelector('[data-schedule-preview]')
     const rawInput = builder.querySelector('[data-schedule-raw]')
+    const addOptionButtons = Array.from(builder.querySelectorAll('[data-schedule-add-option]'))
     const modeSections = Array.from(builder.querySelectorAll('[data-schedule-mode]'))
+    const rangeValues = builder.querySelector('[data-schedule-range-values]')
     const rangeStart = builder.querySelector('[data-schedule-range-start]')
     const rangeEnd = builder.querySelector('[data-schedule-range-end]')
     const weeklyDays = Array.from(builder.querySelectorAll('[data-schedule-week-day]'))
+    const monthlyValues = builder.querySelector('[data-schedule-month-values]')
     const monthlyDay = builder.querySelector('[data-schedule-month-day]')
+    const yearlyValues = builder.querySelector('[data-schedule-year-values]')
     const yearlyInput = builder.querySelector('[data-schedule-yearly]')
     const dateInput = builder.querySelector('[data-schedule-date]')
     const hourValues = builder.querySelector('[data-schedule-hour-values]')
@@ -4291,11 +4295,11 @@ function initScheduleBuilders (scope) {
       }
       if (lower.startsWith('monthly(') && lower.endsWith(')')) {
         const inner = raw.slice(8, -1).trim()
-        return { mode: 'monthly', day: inner, raw }
+        return { mode: 'monthly', monthValues: inner, day: inner, raw }
       }
       if (lower.startsWith('yearly(') && lower.endsWith(')')) {
         const inner = raw.slice(7, -1).trim()
-        return { mode: 'yearly', monthDay: inner, raw }
+        return { mode: 'yearly', yearValues: inner, monthDay: inner, raw }
       }
       if (lower.startsWith('date(') && lower.endsWith(')')) {
         const inner = raw.slice(5, -1).trim()
@@ -4303,11 +4307,9 @@ function initScheduleBuilders (scope) {
       }
       if (lower.startsWith('range(') && lower.endsWith(')')) {
         const inner = raw.slice(6, -1).trim()
-        if (inner.includes('|')) {
-          return { mode: 'custom', raw }
-        }
-        const parts = inner.split('-').map(val => val.trim())
-        return { mode: 'range', start: parts[0] || '', end: parts[1] || '', raw }
+        const firstRange = inner.split('|')[0] || ''
+        const parts = firstRange.split('-').map(val => val.trim())
+        return { mode: 'range', rangeValues: inner, start: parts[0] || '', end: parts[1] || '', raw }
       }
       if (lower.startsWith('all[')) {
         return { mode: 'custom', raw }
@@ -4323,8 +4325,124 @@ function initScheduleBuilders (scope) {
       })
     }
 
+    function setScheduleFieldValidity (input, valid, message = '') {
+      if (!input) return
+      input.classList.toggle('is-invalid', !valid)
+      input.setAttribute('aria-invalid', valid ? 'false' : 'true')
+      const feedback = input.closest('[data-schedule-mode]')?.querySelector('[data-schedule-feedback]')
+      if (feedback) {
+        feedback.classList.toggle('d-none', valid)
+        if (message) feedback.textContent = message
+      }
+    }
+
+    function uniquePipeValues (value) {
+      const seen = new Set()
+      const parts = String(value || '').split('|').map(part => part.trim()).filter(Boolean)
+      const unique = []
+      parts.forEach(part => {
+        const key = part.toLowerCase()
+        if (seen.has(key)) return
+        seen.add(key)
+        unique.push(part)
+      })
+      return unique.join('|')
+    }
+
+    function simplifyScheduleValuesInput (input) {
+      if (!input) return ''
+      const simplified = uniquePipeValues(input.value)
+      if (simplified !== String(input.value || '').trim()) {
+        input.value = simplified
+      }
+      return simplified
+    }
+
+    function isValidMonthlyDayToken (token) {
+      const value = String(token || '').trim().toLowerCase()
+      if (value === 'last') return true
+      if (!/^\d+$/.test(value)) return false
+      const day = Number(value)
+      return Number.isInteger(day) && day >= 1 && day <= 31
+    }
+
+    function isValidHourlyToken (token) {
+      const value = String(token || '').trim()
+      if (!/^\d+$/.test(value)) return false
+      const hour = Number(value)
+      return Number.isInteger(hour) && hour >= 0 && hour <= 23
+    }
+
+    function isValidScheduleMonthDay (value) {
+      const match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})$/)
+      if (!match) return false
+      const month = Number(match[1])
+      const day = Number(match[2])
+      if (!Number.isInteger(month) || month < 1 || month > 12) return false
+      const monthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      return Number.isInteger(day) && day >= 1 && day <= monthDays[month - 1]
+    }
+
+    function isValidRangeScheduleValues (value) {
+      const text = String(value || '').trim()
+      if (!text) return true
+      const ranges = text.split('|').map(part => part.trim())
+      if (!ranges.length || ranges.some(part => !part)) return false
+      return ranges.every(range => {
+        const parts = range.split('-').map(part => part.trim())
+        return parts.length === 2 && isValidScheduleMonthDay(parts[0]) && isValidScheduleMonthDay(parts[1])
+      })
+    }
+
+    function isValidYearlyScheduleValues (value) {
+      const text = String(value || '').trim()
+      if (!text) return true
+      const dates = text.split('|').map(part => part.trim())
+      return dates.length > 0 && dates.every(date => date && isValidScheduleMonthDay(date))
+    }
+
+    function isValidHourlyScheduleValues (value) {
+      const text = String(value || '').trim()
+      if (!text) return true
+      const parts = text.split('|').map(part => part.trim())
+      if (!parts.length || parts.some(part => !part)) return false
+      return parts.every(part => {
+        if (!part.includes('-')) return isValidHourlyToken(part)
+        const rangeParts = part.split('-').map(rangePart => rangePart.trim())
+        return rangeParts.length === 2 && isValidHourlyToken(rangeParts[0]) && isValidHourlyToken(rangeParts[1])
+      })
+    }
+
+    function isValidMonthlyScheduleValues (value) {
+      const text = String(value || '').trim().toLowerCase()
+      if (!text) return true
+      const parts = text.split('|').map(part => part.trim())
+      if (!parts.length || parts.some(part => !part)) return false
+      return parts.every(part => {
+        if (!part.includes('-')) return isValidMonthlyDayToken(part)
+        const rangeParts = part.split('-').map(rangePart => rangePart.trim())
+        if (rangeParts.length !== 2) return false
+        const [start, end] = rangeParts
+        if (!/^\d+$/.test(start) || !isValidMonthlyDayToken(start) || !isValidMonthlyDayToken(end)) return false
+        if (end === 'last') return true
+        return Number(start) <= Number(end)
+      })
+    }
+
     function buildValueFromInputs (mode) {
+      setScheduleFieldValidity(monthlyValues, true)
+      setScheduleFieldValidity(hourValues, true)
+      setScheduleFieldValidity(rangeValues, true)
+      setScheduleFieldValidity(yearlyValues, true)
       if (mode === 'range') {
+        const values = String(rangeValues?.value || '').trim()
+        if (values) {
+          const valid = isValidRangeScheduleValues(values)
+          setScheduleFieldValidity(rangeValues, valid, 'Use valid date ranges like 12/01-12/31.')
+          if (!valid) return ''
+          const simplified = simplifyScheduleValuesInput(rangeValues)
+          return `range(${simplified})`
+        }
         const start = formatMonthDay(rangeStart?.value)
         const end = formatMonthDay(rangeEnd?.value)
         if (start && end) return `range(${start}-${end})`
@@ -4334,10 +4452,26 @@ function initScheduleBuilders (scope) {
         if (selected.length) return `weekly(${selected.join('|')})`
       }
       if (mode === 'monthly') {
+        const values = String(monthlyValues?.value || '').trim()
+        if (values) {
+          const valid = isValidMonthlyScheduleValues(values)
+          setScheduleFieldValidity(monthlyValues, valid, 'Use days 1-31, last, or ranges like 1-7 / 21-last.')
+          if (!valid) return ''
+          const simplified = simplifyScheduleValuesInput(monthlyValues)
+          return `monthly(${simplified})`
+        }
         const day = String(monthlyDay?.value || '').trim()
         if (day) return `monthly(${day})`
       }
       if (mode === 'yearly') {
+        const values = String(yearlyValues?.value || '').trim()
+        if (values) {
+          const valid = isValidYearlyScheduleValues(values)
+          setScheduleFieldValidity(yearlyValues, valid, 'Use valid MM/DD dates like 01/30.')
+          if (!valid) return ''
+          const simplified = simplifyScheduleValuesInput(yearlyValues)
+          return `yearly(${simplified})`
+        }
         const md = formatMonthDay(yearlyInput?.value)
         if (md) return `yearly(${md})`
       }
@@ -4347,7 +4481,13 @@ function initScheduleBuilders (scope) {
       }
       if (mode === 'hourly') {
         const values = String(hourValues?.value || '').trim()
-        if (values) return `hourly(${values})`
+        if (values) {
+          const valid = isValidHourlyScheduleValues(values)
+          setScheduleFieldValidity(hourValues, valid, 'Use hours 0-23 or ranges like 5-7 / 17-04.')
+          if (!valid) return ''
+          const simplified = simplifyScheduleValuesInput(hourValues)
+          return `hourly(${simplified})`
+        }
         const start = String(hourStart?.value || '').trim()
         const end = String(hourEnd?.value || '').trim()
         if (start && end) return `hourly(${start}-${end})`
@@ -4364,6 +4504,18 @@ function initScheduleBuilders (scope) {
 
     function updatePreview (value) {
       if (preview) preview.textContent = value || ''
+    }
+
+    function appendScheduleOptionSeparator (input) {
+      if (!input || input.disabled) return
+      const nextValue = String(input.value || '').replace(/\s+$/g, '')
+      input.value = nextValue && !nextValue.endsWith('|') ? `${nextValue}|` : nextValue
+      input.focus()
+      if (typeof input.setSelectionRange === 'function') {
+        input.setSelectionRange(input.value.length, input.value.length)
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
     }
 
     function updateFromBuilder () {
@@ -4386,6 +4538,7 @@ function initScheduleBuilders (scope) {
       const mode = parsed.mode || 'custom'
       setMode(mode)
       if (mode === 'range') {
+        if (rangeValues) rangeValues.value = parsed.rangeValues || ''
         setMonthDayInput(rangeStart, parsed.start)
         setMonthDayInput(rangeEnd, parsed.end)
       } else if (mode === 'weekly') {
@@ -4394,8 +4547,10 @@ function initScheduleBuilders (scope) {
           day.checked = selected.has(day.value)
         })
       } else if (mode === 'monthly') {
+        if (monthlyValues) monthlyValues.value = parsed.monthValues || ''
         if (monthlyDay) monthlyDay.value = parsed.day || ''
       } else if (mode === 'yearly') {
+        if (yearlyValues) yearlyValues.value = parsed.yearValues || parsed.monthDay || ''
         setMonthDayInput(yearlyInput, parsed.monthDay)
       } else if (mode === 'date') {
         setDateInput(dateInput, parsed.date)
@@ -4417,14 +4572,28 @@ function initScheduleBuilders (scope) {
     updateFromBuilder()
 
     modeSelect.addEventListener('change', () => updateFromBuilder())
+    addOptionButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const input = button.closest('.input-group')?.querySelector('[data-schedule-range-values], [data-schedule-hour-values], [data-schedule-month-values], [data-schedule-year-values]')
+        appendScheduleOptionSeparator(input)
+      })
+    })
+    if (rangeValues) rangeValues.addEventListener('input', () => updateFromBuilder())
+    if (rangeValues) rangeValues.addEventListener('change', () => updateFromBuilder())
     if (rangeStart) rangeStart.addEventListener('change', () => updateFromBuilder())
     if (rangeEnd) rangeEnd.addEventListener('change', () => updateFromBuilder())
     weeklyDays.forEach(day => {
       day.addEventListener('change', () => updateFromBuilder())
     })
+    if (monthlyValues) monthlyValues.addEventListener('input', () => updateFromBuilder())
+    if (monthlyValues) monthlyValues.addEventListener('change', () => updateFromBuilder())
     if (monthlyDay) monthlyDay.addEventListener('input', () => updateFromBuilder())
+    if (yearlyValues) yearlyValues.addEventListener('input', () => updateFromBuilder())
+    if (yearlyValues) yearlyValues.addEventListener('change', () => updateFromBuilder())
     if (yearlyInput) yearlyInput.addEventListener('change', () => updateFromBuilder())
     if (dateInput) dateInput.addEventListener('change', () => updateFromBuilder())
+    if (hourValues) hourValues.addEventListener('input', () => updateFromBuilder())
+    if (hourValues) hourValues.addEventListener('change', () => updateFromBuilder())
     if (hourStart) hourStart.addEventListener('input', () => updateFromBuilder())
     if (hourEnd) hourEnd.addEventListener('input', () => updateFromBuilder())
 

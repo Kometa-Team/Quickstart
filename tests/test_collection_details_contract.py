@@ -413,16 +413,143 @@ def test_schedule_builder_allows_clearing_weekly_days():
     assert "const nextRaw = String(hidden.value || defaultValue || '').trim()" not in script
 
 
+def test_schedule_builder_supports_pipe_separated_range_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    template = (ROOT / "templates" / "partials" / "_macros.html").read_text(encoding="utf-8")
+
+    assert "data-schedule-range-values" in template
+    assert 'placeholder="12/01-12/31"' in template
+    assert 'data-schedule-feedback="range"' in template
+    assert "const rangeValues = builder.querySelector('[data-schedule-range-values]')" in script
+    assert "return `range(${simplified})`" in script
+    assert "rangeValues: inner" in script
+    assert "if (rangeValues) rangeValues.value = parsed.rangeValues || ''" in script
+    assert "if (rangeValues) rangeValues.addEventListener('input', () => updateFromBuilder())" in script
+    assert "if (rangeValues) rangeValues.addEventListener('change', () => updateFromBuilder())" in script
+
+
+def test_schedule_builder_validates_range_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function isValidRangeScheduleValues" in script
+    assert r"match(/^(\d{1,2})\/(\d{1,2})$/)" in script
+    assert "month < 1 || month > 12" in script
+    assert "const monthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]" in script
+    assert "parts.length === 2 && isValidScheduleMonthDay(parts[0]) && isValidScheduleMonthDay(parts[1])" in script
+    assert "setScheduleFieldValidity(rangeValues, valid" in script
+    assert "Use valid date ranges like 12/01-12/31." in script
+
+
 def test_schedule_builder_supports_pipe_separated_hourly_values():
     script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
     template = (ROOT / "templates" / "partials" / "_macros.html").read_text(encoding="utf-8")
 
     assert "data-schedule-hour-values" in template
-    assert 'placeholder="2|5-7|21"' in template
+    assert 'placeholder="2 or 5-7"' in template
+    assert "data-schedule-add-option" in template
+    assert 'data-schedule-feedback="hourly"' in template
     assert "const hourValues = builder.querySelector('[data-schedule-hour-values]')" in script
-    assert "if (values) return `hourly(${values})`" in script
+    assert "if (!valid) return ''" in script
+    assert "return `hourly(${simplified})`" in script
     assert "hourValues: inner" in script
     assert "if (hourValues) hourValues.value = parsed.hourValues || ''" in script
+    assert "if (hourValues) hourValues.addEventListener('input', () => updateFromBuilder())" in script
+    assert "if (hourValues) hourValues.addEventListener('change', () => updateFromBuilder())" in script
+
+
+def test_schedule_builder_validates_hourly_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function isValidHourlyScheduleValues" in script
+    assert "hour >= 0 && hour <= 23" in script
+    assert "return rangeParts.length === 2 && isValidHourlyToken(rangeParts[0]) && isValidHourlyToken(rangeParts[1])" in script
+    assert "setScheduleFieldValidity(hourValues, valid" in script
+    assert "Use hours 0-23 or ranges like 5-7 / 17-04." in script
+
+
+def test_schedule_builder_supports_pipe_separated_monthly_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    template = (ROOT / "templates" / "partials" / "_macros.html").read_text(encoding="utf-8")
+
+    assert "data-schedule-month-values" in template
+    assert 'placeholder="1 or 1-7 or last"' in template
+    assert "data-schedule-add-option" in template
+    assert 'data-schedule-feedback="monthly"' in template
+    assert "const monthlyValues = builder.querySelector('[data-schedule-month-values]')" in script
+    assert "if (!valid) return ''" in script
+    assert "return `monthly(${simplified})`" in script
+    assert "monthValues: inner" in script
+    assert "if (monthlyValues) monthlyValues.value = parsed.monthValues || ''" in script
+    assert "if (monthlyValues) monthlyValues.addEventListener('input', () => updateFromBuilder())" in script
+    assert "if (monthlyValues) monthlyValues.addEventListener('change', () => updateFromBuilder())" in script
+
+
+def test_schedule_builder_validates_monthly_day_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function isValidMonthlyScheduleValues" in script
+    assert "day >= 1 && day <= 31" in script
+    assert r"if (!/^\d+$/.test(start) || !isValidMonthlyDayToken(start) || !isValidMonthlyDayToken(end)) return false" in script
+    assert "return Number(start) <= Number(end)" in script
+    assert "setScheduleFieldValidity(monthlyValues, valid" in script
+    assert "Use days 1-31, last, or ranges like 1-7 / 21-last." in script
+
+
+def test_schedule_builder_supports_pipe_separated_yearly_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    template = (ROOT / "templates" / "partials" / "_macros.html").read_text(encoding="utf-8")
+
+    assert "data-schedule-year-values" in template
+    assert 'placeholder="01/30"' in template
+    assert "data-schedule-add-option" in template
+    assert 'data-schedule-feedback="yearly"' in template
+    assert "const yearlyValues = builder.querySelector('[data-schedule-year-values]')" in script
+    assert "return `yearly(${simplified})`" in script
+    assert "yearValues: inner" in script
+    assert "if (yearlyValues) yearlyValues.value = parsed.yearValues || parsed.monthDay || ''" in script
+    assert "if (yearlyValues) yearlyValues.addEventListener('input', () => updateFromBuilder())" in script
+    assert "if (yearlyValues) yearlyValues.addEventListener('change', () => updateFromBuilder())" in script
+
+
+def test_schedule_builder_validates_yearly_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function isValidYearlyScheduleValues" in script
+    assert "dates.every(date => date && isValidScheduleMonthDay(date))" in script
+    assert "setScheduleFieldValidity(yearlyValues, valid" in script
+    assert "Use valid MM/DD dates like 01/30." in script
+
+
+def test_schedule_builder_add_option_buttons_append_separator():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    template = (ROOT / "templates" / "partials" / "_macros.html").read_text(encoding="utf-8")
+
+    assert template.count("data-schedule-add-option") >= 6
+    assert "const addOptionButtons = Array.from(builder.querySelectorAll('[data-schedule-add-option]'))" in script
+    assert "function appendScheduleOptionSeparator (input)" in script
+    assert "!nextValue.endsWith('|') ? `${nextValue}|` : nextValue" in script
+    assert (
+        "button.closest('.input-group')?.querySelector('[data-schedule-range-values], [data-schedule-hour-values], [data-schedule-month-values], [data-schedule-year-values]')"
+        in script
+    )
+    assert "input.dispatchEvent(new Event('input', { bubbles: true }))" in script
+
+
+def test_schedule_builder_deduplicates_pipe_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+
+    assert "function uniquePipeValues" in script
+    assert "const key = part.toLowerCase()" in script
+    assert "function simplifyScheduleValuesInput" in script
+    assert "input.value = simplified" in script
+    assert "const simplified = simplifyScheduleValuesInput(rangeValues)" in script
+    assert "return `range(${simplified})`" in script
+    assert "const simplified = simplifyScheduleValuesInput(monthlyValues)" in script
+    assert "return `monthly(${simplified})`" in script
+    assert "const simplified = simplifyScheduleValuesInput(yearlyValues)" in script
+    assert "return `yearly(${simplified})`" in script
+    assert "const simplified = simplifyScheduleValuesInput(hourValues)" in script
+    assert "return `hourly(${simplified})`" in script
 
 
 def test_attributes_and_playlists_have_override_scope_counts_and_resets():
