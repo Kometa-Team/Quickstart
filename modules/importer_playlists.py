@@ -13,7 +13,7 @@ library-processing code needs to know about:
                                        any playlist entry's
                                        template_variables.libraries.
 * ``file_entries``                  -- entries that point at a
-                                       file/url/git/repo location
+                                       file/folder/url/git/repo location
                                        instead of a template block.
 * ``template_field_values``         -- flat playlist-scoped template
                                        overrides keyed by field name.
@@ -131,7 +131,7 @@ def parse_playlist_config(config_data: dict, report: ImportReport) -> PlaylistIm
         # -- File-reference entry (file/url/git/repo) short-circuits --
         raw_entry_type = None
         raw_entry_location = None
-        for candidate in ("file", "url", "git", "repo"):
+        for candidate in ("file", "folder", "url", "git", "repo"):
             location = entry.get(candidate)
             if location:
                 raw_entry_type = candidate
@@ -142,16 +142,21 @@ def parse_playlist_config(config_data: dict, report: ImportReport) -> PlaylistIm
             schedule = str(entry.get("schedule") or "").strip()
             if schedule:
                 file_entry["schedule"] = schedule
+            template_values = entry.get("template_variables")
+            if isinstance(template_values, dict) and template_values:
+                file_entry["template_variables"] = template_values
             state.file_entries.append(file_entry)
             report.add("imported", f"playlist_files[{idx}]")
             report.add("imported", f"playlist_files[{idx}].{raw_entry_type}")
             if schedule:
                 report.add("imported", f"playlist_files[{idx}].schedule")
-            if entry.get("template_variables") not in (None, {}):
+            if isinstance(template_values, dict) and template_values:
+                report.add("imported", f"playlist_files[{idx}].template_variables")
+            elif template_values not in (None, {}):
                 report.add(
                     "unmapped",
                     f"playlist_files[{idx}].template_variables",
-                    "Template variables for direct playlist file entries are not supported in Quickstart.",
+                    "Unsupported playlist file template_variables format.",
                 )
             continue
 

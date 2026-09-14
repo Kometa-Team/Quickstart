@@ -18,6 +18,8 @@ COLLECTION_FILES_ACCORDION_PARTIAL_PATH = ROOT / "templates" / "partials" / "_li
 COLLECTION_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_collection_files.html"
 METADATA_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_metadata_files.html"
 OVERLAY_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_overlay_files.html"
+PLAYLIST_FILES_ACCORDION_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_playlist_files_accordion.html"
+PLAYLIST_FILES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_playlist_files.html"
 RADARR_OVERRIDES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_radarr_overrides.html"
 SONARR_OVERRIDES_PARTIAL_PATH = ROOT / "templates" / "partials" / "_library_sonarr_overrides.html"
 
@@ -576,7 +578,6 @@ def test_attributes_and_playlists_have_override_scope_counts_and_resets():
     assert 'data-library-override-label="Attributes"' in movie_settings
     assert 'data-library-override-label="Attributes"' in show_settings
     assert 'data-library-override-label="Playlists"' in playlists
-    assert 'data-library-override-label="Playlist Files"' in playlists
     assert 'id="{{ library.id }}-playlist-accordion"' in playlists
     assert 'data-library-override-label="Shared Playlist Defaults"' in playlist_vars
     assert 'data-library-override-label="Per-Playlist Modifications"' in playlist_vars
@@ -601,6 +602,8 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     collection_files = COLLECTION_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
     metadata_files = METADATA_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
     overlay_files = OVERLAY_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
+    playlist_files_accordion = PLAYLIST_FILES_ACCORDION_PARTIAL_PATH.read_text(encoding="utf-8")
+    playlist_files = PLAYLIST_FILES_PARTIAL_PATH.read_text(encoding="utf-8")
     radarr_overrides = RADARR_OVERRIDES_PARTIAL_PATH.read_text(encoding="utf-8")
     sonarr_overrides = SONARR_OVERRIDES_PARTIAL_PATH.read_text(encoding="utf-8")
 
@@ -613,6 +616,16 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     assert "[data-collection-files-editor]" in script
     assert "[data-metadata-files-editor]" in script
     assert "[data-overlay-files-editor]" in script
+    assert "data-overlay-file-template-variables" in script
+    assert "data-metadata-file-template-variables" in script
+    assert "data-collection-file-template-variables" in script
+    assert "data-playlist-file-template-variables" in script
+    assert "parseOverlayFileTemplateVariables" in script
+    assert "formatOverlayFileTemplateVariables" in script
+    assert "template_variables" in script
+    assert "[data-overlay-file-type], [data-overlay-file-location], [data-overlay-file-template-variables]" in script
+    assert "[data-metadata-file-type], [data-metadata-file-location], [data-metadata-file-schedule], [data-metadata-file-template-variables]" in script
+    assert "[data-collection-file-type], [data-collection-file-location], [data-collection-file-schedule], [data-collection-file-template-variables]" in script
     assert "[data-playlist-key-toggle-group]" in script
     assert "[data-playlist-user-picker]" in script
     assert "name.includes('-library_service_')" in script
@@ -626,6 +639,7 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     assert 'data-library-override-label="Collection Files"' in collection_files_accordion
     assert 'data-library-override-label="Metadata Files"' in metadata_files
     assert 'data-library-override-label="Overlay Files"' in overlay_files
+    assert 'data-library-override-label="Playlist Files"' in playlist_files_accordion
     assert 'data-library-override-label="Radarr Modifications"' in radarr_overrides
     assert 'data-library-override-label="Sonarr Modifications"' in sonarr_overrides
     assert radarr_overrides.count('data-default=""') >= 10
@@ -635,6 +649,7 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     assert 'data-default="[]"' in collection_files
     assert 'data-default="[]"' in metadata_files
     assert 'data-default="[]"' in overlay_files
+    assert 'data-default="[]"' in playlist_files
 
 
 def test_analytics_page_checks_reingest_status_before_loading_trends():

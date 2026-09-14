@@ -1,0 +1,17 @@
+<div class="accordion-item library-advanced-section d-none" data-advanced-section>
+    <h2 class="accordion-header">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+            data-bs-target="#{{ library.id }}-playlist-files">
+            Playlist Files
+        </button>
+    </h2>
+    <div id="{{ library.id }}-playlist-files" class="accordion-collapse collapse"
+        data-library-override-scope="true" data-library-override-label="Playlist Files">
+        <div class="accordion-body">
+            <div class="alert alert-info small mb-3" role="alert">
+                Leave these entries blank unless you want explicit external <code>playlist_files</code> sources.
+            </div>
+            {% include "partials/_library_playlist_files.html" %}
+        </div>
+    </div>
+</div>

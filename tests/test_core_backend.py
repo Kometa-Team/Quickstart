@@ -2717,6 +2717,154 @@ def test_build_libraries_section_emits_raw_overlay_files(app):
     assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "overlay_files"]
 
 
+@pytest.mark.parametrize(
+    "field,location",
+    [
+        ("metadata_files", "https://example.com/custom-metadata.yml"),
+        ("collection_files", "https://example.com/custom-collection.yml"),
+        ("overlay_files", "https://example.com/custom-overlay.yml"),
+    ],
+)
+def test_normalize_library_file_entries_preserves_template_variables(field, location):
+    import json
+
+    from modules.library_file_entries import _normalize_library_file_entries_payload
+
+    raw_entry = {
+        "type": "url",
+        "location": location,
+        "template_variables": {
+            "resolution_only": True,
+            "custom_text": "value",
+        },
+        "validated": True,
+    }
+
+    normalized, errors, changed = _normalize_library_file_entries_payload(
+        {f"mov-library_movies-{field}": json.dumps([raw_entry])},
+        config_name="pytest_file_template_vars",
+        validate_local=True,
+    )
+
+    assert errors == []
+    assert changed is False
+    entries = json.loads(normalized[f"mov-library_movies-{field}"])
+    assert entries == [raw_entry]
+
+
+def test_build_libraries_section_emits_overlay_file_template_variables(app):
+    import json
+
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
+                "movies": {
+                    "mov-library_movies-overlay_files": json.dumps(
+                        [
+                            {
+                                "type": "file",
+                                "location": "config/overlays/media_info.yml",
+                                "template_variables": {
+                                    "resolution_only": True,
+                                    "horizontal_align": "left",
+                                    "use_gradient_bottom": False,
+                                },
+                            }
+                        ]
+                    )
+                }
+            },
+        )
+
+    assert libraries_section["libraries"]["Movies"]["overlay_files"] == [
+        {
+            "file": "config/overlays/media_info.yml",
+            "template_variables": {
+                "resolution_only": True,
+                "horizontal_align": "left",
+                "use_gradient_bottom": False,
+            },
+        }
+    ]
+
+
+def test_build_libraries_section_emits_metadata_file_template_variables(app):
+    import json
+
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_metadata_files={
+                "movies": {
+                    "mov-library_movies-metadata_files": json.dumps(
+                        [
+                            {
+                                "type": "file",
+                                "location": "config/metadata/custom_metadata.yml",
+                                "template_variables": {
+                                    "include_extras": True,
+                                    "label": "Imported",
+                                },
+                            }
+                        ]
+                    )
+                }
+            },
+        )
+
+    assert libraries_section["libraries"]["Movies"]["metadata_files"] == [
+        {
+            "file": "config/metadata/custom_metadata.yml",
+            "template_variables": {
+                "include_extras": True,
+                "label": "Imported",
+            },
+        }
+    ]
+
+
+def test_build_libraries_section_emits_collection_file_template_variables(app):
+    import json
+
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_collection_files={
+                "movies": {
+                    "mov-library_movies-collection_files": json.dumps(
+                        [
+                            {
+                                "type": "file",
+                                "location": "config/collections/custom_collection.yml",
+                                "template_variables": {
+                                    "radarr_add_missing": True,
+                                    "schedule_christmas": "range(12/01-12/31)",
+                                },
+                            }
+                        ]
+                    )
+                }
+            },
+        )
+
+    assert libraries_section["libraries"]["Movies"]["collection_files"] == [
+        {
+            "file": "config/collections/custom_collection.yml",
+            "template_variables": {
+                "radarr_add_missing": True,
+                "schedule_christmas": "range(12/01-12/31)",
+            },
+        }
+    ]
+
+
 def test_build_libraries_section_emits_collection_files(app):
     import json
 
@@ -3091,6 +3239,64 @@ def test_runtime_config_schema_accepts_franchise_build_collection_and_title_over
                         },
                     }
                 ]
+            }
+        },
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
+
+
+def test_runtime_config_schema_accepts_external_file_template_variables(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "playlist_files": [
+            {
+                "folder": "config/custom/playlists",
+                "template_variables": {
+                    "custom_playlist_flag": True,
+                    "custom_playlist_values": ["one", 2],
+                },
+            }
+        ],
+        "libraries": {
+            "Movies": {
+                "metadata_files": [
+                    {
+                        "file": "config/custom/metadata.yml",
+                        "template_variables": {
+                            "custom_metadata_flag": True,
+                            "custom_metadata_text": "anything",
+                        },
+                    }
+                ],
+                "collection_files": [
+                    {
+                        "folder": "config/custom/collections",
+                        "template_variables": {
+                            "custom_collection_flag": True,
+                            "custom_collection_values": ["one", 2],
+                        },
+                    }
+                ],
+                "overlay_files": [
+                    {
+                        "file": "config/custom/overlay.yml",
+                        "template_variables": {
+                            "video_only": True,
+                            "resolution_only": True,
+                            "custom_overlay_map": {"nested": True},
+                        },
+                    }
+                ],
             }
         },
     }
@@ -7147,6 +7353,134 @@ def test_prepare_import_payload_accepts_language_weight_override():
     assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[languages]"] == ["en", "ja"]
     assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[weight_ja]"] == 700
     assert report.summary()["imported"] > 0
+
+
+def test_prepare_import_payload_preserves_overlay_file_template_variables():
+    import json
+
+    from modules import importer
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "overlay_files": [
+                    {
+                        "file": "config/overlays/media_info.yml",
+                        "template_variables": {
+                            "use_edition": False,
+                            "horizontal_align": "right",
+                            "vertical_align": "top",
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    payload, report = importer.prepare_import_payload(
+        config_data,
+        plex_movie_names={"Movies"},
+        plex_show_names=set(),
+    )
+
+    raw_entries = payload["libraries"]["libraries"]["mov-library_movies-overlay_files"]
+    entries = json.loads(raw_entries)
+    assert entries == [
+        {
+            "type": "file",
+            "location": "config/overlays/media_info.yml",
+            "template_variables": {
+                "use_edition": False,
+                "horizontal_align": "right",
+                "vertical_align": "top",
+            },
+        }
+    ]
+    assert "imported: libraries.Movies.overlay_files[0].template_variables" in report.lines
+
+
+def test_prepare_import_payload_preserves_metadata_file_template_variables():
+    import json
+
+    from modules import importer
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "metadata_files": [
+                    {
+                        "file": "config/metadata/custom_metadata.yml",
+                        "template_variables": {
+                            "include_extras": True,
+                            "label": "Imported",
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    payload, report = importer.prepare_import_payload(
+        config_data,
+        plex_movie_names={"Movies"},
+        plex_show_names=set(),
+    )
+
+    raw_entries = payload["libraries"]["libraries"]["mov-library_movies-metadata_files"]
+    entries = json.loads(raw_entries)
+    assert entries == [
+        {
+            "type": "file",
+            "location": "config/metadata/custom_metadata.yml",
+            "template_variables": {
+                "include_extras": True,
+                "label": "Imported",
+            },
+        }
+    ]
+    assert "imported: libraries.Movies.metadata_files[0].template_variables" in report.lines
+
+
+def test_prepare_import_payload_preserves_collection_file_template_variables():
+    import json
+
+    from modules import importer
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "collection_files": [
+                    {
+                        "file": "config/collections/custom_collection.yml",
+                        "template_variables": {
+                            "radarr_add_missing": True,
+                            "schedule_christmas": "range(12/01-12/31)",
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    payload, report = importer.prepare_import_payload(
+        config_data,
+        plex_movie_names={"Movies"},
+        plex_show_names=set(),
+    )
+
+    raw_entries = payload["libraries"]["libraries"]["mov-library_movies-collection_files"]
+    entries = json.loads(raw_entries)
+    assert entries == [
+        {
+            "type": "file",
+            "location": "config/collections/custom_collection.yml",
+            "template_variables": {
+                "radarr_add_missing": True,
+                "schedule_christmas": "range(12/01-12/31)",
+            },
+        }
+    ]
+    assert "imported: libraries.Movies.collection_files[0].template_variables" in report.lines
 
 
 def test_prepare_import_payload_accepts_collection_include_and_exclude_with_warning():

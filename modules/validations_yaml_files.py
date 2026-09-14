@@ -654,8 +654,8 @@ def validate_playlist_file_payload(data):
     playlist_file_type = str(data.get("playlist_file_type") or "").strip().lower()
     playlist_file_location = str(data.get("playlist_file_location") or "").strip()
 
-    if playlist_file_type not in {"file", "url", "git", "repo"}:
-        return False, "Playlist file type must be file, url, git, or repo.", {}
+    if playlist_file_type not in {"file", "folder", "url", "git", "repo"}:
+        return False, "Playlist file type must be file, folder, url, git, or repo.", {}
 
     if not playlist_file_location:
         return False, "Playlist file location is required.", {}
