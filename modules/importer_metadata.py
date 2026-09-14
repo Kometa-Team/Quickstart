@@ -1,13 +1,13 @@
-"""Per-library ``metadata_files`` handling for ``prepare_import_payload``.
+"""Per-library ```metadata_files``` handling for ``prepare_import_payload``.
 
 Split out of ``modules.importer`` following the same pattern as
 :mod:`modules.importer_collections` and :mod:`modules.importer_overlays`.
 
-Unlike collections/overlays, `metadata_files` entries do not support
-Quickstart-bundled `default` references. Every entry is treated as a
+Unlike collections/overlays, ``metadata_files`` entries do not support
+Quickstart-bundled ``default`` references. Every entry is treated as a
 raw file reference and written into a JSON blob under
-`libraries_data[lib_id-metadata_files]`. File-level
-`template_variables` are preserved for external metadata files.
+``libraries_data[lib_id-metadata_files]``. File-level
+``template_variables`` are preserved for external metadata files.
 
 Accepted entry shapes:
 
@@ -42,7 +42,7 @@ def process_metadata_files(
 ) -> None:
     """Process ``lib_cfg['metadata_files']`` into libraries_data + report.
 
-    A no-op when the library has no ``metadata_files`` key.  Records an
+    A no-op when the library has no ```metadata_files``` key.  Records an
     unmapped report entry if the key is present but not a list.
     """
     metadata_files = lib_cfg.get("metadata_files")
