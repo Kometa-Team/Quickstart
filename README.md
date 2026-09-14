@@ -314,7 +314,7 @@ There are five primary ways to install and run Quickstart, listed from simplest 
 
 - Go to the [Releases page](https://github.com/Kometa-Team/Quickstart/releases) and download the standalone file.
 
-- Choose the build you want (`master` or `develop`) and download the appropriate asset.
+- Choose the build you want (`master` or `develop`), then pick the asset matching your Mac's chip: `-arm64` for Apple Silicon (M1/M2/M3/M4) or `-x86_64` for Intel. Not sure which you have? Apple menu > About This Mac shows the chip.
 
 - Place the file in its own folder.
 
