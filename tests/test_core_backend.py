@@ -3248,6 +3248,55 @@ def test_runtime_config_schema_accepts_franchise_build_collection_and_title_over
     assert errors == []
 
 
+def test_runtime_config_schema_accepts_external_file_template_variables(isolated_config_dir):
+    import json
+
+    import jsonschema
+
+    schema_path = isolated_config_dir / ".schema" / "config-schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sample = {
+        "plex": {"url": "http://example", "token": "x"},
+        "tmdb": {"apikey": "x"},
+        "libraries": {
+            "Movies": {
+                "metadata_files": [
+                    {
+                        "file": "config/custom/metadata.yml",
+                        "template_variables": {
+                            "custom_metadata_flag": True,
+                            "custom_metadata_text": "anything",
+                        },
+                    }
+                ],
+                "collection_files": [
+                    {
+                        "folder": "config/custom/collections",
+                        "template_variables": {
+                            "custom_collection_flag": True,
+                            "custom_collection_values": ["one", 2],
+                        },
+                    }
+                ],
+                "overlay_files": [
+                    {
+                        "file": "config/custom/overlay.yml",
+                        "template_variables": {
+                            "video_only": True,
+                            "resolution_only": True,
+                            "custom_overlay_map": {"nested": True},
+                        },
+                    }
+                ],
+            }
+        },
+    }
+
+    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(sample), key=lambda err: list(err.path))
+
+    assert errors == []
+
+
 def test_runtime_config_schema_accepts_playlist_exclude_users_keyed_override(isolated_config_dir):
     import json
 
