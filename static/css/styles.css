@@ -3818,6 +3818,19 @@ div#loading {
 .theme-swatch--soul { background-color: #ff9900; }
 .theme-swatch--space { background-color: #0062ff; }
 
+
+.external-yaml-editor-modal .modal-dialog {
+    max-width: min(96vw, 84rem);
+}
+
+.external-yaml-editor-modal .modal-content {
+    max-height: calc(100vh - 2rem);
+}
+
+.external-yaml-editor-modal .modal-body {
+    min-height: 0;
+}
+
 .external-yaml-editor-toolbar {
     align-items: center;
     display: flex;
@@ -3857,10 +3870,7 @@ div#loading {
     font-size: 0.875rem;
     font-weight: 700;
     margin-bottom: 0.6rem;
-    padding: 0.55rem 0.7rem;
-    position: sticky;
-    top: 0;
-    z-index: 3;
+    padding: 0.45rem 0.65rem;
 }
 
 .external-yaml-status-details {
@@ -3869,9 +3879,15 @@ div#loading {
 }
 
 .external-yaml-status--success {
-    background: rgba(var(--bs-success-rgb), 0.14);
-    border-color: rgba(var(--bs-success-rgb), 0.45);
+    background: rgba(var(--bs-success-rgb), 0.08);
+    border-color: rgba(var(--bs-success-rgb), 0.32);
     color: var(--bs-success-text-emphasis);
+}
+
+.external-yaml-status-details.external-yaml-status--success {
+    background: transparent;
+    border-color: var(--theme-border);
+    color: var(--theme-text-muted);
 }
 
 .external-yaml-status--warning {
@@ -3893,10 +3909,11 @@ div#loading {
     border-radius: 0.375rem;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.18);
+    max-height: min(50vh, 32rem);
 }
 
 .external-yaml-editor-lines {
-    max-height: 32rem;
+    max-height: min(50vh, 32rem);
     overflow: hidden;
     padding: 0.375rem 0.35rem;
     background: rgba(0, 0, 0, 0.24);
@@ -3938,7 +3955,8 @@ div#loading {
 }
 
 .external-yaml-editor-content {
-    min-height: 32rem;
+    height: min(50vh, 32rem);
+    min-height: 18rem;
     border: 0;
     border-radius: 0;
     line-height: 1.45;

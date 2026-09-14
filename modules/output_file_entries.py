@@ -75,11 +75,11 @@ def _parse_config_file_block_entries(raw_value, *, allow_schedule=False, allow_t
 
 
 def _parse_metadata_file_entries(raw_value):
-    return _parse_config_file_block_entries(raw_value, allow_schedule=True)
+    return _parse_config_file_block_entries(raw_value, allow_schedule=True, allow_template_variables=True)
 
 
 def _parse_collection_file_block_entries(raw_value):
-    return _parse_config_file_block_entries(raw_value, allow_schedule=True)
+    return _parse_config_file_block_entries(raw_value, allow_schedule=True, allow_template_variables=True)
 
 
 def _parse_overlay_file_block_entries(raw_value):

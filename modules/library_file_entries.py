@@ -338,6 +338,17 @@ def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_n
     return Path(*relative.parts).as_posix()
 
 
+def _copy_library_file_entry_optional_fields(source, target, *, include_validated=False):
+    schedule = str(source.get("schedule") or "").strip()
+    if schedule:
+        target["schedule"] = schedule
+    template_variables = source.get("template_variables")
+    if isinstance(template_variables, dict) and template_variables:
+        target["template_variables"] = template_variables
+    if include_validated:
+        target["validated"] = True
+
+
 def _normalize_library_external_entry(kind, entry, config_name, library_scope, validate_local=True, force_clone_managed=False, require_managed_context=False):
     parsed_entry = dict(entry) if isinstance(entry, dict) else {}
     entry_type = str(parsed_entry.get("type") or "").strip().lower()
@@ -352,11 +363,7 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
             return None, False, "Managed library files require a library scope."
     if entry_type not in LOCAL_LIBRARY_FILE_TYPES or not config_name or not library_scope:
         normalized_entry = {"type": entry_type, "location": location}
-        schedule = str(parsed_entry.get("schedule") or "").strip()
-        if schedule:
-            normalized_entry["schedule"] = schedule
-        if is_validated:
-            normalized_entry["validated"] = True
+        _copy_library_file_entry_optional_fields(parsed_entry, normalized_entry, include_validated=is_validated)
         return normalized_entry, False, None
 
     if validate_local:
@@ -379,11 +386,7 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
     display_location = _display_library_managed_location(normalized_location)
     changed = display_location != location
     normalized_entry = {"type": entry_type, "location": display_location}
-    schedule = str(parsed_entry.get("schedule") or "").strip()
-    if schedule:
-        normalized_entry["schedule"] = schedule
-    if is_validated:
-        normalized_entry["validated"] = True
+    _copy_library_file_entry_optional_fields(parsed_entry, normalized_entry, include_validated=is_validated)
     return normalized_entry, changed, None
 
 

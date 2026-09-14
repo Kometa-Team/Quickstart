@@ -2717,6 +2717,33 @@ def test_build_libraries_section_emits_raw_overlay_files(app):
     assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "overlay_files"]
 
 
+def test_normalize_library_file_entries_preserves_overlay_template_variables():
+    import json
+
+    from modules.library_file_entries import _normalize_library_file_entries_payload
+
+    raw_entry = {
+        "type": "url",
+        "location": "https://example.com/custom-overlay.yml",
+        "template_variables": {
+            "resolution_only": True,
+            "custom_text": "value",
+        },
+        "validated": True,
+    }
+
+    normalized, errors, changed = _normalize_library_file_entries_payload(
+        {"mov-library_movies-overlay_files": json.dumps([raw_entry])},
+        config_name="pytest_overlay_template_vars",
+        validate_local=True,
+    )
+
+    assert errors == []
+    assert changed is False
+    entries = json.loads(normalized["mov-library_movies-overlay_files"])
+    assert entries == [raw_entry]
+
+
 def test_build_libraries_section_emits_overlay_file_template_variables(app):
     import json
 

@@ -76,7 +76,16 @@ def process_metadata_files(
             )
             continue
 
-        imported_metadata_files.append({"type": entry_type, "location": location})
+        imported_entry = {"type": entry_type, "location": location}
+        if isinstance(entry, dict):
+            template_values = entry.get("template_variables")
+            if isinstance(template_values, dict) and template_values:
+                imported_entry["template_variables"] = template_values
+                report.add(
+                    "imported",
+                    f"libraries.{lib_name}.metadata_files[{idx}].template_variables",
+                )
+        imported_metadata_files.append(imported_entry)
         report.add(
             "imported",
             f"libraries.{lib_name}.metadata_files[{idx}].{entry_type}",

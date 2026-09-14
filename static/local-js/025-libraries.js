@@ -515,7 +515,7 @@ function getExternalYamlModal () {
   let modalEl = document.getElementById('externalYamlEditorModal')
   if (modalEl) return prepareLibrariesModal(modalEl)
   modalEl = document.createElement('div')
-  modalEl.className = 'modal fade'
+  modalEl.className = 'modal fade external-yaml-editor-modal'
   modalEl.id = 'externalYamlEditorModal'
   modalEl.tabIndex = -1
   modalEl.setAttribute('aria-hidden', 'true')
@@ -1443,11 +1443,21 @@ function buildMetadataFileRow (entry = {}) {
         </div>
       </div>
       <div class="mt-2 small d-none" data-metadata-file-status></div>
+      <details class="mt-3" data-metadata-file-template-variables-panel>
+        <summary class="small text-muted">External file template variables</summary>
+        <div class="mt-2">
+          <label class="form-label small text-muted">Template variables</label>
+          <textarea class="form-control form-control-sm font-monospace" rows="4" data-metadata-file-template-variables placeholder="variable_name: true&#10;custom_text: value&#10;weight: 50"></textarea>
+          <div class="form-text">One key: value per line. Use any template variable supported by this external metadata file.</div>
+          <div class="invalid-feedback d-none" data-metadata-file-template-variables-feedback></div>
+        </div>
+      </details>
     </div>
   `
   const typeSelect = wrapper.querySelector('[data-metadata-file-type]')
   const locationInput = wrapper.querySelector('[data-metadata-file-location]')
   const scheduleInput = wrapper.querySelector('[data-metadata-file-schedule]')
+  const templateVariablesInput = wrapper.querySelector('[data-metadata-file-template-variables]')
   if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
     typeSelect.value = entry.type
   }
@@ -1456,6 +1466,9 @@ function buildMetadataFileRow (entry = {}) {
   }
   if (scheduleInput && entry.schedule) {
     scheduleInput.value = entry.schedule
+  }
+  if (templateVariablesInput) {
+    templateVariablesInput.value = formatOverlayFileTemplateVariables(entry.template_variables)
   }
   if (entry.validated) {
     wrapper.dataset.metadataFileState = 'success'
@@ -1728,7 +1741,16 @@ function syncMetadataFilesEditor (editor, emitEvents = true) {
     const location = row.querySelector('[data-metadata-file-location]')?.value
     const schedule = row.querySelector('[data-metadata-file-schedule]')?.value
     const validated = String(row.dataset.metadataFileState || '').trim().toLowerCase() === 'success'
-    return normalizeMetadataFileEntry({ type, location, schedule, validated })
+    const templateVariablesInput = row.querySelector('[data-metadata-file-template-variables]')
+    const templateVariables = parseOverlayFileTemplateVariables(templateVariablesInput?.value || '')
+    setLibraryFileTemplateVariablesFeedback(row, 'metadata-file-template-variables', templateVariables.errors)
+    return normalizeMetadataFileEntry({
+      type,
+      location,
+      schedule,
+      validated,
+      template_variables: templateVariables.errors.length ? {} : templateVariables.value
+    })
   }).filter(Boolean)
   hidden.value = JSON.stringify(entries)
   if (emitEvents) {
@@ -1801,11 +1823,21 @@ function buildCollectionFileRow (entry = {}) {
         </div>
       </div>
       <div class="mt-2 small d-none" data-collection-file-status></div>
+      <details class="mt-3" data-collection-file-template-variables-panel>
+        <summary class="small text-muted">External file template variables</summary>
+        <div class="mt-2">
+          <label class="form-label small text-muted">Template variables</label>
+          <textarea class="form-control form-control-sm font-monospace" rows="4" data-collection-file-template-variables placeholder="variable_name: true&#10;custom_text: value&#10;weight: 50"></textarea>
+          <div class="form-text">One key: value per line. Use any template variable supported by this external collection file.</div>
+          <div class="invalid-feedback d-none" data-collection-file-template-variables-feedback></div>
+        </div>
+      </details>
     </div>
   `
   const typeSelect = wrapper.querySelector('[data-collection-file-type]')
   const locationInput = wrapper.querySelector('[data-collection-file-location]')
   const scheduleInput = wrapper.querySelector('[data-collection-file-schedule]')
+  const templateVariablesInput = wrapper.querySelector('[data-collection-file-template-variables]')
   if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
     typeSelect.value = entry.type
   }
@@ -1814,6 +1846,9 @@ function buildCollectionFileRow (entry = {}) {
   }
   if (scheduleInput && entry.schedule) {
     scheduleInput.value = entry.schedule
+  }
+  if (templateVariablesInput) {
+    templateVariablesInput.value = formatOverlayFileTemplateVariables(entry.template_variables)
   }
   if (entry.validated) {
     wrapper.dataset.collectionFileState = 'success'
@@ -2083,7 +2118,16 @@ function syncCollectionFilesEditor (editor, emitEvents = true) {
     const location = row.querySelector('[data-collection-file-location]')?.value
     const schedule = row.querySelector('[data-collection-file-schedule]')?.value
     const validated = String(row.dataset.collectionFileState || '').trim().toLowerCase() === 'success'
-    return normalizeMetadataFileEntry({ type, location, schedule, validated })
+    const templateVariablesInput = row.querySelector('[data-collection-file-template-variables]')
+    const templateVariables = parseOverlayFileTemplateVariables(templateVariablesInput?.value || '')
+    setLibraryFileTemplateVariablesFeedback(row, 'collection-file-template-variables', templateVariables.errors)
+    return normalizeMetadataFileEntry({
+      type,
+      location,
+      schedule,
+      validated,
+      template_variables: templateVariables.errors.length ? {} : templateVariables.value
+    })
   }).filter(Boolean)
   hidden.value = JSON.stringify(entries)
   if (emitEvents) {
@@ -2196,7 +2240,7 @@ document.addEventListener('click', async function (event) {
 document.addEventListener('input', function (event) {
   const target = event.target
   if (!target || !target.closest('[data-metadata-files-editor]')) return
-  if (!target.matches('[data-metadata-file-type], [data-metadata-file-location]')) return
+  if (!target.matches('[data-metadata-file-type], [data-metadata-file-location], [data-metadata-file-schedule], [data-metadata-file-template-variables]')) return
   const row = target.closest('[data-metadata-file-row]')
   const editor = target.closest('[data-metadata-files-editor]')
   setMetadataFileStatus(row, '', '')
@@ -2207,7 +2251,7 @@ document.addEventListener('input', function (event) {
 document.addEventListener('change', function (event) {
   const target = event.target
   if (!target || !target.closest('[data-metadata-files-editor]')) return
-  if (!target.matches('[data-metadata-file-type], [data-metadata-file-location]')) return
+  if (!target.matches('[data-metadata-file-type], [data-metadata-file-location], [data-metadata-file-schedule], [data-metadata-file-template-variables]')) return
   const row = target.closest('[data-metadata-file-row]')
   const editor = target.closest('[data-metadata-files-editor]')
   setMetadataFileStatus(row, '', '')
@@ -2293,7 +2337,7 @@ document.addEventListener('click', async function (event) {
 document.addEventListener('input', function (event) {
   const target = event.target
   if (!target || !target.closest('[data-collection-files-editor]')) return
-  if (!target.matches('[data-collection-file-type], [data-collection-file-location]')) return
+  if (!target.matches('[data-collection-file-type], [data-collection-file-location], [data-collection-file-schedule], [data-collection-file-template-variables]')) return
   const row = target.closest('[data-collection-file-row]')
   const editor = target.closest('[data-collection-files-editor]')
   setCollectionFileStatus(row, '', '')
@@ -2304,7 +2348,7 @@ document.addEventListener('input', function (event) {
 document.addEventListener('change', function (event) {
   const target = event.target
   if (!target || !target.closest('[data-collection-files-editor]')) return
-  if (!target.matches('[data-collection-file-type], [data-collection-file-location]')) return
+  if (!target.matches('[data-collection-file-type], [data-collection-file-location], [data-collection-file-schedule], [data-collection-file-template-variables]')) return
   const row = target.closest('[data-collection-file-row]')
   const editor = target.closest('[data-collection-files-editor]')
   setCollectionFileStatus(row, '', '')
@@ -2370,15 +2414,19 @@ function formatOverlayFileTemplateVariables (value) {
     .join('\n')
 }
 
-function setOverlayFileTemplateVariablesFeedback (row, errors) {
-  if (!row) return
-  const input = row.querySelector('[data-overlay-file-template-variables]')
-  const feedback = row.querySelector('[data-overlay-file-template-variables-feedback]')
+function setLibraryFileTemplateVariablesFeedback (row, dataAttribute, errors) {
+  if (!row || !dataAttribute) return
+  const input = row.querySelector(`[data-${dataAttribute}]`)
+  const feedback = row.querySelector(`[data-${dataAttribute}-feedback]`)
   if (!input || !feedback) return
   const hasErrors = Array.isArray(errors) && errors.length > 0
   input.classList.toggle('is-invalid', hasErrors)
   feedback.classList.toggle('d-none', !hasErrors)
   feedback.textContent = hasErrors ? errors.join(' ') : ''
+}
+
+function setOverlayFileTemplateVariablesFeedback (row, errors) {
+  setLibraryFileTemplateVariablesFeedback(row, 'overlay-file-template-variables', errors)
 }
 
 function buildOverlayFileRow (entry = {}) {
