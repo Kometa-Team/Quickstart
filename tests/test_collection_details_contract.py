@@ -613,6 +613,11 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     assert "[data-collection-files-editor]" in script
     assert "[data-metadata-files-editor]" in script
     assert "[data-overlay-files-editor]" in script
+    assert "data-overlay-file-template-variables" in script
+    assert "parseOverlayFileTemplateVariables" in script
+    assert "formatOverlayFileTemplateVariables" in script
+    assert "template_variables" in script
+    assert "[data-overlay-file-type], [data-overlay-file-location], [data-overlay-file-template-variables]" in script
     assert "[data-playlist-key-toggle-group]" in script
     assert "[data-playlist-user-picker]" in script
     assert "name.includes('-library_service_')" in script

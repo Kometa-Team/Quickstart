@@ -2717,6 +2717,45 @@ def test_build_libraries_section_emits_raw_overlay_files(app):
     assert list(libraries_section["libraries"]["Movies"].keys())[:2] == ["template_variables", "overlay_files"]
 
 
+def test_build_libraries_section_emits_overlay_file_template_variables(app):
+    import json
+
+    from modules import output
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_overlays={
+                "movies": {
+                    "mov-library_movies-overlay_files": json.dumps(
+                        [
+                            {
+                                "type": "file",
+                                "location": "config/overlays/media_info.yml",
+                                "template_variables": {
+                                    "resolution_only": True,
+                                    "horizontal_align": "left",
+                                    "use_gradient_bottom": False,
+                                },
+                            }
+                        ]
+                    )
+                }
+            },
+        )
+
+    assert libraries_section["libraries"]["Movies"]["overlay_files"] == [
+        {
+            "file": "config/overlays/media_info.yml",
+            "template_variables": {
+                "resolution_only": True,
+                "horizontal_align": "left",
+                "use_gradient_bottom": False,
+            },
+        }
+    ]
+
+
 def test_build_libraries_section_emits_collection_files(app):
     import json
 
@@ -7147,6 +7186,50 @@ def test_prepare_import_payload_accepts_language_weight_override():
     assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[languages]"] == ["en", "ja"]
     assert libraries_payload["mov-library_movies-movie-template_overlay_languages_subtitles[weight_ja]"] == 700
     assert report.summary()["imported"] > 0
+
+
+def test_prepare_import_payload_preserves_overlay_file_template_variables():
+    import json
+
+    from modules import importer
+
+    config_data = {
+        "libraries": {
+            "Movies": {
+                "overlay_files": [
+                    {
+                        "file": "config/overlays/media_info.yml",
+                        "template_variables": {
+                            "use_edition": False,
+                            "horizontal_align": "right",
+                            "vertical_align": "top",
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    payload, report = importer.prepare_import_payload(
+        config_data,
+        plex_movie_names={"Movies"},
+        plex_show_names=set(),
+    )
+
+    raw_entries = payload["libraries"]["libraries"]["mov-library_movies-overlay_files"]
+    entries = json.loads(raw_entries)
+    assert entries == [
+        {
+            "type": "file",
+            "location": "config/overlays/media_info.yml",
+            "template_variables": {
+                "use_edition": False,
+                "horizontal_align": "right",
+                "vertical_align": "top",
+            },
+        }
+    ]
+    assert "imported: libraries.Movies.overlay_files[0].template_variables" in report.lines
 
 
 def test_prepare_import_payload_accepts_collection_include_and_exclude_with_warning():

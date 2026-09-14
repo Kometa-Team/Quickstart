@@ -150,7 +150,14 @@ def _process_single_overlay_entry(
         default_value = entry
 
     if raw_entry_type and raw_entry_location:
-        imported_overlay_files.append({"type": raw_entry_type, "location": raw_entry_location})
+        imported_entry = {"type": raw_entry_type, "location": raw_entry_location}
+        if isinstance(template_values, dict) and template_values:
+            imported_entry["template_variables"] = template_values
+            report.add(
+                "imported",
+                f"libraries.{lib_name}.overlay_files[{idx}].template_variables",
+            )
+        imported_overlay_files.append(imported_entry)
         report.add(
             "imported",
             f"libraries.{lib_name}.overlay_files[{idx}].{raw_entry_type}",

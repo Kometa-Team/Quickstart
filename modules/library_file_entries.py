@@ -110,6 +110,9 @@ def _parse_library_file_entries(value):
         schedule = str(entry.get("schedule") or "").strip()
         if schedule:
             parsed_entry["schedule"] = schedule
+        template_variables = entry.get("template_variables")
+        if isinstance(template_variables, dict) and template_variables:
+            parsed_entry["template_variables"] = template_variables
         if validated:
             parsed_entry["validated"] = True
         entries.append(parsed_entry)
