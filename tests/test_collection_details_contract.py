@@ -413,6 +413,18 @@ def test_schedule_builder_allows_clearing_weekly_days():
     assert "const nextRaw = String(hidden.value || defaultValue || '').trim()" not in script
 
 
+def test_schedule_builder_supports_pipe_separated_hourly_values():
+    script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
+    template = (ROOT / "templates" / "partials" / "_macros.html").read_text(encoding="utf-8")
+
+    assert "data-schedule-hour-values" in template
+    assert 'placeholder="2|5-7|21"' in template
+    assert "const hourValues = builder.querySelector('[data-schedule-hour-values]')" in script
+    assert "if (values) return `hourly(${values})`" in script
+    assert "hourValues: inner" in script
+    assert "if (hourValues) hourValues.value = parsed.hourValues || ''" in script
+
+
 def test_attributes_and_playlists_have_override_scope_counts_and_resets():
     script = LIBRARIES_JS_PATH.read_text(encoding="utf-8")
     movie_settings = (ROOT / "templates" / "partials" / "_movie_library_settings.html").read_text(encoding="utf-8")

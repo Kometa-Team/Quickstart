@@ -2568,6 +2568,38 @@ def test_output_collection_file_entries_are_sorted():
     ]
 
 
+def test_output_file_entries_preserve_supported_schedules():
+    import json
+
+    from modules import output
+
+    raw = json.dumps(
+        [
+            {"type": "file", "location": "config/metadata.yml", "schedule": "weekly(friday)"},
+            {"type": "repo", "location": "custom/collections.yml", "schedule": "range(12/01-12/31)"},
+        ]
+    )
+
+    assert output._parse_metadata_file_entries(raw) == [
+        {"file": "config/metadata.yml", "schedule": "weekly(friday)"},
+        {"repo": "custom/collections.yml", "schedule": "range(12/01-12/31)"},
+    ]
+    assert output._parse_collection_file_block_entries(raw) == [
+        {"file": "config/metadata.yml", "schedule": "weekly(friday)"},
+        {"repo": "custom/collections.yml", "schedule": "range(12/01-12/31)"},
+    ]
+
+
+def test_output_overlay_file_entries_drop_unsupported_schedules():
+    import json
+
+    from modules import output
+
+    parsed = output._parse_overlay_file_block_entries(json.dumps([{"type": "file", "location": "config/overlays.yml", "schedule": "weekly(friday)"}]))
+
+    assert parsed == [{"file": "config/overlays.yml"}]
+
+
 def test_output_overlay_file_entries_are_sorted():
     import json
 

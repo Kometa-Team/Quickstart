@@ -107,6 +107,9 @@ def _parse_library_file_entries(value):
         if not entry_type and not location:
             continue
         parsed_entry = {"type": entry_type, "location": location}
+        schedule = str(entry.get("schedule") or "").strip()
+        if schedule:
+            parsed_entry["schedule"] = schedule
         if validated:
             parsed_entry["validated"] = True
         entries.append(parsed_entry)
@@ -346,6 +349,9 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
             return None, False, "Managed library files require a library scope."
     if entry_type not in LOCAL_LIBRARY_FILE_TYPES or not config_name or not library_scope:
         normalized_entry = {"type": entry_type, "location": location}
+        schedule = str(parsed_entry.get("schedule") or "").strip()
+        if schedule:
+            normalized_entry["schedule"] = schedule
         if is_validated:
             normalized_entry["validated"] = True
         return normalized_entry, False, None
@@ -370,6 +376,9 @@ def _normalize_library_external_entry(kind, entry, config_name, library_scope, v
     display_location = _display_library_managed_location(normalized_location)
     changed = display_location != location
     normalized_entry = {"type": entry_type, "location": display_location}
+    schedule = str(parsed_entry.get("schedule") or "").strip()
+    if schedule:
+        normalized_entry["schedule"] = schedule
     if is_validated:
         normalized_entry["validated"] = True
     return normalized_entry, changed, None

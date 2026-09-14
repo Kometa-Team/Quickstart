@@ -159,8 +159,10 @@ function normalizeMetadataFileEntry (entry) {
   const type = String(entry.type || '').trim().toLowerCase()
   const location = String(entry.location || '').trim()
   const validated = entry.validated === true || String(entry.validated || '').trim().toLowerCase() === 'true'
+  const schedule = String(entry.schedule || '').trim()
   if (!type && !location) return null
   const normalized = { type, location }
+  if (schedule) normalized.schedule = schedule
   if (validated) normalized.validated = true
   return normalized
 }
@@ -1422,9 +1424,13 @@ function buildMetadataFileRow (entry = {}) {
             <option value="url">url</option>
           </select>
         </div>
-        <div class="col-md-7">
+        <div class="col-md-5">
           <label class="form-label small text-muted">Location</label>
           <input type="text" class="form-control form-control-sm" data-metadata-file-location placeholder="config/metadata.yml, config/metadata/, user/file.yml, or https://example.com/metadata.yml">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted">Schedule</label>
+          <input type="text" class="form-control form-control-sm" data-metadata-file-schedule placeholder="weekly(friday)">
         </div>
         <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
           <button type="button" class="btn btn-success btn-sm" data-validate-metadata-file>Validate</button>
@@ -1437,11 +1443,15 @@ function buildMetadataFileRow (entry = {}) {
   `
   const typeSelect = wrapper.querySelector('[data-metadata-file-type]')
   const locationInput = wrapper.querySelector('[data-metadata-file-location]')
+  const scheduleInput = wrapper.querySelector('[data-metadata-file-schedule]')
   if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
     typeSelect.value = entry.type
   }
   if (locationInput && entry.location) {
     locationInput.value = entry.location
+  }
+  if (scheduleInput && entry.schedule) {
+    scheduleInput.value = entry.schedule
   }
   if (entry.validated) {
     wrapper.dataset.metadataFileState = 'success'
@@ -1712,8 +1722,9 @@ function syncMetadataFilesEditor (editor, emitEvents = true) {
   const entries = rows.map(row => {
     const type = row.querySelector('[data-metadata-file-type]')?.value
     const location = row.querySelector('[data-metadata-file-location]')?.value
+    const schedule = row.querySelector('[data-metadata-file-schedule]')?.value
     const validated = String(row.dataset.metadataFileState || '').trim().toLowerCase() === 'success'
-    return normalizeMetadataFileEntry({ type, location, validated })
+    return normalizeMetadataFileEntry({ type, location, schedule, validated })
   }).filter(Boolean)
   hidden.value = JSON.stringify(entries)
   if (emitEvents) {
@@ -1771,9 +1782,13 @@ function buildCollectionFileRow (entry = {}) {
             <option value="url">url</option>
           </select>
         </div>
-        <div class="col-md-7">
+        <div class="col-md-5">
           <label class="form-label small text-muted">Location</label>
           <input type="text" class="form-control form-control-sm" data-collection-file-location placeholder="config/collections.yml, config/collections/, user/file.yml, or https://example.com/collections.yml">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted">Schedule</label>
+          <input type="text" class="form-control form-control-sm" data-collection-file-schedule placeholder="weekly(friday)">
         </div>
         <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
           <button type="button" class="btn btn-success btn-sm" data-validate-collection-file>Validate</button>
@@ -1786,11 +1801,15 @@ function buildCollectionFileRow (entry = {}) {
   `
   const typeSelect = wrapper.querySelector('[data-collection-file-type]')
   const locationInput = wrapper.querySelector('[data-collection-file-location]')
+  const scheduleInput = wrapper.querySelector('[data-collection-file-schedule]')
   if (typeSelect && ['file', 'folder', 'git', 'repo', 'url'].includes(entry.type)) {
     typeSelect.value = entry.type
   }
   if (locationInput && entry.location) {
     locationInput.value = entry.location
+  }
+  if (scheduleInput && entry.schedule) {
+    scheduleInput.value = entry.schedule
   }
   if (entry.validated) {
     wrapper.dataset.collectionFileState = 'success'
@@ -2058,8 +2077,9 @@ function syncCollectionFilesEditor (editor, emitEvents = true) {
   const entries = rows.map(row => {
     const type = row.querySelector('[data-collection-file-type]')?.value
     const location = row.querySelector('[data-collection-file-location]')?.value
+    const schedule = row.querySelector('[data-collection-file-schedule]')?.value
     const validated = String(row.dataset.collectionFileState || '').trim().toLowerCase() === 'success'
-    return normalizeMetadataFileEntry({ type, location, validated })
+    return normalizeMetadataFileEntry({ type, location, schedule, validated })
   }).filter(Boolean)
   hidden.value = JSON.stringify(entries)
   if (emitEvents) {
@@ -2742,8 +2762,10 @@ function normalizePlaylistFileEntry (entry) {
   const type = String(entry.type || '').trim().toLowerCase()
   const location = String(entry.location || '').trim()
   const validated = entry.validated === true || String(entry.validated || '').trim().toLowerCase() === 'true'
+  const schedule = String(entry.schedule || '').trim()
   if (!type && !location) return null
   const normalized = { type, location }
+  if (schedule) normalized.schedule = schedule
   if (validated) normalized.validated = true
   return normalized
 }
@@ -2777,9 +2799,13 @@ function buildPlaylistFileRow (entry = {}) {
             <option value="url">url</option>
           </select>
         </div>
-        <div class="col-md-7">
+        <div class="col-md-5">
           <label class="form-label small text-muted">Location</label>
           <input type="text" class="form-control form-control-sm" data-playlist-file-location placeholder="config/playlists.yml, user/playlists.yml, or https://example.com/playlists.yml">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted">Schedule</label>
+          <input type="text" class="form-control form-control-sm" data-playlist-file-schedule placeholder="weekly(friday)">
         </div>
         <div class="col-md-3 d-flex gap-2 flex-wrap justify-content-md-end">
           <button type="button" class="btn btn-outline-primary btn-sm" data-external-yaml-edit data-external-yaml-kind="playlist_files">Edit</button>
@@ -2792,11 +2818,15 @@ function buildPlaylistFileRow (entry = {}) {
   `
   const typeSelect = wrapper.querySelector('[data-playlist-file-type]')
   const locationInput = wrapper.querySelector('[data-playlist-file-location]')
+  const scheduleInput = wrapper.querySelector('[data-playlist-file-schedule]')
   if (typeSelect && ['file', 'url', 'git', 'repo'].includes(entry.type)) {
     typeSelect.value = entry.type
   }
   if (locationInput && entry.location) {
     locationInput.value = entry.location
+  }
+  if (scheduleInput && entry.schedule) {
+    scheduleInput.value = entry.schedule
   }
   if (entry.validated) {
     wrapper.dataset.playlistFileState = 'success'
@@ -3017,8 +3047,9 @@ function syncPlaylistFilesEditor (editor, emitEvents = true) {
   const entries = rows.map(row => {
     const type = row.querySelector('[data-playlist-file-type]')?.value
     const location = row.querySelector('[data-playlist-file-location]')?.value
+    const schedule = row.querySelector('[data-playlist-file-schedule]')?.value
     const validated = String(row.dataset.playlistFileState || '').trim().toLowerCase() === 'success'
-    return normalizePlaylistFileEntry({ type, location, validated })
+    return normalizePlaylistFileEntry({ type, location, schedule, validated })
   }).filter(Boolean)
   hidden.value = JSON.stringify(entries)
   if (emitEvents) {
@@ -4198,6 +4229,7 @@ function initScheduleBuilders (scope) {
     const monthlyDay = builder.querySelector('[data-schedule-month-day]')
     const yearlyInput = builder.querySelector('[data-schedule-yearly]')
     const dateInput = builder.querySelector('[data-schedule-date]')
+    const hourValues = builder.querySelector('[data-schedule-hour-values]')
     const hourStart = builder.querySelector('[data-schedule-hour-start]')
     const hourEnd = builder.querySelector('[data-schedule-hour-end]')
     const defaultValue = String(builder.dataset.defaultValue || '').trim()
@@ -4247,8 +4279,8 @@ function initScheduleBuilders (scope) {
       }
       if (lower.startsWith('hourly(') && lower.endsWith(')')) {
         const inner = raw.slice(7, -1).trim()
-        const parts = inner.split('-').map(val => val.trim())
-        return { mode: 'hourly', hourStart: parts[0] || '', hourEnd: parts[1] || '', raw }
+        const parts = inner.includes('|') ? [] : inner.split('-').map(val => val.trim())
+        return { mode: 'hourly', hourValues: inner, hourStart: parts[0] || '', hourEnd: parts[1] || '', raw }
       }
       if (lower.startsWith('weekly(') && lower.endsWith(')')) {
         const inner = raw.slice(7, -1).trim()
@@ -4314,6 +4346,8 @@ function initScheduleBuilders (scope) {
         if (dateVal) return `date(${dateVal})`
       }
       if (mode === 'hourly') {
+        const values = String(hourValues?.value || '').trim()
+        if (values) return `hourly(${values})`
         const start = String(hourStart?.value || '').trim()
         const end = String(hourEnd?.value || '').trim()
         if (start && end) return `hourly(${start}-${end})`
@@ -4366,6 +4400,7 @@ function initScheduleBuilders (scope) {
       } else if (mode === 'date') {
         setDateInput(dateInput, parsed.date)
       } else if (mode === 'hourly') {
+        if (hourValues) hourValues.value = parsed.hourValues || ''
         if (hourStart) hourStart.value = parsed.hourStart || ''
         if (hourEnd) hourEnd.value = parsed.hourEnd || ''
       }

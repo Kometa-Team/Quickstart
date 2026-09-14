@@ -1024,13 +1024,9 @@ field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
                     aria-label="Exact date">
             </div>
             <div class="schedule-mode" data-schedule-mode="hourly">
-                <div class="schedule-grid">
-                    <input type="number" class="form-control" id="{{ full_id }}_schedule_hour_start" min="0" max="23"
-                        step="1" data-schedule-hour-start placeholder="Start hour">
-                    <span class="schedule-range-sep">to</span>
-                    <input type="number" class="form-control" id="{{ full_id }}_schedule_hour_end" min="0" max="23"
-                        step="1" data-schedule-hour-end placeholder="End hour (optional)">
-                </div>
+                <input type="text" class="form-control" id="{{ full_id }}_schedule_hour_values"
+                    data-schedule-hour-values placeholder="2|5-7|21">
+                <div class="form-text">Use 24-hour values. Separate multiple hours or ranges with <code>|</code>.</div>
             </div>
             <div class="schedule-mode" data-schedule-mode="daily">
                 <div class="form-text">Runs once per day.</div>
@@ -1800,17 +1796,10 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                         aria-label="Exact date" {% if disable_toggle %}disabled{% endif %}>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="hourly">
-                                    <div class="schedule-grid">
-                                        <input type="number" class="form-control"
-                                            id="{{ input_name }}_schedule_hour_start"
-                                            min="0" max="23" step="1"
-                                            data-schedule-hour-start placeholder="Start hour" {% if disable_toggle %}disabled{% endif %}>
-                                        <span class="schedule-range-sep">to</span>
-                                        <input type="number" class="form-control"
-                                            id="{{ input_name }}_schedule_hour_end"
-                                            min="0" max="23" step="1"
-                                            data-schedule-hour-end placeholder="End hour (optional)" {% if disable_toggle %}disabled{% endif %}>
-                                    </div>
+                                    <input type="text" class="form-control"
+                                        id="{{ input_name }}_schedule_hour_values"
+                                        data-schedule-hour-values placeholder="2|5-7|21" {% if disable_toggle %}disabled{% endif %}>
+                                    <div class="form-text">Use 24-hour values. Separate multiple hours or ranges with <code>|</code>.</div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="daily">
                                     <div class="form-text">Runs once per day.</div>

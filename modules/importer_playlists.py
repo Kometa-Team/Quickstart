@@ -138,9 +138,15 @@ def parse_playlist_config(config_data: dict, report: ImportReport) -> PlaylistIm
                 raw_entry_location = str(location).strip()
                 break
         if raw_entry_type and raw_entry_location:
-            state.file_entries.append({"type": raw_entry_type, "location": raw_entry_location})
+            file_entry = {"type": raw_entry_type, "location": raw_entry_location}
+            schedule = str(entry.get("schedule") or "").strip()
+            if schedule:
+                file_entry["schedule"] = schedule
+            state.file_entries.append(file_entry)
             report.add("imported", f"playlist_files[{idx}]")
             report.add("imported", f"playlist_files[{idx}].{raw_entry_type}")
+            if schedule:
+                report.add("imported", f"playlist_files[{idx}].schedule")
             if entry.get("template_variables") not in (None, {}):
                 report.add(
                     "unmapped",
