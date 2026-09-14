@@ -6,7 +6,7 @@ all deal with one of three closely-related concerns:
 1. **Playlist file entries** -- the ``playlist_files:`` YAML block that
    Kometa consumes.  Entries come in as raw JSON/py-literal strings,
    dicts, or lists, and need to be normalized into
-   ``{file|url|git|repo: <location>}`` shapes.  ``_format_*`` /
+   ``{file|folder|url|git|repo: <location>}`` shapes.  ``_format_*`` /
    ``_normalize_*`` / ``_parse_playlist_file_entries_value`` cover this.
 
 2. **Selecting which libraries feed a playlist** -- pulling library
@@ -97,7 +97,7 @@ def _schedule_for_playlist_file_entry(entry):
 def _normalize_playlist_file_entry_for_output(entry):
     if not isinstance(entry, dict):
         return None
-    direct_entry = next(((key, value) for key, value in entry.items() if key in {"file", "url", "git", "repo"}), None)
+    direct_entry = next(((key, value) for key, value in entry.items() if key in {"file", "folder", "url", "git", "repo"}), None)
     if direct_entry:
         entry_type, location = direct_entry
         location = str(location or "").strip()
@@ -106,16 +106,22 @@ def _normalize_playlist_file_entry_for_output(entry):
             schedule = _schedule_for_playlist_file_entry(entry)
             if schedule:
                 normalized["schedule"] = schedule
+            template_variables = entry.get("template_variables")
+            if isinstance(template_variables, dict) and template_variables:
+                normalized["template_variables"] = template_variables
             return normalized
         return None
     entry_type = str(entry.get("type") or "").strip().lower()
     location = str(entry.get("location") or "").strip()
-    if entry_type not in {"file", "url", "git", "repo"} or not location:
+    if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
         return None
     normalized = {entry_type: location}
     schedule = _schedule_for_playlist_file_entry(entry)
     if schedule:
         normalized["schedule"] = schedule
+    template_variables = entry.get("template_variables")
+    if isinstance(template_variables, dict) and template_variables:
+        normalized["template_variables"] = template_variables
     return normalized
 
 

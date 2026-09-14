@@ -341,11 +341,19 @@ def test_playlist_files_emit_direct_file_and_repo_entries(monkeypatch, qs_module
             "mov-library_movies-library": "Movies",
             "mov-library_movies-playlist": "true",
             "mov-library_movies-collection_collectionless": True,
-            "playlist_files_entries": '[{"type":"file","location":"config/extra_playlists.yml","schedule":"weekly(friday)"},{"type":"repo","location":"bullmoose20/playlists.yml"}]',
+            "playlist_files_entries": '[{"type":"file","location":"config/extra_playlists.yml","schedule":"weekly(friday)","template_variables":{"custom_playlist_flag":true}},{"type":"folder","location":"config/playlist_folder","template_variables":{"custom_folder_flag":true}},{"type":"repo","location":"bullmoose20/playlists.yml"}]',
         },
     }
 
     parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
 
-    assert parsed["playlist_files"][1] == {"file": "config/extra_playlists.yml", "schedule": "weekly(friday)"}
-    assert parsed["playlist_files"][2] == {"repo": "bullmoose20/playlists.yml"}
+    assert parsed["playlist_files"][1] == {
+        "file": "config/extra_playlists.yml",
+        "schedule": "weekly(friday)",
+        "template_variables": {"custom_playlist_flag": True},
+    }
+    assert parsed["playlist_files"][2] == {
+        "folder": "config/playlist_folder",
+        "template_variables": {"custom_folder_flag": True},
+    }
+    assert parsed["playlist_files"][3] == {"repo": "bullmoose20/playlists.yml"}

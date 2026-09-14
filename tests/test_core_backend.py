@@ -3258,6 +3258,15 @@ def test_runtime_config_schema_accepts_external_file_template_variables(isolated
     sample = {
         "plex": {"url": "http://example", "token": "x"},
         "tmdb": {"apikey": "x"},
+        "playlist_files": [
+            {
+                "folder": "config/custom/playlists",
+                "template_variables": {
+                    "custom_playlist_flag": True,
+                    "custom_playlist_values": ["one", 2],
+                },
+            }
+        ],
         "libraries": {
             "Movies": {
                 "metadata_files": [

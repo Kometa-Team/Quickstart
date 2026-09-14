@@ -1467,6 +1467,9 @@ function buildMetadataFileRow (entry = {}) {
   if (scheduleInput && entry.schedule) {
     scheduleInput.value = entry.schedule
   }
+  if (templateVariablesInput && entry.template_variables) {
+    templateVariablesInput.value = formatOverlayFileTemplateVariables(entry.template_variables)
+  }
   if (templateVariablesInput) {
     templateVariablesInput.value = formatOverlayFileTemplateVariables(entry.template_variables)
   }
@@ -2899,9 +2902,13 @@ function normalizePlaylistFileEntry (entry) {
   const location = String(entry.location || '').trim()
   const validated = entry.validated === true || String(entry.validated || '').trim().toLowerCase() === 'true'
   const schedule = String(entry.schedule || '').trim()
+  const templateVariables = entry.template_variables
   if (!type && !location) return null
   const normalized = { type, location }
   if (schedule) normalized.schedule = schedule
+  if (templateVariables && typeof templateVariables === 'object' && !Array.isArray(templateVariables) && Object.keys(templateVariables).length) {
+    normalized.template_variables = templateVariables
+  }
   if (validated) normalized.validated = true
   return normalized
 }
@@ -2930,6 +2937,7 @@ function buildPlaylistFileRow (entry = {}) {
           <label class="form-label small text-muted">Type</label>
           <select class="form-select form-select-sm" data-playlist-file-type>
             <option value="file">file</option>
+            <option value="folder">folder</option>
             <option value="git">git</option>
             <option value="repo">repo</option>
             <option value="url">url</option>
@@ -2949,13 +2957,22 @@ function buildPlaylistFileRow (entry = {}) {
           <button type="button" class="btn btn-danger btn-sm" data-remove-playlist-file>Remove</button>
         </div>
       </div>
+      <details class="mt-3" data-playlist-file-template-variables-panel>
+        <summary class="small text-muted">External file template variables</summary>
+        <div class="mt-2">
+          <textarea class="form-control form-control-sm font-monospace" rows="4" data-playlist-file-template-variables placeholder="variable_name: true&#10;custom_text: value&#10;weight: 50"></textarea>
+          <div class="form-text">One key: value per line. Use any template variable supported by this external playlist file.</div>
+          <div class="invalid-feedback d-none" data-playlist-file-template-variables-feedback></div>
+        </div>
+      </details>
       <div class="mt-2 small d-none" data-playlist-file-status></div>
     </div>
   `
   const typeSelect = wrapper.querySelector('[data-playlist-file-type]')
   const locationInput = wrapper.querySelector('[data-playlist-file-location]')
   const scheduleInput = wrapper.querySelector('[data-playlist-file-schedule]')
-  if (typeSelect && ['file', 'url', 'git', 'repo'].includes(entry.type)) {
+  const templateVariablesInput = wrapper.querySelector('[data-playlist-file-template-variables]')
+  if (typeSelect && ['file', 'folder', 'url', 'git', 'repo'].includes(entry.type)) {
     typeSelect.value = entry.type
   }
   if (locationInput && entry.location) {
@@ -2963,6 +2980,9 @@ function buildPlaylistFileRow (entry = {}) {
   }
   if (scheduleInput && entry.schedule) {
     scheduleInput.value = entry.schedule
+  }
+  if (templateVariablesInput) {
+    templateVariablesInput.value = formatOverlayFileTemplateVariables(entry.template_variables)
   }
   if (entry.validated) {
     wrapper.dataset.playlistFileState = 'success'
@@ -3184,8 +3204,17 @@ function syncPlaylistFilesEditor (editor, emitEvents = true) {
     const type = row.querySelector('[data-playlist-file-type]')?.value
     const location = row.querySelector('[data-playlist-file-location]')?.value
     const schedule = row.querySelector('[data-playlist-file-schedule]')?.value
+    const templateVariablesInput = row.querySelector('[data-playlist-file-template-variables]')
+    const templateVariables = parseOverlayFileTemplateVariables(templateVariablesInput?.value || '')
+    setLibraryFileTemplateVariablesFeedback(row, 'playlist-file-template-variables', templateVariables.errors)
     const validated = String(row.dataset.playlistFileState || '').trim().toLowerCase() === 'success'
-    return normalizePlaylistFileEntry({ type, location, schedule, validated })
+    return normalizePlaylistFileEntry({
+      type,
+      location,
+      schedule,
+      template_variables: templateVariables.errors.length ? {} : templateVariables.value,
+      validated
+    })
   }).filter(Boolean)
   hidden.value = JSON.stringify(entries)
   if (emitEvents) {
