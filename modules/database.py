@@ -8,6 +8,27 @@ from contextlib import closing
 
 from modules import helpers
 
+LOG_LINE_COUNT_COLUMNS = (
+    "debug_count",
+    "info_count",
+    "warning_count",
+    "error_count",
+    "critical_count",
+    "trace_count",
+)
+
+
+def _coerce_count(value):
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _compute_total_log_line_count(row):
+    return sum(_coerce_count(row.get(key) if isinstance(row, dict) else row[key]) for key in LOG_LINE_COUNT_COLUMNS)
+
+
 TRANSIENT_SECTION_KEYS = {
     "configSelector",
     "config_name",
@@ -499,6 +520,7 @@ def _decode_log_run_row(row):
     decoded["quickstart_branch"] = str(decoded.get("quickstart_branch") or "").strip() or None
     decoded["start_mode"] = str(decoded.get("start_mode") or "").strip().lower() or None
     decoded["tool_name"] = str(decoded.get("tool_name") or "kometa").strip().lower() or "kometa"
+    decoded["total_log_line_count"] = _compute_total_log_line_count(decoded)
     return decoded
 
 

@@ -474,6 +474,7 @@ class LogscanAnalyzer:
             "log_mtime": log_mtime,
             "log_size": log_size,
             "log_counts": counts,
+            "total_log_line_count": sum(int(counts.get(key, 0) or 0) for key in ("debug", "info", "warning", "error", "critical", "trace")),
             "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
         if validation_run:

@@ -5205,6 +5205,25 @@ def logscan_progress():
 
 @app.route("/logscan/trends", methods=["GET"])
 def logscan_trends():
+    request_started_at = time.perf_counter()
+    raw_limit = str(request.args.get("limit", "50")).strip().lower()
+    if raw_limit == "all":
+        limit = None
+    else:
+        try:
+            limit = int(raw_limit)
+        except Exception:
+            limit = 50
+        limit = max(1, min(limit, 500))
+
+    def _include_flag(name):
+        return str(request.args.get(name, "1")).strip().lower() not in {"0", "false", "no", "off"}
+
+    include_ingest_health = _include_flag("include_ingest_health")
+    include_archive_storage = _include_flag("include_archive_storage")
+    include_incomplete = _include_flag("include_incomplete")
+    lightweight_request = not include_ingest_health and not include_archive_storage and not include_incomplete
+
     snapshot = _logscan_reingest_snapshot()
     if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
         total_runs = database.get_log_runs_count()
@@ -5238,23 +5257,12 @@ def logscan_trends():
             }
         )
 
-    try:
-        _ingest_completed_live_logs("imagemaid")
-        _archive_finished_live_meta_log_if_idle()
-    except Exception:
-        pass
-    raw_limit = str(request.args.get("limit", "50")).strip().lower()
-    if raw_limit == "all":
-        limit = None
-    else:
+    if not lightweight_request:
         try:
-            limit = int(raw_limit)
+            _ingest_completed_live_logs("imagemaid")
+            _archive_finished_live_meta_log_if_idle()
         except Exception:
-            limit = 50
-        limit = max(1, min(limit, 500))
-    include_ingest_health = str(request.args.get("include_ingest_health", "1")).strip().lower() not in {"0", "false", "no", "off"}
-    include_archive_storage = str(request.args.get("include_archive_storage", "1")).strip().lower() not in {"0", "false", "no", "off"}
-    include_incomplete = str(request.args.get("include_incomplete", "1")).strip().lower() not in {"0", "false", "no", "off"}
+            pass
     total_runs = database.get_log_runs_count()
     resolution_context = _build_logscan_resolution_context()
     runs = _annotate_logscan_runs(database.get_log_runs(limit=limit), context=resolution_context)
@@ -5278,6 +5286,12 @@ def logscan_trends():
             all_runs=all_runs,
             incomplete_runs=all_incomplete_runs,
             context=resolution_context,
+        )
+    elapsed = time.perf_counter() - request_started_at
+    if elapsed >= 2:
+        helpers.ts_log(
+            f"Analytics trends request took {elapsed:.2f}s (limit={raw_limit}, lightweight={lightweight_request}, runs={len(runs)}, total={total_runs}).",
+            level="WARNING",
         )
     return jsonify(payload)
 
