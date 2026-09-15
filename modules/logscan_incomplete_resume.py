@@ -67,6 +67,19 @@ from modules.process_control import extract_selected_libraries
 _read_logscan_text = helpers.read_logscan_text
 
 
+def _count_value(value):
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _total_log_line_count(counts):
+    if not isinstance(counts, dict):
+        return 0
+    return sum(_count_value(counts.get(key)) for key in ("debug", "info", "warning", "error", "critical", "trace"))
+
+
 def analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=None):
     import quickstart
 
@@ -235,6 +248,7 @@ def analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=No
         "error_count": counts.get("error", 0),
         "critical_count": counts.get("critical", 0),
         "trace_count": counts.get("trace", 0),
+        "total_log_line_count": _total_log_line_count(counts),
         "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
         "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
         "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
@@ -325,6 +339,7 @@ def build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_nam
         "error_count": counts.get("error", 0),
         "critical_count": counts.get("critical", 0),
         "trace_count": counts.get("trace", 0),
+        "total_log_line_count": _total_log_line_count(counts),
         "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
         "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
         "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
@@ -423,6 +438,7 @@ def build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None):
         "error_count": 0,
         "critical_count": 0,
         "trace_count": 0,
+        "total_log_line_count": 0,
         "analysis_counts": {},
         "library_counts": {},
         "maintenance_summary": {},

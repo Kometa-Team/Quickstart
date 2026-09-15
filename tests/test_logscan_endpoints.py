@@ -460,6 +460,7 @@ def test_logscan_trends_uses_cached_incomplete_summary_without_reparse(client, i
     assert row["config_name"] == "demo"
     assert row["warning_count"] == 2
     assert row["error_count"] == 1
+    assert row["total_log_line_count"] == 3
     assert row["recommendations_count"] == 1
     assert row["progress_snapshot"]["rows"][0]["name"] == "Movies"
 
@@ -1872,6 +1873,7 @@ def test_logscan_reingest_ingests_imagemaid_log(client, isolated_config_dir, mon
     assert imagemaid_runs[0]["info_count"] == 3
     assert imagemaid_runs[0]["warning_count"] == 1
     assert imagemaid_runs[0]["critical_count"] == 1
+    assert imagemaid_runs[0]["total_log_line_count"] == 6
 
 
 def test_logscan_reingest_archives_completed_imagemaid_live_log(client, isolated_config_dir, monkeypatch, qs_module):

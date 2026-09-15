@@ -736,16 +736,7 @@ function getCountsTotal (run) {
 }
 
 function getDisplayedItemsTotal (run) {
-  if (getRunToolName(run) === 'imagemaid') {
-    const cache = getCount(run, 'cache_line_count')
-    const debug = getCount(run, 'debug_count')
-    const info = getCount(run, 'info_count')
-    const warnings = getCount(run, 'warning_count')
-    const errors = getCount(run, 'error_count')
-    const critical = getCount(run, 'critical_count')
-    const traces = getCount(run, 'trace_count')
-    return cache + debug + info + warnings + errors + critical + traces
-  }
+  if (getRunToolName(run) === 'imagemaid') return getTotalLogLineCount(run)
   return getRunLibraryTotals(run).total
 }
 
@@ -782,6 +773,12 @@ function getCount (run, key) {
   return Number.isFinite(value) ? value : 0
 }
 
+function getTotalLogLineCount (run) {
+  const direct = run && typeof run.total_log_line_count === 'number' ? run.total_log_line_count : null
+  if (direct !== null && Number.isFinite(direct)) return direct
+  return getCount(run, 'debug_count') + getCount(run, 'info_count') + getCount(run, 'warning_count') + getCount(run, 'error_count') + getCount(run, 'critical_count') + getCount(run, 'trace_count')
+}
+
 function renderRunCountChips (run) {
   if (getRunToolName(run) === 'imagemaid') {
     const cache = getCount(run, 'cache_line_count')
@@ -791,7 +788,7 @@ function renderRunCountChips (run) {
     const errors = getCount(run, 'error_count')
     const critical = getCount(run, 'critical_count')
     const traces = getCount(run, 'trace_count')
-    const total = cache + debug + info + warnings + errors + critical + traces
+    const totalLogLines = getTotalLogLineCount(run)
     return [
       renderCountChip('C', 'Cache lines', cache, 'cache'),
       renderCountChip('D', 'Debug lines', debug, 'debug'),
@@ -800,7 +797,7 @@ function renderRunCountChips (run) {
       renderCountChip('E', 'Errors', errors, 'error'),
       renderCountChip('Cr', 'Critical lines', critical, 'critical'),
       renderCountChip('T', 'Tracebacks', traces, 'trace'),
-      renderCountChip('Items', 'Total counted lines', total, 'total')
+      renderCountChip('Lines', 'Total log-level lines', totalLogLines, 'lines')
     ].join('')
   }
 
@@ -811,6 +808,7 @@ function renderRunCountChips (run) {
   const errors = getCount(run, 'error_count')
   const critical = getCount(run, 'critical_count')
   const traces = getCount(run, 'trace_count')
+  const totalLogLines = getTotalLogLineCount(run)
   const libraryTotals = getRunLibraryTotals(run)
   return [
     renderCountChip('C', 'Cache lines', cache, 'cache'),
@@ -820,6 +818,7 @@ function renderRunCountChips (run) {
     renderCountChip('E', 'Errors', errors, 'error'),
     renderCountChip('Cr', 'Critical lines', critical, 'critical'),
     renderCountChip('T', 'Tracebacks', traces, 'trace'),
+    renderCountChip('Lines', 'Total log-level lines', totalLogLines, 'lines'),
     renderCountChip('M', 'Movies', libraryTotals.movies, 'movie'),
     renderCountChip('S', 'Shows', libraryTotals.shows, 'show'),
     renderCountChip('Ep', 'Episodes', libraryTotals.episodes, 'episode'),
@@ -1160,6 +1159,7 @@ const PANEL_PREFS = [
 ]
 
 const LOG_LEVEL_SERIES = [
+  { key: 'total_log_line_count', short: 'Lines', label: 'Log lines', css: 'logscan-stack-lines' },
   { key: 'cache_line_count', short: 'C', label: 'Cache', css: 'logscan-stack-cache' },
   { key: 'debug_count', short: 'D', label: 'Debug', css: 'logscan-stack-debug' },
   { key: 'info_count', short: 'I', label: 'Info', css: 'logscan-stack-info' },
@@ -2156,6 +2156,8 @@ function renderCountsMix (runs) {
           ? run.cache_line_count
           : 0
         buckets[key][series.key] += cacheValue
+      } else if (series.key === 'total_log_line_count') {
+        buckets[key][series.key] += getTotalLogLineCount(run)
       } else {
         buckets[key][series.key] += getCount(run, series.key)
       }
@@ -2551,6 +2553,8 @@ function getSortValue (run, key) {
       return getRunCommandValue(run)
     case 'counts':
       return getCountsTotal(run)
+    case 'total_log_line_count':
+      return getTotalLogLineCount(run)
     case 'warning_count':
     case 'debug_count':
     case 'info_count':
@@ -3120,7 +3124,8 @@ function stopReingestPolling () {
   setReingestButtonLabel(defaultReingestButtonLabel)
 }
 
-function fetchReingestStatus (jobId) {
+function fetchReingestStatus (jobId, options = {}) {
+  const applyComplete = !options || options.applyComplete !== false
   const query = jobId ? `?job=${encodeURIComponent(jobId)}` : ''
   return fetch(`/logscan/trends/reingest/status${query}`)
     .then(res => res.json().then(data => ({ ok: res.ok, data })))
@@ -3149,7 +3154,9 @@ function fetchReingestStatus (jobId) {
       }
       if (data.status === 'complete') {
         stopReingestPolling()
-        applyReingestSummary(data)
+        if (applyComplete) {
+          applyReingestSummary(data)
+        }
         return data
       }
       if (data.status === 'error') {
@@ -3361,6 +3368,17 @@ function handleRunningTrendsPayload (data) {
   startReingestPolling(state.job_id || null)
   updateStatus('Reingest is running. Analytics will refresh when it finishes.')
   return true
+}
+
+function createAnalyticsLoadTimer (suppressStatus, messages) {
+  if (suppressStatus || !Array.isArray(messages) || !messages.length) return () => {}
+  const timers = messages.map(item => {
+    const delay = Number.isFinite(item.delay) ? item.delay : 0
+    return setTimeout(() => updateStatus(item.message), delay)
+  })
+  return function clearAnalyticsLoadTimer () {
+    timers.forEach(timer => clearTimeout(timer))
+  }
 }
 
 function fetchIngestHealth () {
@@ -3580,8 +3598,22 @@ function fetchRuns (options = {}) {
   const suppressStatus = options && options.suppressStatus
   const rawLimit = String(limit.value || '500').toLowerCase()
   const safeLimit = rawLimit === 'all' ? 'all' : (Number.isFinite(parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 500)
-  if (!suppressStatus) updateStatus('Loading trends...')
-  fetch(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0`)
+  const clearLoadTimer = createAnalyticsLoadTimer(suppressStatus, [
+    {
+      delay: 8000,
+      message: 'Still loading saved analytics runs. Large log history or slow storage can make this take longer.'
+    },
+    {
+      delay: 30000,
+      message: 'Still waiting for Analytics data. Quickstart may be reading the saved run database or resolving archived log files.'
+    },
+    {
+      delay: 120000,
+      message: 'Analytics is still waiting on the server response. Check the Quickstart console or container logs for a slow /logscan/trends request.'
+    }
+  ])
+  if (!suppressStatus) updateStatus('Loading saved analytics runs...')
+  return fetch(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0`)
     .then(res => res.json())
     .then(data => {
       if (handleRunningTrendsPayload(data)) return
@@ -3594,7 +3626,8 @@ function fetchRuns (options = {}) {
       updateConfigFilter(allTableRuns)
       updateCommandFilter(allTableRuns)
       updateDateRangeInputs(allTableRuns, getFilterState())
-      loadPreferences()
+      if (!suppressStatus) updateStatus('Rendering analytics charts...')
+      return loadPreferences()
         .then(() => {
           applyFiltersAndRender()
           if (!suppressStatus && (!lastIngestState || lastIngestState.status !== 'running')) {
@@ -3625,15 +3658,35 @@ function fetchRuns (options = {}) {
       tableBody.innerHTML = '<tr><td colspan="18" class="text-muted">Unable to load runs.</td></tr>'
       updateSelectionSummary()
     })
+    .finally(() => {
+      clearLoadTimer()
+    })
 }
 
 function refreshAnalyticsPage (options = {}) {
   const suppressStatus = Boolean(options && options.suppressStatus)
+  const clearLoadTimer = createAnalyticsLoadTimer(suppressStatus, [
+    {
+      delay: 5000,
+      message: 'Checking whether Analytics is rebuilding saved trends...'
+    },
+    {
+      delay: 15000,
+      message: 'Still checking Analytics status. If this persists, the reingest status endpoint may be waiting on the server.'
+    }
+  ])
+  if (!suppressStatus) updateStatus('Checking Analytics status...')
   checkMissingDownload()
-  fetchReingestStatus()
+  return fetchReingestStatus(null, { applyComplete: false })
     .then(data => {
-      if (data && (data.status === 'running' || data.status === 'complete')) return
-      fetchRuns({ suppressStatus })
+      clearLoadTimer()
+      if (data && data.status === 'running') return data
+      return fetchRuns({ suppressStatus })
+    })
+    .catch(err => {
+      clearLoadTimer()
+      console.error(err)
+      return fetchRuns({ suppressStatus })
     })
 }
 

@@ -498,6 +498,7 @@ def analyze_imagemaid_log_content(content, log_path=None):
         "quickstart_run_marker": quickstart_run_marker,
         "config_line_count": None,
         "cache_line_count": cache_count,
+        "total_log_line_count": debug_count + info_count + warning_count + error_count + critical_count + trace_count,
         "created_at": created_at,
         "run_complete": run_complete,
         "completion_reason": completion_reason,

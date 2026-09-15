@@ -50,6 +50,9 @@
     --logscan-sem-trace: #4cc9f0;
     --logscan-sem-trace-ink: #4cc9f0;
     --logscan-sem-trace-soft: rgba(76, 201, 240, 0.14);
+    --logscan-sem-lines: #cbd5e1;
+    --logscan-sem-lines-ink: #e2e8f0;
+    --logscan-sem-lines-soft: rgba(203, 213, 225, 0.14);
 }
 
 [data-theme="kometa"] {
@@ -3138,6 +3141,11 @@ div#loading {
     color: var(--logscan-sem-trace-ink);
 }
 
+.logscan-count-chip--lines {
+    background: var(--logscan-sem-lines-soft);
+    color: var(--logscan-sem-lines-ink);
+}
+
 .logscan-count-chip--movie {
     background: rgba(67, 170, 139, 0.14);
     color: #5bd3ad;
@@ -3451,6 +3459,10 @@ div#loading {
     background: var(--logscan-sem-critical);
 }
 
+.logscan-stack-lines {
+    background: var(--logscan-sem-lines);
+}
+
 .logscan-stack-runtime {
     background: #43aa8b;
 }
@@ -3519,6 +3531,12 @@ div#loading {
 .logscan-series-toggle.active {
     background: rgba(255, 255, 255, 0.14);
     color: var(--theme-text);
+}
+
+.logscan-series-toggle[data-series-key="total_log_line_count"] {
+    --logscan-series-color: var(--logscan-sem-lines);
+    --logscan-series-ink: var(--logscan-sem-lines-ink);
+    --logscan-series-soft: var(--logscan-sem-lines-soft);
 }
 
 .logscan-series-toggle[data-series-key="cache_line_count"] {
