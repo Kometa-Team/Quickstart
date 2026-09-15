@@ -2739,6 +2739,15 @@ div#loading {
     min-width: 9.5rem;
 }
 
+.logscan-multi-filter {
+    min-height: 5.4rem;
+    min-width: 13.75rem;
+}
+
+.logscan-command-filter {
+    min-width: min(32.5rem, 100%);
+}
+
 .logscan-run-count {
     flex: 0 0 auto;
 }
@@ -3390,6 +3399,43 @@ div#loading {
     text-align: right;
     font-size: 0.75rem;
     color: var(--theme-text-muted);
+}
+
+.logscan-section-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.logscan-view-accordion {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.logscan-view-accordion .accordion-item {
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.logscan-view-accordion .accordion-button {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--theme-text);
+    font-weight: 700;
+}
+
+.logscan-view-accordion .accordion-button:not(.collapsed) {
+    background: rgba(var(--accent-color), 0.08);
+    color: var(--theme-text);
+}
+
+.logscan-view-accordion .accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--theme-border);
+}
+
+.logscan-view-accordion .accordion-body {
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .logscan-pref-accordion .accordion-button {
