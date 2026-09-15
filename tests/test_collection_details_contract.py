@@ -665,6 +665,21 @@ def test_analytics_page_checks_reingest_status_before_loading_trends():
     assert "fetchArchiveStorage()" in script
     assert "fetchIngestHealth()" in script
 
+    template = (ROOT / "templates" / "905-analytics.html").read_text(encoding="utf-8")
+    for filter_id in (
+        "logscan-trends-tool-filter",
+        "logscan-trends-config-filter",
+        "logscan-trends-tool-version-filter",
+        "logscan-trends-quickstart-version-filter",
+        "logscan-trends-command-filter",
+        "logscan-trends-library-filter",
+    ):
+        marker = f'id="{filter_id}"'
+        start = template.index(marker)
+        select_fragment = template[start : template.index(">", start)]
+        assert "multiple" in select_fragment
+        assert "logscan-multi-filter" in select_fragment
+
 
 def test_template_variable_sections_show_override_rail():
     styles = STYLES_PATH.read_text(encoding="utf-8")

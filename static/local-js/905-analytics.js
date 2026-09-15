@@ -92,6 +92,9 @@ const deleteLogModalEl = document.getElementById('logscan-delete-log-modal')
 const compressLogModalEl = document.getElementById('logscan-compress-log-modal')
 const runDetailsModalEl = document.getElementById('logscan-run-details-modal')
 const preferencesModalEl = document.getElementById('logscan-preferences-modal')
+const analyticsSectionExpandAll = document.getElementById('logscan-sections-expand-all')
+const analyticsSectionCollapseAll = document.getElementById('logscan-sections-collapse-all')
+const analyticsSections = document.querySelectorAll('.logscan-analytics-section')
 let missingDownloadUrl = ''
 let pendingInvalidLogCleanup = null
 let pendingDeleteRun = null
@@ -117,8 +120,59 @@ let lastIngestState = null
 let analyticsPrefs = null
 const defaultReingestButtonLabel = reingest.textContent.trim() || 'Reingest logs'
 
+function setAnalyticsSectionsExpanded (expanded) {
+  analyticsSections.forEach(section => {
+    if (window.bootstrap && typeof window.bootstrap.Collapse === 'function') {
+      const collapse = window.bootstrap.Collapse.getOrCreateInstance(section, { toggle: false })
+      if (expanded) {
+        collapse.show()
+      } else {
+        collapse.hide()
+      }
+      return
+    }
+    section.classList.toggle('show', expanded)
+  })
+}
+
+function getSelectedValues (control) {
+  const el = control && control.elements ? control.elements[0] : control
+  if (!el) return []
+  if (!el.multiple) {
+    const value = String(el.value || '').trim()
+    return value ? [value] : []
+  }
+  return Array.from(el.selectedOptions || [])
+    .map(option => String(option.value || '').trim())
+    .filter(Boolean)
+}
+
+function setSelectedValues (controls, values) {
+  if (!controls || !controls.length) return
+  const selected = new Set(Array.isArray(values) ? values.map(value => String(value || '').trim()).filter(Boolean) : [])
+  for (const el of controls) {
+    if (!el.multiple) {
+      el.value = Array.from(selected)[0] || ''
+      continue
+    }
+    Array.from(el.options || []).forEach(option => {
+      option.selected = selected.has(String(option.value || '').trim())
+    })
+  }
+}
+
+function sameSelection (a, b) {
+  const left = Array.isArray(a) ? a.slice().sort() : []
+  const right = Array.isArray(b) ? b.slice().sort() : []
+  return left.length === right.length && left.every((value, index) => value === right[index])
+}
+
 function syncMirroredControlValue (controls, source) {
   if (!controls.length || !source) return
+  if (source.multiple) {
+    setSelectedValues(controls, getSelectedValues(source))
+    return
+  }
   const value = source.value
   for (const el of controls) {
     if (el === source) continue
@@ -321,10 +375,6 @@ function normalizeRunCommand (command) {
     }
   })
   return parts.join(' ').trim()
-}
-
-function getDefaultToolFilterValue (tools) {
-  return ''
 }
 
 function getRunCommandValue (run) {
@@ -2291,15 +2341,15 @@ function renderIssueTrends (runs) {
 function updateLibraryFilter (runs) {
   if (!libraryFilter.length) return false
   const names = collectLibraryNames(runs)
-  const selected = libraryFilter.value || ''
+  const selected = getSelectedValues(libraryFilter)
   const options = ['<option value="">All libraries</option>']
   names.forEach(name => {
     options.push(`<option value="${escapeHtml(name)}" title="${escapeHtml(name)}">[${escapeHtml(nbspLeadingSpaces(name))}]</option>`)
   })
   libraryFilter.setHTML(options.join(''))
-  const nextValue = selected && names.includes(selected) ? selected : ''
-  libraryFilter.setValue(nextValue)
-  return nextValue !== selected
+  const nextValues = selected.filter(name => names.includes(name))
+  setSelectedValues(libraryFilter, nextValues)
+  return !sameSelection(nextValues, selected)
 }
 
 function renderLibraryInventory (runs) {
@@ -2314,7 +2364,7 @@ function renderLibraryInventory (runs) {
     librariesEl.textContent = 'No library totals yet.'
     return
   }
-  const selectedLibrary = libraryFilter.value || ''
+  const selectedLibraries = getSelectedValues(libraryFilter)
   const snapshots = buildLibrarySnapshots(runsWithCounts)
   const days = Object.keys(snapshots).sort().slice(-14)
   if (!days.length) {
@@ -2328,12 +2378,14 @@ function renderLibraryInventory (runs) {
     let episodes = 0
     let shows = 0
     let total = 0
-    if (selectedLibrary) {
-      const entryTotals = getLibraryMediaTotals(libraries[selectedLibrary] || {})
-      movies = entryTotals.movies
-      episodes = entryTotals.episodes
-      shows = entryTotals.shows
-      total = entryTotals.total
+    if (selectedLibraries.length) {
+      selectedLibraries.forEach(selectedLibrary => {
+        const entryTotals = getLibraryMediaTotals(libraries[selectedLibrary] || {})
+        movies += entryTotals.movies
+        episodes += entryTotals.episodes
+        shows += entryTotals.shows
+        total += entryTotals.total
+      })
     } else {
       Object.values(libraries).forEach(entry => {
         const entryTotals = getLibraryMediaTotals(entry)
@@ -2351,8 +2403,8 @@ function renderLibraryInventory (runs) {
       total
     }
   })
-  if (selectedLibrary && rowsData.every(row => row.total === 0 && row.shows === 0)) {
-    librariesEl.textContent = 'No totals recorded for the selected library yet.'
+  if (selectedLibraries.length && rowsData.every(row => row.total === 0 && row.shows === 0)) {
+    librariesEl.textContent = 'No totals recorded for the selected libraries yet.'
     return
   }
   const totals = rowsData.map(row => row.total || 0)
@@ -2396,7 +2448,7 @@ function renderLibraryInventory (runs) {
     </div>`
   ))
   const labelStyle = `style="grid-template-columns: repeat(${rowsData.length}, minmax(0, 1fr));"`
-  const metaLabel = selectedLibrary ? `Tracking: ${escapeHtml(selectedLibrary)}` : 'Tracking: All libraries'
+  const metaLabel = selectedLibraries.length ? `Tracking: ${escapeHtml(selectedLibraries.join(', '))}` : 'Tracking: All libraries'
   const legend = `
     <div class="logscan-daily-legend">
       <span class="logscan-legend-item"><span class="logscan-legend-swatch" style="background:#43aa8b"></span>Movies</span>
@@ -2639,21 +2691,21 @@ function updateSortIndicators () {
 
 function updateConfigFilter (runs) {
   if (!configFilter.length) return false
-  const selected = configFilter.value || ''
+  const selected = getSelectedValues(configFilter)
   const configs = Array.from(new Set(runs.map(run => normalizeConfigName(run.config_name)))).sort()
   const options = ['<option value="">All configs</option>']
   configs.forEach(cfg => {
     options.push(`<option value="${escapeHtml(cfg)}">${escapeHtml(cfg)}</option>`)
   })
   configFilter.setHTML(options.join(''))
-  const nextValue = selected && configs.includes(selected) ? selected : ''
-  configFilter.setValue(nextValue)
-  return nextValue !== selected
+  const nextValues = selected.filter(cfg => configs.includes(cfg))
+  setSelectedValues(configFilter, nextValues)
+  return !sameSelection(nextValues, selected)
 }
 
 function updateCommandFilter (runs) {
   if (!commandFilter.length) return false
-  const selected = commandFilter.value || ''
+  const selected = getSelectedValues(commandFilter)
   const counts = new Map()
   runs.forEach(run => {
     const command = getRunCommandValue(run)
@@ -2673,9 +2725,9 @@ function updateCommandFilter (runs) {
     )
   })
   commandFilter.setHTML(options.join(''))
-  const nextValue = selected && counts.has(selected) ? selected : ''
-  commandFilter.setValue(nextValue)
-  return nextValue !== selected
+  const nextValues = selected.filter(command => counts.has(command))
+  setSelectedValues(commandFilter, nextValues)
+  return !sameSelection(nextValues, selected)
 }
 
 function getAvailableDateBounds (runs) {
@@ -2766,13 +2818,13 @@ function updateRunCountDisplay (filtered) {
 
 function getFilterState () {
   return {
-    config: configFilter.value || '',
-    tool: toolFilter.value || '',
-    toolVersion: toolVersionFilter.value || '',
-    quickstartVersion: quickstartVersionFilter.value || '',
+    config: getSelectedValues(configFilter),
+    tool: getSelectedValues(toolFilter),
+    toolVersion: getSelectedValues(toolVersionFilter),
+    quickstartVersion: getSelectedValues(quickstartVersionFilter),
     timeRange: timeRange.value || 'all',
-    command: commandFilter.value || '',
-    library: libraryFilter.value || '',
+    command: getSelectedValues(commandFilter),
+    library: getSelectedValues(libraryFilter),
     start: dateStart.value || '',
     end: dateEnd.value || ''
   }
@@ -2790,11 +2842,11 @@ function filterRuns (runs, state) {
     rangeEnd = relative.end
   }
   return runs.filter(run => {
-    if (state.config && normalizeConfigName(run.config_name) !== state.config) return false
-    if (state.tool && getRunToolName(run) !== state.tool) return false
-    if (state.toolVersion && getRunToolVersionValue(run) !== state.toolVersion) return false
-    if (state.quickstartVersion && getRunQuickstartVersionValue(run) !== state.quickstartVersion) return false
-    if (state.command && getRunCommandValue(run) !== state.command) return false
+    if (state.config.length && !state.config.includes(normalizeConfigName(run.config_name))) return false
+    if (state.tool.length && !state.tool.includes(getRunToolName(run))) return false
+    if (state.toolVersion.length && !state.toolVersion.includes(getRunToolVersionValue(run))) return false
+    if (state.quickstartVersion.length && !state.quickstartVersion.includes(getRunQuickstartVersionValue(run))) return false
+    if (state.command.length && !state.command.includes(getRunCommandValue(run))) return false
     if (rangeStart || rangeEnd) {
       const dateKey = getRunDateKey(run)
       if (!isDateWithinRange(dateKey, rangeStart, rangeEnd)) return false
@@ -2805,19 +2857,19 @@ function filterRuns (runs, state) {
 
 function updateFilterOptions (state) {
   let changed = false
-  changed = updateConfigFilter(filterRuns(allTableRuns, { ...state, config: '' })) || changed
-  changed = updateToolFilter(filterRuns(allTableRuns, { ...state, tool: '' })) || changed
-  changed = updateToolVersionFilter(filterRuns(allTableRuns, { ...state, toolVersion: '' })) || changed
-  changed = updateQuickstartVersionFilter(filterRuns(allTableRuns, { ...state, quickstartVersion: '' })) || changed
-  changed = updateCommandFilter(filterRuns(allTableRuns, { ...state, command: '' })) || changed
+  changed = updateConfigFilter(filterRuns(allTableRuns, { ...state, config: [] })) || changed
+  changed = updateToolFilter(filterRuns(allTableRuns, { ...state, tool: [] })) || changed
+  changed = updateToolVersionFilter(filterRuns(allTableRuns, { ...state, toolVersion: [] })) || changed
+  changed = updateQuickstartVersionFilter(filterRuns(allTableRuns, { ...state, quickstartVersion: [] })) || changed
+  changed = updateCommandFilter(filterRuns(allTableRuns, { ...state, command: [] })) || changed
   changed = updateDateRangeInputs(filterRuns(allTableRuns, { ...state, start: '', end: '', timeRange: 'all' }), state) || changed
-  changed = updateLibraryFilter(filterRuns(allRuns, { ...state, library: '' })) || changed
+  changed = updateLibraryFilter(filterRuns(allRuns, { ...state, library: [] })) || changed
   return changed
 }
 
 function updateToolFilter (runs) {
   if (!toolFilter.length) return false
-  const selected = toolFilter.value || ''
+  const selected = getSelectedValues(toolFilter)
   const tools = Array.from(new Set(runs.map(run => getRunToolName(run)))).sort()
   const options = ['<option value="">All apps</option>']
   tools.forEach(tool => {
@@ -2825,14 +2877,14 @@ function updateToolFilter (runs) {
     options.push(`<option value="${escapeHtml(tool)}">${escapeHtml(label)}</option>`)
   })
   toolFilter.setHTML(options.join(''))
-  const nextValue = selected && tools.includes(selected) ? selected : getDefaultToolFilterValue(tools)
-  toolFilter.setValue(nextValue)
-  return nextValue !== selected
+  const nextValues = selected.filter(tool => tools.includes(tool))
+  setSelectedValues(toolFilter, nextValues)
+  return !sameSelection(nextValues, selected)
 }
 
 function updateToolVersionFilter (runs) {
   if (!toolVersionFilter.length) return false
-  const selected = toolVersionFilter.value || ''
+  const selected = getSelectedValues(toolVersionFilter)
   const counts = new Map()
   runs.forEach(run => {
     const version = getRunToolVersionValue(run)
@@ -2845,14 +2897,14 @@ function updateToolVersionFilter (runs) {
     options.push(`<option value="${escapeHtml(version)}">${escapeHtml(version)}</option>`)
   })
   toolVersionFilter.setHTML(options.join(''))
-  const nextValue = selected && counts.has(selected) ? selected : ''
-  toolVersionFilter.setValue(nextValue)
-  return nextValue !== selected
+  const nextValues = selected.filter(version => counts.has(version))
+  setSelectedValues(toolVersionFilter, nextValues)
+  return !sameSelection(nextValues, selected)
 }
 
 function updateQuickstartVersionFilter (runs) {
   if (!quickstartVersionFilter.length) return false
-  const selected = quickstartVersionFilter.value || ''
+  const selected = getSelectedValues(quickstartVersionFilter)
   const counts = new Map()
   runs.forEach(run => {
     const version = getRunQuickstartVersionValue(run)
@@ -2865,9 +2917,9 @@ function updateQuickstartVersionFilter (runs) {
     options.push(`<option value="${escapeHtml(version)}">${escapeHtml(version)}</option>`)
   })
   quickstartVersionFilter.setHTML(options.join(''))
-  const nextValue = selected && counts.has(selected) ? selected : ''
-  quickstartVersionFilter.setValue(nextValue)
-  return nextValue !== selected
+  const nextValues = selected.filter(version => counts.has(version))
+  setSelectedValues(quickstartVersionFilter, nextValues)
+  return !sameSelection(nextValues, selected)
 }
 
 function applyFiltersAndRender () {
@@ -3985,6 +4037,16 @@ if (tableCollapseEl) {
     tableToggle.textContent = 'Show runs'
   })
 }
+if (analyticsSectionExpandAll) {
+  analyticsSectionExpandAll.addEventListener('click', function () {
+    setAnalyticsSectionsExpanded(true)
+  })
+}
+if (analyticsSectionCollapseAll) {
+  analyticsSectionCollapseAll.addEventListener('click', function () {
+    setAnalyticsSectionsExpanded(false)
+  })
+}
 configFilter.on('change', function () {
   syncMirroredControlValue(configFilter, this)
   tablePage = 1
@@ -4047,13 +4109,13 @@ resetFilters.on('click', function () {
   limit.setValue('500')
   tablePage = 1
   tableStatusFilter = 'all'
-  configFilter.setValue('')
-  toolFilter.setValue('')
-  toolVersionFilter.setValue('')
-  quickstartVersionFilter.setValue('')
+  setSelectedValues(configFilter, [])
+  setSelectedValues(toolFilter, [])
+  setSelectedValues(toolVersionFilter, [])
+  setSelectedValues(quickstartVersionFilter, [])
   timeRange.setValue('all')
-  commandFilter.setValue('')
-  libraryFilter.setValue('')
+  setSelectedValues(commandFilter, [])
+  setSelectedValues(libraryFilter, [])
   clearDateFilters()
   fetchRuns({ suppressStatus: true })
 })

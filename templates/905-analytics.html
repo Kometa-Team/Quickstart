@@ -42,13 +42,13 @@
           </select>
           <div class="input-group input-group-sm w-auto logscan-app-filter">
             <span class="input-group-text">App</span>
-            <select id="logscan-trends-tool-filter" class="form-select form-select-sm logscan-control-field"
-              title="Filter visuals by app.">
+            <select id="logscan-trends-tool-filter" class="form-select form-select-sm logscan-control-field logscan-multi-filter"
+              multiple size="3" title="Filter visuals by one or more apps.">
               <option value="">All apps</option>
             </select>
           </div>
-          <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by tracked config.">
+          <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter visuals by one or more tracked configs.">
             <option value="">All configs</option>
           </select>
           <div class="input-group input-group-sm w-auto logscan-time-range">
@@ -75,20 +75,20 @@
           <div id="logscan-trends-date-hint" class="small text-muted logscan-date-hint"></div>
         </div>
         <div class="logscan-filter-row logscan-filter-row-secondary">
-          <select id="logscan-trends-tool-version-filter" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by Kometa or ImageMaid version. Pair with App to isolate one tool.">
+          <select id="logscan-trends-tool-version-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter visuals by one or more Kometa or ImageMaid versions. Pair with App to isolate one tool.">
             <option value="">All tool versions</option>
           </select>
-          <select id="logscan-trends-quickstart-version-filter" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by Quickstart version from the run marker.">
+          <select id="logscan-trends-quickstart-version-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter visuals by one or more Quickstart versions from the run marker.">
             <option value="">All QS versions</option>
           </select>
-          <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by run command.">
+          <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter logscan-command-filter"
+            multiple size="4" title="Filter visuals by one or more run commands.">
             <option value="">All commands</option>
           </select>
-          <select id="logscan-trends-library-filter" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter library inventory by library.">
+          <select id="logscan-trends-library-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter library inventory by one or more libraries.">
             <option value="">All libraries</option>
           </select>
           <button id="logscan-trends-preferences" class="btn nav-button btn-sm logscan-control-action" type="button"
@@ -122,87 +122,154 @@
       <div class="small text-muted mt-1" id="logscan-trends-progress-text"></div>
     </div>
 
-    <div class="row g-3 mt-3">
-      <div class="col-lg-4" data-panel-key="summary">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Summary</h6>
-          <div id="logscan-trends-summary" class="small text-muted">Loading summary...</div>
-          <div class="mt-3">
-            <h6 class="text-uppercase text-muted mb-2">Ingest Health</h6>
-            <div id="logscan-trends-ingest" class="small text-muted">Loading ingest status...</div>
+    <div class="logscan-section-controls mt-3">
+      <button id="logscan-sections-expand-all" class="btn nav-button btn-sm" type="button">Expand analytics panels</button>
+      <button id="logscan-sections-collapse-all" class="btn nav-button btn-sm" type="button">Collapse analytics panels</button>
+    </div>
+
+    <div class="accordion logscan-view-accordion mt-3" id="logscan-analytics-sections">
+      <div class="accordion-item bg-dark text-light border-secondary">
+        <h2 class="accordion-header" id="logscan-overview-heading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#logscan-overview-collapse" aria-expanded="false" aria-controls="logscan-overview-collapse">
+            Overview, Health, and Inventory
+          </button>
+        </h2>
+        <div id="logscan-overview-collapse" class="accordion-collapse collapse logscan-analytics-section">
+          <div class="accordion-body">
+            <div class="row g-3">
+              <div class="col-lg-4" data-panel-key="summary">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Summary</h6>
+                  <div id="logscan-trends-summary" class="small text-muted">Loading summary...</div>
+                  <div class="mt-3">
+                    <h6 class="text-uppercase text-muted mb-2">Ingest Health</h6>
+                    <div id="logscan-trends-ingest" class="small text-muted">Loading ingest status...</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-8" data-panel-key="daily_runs">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Daily Runs</h6>
+                  <div id="logscan-trends-daily" class="small text-muted">Loading daily totals...</div>
+                  <div class="mt-3">
+                    <h6 class="text-uppercase text-muted mb-2">Avg Runtime by Day</h6>
+                    <div id="logscan-trends-daily-runtime" class="small text-muted">Loading average runtimes...</div>
+                  </div>
+                  <div class="mt-3" data-panel-key="library_inventory">
+                    <h6 class="text-uppercase text-muted mb-2">Library Inventory</h6>
+                    <div id="logscan-trends-libraries" class="small text-muted">Loading library totals...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-lg-8" data-panel-key="daily_runs">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Daily Runs</h6>
-          <div id="logscan-trends-daily" class="small text-muted">Loading daily totals...</div>
-          <div class="mt-3">
-            <h6 class="text-uppercase text-muted mb-2">Avg Runtime by Day</h6>
-            <div id="logscan-trends-daily-runtime" class="small text-muted">Loading average runtimes...</div>
+
+      <div class="accordion-item bg-dark text-light border-secondary">
+        <h2 class="accordion-header" id="logscan-runtime-heading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#logscan-runtime-collapse" aria-expanded="false" aria-controls="logscan-runtime-collapse">
+            Runtime Distribution
+          </button>
+        </h2>
+        <div id="logscan-runtime-collapse" class="accordion-collapse collapse logscan-analytics-section">
+          <div class="accordion-body">
+            <div class="row g-3">
+              <div class="col-12" data-panel-key="runtime_distribution">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Runtime Distribution</h6>
+                  <div id="logscan-trends-runtime" class="small text-muted">Loading runtime distribution...</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="mt-3" data-panel-key="library_inventory">
-            <h6 class="text-uppercase text-muted mb-2">Library Inventory</h6>
-            <div id="logscan-trends-libraries" class="small text-muted">Loading library totals...</div>
+        </div>
+      </div>
+
+      <div class="accordion-item bg-dark text-light border-secondary">
+        <h2 class="accordion-header" id="logscan-imagemaid-heading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#logscan-imagemaid-collapse" aria-expanded="false" aria-controls="logscan-imagemaid-collapse">
+            ImageMaid Analytics
+          </button>
+        </h2>
+        <div id="logscan-imagemaid-collapse" class="accordion-collapse collapse logscan-analytics-section">
+          <div class="accordion-body">
+            <div class="row g-3">
+              <div class="col-lg-4" data-panel-key="imagemaid_summary">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">ImageMaid Summary</h6>
+                  <div id="logscan-trends-imagemaid-summary" class="small text-muted">Loading ImageMaid summary...</div>
+                </div>
+              </div>
+              <div class="col-lg-4" data-panel-key="imagemaid_recovered_trend">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Recovered Space by Day</h6>
+                  <div id="logscan-trends-imagemaid-recovered" class="small text-muted">Loading recovered space trend...</div>
+                </div>
+              </div>
+              <div class="col-lg-4" data-panel-key="imagemaid_mode_mix">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">ImageMaid Runs by Mode</h6>
+                  <div id="logscan-trends-imagemaid-modes" class="small text-muted">Loading mode distribution...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-3">
+              <div class="col-12" data-panel-key="imagemaid_files_trend">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Files Removed by Day</h6>
+                  <div id="logscan-trends-imagemaid-files" class="small text-muted">Loading removed files trend...</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="row g-3 mt-3">
-      <div class="col-12" data-panel-key="runtime_distribution">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Runtime Distribution</h6>
-          <div id="logscan-trends-runtime" class="small text-muted">Loading runtime distribution...</div>
+      <div class="accordion-item bg-dark text-light border-secondary">
+        <h2 class="accordion-header" id="logscan-log-lines-heading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#logscan-log-lines-collapse" aria-expanded="false" aria-controls="logscan-log-lines-collapse">
+            Log Lines and Counts
+          </button>
+        </h2>
+        <div id="logscan-log-lines-collapse" class="accordion-collapse collapse logscan-analytics-section">
+          <div class="accordion-body">
+            <div class="row g-3">
+              <div class="col-12" data-panel-key="counts_mix">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Log Lines + Levels + Cache (Avg per day)</h6>
+                  <div id="logscan-trends-counts-series" class="small mb-2"></div>
+                  <div id="logscan-trends-counts" class="small text-muted">Loading log-level averages...</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="row g-3 mt-3">
-      <div class="col-lg-4" data-panel-key="imagemaid_summary">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">ImageMaid Summary</h6>
-          <div id="logscan-trends-imagemaid-summary" class="small text-muted">Loading ImageMaid summary...</div>
-        </div>
-      </div>
-      <div class="col-lg-4" data-panel-key="imagemaid_recovered_trend">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Recovered Space by Day</h6>
-          <div id="logscan-trends-imagemaid-recovered" class="small text-muted">Loading recovered space trend...</div>
-        </div>
-      </div>
-      <div class="col-lg-4" data-panel-key="imagemaid_mode_mix">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">ImageMaid Runs by Mode</h6>
-          <div id="logscan-trends-imagemaid-modes" class="small text-muted">Loading mode distribution...</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 mt-3">
-      <div class="col-12" data-panel-key="imagemaid_files_trend">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Files Removed by Day</h6>
-          <div id="logscan-trends-imagemaid-files" class="small text-muted">Loading removed files trend...</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 mt-3">
-      <div class="col-12" data-panel-key="counts_mix">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Log Lines + Levels + Cache (Avg per day)</h6>
-          <div id="logscan-trends-counts-series" class="small mb-2"></div>
-          <div id="logscan-trends-counts" class="small text-muted">Loading log-level averages...</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 mt-3">
-      <div class="col-12" data-panel-key="issue_trends">
-        <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Issue Trends</h6>
-          <div id="logscan-trends-issues" class="small text-muted">Loading issue trends...</div>
+      <div class="accordion-item bg-dark text-light border-secondary">
+        <h2 class="accordion-header" id="logscan-issues-heading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#logscan-issues-collapse" aria-expanded="false" aria-controls="logscan-issues-collapse">
+            Issue Trends
+          </button>
+        </h2>
+        <div id="logscan-issues-collapse" class="accordion-collapse collapse logscan-analytics-section">
+          <div class="accordion-body">
+            <div class="row g-3">
+              <div class="col-12" data-panel-key="issue_trends">
+                <div class="border border-secondary rounded p-3 h-100">
+                  <h6 class="text-uppercase text-muted mb-2">Issue Trends</h6>
+                  <div id="logscan-trends-issues" class="small text-muted">Loading issue trends...</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -241,13 +308,13 @@
           </select>
           <div class="input-group input-group-sm w-auto logscan-app-filter">
             <span class="input-group-text">App</span>
-            <select id="logscan-trends-tool-filter-bottom" class="form-select form-select-sm logscan-control-field"
-              title="Filter visuals by app.">
+            <select id="logscan-trends-tool-filter-bottom" class="form-select form-select-sm logscan-control-field logscan-multi-filter"
+              multiple size="3" title="Filter visuals by one or more apps.">
               <option value="">All apps</option>
             </select>
           </div>
-          <select id="logscan-trends-config-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by tracked config.">
+          <select id="logscan-trends-config-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter visuals by one or more tracked configs.">
             <option value="">All configs</option>
           </select>
           <div class="input-group input-group-sm w-auto logscan-time-range">
@@ -274,20 +341,20 @@
           <div id="logscan-trends-date-hint-bottom" class="small text-muted logscan-date-hint"></div>
         </div>
         <div class="logscan-filter-row logscan-filter-row-secondary">
-          <select id="logscan-trends-tool-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by Kometa or ImageMaid version. Pair with App to isolate one tool.">
+          <select id="logscan-trends-tool-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter visuals by one or more Kometa or ImageMaid versions. Pair with App to isolate one tool.">
             <option value="">All tool versions</option>
           </select>
-          <select id="logscan-trends-quickstart-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by Quickstart version from the run marker.">
+          <select id="logscan-trends-quickstart-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter visuals by one or more Quickstart versions from the run marker.">
             <option value="">All QS versions</option>
           </select>
-          <select id="logscan-trends-command-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter visuals by run command.">
+          <select id="logscan-trends-command-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter logscan-command-filter"
+            multiple size="4" title="Filter visuals by one or more run commands.">
             <option value="">All commands</option>
           </select>
-          <select id="logscan-trends-library-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field"
-            title="Filter library inventory by library.">
+          <select id="logscan-trends-library-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
+            multiple size="4" title="Filter library inventory by one or more libraries.">
             <option value="">All libraries</option>
           </select>
           <button id="logscan-trends-preferences-bottom" class="btn nav-button btn-sm logscan-control-action" type="button"
