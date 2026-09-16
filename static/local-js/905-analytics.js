@@ -3454,10 +3454,12 @@ function stopReingestPolling () {
 function fetchReingestStatus (jobId, options = {}) {
   const applyComplete = !options || options.applyComplete !== false
   const query = jobId ? `?job=${encodeURIComponent(jobId)}` : ''
-  return fetch(`/logscan/trends/reingest/status${query}`)
-    .then(res => res.json().then(data => ({ ok: res.ok, data })))
-    .then(({ ok, data }) => {
-      if (!ok || !data) return data
+  return fetchAnalyticsJson(`/logscan/trends/reingest/status${query}`, {
+    label: 'Analytics reingest status request',
+    timeoutMs: 10000
+  })
+    .then(data => {
+      if (!data) return data
       if (typeof window.QS_handleLogscanReingestStatus === 'function') {
         window.QS_handleLogscanReingestStatus(data)
       }
@@ -4086,35 +4088,13 @@ function fetchRuns (options = {}) {
 
 function refreshAnalyticsPage (options = {}) {
   const suppressStatus = Boolean(options && options.suppressStatus)
-  const clearLoadTimer = createAnalyticsLoadTimer(suppressStatus, [
-    {
-      operation: 'Checking Analytics reingest status',
-      endpoint: '/logscan/trends/reingest/status'
-    },
-    {
-      delay: 5000,
-      message: 'Checking whether Analytics is rebuilding saved trends...'
-    },
-    {
-      delay: 15000,
-      message: 'Still checking Analytics status. If this persists, the reingest status endpoint may be waiting on the server.'
-    }
-  ])
-  if (!suppressStatus) updateStatus('Checking Analytics status...')
   checkMissingDownload()
-  return fetchReingestStatus(null, { applyComplete: false })
-    .then(data => {
-      clearLoadTimer()
-      if (data && data.status === 'running') return data
-      return fetchRuns({ suppressStatus })
-    })
-    .catch(err => {
-      clearLoadTimer()
-      console.error(err)
-      return fetchRuns({ suppressStatus })
-    })
+  const runsRequest = fetchRuns({ suppressStatus })
+  fetchReingestStatus(null, { applyComplete: false }).catch(err => {
+    console.error(err)
+  })
+  return runsRequest
 }
-
 function getSelectedRuns () {
   if (!selectedRunKeys.size) return []
   return getSelectableRuns(allTableRuns).filter(run => selectedRunKeys.has(run.run_key))
