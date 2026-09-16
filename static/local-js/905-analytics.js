@@ -92,6 +92,11 @@ const deleteLogModalEl = document.getElementById('logscan-delete-log-modal')
 const compressLogModalEl = document.getElementById('logscan-compress-log-modal')
 const runDetailsModalEl = document.getElementById('logscan-run-details-modal')
 const preferencesModalEl = document.getElementById('logscan-preferences-modal')
+const filterPickerModalEl = document.getElementById('logscan-filter-picker-modal')
+const filterPickerTitle = document.getElementById('logscan-filter-picker-title')
+const filterPickerBody = document.getElementById('logscan-filter-picker-body')
+const filterPickerApply = document.getElementById('logscan-filter-picker-apply')
+const filterPickerClear = document.getElementById('logscan-filter-picker-clear')
 const analyticsSectionExpandAll = document.getElementById('logscan-sections-expand-all')
 const analyticsSectionCollapseAll = document.getElementById('logscan-sections-collapse-all')
 const analyticsSections = document.querySelectorAll('.logscan-analytics-section')
@@ -118,6 +123,7 @@ const selectedRunKeys = new Set()
 const sortState = { key: 'finished_at', dir: 'desc' }
 let lastIngestState = null
 let analyticsPrefs = null
+let activeFilterPickerSelect = null
 const defaultReingestButtonLabel = reingest.textContent.trim() || 'Reingest logs'
 
 function setAnalyticsSectionsExpanded (expanded) {
@@ -148,9 +154,11 @@ function getSelectedValues (control) {
 }
 
 function setSelectedValues (controls, values) {
-  if (!controls || !controls.length) return
+  if (!controls) return
+  const elements = controls.elements || (controls.nodeType === 1 ? [controls] : Array.from(controls || []))
+  if (!elements.length) return
   const selected = new Set(Array.isArray(values) ? values.map(value => String(value || '').trim()).filter(Boolean) : [])
-  for (const el of controls) {
+  for (const el of elements) {
     if (!el.multiple) {
       el.value = Array.from(selected)[0] || ''
       continue
@@ -179,6 +187,108 @@ function syncMirroredControlValue (controls, source) {
     el.value = value
   }
 }
+function getFilterLabel (select) {
+  if (!select) return 'Filter'
+  if (select.dataset && select.dataset.filterLabel) return select.dataset.filterLabel
+  const group = select.closest('.input-group')
+  const label = group ? group.querySelector('.input-group-text') : null
+  return label ? label.textContent.trim() : 'Filter'
+}
+
+function getOptionLabel (option) {
+  if (!option) return ''
+  return String(option.getAttribute('title') || option.textContent || option.value || '').trim()
+}
+
+function getAllOptionLabel (select) {
+  const first = select && select.options ? Array.from(select.options).find(option => !String(option.value || '').trim()) : null
+  return first ? getOptionLabel(first) : `All ${getFilterLabel(select).toLowerCase()}`
+}
+
+function getFilterSelectionSummary (select) {
+  const values = new Set(getSelectedValues(select))
+  if (!values.size) return getAllOptionLabel(select)
+  const labels = Array.from(select.options || [])
+    .filter(option => values.has(String(option.value || '').trim()))
+    .map(option => getOptionLabel(option))
+    .filter(Boolean)
+  if (!labels.length) return getAllOptionLabel(select)
+  if (labels.length <= 2) return labels.join(', ')
+  return `${labels.length} selected`
+}
+
+function updateFilterPickerButton (select) {
+  if (!select || !select.id) return
+  const button = document.querySelector(`[data-filter-picker-target="${select.id}"]`)
+  if (!button) return
+  const value = getFilterSelectionSummary(select)
+  button.querySelector('.logscan-filter-picker-value').textContent = value
+  button.setAttribute('title', value)
+}
+
+function syncFilterPickerButtons () {
+  document.querySelectorAll('select.logscan-multi-filter').forEach(updateFilterPickerButton)
+}
+
+function ensureFilterPickerButtons () {
+  document.querySelectorAll('select.logscan-multi-filter').forEach(select => {
+    select.classList.add('logscan-native-multi-filter')
+    if (!select.id || document.querySelector(`[data-filter-picker-target="${select.id}"]`)) {
+      updateFilterPickerButton(select)
+      return
+    }
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'btn nav-button btn-sm logscan-filter-picker-button'
+    button.dataset.filterPickerTarget = select.id
+    button.innerHTML = `
+      <span class="logscan-filter-picker-label">${escapeHtml(getFilterLabel(select))}</span>
+      <span class="logscan-filter-picker-value"></span>
+    `
+    button.addEventListener('click', function () {
+      openFilterPicker(select)
+    })
+    select.insertAdjacentElement('afterend', button)
+    updateFilterPickerButton(select)
+  })
+}
+
+function renderFilterPickerOptions (select) {
+  if (!filterPickerBody) return
+  const selected = new Set(getSelectedValues(select))
+  const options = Array.from(select.options || []).filter(option => String(option.value || '').trim())
+  if (!options.length) {
+    filterPickerBody.innerHTML = '<div class="text-muted small">No filter choices available.</div>'
+    return
+  }
+  filterPickerBody.innerHTML = options.map((option, index) => {
+    const value = String(option.value || '').trim()
+    const inputId = `logscan-filter-picker-option-${index}`
+    const checked = selected.has(value) ? ' checked' : ''
+    return `
+      <label class="logscan-filter-picker-option" for="${inputId}">
+        <input class="form-check-input" type="checkbox" id="${inputId}" value="${escapeHtml(value)}"${checked}>
+        <span>${escapeHtml(getOptionLabel(option))}</span>
+      </label>
+    `
+  }).join('')
+}
+
+function openFilterPicker (select) {
+  if (!select || !filterPickerModalEl) return
+  activeFilterPickerSelect = select
+  if (filterPickerTitle) filterPickerTitle.textContent = `Filter by ${getFilterLabel(select)}`
+  renderFilterPickerOptions(select)
+  bootstrap.Modal.getOrCreateInstance(filterPickerModalEl).show()
+}
+
+function applyFilterPickerSelection (values) {
+  if (!activeFilterPickerSelect) return
+  setSelectedValues(activeFilterPickerSelect, values)
+  activeFilterPickerSelect.dispatchEvent(new Event('change', { bubbles: true }))
+  updateFilterPickerButton(activeFilterPickerSelect)
+}
+
 
 function escapeHtml (value) {
   return String(value || '')
@@ -2349,6 +2459,7 @@ function updateLibraryFilter (runs) {
   libraryFilter.setHTML(options.join(''))
   const nextValues = selected.filter(name => names.includes(name))
   setSelectedValues(libraryFilter, nextValues)
+  syncFilterPickerButtons()
   return !sameSelection(nextValues, selected)
 }
 
@@ -2700,6 +2811,7 @@ function updateConfigFilter (runs) {
   configFilter.setHTML(options.join(''))
   const nextValues = selected.filter(cfg => configs.includes(cfg))
   setSelectedValues(configFilter, nextValues)
+  syncFilterPickerButtons()
   return !sameSelection(nextValues, selected)
 }
 
@@ -2727,6 +2839,7 @@ function updateCommandFilter (runs) {
   commandFilter.setHTML(options.join(''))
   const nextValues = selected.filter(command => counts.has(command))
   setSelectedValues(commandFilter, nextValues)
+  syncFilterPickerButtons()
   return !sameSelection(nextValues, selected)
 }
 
@@ -2879,6 +2992,7 @@ function updateToolFilter (runs) {
   toolFilter.setHTML(options.join(''))
   const nextValues = selected.filter(tool => tools.includes(tool))
   setSelectedValues(toolFilter, nextValues)
+  syncFilterPickerButtons()
   return !sameSelection(nextValues, selected)
 }
 
@@ -2899,6 +3013,7 @@ function updateToolVersionFilter (runs) {
   toolVersionFilter.setHTML(options.join(''))
   const nextValues = selected.filter(version => counts.has(version))
   setSelectedValues(toolVersionFilter, nextValues)
+  syncFilterPickerButtons()
   return !sameSelection(nextValues, selected)
 }
 
@@ -2919,6 +3034,7 @@ function updateQuickstartVersionFilter (runs) {
   quickstartVersionFilter.setHTML(options.join(''))
   const nextValues = selected.filter(version => counts.has(version))
   setSelectedValues(quickstartVersionFilter, nextValues)
+  syncFilterPickerButtons()
   return !sameSelection(nextValues, selected)
 }
 
@@ -4050,22 +4166,26 @@ if (analyticsSectionCollapseAll) {
 configFilter.on('change', function () {
   syncMirroredControlValue(configFilter, this)
   tablePage = 1
+  syncFilterPickerButtons()
   loadPreferences().then(() => applyFiltersAndRender())
 })
 toolFilter.on('change', function () {
   syncMirroredControlValue(toolFilter, this)
   tablePage = 1
+  syncFilterPickerButtons()
   clearDateFilters()
   applyFiltersAndRender()
 })
 toolVersionFilter.on('change', function () {
   syncMirroredControlValue(toolVersionFilter, this)
   tablePage = 1
+  syncFilterPickerButtons()
   applyFiltersAndRender()
 })
 quickstartVersionFilter.on('change', function () {
   syncMirroredControlValue(quickstartVersionFilter, this)
   tablePage = 1
+  syncFilterPickerButtons()
   applyFiltersAndRender()
 })
 timeRange.on('change', function () {
@@ -4077,6 +4197,7 @@ timeRange.on('change', function () {
 commandFilter.on('change', function () {
   syncMirroredControlValue(commandFilter, this)
   tablePage = 1
+  syncFilterPickerButtons()
   applyFiltersAndRender()
 })
 dateStart.on('change', function () {
@@ -4091,6 +4212,7 @@ dateEnd.on('change', function () {
 })
 libraryFilter.on('change', function () {
   syncMirroredControlValue(libraryFilter, this)
+  syncFilterPickerButtons()
   renderLibraryInventory(currentFilteredRuns)
 })
 delegate(countsSeries, 'click', '.logscan-series-toggle', function () {
@@ -4116,6 +4238,7 @@ resetFilters.on('click', function () {
   timeRange.setValue('all')
   setSelectedValues(commandFilter, [])
   setSelectedValues(libraryFilter, [])
+  syncFilterPickerButtons()
   clearDateFilters()
   fetchRuns({ suppressStatus: true })
 })
@@ -4157,6 +4280,27 @@ preferencesRecommended.addEventListener('click', function () {
       }
     })
 })
+if (filterPickerApply) {
+  filterPickerApply.addEventListener('click', function () {
+    const values = Array.from(filterPickerBody ? filterPickerBody.querySelectorAll('input[type="checkbox"]:checked') : [])
+      .map(input => input.value)
+      .filter(Boolean)
+    applyFilterPickerSelection(values)
+    hideModal(filterPickerModalEl)
+  })
+}
+if (filterPickerClear) {
+  filterPickerClear.addEventListener('click', function () {
+    applyFilterPickerSelection([])
+    hideModal(filterPickerModalEl)
+  })
+}
+if (filterPickerModalEl) {
+  filterPickerModalEl.addEventListener('hidden.bs.modal', function () {
+    activeFilterPickerSelect = null
+  })
+}
+
 confirmReset.addEventListener('click', handleReset)
 confirmReingest.addEventListener('click', handleReingest)
 clearInvalidArchived.addEventListener('click', function () {
@@ -4287,5 +4431,6 @@ window.addEventListener('pageshow', function (event) {
   if (!event || !event.persisted) return
   refreshAnalyticsPage({ suppressStatus: true })
 })
+ensureFilterPickerButtons()
 renderCountsSeriesSelector()
 refreshAnalyticsPage()
