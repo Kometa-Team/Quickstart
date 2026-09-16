@@ -1395,7 +1395,7 @@ LOGSCAN_STARTUP_MIGRATION_JOB_ID = "startup-logscan-migration"
 
 session_ttl = _get_session_lifetime_seconds()
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=session_ttl)
-app.config["SESSION_REFRESH_EACH_REQUEST"] = True
+app.config["SESSION_REFRESH_EACH_REQUEST"] = False
 app.config["QS_SESSION_LIFETIME_DAYS"] = _get_session_lifetime_days()
 app.config["QS_FLASK_SESSION_DIR"] = flask_cache_dir
 app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500, default_timeout=session_ttl)
@@ -1409,15 +1409,20 @@ SESSIONLESS_HEALTHCHECK_ENDPOINTS = {"kometa_status"}
 SESSIONLESS_HEALTHCHECK_PATHS = {"/kometa-status"}
 
 
-def _is_sessionless_healthcheck_request():
+def _is_sessionless_request():
     if request.method != "GET":
         return False
-    return request.endpoint in SESSIONLESS_HEALTHCHECK_ENDPOINTS or request.path in SESSIONLESS_HEALTHCHECK_PATHS
+    return (
+        request.endpoint == "static"
+        or request.path.startswith("/static/")
+        or request.endpoint in SESSIONLESS_HEALTHCHECK_ENDPOINTS
+        or request.path in SESSIONLESS_HEALTHCHECK_PATHS
+    )
 
 
 @app.before_request
 def before_request():
-    if _is_sessionless_healthcheck_request():
+    if _is_sessionless_request():
         return None
 
     # Assign user UUID if not already present
@@ -1438,11 +1443,16 @@ def before_request():
 
     try:
         ua = request.user_agent
-        session["qs_user_agent"] = ua.string or ""
-        session["qs_user_agent_browser"] = ua.browser or ""
-        session["qs_user_agent_version"] = ua.version or ""
-        session["qs_user_agent_platform"] = ua.platform or ""
-        session["qs_user_agent_raw"] = request.headers.get("User-Agent", "") or ""
+        user_agent_values = {
+            "qs_user_agent": ua.string or "",
+            "qs_user_agent_browser": ua.browser or "",
+            "qs_user_agent_version": ua.version or "",
+            "qs_user_agent_platform": ua.platform or "",
+            "qs_user_agent_raw": request.headers.get("User-Agent", "") or "",
+        }
+        for key, value in user_agent_values.items():
+            if session.get(key) != value:
+                session[key] = value
     except Exception:
         pass
 
@@ -1507,13 +1517,13 @@ server_session = Session(app)
 _save_server_session = app.session_interface.save_session
 
 
-def _save_session_unless_sessionless_healthcheck(app_obj, session_obj, response):
-    if has_request_context() and _is_sessionless_healthcheck_request():
+def _save_session_unless_sessionless_request(app_obj, session_obj, response):
+    if has_request_context() and _is_sessionless_request():
         return None
     return _save_server_session(app_obj, session_obj, response)
 
 
-app.session_interface.save_session = _save_session_unless_sessionless_healthcheck
+app.session_interface.save_session = _save_session_unless_sessionless_request
 server_thread = None
 shutdown_event = threading.Event()
 

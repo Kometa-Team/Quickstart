@@ -2120,15 +2120,28 @@ def test_analytics_local_escapehtml_does_not_clobber_global_shim(page, live_serv
 
 @pytest.mark.e2e
 def test_analytics_module_runs_without_console_errors(page, live_server):
-    """No JS console errors from the module conversion."""
-    errors = []
-    page.on("pageerror", lambda exc: errors.append(str(exc)))
-    page.on("console", lambda msg: errors.append(f"{msg.type}: {msg.text}") if msg.type == "error" else None)
+    """Analytics must complete its initial load without an uncaught JS error."""
+    page_errors = []
+    console_errors = []
+    page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
 
     page.goto(f"{live_server}/step/905-analytics", wait_until="domcontentloaded")
-    page.wait_for_timeout(1000)
-    relevant = [e for e in errors if any(kw in e.lower() for kw in ("analytics.js", "strict mode", "redeclar", "is not defined"))]
-    assert not relevant, f"module conversion introduced JS errors: {relevant}"
+    page.wait_for_function(
+        """() => {
+            const summary = document.querySelector('#logscan-trends-summary')
+            const text = (summary && summary.textContent || '').trim()
+            return text
+                && !text.startsWith('Loading')
+                && !text.startsWith('Rendering')
+                && !text.startsWith('Preparing')
+        }""",
+        timeout=15000,
+    )
+
+    relevant_console_errors = [error for error in console_errors if any(keyword in error.lower() for keyword in ("analytics.js", "strict mode", "redeclar", "is not defined"))]
+    assert not page_errors, f"Analytics page raised uncaught JavaScript errors: {page_errors}"
+    assert not relevant_console_errors, f"Analytics module logged JavaScript errors: {relevant_console_errors}"
 
 
 # ES module conversion of rgbaPicker.js (chore/convert-rgbapicker-to-module).

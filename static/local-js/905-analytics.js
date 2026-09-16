@@ -3736,8 +3736,9 @@ function getAnalyticsLoadPhaseLabel (phase) {
 }
 
 function formatAnalyticsLoadStatus (state, fallbackOperation, endpoint, startedAt) {
-  const elapsed = Number.isFinite(Number(state && state.elapsed_seconds))
-    ? Number(state.elapsed_seconds)
+  const stateElapsed = state ? Number(state.elapsed_seconds) : NaN
+  const elapsed = Number.isFinite(stateElapsed)
+    ? stateElapsed
     : (Date.now() - startedAt) / 1000
   const phaseLabel = getAnalyticsLoadPhaseLabel(state && state.phase) || fallbackOperation
   const pieces = [`${phaseLabel}. Waiting ${formatElapsedSeconds(elapsed)}.`]
