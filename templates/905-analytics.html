@@ -43,12 +43,12 @@
           <div class="input-group input-group-sm w-auto logscan-app-filter">
             <span class="input-group-text">App</span>
             <select id="logscan-trends-tool-filter" class="form-select form-select-sm logscan-control-field logscan-multi-filter"
-              multiple size="3" title="Filter visuals by one or more apps.">
+              multiple size="3" title="Filter visuals by one or more apps." data-filter-label="App">
               <option value="">All apps</option>
             </select>
           </div>
           <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter visuals by one or more tracked configs.">
+            multiple size="4" title="Filter visuals by one or more tracked configs." data-filter-label="Config">
             <option value="">All configs</option>
           </select>
           <div class="input-group input-group-sm w-auto logscan-time-range">
@@ -76,19 +76,19 @@
         </div>
         <div class="logscan-filter-row logscan-filter-row-secondary">
           <select id="logscan-trends-tool-version-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter visuals by one or more Kometa or ImageMaid versions. Pair with App to isolate one tool.">
+            multiple size="4" title="Filter visuals by one or more Kometa or ImageMaid versions. Pair with App to isolate one tool." data-filter-label="Tool version">
             <option value="">All tool versions</option>
           </select>
           <select id="logscan-trends-quickstart-version-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter visuals by one or more Quickstart versions from the run marker.">
+            multiple size="4" title="Filter visuals by one or more Quickstart versions from the run marker." data-filter-label="QS version">
             <option value="">All QS versions</option>
           </select>
           <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter logscan-command-filter"
-            multiple size="4" title="Filter visuals by one or more run commands.">
+            multiple size="4" title="Filter visuals by one or more run commands." data-filter-label="Command">
             <option value="">All commands</option>
           </select>
           <select id="logscan-trends-library-filter" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter library inventory by one or more libraries.">
+            multiple size="4" title="Filter library inventory by one or more libraries." data-filter-label="Library">
             <option value="">All libraries</option>
           </select>
           <button id="logscan-trends-preferences" class="btn nav-button btn-sm logscan-control-action" type="button"
@@ -309,12 +309,12 @@
           <div class="input-group input-group-sm w-auto logscan-app-filter">
             <span class="input-group-text">App</span>
             <select id="logscan-trends-tool-filter-bottom" class="form-select form-select-sm logscan-control-field logscan-multi-filter"
-              multiple size="3" title="Filter visuals by one or more apps.">
+              multiple size="3" title="Filter visuals by one or more apps." data-filter-label="App">
               <option value="">All apps</option>
             </select>
           </div>
           <select id="logscan-trends-config-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter visuals by one or more tracked configs.">
+            multiple size="4" title="Filter visuals by one or more tracked configs." data-filter-label="Config">
             <option value="">All configs</option>
           </select>
           <div class="input-group input-group-sm w-auto logscan-time-range">
@@ -342,19 +342,19 @@
         </div>
         <div class="logscan-filter-row logscan-filter-row-secondary">
           <select id="logscan-trends-tool-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter visuals by one or more Kometa or ImageMaid versions. Pair with App to isolate one tool.">
+            multiple size="4" title="Filter visuals by one or more Kometa or ImageMaid versions. Pair with App to isolate one tool." data-filter-label="Tool version">
             <option value="">All tool versions</option>
           </select>
           <select id="logscan-trends-quickstart-version-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter visuals by one or more Quickstart versions from the run marker.">
+            multiple size="4" title="Filter visuals by one or more Quickstart versions from the run marker." data-filter-label="QS version">
             <option value="">All QS versions</option>
           </select>
           <select id="logscan-trends-command-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter logscan-command-filter"
-            multiple size="4" title="Filter visuals by one or more run commands.">
+            multiple size="4" title="Filter visuals by one or more run commands." data-filter-label="Command">
             <option value="">All commands</option>
           </select>
           <select id="logscan-trends-library-filter-bottom" class="form-select form-select-sm w-auto logscan-control-field logscan-multi-filter"
-            multiple size="4" title="Filter library inventory by one or more libraries.">
+            multiple size="4" title="Filter library inventory by one or more libraries." data-filter-label="Library">
             <option value="">All libraries</option>
           </select>
           <button id="logscan-trends-preferences-bottom" class="btn nav-button btn-sm logscan-control-action" type="button"
@@ -586,6 +586,26 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="logscan-filter-picker-modal" tabindex="-1" aria-labelledby="logscan-filter-picker-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable logscan-filter-picker-dialog">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="logscan-filter-picker-title">Filter</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="logscan-filter-picker-body" class="logscan-filter-picker-list"></div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn nav-button btn-sm" id="logscan-filter-picker-clear">Clear</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-filter-picker-apply">Apply</button>
       </div>
     </div>
   </div>

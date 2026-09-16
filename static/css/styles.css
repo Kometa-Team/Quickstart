@@ -2748,6 +2748,71 @@ div#loading {
     min-width: min(32.5rem, 100%);
 }
 
+
+.logscan-native-multi-filter {
+    display: none !important;
+}
+
+.logscan-filter-picker-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.15rem;
+    min-width: 13.75rem;
+    max-width: 100%;
+    min-height: 2.35rem;
+    text-align: left;
+    white-space: normal;
+}
+
+.logscan-filter-picker-label {
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.logscan-filter-picker-value {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+}
+
+.logscan-filter-picker-dialog {
+    max-width: min(720px, calc(100vw - 1rem));
+}
+
+.logscan-filter-picker-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.logscan-filter-picker-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+}
+
+.logscan-filter-picker-option span {
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+}
+
+.logscan-filter-picker-option:hover,
+.logscan-filter-picker-option:focus-within {
+    border-color: rgba(var(--accent-color), 0.75);
+    background: rgba(var(--accent-color), 0.08);
+}
+
 .logscan-run-count {
     flex: 0 0 auto;
 }
