@@ -149,7 +149,7 @@ jobs:
             arch_suffix: ''
           - os: 'macos'
             os_upper: 'MacOS'
-            os_version: '13'
+            os_version: '15'
             ext: ''
             arch_suffix: '-x86_64'
           - os: 'macos'
