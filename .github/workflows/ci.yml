@@ -230,7 +230,7 @@ jobs:
         uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
+          client-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Download link artifacts
@@ -242,9 +242,10 @@ jobs:
 
       - name: Generate Body
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_BODY_RAW: ${{ github.event.pull_request.body }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
           DOCKER_TEAM: ${{ vars.DOCKER_TEAM }}
           DOCKER_REPO: ${{ vars.DOCKER_REPO }}
           TAG_NAME: ${{ needs.build-vars.outputs.tag-name }}
@@ -263,7 +264,9 @@ jobs:
           PR_BODY+=$'\n\n## Docker Image'
           PR_BODY+=$'\n\n**`'"$DOCKER_TEAM"'/'"$DOCKER_REPO"':'"$TAG_NAME"'`**'
 
-          gh pr edit "$PR_NUMBER" --body "$PR_BODY"
+          gh pr edit "$PR_NUMBER" \
+            --repo "$REPOSITORY" \
+            --body "$PR_BODY"
 
   failure-notification:
     name: Failure Notification
