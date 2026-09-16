@@ -4437,10 +4437,7 @@ def kometa_status():
                 pid = None
     if not pid:
         if not pending_start:
-            try:
-                _ingest_completed_live_logs("kometa")
-            except Exception:
-                pass
+            _start_logscan_live_ingest("kometa")
             _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
@@ -4557,10 +4554,7 @@ def kometa_status():
                 os.remove(helpers.get_kometa_pid_file())
             except Exception:
                 pass
-        try:
-            _ingest_completed_live_logs("kometa")
-        except Exception:
-            pass
+        _start_logscan_live_ingest("kometa")
         _clear_process_metric_cache(pid, "kometa")
         _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
@@ -6012,6 +6006,134 @@ def _start_logscan_auto_reingest(log_dir):
     thread = threading.Thread(target=_run_logscan_reingest_job, args=(job_id, False), daemon=True, name="logscan-auto-reingest")
     thread.start()
     return True
+
+
+def _logscan_live_ingest_candidates(tool_name="kometa", log_dir=None):
+    tool_name = _normalize_logscan_tool_name(tool_name)
+    live_dir = _get_logscan_live_dir(tool_name, log_dir=log_dir if tool_name == "kometa" else None)
+    if not live_dir.exists():
+        return []
+    if tool_name == "kometa":
+        path = live_dir / "meta.log"
+        return [path] if path.exists() and path.is_file() else []
+    return [path for path in sorted(live_dir.glob("*.log*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True) if path.is_file() and ".log" in path.name.lower()]
+
+
+def _logscan_live_ingest_has_work(tool_name="kometa", log_dir=None):
+    try:
+        candidates = _logscan_live_ingest_candidates(tool_name, log_dir=log_dir)
+        if not candidates:
+            return False
+        ingest_cache = _load_logscan_ingest_cache()
+        cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+        if not isinstance(cache_logs, dict):
+            cache_logs = {}
+        for path in candidates:
+            try:
+                stats = path.stat()
+                cache_key = str(path.resolve())
+                if not _logscan_cache_entry_matches(path, cache_entry=cache_logs.get(cache_key, {}), stats=stats):
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        return False
+    return False
+
+
+def _start_logscan_live_ingest(tool_name="kometa", log_dir=None):
+    tool_name = _normalize_logscan_tool_name(tool_name)
+    if logscan_ingest_lock.locked():
+        return False
+    snapshot = _logscan_reingest_snapshot()
+    if snapshot.get("status") == "running":
+        return False
+    if not _logscan_live_ingest_has_work(tool_name, log_dir=log_dir):
+        return False
+    job_id = secrets.token_urlsafe(8)
+    now = datetime.now(timezone.utc).isoformat()
+    current_file = "meta.log" if tool_name == "kometa" else None
+    _update_logscan_reingest_state(
+        status="running",
+        job_id=job_id,
+        trigger=f"{tool_name}_run_complete",
+        phase="ingesting_live_log",
+        started_at=now,
+        finished_at=None,
+        total=1,
+        scanned=0,
+        ingested=0,
+        archived=0,
+        duplicates=0,
+        skipped_incomplete=0,
+        skipped_invalid=0,
+        errors=0,
+        current_file=current_file,
+        missing_people_unique=0,
+        missing_people_logs=0,
+        missing_people_log_ready=False,
+        missing_people_log_lines=0,
+        sample_incomplete=[],
+        sample_errors=[],
+    )
+    raw_log_dir = str(log_dir) if log_dir else None
+    thread = threading.Thread(
+        target=_run_logscan_live_ingest_job,
+        args=(job_id, tool_name, raw_log_dir),
+        daemon=True,
+        name=f"logscan-live-ingest-{tool_name}",
+    )
+    thread.start()
+    return True
+
+
+def _run_logscan_live_ingest_job(job_id, tool_name, raw_log_dir=None):
+    if not logscan_ingest_lock.acquire(blocking=False):
+        _update_logscan_reingest_state(
+            status="error",
+            job_id=job_id,
+            error="Logscan ingest already running.",
+            finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+        return
+    try:
+        with app.app_context():
+            log_dir = Path(raw_log_dir) if raw_log_dir else None
+            current_file = "meta.log" if tool_name == "kometa" else None
+            _update_logscan_reingest_state(
+                status="running",
+                job_id=job_id,
+                phase="ingesting_live_log",
+                current_file=current_file,
+                total=1,
+                scanned=0,
+            )
+            result = _ingest_completed_live_logs(tool_name, log_dir=log_dir)
+            ingested = int(result.get("ingested") or 0) if isinstance(result, dict) else 0
+            archived = int(result.get("archived") or 0) if isinstance(result, dict) else 0
+            _update_logscan_reingest_state(
+                status="complete",
+                job_id=job_id,
+                phase="complete",
+                scanned=1,
+                ingested=ingested,
+                archived=archived,
+                errors=0,
+                current_file=None,
+                finished_at=datetime.now(timezone.utc).isoformat(),
+                success=True,
+            )
+    except Exception as exc:
+        _update_logscan_reingest_state(
+            status="error",
+            job_id=job_id,
+            error=str(exc),
+            errors=1,
+            current_file=None,
+            finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+    finally:
+        logscan_ingest_lock.release()
 
 
 def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):

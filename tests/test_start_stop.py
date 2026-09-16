@@ -152,7 +152,7 @@ def test_kometa_status_keeps_pending_start_queued_without_ingesting(client, monk
     monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
     monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
     ingest_calls = []
-    monkeypatch.setattr(qs_module, "_ingest_completed_live_logs", lambda tool: ingest_calls.append(tool))
+    monkeypatch.setattr(qs_module, "_start_logscan_live_ingest", lambda tool: ingest_calls.append(tool) or True)
 
     with qs_module.RUN_CONTEXT_LOCK:
         qs_module.RUN_CONTEXT["command"] = "python kometa.py --times 07:00"
@@ -177,6 +177,27 @@ def test_kometa_status_keeps_pending_start_queued_without_ingesting(client, monk
     assert data["schedule_times"] == ["07:00"]
     assert ingest_calls == []
     assert command_after_status == "python kometa.py --times 07:00"
+
+
+def test_kometa_status_starts_visible_live_log_ingest_when_not_running(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
+    ingest_calls = []
+    monkeypatch.setattr(qs_module, "_start_logscan_live_ingest", lambda tool: ingest_calls.append(tool) or True)
+
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["command"] = "python kometa.py --config config.yml"
+        qs_module.RUN_CONTEXT["start_mode"] = "current"
+
+    resp = client.get("/kometa-status")
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "not started"
+    assert ingest_calls == ["kometa"]
+    with qs_module.RUN_CONTEXT_LOCK:
+        assert qs_module.RUN_CONTEXT["command"] is None
 
 
 def test_start_kometa_blocks_times_inside_maintenance(client, monkeypatch, qs_module):

@@ -207,10 +207,13 @@ def isolated_config_dir(tmp_path, monkeypatch, app):
     config_dir.mkdir(parents=True, exist_ok=True)
     _seed_schema_files(config_dir)
     kometa_root = tmp_path / "_qs_test_kometa_root"
+    imagemaid_root = tmp_path / "_qs_test_imagemaid_root"
     kometa_root.mkdir(parents=True, exist_ok=True)
+    imagemaid_root.mkdir(parents=True, exist_ok=True)
 
     _patch_helpers_paths(monkeypatch, config_dir)
     app.config["KOMETA_ROOT"] = str(kometa_root)
+    app.config["IMAGEMAID_ROOT"] = str(imagemaid_root)
 
     return config_dir
 
@@ -221,12 +224,15 @@ def _runtime_isolation(tmp_path, monkeypatch, app):
     config_dir.mkdir(parents=True, exist_ok=True)
     _seed_schema_files(config_dir)
     kometa_root = tmp_path / "_qs_test_kometa_root"
+    imagemaid_root = tmp_path / "_qs_test_imagemaid_root"
     kometa_root.mkdir(parents=True, exist_ok=True)
+    imagemaid_root.mkdir(parents=True, exist_ok=True)
 
     _patch_helpers_paths(monkeypatch, config_dir)
     app.config["KOMETA_ROOT"] = str(kometa_root)
+    app.config["IMAGEMAID_ROOT"] = str(imagemaid_root)
 
-    return {"config_dir": config_dir, "kometa_root": kometa_root}
+    return {"config_dir": config_dir, "kometa_root": kometa_root, "imagemaid_root": imagemaid_root}
 
 
 def _reset_runtime_state(qs_module):

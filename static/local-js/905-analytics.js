@@ -3082,7 +3082,7 @@ function updateQuickstartVersionFilter (runs) {
   return !sameSelection(nextValues, selected)
 }
 
-function applyFiltersAndRender () {
+function getFilteredAnalyticsRuns () {
   syncDateRangeVisibility()
   let state = getFilterState()
   for (let i = 0; i < 2; i += 1) {
@@ -3094,6 +3094,10 @@ function applyFiltersAndRender () {
   const filteredTableRuns = filterTableRunsByStatus(filterRuns(allTableRuns, state))
   currentFilteredRuns = filtered
   updateRunCountDisplay(filtered)
+  return { filtered, filteredTableRuns }
+}
+
+function renderAnalyticsChartsAndTable (filtered, filteredTableRuns) {
   renderSummary(filtered)
   renderDaily(filtered)
   renderImagemaidSummary(filtered)
@@ -3118,6 +3122,106 @@ function applyFiltersAndRender () {
   renderTable(sortRuns(filteredTableRuns))
   renderIngestHealth(lastIngestState)
   updateSortIndicators()
+}
+
+function nextAnalyticsFrame () {
+  return new Promise(resolve => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0))
+  })
+}
+
+function setAnalyticsLoadingPanels (message) {
+  const text = String(message || '').trim()
+  if (!text) return
+  ;[summaryEl, daily, dailyRuntime, runtimeEl, countsEl, issuesEl, librariesEl].forEach(el => {
+    if (!el) return
+    const current = String(el.textContent || '').trim()
+    if (!current || current.startsWith('Loading') || current.startsWith('Rendering')) {
+      el.textContent = text
+    }
+  })
+}
+
+function setAnalyticsRenderPhase (message) {
+  updateStatus(message)
+  updateIndeterminateProgress(message)
+}
+
+function fetchAnalyticsJson (url, options = {}) {
+  const timeoutMs = Number.isFinite(Number(options.timeoutMs)) ? Number(options.timeoutMs) : 90000
+  const label = options.label || url
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+  const timer = controller
+    ? window.setTimeout(() => controller.abort(), timeoutMs)
+    : null
+  return fetch(url, { cache: 'no-store', signal: controller ? controller.signal : undefined })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`${label} failed with HTTP ${res.status}.`)
+      }
+      return res.json()
+    })
+    .catch(err => {
+      if (err && err.name === 'AbortError') {
+        throw new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)} seconds.`)
+      }
+      throw err
+    })
+    .finally(() => {
+      if (timer) window.clearTimeout(timer)
+    })
+}
+
+async function applyFiltersAndRenderStaged () {
+  setProgressVisible(true)
+  setAnalyticsRenderPhase('Preparing Analytics filters...')
+  setAnalyticsLoadingPanels('Preparing Analytics filters...')
+  await nextAnalyticsFrame()
+
+  const { filtered, filteredTableRuns } = getFilteredAnalyticsRuns()
+  const rowCount = filtered.length.toLocaleString()
+  setAnalyticsRenderPhase(`Rendering summary for ${rowCount} runs...`)
+  renderSummary(filtered)
+  await nextAnalyticsFrame()
+
+  setAnalyticsRenderPhase(`Rendering daily totals and runtime charts for ${rowCount} runs...`)
+  renderDaily(filtered)
+  renderRuntimeDistribution(filtered)
+  await nextAnalyticsFrame()
+
+  setAnalyticsRenderPhase(`Rendering log counts, issue trends, and library totals for ${rowCount} runs...`)
+  renderCountsMix(filtered)
+  renderIssueTrends(filtered)
+  updateLibraryFilter(filtered)
+  renderLibraryInventory(filtered)
+  await nextAnalyticsFrame()
+
+  setAnalyticsRenderPhase(`Rendering ImageMaid charts and recent run table for ${rowCount} runs...`)
+  renderImagemaidSummary(filtered)
+  renderImagemaidTrendChart(imagemaidRecovered, filtered, 'recoveredBytes', {
+    barColor: '#43aa8b',
+    seriesLabel: 'Recovered space',
+    formatValue: value => formatBytes(value),
+    metaLabel: 'Daily total recovered space from ImageMaid runs'
+  })
+  renderImagemaidTrendChart(imagemaidFiles, filtered, 'removedFiles', {
+    barColor: '#f9c74f',
+    seriesLabel: 'Files removed',
+    formatValue: value => formatCompactNumber(value),
+    metaLabel: 'Daily total files removed by ImageMaid'
+  })
+  renderImagemaidModeMix(filtered)
+  renderTable(sortRuns(filteredTableRuns))
+  renderIngestHealth(lastIngestState)
+  updateSortIndicators()
+  await nextAnalyticsFrame()
+}
+
+function applyFiltersAndRender (options = {}) {
+  if (options && options.staged) return applyFiltersAndRenderStaged()
+  const { filtered, filteredTableRuns } = getFilteredAnalyticsRuns()
+  renderAnalyticsChartsAndTable(filtered, filteredTableRuns)
+  return Promise.resolve()
 }
 
 function updateStatus (message) {
@@ -3647,6 +3751,7 @@ function createAnalyticsLoadTimer (suppressStatus, messages, options = {}) {
   const updateLoadingProgress = () => {
     const message = formatAnalyticsLoadStatus(lastStatusState, operation, endpoint, startedAt)
     updateIndeterminateProgress(message)
+    if (endpoint === '/logscan/trends') setAnalyticsLoadingPanels(message)
   }
   const pollStatus = () => {
     if (!statusEndpoint || !requestId) return
@@ -3658,6 +3763,7 @@ function createAnalyticsLoadTimer (suppressStatus, messages, options = {}) {
         const message = formatAnalyticsLoadStatus(lastStatusState, operation, endpoint, startedAt)
         updateStatus(message)
         updateIndeterminateProgress(message)
+        if (endpoint === '/logscan/trends') setAnalyticsLoadingPanels(message)
       })
       .catch(() => {})
   }
@@ -3923,8 +4029,10 @@ function fetchRuns (options = {}) {
     }
   ], { requestId, statusEndpoint: '/logscan/trends/status' })
   if (!suppressStatus) updateStatus('Loading saved analytics runs...')
-  return fetch(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0&request_id=${encodeURIComponent(requestId)}`)
-    .then(res => res.json())
+  return fetchAnalyticsJson(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0&request_id=${encodeURIComponent(requestId)}`, {
+    label: 'Analytics saved runs request',
+    timeoutMs: 90000
+  })
     .then(data => {
       if (handleRunningTrendsPayload(data)) return
       allRuns = Array.isArray(data.runs) ? data.runs : []
@@ -3939,19 +4047,22 @@ function fetchRuns (options = {}) {
       if (!suppressStatus) updateStatus('Rendering analytics charts...')
       return loadPreferences()
         .then(() => {
-          applyFiltersAndRender()
-          if (!suppressStatus && (!lastIngestState || lastIngestState.status !== 'running')) {
-            updateStatus(`Last updated: ${formatTimestamp(new Date().toISOString())}`)
-          }
-          fetchIncompleteRuns(safeLimit)
-          fetchArchiveStorage()
-          fetchIngestHealth()
+          return applyFiltersAndRender({ staged: true })
+            .then(() => {
+              if (!suppressStatus && (!lastIngestState || lastIngestState.status !== 'running')) {
+                updateStatus(`Last updated: ${formatTimestamp(new Date().toISOString())}`)
+              }
+              fetchIncompleteRuns(safeLimit)
+              fetchArchiveStorage()
+              fetchIngestHealth()
+            })
         })
     })
     .catch(err => {
       console.error(err)
-      if (!suppressStatus) updateStatus('Failed to load trends.')
-      summaryEl.textContent = 'Unable to load summary.'
+      const message = err && err.message ? err.message : 'Failed to load trends.'
+      if (!suppressStatus) updateStatus(message)
+      summaryEl.textContent = message
       daily.textContent = 'Unable to load daily totals.'
       if (dailyRuntime) {
         dailyRuntime.textContent = 'Unable to load runtime averages.'
