@@ -7775,3 +7775,5 @@ if __name__ == "__main__":
                 os.execl(python, python, *sys.argv)
 
         QuickstartTrayApp().exec()
+
+# TEMP: touch to satisfy CI's build-trigger file match so the macOS arm64 matrix leg runs on this PR - revert before merge

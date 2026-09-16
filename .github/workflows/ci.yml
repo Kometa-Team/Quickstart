@@ -130,7 +130,7 @@ jobs:
       full_build: ${{ needs.build-vars.outputs.full-build == 'true' }}
 
   build-executable:
-    name: Build ${{ matrix.os_upper }} Executable
+    name: Build ${{ matrix.os_upper }}${{ matrix.arch_suffix }} Executable
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     needs: [build-vars]
     strategy:
@@ -141,14 +141,22 @@ jobs:
             os_upper: 'Windows'
             os_version: 'latest'
             ext: '.exe'
+            arch_suffix: ''
           - os: 'ubuntu'
             os_upper: 'Linux'
             os_version: 'latest'
             ext: ''
+            arch_suffix: ''
           - os: 'macos'
             os_upper: 'MacOS'
-            os_version: '13'
+            os_version: '15-intel'
             ext: ''
+            arch_suffix: '-x86_64'
+          - os: 'macos'
+            os_upper: 'MacOS'
+            os_version: '15'
+            ext: ''
+            arch_suffix: '-arm64'
     steps:
       - name: Check Out Repo
         uses: actions/checkout@v7
@@ -182,9 +190,10 @@ jobs:
           TAG_NAME: ${{ needs.build-vars.outputs.tag-name }}
           PART: ${{ needs.build-vars.outputs.part-value }}
           EXT: ${{ matrix.ext }}
+          ARCH_SUFFIX: ${{ matrix.arch_suffix }}
         run: |
           version="$(cat VERSION)-build$(cat BUILDNUM)"
-          filename="Quickstart-v${version}.${TAG_NAME}${PART}-${RUNNER_OS}${EXT}"
+          filename="Quickstart-v${version}.${TAG_NAME}${PART}-${RUNNER_OS}${ARCH_SUFFIX}${EXT}"
           echo "filename=${filename}" >> $GITHUB_OUTPUT
           pyinstaller -y ./quickstart.spec -- --branch pull --build "${RUNNER_OS}"
           mv "dist/Quickstart${EXT}" "dist/${filename}"
@@ -202,13 +211,13 @@ jobs:
         env:
           FILENAME: ${{ steps.build-executable.outputs.filename }}
           ARTIFACT_URL: ${{ steps.artifact-upload-step.outputs.artifact-url }}
-        run: echo "[${FILENAME}](${ARTIFACT_URL})" > "link-${{ matrix.os }}.txt"
+        run: echo "[${FILENAME}](${ARTIFACT_URL})" > "link-${{ matrix.os }}${{ matrix.arch_suffix }}.txt"
 
       - name: Upload link file
         uses: actions/upload-artifact@v7
         with:
-          name: link-${{ matrix.os }}
-          path: link-${{ matrix.os }}.txt
+          name: link-${{ matrix.os }}${{ matrix.arch_suffix }}
+          path: link-${{ matrix.os }}${{ matrix.arch_suffix }}.txt
 
   add-links:
     name: Add Links to PR
@@ -221,7 +230,7 @@ jobs:
         uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
+          client-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Download link artifacts
@@ -233,26 +242,31 @@ jobs:
 
       - name: Generate Body
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_BODY_RAW: ${{ github.event.pull_request.body }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
           DOCKER_TEAM: ${{ vars.DOCKER_TEAM }}
           DOCKER_REPO: ${{ vars.DOCKER_REPO }}
           TAG_NAME: ${{ needs.build-vars.outputs.tag-name }}
         run: |
           WIN_LINK=$(cat links/link-windows.txt 2>/dev/null || echo "unavailable")
           UBUNTU_LINK=$(cat links/link-ubuntu.txt 2>/dev/null || echo "unavailable")
-          MACOS_LINK=$(cat links/link-macos.txt 2>/dev/null || echo "unavailable")
+          MACOS_X86_64_LINK=$(cat links/link-macos-x86_64.txt 2>/dev/null || echo "unavailable")
+          MACOS_ARM64_LINK=$(cat links/link-macos-arm64.txt 2>/dev/null || echo "unavailable")
 
           PR_BODY=$(echo "$PR_BODY_RAW" | sed -z 's/\n## Executables.*//')
           PR_BODY+=$'\n\n## Executables'
           PR_BODY+=$'\n\n**'"$WIN_LINK"'**'
           PR_BODY+=$'\n\n**'"$UBUNTU_LINK"'**'
-          PR_BODY+=$'\n\n**'"$MACOS_LINK"'**'
+          PR_BODY+=$'\n\n**'"$MACOS_X86_64_LINK"'**'
+          PR_BODY+=$'\n\n**'"$MACOS_ARM64_LINK"'**'
           PR_BODY+=$'\n\n## Docker Image'
           PR_BODY+=$'\n\n**`'"$DOCKER_TEAM"'/'"$DOCKER_REPO"':'"$TAG_NAME"'`**'
 
-          gh pr edit "$PR_NUMBER" --body "$PR_BODY"
+          gh pr edit "$PR_NUMBER" \
+            --repo "$REPOSITORY" \
+            --body "$PR_BODY"
 
   failure-notification:
     name: Failure Notification
