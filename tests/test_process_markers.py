@@ -1,3 +1,6 @@
+import os
+
+
 def test_write_quickstart_run_marker_writes_pending_journal_without_touching_meta_log(monkeypatch, tmp_path, qs_module):
     import modules.process_markers as process_markers
 
@@ -126,6 +129,8 @@ def test_flush_quickstart_pending_markers_falls_back_to_first_quickstart_line(mo
         + "\n",
         encoding="utf-8",
     )
+    original_mtime = 1777957200
+    os.utime(meta_path, (original_mtime, original_mtime))
     pending_path.write_text(
         "[Quickstart] Maintenance marker: event=paused at=2026-05-05T02:00:00Z local_at=2026-05-05T22:00:00\n",
         encoding="utf-8",
@@ -141,6 +146,7 @@ def test_flush_quickstart_pending_markers_falls_back_to_first_quickstart_line(mo
     replay_index = saved_text.index("# [Quickstart] Marker replay start")
     continue_index = saved_text.index("[2026-05-05 01:01:00,000]")
     assert run_marker_index < replay_index < continue_index
+    assert int(meta_path.stat().st_mtime) == original_mtime
     assert not pending_path.exists()
 
 

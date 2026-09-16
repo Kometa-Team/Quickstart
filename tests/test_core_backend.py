@@ -8203,3 +8203,31 @@ def test_normalize_generated_config_library_files_includes_failing_path(qs_modul
 
     assert len(errors) == 1
     assert r"Path: C:\does-not-exist\metadata" in errors[0]
+
+
+def test_logscan_trends_status_reports_active_request_phase(client, qs_module):
+    qs_module._update_logscan_trends_request_state(
+        "pytest-analytics-request",
+        reset=True,
+        status="running",
+        phase="loading_runs",
+        detail="Loading saved run rows from the Analytics database.",
+        total_runs=12,
+        loaded_runs=5,
+        limit="500",
+        lightweight=True,
+    )
+
+    resp = client.get("/logscan/trends/status?request_id=pytest-analytics-request")
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "running"
+    assert data["phase"] == "loading_runs"
+    assert data["total_runs"] == 12
+    assert data["loaded_runs"] == 5
+    assert data["elapsed_seconds"] >= 0
+    assert "started_monotonic" not in data
+
+    stale = client.get("/logscan/trends/status?request_id=other-request").get_json()
+    assert stale["status"] == "unknown"

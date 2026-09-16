@@ -342,6 +342,43 @@ function formatBytes (value) {
   return `${display} ${units[unitIndex]}`
 }
 
+function formatCompressionRatio (originalBytes, compressedBytes) {
+  if (typeof originalBytes !== 'number' || typeof compressedBytes !== 'number') return null
+  if (!Number.isFinite(originalBytes) || !Number.isFinite(compressedBytes)) return null
+  if (originalBytes <= 0 || compressedBytes <= 0) return null
+  const ratio = originalBytes / compressedBytes
+  const saved = Math.max(0, Math.round((1 - (compressedBytes / originalBytes)) * 100))
+  if (!Number.isFinite(ratio) || ratio <= 0) return null
+  return `${ratio.toFixed(1).replace(/\.0$/, '')}:1, ${saved}% smaller`
+}
+
+function formatArchiveSizeDetails (compressedBytes, originalBytes, fallbackBytes) {
+  const hasCompressed = typeof compressedBytes === 'number' && Number.isFinite(compressedBytes) && compressedBytes >= 0
+  const hasOriginal = typeof originalBytes === 'number' && Number.isFinite(originalBytes) && originalBytes > 0
+  if (hasCompressed && hasOriginal && originalBytes !== compressedBytes) {
+    const ratio = formatCompressionRatio(originalBytes, compressedBytes)
+    return `${formatBytes(compressedBytes)} compressed (${formatBytes(originalBytes)} original${ratio ? `, ${ratio}` : ''})`
+  }
+  return formatBytes(typeof fallbackBytes === 'number' ? fallbackBytes : (hasCompressed ? compressedBytes : originalBytes))
+}
+
+function formatRunLogSizeDetails (run, resolvedBytes) {
+  const originalBytes = typeof run.log_original_size === 'number' && Number.isFinite(run.log_original_size)
+    ? run.log_original_size
+    : null
+  const compressedBytes = typeof run.log_compressed_size === 'number' && Number.isFinite(run.log_compressed_size)
+    ? run.log_compressed_size
+    : null
+  if (run.log_is_compressed && compressedBytes !== null && originalBytes !== null && originalBytes !== compressedBytes) {
+    const ratio = formatCompressionRatio(originalBytes, compressedBytes)
+    return `
+      <div>${escapeHtml(formatBytes(compressedBytes))}</div>
+      <div class="small text-muted">Original ${escapeHtml(formatBytes(originalBytes))}${ratio ? ` | ${escapeHtml(ratio)}` : ''}</div>
+    `
+  }
+  return escapeHtml(formatBytes(resolvedBytes))
+}
+
 function formatTimestamp (value) {
   if (!value) return null
   const text = String(value).trim()
@@ -1844,16 +1881,20 @@ function renderArchiveStorageSummary (storage) {
     : (imagemaidKeepLimit > 0 ? `Keep last ${imagemaidKeepLimit} archived logs` : 'Keep all archived logs')
   const archivedFiles = storage && Number.isFinite(storage.archived_files) ? storage.archived_files : 0
   const archivedBytes = storage && Number.isFinite(storage.archived_bytes) ? storage.archived_bytes : 0
+  const archivedOriginalBytes = storage && Number.isFinite(storage.archived_original_bytes) ? storage.archived_original_bytes : 0
+  const archivedCompressedBytes = storage && Number.isFinite(storage.archived_compressed_bytes) ? storage.archived_compressed_bytes : 0
   const extraArchivedFiles = storage && Number.isFinite(storage.extra_archived_files) ? storage.extra_archived_files : 0
   const extraArchivedBytes = storage && Number.isFinite(storage.extra_archived_bytes) ? storage.extra_archived_bytes : 0
+  const extraOriginalBytes = storage && Number.isFinite(storage.extra_archived_original_bytes) ? storage.extra_archived_original_bytes : 0
+  const extraCompressedBytes = storage && Number.isFinite(storage.extra_archived_compressed_bytes) ? storage.extra_archived_compressed_bytes : 0
   const fileLabel = archivedFiles === 1 ? 'file' : 'files'
   const lines = [
     `Archived log retention: Kometa: ${kometaRetentionLabel} | ImageMaid: ${imagemaidRetentionLabel}`,
-    `Tracked archived log storage: ${formatBytes(archivedBytes)} across ${archivedFiles} ${fileLabel}`
+    `Tracked archived log storage: ${formatArchiveSizeDetails(archivedCompressedBytes, archivedOriginalBytes, archivedBytes)} across ${archivedFiles} ${fileLabel}`
   ]
   if (extraArchivedFiles > 0) {
     const extraLabel = extraArchivedFiles === 1 ? 'file' : 'files'
-    lines.push(`Additional archived logs on disk not linked to Analytics: ${formatBytes(extraArchivedBytes)} across ${extraArchivedFiles} ${extraLabel}`)
+    lines.push(`Additional archived logs on disk not linked to Analytics: ${formatArchiveSizeDetails(extraCompressedBytes, extraOriginalBytes, extraArchivedBytes)} across ${extraArchivedFiles} ${extraLabel}`)
   }
   tablePolicy.innerHTML = lines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
 }
@@ -2192,7 +2233,7 @@ function renderTable (runs) {
         </button>
       `)
     } else if (run.log_is_compressed) {
-      logActions.push('<span class="small text-muted">Compressed</span>')
+      logActions.push(`<span class="small text-muted">${run.log_location === 'archive' ? 'Archived compressed' : 'Compressed'}</span>`)
     }
     if (run.log_can_delete) {
       logActions.push(`
@@ -2240,8 +2281,8 @@ function renderTable (runs) {
         ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
         ${renderRunCardCell(progressLabel, progressHelpText, renderProgressSnapshotCell(run, runKey), 'class="logscan-progress-cell"')}
         ${isImageMaidRun ? '' : renderRunCardCell('Section runtimes', 'Runtime totals parsed per run section when available.', sectionCell)}
-        ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
-        ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
+        ${renderRunCardCell('Log size', 'Current resolved log size. Compressed archives also show original size and compression ratio when known.', formatRunLogSizeDetails(run, sizeBytes))}
+        ${renderRunCardCell('Log', 'Download the resolved log for this run. Finished runs prefer archived compressed copies when available; archived plain logs can also be compressed and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
         ${renderRunCardCell('Report', run.is_incomplete ? 'Open recommendations and diagnostics captured for this incomplete log.' : 'Open the recommendations recorded for the run.', `
           <div class="logscan-action-stack">
             <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-run-details"
@@ -2667,9 +2708,9 @@ function renderIngestHealth (state) {
   } else if (state.total === 0) {
     lines.push('No log files found yet.')
   } else if (state.needs_reingest) {
-    lines.push('Missing or incomplete logs detected. Use Reingest logs to catch up.')
+    lines.push('Missing or incomplete live logs detected. Use Reingest logs to catch up.')
   } else {
-    lines.push('All available logs are ingested.')
+    lines.push('Live log folders are caught up. Archived logs are read from the Analytics cache unless you reingest.')
   }
   if (state.pending_active) {
     lines.push('Active run detected; meta.log will ingest after completion.')
@@ -2683,6 +2724,9 @@ function renderIngestHealth (state) {
   }
   if (Array.isArray(state.incomplete_sample) && state.incomplete_sample.length) {
     lines.push(`Incomplete samples: ${state.incomplete_sample.join(', ')}`)
+  }
+  if (state.archive_scan_skipped) {
+    lines.push('Archive validation skipped for faster page load.')
   }
   if (invalidArchivedCount > 0) {
     lines.push(`Invalid archived logs: ${invalidArchivedCount}. Use Clear invalid archived logs to remove them.`)
@@ -3080,6 +3124,16 @@ function updateStatus (message) {
   if (statusEl) statusEl.textContent = message
 }
 
+function updateIndeterminateProgress (message) {
+  if (progressBar) {
+    progressBar.classList.add('progress-bar-striped', 'progress-bar-animated')
+    progressBar.style.width = '100%'
+  }
+  if (progressText) {
+    progressText.textContent = message
+  }
+}
+
 function setReingestButtonLabel (label) {
   if (!reingest) return
   reingest.textContent = label || defaultReingestButtonLabel
@@ -3105,6 +3159,7 @@ function updateProgressFromState (state) {
   const skippedInvalid = Number.isFinite(state.skipped_invalid) ? state.skipped_invalid : 0
   const errors = Number.isFinite(state.errors) ? state.errors : 0
   const pct = total ? Math.min(100, Math.round((scanned / total) * 100)) : 0
+  progressBar.classList.add('progress-bar-striped', 'progress-bar-animated')
   progressBar.style.width = `${pct}%`
   const pieces = [
     `Scanned: ${scanned}/${total}`,
@@ -3538,14 +3593,96 @@ function handleRunningTrendsPayload (data) {
   return true
 }
 
-function createAnalyticsLoadTimer (suppressStatus, messages) {
+function createAnalyticsRequestId () {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function formatElapsedSeconds (seconds) {
+  const safeSeconds = Number(seconds)
+  if (!Number.isFinite(safeSeconds) || safeSeconds <= 0) return '0s'
+  return formatSeconds(safeSeconds)
+}
+
+function getAnalyticsLoadPhaseLabel (phase) {
+  const labels = {
+    starting: 'Preparing Analytics request',
+    checking_reingest: 'Checking active reingest state',
+    counting_runs: 'Counting saved Analytics runs',
+    active_reingest: 'Analytics reingest is already running',
+    archiving_live_logs: 'Checking completed live logs',
+    building_resolution_context: 'Resolving archived log paths and config references',
+    loading_runs: 'Loading saved runs from the Analytics database',
+    annotating_runs: 'Annotating runs for filters, tables, and charts',
+    loading_incomplete_runs: 'Loading incomplete run records',
+    summarizing_archive_storage: 'Calculating archived log storage totals',
+    complete: 'Analytics request complete',
+    error: 'Analytics request failed'
+  }
+  return labels[phase] || ''
+}
+
+function formatAnalyticsLoadStatus (state, fallbackOperation, endpoint, startedAt) {
+  const elapsed = Number.isFinite(Number(state && state.elapsed_seconds))
+    ? Number(state.elapsed_seconds)
+    : (Date.now() - startedAt) / 1000
+  const phaseLabel = getAnalyticsLoadPhaseLabel(state && state.phase) || fallbackOperation
+  const pieces = [`${phaseLabel}. Waiting ${formatElapsedSeconds(elapsed)}.`]
+  if (state && state.detail) pieces.push(state.detail)
+  if (state && Number.isFinite(Number(state.total_runs))) pieces.push(`Saved runs: ${Number(state.total_runs).toLocaleString()}.`)
+  if (state && Number.isFinite(Number(state.loaded_runs))) pieces.push(`Loaded rows: ${Number(state.loaded_runs).toLocaleString()}.`)
+  if (state && state.limit) pieces.push(`Limit: ${state.limit}.`)
+  if (state && state.status === 'unknown') pieces.push('Backend phase has not been published for this request yet.')
+  pieces.push(`Request: ${endpoint}.`)
+  return pieces.join(' ')
+}
+
+function createAnalyticsLoadTimer (suppressStatus, messages, options = {}) {
   if (suppressStatus || !Array.isArray(messages) || !messages.length) return () => {}
-  const timers = messages.map(item => {
-    const delay = Number.isFinite(item.delay) ? item.delay : 0
-    return setTimeout(() => updateStatus(item.message), delay)
-  })
+  const startedAt = Date.now()
+  const operation = messages.find(item => item && item.operation)?.operation || 'Loading Analytics data'
+  const endpoint = messages.find(item => item && item.endpoint)?.endpoint || '/logscan/trends'
+  const statusEndpoint = options.statusEndpoint || null
+  const requestId = options.requestId || null
+  let lastStatusState = null
+  const updateLoadingProgress = () => {
+    const message = formatAnalyticsLoadStatus(lastStatusState, operation, endpoint, startedAt)
+    updateIndeterminateProgress(message)
+  }
+  const pollStatus = () => {
+    if (!statusEndpoint || !requestId) return
+    fetch(`${statusEndpoint}?request_id=${encodeURIComponent(requestId)}`, { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (!data || data.status === 'unknown') return
+        lastStatusState = data
+        const message = formatAnalyticsLoadStatus(lastStatusState, operation, endpoint, startedAt)
+        updateStatus(message)
+        updateIndeterminateProgress(message)
+      })
+      .catch(() => {})
+  }
+  setProgressVisible(true)
+  updateLoadingProgress()
+  pollStatus()
+  const heartbeat = setInterval(updateLoadingProgress, 1000)
+  const statusPoll = statusEndpoint && requestId ? setInterval(pollStatus, 1500) : null
+  const timers = messages
+    .filter(item => item && item.message)
+    .map(item => {
+      const delay = Number.isFinite(item.delay) ? item.delay : 0
+      return setTimeout(() => {
+        const elapsed = formatElapsedSeconds((Date.now() - startedAt) / 1000)
+        updateStatus(`${item.message} Elapsed: ${elapsed}.`)
+        updateLoadingProgress()
+      }, delay)
+    })
   return function clearAnalyticsLoadTimer () {
+    clearInterval(heartbeat)
+    if (statusPoll) clearInterval(statusPoll)
     timers.forEach(timer => clearTimeout(timer))
+    if (!lastIngestState || lastIngestState.status !== 'running') {
+      setProgressVisible(false)
+    }
   }
 }
 
@@ -3766,22 +3903,27 @@ function fetchRuns (options = {}) {
   const suppressStatus = options && options.suppressStatus
   const rawLimit = String(limit.value || '500').toLowerCase()
   const safeLimit = rawLimit === 'all' ? 'all' : (Number.isFinite(parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 500)
+  const requestId = createAnalyticsRequestId()
   const clearLoadTimer = createAnalyticsLoadTimer(suppressStatus, [
     {
+      operation: 'Loading saved Analytics runs',
+      endpoint: '/logscan/trends'
+    },
+    {
       delay: 8000,
-      message: 'Still loading saved analytics runs. Large log history or slow storage can make this take longer.'
+      message: 'Still loading saved Analytics runs. Large log history or slow storage can make this take longer.'
     },
     {
       delay: 30000,
-      message: 'Still waiting for Analytics data. Quickstart may be reading the saved run database or resolving archived log files.'
+      message: 'Analytics is still active. The progress line shows the latest backend phase, elapsed time, saved run count, and loaded row count when available.'
     },
     {
       delay: 120000,
-      message: 'Analytics is still waiting on the server response. Check the Quickstart console or container logs for a slow /logscan/trends request.'
+      message: 'Analytics is still active on the backend. If the phase stops changing, check the Quickstart console or container logs for the slow /logscan/trends timing warning.'
     }
-  ])
+  ], { requestId, statusEndpoint: '/logscan/trends/status' })
   if (!suppressStatus) updateStatus('Loading saved analytics runs...')
-  return fetch(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0`)
+  return fetch(`/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0&request_id=${encodeURIComponent(requestId)}`)
     .then(res => res.json())
     .then(data => {
       if (handleRunningTrendsPayload(data)) return
@@ -3834,6 +3976,10 @@ function fetchRuns (options = {}) {
 function refreshAnalyticsPage (options = {}) {
   const suppressStatus = Boolean(options && options.suppressStatus)
   const clearLoadTimer = createAnalyticsLoadTimer(suppressStatus, [
+    {
+      operation: 'Checking Analytics reingest status',
+      endpoint: '/logscan/trends/reingest/status'
+    },
     {
       delay: 5000,
       message: 'Checking whether Analytics is rebuilding saved trends...'
