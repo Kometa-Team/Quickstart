@@ -372,8 +372,16 @@ function formatRunLogSizeDetails (run, resolvedBytes) {
   if (run.log_is_compressed && compressedBytes !== null && originalBytes !== null && originalBytes !== compressedBytes) {
     const ratio = formatCompressionRatio(originalBytes, compressedBytes)
     return `
-      <div>${escapeHtml(formatBytes(compressedBytes))}</div>
-      <div class="small text-muted">Original ${escapeHtml(formatBytes(originalBytes))}${ratio ? ` | ${escapeHtml(ratio)}` : ''}</div>
+      <span class="logscan-log-size">
+        <span class="logscan-log-size__primary">
+          <span class="logscan-log-size__label">Compressed</span>
+          <strong>${escapeHtml(formatBytes(compressedBytes))}</strong>
+        </span>
+        <span class="logscan-log-size__meta">
+          <span><span class="logscan-log-size__label">Original</span> ${escapeHtml(formatBytes(originalBytes))}</span>
+          ${ratio ? `<span class="logscan-log-size__ratio">${escapeHtml(ratio)}</span>` : ''}
+        </span>
+      </span>
     `
   }
   return escapeHtml(formatBytes(resolvedBytes))

@@ -2987,6 +2987,45 @@ div#loading {
     opacity: 0.78;
 }
 
+.logscan-log-size {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+}
+
+.logscan-log-size__primary,
+.logscan-log-size__meta {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.55rem;
+}
+
+.logscan-log-size__primary {
+    font-size: 0.92rem;
+}
+
+.logscan-log-size__meta {
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.logscan-log-size__label {
+    color: var(--theme-text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.logscan-log-size__ratio {
+    border-left: 1px solid var(--theme-border);
+    padding-left: 0.55rem;
+}
+
 .logscan-app-indicator {
     align-items: center;
     display: inline-flex;
