@@ -995,6 +995,7 @@ function qsGetBackgroundJobLabel (job) {
   const jobType = String(job && job.job_type ? job.job_type : '').trim()
   const trigger = String(job && job.trigger ? job.trigger : '').trim()
   if (jobType === 'logscan_reingest') {
+    if (trigger.endsWith('_run_complete')) return 'Analytics ingest'
     return trigger === 'startup_migration' ? 'Analytics migration' : 'Analytics reingest'
   }
   if (jobType === 'kometa_update') return 'Kometa update'
@@ -1100,6 +1101,7 @@ function qsGetBackgroundJobDetails (job) {
       qsPushActiveDetail(details, 'Scanned', `${qsFormatActiveNumber(job.scanned)}/${qsFormatActiveNumber(job.total)}`)
     }
     qsPushActiveDetail(details, 'Ingested', qsFormatActiveNumber(job.ingested))
+    if (Number(job.archived || 0) > 0) qsPushActiveDetail(details, 'Archived', qsFormatActiveNumber(job.archived))
     qsPushActiveDetail(details, 'Duplicates', qsFormatActiveNumber(job.duplicates))
     const skipped = Number(job.skipped_incomplete || 0) + Number(job.skipped_invalid || 0)
     if (skipped > 0) qsPushActiveDetail(details, 'Skipped', qsFormatActiveNumber(skipped))

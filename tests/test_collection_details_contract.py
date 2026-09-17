@@ -652,12 +652,15 @@ def test_advanced_library_sections_have_override_scope_counts_and_defaults():
     assert 'data-default="[]"' in playlist_files
 
 
-def test_analytics_page_checks_reingest_status_before_loading_trends():
+def test_analytics_page_loads_trends_without_waiting_for_reingest_status():
     script = (ROOT / "static" / "local-js" / "905-analytics.js").read_text(encoding="utf-8")
 
-    assert "fetchReingestStatus(null, { applyComplete: false })\n    .then(data => {" in script
-    assert "if (data && data.status === 'running') return data" in script
-    assert "fetchRuns({ suppressStatus })" in script
+    runs_request = "const runsRequest = fetchRuns({ suppressStatus })"
+    reingest_request = "fetchReingestStatus(null, { applyComplete: false }).catch(err => {"
+    assert runs_request in script
+    assert reingest_request in script
+    assert script.index(runs_request) < script.index(reingest_request)
+    assert "return runsRequest" in script
     assert "/logscan/trends?limit=${safeLimit}&include_archive_storage=0&include_ingest_health=0&include_incomplete=0" in script
     assert "total_log_line_count" in script
     assert "Log Lines + Levels + Cache" in (ROOT / "templates" / "905-analytics.html").read_text(encoding="utf-8")

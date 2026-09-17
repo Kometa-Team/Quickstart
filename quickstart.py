@@ -406,6 +406,19 @@ apply_validation_metadata = persistence.apply_validation_metadata
 _is_logscan_gzip_path = helpers.is_logscan_gzip_path
 _read_logscan_text = helpers.read_logscan_text
 
+
+def _get_logscan_gzip_original_size(path):
+    try:
+        path = Path(path)
+        if not _is_logscan_gzip_path(path) or path.stat().st_size < 4:
+            return None
+        with path.open("rb") as handle:
+            handle.seek(-4, os.SEEK_END)
+            return int.from_bytes(handle.read(4), byteorder="little", signed=False)
+    except Exception:
+        return None
+
+
 ACTIVE_WORK_POLICIES = {
     "kometa_run": [
         {
@@ -1359,6 +1372,11 @@ os.makedirs(flask_cache_dir, exist_ok=True)
 
 logscan_reingest_lock = threading.Lock()
 logscan_ingest_lock = threading.Lock()
+logscan_trends_request_lock = threading.Lock()
+logscan_trends_request_state = {
+    "status": "idle",
+    "request_id": None,
+}
 BULK_VALIDATION_PROGRESS = {}
 BULK_VALIDATION_PROGRESS_LOCK = threading.Lock()
 logscan_reingest_state = {
@@ -1377,7 +1395,7 @@ LOGSCAN_STARTUP_MIGRATION_JOB_ID = "startup-logscan-migration"
 
 session_ttl = _get_session_lifetime_seconds()
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=session_ttl)
-app.config["SESSION_REFRESH_EACH_REQUEST"] = True
+app.config["SESSION_REFRESH_EACH_REQUEST"] = False
 app.config["QS_SESSION_LIFETIME_DAYS"] = _get_session_lifetime_days()
 app.config["QS_FLASK_SESSION_DIR"] = flask_cache_dir
 app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500, default_timeout=session_ttl)
@@ -1391,15 +1409,20 @@ SESSIONLESS_HEALTHCHECK_ENDPOINTS = {"kometa_status"}
 SESSIONLESS_HEALTHCHECK_PATHS = {"/kometa-status"}
 
 
-def _is_sessionless_healthcheck_request():
+def _is_sessionless_request():
     if request.method != "GET":
         return False
-    return request.endpoint in SESSIONLESS_HEALTHCHECK_ENDPOINTS or request.path in SESSIONLESS_HEALTHCHECK_PATHS
+    return (
+        request.endpoint == "static"
+        or request.path.startswith("/static/")
+        or request.endpoint in SESSIONLESS_HEALTHCHECK_ENDPOINTS
+        or request.path in SESSIONLESS_HEALTHCHECK_PATHS
+    )
 
 
 @app.before_request
 def before_request():
-    if _is_sessionless_healthcheck_request():
+    if _is_sessionless_request():
         return None
 
     # Assign user UUID if not already present
@@ -1420,11 +1443,16 @@ def before_request():
 
     try:
         ua = request.user_agent
-        session["qs_user_agent"] = ua.string or ""
-        session["qs_user_agent_browser"] = ua.browser or ""
-        session["qs_user_agent_version"] = ua.version or ""
-        session["qs_user_agent_platform"] = ua.platform or ""
-        session["qs_user_agent_raw"] = request.headers.get("User-Agent", "") or ""
+        user_agent_values = {
+            "qs_user_agent": ua.string or "",
+            "qs_user_agent_browser": ua.browser or "",
+            "qs_user_agent_version": ua.version or "",
+            "qs_user_agent_platform": ua.platform or "",
+            "qs_user_agent_raw": request.headers.get("User-Agent", "") or "",
+        }
+        for key, value in user_agent_values.items():
+            if session.get(key) != value:
+                session[key] = value
     except Exception:
         pass
 
@@ -1489,13 +1517,13 @@ server_session = Session(app)
 _save_server_session = app.session_interface.save_session
 
 
-def _save_session_unless_sessionless_healthcheck(app_obj, session_obj, response):
-    if has_request_context() and _is_sessionless_healthcheck_request():
+def _save_session_unless_sessionless_request(app_obj, session_obj, response):
+    if has_request_context() and _is_sessionless_request():
         return None
     return _save_server_session(app_obj, session_obj, response)
 
 
-app.session_interface.save_session = _save_session_unless_sessionless_healthcheck
+app.session_interface.save_session = _save_session_unless_sessionless_request
 server_thread = None
 shutdown_event = threading.Event()
 
@@ -1527,13 +1555,18 @@ def start():
     return redirect(url_for("step", name="001-start"))
 
 
-def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True):
+def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True, run_keys=None):
     cache_entries = []
+    run_key_filter = None
+    if run_keys is not None:
+        run_key_filter = {str(value or "").strip() for value in run_keys if str(value or "").strip()}
     ingest_cache = _load_logscan_ingest_cache()
     cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
     if isinstance(cache_logs, dict):
         for raw_path, entry in cache_logs.items():
             if not isinstance(entry, dict):
+                continue
+            if run_key_filter is not None and str(entry.get("run_key") or "").strip() not in run_key_filter:
                 continue
             try:
                 path = Path(raw_path).resolve()
@@ -1545,11 +1578,27 @@ def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True
                 stats = path.stat()
             except Exception:
                 continue
+            location = _classify_logscan_file_location(path, log_dir=log_dir)
+            is_compressed = _is_logscan_gzip_path(path)
+            compressed_size = int(stats.st_size) if is_compressed else None
+            original_size = entry.get("original_size")
+            if original_size is None:
+                original_size = entry.get("uncompressed_size")
+            try:
+                original_size = int(original_size) if original_size is not None else None
+            except Exception:
+                original_size = None
+            if original_size is None and is_compressed:
+                original_size = _get_logscan_gzip_original_size(path)
             cache_entries.append(
                 {
                     "path": path,
                     "mtime": float(stats.st_mtime),
                     "size": int(stats.st_size),
+                    "original_size": original_size,
+                    "compressed_size": compressed_size,
+                    "location": location,
+                    "is_compressed": is_compressed,
                     "run_key": entry.get("run_key"),
                     "tool_name": _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(path, log_dir=log_dir)),
                 }
@@ -1562,16 +1611,44 @@ def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True
                 stats = path.stat()
             except Exception:
                 continue
+            is_compressed = _is_logscan_gzip_path(path)
             candidate_files.append(
                 {
                     "path": path,
                     "mtime": float(stats.st_mtime),
                     "size": int(stats.st_size),
+                    "original_size": _get_logscan_gzip_original_size(path) if is_compressed else int(stats.st_size),
+                    "compressed_size": int(stats.st_size) if is_compressed else None,
                     "location": _classify_logscan_file_location(path, log_dir=log_dir),
+                    "is_compressed": is_compressed,
                     "tool_name": _detect_logscan_tool_from_path(path, log_dir=log_dir),
                 }
             )
-    return {"cache_entries": cache_entries, "candidate_files": candidate_files}
+    return {
+        "cache_entries": cache_entries,
+        "candidate_files": candidate_files,
+        "candidate_files_scanned": bool(include_candidate_files),
+        "run_key_filtered": run_key_filter is not None,
+    }
+
+
+def _logscan_match_sort_key(entry, log_dir=None):
+    path = entry.get("path") if isinstance(entry, dict) else None
+    location = entry.get("location") if isinstance(entry, dict) else None
+    if not location and path:
+        location = _classify_logscan_file_location(path, log_dir=log_dir)
+    is_compressed = bool(entry.get("is_compressed")) if isinstance(entry, dict) else False
+    if not is_compressed and path:
+        is_compressed = _is_logscan_gzip_path(path)
+    if location == "archive" and is_compressed:
+        rank = 0
+    elif location == "archive":
+        rank = 1
+    elif location == "live":
+        rank = 3
+    else:
+        rank = 2
+    return (rank, -float(entry.get("mtime", 0) or 0))
 
 
 def _find_logscan_cache_entry_for_run(run_key):
@@ -1581,6 +1658,7 @@ def _find_logscan_cache_entry_for_run(run_key):
     cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
     if not isinstance(cache_logs, dict):
         return None
+    matches = []
     for raw_path, entry in cache_logs.items():
         if not isinstance(entry, dict) or entry.get("run_key") != run_key:
             continue
@@ -1597,14 +1675,34 @@ def _find_logscan_cache_entry_for_run(run_key):
         except Exception:
             mtime = float(entry.get("mtime", 0) or 0)
             size = int(entry.get("size", 0) or 0)
-        return {
-            "path": path,
-            "mtime": mtime,
-            "size": size,
-            "run_key": entry.get("run_key"),
-            "tool_name": _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(path)),
-        }
-    return None
+        is_compressed = _is_logscan_gzip_path(path)
+        compressed_size = size if is_compressed else None
+        original_size = entry.get("original_size")
+        if original_size is None:
+            original_size = entry.get("uncompressed_size")
+        try:
+            original_size = int(original_size) if original_size is not None else None
+        except Exception:
+            original_size = None
+        if original_size is None and is_compressed:
+            original_size = _get_logscan_gzip_original_size(path)
+        matches.append(
+            {
+                "path": path,
+                "mtime": mtime,
+                "size": size,
+                "original_size": original_size,
+                "compressed_size": compressed_size,
+                "location": _classify_logscan_file_location(path),
+                "is_compressed": is_compressed,
+                "run_key": entry.get("run_key"),
+                "tool_name": _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(path)),
+            }
+        )
+    if not matches:
+        return None
+    matches.sort(key=_logscan_match_sort_key)
+    return matches[0]
 
 
 def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_live_fallback=True):
@@ -1618,12 +1716,15 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
             entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key and _normalize_logscan_tool_name(entry.get("tool_name")) == run_tool_name
         ]
         if cache_matches:
-            cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
+            cache_matches.sort(key=lambda entry: _logscan_match_sort_key(entry, log_dir=log_dir))
             match = cache_matches[0]
             return {
                 "path": match["path"],
-                "location": _classify_logscan_file_location(match["path"], log_dir=log_dir),
+                "location": match.get("location") or _classify_logscan_file_location(match["path"], log_dir=log_dir),
                 "size": match.get("size"),
+                "original_size": match.get("original_size"),
+                "compressed_size": match.get("compressed_size"),
+                "is_compressed": bool(match.get("is_compressed")),
                 "mtime": match.get("mtime"),
                 "source": "cache",
             }
@@ -1661,6 +1762,9 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
         "path": match["path"],
         "location": match.get("location") or _classify_logscan_file_location(match["path"], log_dir=log_dir),
         "size": match.get("size"),
+        "original_size": match.get("original_size"),
+        "compressed_size": match.get("compressed_size"),
+        "is_compressed": bool(match.get("is_compressed")),
         "mtime": match.get("mtime"),
         "source": "fallback",
     }
@@ -1682,14 +1786,17 @@ def _resolve_logscan_run_log_info(run_key, run_record=None, context=None):
         if direct_match and (not run_tool_name or _normalize_logscan_tool_name(direct_match.get("tool_name")) == run_tool_name):
             cache_matches = [direct_match]
     if cache_matches:
-        cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
+        cache_matches.sort(key=_logscan_match_sort_key)
         match = cache_matches[0]
-        location = _classify_logscan_file_location(match["path"])
+        location = match.get("location") or _classify_logscan_file_location(match["path"])
         if not (isinstance(run_record, dict) and location == "live"):
             return {
                 "path": match["path"],
                 "location": location,
                 "size": match.get("size"),
+                "original_size": match.get("original_size"),
+                "compressed_size": match.get("compressed_size"),
+                "is_compressed": bool(match.get("is_compressed")),
                 "mtime": match.get("mtime"),
                 "source": "cache",
             }
@@ -1701,14 +1808,20 @@ def _resolve_logscan_run_log_info(run_key, run_record=None, context=None):
                 "path": match["path"],
                 "location": _classify_logscan_file_location(match["path"]),
                 "size": match.get("size"),
+                "original_size": match.get("original_size"),
+                "compressed_size": match.get("compressed_size"),
+                "is_compressed": bool(match.get("is_compressed")),
                 "mtime": match.get("mtime"),
                 "source": "cache",
             }
         return None
     full_context = context
-    if not isinstance(full_context, dict) or not isinstance(full_context.get("candidate_files"), list) or not full_context.get("candidate_files"):
-        full_context = _build_logscan_resolution_context(include_candidate_files=True)
-    info = _match_logscan_run_to_file(run_record, context=full_context, allow_live_fallback=False)
+    if isinstance(full_context, dict) and full_context.get("candidate_files_scanned") is False:
+        info = None
+    else:
+        if not isinstance(full_context, dict) or not isinstance(full_context.get("candidate_files"), list) or not full_context.get("candidate_files"):
+            full_context = _build_logscan_resolution_context(include_candidate_files=True)
+        info = _match_logscan_run_to_file(run_record, context=full_context, allow_live_fallback=False)
     if info:
         return info
     if cache_matches:
@@ -1717,6 +1830,9 @@ def _resolve_logscan_run_log_info(run_key, run_record=None, context=None):
             "path": match["path"],
             "location": _classify_logscan_file_location(match["path"]),
             "size": match.get("size"),
+            "original_size": match.get("original_size"),
+            "compressed_size": match.get("compressed_size"),
+            "is_compressed": bool(match.get("is_compressed")),
             "mtime": match.get("mtime"),
             "source": "cache",
         }
@@ -1833,6 +1949,10 @@ def _compress_logscan_run_artifact(run_key):
     if not info or not info.get("path"):
         return False, {"error": "Archived log file for this run could not be found.", "run_key": run_key}, 404
     source_path = Path(info["path"])
+    try:
+        source_size = int(source_path.stat().st_size)
+    except Exception:
+        source_size = int(info.get("size", 0) or 0)
     if info.get("location") != "archive":
         return False, {"error": "Only archived logs can be compressed from Analytics.", "run_key": run_key}, 409
     if _is_logscan_gzip_path(source_path):
@@ -1861,8 +1981,11 @@ def _compress_logscan_run_artifact(run_key):
         compressed_stats = compressed_path.stat()
         cache_entry["mtime"] = compressed_stats.st_mtime
         cache_entry["size"] = compressed_stats.st_size
+        cache_entry["compressed_size"] = compressed_stats.st_size
     except Exception:
         pass
+    if source_size:
+        cache_entry["original_size"] = int(cache_entry.get("original_size") or source_size)
     cache_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
     cache_logs[compressed_key] = cache_entry
     cache["logs"] = cache_logs
@@ -1895,7 +2018,9 @@ def _annotate_logscan_runs(runs, context=None):
         row["log_available"] = bool(info and info.get("path"))
         row["log_location"] = info.get("location") if info else "missing"
         row["log_resolved_size"] = info.get("size") if info and isinstance(info.get("size"), int) else row.get("log_size")
-        row["log_is_compressed"] = bool(info and info.get("path") and _is_logscan_gzip_path(info["path"]))
+        row["log_original_size"] = info.get("original_size") if info and isinstance(info.get("original_size"), int) else row.get("log_size")
+        row["log_compressed_size"] = info.get("compressed_size") if info and isinstance(info.get("compressed_size"), int) else None
+        row["log_is_compressed"] = bool(info and (info.get("is_compressed") or (info.get("path") and _is_logscan_gzip_path(info["path"]))))
         row["log_can_delete"] = row["log_location"] == "archive" and row["log_available"]
         row["log_can_compress"] = row["log_location"] == "archive" and row["log_available"] and not row["log_is_compressed"]
         annotated.append(row)
@@ -4322,10 +4447,7 @@ def kometa_status():
                 pid = None
     if not pid:
         if not pending_start:
-            try:
-                _ingest_completed_live_logs("kometa")
-            except Exception:
-                pass
+            _start_logscan_live_ingest("kometa")
             _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
@@ -4442,10 +4564,7 @@ def kometa_status():
                 os.remove(helpers.get_kometa_pid_file())
             except Exception:
                 pass
-        try:
-            _ingest_completed_live_logs("kometa")
-        except Exception:
-            pass
+        _start_logscan_live_ingest("kometa")
         _clear_process_metric_cache(pid, "kometa")
         _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
@@ -5203,9 +5322,49 @@ def logscan_progress():
         return jsonify({"error": f"Failed to analyze log progress: {str(e)}"}), 500
 
 
+def _update_logscan_trends_request_state(request_id, **updates):
+    now = datetime.now(timezone.utc).isoformat()
+    with logscan_trends_request_lock:
+        current_request_id = logscan_trends_request_state.get("request_id")
+        if current_request_id != request_id or updates.get("reset"):
+            logscan_trends_request_state.clear()
+            logscan_trends_request_state.update(
+                {
+                    "request_id": request_id,
+                    "started_at": now,
+                    "started_monotonic": time.perf_counter(),
+                }
+            )
+        updates.pop("reset", None)
+        logscan_trends_request_state.update(updates)
+        logscan_trends_request_state["updated_at"] = now
+
+
+def _logscan_trends_request_snapshot(request_id=None):
+    with logscan_trends_request_lock:
+        snapshot = dict(logscan_trends_request_state)
+    if request_id and snapshot.get("request_id") != request_id:
+        return {
+            "status": "unknown",
+            "request_id": request_id,
+            "message": "No active Analytics request matches this browser request.",
+        }
+    started_monotonic = snapshot.pop("started_monotonic", None)
+    if isinstance(started_monotonic, (int, float)):
+        snapshot["elapsed_seconds"] = max(0, round(time.perf_counter() - started_monotonic, 1))
+    return snapshot
+
+
+@app.route("/logscan/trends/status", methods=["GET"])
+def logscan_trends_status():
+    request_id = str(request.args.get("request_id") or "").strip() or None
+    return jsonify(_logscan_trends_request_snapshot(request_id=request_id))
+
+
 @app.route("/logscan/trends", methods=["GET"])
 def logscan_trends():
     request_started_at = time.perf_counter()
+    request_id = str(request.args.get("request_id") or uuid.uuid4()).strip()[:80]
     raw_limit = str(request.args.get("limit", "50")).strip().lower()
     if raw_limit == "all":
         limit = None
@@ -5224,80 +5383,147 @@ def logscan_trends():
     include_incomplete = _include_flag("include_incomplete")
     lightweight_request = not include_ingest_health and not include_archive_storage and not include_incomplete
 
-    snapshot = _logscan_reingest_snapshot()
-    if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
-        total_runs = database.get_log_runs_count()
-        running_health = {
-            "source": "running",
-            "status": snapshot.get("status") or "running",
-            "job_id": snapshot.get("job_id"),
-            "trigger": snapshot.get("trigger"),
-            "migration_level": snapshot.get("migration_level"),
-            "total": snapshot.get("total", 0),
-            "scanned": snapshot.get("scanned", 0),
-            "ingested": snapshot.get("ingested", 0),
-            "duplicates": snapshot.get("duplicates", 0),
-            "skipped_incomplete": snapshot.get("skipped_incomplete", 0),
-            "skipped_invalid": snapshot.get("skipped_invalid", 0),
-            "errors": snapshot.get("errors", 0),
-            "current_file": snapshot.get("current_file"),
-            "needs_reingest": True,
-            "pending_active": True,
+    def _phase(phase, detail=None, **extra):
+        payload = {
+            "status": "running",
+            "phase": phase,
+            "detail": detail,
+            "limit": raw_limit,
+            "lightweight": lightweight_request,
+            "include_ingest_health": include_ingest_health,
+            "include_archive_storage": include_archive_storage,
+            "include_incomplete": include_incomplete,
         }
-        return jsonify(
-            {
-                "runs": [],
-                "incomplete_runs": [],
-                "total_runs": total_runs,
-                "total_incomplete_runs": 0,
-                "ingest_health": running_health,
-                "archive_storage": None,
-                "reingest_running": True,
-                "reingest": snapshot,
-            }
-        )
+        payload.update(extra)
+        _update_logscan_trends_request_state(request_id, **payload)
 
-    if not lightweight_request:
-        try:
-            _ingest_completed_live_logs("imagemaid")
-            _archive_finished_live_meta_log_if_idle()
-        except Exception:
-            pass
-    total_runs = database.get_log_runs_count()
-    resolution_context = _build_logscan_resolution_context()
-    runs = _annotate_logscan_runs(database.get_log_runs(limit=limit), context=resolution_context)
-    incomplete_runs = []
-    all_incomplete_runs = []
-    if include_incomplete:
-        incomplete_runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
-        all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
-    payload = {
-        "runs": runs,
-        "incomplete_runs": incomplete_runs,
-        "total_runs": total_runs,
-        "total_incomplete_runs": len(all_incomplete_runs),
-        "ingest_health": _logscan_ingest_health() if include_ingest_health else None,
-        "archive_storage": None,
-        "reingest_running": False,
-    }
-    if include_archive_storage:
-        all_runs = database.get_log_runs(limit=None) if total_runs else []
-        payload["archive_storage"] = _get_logscan_archive_storage_summary(
-            all_runs=all_runs,
-            incomplete_runs=all_incomplete_runs,
-            context=resolution_context,
+    def _finish(status, **extra):
+        _update_logscan_trends_request_state(request_id, status=status, **extra)
+
+    _update_logscan_trends_request_state(
+        request_id,
+        reset=True,
+        status="running",
+        phase="starting",
+        detail="Preparing Analytics request.",
+        limit=raw_limit,
+        lightweight=lightweight_request,
+        include_ingest_health=include_ingest_health,
+        include_archive_storage=include_archive_storage,
+        include_incomplete=include_incomplete,
+    )
+
+    try:
+        _phase("checking_reingest", "Checking whether an Analytics reingest is already running.")
+        snapshot = _logscan_reingest_snapshot()
+        if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
+            _phase("counting_runs", "A reingest is running; counting saved runs before returning progress.")
+            total_runs = database.get_log_runs_count()
+            running_health = {
+                "source": "running",
+                "status": snapshot.get("status") or "running",
+                "job_id": snapshot.get("job_id"),
+                "trigger": snapshot.get("trigger"),
+                "migration_level": snapshot.get("migration_level"),
+                "total": snapshot.get("total", 0),
+                "scanned": snapshot.get("scanned", 0),
+                "ingested": snapshot.get("ingested", 0),
+                "duplicates": snapshot.get("duplicates", 0),
+                "skipped_incomplete": snapshot.get("skipped_incomplete", 0),
+                "skipped_invalid": snapshot.get("skipped_invalid", 0),
+                "errors": snapshot.get("errors", 0),
+                "current_file": snapshot.get("current_file"),
+                "needs_reingest": True,
+                "pending_active": True,
+            }
+            _finish("complete", phase="active_reingest", total_runs=total_runs, loaded_runs=0)
+            return jsonify(
+                {
+                    "request_id": request_id,
+                    "runs": [],
+                    "incomplete_runs": [],
+                    "total_runs": total_runs,
+                    "total_incomplete_runs": 0,
+                    "ingest_health": running_health,
+                    "archive_storage": None,
+                    "reingest_running": True,
+                    "reingest": snapshot,
+                }
+            )
+
+        if not lightweight_request:
+            _phase("archiving_live_logs", "Checking for completed live logs that should be archived before Analytics loads.")
+            try:
+                _ingest_completed_live_logs("imagemaid")
+                _archive_finished_live_meta_log_if_idle()
+            except Exception:
+                pass
+        _phase("counting_runs", "Counting saved Analytics runs in the local database.")
+        total_runs = database.get_log_runs_count()
+        _phase("loading_runs", "Loading saved run rows from the Analytics database.", total_runs=total_runs)
+        raw_runs = database.get_log_runs(limit=limit)
+        raw_incomplete_runs = []
+        all_incomplete_runs = []
+        if include_incomplete:
+            _phase("loading_incomplete_runs", "Loading incomplete run records.", total_runs=total_runs, loaded_runs=len(raw_runs))
+            raw_incomplete_runs = _get_logscan_incomplete_runs(limit=limit)
+            all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
+
+        visible_run_keys = {run.get("run_key") for run in raw_runs if isinstance(run, dict) and run.get("run_key")}
+        visible_run_keys.update(run.get("run_key") for run in raw_incomplete_runs if isinstance(run, dict) and run.get("run_key"))
+        full_archive_context = include_archive_storage or include_ingest_health
+        _phase(
+            "building_resolution_context",
+            "Resolving cached log paths for visible rows." if not full_archive_context else "Resolving archived log paths and config references.",
+            total_runs=total_runs,
+            loaded_runs=len(raw_runs),
         )
-    elapsed = time.perf_counter() - request_started_at
-    if elapsed >= 2:
-        helpers.ts_log(
-            f"Analytics trends request took {elapsed:.2f}s (limit={raw_limit}, lightweight={lightweight_request}, runs={len(runs)}, total={total_runs}).",
-            level="WARNING",
+        resolution_context = _build_logscan_resolution_context(
+            include_candidate_files=full_archive_context,
+            run_keys=None if full_archive_context else visible_run_keys,
         )
-    return jsonify(payload)
+        _phase(
+            "annotating_runs",
+            "Annotating saved runs for filters, tables, and chart labels.",
+            total_runs=total_runs,
+            loaded_runs=len(raw_runs),
+        )
+        runs = _annotate_logscan_runs(raw_runs, context=resolution_context)
+        incomplete_runs = _annotate_logscan_runs(raw_incomplete_runs, context=resolution_context) if include_incomplete else []
+        payload = {
+            "request_id": request_id,
+            "runs": runs,
+            "incomplete_runs": incomplete_runs,
+            "total_runs": total_runs,
+            "total_incomplete_runs": len(all_incomplete_runs),
+            "ingest_health": _logscan_ingest_health() if include_ingest_health else None,
+            "archive_storage": None,
+            "reingest_running": False,
+        }
+        if include_archive_storage:
+            _phase("summarizing_archive_storage", "Calculating archived log storage totals.", total_runs=total_runs, loaded_runs=len(runs))
+            all_runs = database.get_log_runs(limit=None) if total_runs else []
+            payload["archive_storage"] = _get_logscan_archive_storage_summary(
+                all_runs=all_runs,
+                incomplete_runs=all_incomplete_runs,
+                context=resolution_context,
+            )
+        elapsed = time.perf_counter() - request_started_at
+        _finish("complete", phase="complete", total_runs=total_runs, loaded_runs=len(runs), elapsed_seconds=round(elapsed, 1))
+        if elapsed >= 2:
+            helpers.ts_log(
+                f"Analytics trends request took {elapsed:.2f}s (limit={raw_limit}, lightweight={lightweight_request}, runs={len(runs)}, total={total_runs}).",
+                level="WARNING",
+            )
+        return jsonify(payload)
+    except Exception as exc:
+        _finish("error", phase="error", error=str(exc))
+        raise
 
 
 @app.route("/logscan/trends/ingest-health", methods=["GET"])
 def logscan_trends_ingest_health():
+    validate_archives = str(request.args.get("validate_archives", "0")).strip().lower() in {"1", "true", "yes", "on"}
     snapshot = _logscan_reingest_snapshot()
     if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
         return jsonify(
@@ -5319,7 +5545,7 @@ def logscan_trends_ingest_health():
                 "pending_active": True,
             }
         )
-    return jsonify(_logscan_ingest_health())
+    return jsonify(_logscan_ingest_health(validate_archives=validate_archives))
 
 
 @app.route("/logscan/trends/archive-storage", methods=["GET"])
@@ -5327,9 +5553,11 @@ def logscan_trends_archive_storage():
     snapshot = _logscan_reingest_snapshot()
     if logscan_ingest_lock.locked() or snapshot.get("status") == "running":
         return jsonify({"status": "running", "archive_storage": None, "reingest": snapshot}), 202
-    resolution_context = _build_logscan_resolution_context()
+    scan_disk = str(request.args.get("scan_disk", "0")).strip().lower() in {"1", "true", "yes", "on"}
     all_runs = database.get_log_runs(limit=None) if database.get_log_runs_count() else []
     all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
+    run_keys = {run.get("run_key") for run in list(all_runs or []) + list(all_incomplete_runs or []) if isinstance(run, dict) and run.get("run_key")}
+    resolution_context = _build_logscan_resolution_context(include_candidate_files=scan_disk, run_keys=None if scan_disk else run_keys)
     return jsonify(
         {
             "status": "idle",
@@ -5444,9 +5672,50 @@ def _reset_logscan_reingest_state():
         )
 
 
+def _get_logscan_archive_size_details(info, archive_paths=None):
+    if not isinstance(info, dict):
+        return {"size": 0, "original_size": 0, "compressed_size": 0}
+    path_key = None
+    if info.get("path"):
+        try:
+            path_key = str(Path(info["path"]).resolve())
+        except Exception:
+            path_key = None
+    archive_entry = archive_paths.get(path_key) if isinstance(archive_paths, dict) and path_key else None
+    size = info.get("size")
+    if not isinstance(size, int) and isinstance(archive_entry, dict):
+        size = archive_entry.get("size")
+    size = int(size) if isinstance(size, int) else 0
+    is_compressed = bool(info.get("is_compressed"))
+    if not is_compressed and info.get("path"):
+        is_compressed = _is_logscan_gzip_path(info["path"])
+    original_size = info.get("original_size")
+    if not isinstance(original_size, int) and isinstance(archive_entry, dict):
+        original_size = archive_entry.get("original_size") or archive_entry.get("uncompressed_size")
+    if not isinstance(original_size, int) and is_compressed and info.get("path"):
+        original_size = _get_logscan_gzip_original_size(info["path"])
+    if not isinstance(original_size, int) and not is_compressed:
+        original_size = size
+    compressed_size = info.get("compressed_size")
+    if not isinstance(compressed_size, int) and isinstance(archive_entry, dict):
+        compressed_size = archive_entry.get("compressed_size")
+    if not isinstance(compressed_size, int):
+        compressed_size = size
+    return {
+        "size": size,
+        "original_size": int(original_size) if isinstance(original_size, int) else 0,
+        "compressed_size": int(compressed_size) if isinstance(compressed_size, int) else 0,
+    }
+
+
 def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, context=None):
     context = context or _build_logscan_resolution_context()
     archive_paths = {}
+    for entry in context.get("cache_entries", []):
+        path = entry.get("path")
+        if not path or (entry.get("location") or _classify_logscan_file_location(path)) != "archive":
+            continue
+        archive_paths[str(path.resolve())] = entry
     for entry in context.get("candidate_files", []):
         path = entry.get("path")
         if not path or _classify_logscan_file_location(path) != "archive":
@@ -5455,6 +5724,8 @@ def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, co
 
     tracked_paths = set()
     tracked_bytes = 0
+    tracked_original_bytes = 0
+    tracked_compressed_bytes = 0
     for run in list(all_runs or []) + list(incomplete_runs or []):
         if not isinstance(run, dict):
             continue
@@ -5465,30 +5736,41 @@ def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, co
         if path_key in tracked_paths:
             continue
         tracked_paths.add(path_key)
-        if isinstance(info.get("size"), int):
-            tracked_bytes += info["size"]
-        else:
-            entry = archive_paths.get(path_key)
-            tracked_bytes += int(entry.get("size", 0)) if isinstance(entry, dict) else 0
+        size_info = _get_logscan_archive_size_details(info, archive_paths=archive_paths)
+        tracked_bytes += size_info["size"]
+        tracked_original_bytes += size_info["original_size"]
+        tracked_compressed_bytes += size_info["compressed_size"]
 
     total_archived_bytes = 0
+    total_archived_original_bytes = 0
+    total_archived_compressed_bytes = 0
     for entry in archive_paths.values():
-        if isinstance(entry.get("size"), int):
-            total_archived_bytes += entry["size"]
+        size_info = _get_logscan_archive_size_details(entry, archive_paths=archive_paths)
+        total_archived_bytes += size_info["size"]
+        total_archived_original_bytes += size_info["original_size"]
+        total_archived_compressed_bytes += size_info["compressed_size"]
 
     total_archived_files = len(archive_paths)
     tracked_archived_files = len(tracked_paths)
     extra_archived_files = max(0, total_archived_files - tracked_archived_files)
     extra_archived_bytes = max(0, total_archived_bytes - tracked_bytes)
+    extra_original_bytes = max(0, total_archived_original_bytes - tracked_original_bytes)
+    extra_compressed_bytes = max(0, total_archived_compressed_bytes - tracked_compressed_bytes)
     kometa_keep_limit = _get_logscan_keep_limit("kometa")
     imagemaid_keep_limit = _get_logscan_keep_limit("imagemaid")
     return {
         "archived_bytes": tracked_bytes,
+        "archived_original_bytes": tracked_original_bytes,
+        "archived_compressed_bytes": tracked_compressed_bytes,
         "archived_files": tracked_archived_files,
         "disk_archived_bytes": total_archived_bytes,
+        "disk_archived_original_bytes": total_archived_original_bytes,
+        "disk_archived_compressed_bytes": total_archived_compressed_bytes,
         "disk_archived_files": total_archived_files,
         "extra_archived_files": extra_archived_files,
         "extra_archived_bytes": extra_archived_bytes,
+        "extra_archived_original_bytes": extra_original_bytes,
+        "extra_archived_compressed_bytes": extra_compressed_bytes,
         "keep_limit": kometa_keep_limit,
         "retention_label": f"Kometa: {_format_archived_log_retention_label(kometa_keep_limit)} | ImageMaid: {_format_archived_log_retention_label(imagemaid_keep_limit)}",
         "kometa_keep_limit": kometa_keep_limit,
@@ -5496,6 +5778,7 @@ def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, co
         "kometa_retention_label": _format_archived_log_retention_label(kometa_keep_limit),
         "imagemaid_retention_label": _format_archived_log_retention_label(imagemaid_keep_limit),
         "compression_ready": True,
+        "disk_scan_skipped": not bool(context.get("candidate_files_scanned")),
     }
 
 
@@ -5570,7 +5853,7 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
 
 
 def _logscan_needs_reingest(cache_logs, log_dir):
-    return bool(_get_logscan_delta_files(log_dir=log_dir, include_archive=True))
+    return bool(_get_logscan_delta_files(log_dir=log_dir, include_archive=False))
 
 
 def _get_logscan_invalid_archived_logs(log_dir=None, limit=None):
@@ -5639,12 +5922,12 @@ def _get_logscan_invalid_archived_logs(log_dir=None, limit=None):
     return invalid_logs[:safe_limit]
 
 
-def _logscan_ingest_health(log_dir=None):
+def _logscan_ingest_health(log_dir=None, include_archive=False, validate_archives=False):
     log_dir = Path(log_dir) if log_dir else helpers.get_kometa_log_dir()
     log_dir_exists = log_dir.exists()
     imagemaid_log_dir = _get_logscan_live_dir("imagemaid")
     imagemaid_dir_exists = imagemaid_log_dir.exists()
-    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True) if (log_dir_exists or imagemaid_dir_exists) else []
+    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=include_archive) if (log_dir_exists or imagemaid_dir_exists) else []
     ingest_cache = _load_logscan_ingest_cache()
     cache_logs = ingest_cache["logs"]
     missing = []
@@ -5681,7 +5964,7 @@ def _logscan_ingest_health(log_dir=None):
     if total < 0:
         total = 0
     needs_reingest = bool(missing or incomplete)
-    invalid_archived = _get_logscan_invalid_archived_logs(log_dir=log_dir)
+    invalid_archived = _get_logscan_invalid_archived_logs(log_dir=log_dir) if validate_archives else []
 
     return {
         "source": "health",
@@ -5695,6 +5978,7 @@ def _logscan_ingest_health(log_dir=None):
         "incomplete_sample": incomplete[:5],
         "invalid_archived_count": len(invalid_archived),
         "invalid_archived_sample": [entry.get("name") for entry in invalid_archived[:5] if entry.get("name")],
+        "archive_scan_skipped": not bool(include_archive or validate_archives),
         "needs_reingest": needs_reingest,
         "pending_active": pending_active,
         "last_updated": latest_updated,
@@ -5732,6 +6016,134 @@ def _start_logscan_auto_reingest(log_dir):
     thread = threading.Thread(target=_run_logscan_reingest_job, args=(job_id, False), daemon=True, name="logscan-auto-reingest")
     thread.start()
     return True
+
+
+def _logscan_live_ingest_candidates(tool_name="kometa", log_dir=None):
+    tool_name = _normalize_logscan_tool_name(tool_name)
+    live_dir = _get_logscan_live_dir(tool_name, log_dir=log_dir if tool_name == "kometa" else None)
+    if not live_dir.exists():
+        return []
+    if tool_name == "kometa":
+        path = live_dir / "meta.log"
+        return [path] if path.exists() and path.is_file() else []
+    return [path for path in sorted(live_dir.glob("*.log*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True) if path.is_file() and ".log" in path.name.lower()]
+
+
+def _logscan_live_ingest_has_work(tool_name="kometa", log_dir=None):
+    try:
+        candidates = _logscan_live_ingest_candidates(tool_name, log_dir=log_dir)
+        if not candidates:
+            return False
+        ingest_cache = _load_logscan_ingest_cache()
+        cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+        if not isinstance(cache_logs, dict):
+            cache_logs = {}
+        for path in candidates:
+            try:
+                stats = path.stat()
+                cache_key = str(path.resolve())
+                if not _logscan_cache_entry_matches(path, cache_entry=cache_logs.get(cache_key, {}), stats=stats):
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        return False
+    return False
+
+
+def _start_logscan_live_ingest(tool_name="kometa", log_dir=None):
+    tool_name = _normalize_logscan_tool_name(tool_name)
+    if logscan_ingest_lock.locked():
+        return False
+    snapshot = _logscan_reingest_snapshot()
+    if snapshot.get("status") == "running":
+        return False
+    if not _logscan_live_ingest_has_work(tool_name, log_dir=log_dir):
+        return False
+    job_id = secrets.token_urlsafe(8)
+    now = datetime.now(timezone.utc).isoformat()
+    current_file = "meta.log" if tool_name == "kometa" else None
+    _update_logscan_reingest_state(
+        status="running",
+        job_id=job_id,
+        trigger=f"{tool_name}_run_complete",
+        phase="ingesting_live_log",
+        started_at=now,
+        finished_at=None,
+        total=1,
+        scanned=0,
+        ingested=0,
+        archived=0,
+        duplicates=0,
+        skipped_incomplete=0,
+        skipped_invalid=0,
+        errors=0,
+        current_file=current_file,
+        missing_people_unique=0,
+        missing_people_logs=0,
+        missing_people_log_ready=False,
+        missing_people_log_lines=0,
+        sample_incomplete=[],
+        sample_errors=[],
+    )
+    raw_log_dir = str(log_dir) if log_dir else None
+    thread = threading.Thread(
+        target=_run_logscan_live_ingest_job,
+        args=(job_id, tool_name, raw_log_dir),
+        daemon=True,
+        name=f"logscan-live-ingest-{tool_name}",
+    )
+    thread.start()
+    return True
+
+
+def _run_logscan_live_ingest_job(job_id, tool_name, raw_log_dir=None):
+    if not logscan_ingest_lock.acquire(blocking=False):
+        _update_logscan_reingest_state(
+            status="error",
+            job_id=job_id,
+            error="Logscan ingest already running.",
+            finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+        return
+    try:
+        with app.app_context():
+            log_dir = Path(raw_log_dir) if raw_log_dir else None
+            current_file = "meta.log" if tool_name == "kometa" else None
+            _update_logscan_reingest_state(
+                status="running",
+                job_id=job_id,
+                phase="ingesting_live_log",
+                current_file=current_file,
+                total=1,
+                scanned=0,
+            )
+            result = _ingest_completed_live_logs(tool_name, log_dir=log_dir)
+            ingested = int(result.get("ingested") or 0) if isinstance(result, dict) else 0
+            archived = int(result.get("archived") or 0) if isinstance(result, dict) else 0
+            _update_logscan_reingest_state(
+                status="complete",
+                job_id=job_id,
+                phase="complete",
+                scanned=1,
+                ingested=ingested,
+                archived=archived,
+                errors=0,
+                current_file=None,
+                finished_at=datetime.now(timezone.utc).isoformat(),
+                success=True,
+            )
+    except Exception as exc:
+        _update_logscan_reingest_state(
+            status="error",
+            job_id=job_id,
+            error=str(exc),
+            errors=1,
+            current_file=None,
+            finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+    finally:
+        logscan_ingest_lock.release()
 
 
 def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
@@ -5859,7 +6271,7 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
                     archived_stats = archived_path.stat()
                     if not path.exists():
                         cache_logs.pop(cache_key, None)
-                    cache_logs[str(archived_path.resolve())] = {
+                    archive_entry = {
                         "mtime": archived_stats.st_mtime,
                         "size": archived_stats.st_size,
                         "content_md5": content_md5,
@@ -5868,6 +6280,10 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
                         "run_complete": True,
                         "updated_at": datetime.now(timezone.utc).isoformat(),
                     }
+                    if _is_logscan_gzip_path(archived_path):
+                        archive_entry["compressed_size"] = archived_stats.st_size
+                        archive_entry["original_size"] = int(stats.st_size)
+                    cache_logs[str(archived_path.resolve())] = archive_entry
                     cache_dirty = True
                     archived += 1
                 except Exception:
@@ -5989,11 +6405,21 @@ def _archive_finished_live_meta_log_if_idle(log_dir=None):
         return None
 
     updated_entry = dict(live_entry)
+    original_size = live_entry.get("original_size") or live_entry.get("size")
+    try:
+        original_size = int(original_size) if original_size is not None else int(live_path.stat().st_size)
+    except Exception:
+        original_size = None
     updated_entry["mtime"] = archived_stats.st_mtime
     updated_entry["size"] = archived_stats.st_size
+    updated_entry["compressed_size"] = archived_stats.st_size
+    if original_size is not None:
+        updated_entry["original_size"] = original_size
     updated_entry["content_md5"] = content_md5
     updated_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
     live_entry["content_md5"] = content_md5
+    if original_size is not None:
+        live_entry["original_size"] = original_size
     cache_logs[live_key] = live_entry
     cache_logs[archived_key] = updated_entry
     ingest_cache["logs"] = cache_logs
@@ -6043,6 +6469,14 @@ def _archive_rotated_log_and_update_cache(path, cache_logs, archive_dir, run_key
     updated_entry = dict(existing_entry)
     updated_entry["mtime"] = archived_stats.st_mtime
     updated_entry["size"] = archived_stats.st_size
+    if _is_logscan_gzip_path(archived_path):
+        updated_entry["compressed_size"] = archived_stats.st_size
+        try:
+            updated_entry["original_size"] = int(existing_entry.get("original_size") or source_path.stat().st_size)
+        except Exception:
+            pass
+    else:
+        updated_entry["original_size"] = archived_stats.st_size
     updated_entry["run_complete"] = bool(run_complete)
     updated_entry["tool_name"] = _detect_logscan_tool_from_path(source_path)
     updated_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -6486,7 +6920,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     if archived_path:
                         try:
                             archived_stats = archived_path.stat()
-                            cache_logs[str(archived_path.resolve())] = {
+                            archive_entry = {
                                 "mtime": archived_stats.st_mtime,
                                 "size": archived_stats.st_size,
                                 "content_md5": content_md5,
@@ -6495,6 +6929,10 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                                 "run_complete": True,
                                 "updated_at": datetime.now(timezone.utc).isoformat(),
                             }
+                            if _is_logscan_gzip_path(archived_path):
+                                archive_entry["compressed_size"] = archived_stats.st_size
+                                archive_entry["original_size"] = int(stats.st_size)
+                            cache_logs[str(archived_path.resolve())] = archive_entry
                             cache_dirty = True
                         except Exception:
                             pass

@@ -96,11 +96,23 @@ def test_logscan_trends_empty(client, isolated_config_dir):
     assert payload["total_runs"] == 0
     assert payload["runs"] == []
     assert payload["archive_storage"]["archived_bytes"] == 0
-    assert payload["archive_storage"]["archived_files"] == 0
-    assert payload["archive_storage"]["extra_archived_files"] == 0
-    assert payload["archive_storage"]["retention_label"] == "Kometa: Keep all archived logs | ImageMaid: Keep all archived logs"
-    assert payload["archive_storage"]["kometa_retention_label"] == "Keep all archived logs"
-    assert payload["archive_storage"]["imagemaid_retention_label"] == "Keep all archived logs"
+    assert payload["ingest_health"]["total"] == 0
+
+    lightweight_resp = client.get("/logscan/trends?include_archive_storage=0&include_ingest_health=0&include_incomplete=0")
+    assert lightweight_resp.status_code == 200
+    lightweight_payload = lightweight_resp.get_json()
+    assert lightweight_payload["archive_storage"] is None
+    assert lightweight_payload["ingest_health"] is None
+
+    storage_resp = client.get("/logscan/trends/archive-storage")
+    assert storage_resp.status_code == 200
+    storage = storage_resp.get_json()["archive_storage"]
+    assert storage["archived_bytes"] == 0
+    assert storage["archived_files"] == 0
+    assert storage["extra_archived_files"] == 0
+    assert storage["retention_label"] == "Kometa: Keep all archived logs | ImageMaid: Keep all archived logs"
+    assert storage["kometa_retention_label"] == "Keep all archived logs"
+    assert storage["imagemaid_retention_label"] == "Keep all archived logs"
 
 
 def test_logscan_trends_reports_invalid_archived_log_candidates(client, isolated_config_dir):
@@ -110,11 +122,11 @@ def test_logscan_trends_reports_invalid_archived_log_candidates(client, isolated
     with gzip.open(invalid_path, "wt", encoding="utf-8") as handle:
         handle.write("")
 
-    resp = client.get("/logscan/trends")
+    resp = client.get("/logscan/trends/ingest-health?validate_archives=1")
     assert resp.status_code == 200
     payload = resp.get_json()
-    assert payload["ingest_health"]["invalid_archived_count"] == 1
-    assert payload["ingest_health"]["invalid_archived_sample"] == [invalid_path.name]
+    assert payload["invalid_archived_count"] == 1
+    assert payload["invalid_archived_sample"] == [invalid_path.name]
 
 
 def test_logscan_trends_returns_lightweight_payload_while_reingest_runs(client, isolated_config_dir, monkeypatch, qs_module):
@@ -208,6 +220,31 @@ def test_logscan_trends_limit_all_returns_all_saved_runs(client, isolated_config
     assert payload["total_runs"] == 3
 
 
+def test_logscan_trends_lightweight_request_does_not_scan_archive_candidates(client, isolated_config_dir, monkeypatch, qs_module):
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-fast-1",
+            "finished_at": "2026-04-23T10:00:00Z",
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:00:00Z",
+        }
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_iter_logscan_candidate_files",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("lightweight request should not scan archive candidates")),
+    )
+
+    resp = client.get("/logscan/trends?include_archive_storage=0&include_ingest_health=0&include_incomplete=0")
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["total_runs"] == 1
+    assert payload["archive_storage"] is None
+    assert payload["ingest_health"] is None
+    assert payload["runs"][0]["log_location"] == "missing"
+
+
 def test_logscan_trends_includes_archive_storage_and_run_file_metadata(client, isolated_config_dir, monkeypatch, qs_module):
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -236,7 +273,7 @@ def test_logscan_trends_includes_archive_storage_and_run_file_metadata(client, i
         lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-archive-1", "run_complete": True}}},
     )
 
-    resp = client.get("/logscan/trends")
+    resp = client.get("/logscan/trends?include_archive_storage=1")
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["archive_storage"]["archived_files"] == 1
@@ -367,7 +404,7 @@ def test_logscan_trends_includes_incomplete_runs_in_table_payload(client, isolat
         qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {str(incomplete_path.resolve()): {"run_key": "run-incomplete-1", "run_complete": False}}}
     )
 
-    resp = client.get("/logscan/trends")
+    resp = client.get("/logscan/trends?include_incomplete=1&include_archive_storage=1")
     assert resp.status_code == 200
     payload = resp.get_json()
     assert payload["total_incomplete_runs"] == 1
@@ -745,7 +782,9 @@ def test_logscan_trends_log_compress_compresses_archived_log_and_updates_cache(c
     assert not log_path.exists()
     with gzip.open(compressed_path, "rt", encoding="utf-8") as handle:
         assert handle.read() == "compress me\n"
-    assert str(compressed_path.resolve()) in saved_cache["cache"]["logs"]
+    compressed_entry = saved_cache["cache"]["logs"][str(compressed_path.resolve())]
+    assert compressed_entry["compressed_size"] == compressed_path.stat().st_size
+    assert compressed_entry["original_size"] == stats.st_size
     assert str(log_path.resolve()) not in saved_cache["cache"]["logs"]
 
 
@@ -885,8 +924,11 @@ def test_archive_finished_live_meta_log_if_idle_copies_live_file_and_caches_hash
     saved_cache = saved["cache"]
     assert str(live_path.resolve()) in saved_cache["logs"]
     assert str(archived.resolve()) in saved_cache["logs"]
-    assert saved_cache["logs"][str(archived.resolve())]["run_key"] == "run-live-finished-1"
-    assert saved_cache["logs"][str(live_path.resolve())]["content_md5"] == saved_cache["logs"][str(archived.resolve())]["content_md5"]
+    archived_entry = saved_cache["logs"][str(archived.resolve())]
+    assert archived_entry["run_key"] == "run-live-finished-1"
+    assert archived_entry["compressed_size"] == archived.stat().st_size
+    assert archived_entry["original_size"] == live_path.stat().st_size
+    assert saved_cache["logs"][str(live_path.resolve())]["content_md5"] == archived_entry["content_md5"]
     assert archived.suffixes[-2:] == [".log", ".gz"]
 
     archived_again = qs_module._archive_finished_live_meta_log_if_idle(log_dir=log_dir)
@@ -1021,6 +1063,56 @@ def test_logscan_trends_log_download_supports_gzip_archive(client, isolated_conf
     assert resp.status_code == 200
     assert resp.mimetype == "application/gzip"
     assert gzip.decompress(resp.data).replace(b"\r\n", b"\n") == b"hello from compressed log\n"
+
+
+def test_logscan_trends_prefers_compressed_archive_over_live_copy(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    content = b"finished log that should be served from archive\n"
+    live_path = log_dir / "meta.log"
+    live_path.write_bytes(content)
+    archived_path = archive_dir / "meta-20260423-110000Z-46.log.gz"
+    with gzip.open(archived_path, "wb") as handle:
+        handle.write(content)
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-prefer-archive",
+            "finished_at": "2026-04-23T11:00:00Z",
+            "config_name": "demo",
+            "created_at": "2026-04-23T11:00:00Z",
+            "log_mtime": live_path.stat().st_mtime,
+            "log_size": live_path.stat().st_size,
+        }
+    )
+    cache = {
+        "version": 1,
+        "logs": {
+            str(live_path.resolve()): {"run_key": "run-prefer-archive", "run_complete": True},
+            str(archived_path.resolve()): {"run_key": "run-prefer-archive", "run_complete": True},
+        },
+    }
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: copy.deepcopy(cache))
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: None)
+
+    payload = client.get("/logscan/trends?limit=all").get_json()
+    run = payload["runs"][0]
+    assert run["run_key"] == "run-prefer-archive"
+    assert run["log_location"] == "archive"
+    assert run["log_is_compressed"] is True
+    assert run["log_resolved_size"] == archived_path.stat().st_size
+    assert run["log_compressed_size"] == archived_path.stat().st_size
+    assert run["log_original_size"] == len(content)
+    assert payload["archive_storage"]["archived_compressed_bytes"] == archived_path.stat().st_size
+    assert payload["archive_storage"]["archived_original_bytes"] == len(content)
+
+    resp = client.get("/logscan/trends/log?run_key=run-prefer-archive")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/gzip"
+    assert gzip.decompress(resp.data) == content
 
 
 def test_logscan_trends_log_delete_removes_gzip_archived_log_and_run(client, isolated_config_dir, monkeypatch, qs_module):

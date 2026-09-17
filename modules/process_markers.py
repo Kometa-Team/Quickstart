@@ -63,6 +63,7 @@ working unchanged.
 
 from __future__ import annotations
 
+import os
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -191,6 +192,7 @@ def _flush_pending_marker_file(log_path, pending_paths, marker_label):
         if not log_path.exists() or not log_path.is_file():
             return {"flushed": False, "inserted": 0, "anchor": "missing_log"}
 
+        original_stats = log_path.stat()
         content = log_path.read_text(encoding="utf-8", errors="replace")
         existing_lines = {line.strip() for line in content.splitlines() if line.strip()}
         lines_to_insert = [line for line in pending_lines if line not in existing_lines]
@@ -234,6 +236,10 @@ def _flush_pending_marker_file(log_path, pending_paths, marker_label):
         if updated_text and not updated_text.endswith(newline):
             updated_text += newline
         log_path.write_text(updated_text, encoding="utf-8")
+        try:
+            os.utime(log_path, (original_stats.st_atime, original_stats.st_mtime))
+        except Exception:
+            pass
         _clear_marker_artifacts(*pending_paths)
         helpers.ts_log(
             f"Replayed {len(lines_to_insert)} pending {marker_label} marker(s) into {log_path.name} via {anchor_name}.",
