@@ -47,7 +47,6 @@ def _err_response(message="Error"):
     [
         ("/validate_tautulli", "validate_tautulli_server", {"tautulli_url": "http://t", "apikey": "k"}),
         ("/validate_tracearr", "validate_tracearr_server", {"tracearr_url": "http://t", "tracearr_apikey": "trr_pub_k"}),
-        ("/validate_trakt", "validate_trakt_server", {"client_id": "id", "client_secret": "sec"}),
         ("/validate_mal", "validate_mal_server", {"client_id": "id", "client_secret": "sec"}),
         ("/validate_webhook", "validate_webhook_server", {"webhook_url": "http://hook"}),
     ],
@@ -64,7 +63,6 @@ def test_validate_passthrough_route_proxies_success(client, route, mock_fn, payl
     [
         ("/validate_tautulli", "validate_tautulli_server", {"tautulli_url": "http://t", "apikey": "k"}),
         ("/validate_tracearr", "validate_tracearr_server", {"tracearr_url": "http://t", "tracearr_apikey": "trr_pub_k"}),
-        ("/validate_trakt", "validate_trakt_server", {"client_id": "id", "client_secret": "sec"}),
     ],
 )
 def test_validate_passthrough_route_proxies_failure_payload(client, route, mock_fn, payload):
@@ -201,96 +199,12 @@ def test_validate_yamtrack_missing_url_returns_400(client):
 # ---------------------------------------------------------------------------
 
 
-def test_import_trakt_yaml_parses_and_persists_credentials(client):
-    yaml_text = """
-trakt:
-  client_id: test-client-id
-  client_secret: test-client-secret
-  authorization:
-    access_token: test-access-token
-    token_type: bearer
-    expires_in: 604800
-    refresh_token: test-refresh-token
-    scope: public
-    created_at: 1786134359
-"""
-
-    resp = client.post("/import_trakt_yaml", json={"yaml": yaml_text})
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["valid"] is True
-    assert data["trakt"]["client_id"] == "test-client-id"
-    assert data["trakt"]["authorization"]["access_token"] == "test-access-token"
-
-
-def test_validate_trakt_token_missing_access_and_client_id_returns_400(client):
-    resp = client.post("/validate_trakt_token", json={})
-    assert resp.status_code == 400
-    data = resp.get_json()
-    assert data["valid"] is False
-    assert "Missing" in data.get("error", "")
-
-
-def test_validate_trakt_token_valid_access_token_returns_200(client):
-    import blueprints.validation_routes as vr
-
-    ok_resp = MagicMock()
-    ok_resp.status_code = 200
-
-    with patch.object(vr.requests, "get", return_value=ok_resp):
-        resp = client.post(
-            "/validate_trakt_token",
-            json={
-                "access_token": "valid-token",
-                "client_id": "my-client-id",
-                "client_secret": "my-secret",
-                "refresh_token": "refresh",
-            },
-        )
-    assert resp.status_code == 200
-    assert resp.get_json()["valid"] is True
-
-
-def test_validate_trakt_token_401_without_refresh_returns_400(client):
-    import blueprints.validation_routes as vr
-
-    err_resp = MagicMock()
-    err_resp.status_code = 401
-
-    with patch.object(vr.requests, "get", return_value=err_resp):
-        resp = client.post(
-            "/validate_trakt_token",
-            json={
-                "access_token": "expired-token",
-                "client_id": "my-client-id",
-                # no refresh_token or client_secret -- refresh can't be attempted
-            },
-        )
-    assert resp.status_code == 400
-    assert resp.get_json()["valid"] is False
-
-
-def test_validate_trakt_token_network_error_returns_400(client):
-    import blueprints.validation_routes as vr
-    import requests as req_lib
-
-    with patch.object(vr.requests, "get", side_effect=req_lib.exceptions.RequestException("timeout")):
-        resp = client.post(
-            "/validate_trakt_token",
-            json={
-                "access_token": "token",
-                "client_id": "id",
-                "client_secret": "secret",
-                "refresh_token": "refresh",
-            },
-        )
-    assert resp.status_code == 400
-    assert resp.get_json()["valid"] is False
-
-
-# ---------------------------------------------------------------------------
-# validate_mal_token -- token check flow
-# ---------------------------------------------------------------------------
+def test_retired_trakt_routes_return_gone(client):
+    assert client.get("/step/130-trakt").status_code == 404
+    for route in ("/validate_trakt", "/import_trakt_yaml", "/validate_trakt_token"):
+        resp = client.post(route, json={})
+        assert resp.status_code == 410
+        assert "removed" in resp.get_json()["error"].lower()
 
 
 def test_validate_mal_token_missing_access_token_returns_400(client):

@@ -473,32 +473,32 @@
         ],
         [
           "anidb_3_0",
-          "AniDB Main Tags & 3\u2605+",
+          "AniDB Main Tags & 3★+",
           "AniDB Main Tags and all <b>3-star and higher</b> tags."
         ],
         [
           "anidb_2_5",
-          "AniDB Main Tags & 2.5\u2605+",
+          "AniDB Main Tags & 2.5★+",
           "AniDB Main Tags and all <b>2.5-star and higher</b> tags."
         ],
         [
           "anidb_2_0",
-          "AniDB Main Tags & 2\u2605+",
+          "AniDB Main Tags & 2★+",
           "AniDB Main Tags and all <b>2-star and higher</b> tags."
         ],
         [
           "anidb_1_5",
-          "AniDB Main Tags & 1.5\u2605+",
+          "AniDB Main Tags & 1.5★+",
           "AniDB Main Tags and all <b>1.5-star and higher</b> tags."
         ],
         [
           "anidb_1_0",
-          "AniDB Main Tags & 1\u2605+",
+          "AniDB Main Tags & 1★+",
           "AniDB Main Tags and all <b>1-star and higher</b> tags."
         ],
         [
           "anidb_0_5",
-          "AniDB Main Tags & 0.5\u2605+",
+          "AniDB Main Tags & 0.5★+",
           "AniDB Main Tags and all <b>0.5-star and higher</b> tags."
         ],
         [
@@ -1023,16 +1023,6 @@
           "Use <b>TMDb rating</b> directly."
         ],
         [
-          "trakt_user",
-          "Use Trakt User Rating",
-          "Use your <b>personal Trakt user rating</b>."
-        ],
-        [
-          "trakt",
-          "Use Trakt Rating",
-          "Use <b>Trakt global rating</b>."
-        ],
-        [
           "lock",
           "Lock Rating Field",
           "Prevent rating field from being modified."
@@ -1197,16 +1187,6 @@
           "tmdb",
           "Use TMDb Rating",
           "Use <b>TMDb rating</b> directly."
-        ],
-        [
-          "trakt_user",
-          "Use Trakt User Rating",
-          "Use your <b>personal Trakt user rating</b>."
-        ],
-        [
-          "trakt",
-          "Use Trakt Rating",
-          "Use <b>Trakt global rating</b>."
         ],
         [
           "lock",
@@ -1375,16 +1355,6 @@
           "Use <b>TMDb rating</b> directly."
         ],
         [
-          "trakt_user",
-          "Use Trakt User Rating",
-          "Use your <b>personal Trakt user rating</b>."
-        ],
-        [
-          "trakt",
-          "Use Trakt Rating",
-          "Use <b>Trakt global rating</b>."
-        ],
-        [
           "lock",
           "Lock Rating Field",
           "Prevent rating field from being modified."
@@ -1448,11 +1418,6 @@
           "tmdb",
           "Use TMDb Rating",
           "Use <b>TMDb rating</b> directly."
-        ],
-        [
-          "trakt",
-          "Use Trakt Rating",
-          "Use <b>Trakt global rating</b>."
         ],
         [
           "lock",
@@ -1520,11 +1485,6 @@
           "Use <b>TMDb rating</b> directly."
         ],
         [
-          "trakt",
-          "Use Trakt Rating",
-          "Use <b>Trakt global rating</b>."
-        ],
-        [
           "lock",
           "Lock Rating Field",
           "Prevent rating field from being modified."
@@ -1590,16 +1550,6 @@
           "Use <b>TMDb rating</b> directly."
         ],
         [
-          "trakt",
-          "Use Trakt Rating",
-          "Use <b>Trakt global rating</b>."
-        ],
-        [
-          "trakt_user",
-          "Use Trakt User's Personal Rating",
-          "Use <b>your personal Trakt rating</b>."
-        ],
-        [
           "lock",
           "Lock Rating Field",
           "Prevent user rating from being modified."
@@ -1660,10 +1610,6 @@
             "TMDb"
           ],
           [
-            "trakt",
-            "Trakt"
-          ],
-          [
             "tvdb",
             "TVDb"
           ],
@@ -1683,7 +1629,7 @@
       },
       "yml_location": "attribute"
     },
-        {
+    {
       "prefix": "mass_poster_update",
       "type": "toggle_with_select",
       "accordion": "library",
@@ -1729,10 +1675,6 @@
           [
             "tmdb",
             "TMDb"
-          ],
-          [
-            "trakt",
-            "Trakt"
           ],
           [
             "tvdb",
@@ -1785,10 +1727,6 @@
           [
             "tmdb",
             "TMDb"
-          ],
-          [
-            "trakt",
-            "Trakt"
           ],
           [
             "tvdb",
@@ -1853,10 +1791,6 @@
             "TMDb"
           ],
           [
-            "trakt",
-            "Trakt"
-          ],
-          [
             "tvdb",
             "TVDb"
           ],
@@ -1915,10 +1849,6 @@
             "TMDb"
           ],
           [
-            "trakt",
-            "Trakt"
-          ],
-          [
             "tvdb",
             "TVDb"
           ],
@@ -1975,10 +1905,6 @@
           [
             "plex",
             "Plex"
-          ],
-          [
-            "trakt",
-            "Trakt"
           ],
           [
             "tvdb",

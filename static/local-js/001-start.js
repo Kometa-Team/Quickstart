@@ -1531,7 +1531,6 @@ document.addEventListener('DOMContentLoaded', function () {
     github: 'GitHub',
     radarr: 'Radarr',
     sonarr: 'Sonarr',
-    trakt: 'Trakt',
     mal: 'MyAnimeList',
     anidb: 'AniDB',
     webhooks: 'Webhooks',
@@ -1558,7 +1557,6 @@ document.addEventListener('DOMContentLoaded', function () {
     'anidb',
     'radarr',
     'sonarr',
-    'trakt',
     'mal',
     'settings'
   ]
@@ -2333,7 +2331,6 @@ document.addEventListener('DOMContentLoaded', function () {
           '100-anidb': 'AniDB',
           '110-radarr': 'Radarr',
           '120-sonarr': 'Sonarr',
-          '130-trakt': 'Trakt',
           '140-mal': 'MyAnimeList',
           '150-settings': 'Settings'
         }

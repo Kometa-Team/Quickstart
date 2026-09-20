@@ -187,7 +187,6 @@ def test_prepare_import_payload_maps_playlist_template_variables_into_libraries_
     assert libraries["playlist-template_variables[sonarr_add_missing]"] is False
     assert libraries["playlist-template_variables[sonarr_folder]"] == "/data/media/shows"
     assert json.loads(libraries["playlist-template_variables[sonarr_tag]"]) == ["playlist-show"]
-    assert json.loads(libraries["playlist-template_variables[trakt_list]"]) == ["https://trakt.tv/users/example/lists/default"]
     assert json.loads(libraries["playlist-template_variables[name_]"]) == {"mcu": "Marvel Timeline"}
     assert json.loads(libraries["playlist-template_variables[delete_playlist_]"]) == {"mcu": "true"}
     assert json.loads(libraries["playlist-template_variables[radarr_add_missing_]"]) == {"mcu": "true"}
@@ -196,7 +195,6 @@ def test_prepare_import_payload_maps_playlist_template_variables_into_libraries_
     assert json.loads(libraries["playlist-template_variables[sonarr_add_missing_]"]) == {"mcu": "false"}
     assert json.loads(libraries["playlist-template_variables[sonarr_folder_]"]) == {"mcu": "/data/media/shows/mcu"}
     assert json.loads(libraries["playlist-template_variables[sonarr_tag_]"]) == {"mcu": ["mcu-show"]}
-    assert json.loads(libraries["playlist-template_variables[trakt_list_]"]) == {"mcu": ["https://trakt.tv/users/example/lists/mcu"]}
     assert any("playlist_files[0].template_variables.name_mcu" in line for line in report.lines)
 
 

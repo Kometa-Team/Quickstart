@@ -248,17 +248,6 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             id="anidb_ignores_inactive_library",
         ),
         pytest.param(
-            "_libraries_data_trakt_dependency_reasons",
-            {
-                "sho-library_tv-library": "TV Shows",
-                TRAKT_OVERLAY_ENABLED_KEY: True,
-                TRAKT_OVERLAY_IMAGE_KEY: "trakt",
-            },
-            True,
-            "episode ratings overlay uses trakt",
-            id="trakt_overlay_enabled",
-        ),
-        pytest.param(
             "_libraries_data_radarr_dependency_reasons",
             {
                 "mov-library_movies-library": "Movies",
@@ -347,25 +336,6 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             True,
             "sonarr_add_missing_metacritic enabled",
             id="sonarr_metacritic_template_collection_enabled",
-        ),
-        pytest.param(
-            "_libraries_data_trakt_dependency_reasons",
-            {
-                "sho-library_tv-library": "TV Shows",
-                TRAKT_COLLECTION_KEY: True,
-            },
-            True,
-            "Trakt Charts collection enabled",
-            id="trakt_collection_enabled",
-        ),
-        pytest.param(
-            "_libraries_data_trakt_dependency_reasons",
-            {
-                TRAKT_COLLECTION_KEY: False,
-            },
-            False,
-            "",
-            id="trakt_collection_disabled",
         ),
     ],
 )
@@ -546,7 +516,6 @@ def test_workspace_status_route_returns_all_dependency_reasons(client, monkeypat
     assert payload["anidb_requirement_reasons"]
     assert payload["radarr_requirement_reasons"]
     assert payload["sonarr_requirement_reasons"]
-    assert payload["trakt_requirement_reasons"]
     assert payload["mal_requirement_reasons"]
     assert "110-radarr" in payload["required_keys"]
     assert "120-sonarr" in payload["required_keys"]
@@ -792,7 +761,7 @@ def test_app_install_flows_refresh_sidebar_readiness():
     assert "window.QS_refreshAppReadiness({ fetch: true })" in kometa_validate_script
 
 
-def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
+def test_workspace_context_does_not_promote_retired_trakt(monkeypatch, qs_module):
     rows = [
         _section_row(
             "libraries",
@@ -808,9 +777,8 @@ def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
     ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
 
-    assert "130-trakt" in ctx["required_keys"]
-    assert "130-trakt" not in ctx["optional_keys"]
-    assert ctx["trakt_requirement_reasons"]
+    assert "130-trakt" not in ctx["required_keys"]
+    assert "130-trakt" in ctx["optional_keys"]
 
 
 def test_workspace_context_promotes_mal_to_required(monkeypatch, qs_module):
@@ -1013,10 +981,9 @@ def test_workspace_context_keeps_trakt_optional_without_dependency(monkeypatch, 
 
     assert "130-trakt" not in ctx["required_keys"]
     assert "130-trakt" in ctx["optional_keys"]
-    assert ctx["trakt_requirement_reasons"] == []
 
 
-def test_trakt_optional_token_only_residue_stays_unknown(qs_module):
+def test_retired_trakt_token_residue_does_not_receive_special_status(qs_module):
     section_rows = {
         "trakt": {
             "validated": False,
@@ -1039,7 +1006,7 @@ def test_trakt_optional_token_only_residue_stays_unknown(qs_module):
     }
 
     state = qs_module._derive_step_status("130-trakt", "optional", section_rows, config_exists=True)
-    assert state == "unknown"
+    assert state == "warn"
 
 
 def test_optional_skipped_without_changes_stays_unknown(qs_module):
@@ -1808,68 +1775,9 @@ def test_libraries_sonarr_dependency_hint_endpoint_disabled_payload_returns_empt
     assert payload["reasons"] == []
 
 
-def test_libraries_trakt_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
-    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
-
-    resp = client.post(
-        "/libraries_trakt_dependency_hint",
-        json={
-            "source_library_id": "sho-library_tv",
-            "source_payload": {
-                "sho-library_tv-library": "TV Shows",
-                TRAKT_COLLECTION_KEY: "true",
-            },
-        },
-    )
-
-    assert resp.status_code == 200
-    payload = resp.get_json()
-    assert payload["success"] is True
-    assert payload["required"] is True
-    assert any("Trakt Charts collection enabled" in reason for reason in payload["reasons"])
-
-
-def test_libraries_trakt_dependency_hint_endpoint_overlay_returns_reasons(client, monkeypatch, qs_module):
-    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
-
-    resp = client.post(
-        "/libraries_trakt_dependency_hint",
-        json={
-            "source_library_id": "sho-library_tv",
-            "source_payload": {
-                "sho-library_tv-library": "TV Shows",
-                TRAKT_OVERLAY_ENABLED_KEY: "true",
-                TRAKT_OVERLAY_IMAGE_KEY: "trakt",
-            },
-        },
-    )
-
-    assert resp.status_code == 200
-    payload = resp.get_json()
-    assert payload["success"] is True
-    assert payload["required"] is True
-    assert any("episode ratings overlay uses trakt" in reason for reason in payload["reasons"])
-
-
-def test_libraries_trakt_dependency_hint_endpoint_disabled_collection_returns_empty(client, monkeypatch, qs_module):
-    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
-
-    resp = client.post(
-        "/libraries_trakt_dependency_hint",
-        json={
-            "source_library_id": "sho-library_tv",
-            "source_payload": {
-                "sho-library_tv-library": "TV Shows",
-                TRAKT_COLLECTION_KEY: "false",
-            },
-        },
-    )
-
-    assert resp.status_code == 200
-    payload = resp.get_json()
-    assert payload["success"] is True
-    assert payload["required"] is False
-    assert payload["reasons"] == []
+def test_libraries_trakt_dependency_hint_endpoint_is_removed(client):
+    resp = client.post("/libraries_trakt_dependency_hint", json={})
+    assert resp.status_code == 404
 
 
 def test_libraries_mal_dependency_hint_endpoint_non_mal_source_returns_empty(client, monkeypatch, qs_module):

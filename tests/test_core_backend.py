@@ -3051,7 +3051,6 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     collection_entries = libraries_section["libraries"]["Movies"]["collection_files"]
 
     tautulli_entry = next((entry for entry in collection_entries if entry.get("default") == "tautulli"), None)
-    trakt_entry = next((entry for entry in collection_entries if entry.get("default") == "trakt"), None)
     tmdb_entry = next((entry for entry in collection_entries if entry.get("default") == "tmdb"), None)
     simkl_entry = next((entry for entry in collection_entries if entry.get("default") == "simkl"), None)
     anilist_entry = next((entry for entry in collection_entries if entry.get("default") == "anilist"), None)
@@ -3074,16 +3073,6 @@ def test_build_libraries_section_preserves_chart_builder_size_template_variables
     assert tautulli_entry["template_variables"]["sync_mode_watched"] == "append"
     assert tautulli_entry["template_variables"]["cache_builders_popular"] == "0"
     assert tautulli_entry["template_variables"]["collection_order_popular"] == "custom"
-    assert trakt_entry["template_variables"]["limit"] == "75"
-    assert trakt_entry["template_variables"]["limit_popular"] == "50"
-    assert trakt_entry["template_variables"]["limit_recommended"] == "30"
-    assert trakt_entry["template_variables"]["image"] == "chart/color/trakt"
-    assert trakt_entry["template_variables"]["url_logo_collected"] == "https://example.com/trakt-collected.png"
-    assert trakt_entry["template_variables"]["sync_mode_recommended"] == "append"
-    assert trakt_entry["template_variables"]["cache_builders_trending"] == "0"
-    assert trakt_entry["template_variables"]["collection_order_watched"] == "custom"
-    assert trakt_entry["template_variables"]["radarr_folder_collected"] == r"C:\Media\Movies"
-    assert trakt_entry["template_variables"]["sonarr_search_watched"] is False
     assert tmdb_entry["template_variables"]["limit"] == "60"
     assert tmdb_entry["template_variables"]["limit_airing"] == "20"
     assert tmdb_entry["template_variables"]["limit_trending"] == "40"
@@ -3565,7 +3554,6 @@ def test_build_libraries_section_preserves_collectionless_template_variables(app
     assert template_vars["imdb_list"] == ["ls123456789"]
     assert template_vars["plex_search"] == {"all": {"title": "Example"}}
     assert template_vars["mdblist_list"] == ["https://mdblist.com/lists/example/list"]
-    assert template_vars["trakt_list"] == ["https://trakt.tv/users/example/lists/list"]
     assert template_vars["exclude"] == ["Marvel Cinematic Universe"]
     assert template_vars["exclude_prefix"] == ["!", "~"]
 
@@ -3612,7 +3600,6 @@ def test_build_libraries_section_expands_geography_dynamic_child_override_maps(a
     show_country = next(entry for entry in show_entries if entry.get("default") == "country")
     show_region = next(entry for entry in show_entries if entry.get("default") == "region")
 
-    assert movie_country["template_variables"]["trakt_list"] == ["https://trakt.tv/users/example/lists/france"]
     assert movie_country["template_variables"]["name_France"] == "French Cinema"
     assert movie_country["template_variables"]["schedule_France"] == "weekly(sunday)"
     assert movie_country["template_variables"]["file_background_France"] == r"C:\Posters\france-bg.jpg"

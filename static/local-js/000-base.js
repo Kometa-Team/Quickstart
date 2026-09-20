@@ -1869,7 +1869,6 @@ function qsCurrentStepHasMeaningfulInput () {
     '088-yamtrack': ['yamtrack_url', 'yamtrack_username', 'yamtrack_password'],
     '110-radarr': ['radarr_url', 'radarr_token'],
     '120-sonarr': ['sonarr_url', 'sonarr_token'],
-    '130-trakt': ['trakt_client_id', 'trakt_client_secret', 'trakt_pin', 'trakt_access_token', 'trakt_refresh_token'],
     '140-mal': ['mal_client_id', 'mal_client_secret', 'mal_localhost_url', 'mal_access_token', 'mal_refresh_token']
   }
   const mappedFields = fieldMap[stepKey] || []
@@ -2220,11 +2219,6 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_SONARR_REQUIREMENT_REASONS',
       label: 'Sonarr'
     },
-    trakt: {
-      stepKey: '130-trakt',
-      windowKey: 'QS_TRAKT_REQUIREMENT_REASONS',
-      label: 'Trakt'
-    },
     mal: {
       stepKey: '140-mal',
       windowKey: 'QS_MAL_REQUIREMENT_REASONS',
@@ -2433,7 +2427,6 @@ function qsApplyWorkspaceStatus (payload) {
   const anidbReasons = qsArrayFromKeys(payload.anidb_requirement_reasons)
   const radarrReasons = qsArrayFromKeys(payload.radarr_requirement_reasons)
   const sonarrReasons = qsArrayFromKeys(payload.sonarr_requirement_reasons)
-  const traktReasons = qsArrayFromKeys(payload.trakt_requirement_reasons)
   const malReasons = qsArrayFromKeys(payload.mal_requirement_reasons)
 
   window.QS_REQUIRED_KEYS = requiredKeys
@@ -2447,7 +2440,6 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_ANIDB_REQUIREMENT_REASONS = anidbReasons
   window.QS_RADARR_REQUIREMENT_REASONS = radarrReasons
   window.QS_SONARR_REQUIREMENT_REASONS = sonarrReasons
-  window.QS_TRAKT_REQUIREMENT_REASONS = traktReasons
   window.QS_MAL_REQUIREMENT_REASONS = malReasons
 
   qsApplyGroupMembership(requiredKeys, optionalKeys, reviewKeys)
@@ -2460,7 +2452,6 @@ function qsApplyWorkspaceStatus (payload) {
     anidb: anidbReasons,
     radarr: radarrReasons,
     sonarr: sonarrReasons,
-    trakt: traktReasons,
     mal: malReasons
   })
 
@@ -3138,7 +3129,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (event) => {
     const target = event.target instanceof window.Element ? event.target : null
     if (!target) return
-    if (target.closest('#validateButton, #validate_trakt_pin, #validate_mal_url, .validate-button')) {
+    if (target.closest('#validateButton, #validate_mal_url, .validate-button')) {
       qsSetCurrentValidationAttempted(true)
     }
   })

@@ -1,4 +1,4 @@
-// Narrow helpers shared by the OAuth-PIN wizards (130-trakt and 140-mal).
+// Narrow helpers used by the MyAnimeList OAuth-PIN wizard (140-mal).
 //
 // These two wizards implement variations on the same flow:
 //

@@ -15,7 +15,7 @@
 // factory wires the DOM listeners and delegates to oauthValidationHelpers
 // for the network + status-message primitives.
 //
-// The two callers today (130-trakt, 140-mal) shrink from ~200 lines
+// The MAL caller (140-mal) shrink from ~200 lines
 // each to ~60 lines of pure config.
 
 import { refreshValidationCallout } from './validationPageBase.js'

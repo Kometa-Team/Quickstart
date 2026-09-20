@@ -5604,11 +5604,6 @@ body {
     outline: none;
 }
 
-.qs-trakt-required-hint {
-    border-color: rgba(245, 158, 11, 0.38);
-    background: rgba(43, 30, 7, 0.34);
-}
-
 .qs-omdb-required-hint {
     border-color: rgba(244, 114, 182, 0.34);
     background: rgba(54, 16, 37, 0.34);
@@ -5671,10 +5666,6 @@ body {
 
 .qs-sonarr-required-hint .qs-dependency-hint-title {
     color: #aef0bf;
-}
-
-.qs-trakt-required-hint .qs-dependency-hint-title {
-    color: #ffd793;
 }
 
 .qs-dependency-hint-lines,

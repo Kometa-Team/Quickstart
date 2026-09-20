@@ -192,7 +192,6 @@ ORDERED_CONFIG_SECTIONS = (
     ("anidb", "090-anidb"),
     ("radarr", "100-radarr"),
     ("sonarr", "110-sonarr"),
-    ("trakt", "120-trakt"),
     ("mal", "130-mal"),
 )
 
@@ -209,6 +208,25 @@ def _strip_mal_code_verifier(config_data):
         return
     authorization_data = config_data["mal"]["mal"].get("authorization", {})
     authorization_data.pop("code_verifier", None)
+
+
+def _strip_retired_trakt_fields(value):
+    """Remove native Trakt configuration and builders from generated output."""
+    if isinstance(value, dict):
+        for key in list(value):
+            key_text = str(key).lower()
+            if key_text == "trakt" or key_text.startswith("trakt_") or key_text.startswith("child_trakt_"):
+                value.pop(key, None)
+                continue
+            child = value[key]
+            if isinstance(child, str) and child.strip().lower() in {"trakt", "trakt_user"}:
+                value.pop(key, None)
+                continue
+            _strip_retired_trakt_fields(child)
+    elif isinstance(value, list):
+        value[:] = [item for item in value if not (isinstance(item, str) and item.strip().lower() in {"trakt", "trakt_user"})]
+        for item in value:
+            _strip_retired_trakt_fields(item)
 
 
 def apply_final_transformations(config_data, library_types, *, optimize_defaults=True):
@@ -237,6 +255,7 @@ def apply_final_transformations(config_data, library_types, *, optimize_defaults
     staying stable.
     """
     _strip_mal_code_verifier(config_data)
+    _strip_retired_trakt_fields(config_data)
     config_data = _normalize_legacy_collection_template_vars(config_data)
     if optimize_defaults:
         config_data = optimize_template_variables(config_data, library_types)

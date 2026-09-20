@@ -54,27 +54,6 @@ def test_tmdb_chart_exposes_shared_child_custom_and_arr_template_variables():
     }.issubset(keys)
 
 
-def test_trakt_chart_exposes_shared_child_custom_and_arr_template_variables():
-    keys = _field_keys("collection_trakt")
-
-    assert {
-        "image",
-        "allowed_libraries",
-        "schedule",
-        "url_logo",
-        "url_logo_collected",
-        "url_logo_recommended",
-        "url_logo_watched",
-        "sync_mode_recommended",
-        "cache_builders_trending",
-        "collection_order_watched",
-        "radarr_folder_collected",
-        "radarr_tag_popular",
-        "sonarr_folder_trending",
-        "sonarr_search_watched",
-    }.issubset(keys)
-
-
 def test_simkl_chart_exposes_period_shared_child_custom_and_arr_template_variables():
     keys = _field_keys("collection_simkl")
 

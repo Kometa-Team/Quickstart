@@ -1,6 +1,5 @@
 import requests
 from flask import Blueprint, Flask, current_app as app, jsonify, request, session
-from ruamel.yaml import YAML
 
 from modules import database, helpers, persistence, url_validation, validations
 
@@ -274,219 +273,17 @@ def validate_tracearr():
 
 @bp.route("/validate_trakt", methods=["POST"])
 def validate_trakt():
-    data = request.json
-    return validations.validate_trakt_server(data)
+    return jsonify({"valid": False, "error": "Trakt support was removed in Kometa 2.4.9. Use MDBList, SIMKL, FlickList, TMDb, or IMDb instead."}), 410
 
 
 @bp.route("/import_trakt_yaml", methods=["POST"])
 def import_trakt_yaml():
-    payload = request.get_json(silent=True) or {}
-    yaml_text = payload.get("yaml", "") or ""
-    if not isinstance(yaml_text, str) or not yaml_text.strip():
-        return jsonify({"valid": False, "error": "No YAML content provided."}), 400
-
-    try:
-        parser = YAML(typ="safe", pure=True)
-        parsed = parser.load(yaml_text)
-    except Exception as exc:  # noqa: BLE001
-        helpers.ts_log(f"Failed to parse Trakt YAML import: {exc}", level="ERROR")
-        return jsonify({"valid": False, "error": "The YAML could not be parsed."}), 400
-
-    if not isinstance(parsed, dict):
-        return jsonify({"valid": False, "error": "The YAML must contain a top-level mapping."}), 400
-
-    trakt_block = parsed.get("trakt")
-    if not isinstance(trakt_block, dict):
-        return jsonify({"valid": False, "error": "The YAML must contain a 'trakt' mapping."}), 400
-
-    normalized = {
-        "client_id": trakt_block.get("client_id"),
-        "client_secret": trakt_block.get("client_secret"),
-        "authorization": {},
-    }
-
-    auth_block = trakt_block.get("authorization")
-    if isinstance(auth_block, dict):
-        for key in ["access_token", "token_type", "expires_in", "refresh_token", "scope", "created_at"]:
-            if key in auth_block:
-                normalized["authorization"][key] = auth_block.get(key)
-
-    if not normalized.get("client_id") or not normalized.get("client_secret"):
-        return jsonify({"valid": False, "error": "The YAML import is missing a client_id or client_secret."}), 400
-
-    config_name = session.get("config_name") or persistence.ensure_session_config_name()
-    stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, "trakt")
-    if not isinstance(stored_data, dict):
-        stored_data = {}
-
-    trakt_data = stored_data.get("trakt", {}) if isinstance(stored_data.get("trakt"), dict) else {}
-    trakt_data.update(
-        {
-            "client_id": normalized.get("client_id"),
-            "client_secret": normalized.get("client_secret"),
-            "authorization": normalized.get("authorization", {}),
-        }
-    )
-    stored_data["trakt"] = trakt_data
-    stored_data["validated"] = True
-    stored_data["validated_at"] = helpers.utc_now_iso()
-
-    database.save_section_data(
-        name=config_name,
-        section="trakt",
-        validated=True,
-        user_entered=user_entered,
-        data=stored_data,
-    )
-
-    return jsonify({"valid": True, "trakt": trakt_data})
+    return jsonify({"valid": False, "error": "Trakt support was removed in Kometa 2.4.9. Use MDBList, SIMKL, FlickList, TMDb, or IMDb instead."}), 410
 
 
 @bp.route("/validate_trakt_token", methods=["POST"])
 def validate_trakt_token():
-    data = request.get_json(silent=True) or {}
-    access_token = data.get("access_token")
-    client_id = data.get("client_id")
-    client_secret = data.get("client_secret")
-    refresh_token = data.get("refresh_token")
-    debug_enabled = helpers.booler(app.config.get("QS_DEBUG", False)) or helpers.booler(data.get("debug", False))
-
-    def is_blank(value):
-        if value is None:
-            return True
-        if isinstance(value, str):
-            trimmed = value.strip()
-            if trimmed == "" or trimmed.lower() in ("none", "null"):
-                return True
-        return False
-
-    if is_blank(access_token) or is_blank(client_id) or is_blank(client_secret) or is_blank(refresh_token):
-        settings = persistence.retrieve_settings("130-trakt") or {}
-        trakt_data = settings.get("trakt", {}) if isinstance(settings, dict) else {}
-        auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
-        if is_blank(access_token):
-            access_token = auth.get("access_token")
-        if is_blank(client_id):
-            client_id = trakt_data.get("client_id") or auth.get("client_id")
-        if is_blank(client_secret):
-            client_secret = trakt_data.get("client_secret") or auth.get("client_secret")
-        if is_blank(refresh_token):
-            refresh_token = auth.get("refresh_token")
-
-    if is_blank(access_token) or is_blank(client_id):
-        debug_payload = None
-        if debug_enabled:
-            settings = persistence.retrieve_settings("130-trakt") or {}
-            trakt_data = settings.get("trakt", {}) if isinstance(settings, dict) else {}
-            auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
-            debug_payload = {
-                "config_name": session.get("config_name"),
-                "request": {
-                    "access_token": not is_blank(data.get("access_token")),
-                    "client_id": not is_blank(data.get("client_id")),
-                    "client_secret": not is_blank(data.get("client_secret")),
-                    "refresh_token": not is_blank(data.get("refresh_token")),
-                },
-                "stored": {
-                    "access_token": not is_blank(auth.get("access_token")),
-                    "client_id": not is_blank(trakt_data.get("client_id") or auth.get("client_id")),
-                    "client_secret": not is_blank(trakt_data.get("client_secret") or auth.get("client_secret")),
-                    "refresh_token": not is_blank(auth.get("refresh_token")),
-                },
-            }
-        response = {"valid": False, "error": "Missing Trakt access token or client ID."}
-        if debug_payload:
-            response["debug"] = debug_payload
-        return jsonify(response), 400
-    try:
-        response = requests.get(
-            "https://api.trakt.tv/users/settings",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {access_token}",
-                "trakt-api-version": "2",
-                "trakt-api-key": client_id,
-            },
-            timeout=10,
-        )
-        if debug_enabled:
-            helpers.ts_log(f"Trakt token check status={response.status_code}", level="DEBUG")
-        if response.status_code == 200:
-            return jsonify({"valid": True})
-        if response.status_code == 423:
-            return jsonify({"valid": False, "error": "Account is locked; please contact Trakt Support."}), 400
-        if response.status_code in (401, 403):
-            if is_blank(refresh_token) or is_blank(client_secret):
-                return jsonify({"valid": False, "error": "Access token is invalid or expired."}), 400
-
-            refresh_response = requests.post(
-                "https://api.trakt.tv/oauth/token",
-                json={
-                    "refresh_token": refresh_token,
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                    "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
-                    "grant_type": "refresh_token",
-                },
-                headers={"Content-Type": "application/json"},
-                timeout=10,
-            )
-            if refresh_response.status_code != 200:
-                debug_payload = None
-                if debug_enabled:
-                    debug_payload = {
-                        "status": response.status_code,
-                        "refresh_status": refresh_response.status_code,
-                    }
-                response_body = {"valid": False, "error": "Access token is invalid or expired."}
-                if debug_payload:
-                    response_body["debug"] = debug_payload
-                return jsonify(response_body), 400
-
-            refreshed = refresh_response.json()
-            new_access = refreshed.get("access_token")
-            if is_blank(new_access):
-                return jsonify({"valid": False, "error": "Access token refresh failed."}), 400
-
-            config_name = session.get("config_name") or persistence.ensure_session_config_name()
-            stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, "trakt")
-            if not isinstance(stored_data, dict):
-                stored_data = {}
-            trakt_data = stored_data.get("trakt", {}) if isinstance(stored_data.get("trakt"), dict) else {}
-            auth = trakt_data.get("authorization", {}) if isinstance(trakt_data.get("authorization"), dict) else {}
-            auth["access_token"] = new_access
-            if refreshed.get("refresh_token"):
-                auth["refresh_token"] = refreshed.get("refresh_token")
-            if refreshed.get("token_type"):
-                auth["token_type"] = refreshed.get("token_type")
-            if refreshed.get("expires_in"):
-                auth["expires_in"] = refreshed.get("expires_in")
-            if refreshed.get("scope"):
-                auth["scope"] = refreshed.get("scope")
-            if refreshed.get("created_at"):
-                auth["created_at"] = refreshed.get("created_at")
-            trakt_data["authorization"] = auth
-            stored_data["trakt"] = trakt_data
-            stored_data["validated"] = True
-            stored_data["validated_at"] = helpers.utc_now_iso()
-            database.save_section_data(
-                name=config_name,
-                section="trakt",
-                validated=True,
-                user_entered=user_entered,
-                data=stored_data,
-            )
-            return jsonify({"valid": True, "refreshed": True, "authorization": auth})
-        response_body = {"valid": False, "error": f"Trakt validation failed ({response.status_code})."}
-        if debug_enabled:
-            response_body["debug"] = {"status": response.status_code}
-        return jsonify(response_body), 400
-    except requests.exceptions.RequestException as exc:
-        helpers.ts_log(f"Trakt validation error: {exc}", level="ERROR")
-        response_body = {"valid": False, "error": "Trakt validation error."}
-        if debug_enabled:
-            response_body["debug"] = {"status": "request_exception"}
-        return jsonify(response_body), 400
+    return jsonify({"valid": False, "error": "Trakt support was removed in Kometa 2.4.9. Use MDBList, SIMKL, FlickList, TMDb, or IMDb instead."}), 410
 
 
 @bp.route("/validate_mal", methods=["POST"])

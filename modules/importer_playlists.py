@@ -55,7 +55,6 @@ PLAYLIST_SHARED_IMPORT_FIELDS: dict[str, str] = {
     "sonarr_add_missing": "boolean",
     "sonarr_folder": "string",
     "sonarr_tag": "string_list",
-    "trakt_list": "string_list",
     "imdb_list": "string_list",
     "mdblist_list": "string_list",
 }
@@ -79,7 +78,6 @@ PLAYLIST_KEYED_IMPORT_FIELDS: dict[str, str] = {
     "sonarr_folder_": "string",
     "sonarr_tag_": "string_list",
     "sync_to_users_": "string_list",
-    "trakt_list_": "string_list",
 }
 
 

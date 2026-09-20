@@ -41,7 +41,7 @@ def test_prepare_import_payload_accepts_mass_metadata_update():
     assert libraries["mov-library_movies-attribute_mass_collection_mode"] == "hide"
     assert libraries["mov-library_movies-attribute_mass_imdb_parental_labels"] == "mild"
     assert libraries["mov-library_movies-attribute_mass_audience_rating_update_order"] == '["tmdb"]'
-    assert libraries["mov-library_movies-attribute_mass_poster_source"] == "trakt"
+    assert libraries["mov-library_movies-attribute_mass_poster_source"] == "tmdb"
     assert libraries["mov-library_movies-attribute_mass_poster_ignore_locked"] is True
     assert libraries["mov-library_movies-attribute_mass_logo_source"] == "tvdb"
     assert libraries["mov-library_movies-attribute_mass_square_art_source"] == "tvdb"
