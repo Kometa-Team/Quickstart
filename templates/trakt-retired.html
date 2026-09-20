@@ -20,8 +20,9 @@
   <h2 class="h5 mt-4">Supported alternatives</h2>
   <p>Use MDBList, SIMKL, FlickList, TMDb, IMDb, or another supported Kometa builder.</p>
   <p>
-    The <code>mdb_trakt</code> rating source remains available because it is provided through MDBList rather
-    than the native Trakt integration.
+    While MDBList continues to provide them, the <code>mdb_trakt</code> operation source and
+    <code>mdb_trakt_rating</code> overlay value remain available. They use MDBList rather than QuickStart's
+    retired native Trakt integration and may also be removed if MDBList discontinues them.
   </p>
 
   <a class="btn btn-primary mt-3" href="{{ url_for('step', name='001-start') }}">
