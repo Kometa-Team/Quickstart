@@ -47,6 +47,7 @@ def test_retired_trakt_fields_are_scrubbed_from_generated_data():
                             "trakt_list_halloween": ["https://trakt.tv/halloween"],
                             "rating_source": "trakt_user",
                             "mdb_rating_source": "mdb_trakt",
+                            "overlay_value": "mdb_trakt_rating",
                             "imdb_list": "https://imdb.com/list/ls1",
                         },
                     }
@@ -61,5 +62,6 @@ def test_retired_trakt_fields_are_scrubbed_from_generated_data():
     variables = config["libraries"]["Movies"]["collection_files"][0]["template_variables"]
     assert variables == {
         "mdb_rating_source": "mdb_trakt",
+        "overlay_value": "mdb_trakt_rating",
         "imdb_list": "https://imdb.com/list/ls1",
     }

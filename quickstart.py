@@ -2168,6 +2168,20 @@ def logscan_trends_log_compress():
 
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
+    if name == "130-trakt":
+        page_info = {
+            "title": "Trakt Support Removed",
+            "template_name": "130-trakt-retired",
+            "template_uses_module": False,
+            "suppress_page_script": True,
+            "plex_valid": False,
+            "tmdb_valid": False,
+            "libs_valid": False,
+            "sett_valid": False,
+            "yaml_valid": False,
+            "save_error": None,
+        }
+        return render_template("trakt-retired.html", page_info=page_info), 410
     page_info = {}
     header_style = "single line"
     save_error = None

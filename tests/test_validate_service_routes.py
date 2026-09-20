@@ -200,7 +200,9 @@ def test_validate_yamtrack_missing_url_returns_400(client):
 
 
 def test_retired_trakt_routes_return_gone(client):
-    assert client.get("/step/130-trakt").status_code == 404
+    page = client.get("/step/130-trakt")
+    assert page.status_code == 410
+    assert b"Trakt support has been removed" in page.data
     for route in ("/validate_trakt", "/import_trakt_yaml", "/validate_trakt_token"):
         resp = client.post(route, json={})
         assert resp.status_code == 410

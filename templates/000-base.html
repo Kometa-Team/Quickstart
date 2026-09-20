@@ -150,7 +150,7 @@
 
   <script type="module"
     src="{{ asset_url('001-start') }}"></script>
-  {% if page_info['template_name'] != '001-start' %}
+  {% if page_info['template_name'] != '001-start' and not page_info.get('suppress_page_script') %}
   {% if page_info.get('template_uses_module') %}
   <script type="module"
     src="{{ asset_url(page_info['template_name']) }}"></script>
