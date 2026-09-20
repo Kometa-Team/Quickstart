@@ -144,7 +144,6 @@ def test_collectionless_exposes_all_optional_builder_template_variables():
         "imdb_list",
         "plex_search",
         "mdblist_list",
-        "trakt_list",
     ]:
         assert key in fields
     assert fields["exclude"]["section"] == "builders"

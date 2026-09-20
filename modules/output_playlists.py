@@ -62,7 +62,6 @@ PLAYLIST_SHARED_TEMPLATE_VAR_SPECS = {
     "sonarr_add_missing": "boolean",
     "sonarr_folder": "string",
     "sonarr_tag": "string_list",
-    "trakt_list": "string_list",
     "imdb_list": "string_list",
     "mdblist_list": "string_list",
 }
@@ -85,7 +84,6 @@ PLAYLIST_KEYED_TEMPLATE_VAR_SPECS = {
     "sonarr_folder_": "string",
     "sonarr_tag_": "string_list",
     "sync_to_users_": "string_list",
-    "trakt_list_": "string_list",
 }
 
 
@@ -277,7 +275,6 @@ def _normalize_playlist_template_var_value(key, value):
         "item_sonarr_tag",
         "radarr_tag",
         "sonarr_tag",
-        "trakt_list",
         "imdb_list",
         "mdblist_list",
     }:

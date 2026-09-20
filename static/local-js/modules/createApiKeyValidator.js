@@ -16,7 +16,7 @@
 // and revalidateOnLoad to refresh those dropdowns when an already-
 // validated user returns to the page.
 //
-// Wizards with OAuth-PIN flows (010-plex, 130-trakt, 140-mal) are NOT
+// Wizards with OAuth-PIN flows (010-plex and 140-mal) are NOT
 // migrated to this factory; their multi-step flow is fundamentally
 // different from the "credential -> validate -> done" shape and they
 // belong in a separate helper (Step 6 PR 4 later slices).

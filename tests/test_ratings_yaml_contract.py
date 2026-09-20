@@ -298,7 +298,7 @@ def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs
     assert "sonarr_add_missing" not in template_vars
     assert template_vars["sonarr_folder"] == "/data/media/shows"
     assert template_vars["sonarr_tag"] == "playlist-show"
-    assert template_vars["trakt_list"] == "https://trakt.tv/users/example/lists/default"
+    assert "trakt_list" not in template_vars
     assert template_vars["name_mcu"] == "Marvel Timeline"
     assert template_vars["delete_playlist_mcu"] is True
     assert template_vars["radarr_add_missing_mcu"] is True
@@ -307,7 +307,7 @@ def test_playlist_files_emit_shared_and_keyed_template_variables(monkeypatch, qs
     assert template_vars["sonarr_add_missing_mcu"] is False
     assert template_vars["sonarr_folder_mcu"] == "/data/media/shows/mcu"
     assert template_vars["sonarr_tag_mcu"] == "mcu-show"
-    assert template_vars["trakt_list_mcu"] == "https://trakt.tv/users/example/lists/mcu"
+    assert "trakt_list_mcu" not in template_vars
     assert template_vars["exclude_users_mcu"] == "guest"
 
 

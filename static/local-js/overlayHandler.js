@@ -3940,7 +3940,6 @@ const OverlayHandler = {
       metacritic: 'Metacritic',
       rt_popcorn: 'RT-Aud-Fresh',
       rt_tomato: 'RT-Crit-Fresh',
-      trakt: 'Trakt',
       mal: 'MAL',
       mdb: 'MDBList',
       star: 'Star'
@@ -3979,7 +3978,6 @@ const OverlayHandler = {
       metacritic: { scale: 'score100', decimals: 0 },
       rt_popcorn: { scale: 'percent', decimals: 0 },
       rt_tomato: { scale: 'percent', decimals: 0 },
-      trakt: { scale: 'percent', decimals: 0 },
       mal: { scale: 'decimal10', decimals: 2 },
       mdb: { scale: 'score100', decimals: 0 },
       mdblist: { scale: 'score100', decimals: 0 },
@@ -4009,7 +4007,6 @@ const OverlayHandler = {
       tmdb: 'Consensus-SemiBold.otf',
       metacritic: 'Montserrat-SemiBold.ttf',
       letterboxd: 'Montserrat-Bold.ttf',
-      trakt: 'Figtree-Medium.ttf',
       rt_tomato: 'LibreFranklin-Bold.ttf',
       rt_popcorn: 'LibreFranklin-Bold.ttf',
       'rt tomato': 'LibreFranklin-Bold.ttf',
@@ -4048,7 +4045,6 @@ const OverlayHandler = {
       metacritic: { critic: 'mdb_metacritic', audience: 'mdb_metacriticuser', user: 'mdb_metacriticuser' },
       rt_tomato: { critic: 'mdb_tomatoes', audience: 'mdb_tomatoesaudience', user: 'mdb_tomatoes' },
       rt_popcorn: { any: 'mdb_tomatoesaudience' },
-      trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' },
       mal: { any: 'mal' },
       mdb: { any: 'mdb' },
       floppy: { any: 'floppy' }
@@ -4056,7 +4052,6 @@ const OverlayHandler = {
     const RATING_SOURCE_MAP_EPISODE = {
       imdb: { any: 'imdb' },
       tmdb: { any: 'tmdb' },
-      trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' },
       floppy: { any: 'floppy' }
     }
     const RATING_SOURCE_LABEL_MAP = {
@@ -4068,8 +4063,6 @@ const OverlayHandler = {
       mdb_metacriticuser: 'Use Metacritic via MDBList',
       mdb_tomatoes: 'Use Rotten Tomatoes via MDBList',
       mdb_tomatoesaudience: 'Use RT Audience via MDBList',
-      trakt: 'Use Trakt Rating',
-      trakt_user: 'Use Trakt Rating',
       mal: 'Use MyAnimeList Score',
       mdb: 'Use MDBList Score',
       floppy: 'Use Floppy User Rating'
@@ -4082,8 +4075,6 @@ const OverlayHandler = {
       mdb_metacriticuser: 'mdblist',
       mdb_tomatoes: 'mdblist',
       mdb_tomatoesaudience: 'mdblist',
-      trakt: 'trakt',
-      trakt_user: 'trakt',
       mal: 'mal',
       mdb: 'mdblist',
       floppy: 'floppy'
@@ -4092,7 +4083,6 @@ const OverlayHandler = {
       tmdb: 'qs-validate-tmdb',
       mdblist: 'qs-validate-mdblist',
       floppy: 'qs-validate-floppy',
-      trakt: 'qs-validate-trakt',
       mal: 'qs-validate-mal',
       myanimelist: 'qs-validate-mal',
       anidb: 'qs-validate-anidb',
@@ -4103,7 +4093,6 @@ const OverlayHandler = {
       tmdb: 'TMDb',
       mdblist: 'MDBList',
       floppy: 'Floppy',
-      trakt: 'Trakt',
       mal: 'MyAnimeList',
       myanimelist: 'MyAnimeList',
       anidb: 'AniDB',
@@ -4385,9 +4374,6 @@ const OverlayHandler = {
       if (source === 'mdb_metacritic' || source === 'mdb_metacriticuser') {
         return 'Use Metacritic via MDBList'
       }
-      if (source === 'trakt' || source === 'trakt_user') {
-        return 'Use Trakt Rating'
-      }
       return fallbackLabel
     }
 
@@ -4605,7 +4591,6 @@ const OverlayHandler = {
             metacritic: ['metacritic'],
             rt_tomato: ['rotten tomatoes'],
             rt_popcorn: ['rt audience'],
-            trakt: ['trakt'],
             mal: ['myanimelist', 'mal'],
             tmdb: ['tmdb']
           }
@@ -4642,7 +4627,6 @@ const OverlayHandler = {
             mdblist: '060-mdblist',
             floppy: '067-floppy',
             anidb: '100-anidb',
-            trakt: '130-trakt',
             myanimelist: '140-mal',
             omdb: '050-omdb',
             plex: '010-plex'
@@ -4664,8 +4648,7 @@ const OverlayHandler = {
                 serviceTag = 'IMDb'
               } else if (normalized.includes('tmdb')) {
                 serviceTag = 'TMDb'
-              } else if (normalized.includes('trakt')) {
-                serviceTag = 'Trakt'
+
               } else if (normalized.includes('myanimelist') || normalized.includes('mal')) {
                 serviceTag = 'MyAnimeList'
               } else if (normalized.includes('letterboxd')) {

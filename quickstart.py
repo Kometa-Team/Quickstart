@@ -94,9 +94,6 @@ from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/leg
     QS_TAUTULLI_REQUIRED_STEP_KEY,
     QS_TRACEARR_DEP_COLLECTION_IDS,
     QS_TRACEARR_REQUIRED_STEP_KEY,
-    QS_TRAKT_DEP_COLLECTION_IDS,
-    QS_TRAKT_OVERLAY_IMAGE_VALUES,
-    QS_TRAKT_REQUIRED_STEP_KEY,
     _active_library_prefixes,
     _append_dependency_reason,
     _attribute_dependency_source_reasons,
@@ -111,7 +108,6 @@ from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/leg
     _config_sonarr_dependency_reasons,
     _config_tautulli_dependency_reasons,
     _config_tracearr_dependency_reasons,
-    _config_trakt_dependency_reasons,
     _dependency_reason_label,
     _is_truthy_setting_value,
     _libraries_data_anidb_dependency_reasons,
@@ -129,7 +125,6 @@ from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/leg
     _libraries_data_tautulli_dependency_reasons,
     _libraries_data_tracearr_dependency_reasons,
     _libraries_data_template_collection_dependency_reasons,
-    _libraries_data_trakt_dependency_reasons,
     _library_prefix_from_key,
     _normalize_status,
     _parse_json_array,
@@ -499,7 +494,6 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "100-anidb",
         "110-radarr",
         "120-sonarr",
-        "130-trakt",
         "140-mal",
         "150-settings",
         "150-settings",
@@ -514,7 +508,6 @@ VALIDATION_DOCS = {
     "libraries": f"{VALIDATION_DOC_BASE}025-libraries",
     "plex": f"{VALIDATION_DOC_BASE}010-plex",
     "tmdb": f"{VALIDATION_DOC_BASE}020-tmdb",
-    "trakt": f"{VALIDATION_DOC_BASE}130-trakt",
     "radarr": f"{VALIDATION_DOC_BASE}110-radarr",
     "sonarr": f"{VALIDATION_DOC_BASE}120-sonarr",
     "tautulli": f"{VALIDATION_DOC_BASE}030-tautulli",
@@ -2175,6 +2168,20 @@ def logscan_trends_log_compress():
 
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
+    if name == "130-trakt":
+        page_info = {
+            "title": "Trakt Support Removed",
+            "template_name": "130-trakt-retired",
+            "template_uses_module": False,
+            "suppress_page_script": True,
+            "plex_valid": False,
+            "tmdb_valid": False,
+            "libs_valid": False,
+            "sett_valid": False,
+            "yaml_valid": False,
+            "save_error": None,
+        }
+        return render_template("trakt-retired.html", page_info=page_info), 410
     page_info = {}
     header_style = "single line"
     save_error = None
@@ -2611,7 +2618,6 @@ def step(name):
         "mdblist": False,
         "floppy": False,
         "anidb": False,
-        "trakt": False,
         "mal": False,
         "tracearr": False,
     }
@@ -2625,7 +2631,6 @@ def step(name):
         ("060-mdblist", "mdblist"),
         ("067-floppy", "floppy"),
         ("100-anidb", "anidb"),
-        ("130-trakt", "trakt"),
         ("140-mal", "mal"),
     ]
     for section, key in service_validation_sources:
@@ -2884,7 +2889,6 @@ def step(name):
             anidb_requirement_reasons=workspace_status.get("anidb_requirement_reasons", []),
             radarr_requirement_reasons=workspace_status.get("radarr_requirement_reasons", []),
             sonarr_requirement_reasons=workspace_status.get("sonarr_requirement_reasons", []),
-            trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
             mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
             workspace_readiness=workspace_status.get("readiness", {}),
             final_gate=final_gate,
@@ -2935,7 +2939,6 @@ def step(name):
         anidb_requirement_reasons=workspace_status.get("anidb_requirement_reasons", []),
         radarr_requirement_reasons=workspace_status.get("radarr_requirement_reasons", []),
         sonarr_requirement_reasons=workspace_status.get("sonarr_requirement_reasons", []),
-        trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
         mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
         workspace_readiness=workspace_status.get("readiness", {}),
         image_data=image_data,
@@ -2974,7 +2977,6 @@ def workspace_status():
         anidb_requirement_reasons=status.get("anidb_requirement_reasons", []),
         radarr_requirement_reasons=status.get("radarr_requirement_reasons", []),
         sonarr_requirement_reasons=status.get("sonarr_requirement_reasons", []),
-        trakt_requirement_reasons=status.get("trakt_requirement_reasons", []),
         mal_requirement_reasons=status.get("mal_requirement_reasons", []),
         readiness=status.get("readiness", {}),
     )
@@ -3408,7 +3410,7 @@ def validate_all_services():
 
     results = {}
     summary = {"validated": 0, "failed": 0, "skipped": 0}
-    manual_progress_keys = ["001-start", "025-libraries", "150-settings", "100-anidb", "090-webhooks", "130-trakt", "140-mal"]
+    manual_progress_keys = ["001-start", "025-libraries", "150-settings", "100-anidb", "090-webhooks", "140-mal"]
     progress_steps = [{"key": template_key, "label": label_for_key(template_key)} for template_key, *_rest in targets]
     progress_steps.extend({"key": key, "label": label_for_key(key)} for key in manual_progress_keys)
     progress_completed = 0
@@ -3832,39 +3834,6 @@ def validate_all_services():
     else:
         skip_section_validation("090-webhooks", "webhooks", reason="no_webhooks")
     finish_progress_step("090-webhooks")
-
-    # Validate All checks for Trakt (token check if present)
-    start_progress_step("130-trakt")
-    trakt_settings = persistence.retrieve_settings("130-trakt") or {}
-    trakt_data = trakt_settings.get("trakt", {}) if isinstance(trakt_settings, dict) else {}
-    trakt_auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
-    trakt_access = trakt_auth.get("access_token") if isinstance(trakt_auth, dict) else None
-    trakt_client_id = trakt_data.get("client_id") if isinstance(trakt_data, dict) else None
-    if is_blank_value(trakt_access) or is_blank_value(trakt_client_id):
-        skip_section_validation("130-trakt", "trakt", reason="missing_tokens")
-    else:
-        try:
-            response = requests.get(
-                "https://api.trakt.tv/users/settings",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {trakt_access}",
-                    "trakt-api-version": "2",
-                    "trakt-api-key": trakt_client_id,
-                },
-                timeout=10,
-            )
-            if response.status_code == 200:
-                update_section_validation("130-trakt", "trakt", True)
-            elif response.status_code == 423:
-                update_section_validation("130-trakt", "trakt", False, reason="account_locked")
-            elif response.status_code in (401, 403):
-                update_section_validation("130-trakt", "trakt", False, reason="token_invalid")
-            else:
-                update_section_validation("130-trakt", "trakt", False, reason="validation_error")
-        except requests.exceptions.RequestException:
-            update_section_validation("130-trakt", "trakt", False, reason="validation_error")
-    finish_progress_step("130-trakt")
 
     # Validate All checks for MAL (token check if present)
     start_progress_step("140-mal")
@@ -7333,7 +7302,6 @@ def logscan_trends_page():
         anidb_requirement_reasons=workspace_status.get("anidb_requirement_reasons", []),
         radarr_requirement_reasons=workspace_status.get("radarr_requirement_reasons", []),
         sonarr_requirement_reasons=workspace_status.get("sonarr_requirement_reasons", []),
-        trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
         mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
         workspace_readiness=workspace_status.get("readiness", {}),
     )

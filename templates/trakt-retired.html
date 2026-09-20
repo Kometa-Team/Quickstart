@@ -1,0 +1,32 @@
+{% extends "000-base.html" %}
+{% block content %}
+<main class="container py-5" style="max-width: 760px;">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <i class="bi bi-signpost-split fs-1 text-warning" aria-hidden="true"></i>
+    <div>
+      <div class="text-warning fw-semibold">HTTP 410 - Gone</div>
+      <h1 class="h2 mb-0">Trakt support has been removed</h1>
+    </div>
+  </div>
+
+  <p class="lead">
+    Native Trakt support was removed from Quickstart for compatibility with Kometa 2.4.9 and later.
+  </p>
+  <p>
+    Quickstart no longer stores, validates, imports, or exports Trakt credentials and native Trakt builders.
+    Previously saved Trakt data is ignored when generating configuration files.
+  </p>
+
+  <h2 class="h5 mt-4">Supported alternatives</h2>
+  <p>Use MDBList, SIMKL, FlickList, TMDb, IMDb, or another supported Kometa builder.</p>
+  <p>
+    Trakt-derived ratings previously exposed through MDBList have also been removed because MDBList no longer
+    has access to Trakt data. MDBList remains supported for its other rating sources and builders.
+  </p>
+
+  <a class="btn btn-primary mt-3" href="{{ url_for('step', name='001-start') }}">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+    Back to Quickstart
+  </a>
+</main>
+{% endblock %}

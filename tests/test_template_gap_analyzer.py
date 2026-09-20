@@ -248,7 +248,7 @@ def test_build_qs_playlist_supported_keys_includes_shared_and_keyed_playlist_fie
 
     assert "radarr_add_missing" in playlist_keys
     assert "sonarr_add_missing" in playlist_keys
-    assert "trakt_list_" in playlist_keys
+    assert "trakt_list_" not in playlist_keys
     assert "use_" in playlist_keys
 
 
@@ -274,7 +274,7 @@ def test_playlist_key_supported_in_quickstart_accepts_keyed_playlist_overrides()
 
     assert module.playlist_key_supported_in_quickstart("radarr_add_missing", playlist_keys) is True
     assert module.playlist_key_supported_in_quickstart("sonarr_add_missing", playlist_keys) is True
-    assert module.playlist_key_supported_in_quickstart("trakt_list_xmen", playlist_keys) is True
+    assert module.playlist_key_supported_in_quickstart("trakt_list_xmen", playlist_keys) is False
     assert module.playlist_key_supported_in_quickstart("use_mcu", playlist_keys) is True
     assert module.playlist_key_supported_in_quickstart("unknown_playlist_key", playlist_keys) is False
 
@@ -1405,7 +1405,7 @@ def test_quickstart_recommendation_summary_excludes_dynamic_collection_child_ins
 
     assert ranked == []
     assert excluded[("collection", "franchise", "movie_645")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
-    assert excluded[("collection", "seasonal", "trakt_list_christmas")]["reason"] == "dynamic_collection_child_instance_key_not_ranked"
+    assert excluded[("collection", "seasonal", "trakt_list_christmas")]["reason"] == "retired_trakt_support_not_recommended"
 
 
 def test_build_merged_fix_queue_excludes_internal_and_dynamic_instance_false_positives():

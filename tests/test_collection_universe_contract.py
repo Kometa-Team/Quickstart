@@ -81,7 +81,6 @@ def test_universe_uses_dynamic_child_override_surface_for_inherited_prefixes():
         "child_delete_collections_named_overrides": ("delete_collections_named_", "string_list", "universe_key", None),
         "child_imdb_list_overrides": ("imdb_list_", "string_list", "universe_key", None),
         "child_mdblist_list_overrides": ("mdblist_list_", "string_list", "universe_key", None),
-        "child_trakt_list_overrides": ("trakt_list_", "string_list", "universe_key", None),
         "child_sync_mode_overrides": ("sync_mode_", "select", "universe_key", None),
         "child_collection_order_overrides": ("collection_order_", "select", "universe_key", None),
         "child_cache_builders_overrides": ("cache_builders_", "string", "universe_key", None),

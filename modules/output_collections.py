@@ -74,7 +74,6 @@ FRANCHISE_DYNAMIC_CHILD_FIELD_SPECS = {
     "child_imdb_search_overrides": ("imdb_search_", "json"),
     "child_mdblist_list_overrides": ("mdblist_list_", "string_list"),
     "child_letterboxd_list_overrides": ("letterboxd_list_", "string_list"),
-    "child_trakt_list_overrides": ("trakt_list_", "string_list"),
     "child_sync_mode_overrides": ("sync_mode_", "select"),
     "child_collection_order_overrides": ("collection_order_", "select"),
     "child_cache_builders_overrides": ("cache_builders_", "string"),
@@ -248,7 +247,6 @@ def _normalize_collection_template_var_value(key, value):
         list_values = _parse_string_list(value)
         return list_values if list_values else None
     if key in {
-        "trakt_list",
         "imdb_list",
         "imdb_id",
         "mdblist_list",
@@ -262,7 +260,6 @@ def _normalize_collection_template_var_value(key, value):
         "tvdb_list",
     } or key.startswith(
         (
-            "trakt_list_",
             "imdb_list_",
             "imdb_id_",
             "mdblist_list_",

@@ -45,7 +45,6 @@ from modules.dependency_reasons import (
     QS_SONARR_REQUIRED_STEP_KEY,
     QS_TAUTULLI_REQUIRED_STEP_KEY,
     QS_TRACEARR_REQUIRED_STEP_KEY,
-    QS_TRAKT_REQUIRED_STEP_KEY,
     _config_anidb_dependency_reasons,
     _config_floppy_dependency_reasons,
     _config_mal_dependency_reasons,
@@ -55,7 +54,6 @@ from modules.dependency_reasons import (
     _config_sonarr_dependency_reasons,
     _config_tautulli_dependency_reasons,
     _config_tracearr_dependency_reasons,
-    _config_trakt_dependency_reasons,
 )
 from modules.imagemaid import (
     get_imagemaid_settings_section as _get_imagemaid_settings_section,
@@ -293,7 +291,6 @@ def _build_workspace_status_context(config_name, template_list, available_config
     anidb_requirement_reasons = _config_anidb_dependency_reasons(section_rows) if QS_ANIDB_REQUIRED_STEP_KEY in template_keys else []
     radarr_requirement_reasons = _config_radarr_dependency_reasons(section_rows) if QS_RADARR_REQUIRED_STEP_KEY in template_keys else []
     sonarr_requirement_reasons = _config_sonarr_dependency_reasons(section_rows) if QS_SONARR_REQUIRED_STEP_KEY in template_keys else []
-    trakt_requirement_reasons = _config_trakt_dependency_reasons(section_rows) if QS_TRAKT_REQUIRED_STEP_KEY in template_keys else []
     mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
     if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys and tautulli_requirement_reasons:
         required_seed.add(QS_TAUTULLI_REQUIRED_STEP_KEY)
@@ -311,8 +308,6 @@ def _build_workspace_status_context(config_name, template_list, available_config
         required_seed.add(QS_RADARR_REQUIRED_STEP_KEY)
     if QS_SONARR_REQUIRED_STEP_KEY in template_keys and sonarr_requirement_reasons:
         required_seed.add(QS_SONARR_REQUIRED_STEP_KEY)
-    if QS_TRAKT_REQUIRED_STEP_KEY in template_keys and trakt_requirement_reasons:
-        required_seed.add(QS_TRAKT_REQUIRED_STEP_KEY)
     if QS_MAL_REQUIRED_STEP_KEY in template_keys and mal_requirement_reasons:
         required_seed.add(QS_MAL_REQUIRED_STEP_KEY)
     review_seed = set(QS_REVIEW_STEP_KEYS)
@@ -349,7 +344,6 @@ def _build_workspace_status_context(config_name, template_list, available_config
             "anidb_requirement_reasons": anidb_requirement_reasons,
             "radarr_requirement_reasons": radarr_requirement_reasons,
             "sonarr_requirement_reasons": sonarr_requirement_reasons,
-            "trakt_requirement_reasons": trakt_requirement_reasons,
             "mal_requirement_reasons": mal_requirement_reasons,
         }
         app_readiness = _build_workspace_app_readiness_from_status(config_name, provisional_status, template_list=template_list)
@@ -445,7 +439,6 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "anidb_requirement_reasons": anidb_requirement_reasons,
         "radarr_requirement_reasons": radarr_requirement_reasons,
         "sonarr_requirement_reasons": sonarr_requirement_reasons,
-        "trakt_requirement_reasons": trakt_requirement_reasons,
         "mal_requirement_reasons": mal_requirement_reasons,
         "readiness": readiness,
     }

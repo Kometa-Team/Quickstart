@@ -941,10 +941,6 @@
                 "label": "RT Tomato"
               },
               {
-                "value": "trakt",
-                "label": "Trakt"
-              },
-              {
                 "value": "mal",
                 "label": "MyAnimeList"
               },
@@ -1062,10 +1058,6 @@
                 "label": "RT Tomato"
               },
               {
-                "value": "trakt",
-                "label": "Trakt"
-              },
-              {
                 "value": "mal",
                 "label": "MyAnimeList"
               },
@@ -1181,10 +1173,6 @@
               {
                 "value": "rt_tomato",
                 "label": "RT Tomato"
-              },
-              {
-                "value": "trakt",
-                "label": "Trakt"
               },
               {
                 "value": "mal",
@@ -1446,10 +1434,6 @@
               {
                 "value": "tmdb",
                 "label": "TMDb"
-              },
-              {
-                "value": "trakt",
-                "label": "Trakt"
               }
             ]
           },
@@ -1535,10 +1519,6 @@
               {
                 "value": "tmdb",
                 "label": "TMDb"
-              },
-              {
-                "value": "trakt",
-                "label": "Trakt"
               }
             ]
           },

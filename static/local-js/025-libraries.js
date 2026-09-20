@@ -140,11 +140,6 @@ const dependencyHintConfigs = {
     endpoint: '/libraries_sonarr_dependency_hint',
     windowKey: 'QS_SONARR_REQUIREMENT_REASONS'
   },
-  trakt: {
-    stepKey: '130-trakt',
-    endpoint: '/libraries_trakt_dependency_hint',
-    windowKey: 'QS_TRAKT_REQUIREMENT_REASONS'
-  },
   mal: {
     stepKey: '140-mal',
     endpoint: '/libraries_mal_dependency_hint',

@@ -19,7 +19,6 @@ from modules.dependency_reasons import (
     _libraries_data_sonarr_dependency_reasons,
     _libraries_data_tautulli_dependency_reasons,
     _libraries_data_tracearr_dependency_reasons,
-    _libraries_data_trakt_dependency_reasons,
     _library_prefix_from_key,
 )
 
@@ -1507,7 +1506,6 @@ _DEPENDENCY_HINT_ROUTES = (
     ("AniDB", "anidb", _libraries_data_anidb_dependency_reasons),
     ("Radarr", "radarr", _libraries_data_radarr_dependency_reasons),
     ("Sonarr", "sonarr", _libraries_data_sonarr_dependency_reasons),
-    ("Trakt", "trakt", _libraries_data_trakt_dependency_reasons),
     ("MAL", "mal", _libraries_data_mal_dependency_reasons),
 )
 

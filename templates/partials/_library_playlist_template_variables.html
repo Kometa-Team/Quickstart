@@ -237,7 +237,6 @@ playlist-template_variables[{{ field_key }}]
       {{ playlist_string_list_input('sonarr_tag', 'Sonarr Tags', 'Add Sonarr tag', 'Change Sonarr tags for all playlists in this defaults file.') }}
       {{ playlist_string_list_input('item_radarr_tag', 'Item Radarr Tags', 'Add item Radarr tag', 'Append a Radarr tag to every movie found by all playlists in this defaults file.') }}
       {{ playlist_string_list_input('item_sonarr_tag', 'Item Sonarr Tags', 'Add item Sonarr tag', 'Append a Sonarr tag to every series found by all playlists in this defaults file.') }}
-      {{ playlist_string_list_input('trakt_list', 'Default Trakt Lists', 'Add Trakt list URL', 'Default Trakt list URLs used when a playlist key does not provide its own builder list.') }}
       {{ playlist_string_list_input('imdb_list', 'Default IMDb Lists', 'Add IMDb list URL', 'Default IMDb list URLs used when a playlist key does not provide its own builder list.') }}
       {{ playlist_string_list_input('mdblist_list', 'Default MDBList Lists', 'Add MDBList URL', 'Default MDBList URLs used when a playlist key does not provide its own builder list.') }}
     </div>
@@ -272,7 +271,6 @@ playlist-template_variables[{{ field_key }}]
       {{ playlist_mapping_input('sonarr_add_missing_', 'Sonarr Add Missing Modifications', 'Playlist key (e.g. mcu)', 'true or false', 'Change Sonarr add_missing for a specific playlist key.', '', 'Sonarr add missing', 'boolean') }}
       {{ playlist_mapping_input('sonarr_folder_', 'Sonarr Folder Modifications', 'Playlist key (e.g. mcu)', 'Sonarr root folder path', 'Change Sonarr root_folder_path for a specific playlist key.', '', 'Sonarr folder', 'string') }}
       {{ playlist_mapping_input('sonarr_tag_', 'Sonarr Tag Modifications', 'Playlist key (e.g. mcu)', 'Add comma-separated Sonarr tags', 'Change Sonarr tags for a specific playlist key.', '', 'Sonarr tags', 'string_list') }}
-      {{ playlist_mapping_input('trakt_list_', 'Trakt List Modifications', 'Playlist key (e.g. mcu)', 'Add comma-separated Trakt list URLs', 'Change the Trakt list URLs for a specific playlist key.', '', 'Trakt URLs', 'string_list') }}
       {{ playlist_mapping_input('imdb_list_', 'IMDb List Modifications', 'Playlist key (e.g. mcu)', 'Add comma-separated IMDb list URLs', 'Change the IMDb list URLs for a specific playlist key.', '', 'IMDb URLs', 'string_list') }}
       {{ playlist_mapping_input('mdblist_list_', 'MDBList Modifications', 'Playlist key (e.g. mcu)', 'Add comma-separated MDBList URLs', 'Change the MDBList URLs for a specific playlist key.', '', 'MDBList URLs', 'string_list') }}
       {{ playlist_mapping_input('item_radarr_tag_', 'Item Radarr Tag Modifications', 'Playlist key (e.g. mcu)', 'Add comma-separated item Radarr tags', 'Change item Radarr tags for a specific playlist key.', '', 'Item Radarr tags', 'string_list') }}

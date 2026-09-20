@@ -55,7 +55,6 @@ from modules.dependency_reasons import (
     QS_SONARR_REQUIRED_STEP_KEY,
     QS_TAUTULLI_REQUIRED_STEP_KEY,
     QS_TRACEARR_REQUIRED_STEP_KEY,
-    QS_TRAKT_REQUIRED_STEP_KEY,
     _normalize_status,
 )
 from modules.workspace_status_constants import (
@@ -222,7 +221,6 @@ def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at
         ("anidb", QS_ANIDB_REQUIRED_STEP_KEY, "AniDB", "anidb_requirement_reasons", "qs-anidb-required-hint"),
         ("radarr", QS_RADARR_REQUIRED_STEP_KEY, "Radarr", "radarr_requirement_reasons", "qs-radarr-required-hint"),
         ("sonarr", QS_SONARR_REQUIRED_STEP_KEY, "Sonarr", "sonarr_requirement_reasons", "qs-sonarr-required-hint"),
-        ("trakt", QS_TRAKT_REQUIRED_STEP_KEY, "Trakt", "trakt_requirement_reasons", "qs-trakt-required-hint"),
         ("mal", QS_MAL_REQUIRED_STEP_KEY, "MyAnimeList", "mal_requirement_reasons", "qs-mal-required-hint"),
     ]
     dependency_cards = []

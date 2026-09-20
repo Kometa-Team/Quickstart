@@ -9,7 +9,6 @@ CHART_COLLECTION_IDS = [
     "collection_tracearr",
     "collection_imdb",
     "collection_tmdb",
-    "collection_trakt",
     "collection_simkl",
     "collection_anilist",
     "collection_myanimelist",

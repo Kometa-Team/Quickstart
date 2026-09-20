@@ -229,16 +229,6 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert libraries_payload["mov-library_movies-template_collection_tautulli_sync_mode_watched"] == "append"
     assert libraries_payload["mov-library_movies-template_collection_tautulli_cache_builders_popular"] == 0
     assert libraries_payload["mov-library_movies-template_collection_tautulli_collection_order_popular"] == "custom"
-    assert libraries_payload["mov-library_movies-template_collection_trakt_limit"] == 75
-    assert libraries_payload["mov-library_movies-template_collection_trakt_limit_popular"] == 50
-    assert libraries_payload["mov-library_movies-template_collection_trakt_limit_recommended"] == 30
-    assert libraries_payload["mov-library_movies-template_collection_trakt_image"] == "chart/color/trakt"
-    assert libraries_payload["mov-library_movies-template_collection_trakt_url_logo_collected"] == "https://example.com/trakt-collected.png"
-    assert libraries_payload["mov-library_movies-template_collection_trakt_sync_mode_recommended"] == "append"
-    assert libraries_payload["mov-library_movies-template_collection_trakt_cache_builders_trending"] == 0
-    assert libraries_payload["mov-library_movies-template_collection_trakt_collection_order_watched"] == "custom"
-    assert libraries_payload["mov-library_movies-template_collection_trakt_radarr_folder_collected"] == r"C:\Media\Movies"
-    assert libraries_payload["mov-library_movies-template_collection_trakt_sonarr_search_watched"] == "false"
     assert libraries_payload["mov-library_movies-template_collection_tmdb_limit"] == 60
     assert libraries_payload["mov-library_movies-template_collection_tmdb_limit_airing"] == 20
     assert libraries_payload["mov-library_movies-template_collection_tmdb_limit_trending"] == 40
@@ -320,7 +310,6 @@ def test_prepare_import_payload_accepts_chart_builder_size_template_variables():
     assert json.loads(libraries_payload["mov-library_movies-template_collection_content_rating_us_child_image_overrides"]) == {"PG-13": "content_rating/us/PG-13-custom"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_content_rating_us_child_item_radarr_tag_overrides"]) == {"R": "rating,r"}
     assert any("libraries.Movies.collection_files[0].template_variables.list_days" in line for line in report.lines)
-    assert any("libraries.Movies.collection_files[1].template_variables.limit_popular" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[2].template_variables.limit_airing" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[3].template_variables.limit_trending_today" in line for line in report.lines)
     assert any("libraries.Movies.collection_files[4].template_variables.limit_season" in line for line in report.lines)
@@ -458,7 +447,6 @@ def test_prepare_import_payload_collapses_universe_dynamic_child_template_variab
     assert libraries_payload["mov-library_movies-collection_universe"] is True
     assert libraries_payload["mov-library_movies-template_collection_universe_child_url_poster_overrides"] == '{"avp": "https://example.com/avp.jpg"}'
     assert libraries_payload["mov-library_movies-template_collection_universe_child_schedule_overrides"] == '{"arrow": "weekly(sunday)"}'
-    assert libraries_payload["mov-library_movies-template_collection_universe_child_trakt_list_overrides"] == '{"trek": "https://trakt.tv/users/example/lists/star-trek"}'
     assert libraries_payload["mov-library_movies-template_collection_universe_child_delete_collections_named_overrides"] == '{"mummy": "The Mummy Universe"}'
     assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_folder_overrides"] == '{"avp": "C:\\\\Media\\\\Movies"}'
     assert libraries_payload["mov-library_movies-template_collection_universe_child_radarr_search_overrides"] == '{"avp": "false"}'
@@ -535,7 +523,6 @@ def test_prepare_import_payload_accepts_based_and_collectionless_template_variab
     assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_imdb_list"]) == ["ls123456789"]
     assert libraries_payload["mov-library_movies-template_collection_collectionless_plex_search"] == {"all": {"title": "Example"}}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_mdblist_list"]) == ["https://mdblist.com/lists/example/list"]
-    assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_trakt_list"]) == ["https://trakt.tv/users/example/lists/list"]
     assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_exclude"]) == ["Marvel Cinematic Universe"]
     assert json.loads(libraries_payload["mov-library_movies-template_collection_collectionless_exclude_prefix"]) == ["!", "~"]
     assert any("libraries.Movies.collection_files[0].template_variables.keywords_books" in line for line in report.lines)
@@ -638,9 +625,6 @@ def test_prepare_import_payload_collapses_seasonal_dynamic_child_template_variab
     assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_imdb_list_overrides"]) == {"years": "ls066838460"}
     imdb_search_mapping = json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_imdb_search_overrides"])
     assert json.loads(imdb_search_mapping["halloween"]) == {"list.any": ["ls546214737"], "limit": 500}
-    assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_trakt_list_overrides"]) == {
-        "halloween": "https://trakt.tv/users/example/lists/halloween"
-    }
     assert json.loads(libraries_payload["mov-library_movies-template_collection_seasonal_child_mdblist_list_overrides"]) == {
         "christmas": "https://mdblist.com/lists/k0meta/christmas-extravaganza"
     }
@@ -788,7 +772,6 @@ def test_prepare_import_payload_collapses_country_and_continent_geography_templa
     assert libraries_payload["mov-library_movies-collection_continent"] is True
     assert libraries_payload["sho-library_shows-collection_continent"] is True
     assert libraries_payload["mov-library_movies-template_collection_country_search_term"] == "country"
-    assert json.loads(libraries_payload["mov-library_movies-template_collection_country_trakt_list"]) == ["https://trakt.tv/users/example/lists/france"]
     assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_schedule_overrides"]) == {"France": "weekly(sunday)"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_name_overrides"]) == {"France": "French Cinema"}
     assert json.loads(libraries_payload["mov-library_movies-template_collection_country_child_file_background_overrides"]) == {"France": r"C:\Posters\france-bg.jpg"}
@@ -803,7 +786,6 @@ def test_prepare_import_payload_collapses_country_and_continent_geography_templa
     assert json.loads(libraries_payload["sho-library_shows-template_collection_continent_child_sync_mode_overrides"]) == {"Europe": "append"}
     assert json.loads(libraries_payload["sho-library_shows-template_collection_continent_child_file_logo_overrides"]) == {"Europe": r"C:\Logos\europe.png"}
     assert json.loads(libraries_payload["sho-library_shows-template_collection_continent_child_item_sonarr_tag_overrides"]) == {"Europe": "continent,europe"}
-    assert any("libraries.Movies.collection_files[0].template_variables.trakt_list" in line for line in report.lines)
     assert any("libraries.Shows.collection_files[0].template_variables.sync_mode_fr" in line for line in report.lines)
 
 

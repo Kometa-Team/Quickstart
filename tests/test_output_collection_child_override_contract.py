@@ -7,7 +7,6 @@ def test_apply_template_var_normalizers_expands_universe_dynamic_child_override_
     template_vars = {
         "child_url_poster_overrides": '{"avp": "https://example.com/avp.jpg"}',
         "child_schedule_overrides": '{"arrow": "weekly(sunday)"}',
-        "child_trakt_list_overrides": '{"trek": ["https://trakt.tv/users/example/lists/star-trek"]}',
         "child_delete_collections_named_overrides": '{"mummy": ["The Mummy Universe"]}',
         "child_radarr_folder_overrides": '{"avp": "C:\\\\Media\\\\Movies"}',
         "child_radarr_search_overrides": '{"avp": "false"}',
@@ -17,7 +16,6 @@ def test_apply_template_var_normalizers_expands_universe_dynamic_child_override_
 
     assert template_vars["url_poster_avp"] == "https://example.com/avp.jpg"
     assert template_vars["schedule_arrow"] == "weekly(sunday)"
-    assert template_vars["trakt_list_trek"] == ["https://trakt.tv/users/example/lists/star-trek"]
     assert template_vars["delete_collections_named_mummy"] == ["The Mummy Universe"]
     assert template_vars["radarr_folder_avp"] == r"C:\Media\Movies"
     assert template_vars["radarr_search_avp"] is False
@@ -90,7 +88,6 @@ def test_apply_template_var_normalizers_expands_seasonal_dynamic_child_override_
         "child_tmdb_movie_overrides": '{"halloween": ["23437"]}',
         "child_imdb_list_overrides": '{"years": ["ls066838460"]}',
         "child_imdb_search_overrides": '{"halloween": {"list.any": ["ls546214737"], "limit": 500}}',
-        "child_trakt_list_overrides": '{"halloween": ["https://trakt.tv/users/example/lists/halloween"]}',
         "child_mdblist_list_overrides": '{"christmas": ["https://mdblist.com/lists/k0meta/christmas-extravaganza"]}',
         "child_letterboxd_list_overrides": '{"black_history": ["https://letterboxd.com/mardarrius/list/black-is-beautiful/"]}',
         "child_url_logo_overrides": '{"women": "https://example.com/women.png"}',
@@ -110,7 +107,6 @@ def test_apply_template_var_normalizers_expands_seasonal_dynamic_child_override_
     assert template_vars["tmdb_movie_halloween"] == ["23437"]
     assert template_vars["imdb_list_years"] == ["ls066838460"]
     assert template_vars["imdb_search_halloween"] == {"list.any": ["ls546214737"], "limit": 500}
-    assert template_vars["trakt_list_halloween"] == ["https://trakt.tv/users/example/lists/halloween"]
     assert template_vars["mdblist_list_christmas"] == ["https://mdblist.com/lists/k0meta/christmas-extravaganza"]
     assert template_vars["letterboxd_list_black_history"] == ["https://letterboxd.com/mardarrius/list/black-is-beautiful/"]
     assert template_vars["url_logo_women"] == "https://example.com/women.png"
