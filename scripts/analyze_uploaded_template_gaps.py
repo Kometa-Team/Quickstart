@@ -58,6 +58,15 @@ QS_SPECIAL_PLAYLIST_SUPPORTED_KEYS = {
     "playlist_sync_to_users",
     "sync_to_users",
 }
+
+RETIRED_TRAKT_KEYS = {
+    "trakt",
+    "trakt_user",
+    "trakt_rating",
+    "trakt_user_rating",
+    "mdb_trakt",
+    "mdb_trakt_rating",
+}
 LETTERBOXD_LEGACY_KEY_MAP = {
     "use_top_250": "use_top_500",
     "radarr_add_missing_top_250": "radarr_add_missing_top_500",
@@ -751,7 +760,14 @@ def normalize_legacy_template_key(kind: str, alias: str | None, key: str) -> str
     return key
 
 
+def is_retired_trakt_key(key: str) -> bool:
+    normalized = str(key or "").strip().lower()
+    return normalized in RETIRED_TRAKT_KEYS or normalized.startswith(("trakt_", "child_trakt_"))
+
+
 def playlist_key_supported_in_quickstart(key: str, qs_playlist_keys: set[str]) -> bool:
+    if is_retired_trakt_key(key):
+        return False
     if key in qs_playlist_keys:
         return True
 
@@ -1096,6 +1112,8 @@ def is_dynamic_collection_child_instance_key(row: dict[str, Any]) -> bool:
 def get_structural_finding_exclusion(row: dict[str, Any]) -> str | None:
     kind = str(row.get("kind") or "")
     key = str(row.get("key") or "")
+    if is_retired_trakt_key(key):
+        return "retired_trakt_support_not_recommended"
     if kind == "overlay" and key in INTERNAL_OVERLAY_TEMPLATE_KEYS:
         return "internal_overlay_finalizer_key_not_user_facing"
     if is_dynamic_collection_child_instance_key(row):
