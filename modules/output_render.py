@@ -219,12 +219,12 @@ def _strip_retired_trakt_fields(value):
                 value.pop(key, None)
                 continue
             child = value[key]
-            if isinstance(child, str) and child.strip().lower() in {"trakt", "trakt_user"}:
+            if isinstance(child, str) and child.strip().lower() in {"trakt", "trakt_user", "mdb_trakt", "mdb_trakt_rating"}:
                 value.pop(key, None)
                 continue
             _strip_retired_trakt_fields(child)
     elif isinstance(value, list):
-        value[:] = [item for item in value if not (isinstance(item, str) and item.strip().lower() in {"trakt", "trakt_user"})]
+        value[:] = [item for item in value if not (isinstance(item, str) and item.strip().lower() in {"trakt", "trakt_user", "mdb_trakt", "mdb_trakt_rating"})]
         for item in value:
             _strip_retired_trakt_fields(item)
 

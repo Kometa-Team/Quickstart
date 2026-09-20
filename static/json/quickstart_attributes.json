@@ -973,11 +973,6 @@
           "Use <b>Rotten Tomatoes audience rating</b> via MDBList."
         ],
         [
-          "mdb_trakt",
-          "Use Trakt via MDBList",
-          "Use <b>Trakt score</b> via MDBList."
-        ],
-        [
           "mdb",
           "Use MDBList Score",
           "Use the <b>combined MDBList score</b>."
@@ -1139,11 +1134,6 @@
           "Use <b>Rotten Tomatoes audience rating</b> via MDBList."
         ],
         [
-          "mdb_trakt",
-          "Use Trakt via MDBList",
-          "Use <b>Trakt score</b> via MDBList."
-        ],
-        [
           "mdb",
           "Use MDBList Score",
           "Use the <b>combined MDBList score</b>."
@@ -1303,11 +1293,6 @@
           "mdb_tomatoesaudience",
           "Use RT Audience via MDBList",
           "Use <b>Rotten Tomatoes audience rating</b> via MDBList."
-        ],
-        [
-          "mdb_trakt",
-          "Use Trakt via MDBList",
-          "Use <b>Trakt score</b> via MDBList."
         ],
         [
           "mdb",

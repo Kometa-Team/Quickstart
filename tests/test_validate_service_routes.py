@@ -203,8 +203,7 @@ def test_retired_trakt_routes_return_gone(client):
     page = client.get("/step/130-trakt")
     assert page.status_code == 410
     assert b"Trakt support has been removed" in page.data
-    assert b"mdb_trakt" in page.data
-    assert b"mdb_trakt_rating" in page.data
+    assert b"Trakt-derived ratings previously exposed through MDBList have also been removed" in page.data
     for route in ("/validate_trakt", "/import_trakt_yaml", "/validate_trakt_token"):
         resp = client.post(route, json={})
         assert resp.status_code == 410

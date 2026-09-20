@@ -28,7 +28,7 @@ def test_trakt_is_absent_from_quickstart_catalogs():
     option_values = [item[0] for item in _walk(attributes) if isinstance(item, list) and item]
     assert "trakt" not in option_values
     assert "trakt_user" not in option_values
-    assert "mdb_trakt" in option_values
+    assert "mdb_trakt" not in option_values
 
     overlay_options = [item.get("value") for item in _walk(overlays) if isinstance(item, dict)]
     assert "trakt" not in overlay_options
@@ -61,7 +61,5 @@ def test_retired_trakt_fields_are_scrubbed_from_generated_data():
     assert "trakt" not in config
     variables = config["libraries"]["Movies"]["collection_files"][0]["template_variables"]
     assert variables == {
-        "mdb_rating_source": "mdb_trakt",
-        "overlay_value": "mdb_trakt_rating",
         "imdb_list": "https://imdb.com/list/ls1",
     }
