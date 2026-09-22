@@ -129,6 +129,30 @@ def test_quickstart_update_detects_higher_remote_develop_build(monkeypatch):
     assert info["update_available"] is True
 
 
+def test_quickstart_update_ignores_develop_release_baseline_build_zero(monkeypatch):
+    _qs_update._QS_UPDATE_CACHE.clear()
+    monkeypatch.setattr(_version, "get_branch", lambda: "develop")
+    monkeypatch.setattr(
+        _version,
+        "get_remote_version_status",
+        lambda _branch: {
+            "version": "0.10.8-build0",
+            "base_version": "0.10.8",
+            "buildnum": "0",
+            "status": "ok",
+            "message": "",
+        },
+    )
+    monkeypatch.setattr(_qs_update, "get_version", lambda _branch: "0.10.7-build0")
+    monkeypatch.setattr(_qs_update, "get_quickstart_update_remote", lambda *_args, **_kwargs: "origin")
+
+    info = _qs_update.check_for_update()
+
+    assert info["remote_version"] == "0.10.8-build0"
+    assert info["remote_buildnum"] == "0"
+    assert info["update_available"] is False
+
+
 def test_quickstart_update_reports_pending_develop_build(monkeypatch):
     _qs_update._QS_UPDATE_CACHE.clear()
     monkeypatch.setattr(_version, "get_branch", lambda: "develop")
