@@ -98,6 +98,10 @@ def _is_remote_quickstart_version_newer(local_version, remote_version):
     return False
 
 
+def _is_develop_release_baseline(branch, remote_status):
+    return str(branch or "").strip() == "develop" and str(remote_status.get("buildnum") or "").strip() == "0"
+
+
 def check_for_update():
     """Compare the local version with the remote version and determine Kometa branch."""
     from modules.helpers._version import get_branch, get_remote_version_status
@@ -115,7 +119,9 @@ def check_for_update():
     remote_status = get_remote_version_status(branch)
     remote_version = remote_status.get("version")
 
-    update_available = _is_remote_quickstart_version_newer(local_version, remote_version)
+    update_available = False
+    if not _is_develop_release_baseline(branch, remote_status):
+        update_available = _is_remote_quickstart_version_newer(local_version, remote_version)
     update_remote = get_quickstart_update_remote()
 
     # Determine Kometa branch
