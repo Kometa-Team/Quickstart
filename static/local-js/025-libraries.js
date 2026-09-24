@@ -37,7 +37,6 @@ const copyDeselectAllBtn = document.getElementById('copyDeselectAll')
 const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
 let activeLibraryId = null
 let loadRequestId = 0
-let allowNextStepNavigation = false
 let lookupLabelAutosaveTimer = null
 let libraryCardInitializing = 0
 
@@ -7828,10 +7827,6 @@ if (libraryPicker) {
 
 document.addEventListener('qs:before-step-navigation', (event) => {
   const detail = (event && event.detail) || {}
-  if (allowNextStepNavigation) {
-    allowNextStepNavigation = false
-    return
-  }
   if (!activeLibraryId || !libraryContainer || !libraryContainer.firstElementChild) return
   if (!detail.targetPage || detail.targetPage === '025-libraries') return
 
@@ -7839,12 +7834,9 @@ document.addEventListener('qs:before-step-navigation', (event) => {
 
   autosaveActiveLibrary()
     .then(() => {
-      allowNextStepNavigation = true
-      jumpTo(detail.targetPage, detail.targetLabel)
+      window.location.assign(`/step/${encodeURIComponent(detail.targetPage)}`)
     })
-    .catch(() => {
-      allowNextStepNavigation = false
-    })
+    .catch(() => {})
 })
 
 if (typeof setupParentChildToggleSync === 'function') {
