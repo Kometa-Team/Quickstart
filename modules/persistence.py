@@ -198,7 +198,7 @@ def clean_form_data(form_data):
                     except Exception:
                         value = value
             lc_value = value.lower().strip()
-            if lc_value == "none" and key.endswith(("[rating1]", "[rating2]", "[rating3]")):
+            if lc_value == "none" and key.endswith(("[rating1]", "[rating1_image]", "[rating2]", "[rating2_image]", "[rating3]", "[rating3_image]")):
                 # Rating selectors need an explicit disabled sentinel. Treating
                 # "none" as absent makes the UI restore the template default
                 # when this library is loaded again.

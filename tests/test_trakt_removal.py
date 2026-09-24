@@ -40,11 +40,13 @@ def test_trakt_is_absent_from_quickstart_catalogs():
 
 
 def test_cleared_rating_selector_keeps_explicit_none_sentinel():
-    key = "mov-library_movies-movie-template_overlay_ratings[rating3]"
+    rating_key = "mov-library_movies-movie-template_overlay_ratings[rating3]"
+    image_key = "mov-library_movies-movie-template_overlay_ratings[rating3_image]"
 
-    cleaned = clean_form_data(MultiDict({key: "none", "ordinary_field": "none"}))
+    cleaned = clean_form_data(MultiDict({rating_key: "none", image_key: "none", "ordinary_field": "none"}))
 
-    assert cleaned[key] == "none"
+    assert cleaned[rating_key] == "none"
+    assert cleaned[image_key] == "none"
     assert cleaned["ordinary_field"] is None
 
 
