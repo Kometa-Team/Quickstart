@@ -1,7 +1,12 @@
 import json
+import pickle
+import sqlite3
 from pathlib import Path
 
+from werkzeug.datastructures import MultiDict
+
 from modules.output_render import _strip_retired_trakt_fields
+from modules.persistence import clean_form_data
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,6 +37,50 @@ def test_trakt_is_absent_from_quickstart_catalogs():
 
     overlay_options = [item.get("value") for item in _walk(overlays) if isinstance(item, dict)]
     assert "trakt" not in overlay_options
+
+
+def test_cleared_rating_selector_keeps_explicit_none_sentinel():
+    key = "mov-library_movies-movie-template_overlay_ratings[rating3]"
+
+    cleaned = clean_form_data(MultiDict({key: "none", "ordinary_field": "none"}))
+
+    assert cleaned[key] == "none"
+    assert cleaned["ordinary_field"] is None
+
+
+def test_database_sanitizer_removes_legacy_trakt_rows_and_library_fields(isolated_config_dir):
+    from modules import database
+
+    database.save_section_data("libraries", True, True, {"libraries": {}}, name="legacy_trakt")
+    legacy_libraries = {
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-collection_trakt": True,
+            "mov-library_movies-movie-template_overlay_ratings[rating1]": "trakt_user",
+            "mov-library_movies-movie-template_overlay_ratings[rating1_image]": "trakt",
+            "mov-library_movies-attribute_language": "English",
+        }
+    }
+    with sqlite3.connect(database.get_database_path()) as connection:
+        connection.execute(
+            "UPDATE section_data SET data = ? WHERE name == ? AND section == ?",
+            (pickle.dumps(legacy_libraries), "legacy_trakt", "libraries"),
+        )
+        connection.execute(
+            "INSERT INTO section_data(name, section, validated, user_entered, data) VALUES (?, ?, ?, ?, ?)",
+            ("legacy_trakt", "trakt", True, True, pickle.dumps({"trakt": {"client_id": "old"}})),
+        )
+
+    assert database.sanitize_all_section_data() == 2
+
+    _validated, _entered, stored = database.retrieve_section_data("legacy_trakt", "libraries")
+    assert stored == {
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-attribute_language": "English",
+        }
+    }
+    assert database.retrieve_section_data("legacy_trakt", "trakt") == (False, False, None)
 
 
 def test_retired_trakt_fields_are_scrubbed_from_generated_data():

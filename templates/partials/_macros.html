@@ -2359,6 +2359,9 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 {% set skip_var = (var_name == 'builder_level') %}
                                                 {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
                                                 {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
+                                                {% if overlay.id == 'overlay_ratings' and var_name in ['rating1', 'rating2', 'rating3'] and flat_key in data.libraries and selected_value is none %}
+                                                {% set selected_value = 'none' %}
+                                                {% endif %}
                                                 {% if selected_value is boolean %}
                                                 {% set selected_value = 'true' if selected_value else 'false' %}
                                                 {% endif %}
