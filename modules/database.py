@@ -35,6 +35,7 @@ TRANSIENT_SECTION_KEYS = {
     "newConfigName",
     "importMode",
 }
+RETIRED_TRAKT_VALUES = {"trakt", "trakt_user", "mdb_trakt", "mdb_trakt_rating"}
 
 
 def _strip_transient_section_keys(value):
@@ -43,7 +44,11 @@ def _strip_transient_section_keys(value):
     if isinstance(value, dict):
         cleaned = {}
         for key, item in value.items():
-            if key in TRANSIENT_SECTION_KEYS:
+            key_text = str(key).strip().lower()
+            if key in TRANSIENT_SECTION_KEYS or "trakt" in key_text:
+                changed = True
+                continue
+            if isinstance(item, str) and item.strip().lower() in RETIRED_TRAKT_VALUES:
                 changed = True
                 continue
             cleaned_item, item_changed = _strip_transient_section_keys(item)
@@ -54,6 +59,9 @@ def _strip_transient_section_keys(value):
     if isinstance(value, list):
         cleaned = []
         for item in value:
+            if isinstance(item, str) and item.strip().lower() in RETIRED_TRAKT_VALUES:
+                changed = True
+                continue
             cleaned_item, item_changed = _strip_transient_section_keys(item)
             cleaned.append(cleaned_item)
             changed = changed or item_changed
@@ -82,7 +90,8 @@ def save_section_data(section, validated, user_entered, data, name="default"):
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
             cursor.execute(persisted_section_table_create())
-            pickled_data = pickle.dumps(data)
+            cleaned_data, _changed = _strip_transient_section_keys(data)
+            pickled_data = pickle.dumps(cleaned_data)
 
             cursor.execute(
                 """INSERT OR IGNORE INTO
@@ -168,6 +177,13 @@ def sanitize_all_section_data():
             cursor.execute("""SELECT name, section, data FROM section_data""")
             rows = cursor.fetchall()
             for row in rows:
+                if str(row["section"] or "").strip().lower() == "trakt":
+                    cursor.execute(
+                        "DELETE FROM section_data WHERE name == ? AND section == ?",
+                        (row["name"], row["section"]),
+                    )
+                    updated += 1
+                    continue
                 raw_data = row["data"]
                 if raw_data is None:
                     continue

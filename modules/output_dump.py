@@ -175,10 +175,19 @@ def _clean_data(obj, dump_name):
         if dump_name in _ALPHABETICALLY_SORTED_SECTIONS:
             obj = dict(sorted(obj.items()))
         cleaned_dict = {}
+        default_name = str(obj.get("default") or "").strip()
+        runtime_template_vars = obj.get("template_variables")
+        preserve_runtime_empty_text = (
+            (default_name == "runtimes" or default_name.startswith("overlay_runtimes")) and isinstance(runtime_template_vars, dict) and runtime_template_vars.get("text") == ""
+        )
         for k, v in obj.items():
             if k == "valid":
                 continue
             cleaned_value = _clean_data(v, dump_name)
+            if k == "template_variables" and preserve_runtime_empty_text:
+                if cleaned_value is _EMPTY_OUTPUT:
+                    cleaned_value = {}
+                cleaned_value = {"text": "", **cleaned_value}
             if cleaned_value is _EMPTY_OUTPUT:
                 continue
             cleaned_dict[k] = cleaned_value
