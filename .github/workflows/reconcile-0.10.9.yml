@@ -1,0 +1,49 @@
+name: Reconcile 0.10.9 Release Branches
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: reconcile-0.10.9-release-branches
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create App Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
+      - name: Check Out Develop
+        uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: develop
+          fetch-depth: 0
+
+      - name: Verify, Reconcile, and Synchronize
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin master hotfix backup/master-before-0.10.9
+
+          test "$(git rev-parse HEAD)" = "2d0caf64e56d6a678c98e047f7ed94b0ffc2c946"
+          test "$(git rev-parse origin/master)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
+          test "$(git rev-parse origin/hotfix)" = "a75002c887eff73532efbf7031d3581a3629ce06"
+          test "$(git rev-parse origin/backup/master-before-0.10.9)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git merge --strategy=ours --no-edit origin/master -m "Reconcile master history for 0.10.9 release"
+
+          git diff --exit-code HEAD^1 HEAD
+          git merge-base --is-ancestor origin/master HEAD
+          git merge-base --is-ancestor origin/hotfix HEAD
+
+          git push origin HEAD:develop
+          git push origin HEAD:master
+          git push origin HEAD:hotfix
