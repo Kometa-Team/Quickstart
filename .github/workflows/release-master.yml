@@ -8,6 +8,10 @@ on:
         description: Choose which type of release to perform.
         options: [ major, minor, patch ]
         default: patch
+      reconcile_0_10_9:
+        type: boolean
+        description: Reconcile the interrupted 0.10.9 release without incrementing the version.
+        default: false
 
 jobs:
 
@@ -32,6 +36,28 @@ jobs:
 
       - name: Create Release Commit and Synchronize Branches
         run: |
+          if [[ "${{ github.event.inputs.reconcile_0_10_9 }}" == "true" ]]; then
+              git config --local user.email "action@github.com"
+              git config --local user.name "GitHub Action"
+              git fetch origin master hotfix backup/master-before-0.10.9
+
+              test "$(cat VERSION)" = "0.10.9"
+              test "$(cat BUILDNUM)" = "0"
+              test "$(git rev-parse origin/master)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
+              test "$(git rev-parse origin/hotfix)" = "a75002c887eff73532efbf7031d3581a3629ce06"
+              test "$(git rev-parse origin/backup/master-before-0.10.9)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
+
+              git merge --strategy=ours --no-edit origin/master -m "Reconcile master history for 0.10.9 release"
+              git diff --exit-code HEAD^1 HEAD
+              git merge-base --is-ancestor origin/master HEAD
+              git merge-base --is-ancestor origin/hotfix HEAD
+
+              git push origin HEAD:develop
+              git push origin HEAD:master
+              git push origin HEAD:hotfix
+              exit 0
+          fi
+
           version=$(cat VERSION)
           echo "CURRENT_VERSION: '${version}'"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
