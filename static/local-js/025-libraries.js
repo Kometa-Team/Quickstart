@@ -6838,6 +6838,9 @@ function initializeLibraryCardControls (card, libraryId) {
   libraryCardInitializing += 1
   if (card) card.dataset.libraryInitializing = 'true'
   try {
+    if (typeof EventHandler !== 'undefined' && EventHandler.restoreTemplateVariableSelects) {
+      EventHandler.restoreTemplateVariableSelects(card)
+    }
     initPlaylistKeyToggleGroups(card)
     initPlaylistUserPickers(card)
     initPlaylistFilesEditors(card)

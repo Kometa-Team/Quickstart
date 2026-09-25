@@ -141,6 +141,30 @@ describe('EventHandler.attachLibraryListeners: setup', () => {
   })
 })
 
+describe('EventHandler.restoreTemplateVariableSelects', () => {
+  it('restores a saved value in dynamically inserted template controls', () => {
+    const scope = document.createElement('div')
+    scope.innerHTML = '<select class="template-variable-select" name="rating1_image" data-selected="letterboxd"><option value="default" selected>Default</option><option value="letterboxd">Letterboxd</option></select>'
+    document.body.appendChild(scope)
+
+    const select = scope.querySelector('select')
+    expect(select.value).toBe('default')
+
+    window.EventHandler.restoreTemplateVariableSelects(scope)
+
+    expect(select.value).toBe('letterboxd')
+  })
+
+  it('does not change template controls outside the requested scope', () => {
+    document.body.innerHTML = '<div id="active-card"><select class="template-variable-select" data-selected="imdb"><option value="default" selected>Default</option><option value="imdb">IMDb</option></select></div><div id="other-card"><select class="template-variable-select" data-selected="letterboxd"><option value="default" selected>Default</option><option value="letterboxd">Letterboxd</option></select></div>'
+
+    window.EventHandler.restoreTemplateVariableSelects(document.getElementById('active-card'))
+
+    expect(document.querySelector('#active-card select').value).toBe('imdb')
+    expect(document.querySelector('#other-card select').value).toBe('default')
+  })
+})
+
 describe('EventHandler.attachLibraryListeners: idempotency', () => {
   it('marks a library-checkbox with data-listener-added="true" after wiring', () => {
     const { checkbox } = buildLibraryCard({ libraryId: 'mov-library_1' })
