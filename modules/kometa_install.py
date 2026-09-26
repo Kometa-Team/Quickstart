@@ -215,6 +215,7 @@ def build_kometa_install_context(config_name=None):
     primary_path = selection.get("primary_path")
     config_dir = selection.get("config_dir")
     log_dir = selection.get("log_dir")
+    runtime_state = probe_kometa_root_state(selected_root) if selected_root and selected_root.exists() else {}
     return {
         "kometa_install_mode": selection["install_mode"],
         "kometa_existing_root": selection["existing_root"],
@@ -236,6 +237,9 @@ def build_kometa_install_context(config_name=None):
         "kometa_active_log_dir_display": str(log_dir) if log_dir else "",
         "kometa_selection_valid": bool(selection["selection_valid"]),
         "kometa_install_status_message": selection["status_message"],
+        "kometa_detected_branch": runtime_state.get("kometa_detected_branch", ""),
+        "kometa_effective_branch": runtime_state.get("kometa_effective_branch", ""),
+        "kometa_legacy_nightly_branch": bool(runtime_state.get("kometa_legacy_nightly_branch")),
         "kometa_is_managed_install": bool(selection["is_managed"]),
         "kometa_is_external_install": bool(selection["is_external"]),
         "kometa_mode_label": selection["mode_label"],
@@ -533,11 +537,18 @@ def probe_kometa_root_state(path_obj):
     requirements = p / "requirements.txt"
     config_dir = p / "config"
     version_value = "Unknown"
+    branch_marker = ""
     if version_path.exists():
         try:
             version_value = version_path.read_text(encoding="utf-8").strip() or "Unknown"
         except Exception:
             version_value = "Unknown"
+    try:
+        branch_marker = (p / ".kometa_branch").read_text(encoding="utf-8").strip().lower()
+    except (OSError, UnicodeError):
+        branch_marker = ""
+    detected_branch = branch_marker or str(helpers.detect_git_branch(p, default=None) or "").strip().lower()
+    effective_branch = helpers.normalize_kometa_branch_override(detected_branch)
 
     return {
         "kometa_root": kometa_root_posix,
@@ -545,6 +556,9 @@ def probe_kometa_root_state(path_obj):
         "venv_python": python_bin.as_posix(),
         "venv_python_display": str(python_bin),
         "kometa_version": version_value,
+        "kometa_detected_branch": detected_branch,
+        "kometa_effective_branch": effective_branch,
+        "kometa_legacy_nightly_branch": detected_branch == "nightly",
         "root_exists": p.exists(),
         "config_dir_exists": config_dir.exists(),
         "kometa_installed": kometa_py.exists() and requirements.exists(),

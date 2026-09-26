@@ -1,7 +1,7 @@
 from modules import helpers
 
 
-def test_json_schema_sync_manifest_includes_live_nightly_builders_and_schema_files():
+def test_json_schema_sync_manifest_includes_live_develop_builders_and_schema_files():
     synced_files = {local_path for local_path, _remote_path in helpers.JSON_SCHEMA_SYNC_FILES}
 
     expected = {

@@ -119,3 +119,36 @@ class TestRenderAdvisory:
             # No placeholder should leak through -- either the url was
             # substituted or the body never contained one.
             assert "{url_line}" not in rendered
+
+
+def test_nightly_branch_log_line_builds_migration_advisory():
+    from modules.logscan_line_scan import scan_content
+
+    analyzer = _FakeAnalyzer()
+    analyzer.server_versions = []
+    buckets = scan_content(
+        analyzer,
+        "Kometa Version: 2.0.0-nightly1\nhttps://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/VERSION\n",
+    )
+
+    assert buckets["nightly_branch_warnings"] == [1, 2]
+    rendered = render_advisory(_ADVISORY["nightly_branch_warnings"], buckets["nightly_branch_warnings"], analyzer)
+    assert "RETIRED KOMETA NIGHTLY BRANCH" in rendered
+    assert "`develop`" in rendered
+    assert "`master`" in rendered
+
+
+def test_nightly_branch_warning_is_counted_as_update_guidance():
+    from modules.logscan_issue_counts import build_issue_counts
+    from modules.logscan_line_scan import scan_content
+
+    analyzer = _FakeAnalyzer()
+    analyzer.server_versions = []
+    buckets = scan_content(analyzer, "Branch: nightly\n")
+    counts = build_issue_counts(
+        buckets,
+        {"wsl": None, "time": None, "memory": None, "db_cache": None},
+    )
+
+    assert counts["update_nightly_branch"] == 1
+    assert counts["update_version"] == 1

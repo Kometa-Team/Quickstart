@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const kometaInstallSaveButton = document.getElementById('start-kometa-install-save')
   const kometaInstallStatus = document.getElementById('start-kometa-install-status')
   const kometaInstallMessage = document.getElementById('start-kometa-install-message')
+  const kometaNightlyWarning = document.getElementById('start-kometa-nightly-warning')
   const kometaExistingRootWrap = document.getElementById('start-kometa-existing-root-wrap')
   const kometaExistingRootInput = document.getElementById('start-kometa-existing-root')
   const kometaExternalConfigWrap = document.getElementById('start-kometa-external-config-wrap')
@@ -256,6 +257,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function syncStartKometaNightlyWarning () {
+    if (!kometaNightlyWarning || !kometaInstallSettings) return
+    const mode = getStartKometaInstallMode()
+    const persisted = getPersistedStartKometaInstallChoice()
+    const current = getCurrentStartKometaInstallChoice()
+    const selectedRuntimeChanged = current.mode !== persisted.mode ||
+      (current.mode === 'existing' && current.existingRoot !== persisted.existingRoot)
+    const detected = String(kometaInstallSettings.dataset.detectedBranch || '').trim().toLowerCase()
+    const showWarning = !selectedRuntimeChanged && mode !== 'external' && detected === 'nightly'
+    kometaNightlyWarning.classList.toggle('d-none', !showWarning)
+    if (!showWarning) return
+    const action = mode === 'existing'
+      ? 'Switch this existing install to develop or master outside Quickstart.'
+      : 'Use Update Kometa to finish migrating its branch metadata to develop, or select master.'
+    kometaNightlyWarning.textContent = `Retired Kometa branch detected: this install reports nightly. Quickstart will treat it as develop. ${action}`
+  }
   function syncStartKometaInstallUi () {
     if (!kometaInstallSettings) return
     const mode = getStartKometaInstallMode()
@@ -283,6 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
     syncStartKometaModePill()
+    syncStartKometaNightlyWarning()
   }
 
   function normalizeKometaPathInput (value) {
@@ -375,6 +393,8 @@ document.addEventListener('DOMContentLoaded', function () {
       kometaInstallSettings.dataset.externalConfigRoot = normalizeKometaPathInput(data.external_config_root)
       kometaInstallSettings.dataset.externalLogRoot = normalizeKometaPathInput(data.external_log_root)
       kometaInstallSettings.dataset.selectedRoot = data.kometa_primary_path_display || data.kometa_config_dir_display || data.kometa_root_display || data.kometa_root || ''
+      kometaInstallSettings.dataset.detectedBranch = data.kometa_detected_branch || ''
+      kometaInstallSettings.dataset.effectiveBranch = data.kometa_effective_branch || ''
       if (window.pageInfo) {
         window.pageInfo.kometa_install_mode = data.install_mode || mode
         window.pageInfo.kometa_existing_root = normalizeKometaPathInput(data.existing_root)
@@ -394,6 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
         kometaInstallMessage.textContent = data.message || 'Kometa choice saved.'
       }
       syncStartKometaModePill()
+      syncStartKometaNightlyWarning()
       syncStartKometaInstallSaveState({ statusText: 'Saved.' })
       if (typeof showToast === 'function') {
         showToast('success', data.message || 'Kometa choice saved.')

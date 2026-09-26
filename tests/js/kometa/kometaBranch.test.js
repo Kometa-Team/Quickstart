@@ -95,7 +95,6 @@ function installBranchDom (opts = {}) {
       <option value=""></option>
       <option value="master">master</option>
       <option value="develop">develop</option>
-      <option value="nightly">nightly</option>
     </select>
     <span id="kometa-branch-selection"></span>
     <span id="kometa-effective-branch"></span>
@@ -140,8 +139,8 @@ describe('getKometaBranchOverride', () => {
     expect(getKometaBranchOverride()).toBe('')
   })
 
-  it('accepts the three valid branch names', () => {
-    for (const branch of ['master', 'develop', 'nightly']) {
+  it('accepts the two valid branch names', () => {
+    for (const branch of ['master', 'develop']) {
       installBranchDom({ overrideValue: branch })
       expect(getKometaBranchOverride()).toBe(branch)
     }
@@ -202,11 +201,11 @@ describe('getAutoKometaBranch', () => {
     expect(getAutoKometaBranch()).toBe('master')
   })
 
-  it("returns 'nightly' when Quickstart is on anything else", () => {
+  it("returns 'develop' when Quickstart is on anything else", () => {
     installBranchDom({ qsBranch: 'develop' })
-    expect(getAutoKometaBranch()).toBe('nightly')
+    expect(getAutoKometaBranch()).toBe('develop')
     installBranchDom({ qsBranch: 'feature/xyz' })
-    expect(getAutoKometaBranch()).toBe('nightly')
+    expect(getAutoKometaBranch()).toBe('develop')
   })
 })
 
@@ -220,7 +219,7 @@ describe('getEffectiveKometaBranch', () => {
     installBranchDom({ qsBranch: 'master', overrideValue: '' })
     expect(getEffectiveKometaBranch()).toBe('master')
     installBranchDom({ qsBranch: 'develop', overrideValue: '' })
-    expect(getEffectiveKometaBranch()).toBe('nightly')
+    expect(getEffectiveKometaBranch()).toBe('develop')
   })
 
   it('override wins over auto even when auto would agree', () => {
@@ -248,8 +247,8 @@ describe('getKometaVersionSourceUrlValue', () => {
 
 describe('getKometaZipSourceUrlValue', () => {
   it('builds the codeload ZIP URL for the given branch', () => {
-    expect(getKometaZipSourceUrlValue('nightly')).toBe(
-      'https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/nightly'
+    expect(getKometaZipSourceUrlValue('develop')).toBe(
+      'https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/develop'
     )
   })
 })
@@ -264,6 +263,14 @@ describe('loadSavedKometaBranchOverride', () => {
     storage.set(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY, 'develop')
     loadSavedKometaBranchOverride()
     expect(document.getElementById('kometa-branch-override').value).toBe('develop')
+  })
+
+  it('migrates a saved nightly override to develop', () => {
+    installBranchDom({ overrideValue: '' })
+    storage.set(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY, 'nightly')
+    loadSavedKometaBranchOverride()
+    expect(document.getElementById('kometa-branch-override').value).toBe('develop')
+    expect(storage.get(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY)).toBe('develop')
   })
 
   it('coerces an invalid stored value to empty (auto)', () => {
@@ -289,9 +296,9 @@ describe('loadSavedKometaBranchOverride', () => {
 
 describe('saveKometaBranchOverride', () => {
   it('writes a valid selection to localStorage', () => {
-    installBranchDom({ overrideValue: 'nightly' })
+    installBranchDom({ overrideValue: 'develop' })
     saveKometaBranchOverride()
-    expect(storage.get(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY)).toBe('nightly')
+    expect(storage.get(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY)).toBe('develop')
   })
 
   it('removes the key when the selection is empty (auto)', () => {
@@ -337,10 +344,10 @@ describe('syncKometaSourceStatus', () => {
     expect(document.getElementById('kometa-branch-selection').textContent).toBe('Auto')
   })
 
-  it("renders selection label 'Override (nightly)' when override set", () => {
-    installBranchDom({ overrideValue: 'nightly' })
+  it("renders selection label 'Override (develop)' when override set", () => {
+    installBranchDom({ overrideValue: 'develop' })
     syncKometaSourceStatus()
-    expect(document.getElementById('kometa-branch-selection').textContent).toBe('Override (nightly)')
+    expect(document.getElementById('kometa-branch-selection').textContent).toBe('Override (develop)')
   })
 
   it("renders effective branch computed from override", () => {
@@ -375,10 +382,10 @@ describe('syncKometaSourceStatus', () => {
   })
 
   it('also refreshes the branch rollup badge (side effect)', () => {
-    installBranchDom({ qsBranch: 'master', overrideValue: 'nightly' })
+    installBranchDom({ qsBranch: 'master', overrideValue: 'develop' })
     syncKometaSourceStatus()
     const badge = document.getElementById('kometa-branch-rollup-badge')
-    expect(badge.textContent).toBe('NIGHTLY')
+    expect(badge.textContent).toBe('DEVELOP')
     expect(badge.classList.contains('text-bg-warning')).toBe(true)
   })
 })
@@ -408,11 +415,11 @@ describe('syncKometaBranchRollupBadge', () => {
   })
 
   it('sets a title attribute describing the mode + effective branch', () => {
-    installBranchDom({ qsBranch: 'master', overrideValue: 'nightly' })
+    installBranchDom({ qsBranch: 'master', overrideValue: 'develop' })
     syncKometaBranchRollupBadge()
     const title = document.getElementById('kometa-branch-rollup-badge').getAttribute('title')
-    expect(title).toContain('override selected: nightly')
-    expect(title).toContain('Effective branch: nightly')
+    expect(title).toContain('override selected: develop')
+    expect(title).toContain('Effective branch: develop')
   })
 
   it("auto-mode title mentions 'auto' and the effective branch", () => {
@@ -420,7 +427,7 @@ describe('syncKometaBranchRollupBadge', () => {
     syncKometaBranchRollupBadge()
     const title = document.getElementById('kometa-branch-rollup-badge').getAttribute('title')
     expect(title).toContain('mode: auto')
-    expect(title).toContain('Effective branch: nightly')
+    expect(title).toContain('Effective branch: develop')
   })
 
   it('is a no-op when the badge is missing', () => {

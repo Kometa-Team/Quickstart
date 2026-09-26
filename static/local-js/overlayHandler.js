@@ -3931,7 +3931,7 @@ const OverlayHandler = {
       setTemplateNumber(cfg, 'back_height', 60, emit)
     }
 
-    const RATINGS_IMAGE_BASE = 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/rating/'
+    const RATINGS_IMAGE_BASE = 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/develop/defaults/overlays/images/rating/'
     const RATING_LABEL_MAP = {
       anidb: 'AniDB',
       imdb: 'IMDb',

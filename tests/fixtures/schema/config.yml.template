@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/kometa-team/kometa/nightly/json-schema/config-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kometa-team/kometa/develop/json-schema/config-schema.json
 ## Do not remove the above line
 ## This file is a template remove the .template to use the file
 

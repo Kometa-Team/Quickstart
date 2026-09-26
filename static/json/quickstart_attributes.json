@@ -9,7 +9,7 @@
         "show"
       ],
       "title": "Separator Style",
-      "wiki": "https://kometa.wiki/en/nightly/defaults/separators/#separators-default-collection-files",
+      "wiki": "https://kometa.wiki/en/develop/defaults/separators/#separators-default-collection-files",
       "description": "Separators are like index cards at a library, to categorize Collections in your library.<br><br> To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br><b>Warning</b>: Plex does not officially support blank collections, which is what separators are. Select a Placeholder to be safe.",
       "tooltip_variant": "danger",
       "container_class": "",
@@ -121,7 +121,7 @@
       "title": "Language",
       "key": "language",
       "description": "Select the language to apply to the Library collections.",
-      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#attributes",
+      "wiki": "https://kometa.wiki/en/develop/config/libraries/#attributes",
       "tooltip_variant": "info",
       "container_class": "",
       "yml_location": "template_variables",
@@ -197,7 +197,7 @@
         "show"
       ],
       "title": "Report Path",
-      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#report-path",
+      "wiki": "https://kometa.wiki/en/develop/config/libraries/#report-path",
       "description": "Defines a relative path to a YAML file that will store reports (e.g., missing, edited, deleted collections). The path should be relative to your configuration folder. Example: <code>config/missing/Movies_report.yml</code>.",
       "tooltip_variant": "info",
       "placeholder": "e.g. config/missing/Movies_report.yml",
@@ -213,7 +213,7 @@
         "show"
       ],
       "title": "Library Schedule",
-      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#attributes",
+      "wiki": "https://kometa.wiki/en/develop/config/libraries/#attributes",
       "description": "Define when this library runs using Kometa schedule syntax such as <code>weekly(saturday)</code>.",
       "tooltip_variant": "info",
       "container_class": "",
@@ -229,7 +229,7 @@
         "show"
       ],
       "title": "Auto Sort Hubs",
-      "wiki": "https://kometa.wiki/en/nightly/config/settings/?h=auto_sort#auto-sort-hubs",
+      "wiki": "https://kometa.wiki/en/develop/config/settings/?h=auto_sort#auto-sort-hubs",
       "description": "Override Plex Recommendation Hub sorting for this library. This requires Plex Pass. Leave blank to keep Plex or global Kometa behavior.",
       "tooltip_variant": "info",
       "container_class": "",
@@ -279,7 +279,7 @@
         "show"
       ],
       "title": "Remove Overlays",
-      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#remove-overlays",
+      "wiki": "https://kometa.wiki/en/develop/config/libraries/#remove-overlays",
       "description": "Remove Overlays will remove all overlays from your library. This toggle will take priority over any previous selections.",
       "tooltip_variant": "info",
       "container_class": "",
@@ -295,7 +295,7 @@
         "show"
       ],
       "title": "Overlay Schedule",
-      "wiki": "https://kometa.wiki/en/nightly/config/schedule/#scheduling-overlays",
+      "wiki": "https://kometa.wiki/en/develop/config/schedule/#scheduling-overlays",
       "description": "Define when overlays run for this library using Kometa schedule syntax such as <code>weekly(saturday)</code>.<br><br><b>Warning:</b> Overlay files cannot be scheduled individually. Use <code>schedule_overlays</code> at the library level to control all overlay files for this library.",
       "tooltip_variant": "info",
       "container_class": "",
@@ -311,7 +311,7 @@
         "show"
       ],
       "title": "Reset Overlays",
-      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#reset-overlays",
+      "wiki": "https://kometa.wiki/en/develop/config/libraries/#reset-overlays",
       "description": "Reset Overlays will grab a new base image from the source that you choose, and then use that as the source for applying your overlays.<br><br><b>Warning:</b> Once you have done a run with Reset Overlays, you should then set this value to None or remove the reset_overlays line(s) from your config.yml. If you do not do this, you will end up in a loop of your overlays being removed, a new image grabbed, and your overlays reapplying.",
       "tooltip_variant": "danger",
       "container_class": "",
@@ -340,7 +340,7 @@
         "show"
       ],
       "title": "Assets for All",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#assets-for-all",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#assets-for-all",
       "description": "Searches asset directories for images for all items in the library.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -354,7 +354,7 @@
         "show"
       ],
       "title": "Asset Directory",
-      "wiki": "https://kometa.wiki/en/nightly/kometa/guides/assets/",
+      "wiki": "https://kometa.wiki/en/develop/kometa/guides/assets/",
       "description": "Specify the library-level asset directory Kometa should search for posters and backgrounds in this library. Enter one path per line if you want to provide multiple asset directories.",
       "tooltip_variant": "info",
       "placeholder": "e.g. C:\\\\Users\\\\bullmoose20\\\\ppm\\\\assets5\\\\test_tv_lib",
@@ -371,7 +371,7 @@
         "show"
       ],
       "title": "Prioritize Assets",
-      "wiki": "https://kometa.wiki/en/nightly/config/settings/#prioritize-assets",
+      "wiki": "https://kometa.wiki/en/develop/config/settings/#prioritize-assets",
       "description": "When determining which image to use on an item in this library, prioritize the asset_directory over all other image sources.",
       "tooltip_variant": "info",
       "yml_location": "library_settings"
@@ -385,7 +385,7 @@
         "show"
       ],
       "title": "Assets for All Collections",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#assets-for-all-collections",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#assets-for-all-collections",
       "description": "Used to search the asset directories for images for all unmanaged and/or unconfigured collections in the library.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -399,7 +399,7 @@
         "show"
       ],
       "title": "Delete Collections",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#delete-collections",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#delete-collections",
       "description": "Deletes collections based on a set of given attributes. The Collection must match all set attributes to be deleted.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -437,7 +437,7 @@
       ],
       "accordion": "library",
       "title": "Mass Genre Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-genre-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-genre-update",
       "description": "Updates every item's genres using selected sources or strings.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -538,7 +538,7 @@
       ],
       "accordion": "library",
       "title": "Mass Content Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-content-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-content-rating-update",
       "description": "Update the content rating (PG, R, etc.) from various sources.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -614,7 +614,7 @@
       ],
       "accordion": "library",
       "title": "Mass Original Title Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-original-title-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-original-title-update",
       "description": "Update original title fields for items.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -680,7 +680,7 @@
       ],
       "accordion": "library",
       "title": "Mass Studio Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-studio-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-studio-update",
       "description": "Updates the studio tag using selected sources.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -736,7 +736,7 @@
       ],
       "accordion": "library",
       "title": "Mass Originally Available Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-originally-available-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-originally-available-update",
       "description": "Update the <code>originally available</code> date for items.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -812,7 +812,7 @@
       ],
       "accordion": "library",
       "title": "Mass Added At Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-added-at-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-added-at-update",
       "description": "Updates the <code>added_at</code> field of items in your library using selected sources. This field controls where the item appears in Recently Added views.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -888,7 +888,7 @@
       ],
       "accordion": "library",
       "title": "Mass Audience Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-star-rating-update",
       "description": "Update audience rating from different sources.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -1049,7 +1049,7 @@
       ],
       "accordion": "library",
       "title": "Mass Critic Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-star-rating-update",
       "description": "Update critic rating from different sources.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -1210,7 +1210,7 @@
       ],
       "accordion": "library",
       "title": "Mass User Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-star-rating-update",
       "description": "Update user rating from different sources.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -1370,7 +1370,7 @@
       ],
       "accordion": "library",
       "title": "Mass Episode Audience Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the audience rating of all episodes in the library using the selected source(s).",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -1435,7 +1435,7 @@
       ],
       "accordion": "library",
       "title": "Mass Episode Critic Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the critic rating of all episodes in the library using the selected source(s).",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -1500,7 +1500,7 @@
       ],
       "accordion": "library",
       "title": "Mass Episode User Rating Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the user rating of all episodes in the library using the selected source(s).",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -1565,7 +1565,7 @@
         "movie"
       ],
       "title": "Mass Poster Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-poster-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-poster-update",
       "description": "Updates the poster of each item in the library based on the selected source and optional toggles.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -1622,7 +1622,7 @@
         "show"
       ],
       "title": "Mass Poster Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-poster-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-poster-update",
       "description": "Updates the poster of each item in the library based on the selected source and optional toggles.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -1689,7 +1689,7 @@
         "movie"
       ],
       "title": "Mass Background Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-background-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-background-update",
       "description": "Updates the background of each item in the library based on the selected source and optional toggles.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -1741,7 +1741,7 @@
         "show"
       ],
       "title": "Mass Background Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-background-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-background-update",
       "description": "Updates the background of each item in the library based on the selected source and optional toggles.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -1804,7 +1804,7 @@
         "show"
       ],
       "title": "Mass Logo Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-metadata-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-metadata-update",
       "description": "Updates the logo of each item in the library based on the selected source and optional toggles.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -1862,7 +1862,7 @@
         "show"
       ],
       "title": "Mass Square Art Update",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-metadata-update",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-metadata-update",
       "description": "Updates square art for each item in the library based on the selected source and optional toggles.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -1916,7 +1916,7 @@
         "show"
       ],
       "title": "Mass IMDb Parental Labels",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-imdb-parental-labels",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-imdb-parental-labels",
       "description": "Adds IMDb Parental labels of every item in the library.",
       "tooltip_variant": "info",
       "options": [
@@ -1948,7 +1948,7 @@
         "show"
       ],
       "title": "Mass Collection Mode",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-collection-mode",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#mass-collection-mode",
       "description": "Controls the collection mode behavior for all collections.",
       "tooltip_variant": "info",
       "options": [
@@ -1984,7 +1984,7 @@
         "show"
       ],
       "title": "Collection Mode",
-      "wiki": "https://kometa.wiki/en/nightly/files/updates/?h=collection_mode",
+      "wiki": "https://kometa.wiki/en/develop/files/updates/?h=collection_mode",
       "description": "Changes the Collection Mode.",
       "tooltip_variant": "info",
       "options": [
@@ -2019,7 +2019,7 @@
         "music"
       ],
       "title": "Update Blank Track Titles",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#update-blank-track-titles",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#update-blank-track-titles",
       "description": "Updates blank track titles of every item in the library.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -2033,7 +2033,7 @@
         "show"
       ],
       "title": "Remove Title Parentheses",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#remove-title-parentheses",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#remove-title-parentheses",
       "description": "Removes title parentheses of every item in the library.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -2047,7 +2047,7 @@
         "show"
       ],
       "title": "Split Duplicates",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#split-duplicates",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#split-duplicates",
       "description": "Splits all duplicate items found in this library.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -2060,7 +2060,7 @@
         "movie"
       ],
       "title": "Radarr Add All",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-add-all",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#radarr-add-all",
       "description": "Adds every item in the library to Radarr.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -2073,7 +2073,7 @@
       ],
       "accordion": "library",
       "title": "Radarr Remove by Tag",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-remove-by-tag",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#radarr-remove-by-tag",
       "description": "Removes items from Radarr that are tagged with any of the specified tags.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -2091,7 +2091,7 @@
         "show"
       ],
       "title": "Sonarr Add All",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-add-all",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#sonarr-add-all",
       "description": "Adds every item in the library to Sonarr.",
       "tooltip_variant": "info",
       "yml_location": "attribute"
@@ -2104,7 +2104,7 @@
       ],
       "accordion": "library",
       "title": "Sonarr Remove by Tag",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-remove-by-tag",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#sonarr-remove-by-tag",
       "description": "Removes items from Sonarr that are tagged with any of the specified tags.",
       "tooltip_variant": "info",
       "has_custom_string": true,
@@ -2123,7 +2123,7 @@
         "show"
       ],
       "title": "Genre Mapper",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#genre-mapper",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#genre-mapper",
       "description": "Maps input genres to desired output genres or removes them.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -2139,7 +2139,7 @@
         "show"
       ],
       "title": "Content Rating Mapper",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#content-rating-mapper",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#content-rating-mapper",
       "description": "Maps input content ratings to desired output content ratings or removes them.",
       "tooltip_variant": "info",
       "container_class": "accordion",
@@ -2155,7 +2155,7 @@
         "show"
       ],
       "title": "Metadata Backup",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#metadata-backup",
+      "wiki": "https://kometa.wiki/en/develop/config/operations/#metadata-backup",
       "description": "Backs up metadata to a YAML file. You can optionally set the path, exclude attributes, sync tag metadata, or add placeholders for items with no changes.",
       "tooltip_variant": "info",
       "container_class": "accordion",

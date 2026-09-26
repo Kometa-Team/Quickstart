@@ -11,7 +11,7 @@ from modules.helpers._constants import CONFIG_DIR, IMAGEMAID_GITHUB_BASE_URL
 from modules.helpers._zip_update import IMAGEMAID_GITHUB_API_BRANCH
 
 
-def get_kometa_remote_version(branch="nightly"):
+def get_kometa_remote_version(branch="develop"):
     import requests
 
     url = f"https://raw.githubusercontent.com/Kometa-Team/Kometa/{branch}/VERSION"
@@ -58,7 +58,7 @@ def get_kometa_local_branch(kometa_root=None):
     return normalize_kometa_branch_override(_read_text(kometa_root / ".kometa_branch"))
 
 
-def get_kometa_remote_sha(branch="nightly"):
+def get_kometa_remote_sha(branch="develop"):
     from modules.helpers._zip_update import _get_upstream_sha
 
     return _get_upstream_sha(branch, [])

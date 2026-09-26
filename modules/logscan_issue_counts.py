@@ -105,6 +105,7 @@ def build_issue_counts(buckets, platform_recs):
     new_version_found_errors = buckets["new_version_found_errors"]
     new_plexapi_version_found_errors = buckets["new_plexapi_version_found_errors"]
     git_kometa_errors = buckets["git_kometa_errors"]
+    nightly_branch_warnings = buckets["nightly_branch_warnings"]
     anidb69_errors = buckets["anidb69_errors"]
     anidb_auth_errors = buckets["anidb_auth_errors"]
     internal_server_errors = buckets["internal_server_errors"]
@@ -154,7 +155,7 @@ def build_issue_counts(buckets, platform_recs):
         "convert_issues": len(convert_errors),
         "image_issues": len(corrupt_image_errors) + len(image_size),
         "runtime_behavior": len(run_order_errors) + len(checkFiles) + len(timeout_errors),
-        "update_version": len(new_version_found_errors) + len(new_plexapi_version_found_errors) + len(git_kometa_errors),
+        "update_version": len(new_version_found_errors) + len(new_plexapi_version_found_errors) + len(git_kometa_errors) + len(nightly_branch_warnings),
         "platform_system": (
             (1 if wsl_recommendation else 0) + (1 if kometa_time_recommendation else 0) + (1 if kometa_mem_recommendation else 0) + (1 if kometa_db_cache_recommendation else 0)
         ),
@@ -204,6 +205,7 @@ def build_issue_counts(buckets, platform_recs):
         "update_kometa": len(new_version_found_errors),
         "update_plexapi": len(new_plexapi_version_found_errors),
         "update_git": len(git_kometa_errors),
+        "update_nightly_branch": len(nightly_branch_warnings),
         "platform_wsl": 1 if wsl_recommendation else 0,
         "platform_kometa_time": 1 if kometa_time_recommendation else 0,
         "platform_memory": 1 if kometa_mem_recommendation else 0,

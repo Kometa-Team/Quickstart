@@ -36,7 +36,7 @@ def test_tracearr_setup_page_renders_configured_url(client):
 
     assert response.status_code == 200
     assert b"Public API Key" in response.data
-    assert b"requires Kometa nightly" in response.data
+    assert b"requires Kometa develop" in response.data
     assert b'src="/static/images/service-icons/tracearr.png"' in response.data
     assert f'value="{configured_url}"'.encode() in response.data
     assert b"192.168.1.12:3019" not in response.data
@@ -80,7 +80,7 @@ def test_tracearr_settings_round_trip_into_generated_yaml(app, monkeypatch):
     monkeypatch.setattr(
         output.helpers,
         "check_for_update",
-        lambda: {"kometa_branch": "nightly", "branch": "develop", "local_version": "test", "running_on": "Local-Tests"},
+        lambda: {"kometa_branch": "develop", "branch": "develop", "local_version": "test", "running_on": "Local-Tests"},
     )
     monkeypatch.setattr(output.helpers, "get_plex_summary", lambda: "Plex summary unavailable")
     monkeypatch.setattr(output.helpers, "get_quickstart_settings_summary", lambda: [])

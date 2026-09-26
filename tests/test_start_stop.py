@@ -739,7 +739,7 @@ def test_launch_kometa_command_sets_branch_name_from_local_branch_metadata(tmp_p
     venv_dir.mkdir(parents=True, exist_ok=True)
     (kometa_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
     (venv_dir / ("python.exe" if is_win else "python3")).write_text("", encoding="utf-8")
-    (kometa_root / ".kometa_branch").write_text("nightly", encoding="utf-8")
+    (kometa_root / ".kometa_branch").write_text("develop", encoding="utf-8")
     pid_file = tmp_path / "kometa.pid"
     config_path = kometa_root / "config" / "config.yml"
     popen_calls = {}
@@ -770,7 +770,7 @@ def test_launch_kometa_command_sets_branch_name_from_local_branch_metadata(tmp_p
     assert pid_file.read_text(encoding="utf-8") == "4321"
     assert popen_calls["cwd"] == str(kometa_root)
     assert popen_calls["start_new_session"] is True
-    assert popen_calls["env"]["BRANCH_NAME"] == "nightly"
+    assert popen_calls["env"]["BRANCH_NAME"] == "develop"
 
 
 def test_launch_kometa_command_clears_inherited_branch_name_without_local_metadata(tmp_path, monkeypatch, qs_module):
@@ -1685,3 +1685,17 @@ def test_build_imagemaid_command_parts_only_adds_supported_optional_flags(tmp_pa
 
     assert "--no-verify-ssl" in parts
     assert "--overlays-only" in parts
+
+
+def test_nightly_kometa_runtime_branch_is_migrated_to_develop(tmp_path, monkeypatch):
+    from modules.process_lifecycle import _build_kometa_runtime_env
+
+    kometa_root = tmp_path / "kometa"
+    kometa_root.mkdir()
+    (kometa_root / ".kometa_branch").write_text("nightly", encoding="utf-8")
+    monkeypatch.setenv("BRANCH_NAME", "nightly")
+
+    env, branch = _build_kometa_runtime_env(kometa_root)
+
+    assert branch == "develop"
+    assert env["BRANCH_NAME"] == "develop"

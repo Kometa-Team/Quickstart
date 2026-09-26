@@ -56,13 +56,15 @@ from modules.process_markers import (
 )
 from modules.process_run_context import update_imagemaid_run_context
 
-_KOMETA_RUNTIME_BRANCHES = {"master", "develop", "nightly"}
+_KOMETA_RUNTIME_BRANCHES = {"master", "develop"}
 _LAUNCHED_PROCESSES = {}
 _LAUNCHED_PROCESSES_LOCK = threading.Lock()
 
 
 def _normalize_kometa_runtime_branch(value):
     branch = str(value or "").strip().lower()
+    if branch == "nightly":
+        branch = "develop"
     return branch if branch in _KOMETA_RUNTIME_BRANCHES else None
 
 

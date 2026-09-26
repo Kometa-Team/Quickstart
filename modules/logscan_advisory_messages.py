@@ -103,6 +103,7 @@ def build_advisory_messages(
     flixpatrol_errors,
     flixpatrol_paywall,
     git_kometa_errors,
+    nightly_branch_warnings,
     pmm_legacy_errors,
     image_size,
     internal_server_errors,
@@ -211,12 +212,13 @@ def build_advisory_messages(
             "FlixPatrol decided to implement a Paywall which causes Kometa to no longer gather data from them.\n"
             "Even if you pay, this will not work with Kometa.\n"
             f"For more information on the FlixPatrol paywall, {url_line}\n"
-            f"As of Kometa 1.20.0-nightly34 (you are on {analyzer.current_kometa_version}), we have eliminated FlixPatrol. See this announcement: {url_line2}\n"
+            f"As of Kometa 1.20.0-develop34 (you are on {analyzer.current_kometa_version}), we have eliminated FlixPatrol. See this announcement: {url_line2}\n"
             f"{len(flixpatrol_paywall)} line(s) with `- pmm: flixpatrol` detected. Line number(s): {formatted_errors}"
         )
         special_check_lines.append(flixpatrol_paywall_message)
 
     _append_std("git_kometa_errors", git_kometa_errors)
+    _append_std("nightly_branch_warnings", nightly_branch_warnings)
     _append_std("pmm_legacy_errors", pmm_legacy_errors)
     _append_std("image_size", image_size)
 
@@ -244,7 +246,7 @@ def build_advisory_messages(
         formatted_errors = analyzer.format_contiguous_lines(metadata_attribute_errors)
         metadata_attribute_errors_message = (
             f"❌ **METADATA ATTRIBUTE ERRORS**\n"
-            f"If you are using Kometa nightly48 or newer, this is expected behaviour.\n"
+            f"If you are using Kometa develop48 or newer, this is expected behaviour.\n"
             f"`metadata_path` and `overlay_path` are now legacy attributes, and using them will cause the `YAML Error: metadata attribute is required` error.\n"
             f"The error can be ignored as it won't cause any issues, or you can update your config.yml to use the new `collection_files`, `overlay_files` and `metadata_files` attributes.\n\n"
             f"The steps to take are:\n"
