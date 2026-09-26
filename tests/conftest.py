@@ -71,7 +71,7 @@ def _load_app(config_dir, kometa_root):
         "local_version": "0.0.0",
         "remote_version": "0.0.0",
         "branch": "master",
-        "kometa_branch": "nightly",
+        "kometa_branch": "develop",
         "update_available": False,
         "running_on": "Local-Tests",
         "file_ext": "",

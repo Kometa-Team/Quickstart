@@ -25,6 +25,8 @@ def _kometa_update_cache_key(kometa_root, branch, local_version, local_sha=None,
 
 def normalize_kometa_branch_override(value):
     branch = str(value or "").strip().lower()
+    if branch == "nightly":
+        branch = "develop"
     return branch if branch in KOMETA_BRANCH_OVERRIDES else ""
 
 

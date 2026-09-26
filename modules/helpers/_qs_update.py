@@ -47,9 +47,9 @@ def build_quickstart_update_command(branch="master", qs_root=None, remote=None):
 
 
 def get_kometa_branch():
-    """Fetch the correct branch (master or nightly)."""
+    """Fetch the correct branch (master or develop)."""
     version_info = check_for_update()
-    return version_info.get("kometa_branch", "nightly")  # Default to nightly branch
+    return version_info.get("kometa_branch", "develop")  # Default to develop branch
 
 
 def get_version(branch):
@@ -125,7 +125,7 @@ def check_for_update():
     update_remote = get_quickstart_update_remote()
 
     # Determine Kometa branch
-    kometa_branch = "nightly"
+    kometa_branch = "master" if branch == "master" else "develop"
 
     os_name, os_ext = get_running_os()
 

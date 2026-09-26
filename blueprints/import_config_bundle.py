@@ -41,6 +41,7 @@ fields it doesn't need.  The dataclass is a plain
 from __future__ import annotations
 
 import os
+import re
 import secrets
 import shutil
 import zipfile
@@ -52,6 +53,11 @@ from flask import jsonify
 
 from modules import bundle_artifacts, helpers
 from modules.library_file_entries import _is_bundled_library_archive_member
+
+
+def _migrate_legacy_kometa_branch_references(config_text: str) -> str:
+    """Map the retired Kometa nightly branch in imported YAML to develop."""
+    return re.sub(r"\bnightly\b", "develop", config_text, flags=re.IGNORECASE)
 
 
 @dataclass(slots=True)
@@ -90,7 +96,7 @@ def extract_bundle_upload(raw_text: bytes, file_name: str) -> BundleExtractionRe
         config_text = raw_text.decode("utf-8")
     except UnicodeDecodeError:
         config_text = raw_text.decode("utf-8", errors="ignore")
-    return BundleExtractionResult(config_text=config_text)
+    return BundleExtractionResult(config_text=_migrate_legacy_kometa_branch_references(config_text))
 
 
 def _extract_zip_bundle(raw_text: bytes) -> BundleExtractionResult:
@@ -250,8 +256,13 @@ def _extract_bundled_files(archive, member_names, extracted_dir: Path) -> None:
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with archive.open(member_name) as source, open(target, "wb") as dest:
-                dest.write(source.read())
+            with archive.open(member_name) as source:
+                content = source.read()
+            if bundle_artifacts.yaml_path_suffix(normalized_member):
+                yaml_text = content.decode("utf-8", errors="ignore")
+                content = _migrate_legacy_kometa_branch_references(yaml_text).encode("utf-8")
+            with open(target, "wb") as dest:
+                dest.write(content)
         except Exception:
             continue
 

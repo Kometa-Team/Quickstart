@@ -143,7 +143,7 @@ docker inspect --format='{{json .State.Health}}' quickstart
 
 ### Automatic Updates
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
-- **Kometa Sync:** In `managed` mode, Quickstart can pull and update Kometa itself (nightly/master) before running. In `existing direct` mode, Quickstart only checks version/update availability and expects you to update that install manually outside Quickstart.
+- **Kometa Sync:** In `managed` mode, Quickstart can pull and update Kometa itself (develop/master) before running. In `existing direct` mode, Quickstart only checks version/update availability and expects you to update that install manually outside Quickstart.
 - **ImageMaid Sync:** Option to pull and update ImageMaid itself (develop/master) before running
 
 ### Themes & Personalization

@@ -184,7 +184,7 @@ def test_cached_kometa_update_reuses_lookup(tmp_path, monkeypatch):
     root.mkdir()
     (root / "VERSION").write_text("1.2.3", encoding="utf-8")
     (root / ".kometa_sha").write_text("localsha", encoding="utf-8")
-    (root / ".kometa_branch").write_text("nightly", encoding="utf-8")
+    (root / ".kometa_branch").write_text("develop", encoding="utf-8")
 
     helpers.invalidate_cached_kometa_update(root)
 
@@ -242,7 +242,7 @@ def test_check_quickstart_update_refreshes_cached_version(client, monkeypatch, q
         "local_version": "0.0.1",
         "remote_version": "9.9.9",
         "branch": "develop",
-        "kometa_branch": "nightly",
+        "kometa_branch": "develop",
         "update_available": True,
         "running_on": "Local-Windows",
         "file_ext": "",
@@ -342,7 +342,7 @@ def test_check_kometa_update_installed_uses_cached_lookup(client, isolated_confi
             "remote_version": "1.0.1",
             "update_available": True,
             "cached": True,
-            "branch": "nightly",
+            "branch": "develop",
         },
     )
 
@@ -410,8 +410,8 @@ def test_check_kometa_update_branch_override_uses_selected_branch(client, isolat
         captured["branch_override"] = branch_override
         return {
             "local_version": "1.0.0",
-            "local_branch": "nightly",
-            "local_sha": "abc123nightly",
+            "local_branch": "develop",
+            "local_sha": "abc123develop",
             "remote_version": "1.1.0-develop5",
             "remote_sha": "def456develop",
             "update_available": True,
@@ -486,7 +486,7 @@ def test_update_kometa_branch_override_uses_selected_branch(client, monkeypatch,
     monkeypatch.setattr(helpers, "detect_git_branch", lambda *_: "master", raising=False)
     captured = {"branch": None}
 
-    def fake_update(_config_root, branch="nightly", force=False, logs=None):
+    def fake_update(_config_root, branch="develop", force=False, logs=None):
         captured["branch"] = branch
         return {"success": True, "log": ["ok"], "up_to_date": False}
 
@@ -623,7 +623,7 @@ def test_get_upstream_sha_non_200(monkeypatch):
 
     monkeypatch.setattr(helpers.requests, "get", lambda *_args, **_kwargs: _Resp())
     logs = []
-    sha = helpers._get_upstream_sha("nightly", logs)
+    sha = helpers._get_upstream_sha("develop", logs)
     assert sha is None
     assert any("Resolving upstream SHA from:" in line for line in logs)
     assert any("GitHub API" in line for line in logs)
@@ -635,9 +635,9 @@ def test_download_zip_timeout(monkeypatch):
 
     monkeypatch.setattr(helpers.requests, "get", raise_timeout)
     logs = []
-    data = helpers._download_zip("nightly", logs)
+    data = helpers._download_zip("develop", logs)
     assert data is None
-    assert any("Downloading nightly.zip from:" in line for line in logs)
+    assert any("Downloading develop.zip from:" in line for line in logs)
     assert any("Exception during ZIP download" in line for line in logs)
 
 
@@ -704,7 +704,7 @@ def test_perform_kometa_update_zip_only_writes_branch_metadata(tmp_path, monkeyp
     kometa_dir = config_root / "kometa"
     kometa_dir.mkdir(parents=True, exist_ok=True)
 
-    def fake_perform_update(config_root, branch="nightly", force=False, logs=None):
+    def fake_perform_update(config_root, branch="develop", force=False, logs=None):
         from pathlib import Path
 
         kd = Path(config_root) / "kometa"
@@ -750,3 +750,22 @@ def test_pip_install_requires_git_for_git_based_requirements(tmp_path, monkeypat
     assert result is False
     assert any("Required tool not found: git" in line for line in logs)
     assert any("Git is required to install Git-based dependencies" in line for line in logs)
+
+
+def test_kometa_branch_normalization_migrates_nightly():
+    assert helpers.normalize_kometa_branch_override("nightly") == "develop"
+
+
+def test_up_to_date_kometa_update_migrates_branch_metadata(tmp_path, monkeypatch):
+    config_root = tmp_path / "config"
+    kometa_dir = config_root / "kometa"
+    kometa_dir.mkdir(parents=True)
+    (kometa_dir / ".kometa_sha").write_text("same-sha", encoding="utf-8")
+    (kometa_dir / ".kometa_branch").write_text("nightly", encoding="utf-8")
+    monkeypatch.setattr("modules.helpers._zip_update._get_upstream_sha", lambda *_args: "same-sha")
+
+    result = helpers.perform_kometa_update_zip_only(config_root, branch="develop")
+
+    assert result["success"] is True
+    assert result["skipped"] is True
+    assert (kometa_dir / ".kometa_branch").read_text(encoding="utf-8").strip() == "develop"

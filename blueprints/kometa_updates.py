@@ -107,6 +107,8 @@ def save_kometa_install_mode():
     )
     selection = kometa_install.resolve_kometa_selection(section_payload["kometa"])
     kometa_install.apply_kometa_selection(selection)
+    selected_root = selection.get("selected_root")
+    runtime_state = kometa_install.probe_kometa_root_state(selected_root) if selected_root and selected_root.exists() else {}
 
     if install_mode == kometa_install.KOMETA_INSTALL_MODE_EXISTING:
         message = "Quickstart will now use the selected existing Kometa install for this config."
@@ -114,6 +116,11 @@ def save_kometa_install_mode():
         message = "Quickstart will now sync config and optional logs for the selected external Kometa setup."
     else:
         message = "Quickstart will now use its managed Kometa install for this config."
+    if runtime_state.get("kometa_legacy_nightly_branch"):
+        if install_mode == kometa_install.KOMETA_INSTALL_MODE_EXISTING:
+            message += " This install uses the retired nightly branch; switch it to develop or master outside Quickstart."
+        else:
+            message += " This install uses the retired nightly branch; Quickstart will run and update it as develop."
     return jsonify(
         success=True,
         message=message,
@@ -135,6 +142,9 @@ def save_kometa_install_mode():
         can_update=selection.get("can_update"),
         can_probe_runtime=selection.get("can_probe_runtime"),
         can_read_logs=selection.get("can_read_logs"),
+        kometa_detected_branch=runtime_state.get("kometa_detected_branch", ""),
+        kometa_effective_branch=runtime_state.get("kometa_effective_branch", ""),
+        kometa_legacy_nightly_branch=bool(runtime_state.get("kometa_legacy_nightly_branch")),
     )
 
 
@@ -551,7 +561,7 @@ def check_kometa_update():
     )
     local_version = update_info.get("local_version") or state["kometa_version"]
     remote_version = update_info.get("remote_version") or ""
-    remote_branch = update_info.get("branch") or "nightly"
+    remote_branch = update_info.get("branch") or "develop"
     local_branch = update_info.get("local_branch") or "unknown"
     local_sha = update_info.get("local_sha") or ""
     remote_sha = update_info.get("remote_sha") or ""
@@ -649,7 +659,7 @@ def update_kometa():
         if branch_override_raw and not branch_override:
             return jsonify({"success": False, "error": "Invalid Kometa branch override.", "log": ["❌ Invalid Kometa branch override."]}), 400
         qs_branch = data.get("branch") or helpers.detect_git_branch(quickstart.app.root_path)
-        kometa_branch = branch_override or ("master" if qs_branch == "master" else "nightly")
+        kometa_branch = branch_override or ("master" if qs_branch == "master" else "develop")
         force_update = helpers.booler(data.get("force", False))
         background = data.get("background") is True
 

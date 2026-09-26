@@ -101,7 +101,7 @@ def ensure_json_schema():
     global _JSON_SCHEMA_LAST_REFRESH_AT
 
     # branch = get_kometa_branch()
-    branch = "nightly"
+    branch = "develop"
 
     if _schema_files_present() and _JSON_SCHEMA_LAST_REFRESH_AT <= 0:
         try:

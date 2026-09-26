@@ -1,15 +1,14 @@
 // Kometa branch/version management.
 //
-// Kometa can be tracked on one of three upstream branches:
+// Kometa can be tracked on one of two upstream branches:
 //
 //   master   -- stable releases
 //   develop  -- pre-release / testing
-//   nightly  -- daily builds against develop
 //
 // By default we pick a branch based on Quickstart's OWN branch:
 //
 //   Quickstart on master   -> Kometa on master  ('stable follows stable')
-//   Quickstart on anything -> Kometa on nightly ('bleeding-edge follows
+//   Quickstart on anything -> Kometa on develop ('bleeding-edge follows
 //                                                bleeding-edge')
 //
 // The user can override that mapping via the #kometa-branch-override
@@ -62,7 +61,7 @@ export const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
  * Valid branch names the override <select> accepts. Anything else in
  * localStorage or the <select>.value gets coerced to '' (auto).
  */
-const VALID_BRANCHES = ['master', 'develop', 'nightly']
+const VALID_BRANCHES = ['master', 'develop']
 
 // ---------------------------------------------------------------------
 // Branch resolution
@@ -70,9 +69,9 @@ const VALID_BRANCHES = ['master', 'develop', 'nightly']
 
 /**
  * Current value of the branch-override <select>, normalized to one of
- * 'master' | 'develop' | 'nightly' or '' (meaning 'let auto decide').
+ * 'master' | 'develop' or '' (meaning 'let auto decide').
  *
- * @returns {'' | 'master' | 'develop' | 'nightly'}
+ * @returns {'' | 'master' | 'develop'}
  */
 export function getKometaBranchOverride () {
   const el = document.getElementById('kometa-branch-override')
@@ -94,20 +93,19 @@ export function getQuickstartBranch () {
 
 /**
  * What auto-mode resolves to right now: 'master' iff Quickstart itself
- * is on master, otherwise 'nightly'. (There's no 'develop' auto-mode
- * -- develop is override-only.)
+ * is on master, otherwise 'develop'.
  *
- * @returns {'master' | 'nightly'}
+ * @returns {'master' | 'develop'}
  */
 export function getAutoKometaBranch () {
-  return getQuickstartBranch() === 'master' ? 'master' : 'nightly'
+  return getQuickstartBranch() === 'master' ? 'master' : 'develop'
 }
 
 /**
  * The branch actually being used right now: the override if set,
  * else the auto-resolved value.
  *
- * @returns {'master' | 'develop' | 'nightly'}
+ * @returns {'master' | 'develop'}
  */
 export function getEffectiveKometaBranch () {
   return getKometaBranchOverride() || getAutoKometaBranch()
@@ -150,7 +148,9 @@ export function loadSavedKometaBranchOverride () {
   if (!el) return
   try {
     const saved = window.localStorage.getItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY) || ''
-    el.value = VALID_BRANCHES.includes(saved) ? saved : ''
+    const migrated = saved.toString().trim().toLowerCase() === 'nightly' ? 'develop' : saved
+    el.value = VALID_BRANCHES.includes(migrated) ? migrated : ''
+    if (migrated !== saved) window.localStorage.setItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY, migrated)
   } catch {
     el.value = ''
   }

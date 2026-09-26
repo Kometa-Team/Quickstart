@@ -220,7 +220,7 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str], label:
     try:
         _ensure_dir(dest_dir)
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-            root_name = zf.namelist()[0].split("/")[0]  # e.g., Kometa-nightly
+            root_name = zf.namelist()[0].split("/")[0]  # e.g., Kometa-develop
             # Use a stable tmp under CONFIG_DIR to avoid /tmp RAM constraints
             tmp_base = Path(CONFIG_DIR) / "tmp"
             if tmp_base.is_dir():
@@ -393,7 +393,7 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str], requiremen
     return True
 
 
-def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "nightly", force: bool = False, logs=None):
+def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "develop", force: bool = False, logs=None):
     """
     Update Kometa by downloading/extracting the branch ZIP into:
         {config_root}/kometa
@@ -416,6 +416,9 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
 
         local_sha = _read_text(sha_file)
         if local_sha == upstream_sha and not force:
+            if _read_text(branch_file).strip().lower() != branch.strip().lower():
+                _write_text(branch_file, branch)
+                logs.append(f"✅ Updated Kometa branch metadata to '{branch}'.")
             logs.append("✅ Up to date (SHA matches). Skipping download.")
             return {"success": True, "log": logs, "up_to_date": True, "skipped": True}
         if force:
@@ -456,7 +459,7 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
         return {"success": False, "log": logs}
 
 
-def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str = "nightly", force: bool = False, logs=None):
+def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str = "develop", force: bool = False, logs=None):
     """
     Update Kometa by downloading/extracting the branch ZIP into an explicit Kometa root.
     """
@@ -475,6 +478,9 @@ def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str 
 
         local_sha = _read_text(sha_file)
         if local_sha == upstream_sha and not force:
+            if _read_text(branch_file).strip().lower() != branch.strip().lower():
+                _write_text(branch_file, branch)
+                logs.append(f"✅ Updated Kometa branch metadata to '{branch}'.")
             logs.append("✅ Up to date (SHA matches). Skipping download.")
             return {"success": True, "log": logs, "up_to_date": True, "skipped": True}
         if force:

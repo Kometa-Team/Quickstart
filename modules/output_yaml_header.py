@@ -159,7 +159,7 @@ def render_yaml_header(header_style, config_name, movie_libraries, show_librarie
     * Trailing blank lines before the first section
     """
     # Version + environment metadata (all from the shared update snapshot).
-    kometa_branch = version_info.get("kometa_branch", "nightly")
+    kometa_branch = version_info.get("kometa_branch", "develop")
     quickstart_branch = version_info.get("branch", "unknown")
     quickstart_version = version_info.get("local_version", "unknown")
     quickstart_environment = version_info.get("running_on", "unknown")

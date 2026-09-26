@@ -173,7 +173,7 @@ STANDARD_ADVISORIES: tuple[Advisory, ...] = (
     ),
     Advisory(
         bucket_key="flixpatrol_errors",
-        body="❌ **FLIXPATROL ERROR**\nThere was an issue with FlixPatrol data.\nThis is a known issue with Kometa 1.19.0 (master/latest branch).\nSwitch to the 1.19.1 nightly21 or greater Kometa release for a fix.\nIn the Kometa discord thread, for more information on how to switch branches, type `!branch`.\nFor more information on handling FlixPatrol errors, {url_line}\nIf the problem persists, your IP address might be banned by FlixPatrol. Contact their support to have it unbanned.\n",
+        body="❌ **FLIXPATROL ERROR**\nThere was an issue with FlixPatrol data.\nThis is a known issue with Kometa 1.19.0 (master/latest branch).\nSwitch to the 1.19.1 develop21 or greater Kometa release for a fix.\nIn the Kometa discord thread, for more information on how to switch branches, type `!branch`.\nFor more information on handling FlixPatrol errors, {url_line}\nIf the problem persists, your IP address might be banned by FlixPatrol. Contact their support to have it unbanned.\n",
         url="[https://kometa.wiki/en/latest/kometa/faqs/?h=flixpatrol#flixpatrol]",
         count_label="FlixPatrol errors",
     ),
@@ -182,6 +182,12 @@ STANDARD_ADVISORIES: tuple[Advisory, ...] = (
         body="💬 **OLD Kometa YAML**\nYou are using an old config.yml with references to metadata files that date to a version of Kometa that is pre 1.18\nIn the Kometa discord thread, type `!118` for more information.\nFor more information on handling this, {url_line}\n",
         url="[https://kometa.wiki/en/latest/config/overview/?h=configuration]",
         count_label="OLD Kometa YAML",
+    ),
+    Advisory(
+        bucket_key="nightly_branch_warnings",
+        body="⚠️ **RETIRED KOMETA NIGHTLY BRANCH**\nThis log references the retired `nightly` branch. Use `develop` for ongoing development builds or `master` for stable releases.\nUpdate branch settings and any URLs or schema references that still contain `nightly`.\n",
+        url="",
+        count_label="retired `nightly` branch references",
     ),
     Advisory(
         bucket_key="pmm_legacy_errors",
@@ -239,7 +245,7 @@ STANDARD_ADVISORIES: tuple[Advisory, ...] = (
     ),
     Advisory(
         bucket_key="metadata_attribute_errors",
-        body="❌ **METADATA ATTRIBUTE ERRORS**\nIf you are using Kometa nightly48 or newer, this is expected behaviour.\n`metadata_path` and `overlay_path` are now legacy attributes, and using them will cause the `YAML Error: metadata attribute is required` error.\nThe error can be ignored as it won't cause any issues, or you can update your config.yml to use the new `collection_files`, `overlay_files` and `metadata_files` attributes.\n\nThe steps to take are:\n:one: - Look at every file referred to within your config.yml and see what the first level indentation yaml file attributes are. They should be one of these(`collections:, dynamic_collections:, overlays:, metadata:, playlists:, templates:, external_templates:`) and can contain more than 1. For now, ignore the `templates:` and `external_templates:` attributes.\n:two: - if it's `metadata:`, file it under the `metadata_file:` section of your config.yml\n:three: - if it's `collections:` or `dynamic_collections:`, file it under the `collection_files:` section of your config.yml\n:four: - if it's `playlists:`,  file it under the `playlist_files:` section of your config.yml\n:five: - if it's `overlays:`,  file it under the `overlay_files:` section of your config.yml\n\n`*NOTE:` If you only see `templates:` or `external_templates:`, this is a special case and you typically would not be referring to it directly in your config.yml file.\n\nWithin the attached log file, go to the indicated line(s) for more details on the exact issue and take actions to fix.\nFor more information on this, {url_line}\n",
+        body="❌ **METADATA ATTRIBUTE ERRORS**\nIf you are using Kometa develop48 or newer, this is expected behaviour.\n`metadata_path` and `overlay_path` are now legacy attributes, and using them will cause the `YAML Error: metadata attribute is required` error.\nThe error can be ignored as it won't cause any issues, or you can update your config.yml to use the new `collection_files`, `overlay_files` and `metadata_files` attributes.\n\nThe steps to take are:\n:one: - Look at every file referred to within your config.yml and see what the first level indentation yaml file attributes are. They should be one of these(`collections:, dynamic_collections:, overlays:, metadata:, playlists:, templates:, external_templates:`) and can contain more than 1. For now, ignore the `templates:` and `external_templates:` attributes.\n:two: - if it's `metadata:`, file it under the `metadata_file:` section of your config.yml\n:three: - if it's `collections:` or `dynamic_collections:`, file it under the `collection_files:` section of your config.yml\n:four: - if it's `playlists:`,  file it under the `playlist_files:` section of your config.yml\n:five: - if it's `overlays:`,  file it under the `overlay_files:` section of your config.yml\n\n`*NOTE:` If you only see `templates:` or `external_templates:`, this is a special case and you typically would not be referring to it directly in your config.yml file.\n\nWithin the attached log file, go to the indicated line(s) for more details on the exact issue and take actions to fix.\nFor more information on this, {url_line}\n",
         url="[https://kometa.wiki/en/latest/config/files/#example]",
         count_label="METADATA ATTRIBUTE errors",
     ),

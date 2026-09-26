@@ -78,6 +78,7 @@ def scan_content(analyzer, content):
     flixpatrol_errors = []
     flixpatrol_paywall = []
     git_kometa_errors = []
+    nightly_branch_warnings = []
     pmm_legacy_errors = []
     image_size = []
     internal_server_errors = []
@@ -120,6 +121,9 @@ def scan_content(analyzer, content):
     trakt_connection_errors = []
 
     for idx, line in enumerate(lines, start=1):
+        if re.search(r"\bnightly\d*\b", line, re.IGNORECASE):
+            nightly_branch_warnings.append(idx)
+
         if "run_order:" in line:
             next_line = lines[idx] if idx < len(lines) else None
             if next_line and "- operations" not in next_line:
@@ -274,6 +278,7 @@ def scan_content(analyzer, content):
         "flixpatrol_errors": flixpatrol_errors,
         "flixpatrol_paywall": flixpatrol_paywall,
         "git_kometa_errors": git_kometa_errors,
+        "nightly_branch_warnings": nightly_branch_warnings,
         "pmm_legacy_errors": pmm_legacy_errors,
         "image_size": image_size,
         "internal_server_errors": internal_server_errors,

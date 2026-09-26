@@ -3816,7 +3816,7 @@ def test_build_config_includes_saved_library_metadata_files(app, isolated_config
         output.helpers,
         "check_for_update",
         lambda: {
-            "kometa_branch": "nightly",
+            "kometa_branch": "develop",
             "branch": "develop",
             "local_version": "0.10.3-build2",
             "running_on": "Local-Windows",
@@ -4114,7 +4114,7 @@ def test_build_config_prunes_default_horizontal_ratings_offsets(app, monkeypatch
         output.helpers,
         "check_for_update",
         lambda: {
-            "kometa_branch": "nightly",
+            "kometa_branch": "develop",
             "branch": "develop",
             "local_version": "0.10.3-build2",
             "running_on": "Local-Windows",
@@ -5282,7 +5282,7 @@ def test_import_config_preview_accepts_windows_wrapped_bundle_directories(client
         )
         archive.writestr(
             "bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/collection_files/mov-library_movies/config_collection_files_a8a07b81df/movies_refresh.yml",
-            "collections: {}\n",
+            "collections: {}\n# https://example.test/nightly/library.yml\n",
         )
         archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/fonts/", b"")
         archive.writestr("bullmoose20_prod9_config_bundle (test)/bullmoose20_prod9/fonts/Poster.ttf", b"font")
@@ -5303,7 +5303,10 @@ def test_import_config_preview_accepts_windows_wrapped_bundle_directories(client
     with client.session_transaction() as sess:
         bundle_dir = Path(sess["import_preview_bundle_dir"])
 
-    assert (bundle_dir / "bullmoose20_prod9" / "collection_files" / "mov-library_movies" / "config_collection_files_a8a07b81df" / "movies_refresh.yml").exists()
+    library_file = bundle_dir / "bullmoose20_prod9" / "collection_files" / "mov-library_movies" / "config_collection_files_a8a07b81df" / "movies_refresh.yml"
+    assert library_file.exists()
+    assert "nightly" not in library_file.read_text(encoding="utf-8").lower()
+    assert "/develop/" in library_file.read_text(encoding="utf-8")
 
 
 def test_import_config_preview_handles_yaml_date_scalars_in_cache(client):
@@ -7990,10 +7993,10 @@ def test_check_kometa_update_existing_mode_allows_status_check(client, tmp_path,
         lambda *_args, **_kwargs: {
             "local_version": "1.0.0",
             "remote_version": "1.1.0",
-            "branch": "nightly",
+            "branch": "develop",
             "cached": False,
             "update_available": True,
-            "local_branch": "nightly",
+            "local_branch": "develop",
             "local_sha": "abc123",
             "remote_sha": "def456",
             "comparison_basis": "version",
@@ -8218,3 +8221,54 @@ def test_logscan_trends_status_reports_active_request_phase(client, qs_module):
 
     stale = client.get("/logscan/trends/status?request_id=other-request").get_json()
     assert stale["status"] == "unknown"
+
+
+def test_import_config_migrates_nightly_references():
+    from blueprints.import_config_bundle import extract_bundle_upload
+
+    result = extract_bundle_upload(
+        b"# yaml-language-server: $schema=https://example.test/nightly/schema.json\nbranch: NIGHTLY\n",
+        "config.yml",
+    )
+
+    assert "nightly" not in result.config_text.lower()
+    assert result.config_text.count("develop") == 2
+
+
+def test_probe_kometa_root_reports_legacy_nightly_branch(tmp_path, monkeypatch):
+    from modules.kometa_install import probe_kometa_root_state
+
+    kometa_root = tmp_path / "kometa"
+    kometa_root.mkdir()
+    (kometa_root / ".kometa_branch").write_text("nightly", encoding="utf-8")
+    monkeypatch.setattr("modules.kometa_install.helpers.is_kometa_running", lambda: False)
+
+    state = probe_kometa_root_state(kometa_root)
+
+    assert state["kometa_detected_branch"] == "nightly"
+    assert state["kometa_effective_branch"] == "develop"
+    assert state["kometa_legacy_nightly_branch"] is True
+
+
+def test_save_existing_nightly_install_returns_start_page_warning_state(client, tmp_path):
+    kometa_root = tmp_path / "kometa"
+    (kometa_root / "config").mkdir(parents=True)
+    (kometa_root / "kometa.py").write_text("", encoding="utf-8")
+    (kometa_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
+    (kometa_root / ".kometa_branch").write_text("nightly", encoding="utf-8")
+
+    response = client.post(
+        "/save-kometa-install-mode",
+        json={
+            "config_name": "pytest_existing_nightly",
+            "install_mode": "existing",
+            "existing_root": str(kometa_root),
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["kometa_detected_branch"] == "nightly"
+    assert payload["kometa_effective_branch"] == "develop"
+    assert payload["kometa_legacy_nightly_branch"] is True
+    assert "switch it to develop or master" in payload["message"].lower()
