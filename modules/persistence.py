@@ -525,7 +525,7 @@ def migrate_library_keys_to_plex_ids(config_name, all_plex_libraries):
     Returns the number of keys that were renamed (0 = already migrated or
     no matching keys found).
     """
-    from modules.helpers._misc import normalize_id, extract_library_name  # local import to avoid circularity
+    from modules.helpers._misc import normalize_id  # local import to avoid circularity
 
     # Build normalised-name → Plex-ID lookup using the same dedup logic that
     # originally created the keys.
@@ -543,25 +543,29 @@ def migrate_library_keys_to_plex_ids(config_name, all_plex_libraries):
     if not libraries:
         return 0
 
-    # Short-circuit: if every library key already uses a numeric ID, skip.
-    def _id_is_numeric(key):
-        lib_id = extract_library_name(key)
-        return lib_id is not None and lib_id.lstrip("-").isdigit()
+    prefix_migrations = []
+    for normalized_name, plex_id in norm_to_plex_id.items():
+        for media_prefix in ("mov", "sho"):
+            old_prefix = f"{media_prefix}-library_{normalized_name}-"
+            new_prefix = f"{media_prefix}-library_{plex_id}-"
+            if old_prefix != new_prefix:
+                prefix_migrations.append((old_prefix, new_prefix))
 
-    keyed_keys = [k for k in libraries if extract_library_name(k) is not None]
-    if keyed_keys and all(_id_is_numeric(k) for k in keyed_keys):
-        return 0
-
-    new_libraries = {}
+    # Seed with existing numeric/default values, then apply legacy values so a
+    # user's saved choice wins when both forms already exist.
+    new_libraries = dict(libraries)
+    migrated_values = {}
     rename_count = 0
     for key, value in libraries.items():
-        lib_id = extract_library_name(key)
-        if lib_id and lib_id in norm_to_plex_id:
-            new_key = key.replace(f"library_{lib_id}-", f"library_{norm_to_plex_id[lib_id]}-", 1)
-            new_libraries[new_key] = value
-            rename_count += 1
-        else:
-            new_libraries[key] = value
+        for old_prefix, new_prefix in prefix_migrations:
+            if isinstance(key, str) and key.startswith(old_prefix):
+                new_key = f"{new_prefix}{key[len(old_prefix):]}"
+                new_libraries.pop(key, None)
+                migrated_values[new_key] = value
+                rename_count += 1
+                break
+
+    new_libraries.update(migrated_values)
 
     if rename_count > 0:
         try:

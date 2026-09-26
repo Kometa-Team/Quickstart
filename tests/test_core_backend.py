@@ -4624,6 +4624,39 @@ def test_helpers_extract_library_name_supports_metadata_files():
     assert helpers.extract_library_name("sho-library_tv_shows-metadata_files") == "tv_shows"
 
 
+def test_migrate_library_keys_to_plex_ids_migrates_overlay_levels_and_preserves_legacy_values(monkeypatch):
+    from modules import persistence
+
+    stored = {
+        "libraries": {
+            "mov-library_blockbusta-library": "Blockbusta",
+            "mov-library_blockbusta-movie-overlay_mediastinger": True,
+            "mov-library_96-movie-overlay_mediastinger": False,
+            "sho-library_tvshows-show-overlay_status": True,
+            "sho-library_tvshows-season-overlay_status": True,
+            "sho-library_tvshows-episode-overlay_status": True,
+        }
+    }
+    saved = {}
+
+    monkeypatch.setattr(persistence.database, "retrieve_section_data", lambda *_args: (True, False, stored))
+    monkeypatch.setattr(persistence.database, "save_section_data", lambda **kwargs: saved.update(kwargs))
+
+    count = persistence.migrate_library_keys_to_plex_ids(
+        "config",
+        [{"id": 96, "name": "Blockbusta"}, {"id": 12, "name": "TV Shows"}],
+    )
+
+    migrated = saved["data"]["libraries"]
+    assert count == 5
+    assert migrated["mov-library_96-library"] == "Blockbusta"
+    assert migrated["mov-library_96-movie-overlay_mediastinger"] is True
+    assert migrated["sho-library_12-show-overlay_status"] is True
+    assert migrated["sho-library_12-season-overlay_status"] is True
+    assert migrated["sho-library_12-episode-overlay_status"] is True
+    assert not any("blockbusta" in key or "tvshows" in key for key in migrated)
+
+
 def test_update_quickstart_settings_supports_independent_imagemaid_log_retention(client, qs_module, isolated_config_dir, monkeypatch):
     from modules import helpers
 
