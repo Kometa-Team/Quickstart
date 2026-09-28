@@ -146,6 +146,56 @@ Sponsor
 </details>
 {%- endmacro %}
 
+{% macro grouped_step_group(title, group_key, template_list, allowed_keys, subgroups, page_info, step_statuses, section_statuses, open_state=True) -%}
+{% set group_state = (section_statuses.get(group_key) if section_statuses else 'warn') %}
+{% set grouped_keys = namespace(values=[]) %}
+{% for _, keys in subgroups %}
+  {% set grouped_keys.values = grouped_keys.values + keys %}
+{% endfor %}
+<details class="qs-step-group qs-step-group--{{ group_state }}" data-step-group="{{ group_key }}" {% if open_state %}open{% endif %}>
+  <summary class="qs-step-group-summary" title="{{ title }}">
+    <span>{{ title }}</span>
+    <span class="qs-step-group-summary-right">
+      {{ status_icon(group_state, 'qs-step-group-state') }}
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </span>
+  </summary>
+  <div class="qs-step-group-list qs-step-group-list--subgroups" role="list">
+    {% for subgroup_title, subgroup_keys in subgroups %}
+    {% set visible = namespace(value=False) %}
+    {% for template_key in subgroup_keys %}
+      {% if template_key in allowed_keys %}{% set visible.value = True %}{% endif %}
+    {% endfor %}
+    <div class="qs-step-subgroup{% if not visible.value %} d-none{% endif %}"
+      data-step-subgroup="{{ subgroup_title | lower | replace(' ', '-') }}"
+      data-step-keys="{{ subgroup_keys | join(' ') }}">
+      <div class="qs-step-subgroup-title">{{ subgroup_title }}</div>
+      <div class="qs-step-subgroup-list">
+        {% for ordered_key in subgroup_keys %}
+          {% if ordered_key in allowed_keys %}
+            {% for file, name in template_list %}
+              {% set template_key = file.rsplit('.', 1)[0] %}
+              {% if template_key == ordered_key %}{{ step_link(template_key, name, page_info, step_statuses) }}{% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    <div class="qs-step-subgroup qs-step-subgroup--other" data-step-subgroup="other">
+      <div class="qs-step-subgroup-title">Other</div>
+      <div class="qs-step-subgroup-list">
+        {% for file, name in template_list %}
+        {% set template_key = file.rsplit('.', 1)[0] %}
+        {% if template_key in allowed_keys and template_key not in grouped_keys.values %}
+        {{ step_link(template_key, name, page_info, step_statuses) }}
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</details>
+{%- endmacro %}
 {% macro sidebar_controls(page_info) -%}
 <div class="qs-sidebar-head">
   <div class="qs-sidebar-brand-row">

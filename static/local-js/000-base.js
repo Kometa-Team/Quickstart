@@ -2065,19 +2065,41 @@ function qsApplyGroupMembership (requiredKeys, optionalKeys, reviewKeys) {
     stepMap[key] = stepLink
   })
 
-  const appendInOrder = (listEl, keys) => {
+  const groupedDestination = (listEl, key) => {
+    const subgroup = Array.from(listEl.querySelectorAll('[data-step-keys]')).find((candidate) => {
+      return String(candidate.dataset.stepKeys || '').split(/\s+/).includes(key)
+    })
+    return {
+      element: subgroup?.querySelector('.qs-step-subgroup-list') || listEl.querySelector('[data-step-subgroup="other"] .qs-step-subgroup-list') || listEl,
+      orderedKeys: String(subgroup?.dataset.stepKeys || '').split(/\s+/).filter(Boolean)
+    }
+  }
+
+  const appendInOrder = (listEl, keys, grouped = false) => {
     if (!listEl) return
     keys.forEach((key) => {
       const stepLink = stepMap[key]
       if (!stepLink) return
-      listEl.appendChild(stepLink)
+      if (!grouped) {
+        listEl.appendChild(stepLink)
+        return
+      }
+      const destination = groupedDestination(listEl, key)
+      const targetOrder = destination.orderedKeys.indexOf(key)
+      const siblings = Array.from(destination.element.querySelectorAll('.qs-step-link[data-step-key]')).filter((candidate) => candidate !== stepLink)
+      const nextSibling = siblings.find((candidate) => destination.orderedKeys.indexOf(String(candidate.dataset.stepKey || '')) > targetOrder)
+      destination.element.insertBefore(stepLink, nextSibling || null)
+      destination.element.closest('.qs-step-subgroup')?.classList.remove('d-none')
     })
   }
 
-  appendInOrder(groups.required, requiredKeys)
-  appendInOrder(groups.optional, optionalKeys)
+  appendInOrder(groups.required, requiredKeys, true)
+  appendInOrder(groups.optional, optionalKeys, true)
   appendInOrder(groups.review, reviewKeys)
 
+  document.querySelectorAll('.qs-step-subgroup').forEach((subgroup) => {
+    subgroup.classList.toggle('d-none', !subgroup.querySelector('.qs-step-link[data-step-key]'))
+  })
   // Preserve user-controlled expanded/collapsed state.
   // Only auto-open when the current step actually moves to a different section
   // (e.g., Optional -> Required via dependency changes such as MAL).

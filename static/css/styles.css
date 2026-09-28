@@ -5882,6 +5882,33 @@ body {
     margin-left: auto;
 }
 
+.qs-step-group-list--subgroups {
+    gap: 0.55rem;
+}
+
+.qs-step-subgroup,
+.qs-step-subgroup-list {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.qs-step-subgroup + .qs-step-subgroup:not(.d-none) {
+    padding-top: 0.55rem;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border) 65%, transparent);
+}
+
+.qs-step-subgroup-title {
+    padding: 0.15rem 0.35rem 0;
+    color: var(--theme-text-muted);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.qs-step-subgroup--other:not(:has(.qs-step-link)) {
+    display: none;
+}
+
 .qs-step-list {
     display: flex;
     flex-direction: row;
