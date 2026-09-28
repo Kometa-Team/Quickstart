@@ -35270,6 +35270,7 @@
         "id": "collection_simkl",
         "label": "Simkl Charts",
         "url": "https://kometa.wiki/en/develop/defaults/chart/simkl",
+        "image_url": "https://kometa.wiki/en/develop/assets/images/defaults/posters/simkl.png",
         "media_types": [
           "movie",
           "show"
