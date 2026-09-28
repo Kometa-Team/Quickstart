@@ -4041,6 +4041,22 @@ function parseStepOrder (stepKey) {
 
 function insertStepByOrder (container, stepButton) {
   if (!container || !stepButton) return
+  if (container.querySelector('[data-step-keys]')) {
+    const stepKey = String(stepButton.dataset.stepKey || '')
+    const subgroup = Array.from(container.querySelectorAll('[data-step-keys]')).find((candidate) => {
+      return String(candidate.dataset.stepKeys || '').split(/\s+/).includes(stepKey)
+    })
+    const destination = subgroup?.querySelector('.qs-step-subgroup-list') || container.querySelector('[data-step-subgroup="other"] .qs-step-subgroup-list') || container
+    const orderedKeys = String(subgroup?.dataset.stepKeys || '').split(/\s+/).filter(Boolean)
+    const targetOrder = orderedKeys.indexOf(stepKey)
+    const siblings = Array.from(destination.querySelectorAll('.qs-step-link[data-step-key]')).filter(el => el !== stepButton)
+    const nextSibling = siblings.find(el => orderedKeys.indexOf(String(el.dataset.stepKey || '')) > targetOrder)
+    destination.insertBefore(stepButton, nextSibling || null)
+    container.querySelectorAll('.qs-step-subgroup').forEach((candidate) => {
+      candidate.classList.toggle('d-none', !candidate.querySelector('.qs-step-link[data-step-key]'))
+    })
+    return
+  }
   const targetOrder = parseStepOrder(stepButton.dataset.stepKey)
   const siblings = Array.from(container.querySelectorAll('.qs-step-link[data-step-key]')).filter(el => el !== stepButton)
   const nextSibling = siblings.find(el => parseStepOrder(el.dataset.stepKey) > targetOrder)
