@@ -55,8 +55,10 @@ def test_tmdb_chart_exposes_shared_child_custom_and_arr_template_variables():
 
 
 def test_simkl_chart_exposes_period_shared_child_custom_and_arr_template_variables():
+    collection = _collection("collection_simkl")
     keys = _field_keys("collection_simkl")
 
+    assert collection["image_url"] == "https://kometa.wiki/en/develop/assets/images/defaults/posters/simkl.png"
     assert {
         "period",
         "image",
