@@ -8,6 +8,8 @@ Covers:
   - quickstart.py                → /lookup_template_string_value
 """
 
+import pytest
+
 # ===========================================================================
 # /activate-config
 # ===========================================================================
@@ -121,6 +123,34 @@ def test_library_lists_from_telemetry_builds_movie_and_show_descriptors():
 
     assert movie_libraries == [{"id": "mov-library_1", "name": "Movies", "type": "movie"}]
     assert show_libraries == [{"id": "sho-library_2", "name": "TV Shows", "type": "show"}]
+
+
+@pytest.mark.parametrize(
+    ("movie_ids", "show_ids"),
+    [("", ""), ("", "2"), ("1", ""), ("1", "2")],
+    ids=["both-missing", "movies-missing", "shows-missing", "both-present"],
+)
+def test_build_library_lists_falls_back_per_type(monkeypatch, library_routes_module, movie_ids, show_ids):
+    telemetry = {
+        "plex_pass": True,
+        "libraries": {
+            "1": {"name": "Movies", "type": "movie"},
+            "2": {"name": "TV Shows", "type": "show"},
+            "3": {"name": "Music", "type": "artist"},
+        },
+    }
+    settings = {
+        "010-plex": {"plex": {"tmp_movie_libraries": movie_ids, "tmp_show_libraries": show_ids}},
+        "plex_telemetry": {"plex_telemetry": telemetry},
+    }
+    monkeypatch.setattr(library_routes_module.persistence, "retrieve_settings", lambda section: settings[section])
+    monkeypatch.setattr(library_routes_module.persistence, "get_library_names", lambda section: {"1": "Cached Movies", "2": "Cached Shows"})
+
+    movies, shows, actual_telemetry = library_routes_module._build_library_lists()
+
+    assert movies == [{"id": "mov-library_1", "name": "Cached Movies" if movie_ids else "Movies", "type": "movie"}]
+    assert shows == [{"id": "sho-library_2", "name": "Cached Shows" if show_ids else "TV Shows", "type": "show"}]
+    assert actual_telemetry == telemetry
 
 
 # ===========================================================================

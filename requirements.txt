@@ -6,7 +6,7 @@ gunicorn==26.2.0
 jsonschema==4.26.0
 namesgenerator==0.3
 pillow==12.3.0
-PlexAPI==4.18.2
+PlexAPI==4.18.3
 pre-commit==4.6.2
 psutil==7.2.2
 pyfiglet==1.0.4
@@ -15,4 +15,4 @@ python-dotenv==1.2.3
 requests==2.34.2
 ruamel.yaml==0.19.1
 waitress==3.0.2
-Werkzeug==3.1.8
+Werkzeug==3.1.9
