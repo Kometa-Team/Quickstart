@@ -7478,26 +7478,28 @@ def support_info():
                 lines.append("#")
     lines.append("###")
 
-    log_path = Path(helpers.LOG_FILE).resolve()
-    log_lines = []
+    if request.args.get("include_logs") == "1":
+        log_path = Path(helpers.LOG_FILE).resolve()
+        log_lines = []
 
-    if log_path.exists():
-        try:
-            with log_path.open("r", encoding="utf-8", errors="replace") as f:
-                tail = deque(f, maxlen=200)
-            for line in tail:
-                log_lines.append(helpers.redact_string(line.rstrip("\n")))
-            if not log_lines:
-                log_lines.append("Quickstart log is empty.")
-        except Exception:
+        if log_path.exists():
+            try:
+                with log_path.open("r", encoding="utf-8", errors="replace") as f:
+                    tail = deque(f, maxlen=200)
+                for line in tail:
+                    log_lines.append(helpers.redact_string(line.rstrip("\n")))
+                if not log_lines:
+                    log_lines.append("Quickstart log is empty.")
+            except Exception:
+                log_lines.append("Quickstart log unavailable.")
+        else:
             log_lines.append("Quickstart log unavailable.")
-    else:
-        log_lines.append("Quickstart log unavailable.")
 
-    lines.append("# Quickstart log tail (last 200 lines)")
-    lines.append("")
+        lines.append("# Quickstart log tail (last 200 lines)")
+        lines.append("")
+        lines.extend(log_lines)
 
-    text = "\n".join(lines + log_lines)
+    text = "\n".join(lines)
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"text": text, "generated_at": generated_at})
 

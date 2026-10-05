@@ -379,6 +379,13 @@
             <p class="text-muted small mb-2">
               Share this info with support in Discord. We made every effort to redact secrets, but please review before posting.
             </p>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" id="supportInfoIncludeLogs" aria-describedby="supportInfoLogsNote">
+              <label class="form-check-label" for="supportInfoIncludeLogs">Include recent logs</label>
+            </div>
+            <p class="text-muted small mb-2" id="supportInfoLogsNote">
+              Recent logs may contain Plex users' names or other personal information.
+            </p>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-2 d-none" id="supportInfoJumpWrap">
               <label class="form-label small text-muted mb-0" for="supportInfoJump">Jump to section</label>
               <select id="supportInfoJump" class="form-select form-select-sm w-auto">

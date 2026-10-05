@@ -4401,6 +4401,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const output = modalEl.querySelector('#supportInfoOutput')
   const refreshBtn = modalEl.querySelector('#supportInfoRefresh')
   const copyBtn = modalEl.querySelector('#supportInfoCopy')
+  const includeLogs = modalEl.querySelector('#supportInfoIncludeLogs')
   const status = modalEl.querySelector('#supportInfoStatus')
   const jumpWrap = modalEl.querySelector('#supportInfoJumpWrap')
   const jumpSelect = modalEl.querySelector('#supportInfoJump')
@@ -4409,6 +4410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyFallbackText = modalEl.querySelector('#supportInfoCopyText')
   const isSecureContext = window.isSecureContext
   let supportInfoText = ''
+  let supportInfoRequestId = 0
 
   function setStatus (text, isError) {
     if (!status) return
@@ -4501,6 +4503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadSupportInfo () {
     if (!output) return
+    const requestId = ++supportInfoRequestId
     if (copyBtn) copyBtn.disabled = true
     setStatus('Loading...', false)
     supportInfoText = ''
@@ -4508,8 +4511,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSupportInfoText('Loading support info...', { copyable: false })
 
     try {
-      const res = await fetch('/support-info')
+      const params = new URLSearchParams({ include_logs: includeLogs?.checked ? '1' : '0' })
+      const res = await fetch(`/support-info?${params}`)
       const data = await res.json()
+      if (requestId !== supportInfoRequestId) return
       if (!res.ok || !data || !data.text) {
         throw new Error((data && data.error) || 'Failed to load support info.')
       }
@@ -4517,6 +4522,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setStatus(data.generated_at ? `Updated ${data.generated_at}` : 'Updated', false)
       if (copyBtn) copyBtn.disabled = !data.text.trim()
     } catch (err) {
+      if (requestId !== supportInfoRequestId) return
       supportInfoText = ''
       hideCopyFallback()
       renderSupportInfoText(`Unable to load support info.\n${err.message || String(err)}`, { copyable: false })
@@ -4590,6 +4596,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (canUseClipboard) {
       try {
         await navigator.clipboard.writeText(text)
+        if (text !== supportInfoText) return
         hideCopyFallback()
         setStatus('Copied', false)
         return
@@ -4598,6 +4605,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    if (text !== supportInfoText) return
     if (!canUseClipboard) {
       showCopyFallback(text, 'Clipboard blocked on non-HTTPS. The raw support info is selected below.')
       return
@@ -4612,6 +4620,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   modalEl.addEventListener('show.bs.modal', () => {
+    if (includeLogs) includeLogs.checked = false
     loadSupportInfo()
   })
 
@@ -4628,6 +4637,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (refreshBtn) refreshBtn.addEventListener('click', loadSupportInfo)
+  if (includeLogs) includeLogs.addEventListener('change', loadSupportInfo)
   if (copyBtn) copyBtn.addEventListener('click', copySupportInfo)
 })
 
