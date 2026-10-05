@@ -137,8 +137,12 @@ def _build_library_lists():
         if lib_id
     ]
 
-    if not movie_libraries and not show_libraries:
-        movie_libraries, show_libraries = _library_lists_from_telemetry(telemetry_data)
+    if not movie_libraries or not show_libraries:
+        telemetry_movies, telemetry_shows = _library_lists_from_telemetry(telemetry_data)
+        if not movie_libraries:
+            movie_libraries = telemetry_movies
+        if not show_libraries:
+            show_libraries = telemetry_shows
 
     return movie_libraries, show_libraries, telemetry_data
 

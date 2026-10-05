@@ -4864,7 +4864,12 @@ def test_plex_page_normalizes_formatted_db_cache_on_load(client, isolated_config
     assert match.group(1) == "2048"
 
 
-def test_libraries_picker_falls_back_to_plex_telemetry_when_tmp_library_ids_missing(client, isolated_config_dir, monkeypatch, qs_module):
+@pytest.mark.parametrize(
+    ("movie_ids", "show_ids"),
+    [("", ""), ("", "2"), ("1", ""), ("1", "2")],
+    ids=["both-missing", "movies-missing", "shows-missing", "both-present"],
+)
+def test_libraries_picker_falls_back_to_plex_telemetry_when_tmp_library_ids_missing(client, isolated_config_dir, monkeypatch, qs_module, movie_ids, show_ids):
     from modules import database
 
     config_name = "pytest_telemetry_library_picker"
@@ -4881,10 +4886,10 @@ def test_libraries_picker_falls_back_to_plex_telemetry_when_tmp_library_ids_miss
             "plex": {
                 "url": "http://localhost:32400",
                 "token": "token",
-                "tmp_movie_libraries": "",
-                "tmp_show_libraries": "",
+                "tmp_movie_libraries": movie_ids,
+                "tmp_show_libraries": show_ids,
                 "tmp_music_libraries": "",
-                "tmp_library_names": "{}",
+                "tmp_library_names": '{"1": "Movies", "2": "TV Shows"}',
             },
         },
     )
@@ -4929,9 +4934,9 @@ def test_libraries_picker_falls_back_to_plex_telemetry_when_tmp_library_ids_miss
 
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert 'value="mov-library_1"' in html
+    assert html.count('value="mov-library_1"') == 1
     assert "[Movies]" in html
-    assert 'value="sho-library_2"' in html
+    assert html.count('value="sho-library_2"') == 1
     assert "[TV Shows]" in html
 
 
