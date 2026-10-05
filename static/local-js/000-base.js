@@ -1994,7 +1994,7 @@ function qsRefreshSectionRollups () {
   })
 }
 
-function qsRefreshSidebarValidationState (inputId) {
+function qsRefreshSidebarValidationState (inputId, options = {}) {
   const validatedInput = inputId ? document.getElementById(inputId) : getValidatedInput()
   if (!validatedInput) return
 
@@ -2012,7 +2012,7 @@ function qsRefreshSidebarValidationState (inputId) {
   qsRecalculateReadinessFromSidebar()
   qsApplyAllDependencyHints()
 
-  if (previousState !== stepState && window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.refresh === 'function') {
+  if (options.refreshWorkspace !== false && previousState !== stepState && window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.refresh === 'function') {
     window.QSWorkspaceStatus.refresh({ reason: 'validation-state-change', delayMs: 120 })
   }
 }
@@ -2077,18 +2077,24 @@ function qsApplyGroupMembership (requiredKeys, optionalKeys, reviewKeys) {
 
   const appendInOrder = (listEl, keys, grouped = false) => {
     if (!listEl) return
-    keys.forEach((key) => {
+    keys.forEach((key, index) => {
       const stepLink = stepMap[key]
       if (!stepLink) return
       if (!grouped) {
-        listEl.appendChild(stepLink)
+        const nextSibling = keys.slice(index + 1).map((nextKey) => stepMap[nextKey]).find((candidate) => candidate?.parentElement === listEl) || null
+        if (stepLink.parentElement !== listEl || stepLink.nextElementSibling !== nextSibling) {
+          listEl.insertBefore(stepLink, nextSibling)
+        }
         return
       }
       const destination = groupedDestination(listEl, key)
-      const targetOrder = destination.orderedKeys.indexOf(key)
+      const orderedKeys = destination.orderedKeys.length ? destination.orderedKeys : keys
+      const targetOrder = orderedKeys.indexOf(key)
       const siblings = Array.from(destination.element.querySelectorAll('.qs-step-link[data-step-key]')).filter((candidate) => candidate !== stepLink)
-      const nextSibling = siblings.find((candidate) => destination.orderedKeys.indexOf(String(candidate.dataset.stepKey || '')) > targetOrder)
-      destination.element.insertBefore(stepLink, nextSibling || null)
+      const nextSibling = siblings.find((candidate) => orderedKeys.indexOf(String(candidate.dataset.stepKey || '')) > targetOrder)
+      if (stepLink.parentElement !== destination.element || stepLink.nextElementSibling !== (nextSibling || null)) {
+        destination.element.insertBefore(stepLink, nextSibling || null)
+      }
       destination.element.closest('.qs-step-subgroup')?.classList.remove('d-none')
     })
   }
@@ -2487,7 +2493,8 @@ function qsApplyWorkspaceStatus (payload) {
   qsRefreshSectionRollups()
   qsApplyReadinessStrip(payload.readiness || {})
   qsRecalculateReadinessFromSidebar()
-  updateValidationCallouts()
+  // Local validation may not be saved yet; reconciling it must not fetch the same stale status again.
+  updateValidationCallouts(undefined, { refreshWorkspace: false })
 }
 
 function qsFetchWorkspaceStatus (options = {}) {
@@ -2774,7 +2781,7 @@ function qsRunBulkValidation (options = {}) {
     .then((confirmed) => confirmed ? qsStartBulkValidation(options) : null)
 }
 
-function updateValidationCallouts (inputId) {
+function updateValidationCallouts (inputId, options = {}) {
   const callouts = document.querySelectorAll('.qs-validation-accordion')
   if (callouts.length) {
     callouts.forEach((wrapper) => {
@@ -2826,7 +2833,7 @@ function updateValidationCallouts (inputId) {
     applyDynamicValidationCalloutState(alert)
   })
 
-  qsRefreshSidebarValidationState(inputId)
+  qsRefreshSidebarValidationState(inputId, options)
 }
 
 function getCurrentTemplateKey () {

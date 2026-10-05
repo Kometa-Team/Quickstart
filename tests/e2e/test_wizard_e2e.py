@@ -809,6 +809,104 @@ def test_plex_db_cache_mismatch_warning(page, live_server):
 
 
 @pytest.mark.e2e
+@pytest.mark.parametrize("step,service", [("020-tmdb", "tmdb"), ("060-mdblist", "mdblist"), ("050-omdb", "omdb"), ("070-notifiarr", "notifiarr")])
+def test_workspace_status_preserves_unsaved_validation_without_refresh_loop(page, live_server, step, service):
+    config_name = f"pytest_unsaved_{service}"
+    _seed_config(config_name)
+    _activate_config(page, live_server, config_name)
+    page.route(
+        f"**/validate_{service}",
+        lambda route: route.fulfill(status=200, json={"valid": True}),
+    )
+    _goto_step(page, live_server, step)
+    payload = page.evaluate("async () => (await fetch('/workspace_status')).json()")
+
+    page.locator(f"#{service}_apikey").fill("navigation-regression-key")
+    page.locator("#validateButton").click()
+    expect(page.locator(f"#{service}_validated")).to_have_value("true")
+
+    result = page.evaluate(
+        """({payload, step}) => {
+          const originalRefresh = window.QSWorkspaceStatus.refresh;
+          let refreshes = 0;
+          window.QSWorkspaceStatus.refresh = () => { refreshes++; };
+          try {
+            window.QSWorkspaceStatus.apply(payload);
+            return {
+              refreshes,
+              state: document.querySelector(`.qs-step-link[data-step-key="${step}"] .qs-step-link-state`).className
+            };
+          } finally {
+            window.QSWorkspaceStatus.refresh = originalRefresh;
+          }
+        }""",
+        {"payload": payload, "step": step},
+    )
+    assert result["refreshes"] == 0, "Applying saved status must not request another refresh for unsaved validation"
+    assert "qs-step-link-state--ok" in result["state"]
+
+
+@pytest.mark.e2e
+def test_workspace_status_does_not_move_unchanged_setup_buttons(page, live_server):
+    _seed_config("pytest_stable_sidebar")
+    _activate_config(page, live_server, "pytest_stable_sidebar")
+    _goto_step(page, live_server, "020-tmdb")
+    payload = page.evaluate("async () => (await fetch('/workspace_status')).json()")
+    moved_steps = page.evaluate(
+        """payload => {
+          window.QSWorkspaceStatus.apply(payload);
+          const observer = new MutationObserver(() => {});
+          observer.observe(document.querySelector('.qs-workspace-nav-panel'), {childList: true, subtree: true});
+          window.QSWorkspaceStatus.apply(payload);
+          const moved = observer.takeRecords().flatMap(record => Array.from(record.removedNodes))
+            .filter(node => node.matches?.('.qs-step-link')).map(node => node.dataset.stepKey);
+          observer.disconnect();
+          return moved;
+        }""",
+        payload,
+    )
+    assert moved_steps == [], "Unchanged Setup buttons must stay attached so status refreshes cannot interrupt clicks"
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("step,service", [("020-tmdb", "tmdb"), ("060-mdblist", "mdblist"), ("050-omdb", "omdb"), ("070-notifiarr", "notifiarr")])
+@pytest.mark.parametrize("width", [1366, 390])
+def test_setup_navigation_after_api_key_validation_and_revalidation(page, live_server, app, step, service, width):
+    import modules.database as database
+
+    page.set_viewport_size({"width": width, "height": 900})
+    config_name = f"pytest_navigation_{service}"
+    _seed_config(config_name)
+    _activate_config(page, live_server, config_name)
+    page.route(
+        f"**/validate_{service}",
+        lambda route: route.fulfill(status=200, json={"valid": True}),
+    )
+    _goto_step(page, live_server, step)
+
+    for target in ["010-plex", "150-settings"]:
+        key = page.locator(f"#{service}_apikey")
+        key.fill("navigation-regression-key-extra")
+        key.fill("navigation-regression-key")
+        page.locator("#validateButton").click()
+        expect(page.locator(f"#{service}_validated")).to_have_value("true")
+        page.evaluate("() => window.QSWorkspaceStatus.refresh({immediate: true})")
+        if service == "tmdb" and target == "010-plex":
+            Path("artifacts").mkdir(exist_ok=True)
+            page.screenshot(path=f"artifacts/validation-navigation-{width}.png", full_page=True)
+        target_link = page.locator(f'.qs-step-group[data-step-group] .qs-step-link[data-step-key="{target}"]')
+        target_link.evaluate("el => { el.closest('details').open = true; }")
+        target_link.click(delay=250)
+        expect(page).to_have_url(re.compile(f"/step/{target}$"))
+        with app.app_context():
+            validated, user_entered, data = database.retrieve_section_data(config_name, service)
+        assert validated is True
+        assert user_entered is True
+        assert data[service]["apikey"] == "navigation-regression-key"
+        _goto_step(page, live_server, step)
+
+
+@pytest.mark.e2e
 def test_tmdb_validator_success_enables_navigation_when_dropdowns_chosen(page, live_server):
     """TMDB gates the Next/JumpTo buttons LIVE on (api key validated)
     AND (language chosen) AND (region chosen). After validate succeeds,
@@ -1796,7 +1894,7 @@ def test_imagemaid_page_loads_as_module(page, live_server):
     page.wait_for_timeout(500)
     state = page.evaluate("""() => {
             const scripts = Array.from(document.scripts)
-            const imagemaidScript = scripts.find(s => (s.src || '').endsWith('/915-imagemaid.js'))
+            const imagemaidScript = scripts.find(s => /[/]915-imagemaid(?:-[^/]+)?[.]js$/.test(s.src || ''))
             return {
                 pageMeta: !!document.getElementById('imagemaid-page-meta'),
                 scriptFound: !!imagemaidScript,
@@ -1804,7 +1902,7 @@ def test_imagemaid_page_loads_as_module(page, live_server):
             }
         }""")
     assert state["pageMeta"], "expected the ImageMaid page to render (precondition)"
-    assert state["scriptFound"], "expected /915-imagemaid.js to be referenced from the page"
+    assert state["scriptFound"], "expected the ImageMaid source or built bundle to be referenced from the page"
     assert state["scriptType"] == "module", f"expected the ImageMaid script to load as type='module' after conversion; got type={state['scriptType']!r}"
 
 
