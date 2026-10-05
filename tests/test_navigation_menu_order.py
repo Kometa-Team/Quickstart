@@ -31,7 +31,9 @@ def test_live_membership_updates_target_optional_subgroups():
     libraries_js = (ROOT / "static" / "local-js" / "025-libraries.js").read_text(encoding="utf-8")
 
     assert "groupedDestination(listEl, key)" in base_js
-    assert "destination.orderedKeys.indexOf(key)" in base_js
+    assert "const orderedKeys = destination.orderedKeys.length ? destination.orderedKeys : keys" in base_js
+    assert "orderedKeys.indexOf(key)" in base_js
+    assert "stepLink.parentElement !== destination.element || stepLink.nextElementSibling !== (nextSibling || null)" in base_js
     assert "destination.element.insertBefore(stepLink, nextSibling || null)" in base_js
     assert "appendInOrder(groups.required, requiredKeys, true)" in base_js
     assert "appendInOrder(groups.optional, optionalKeys, true)" in base_js
