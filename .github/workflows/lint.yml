@@ -50,6 +50,9 @@ jobs:
         run: python -m pip install --upgrade pip pre-commit
 
       - name: Run Pre-commit
+        # no-commit-to-branch guards local commits; on a push to master it always fails
+        env:
+          SKIP: no-commit-to-branch
         run: pre-commit run --all-files --show-diff-on-failure --color=always
 
   vitest:
