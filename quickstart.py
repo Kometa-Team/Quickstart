@@ -200,6 +200,7 @@ from modules.background_jobs import (
     complete_background_job as _complete_background_job,  # noqa: F401 (used directly by tests as qs_module._complete_background_job)
 )
 from blueprints.validation_routes import bp as validation_routes_bp, refresh_plex_libraries
+from blueprints.plex_auth_routes import bp as plex_auth_routes_bp
 from blueprints.asset_routes import bp as asset_routes_bp
 from blueprints.kometa_updates import bp as kometa_updates_bp
 from blueprints.imagemaid_updates import bp as imagemaid_updates_bp
@@ -1186,6 +1187,7 @@ def _nbsp_leading_spaces(s: str) -> str:
 app.jinja_env.filters["nbsp_leading_spaces"] = _nbsp_leading_spaces
 
 app.register_blueprint(validation_routes_bp)
+app.register_blueprint(plex_auth_routes_bp)
 app.register_blueprint(asset_routes_bp)
 app.register_blueprint(kometa_updates_bp)
 app.register_blueprint(imagemaid_updates_bp)
