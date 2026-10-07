@@ -1,4 +1,5 @@
 import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
+import { setupPlexSignIn } from './modules/plexSignIn.js'
 
 // ── pre-config wizard init ──────────────────────────────────────────
 // The "hidden" section + plexDbCache element are revealed for users
@@ -123,3 +124,5 @@ createApiKeyValidator({
   isValid: (data) => data.validated === true,
   onValidationSuccess: applyPlexResponse
 })
+
+setupPlexSignIn()

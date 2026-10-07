@@ -583,6 +583,19 @@ def migrate_library_keys_to_plex_ids(config_name, all_plex_libraries):
     return rename_count
 
 
+def update_stored_plex_token(config_name, token):
+    """Save an approved token without replacing other Plex settings or validating the server."""
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "plex")
+    data = dict(stored) if isinstance(stored, dict) else {}
+    plex = dict(data.get("plex") or get_dummy_data("plex"))
+    plex["token"] = token
+    data["plex"] = plex
+    data["validated"] = False
+    for key in ("validated_at", "validation_status", "validation_updated_at", "validation_reason", "validation_details"):
+        data.pop(key, None)
+    database.save_section_data(name=config_name, section="plex", validated=False, user_entered=True, data=data)
+
+
 def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_libraries, user_list=None):
     """Update stored Plex cache fields in the database and preserve `validated`.
 
