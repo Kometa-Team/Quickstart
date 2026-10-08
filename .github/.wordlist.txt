@@ -13,6 +13,7 @@ CPython
 Deduped
 deduplicated
 dev
+Docker's
 DOM
 else's
 Emby
@@ -20,6 +21,7 @@ exe
 executables
 Frontend
 Gotify
+healthcheck
 Homebrew
 https
 ImageMaid
@@ -29,6 +31,7 @@ Jinja
 jQuery
 JS
 jsdom
+JSON
 kometa
 KStatusNotifierItem
 localhost
@@ -59,6 +62,7 @@ PyInstaller
 PyQt
 pytest
 quickstart
+Quickstart's
 Radarr
 Reingest
 reingests
@@ -79,7 +83,9 @@ Trakt
 truthy
 txt
 ui
+Unraid
 unreferenced
+unselect
 venv
 venvs
 Vite
