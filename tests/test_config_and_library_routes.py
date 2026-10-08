@@ -24,6 +24,8 @@ def test_activate_config_creates_new_config_and_sets_session(client, isolated_co
     assert data["success"] is True
     assert data["name"] == "myprofile"
     assert data["created"] is True  # brand-new config
+    with client.session_transaction() as sess:
+        assert sess["config_name"] == "myprofile"
 
     validated, user_entered, stored = database.retrieve_section_data("myprofile", "settings")
     assert validated is True

@@ -1491,7 +1491,9 @@ document.addEventListener('DOMContentLoaded', function () {
         applyActiveConfigUi(data.name)
         if (newConfigInput) removeValidationMessages(newConfigInput)
         showToast('success', data.created ? `Config '${data.name}' created.` : `Config '${data.name}' loaded.`)
-        window.setTimeout(() => window.location.reload(), 200)
+        const nextUrl = new URL(window.location.href)
+        nextUrl.searchParams.set('config_name', data.name)
+        window.setTimeout(() => window.location.replace(nextUrl.href), 200)
       } catch (err) {
         applyValidationStyles(newConfigInput, 'error', err.message || 'Unable to save config.')
         showToast('error', err.message || 'Unable to save config.')

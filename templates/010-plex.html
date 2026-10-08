@@ -14,12 +14,17 @@
     <span id="plexSignInSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
 </div>
 <div id="plexAuthStatus" class="status-message text-break mb-2" role="status" aria-live="polite"></div>
+<div id="plexServerPicker" class="mb-2 d-none">
+    <label class="form-label" for="plexServerSelect">Plex Server</label>
+    <select class="form-select" id="plexServerSelect"></select>
+</div>
 <div class="input-group mb-2">
     <span class="input-group-text" id="plex_url_text" style="width: 180px; justify-content: space-between;">
         Plex URL
         <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-            title="You must provide the direct address you use to access your server, including the port. You cannot use https://app.plex.tv<br><br>
-            <b>NOTE:</b> If Plex, Quickstart or Kometa are running in Docker, they must be on the same Docker network (e.g., a user-defined bridge network) for the containers to communicate.">
+            title="Leave this blank when signing in with Plex to discover your server address. An existing URL is kept.<br><br>
+            For manual entry, use a direct server address including the port, not https://app.plex.tv. A plex.direct hostname is normal for HTTPS and is not your token.<br><br>
+            <b>NOTE:</b> Quickstart and Kometa must both be able to reach this address. In Docker, use a reachable host address or shared container network.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
@@ -31,8 +36,8 @@
     <span class="input-group-text" id="plex_token_text" style="width: 180px; justify-content: space-between;">
         Plex Token
         <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-            title="Your token may change if you sign out of your devices, <b>do not</b> use the token that is found in Preferences.xml<br><br>
-            Sign in with Plex to obtain a token, or enter an existing authentication token / X-Plex-Token.">
+            title="Sign in with Plex to fill this automatically, or enter an existing authentication token / X-Plex-Token and select Validate.<br><br>
+            Keep this token private. It may change if you sign out of your devices. <b>Do not</b> use the token found in Preferences.xml.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
