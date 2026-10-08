@@ -29,6 +29,7 @@ beforeEach(() => {
       <a id="plexSignInOpen" class="d-none"></a>
       <span id="plexSignInSpinner" class="d-none"></span>
       <div id="plexAuthStatus"></div>
+      <div id="plexServerPicker" class="d-none"><select id="plexServerSelect"></select></div>
       <div id="statusMessage"></div>
       <button type="button" id="toggleApikeyVisibility"></button>
       <button type="button" id="validateButton">Validate</button>
@@ -38,6 +39,8 @@ beforeEach(() => {
   fetchMock = vi.fn(async (url) => {
     if (url.endsWith('/start')) return response({ attempt_id: 'attempt', auth_url: 'https://app.plex.tv/auth#?code=pin', expires_in: 60 })
     if (url.endsWith('/check')) return response({ authenticated: true, token: 'approved-token', username: 'owner' })
+    if (url.endsWith('/servers')) return response({ servers: [] })
+    if (url.endsWith('/connect')) return response({ url: 'http://discovered:32400' })
     if (url === '/validate_plex') return response({ validated: true })
     return response({ cancelled: true })
   })
@@ -62,6 +65,43 @@ afterEach(() => {
 })
 
 describe('Plex sign-in', () => {
+  it('checks approval immediately when focus returns to QS', async () => {
+    button('plexSignIn').click()
+    await settle()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/check'))).toBe(false)
+    window.dispatchEvent(new Event('focus'))
+    await settle()
+    expect(button('plex_token').value).toBe('approved-token')
+    expect(button('plex_validated').value).toBe('true')
+  })
+
+  it('does not overlap checks when focus and visibility return together', async () => {
+    const fallback = fetchMock.getMockImplementation()
+    let resolveCheck
+    fetchMock.mockImplementation(url => url.endsWith('/check') ? new Promise(resolve => { resolveCheck = resolve }) : fallback(url))
+    button('plexSignIn').click()
+    await settle()
+    window.dispatchEvent(new Event('focus'))
+    window.dispatchEvent(new Event('focus'))
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/check'))).toHaveLength(1)
+    resolveCheck(response({ authenticated: true, token: 'approved-token', username: 'owner' }))
+    await settle()
+    expect(button('plex_token').value).toBe('approved-token')
+  })
+
+  it('accepts approval after ten minutes when Plex grants thirty minutes', async () => {
+    const fallback = fetchMock.getMockImplementation()
+    fetchMock.mockImplementation(url => url.endsWith('/start') ? response({ attempt_id: 'attempt', auth_url: 'https://app.plex.tv/auth', expires_in: 1800 }) : fallback(url))
+    button('plexSignIn').click()
+    await settle()
+    vi.setSystemTime(Date.now() + 11 * 60 * 1000)
+    window.dispatchEvent(new Event('focus'))
+    await settle()
+    expect(button('plexAuthStatus').textContent).toBe('Signed in as owner.')
+    expect(button('plex_token').value).toBe('approved-token')
+  })
+
   it('opens synchronously, masks the approved token and validates the server', async () => {
     button('plexSignIn').click()
     expect(window.open).toHaveBeenCalled()
@@ -77,6 +117,7 @@ describe('Plex sign-in', () => {
     expect(JSON.parse(validation[1].body)).toEqual({ plex_token: 'approved-token', plex_url: 'http://plex:32400' })
     expect(button('plex_validated').value).toBe('true')
     expect(popup.close).toHaveBeenCalled()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/servers'))).toBe(false)
   })
 
   it('accepts sign-in without a server URL and focuses the URL field', async () => {
@@ -89,6 +130,119 @@ describe('Plex sign-in', () => {
     expect(button('plex_validated_at').value).toBe('')
     expect(document.activeElement).toBe(button('plex_url'))
     expect(fetchMock.mock.calls.some(([url]) => url === '/validate_plex')).toBe(false)
+    expect(button('plexAuthStatus').textContent).toContain('No owned Plex servers found')
+  })
+
+  it('discovers a single server, fills its reachable URL and validates', async () => {
+    const fallback = fetchMock.getMockImplementation()
+    fetchMock.mockImplementation(url => url.endsWith('/servers') ? response({ servers: [{ id: 'home', name: 'Home Plex' }] }) : fallback(url))
+    button('plex_url').value = ''
+    button('plexSignIn').click()
+    await settle()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(button('plex_url').value).toBe('http://discovered:32400')
+    expect(button('plex_validated').value).toBe('true')
+    expect(button('plexServerPicker').classList.contains('d-none')).toBe(true)
+    const connection = fetchMock.mock.calls.find(([url]) => url.endsWith('/connect'))
+    expect(JSON.parse(connection[1].body).server_id).toBe('home')
+    const validation = fetchMock.mock.calls.find(([url]) => url === '/validate_plex')
+    expect(JSON.parse(validation[1].body).plex_url).toBe('http://discovered:32400')
+  })
+
+  it('waits for a choice when multiple servers are discovered', async () => {
+    const fallback = fetchMock.getMockImplementation()
+    fetchMock.mockImplementation(url => url.endsWith('/servers') ? response({ servers: [{ id: 'home', name: 'Home Plex' }, { id: 'other', name: '<Other Plex>' }] }) : fallback(url))
+    button('plex_url').value = ''
+    button('plexSignIn').click()
+    await settle()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(button('plexServerPicker').classList.contains('d-none')).toBe(false)
+    expect(button('validateButton').disabled).toBe(true)
+    expect(button('plexServerSelect').options[2].textContent).toBe('<Other Plex>')
+    expect(button('plexServerSelect').querySelector('other')).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/connect'))).toBe(false)
+    button('plexServerSelect').value = 'other'
+    button('plexServerSelect').dispatchEvent(new Event('change'))
+    await settle()
+    expect(button('plex_url').value).toBe('http://discovered:32400')
+    expect(button('plexSignIn').disabled).toBe(false)
+    expect(button('plexServerPicker').classList.contains('d-none')).toBe(true)
+  })
+
+  it.each(['servers', 'connect'])('keeps the token and manual entry available if %s fails', async endpoint => {
+    const fallback = fetchMock.getMockImplementation()
+    fetchMock.mockImplementation(url => {
+      if (url.endsWith(`/${endpoint}`)) return response({ error: 'Plex unavailable' }, 502)
+      if (url.endsWith('/servers')) return response({ servers: [{ id: 'home', name: 'Home' }] })
+      return fallback(url)
+    })
+    button('plex_url').value = ''
+    button('plexSignIn').click()
+    await settle()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(button('plex_token').value).toBe('approved-token')
+    expect(button('plex_url').value).toBe('')
+    expect(button('plexAuthStatus').textContent).toContain('Enter your Plex server URL')
+    expect(button('plexSignIn').disabled).toBe(false)
+    expect(button('plex_token').readOnly).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => url === '/validate_plex')).toBe(false)
+  })
+
+  it.each(['cancel', 'input', 'config'])('ignores late discovery after %s', async action => {
+    const fallback = fetchMock.getMockImplementation()
+    let resolveDiscovery
+    fetchMock.mockImplementation(url => url.endsWith('/servers') ? new Promise(resolve => { resolveDiscovery = resolve }) : fallback(url))
+    button('plex_url').value = ''
+    button('plexSignIn').click()
+    await settle()
+    await vi.advanceTimersByTimeAsync(2000)
+    if (action === 'cancel') button('plexSignInCancel').click()
+    if (action === 'input') {
+      button('plex_url').value = 'http://manual:32400'
+      button('plex_url').dispatchEvent(new Event('input'))
+    }
+    if (action === 'config') button('qs-active-config-input').value = 'second'
+    resolveDiscovery(response({ servers: [{ id: 'home', name: 'Home' }] }))
+    await settle()
+    expect(button('plex_url').value).toBe(action === 'input' ? 'http://manual:32400' : '')
+    expect(button('plex_token').value).toBe('approved-token')
+    expect(button('plexSignIn').disabled).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/connect'))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => url === '/validate_plex')).toBe(false)
+  })
+
+  it('ignores a late connection when the user supplies their own URL', async () => {
+    const fallback = fetchMock.getMockImplementation()
+    let resolveConnection
+    fetchMock.mockImplementation(url => {
+      if (url.endsWith('/servers')) return response({ servers: [{ id: 'home', name: 'Home' }] })
+      if (url.endsWith('/connect')) return new Promise(resolve => { resolveConnection = resolve })
+      return fallback(url)
+    })
+    button('plex_url').value = ''
+    button('plexSignIn').click()
+    await settle()
+    await vi.advanceTimersByTimeAsync(2000)
+    button('plex_url').value = 'http://manual:32400'
+    button('plex_url').dispatchEvent(new Event('input'))
+    resolveConnection(response({ url: 'http://discovered:32400' }))
+    await settle()
+    expect(button('plex_url').value).toBe('http://manual:32400')
+    expect(button('validateButton').disabled).toBe(false)
+    expect(fetchMock.mock.calls.some(([url]) => url === '/validate_plex')).toBe(false)
+  })
+
+  it('expires server selection without losing the approved token', async () => {
+    const fallback = fetchMock.getMockImplementation()
+    fetchMock.mockImplementation(url => url.endsWith('/servers') ? response({ servers: [{ id: 'home', name: 'Home' }, { id: 'other', name: 'Other' }] }) : fallback(url))
+    button('plex_url').value = ''
+    button('plexSignIn').click()
+    await settle()
+    await vi.advanceTimersByTimeAsync(60000)
+    expect(button('plex_token').value).toBe('approved-token')
+    expect(button('plexServerPicker').classList.contains('d-none')).toBe(true)
+    expect(button('plexAuthStatus').textContent).toContain('Server selection expired')
+    expect(button('plexSignIn').disabled).toBe(false)
   })
 
   it('keeps account success separate from a server validation failure', async () => {
