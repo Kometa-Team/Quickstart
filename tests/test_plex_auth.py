@@ -1,5 +1,4 @@
 from urllib.parse import parse_qs, urlparse
-from types import SimpleNamespace
 
 import pytest
 import requests
@@ -197,105 +196,6 @@ def test_first_token_save_uses_plex_defaults(auth_client):
     assert data["plex"]["timeout"]
 
 
-def approve(client, monkeypatch):
-    payload = begin(client)
-    monkeypatch.setattr(auth.requests, "get", lambda url, **kwargs: PlexResponse({"authToken": "approved-token"} if "/pins/" in url else {"username": "owner"}))
-    assert client.post("/plex-auth/check", json=payload).status_code == 200
-    return payload
-
-
-def resource(server_id="server-one", name="Home Plex", owned=True, provides="server", connect=None):
-    return SimpleNamespace(clientIdentifier=server_id, name=name, owned=owned, provides=provides, accessToken="private-resource-token", connect=connect)
-
-
-def mock_resources(monkeypatch, resources):
-    def account(**kwargs):
-        assert kwargs == {"token": "approved-token", "timeout": 8}
-        return SimpleNamespace(resources=lambda: resources)
-
-    monkeypatch.setattr(auth, "MyPlexAccount", account)
-
-
-def test_discovery_lists_only_owned_servers_without_credentials(auth_client, monkeypatch):
-    payload = approve(auth_client, monkeypatch)
-    mock_resources(monkeypatch, [resource(name="Z Plex"), resource("server-two", "A Plex"), resource("shared", owned=False), resource("player", provides="player")])
-    response = auth_client.post("/plex-auth/servers", json=payload)
-    assert response.json == {"servers": [{"id": "server-two", "name": "A Plex"}, {"id": "server-one", "name": "Z Plex"}]}
-    assert "token" not in response.get_data(as_text=True)
-    assert response.headers["Cache-Control"] == "no-store"
-
-
-def test_discovery_with_no_owned_servers(auth_client, monkeypatch):
-    payload = approve(auth_client, monkeypatch)
-    mock_resources(monkeypatch, [resource(owned=False)])
-    assert auth_client.post("/plex-auth/servers", json=payload).json == {"servers": []}
-
-
-def test_connect_probes_owned_server_without_relay_and_returns_only_url(auth_client, monkeypatch):
-    payload = approve(auth_client, monkeypatch)
-
-    def connect(**kwargs):
-        assert kwargs == {"timeout": 3, "locations": ["local", "remote"]}
-        return SimpleNamespace(_baseurl="https://192-168-1-20.plex.direct:32400", machineIdentifier="server-one")
-
-    mock_resources(monkeypatch, [resource(connect=connect)])
-    response = auth_client.post("/plex-auth/connect", json={**payload, "server_id": "server-one", "url": "http://untrusted"})
-    assert response.json == {"url": "https://192-168-1-20.plex.direct:32400", "name": "Home Plex"}
-    assert database.retrieve_section_data("first", "plex")[2]["plex"]["token"] == "approved-token"
-
-
-@pytest.mark.parametrize("server_id", [None, 123, "", "shared", "unknown"])
-def test_connect_rejects_unknown_or_unowned_servers(auth_client, monkeypatch, server_id):
-    payload = approve(auth_client, monkeypatch)
-    mock_resources(monkeypatch, [resource(), resource("shared", owned=False)])
-    response = auth_client.post("/plex-auth/connect", json={**payload, "server_id": server_id})
-    assert response.status_code == (404 if server_id in ("shared", "unknown") else 400)
-
-
 @pytest.mark.parametrize("endpoint", ["servers", "connect"])
-def test_discovery_requires_approval_and_active_config(auth_client, monkeypatch, endpoint):
-    payload = begin(auth_client)
-    assert auth_client.post(f"/plex-auth/{endpoint}", json=payload).status_code == 409
-    payload = approve(auth_client, monkeypatch)
-    assert auth_client.post(f"/plex-auth/{endpoint}", json={**payload, "config_name": "second"}).status_code == 409
-    other = auth_client.application.test_client()
-    assert other.post(f"/plex-auth/{endpoint}", json=payload).status_code == 409
-    auth_client.post("/plex-auth/cancel", json=payload)
-    assert auth_client.post(f"/plex-auth/{endpoint}", json=payload).status_code == 409
-
-
-def test_discovery_provider_failure_preserves_approved_token_and_redacts_errors(auth_client, monkeypatch):
-    payload = approve(auth_client, monkeypatch)
-
-    def fail(**kwargs):
-        raise requests.Timeout("private-resource-token")
-
-    monkeypatch.setattr(auth, "MyPlexAccount", fail)
-    response = auth_client.post("/plex-auth/servers", json=payload)
-    assert response.status_code == 502
-    assert "private-resource-token" not in response.get_data(as_text=True)
-    assert database.retrieve_section_data("first", "plex")[2]["plex"]["token"] == "approved-token"
-
-
-@pytest.mark.parametrize(
-    "url,identifier", [("http://plex:32400", "wrong-server"), ("http://plex:32400?X-Plex-Token=secret", "server-one"), ("http://user:secret@plex:32400", "server-one")]
-)
-def test_connect_rejects_wrong_server_or_credentials_in_url(auth_client, monkeypatch, url, identifier):
-    payload = approve(auth_client, monkeypatch)
-    mock_resources(monkeypatch, [resource(connect=lambda **kwargs: SimpleNamespace(_baseurl=url, machineIdentifier=identifier))])
-    response = auth_client.post("/plex-auth/connect", json={**payload, "server_id": "server-one"})
-    assert response.status_code == 502
-    assert "secret" not in response.get_data(as_text=True)
-
-
-def test_unreachable_server_does_not_undo_sign_in(auth_client, monkeypatch):
-    payload = approve(auth_client, monkeypatch)
-
-    def fail(**kwargs):
-        raise requests.ConnectionError("private-resource-token")
-
-    mock_resources(monkeypatch, [resource(connect=fail)])
-    response = auth_client.post("/plex-auth/connect", json={**payload, "server_id": "server-one"})
-    assert response.status_code == 502
-    assert "private-resource-token" not in response.get_data(as_text=True)
-    assert auth_client.post("/plex-auth/check", json=payload).json["authenticated"] is True
+def test_server_discovery_routes_are_not_registered(auth_client, endpoint):
+    assert auth_client.post(f"/plex-auth/{endpoint}", json=begin(auth_client)).status_code == 404
