@@ -1,3 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quickstart"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+description = "Kometa Quickstart: a web UI for building Kometa configuration files"
+readme = "README.md"
+requires-python = "==3.13.*"
+license = "MIT"
+license-files = ["LICENSE"]
+
+[project.urls]
+Homepage = "https://github.com/Kometa-Team/Quickstart"
+
+# Quickstart is an application, not an importable library: requirements.txt
+# stays the single source of truth (Dockerfile and CI install from it), and
+# this file only reads it so the pins are never duplicated.
+[tool.setuptools]
+py-modules = []
+packages = []
+
+[tool.setuptools.dynamic]
+version = { file = ["VERSION"] }
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = { file = ["requirements-dev.txt"] }
+
+[tool.black]
+line-length = 180
+
 [tool.ruff]
 line-length = 180
 target-version = "py313"

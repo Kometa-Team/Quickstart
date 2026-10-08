@@ -44,7 +44,7 @@ repos:
         pass_filenames: false
         stages: [manual]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
+    rev: v0.16.10
     hooks:
       - id: ruff
         args: [ --fix ]
