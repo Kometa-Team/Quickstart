@@ -26,34 +26,27 @@ class PlexResponse:
 
 @pytest.mark.e2e
 @pytest.mark.parametrize("viewport,label", [({"width": 1440, "height": 1000}, "desktop"), ({"width": 390, "height": 844}, "mobile")])
-@pytest.mark.parametrize("mode", ["existing", "discover", "select", "unreachable"])
+@pytest.mark.parametrize("mode", ["existing", "manual"])
 def test_plex_browser_approval_and_server_validation(page, live_server, app, monkeypatch, viewport, label, mode):
     approved = False
     config_name = f"plex_sign_in_{label}_{mode}"
+    server_url = "http://192.168.1.20:32400"
+    auth_requests = []
+    page.on("request", lambda request: auth_requests.append(request.url) if "/plex-auth/" in request.url else None)
     page.set_viewport_size(viewport)
     database.save_section_data("start", True, True, {"start": {"config_name": config_name}}, name=config_name)
 
     def plex_get(url, **kwargs):
         if "/pins/" in url:
             return PlexResponse({"authToken": "approved-token" if approved else None})
+        assert url.endswith("/user")
         assert kwargs["headers"]["X-Plex-Token"] == "approved-token"
         return PlexResponse({"username": "plex-owner"})
 
     monkeypatch.setattr(auth, "requests", SimpleNamespace(post=lambda *args, **kwargs: PlexResponse({"id": 123, "code": "test-pin", "expiresIn": 60}), get=plex_get))
 
-    def connect(**kwargs):
-        assert kwargs == {"timeout": 3, "locations": ["local", "remote"]}
-        if mode == "unreachable":
-            raise ConnectionError("Server unavailable")
-        return SimpleNamespace(_baseurl="http://plex:32400", machineIdentifier="home")
-
-    resources = [SimpleNamespace(clientIdentifier="home", name="Home Plex", owned=True, provides="server", connect=connect)]
-    if mode == "select":
-        resources.append(SimpleNamespace(clientIdentifier="other", name="Another Plex server with a longer name", owned=True, provides="server"))
-    monkeypatch.setattr(auth, "MyPlexAccount", lambda **kwargs: SimpleNamespace(resources=lambda: resources))
-
     def validate(data):
-        assert data == {"plex_url": "http://plex:32400", "plex_token": "approved-token"}
+        assert data == {"plex_url": server_url, "plex_token": "approved-token"}
         return jsonify(
             {
                 "validated": True,
@@ -80,14 +73,16 @@ def test_plex_browser_approval_and_server_validation(page, live_server, app, mon
     page.goto(f"{live_server}/step/010-plex", wait_until="networkidle")
     guidance = page.locator(".qs-validation-callout")
     expect(guidance).to_contain_text("Choose either option:")
-    expect(guidance).to_contain_text("Leave Plex URL blank")
+    expect(guidance).to_contain_text("Quickstart fills only the token")
     expect(guidance).to_contain_text("An existing URL is kept")
     expect(guidance).to_contain_text("Manual entry:")
-    expect(guidance).to_contain_text("your approved token is kept")
-    expect(guidance).to_contain_text("Discovery does not enable remote access")
+    expect(guidance).to_contain_text("Docker host's LAN address and published Plex port")
+    expect(guidance).to_contain_text("Sign-in does not change your server address")
+    expect(guidance).not_to_contain_text("discovery")
     expect(guidance.locator("a")).to_have_attribute("rel", "noopener noreferrer")
-    expect(page.locator("#plex_url_text [data-bs-toggle='tooltip']")).to_have_attribute("data-bs-original-title", re.compile("Leave this blank.*", re.DOTALL))
-    page.locator("#plex_url").fill("http://plex:32400" if mode == "existing" else "")
+    expect(page.locator("#plex_url_text [data-bs-toggle='tooltip']")).to_have_attribute("data-bs-original-title", re.compile("Enter the address Kometa.*", re.DOTALL))
+    expect(page.locator("#plexServerPicker, #plexServerSelect")).to_have_count(0)
+    page.locator("#plex_url").fill(server_url if mode == "existing" else "")
     artifacts = Path(__file__).resolve().parents[2] / "artifacts"
     artifacts.mkdir(exist_ok=True)
     page.evaluate("window.scrollTo({top: 0, behavior: 'instant'})")
@@ -114,31 +109,32 @@ def test_plex_browser_approval_and_server_validation(page, live_server, app, mon
             )
     page.screenshot(path=str(artifacts / f"plex-sign-in-{label}-{mode}-pending.png"), full_page=True)
 
-    page.bring_to_front()
     approved = True
-    if mode == "select":
-        expect(page.locator("#plexServerPicker")).to_be_visible(timeout=15000)
-        expect(page.locator("#plex_url")).to_have_value("")
-        box = page.locator("#plexServerSelect").bounding_box()
-        assert box and box["x"] >= 0 and box["x"] + box["width"] <= viewport["width"] + 1
-        page.screenshot(path=str(artifacts / f"plex-sign-in-{label}-server-picker.png"), full_page=True)
-        page.locator("#plexServerSelect").select_option("home")
-    if mode == "unreachable":
-        expect(page.locator("#plexAuthStatus")).to_contain_text("Quickstart could not connect", timeout=15000)
+    page.bring_to_front()
+    page.evaluate("window.dispatchEvent(new Event('focus'))")
+    if mode == "manual":
+        expect(page.locator("#plexAuthStatus")).to_have_text("Signed in as plex-owner. Enter your Plex server URL, then validate.", timeout=15000)
         expect(page.locator("#plex_token")).to_have_value("approved-token")
         expect(page.locator("#plex_url")).to_have_value("")
         expect(page.locator("#plexSignIn")).to_be_enabled()
-        page.locator("#plex_url").fill("http://plex:32400")
+        expect(page.locator("#plex_token")).not_to_have_attribute("readonly", "")
+        expect(page.locator("#plex_validated")).to_have_value("false")
+        expect(page.locator("#statusMessage")).not_to_have_text("Plex server validated successfully!")
+        assert not any(url.endswith(("/servers", "/connect")) for url in auth_requests)
+        page.locator("#plex_url").fill(server_url)
+        expect(page.locator("#validateButton")).to_be_enabled()
         page.locator("#validateButton").click()
     else:
         expect(page.locator("#plexAuthStatus")).to_have_text("Signed in as plex-owner.", timeout=15000)
-    expect(page.locator("#plex_url")).to_have_value("http://plex:32400")
+    expect(page.locator("#plex_url")).to_have_value(server_url)
     expect(page.locator("#plexAuthStatus")).to_be_visible()
-    expect(page.locator("#statusMessage")).to_have_text("Plex server validated successfully!")
+    expect(page.locator("#statusMessage")).to_have_text("Plex server validated successfully!", timeout=15000)
     expect(page.locator("#plex_token")).to_have_value("approved-token")
     expect(page.locator("#plex_token")).to_have_attribute("type", "password")
     expect(page.locator("#tmp_movie_libraries")).to_have_value("1")
     expect(page.locator("#plex-pass-status-success")).to_be_visible()
+    assert all(url.rsplit("/", 1)[-1] in ("start", "check", "cancel") for url in auth_requests)
+    page.evaluate("window.scrollTo({top: 0, behavior: 'instant'})")
     page.screenshot(path=str(artifacts / f"plex-sign-in-{label}-{mode}-approved.png"), full_page=True)
     with app.app_context():
         assert database.retrieve_section_data(config_name, "plex")[2]["plex"]["token"] == "approved-token"

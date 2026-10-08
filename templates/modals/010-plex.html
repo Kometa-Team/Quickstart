@@ -3,15 +3,16 @@
   <p>A valid Plex server URL and token are required. Choose either option:</p>
   <ul class="mb-3">
     <li class="mb-2"><b>Sign in with Plex:</b> Approve access in the Plex window, including two-factor authentication if enabled.
-      Leave Plex URL blank to find servers owned by your account. One server connects automatically; with multiple servers, select one.
-      An existing URL is kept. Quickstart fills the token and validates the connection automatically.
+      Quickstart fills only the token; enter the server URL yourself. An existing URL is kept and validated after sign-in.
       If the popup is blocked, use <b>Open Plex</b>.</li>
     <li><b>Manual entry:</b> Enter your direct server URL and an existing <code>X-Plex-Token</code>, then select <b>Validate</b>.
-      If automatic discovery cannot find or connect to your server, your approved token is kept; enter the URL and validate manually.</li>
+      You can also obtain the token through sign-in before entering the URL.</li>
   </ul>
-  <p>Quickstart and Kometa must both be able to reach the server address, including when running in Docker.
+  <p>Quickstart and Kometa must both be able to reach the server address.
+    If Plex runs in Docker and Kometa runs on another machine, use the Docker host's LAN address and published Plex port,
+    not a private container IP or <code>localhost</code>.
     <code>https://app.plex.tv</code> is not a direct server address.</p>
   <p>A <code>plex.direct</code> address is normal for Plex HTTPS connections, not an authentication token.
-    Discovery does not enable remote access or change your server settings. Keep your Plex token private.</p>
+    Sign-in does not change your server address or remote-access settings. Keep your Plex token private.</p>
   <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/plex/" target="_blank" rel="noopener noreferrer">Plex configuration documentation</a>
 </div>

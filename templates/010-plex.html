@@ -14,23 +14,19 @@
     <span id="plexSignInSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
 </div>
 <div id="plexAuthStatus" class="status-message text-break mb-2" role="status" aria-live="polite"></div>
-<div id="plexServerPicker" class="mb-2 d-none">
-    <label class="form-label" for="plexServerSelect">Plex Server</label>
-    <select class="form-select" id="plexServerSelect"></select>
-</div>
 <div class="input-group mb-2">
     <span class="input-group-text" id="plex_url_text" style="width: 180px; justify-content: space-between;">
         Plex URL
         <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-            title="Leave this blank when signing in with Plex to discover your server address. An existing URL is kept.<br><br>
-            For manual entry, use a direct server address including the port, not https://app.plex.tv. A plex.direct hostname is normal for HTTPS and is not your token.<br><br>
-            <b>NOTE:</b> Quickstart and Kometa must both be able to reach this address. In Docker, use a reachable host address or shared container network.">
+            title="Enter the address Kometa will use to reach Plex, including the port. Plex sign-in fills only the token, not this address.<br><br>
+            Use a direct server address, not https://app.plex.tv. A plex.direct hostname is normal for HTTPS and is not your token.<br><br>
+            <b>NOTE:</b> Quickstart and Kometa must both be able to reach this address. If Plex runs in Docker and Kometa runs on another machine, use the Docker host's LAN address and published Plex port, not a private container IP or localhost.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
     <input type="text" class="form-control" id="plex_url" name="plex_url"
         value="{{ data['plex']['url'] | string if data['plex']['url'] and 'http://192.168.1.12:32400' not in data['plex']['url'] | string else '' }}"
-        aria-describedby="plex_url_text">
+        aria-describedby="plex_url_text" placeholder="http://192.168.1.20:32400">
 </div>
 <div class="input-group mb-2">
     <span class="input-group-text" id="plex_token_text" style="width: 180px; justify-content: space-between;">
