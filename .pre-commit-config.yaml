@@ -49,7 +49,7 @@ repos:
       - id: ruff
         args: [ --fix ]
   - repo: https://github.com/psf/black
-    rev: 26.5.1
+    rev: 26.10.0
     hooks:
       - id: black
         args: [ -l, '180' ]
