@@ -1138,11 +1138,12 @@ body.qs-has-workspace .footer {
 
     .rating-image-dropdown-label {
         min-width: 0;
+        flex: 1 1 auto;
     }
 
-    .rating-image-dropdown-text {
-        overflow-wrap: anywhere;
-        white-space: normal;
+    .rating-image-dropdown-toggle {
+        padding: 6px 8px;
+        gap: 6px;
     }
 }
 
