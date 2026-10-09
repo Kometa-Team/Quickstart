@@ -65,12 +65,12 @@ export const PathValidation = (() => {
   }
 
   function validateValue (value, rule, platform) {
-    if (value == null) return { valid: true }
+    if (value == null) return { valid: true, empty: true }
     const str = String(value).trim()
-    if (!str) return { valid: true }
+    if (!str) return { valid: true, empty: true }
     const lowered = str.toLowerCase()
     if (lowered === 'none' || lowered === 'null') {
-      return { valid: true }
+      return { valid: true, empty: true }
     }
     if (lowered.includes('\\0') || lowered.includes('\\x00') || lowered.includes('\\u0000')) {
       return { valid: false, message: 'Contains an invalid null sequence.' }
@@ -204,6 +204,8 @@ export const PathValidation = (() => {
     const posixResult = validateValue(input.value, rule, 'linux')
 
     el.replaceChildren()
+    el.hidden = Boolean(windowsResult.empty)
+    if (el.hidden) return
     el.appendChild(buildPlatformLine('Windows', windowsResult))
     el.appendChild(buildPlatformLine('Linux/macOS/Docker', posixResult))
   }

@@ -317,6 +317,72 @@ describe('PathValidation platform-status hint rendering', () => {
     document.body.innerHTML = ''
   })
 
+  it.each(['', '   ', 'none', 'null', ' NONE ', ' NuLl '])('hides platform checks for an unset path (%j) without rejecting it', async (value) => {
+    document.body.innerHTML = `
+      <div class="input-group">
+        <input type="text" name="assets-dir" placeholder="/var/assets">
+      </div>
+    `
+    const input = document.querySelector('input')
+    input.value = value
+    await PathValidation.attach(document)
+    expect(PathValidation.validateAll(document)).toBe(true)
+    expect(input.classList.contains('is-invalid')).toBe(false)
+    expect(input.dataset.pathValid).toBe('true')
+    const hintEl = document.querySelector('[data-path-hint="platform-status"]')
+    expect(hintEl.hidden).toBe(true)
+    expect(hintEl.textContent).toBe('')
+    expect(hintEl.querySelector('.text-success, .text-danger')).toBeNull()
+  })
+
+  it.each(['input', 'blur', 'validateAll'])('removes stale path checks when a field is cleared via %s', async (trigger) => {
+    document.body.innerHTML = `
+      <div class="input-group">
+        <input type="text" name="assets-dir" value="bad/relative">
+      </div>
+    `
+    await PathValidation.attach(document)
+    const input = document.querySelector('input')
+    const hintEl = document.querySelector('[data-path-hint="platform-status"]')
+    expect(hintEl.hidden).toBe(false)
+    expect(input.classList.contains('is-invalid')).toBe(true)
+
+    input.value = ''
+    if (trigger === 'validateAll') expect(PathValidation.validateAll(document)).toBe(true)
+    else input.dispatchEvent(new Event(trigger))
+    expect(hintEl.hidden).toBe(true)
+    expect(hintEl.textContent).toBe('')
+    expect(document.querySelector('.invalid-feedback').textContent).toBe('')
+    expect(input.classList.contains('is-invalid')).toBe(false)
+
+    input.value = '/var/assets'
+    input.dispatchEvent(new Event('input'))
+    expect(hintEl.hidden).toBe(false)
+    expect(hintEl.textContent).toContain('Linux/macOS/Docker: OK')
+    expect(input.dataset.pathValid).toBe('true')
+    input.value = ''
+    input.dispatchEvent(new Event('input'))
+    expect(hintEl.hidden).toBe(true)
+    expect(hintEl.textContent).toBe('')
+  })
+
+  it('keeps a newly added blank row neutral without hiding an existing row\'s checks', async () => {
+    document.body.innerHTML = `
+      <div class="input-group" id="existing">
+        <input type="text" name="assets-dir" value="/var/assets">
+      </div>
+    `
+    await PathValidation.attach(document)
+    document.body.insertAdjacentHTML('beforeend', '<div class="input-group"><input type="text" name="new-assets-dir"></div>')
+    await PathValidation.attach(document)
+    const hints = document.querySelectorAll('[data-path-hint="platform-status"]')
+    expect(hints).toHaveLength(2)
+    expect(hints[0].hidden).toBe(false)
+    expect(hints[0].textContent).toContain('Linux/macOS/Docker: OK')
+    expect(hints[1].hidden).toBe(true)
+    expect(hints[1].textContent).toBe('')
+  })
+
   it('renders both Windows and Linux/macOS/Docker lines for rules that opt in', async () => {
     document.body.innerHTML = `
       <div class="input-group">
