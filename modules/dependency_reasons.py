@@ -372,6 +372,10 @@ def _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, sou
         if prefix not in active_prefixes or not _is_truthy_setting_value(libraries_data.get(f"{prefix}-{builder}-overlay_ratings")):
             continue
 
+        image_key = f"{key[:-1]}_image]"
+        if image_key in libraries_data and not _is_truthy_setting_value(libraries_data[image_key]):
+            continue
+
         _append_dependency_reason(reasons, seen, libraries_data, prefix, f"{builder} ratings overlay uses {selected_source}")
 
     return reasons

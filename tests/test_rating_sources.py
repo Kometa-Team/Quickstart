@@ -106,6 +106,18 @@ def test_cleared_rating_selectors_save_explicit_none(slot, value):
     assert cleaned["ordinary_field"] is None
 
 
+@pytest.mark.parametrize("source,provider", [("mdb_tomatoes", "mdblist"), ("omdb", "omdb"), ("anidb", "anidb"), ("mal", "mal"), ("serializd", "serializd"), ("floppy", "floppy")])
+@pytest.mark.parametrize("image", ["", "none", None])
+def test_explicitly_disabled_image_does_not_require_its_direct_source(source, provider, image):
+    libraries = {
+        "sho-library_tv-library": "TV",
+        "sho-library_tv-show-overlay_ratings": True,
+        "sho-library_tv-show-template_overlay_ratings[rating1]": source,
+        "sho-library_tv-show-template_overlay_ratings[rating1_image]": image,
+    }
+    assert getattr(dependency_reasons, f"_libraries_data_{provider}_dependency_reasons")(libraries) == []
+
+
 def test_serializd_source_moves_setup_into_required_steps(monkeypatch, qs_module):
     from modules import workspace_status
 
