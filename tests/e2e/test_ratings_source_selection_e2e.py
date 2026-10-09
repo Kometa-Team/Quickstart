@@ -76,6 +76,16 @@ def test_rating_sources_and_none_survive_lazy_loading_and_save(page, live_server
     if not first.is_visible():
         section.locator(".overlay-variable-section-toggle").click()
     expect(first).to_be_visible()
+    if label == "mobile":
+        image_group = ratings.locator(".rating-image-input-group").first
+        bounds = image_group.evaluate("""element => {
+          const group = element.getBoundingClientRect();
+          const picker = element.querySelector('.rating-image-dropdown-toggle').getBoundingClientRect();
+          return {groupLeft: group.left, groupRight: group.right, pickerLeft: picker.left, pickerRight: picker.right, width: picker.width};
+        }""")
+        assert bounds["width"] > 100
+        assert bounds["pickerLeft"] >= bounds["groupLeft"] - 1
+        assert bounds["pickerRight"] <= bounds["groupRight"] + 1
     for field in slots:
         field.select_option("")
     for field in slots:
