@@ -142,6 +142,8 @@ def test_rating_sources_and_none_survive_lazy_loading_and_save(page, live_server
     with page.expect_response(lambda response: response.url.endswith(f"/autosave_library/{library_id}") and response.request.method == "POST", timeout=15000) as saved:
         picker.select_option(other_library_id)
     assert saved.value.json()["success"] is True
+    expect(page.locator(f'.library-settings-card[data-library-id="{other_library_id}"]')).to_be_visible(timeout=45000)
+    expect(picker).to_be_enabled(timeout=45000)
     with app.app_context():
         saved_fields = database.retrieve_section_data(config_name, "libraries")[2]["libraries"]
     assert saved_fields[f"{template_name}[rating1]"] == direct_source
@@ -150,6 +152,7 @@ def test_rating_sources_and_none_survive_lazy_loading_and_save(page, live_server
         assert saved_fields[f"{template_name}[rating3]"] == "tmdb"
     picker.select_option(library_id)
     expect(card).to_be_visible(timeout=15000)
+    expect(picker).to_be_enabled(timeout=45000)
     expect(first).to_have_value(direct_source)
     expect(second).to_have_value("")
     page.reload(wait_until="networkidle")
