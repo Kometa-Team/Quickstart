@@ -7287,6 +7287,19 @@ body {
         white-space: nowrap;
     }
 
+    .library-settings-card .accordion-button:has(> .accordion-override-summary:not(.d-none)) {
+        flex-wrap: wrap;
+    }
+
+    .library-settings-card .accordion-button > .accordion-override-summary {
+        flex: 0 1 100%;
+        order: 1;
+        min-width: 0;
+        margin-left: 0 !important;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
     #header-style-rollup-badge,
     #validation-status-rollup-badge,
     #config-output-rollup-badge,

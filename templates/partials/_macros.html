@@ -186,7 +186,7 @@ container_class="border rounded p-3 mb-2", number_input=None
                             <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_order"
                                 id="{{ library.id }}-attribute_{{ prefix }}_order"
                                 value='{{ data["libraries"].get(library.id ~ "-attribute_" ~ prefix ~ "_order", "[]") }}'
-                                data-default="[]">
+                                data-default="[]" data-skip-override-count="true">
                         </div>
                     </div>
                     {% endif %}
