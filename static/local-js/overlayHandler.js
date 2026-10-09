@@ -6,6 +6,7 @@
 // files import from the module instead of dispatching through
 // window.OverlayHandler.
 import { updateAccordionHighlights } from './modules/accordionHighlights.js'
+import { enforceUniqueRatingSlots, getRatingChoice, getRatingSourceService } from './modules/ratingSources.js'
 import {
   initializeOverlays,
   syncSeparatorPlaceholderFields
@@ -4043,8 +4044,8 @@ const OverlayHandler = {
       letterboxd: { any: 'mdb_letterboxd' },
       tmdb: { any: 'tmdb' },
       metacritic: { critic: 'mdb_metacritic', audience: 'mdb_metacriticuser', user: 'mdb_metacriticuser' },
-      rt_tomato: { critic: 'mdb_tomatoes', audience: 'mdb_tomatoesaudience', user: 'mdb_tomatoes' },
-      rt_popcorn: { any: 'mdb_tomatoesaudience' },
+      rt_tomato: { critic: 'plex_tomatoes', audience: 'plex_tomatoesaudience', user: 'plex_tomatoes' },
+      rt_popcorn: { any: 'plex_tomatoesaudience' },
       mal: { any: 'mal' },
       mdb: { any: 'mdb' },
       floppy: { any: 'floppy' }
@@ -4063,26 +4064,17 @@ const OverlayHandler = {
       mdb_metacriticuser: 'Use Metacritic via MDBList',
       mdb_tomatoes: 'Use Rotten Tomatoes via MDBList',
       mdb_tomatoesaudience: 'Use RT Audience via MDBList',
+      plex_tomatoes: 'Use RT via Plex',
+      plex_tomatoesaudience: 'Use RT Audience via Plex',
       mal: 'Use MyAnimeList Score',
       mdb: 'Use MDBList Score',
       floppy: 'Use Floppy User Rating'
-    }
-    const RATING_SOURCE_SERVICE_MAP = {
-      anidb_rating: 'anidb',
-      mdb_letterboxd: 'mdblist',
-      tmdb: 'tmdb',
-      mdb_metacritic: 'mdblist',
-      mdb_metacriticuser: 'mdblist',
-      mdb_tomatoes: 'mdblist',
-      mdb_tomatoesaudience: 'mdblist',
-      mal: 'mal',
-      mdb: 'mdblist',
-      floppy: 'floppy'
     }
     const SERVICE_VALIDATION_INPUTS = {
       tmdb: 'qs-validate-tmdb',
       mdblist: 'qs-validate-mdblist',
       floppy: 'qs-validate-floppy',
+      serializd: 'qs-validate-serializd',
       mal: 'qs-validate-mal',
       myanimelist: 'qs-validate-mal',
       anidb: 'qs-validate-anidb',
@@ -4093,6 +4085,7 @@ const OverlayHandler = {
       tmdb: 'TMDb',
       mdblist: 'MDBList',
       floppy: 'Floppy',
+      serializd: 'Serializd',
       mal: 'MyAnimeList',
       myanimelist: 'MyAnimeList',
       anidb: 'AniDB',
@@ -4569,7 +4562,7 @@ const OverlayHandler = {
               groupLabel = RATING_GROUP_LABEL_MAP[type.group] || type.group || ''
               toggleLabel = 'Pick a source'
             }
-            const serviceKey = source ? (RATING_SOURCE_SERVICE_MAP[source] || null) : null
+            const serviceKey = getRatingSourceService(source)
             const serviceLabel = serviceKey ? (SERVICE_LABEL_MAP[serviceKey] || serviceKey) : 'N/A'
             const hasMapping = toggleLabel !== '—' && groupLabel !== '—'
             return {
@@ -5055,11 +5048,11 @@ const OverlayHandler = {
         if (!statusEl) return
         const ratingSelect = getTemplateInput(cfg, slot.ratingKey)
         const imageSelect = getTemplateInput(cfg, slot.imageKey)
-        const ratingValRaw = (ratingSelect?.value || ratingSelect?.dataset?.default || '').toString().trim().toLowerCase()
-        const imageVal = imageSelect?.value || imageSelect?.dataset?.default
+        const ratingValRaw = getRatingChoice(ratingSelect)
+        const imageVal = getRatingChoice(imageSelect)
         const ratingLabel = (ratingSelect?.selectedOptions?.[0]?.textContent || '').trim() || ratingValRaw
         const imageLabel = (imageSelect?.selectedOptions?.[0]?.textContent || '').trim() || imageVal || 'None'
-        if (!ratingValRaw || !imageVal) {
+        if (!ratingValRaw || ratingValRaw === 'none' || !imageVal || imageVal === 'none') {
           setStatusIcon(statusEl, 'neutral', 'Select rating and image to sync with Library Operations.')
           return
         }
@@ -5067,7 +5060,15 @@ const OverlayHandler = {
           ? RATING_MASS_GROUP_MAP_EPISODE[ratingValRaw]
           : RATING_MASS_GROUP_MAP[ratingValRaw]
         if (!group) {
-          setStatusIcon(statusEl, 'neutral', 'Select rating and image to sync with Library Operations.')
+          const service = getRatingSourceService(ratingValRaw)
+          const message = `${slot.label} uses ${ratingLabel} directly; Library Operations are unchanged.`
+          if (!service) {
+            setStatusIcon(statusEl, 'neutral', message)
+          } else {
+            const validated = getServiceValidation(service)
+            const serviceLabel = SERVICE_LABEL_MAP[service] || service
+            setStatusIcon(statusEl, validated ? 'ok' : 'warn', `${message} ${serviceLabel} ${validated ? 'validated' : 'is not validated'}.`)
+          }
           return
         }
         const imageKey = normalizeRatingImageKey(imageVal, imageLabel)
@@ -5090,7 +5091,7 @@ const OverlayHandler = {
           const defaultLabel = getMassToggleLabel(libraryId, group, source) || RATING_SOURCE_LABEL_MAP[source] || source
           message = `${slot.label} (${ratingLabel} + ${imageLabel}) preserves ${groupLabel}: ${toggleLabel}. Default for this badge would be ${defaultLabel}.`
         }
-        const service = RATING_SOURCE_SERVICE_MAP[effectiveSource] || null
+        const service = getRatingSourceService(effectiveSource)
         if (!service) {
           message += '. No service required.'
           setStatusIcon(statusEl, 'neutral', message)
@@ -5116,47 +5117,12 @@ const OverlayHandler = {
         getTemplateInput(cfg, 'rating3')
       ].filter(Boolean)
       if (!selects.length) return
-      const counts = {}
-      selects.forEach((select) => {
-        const value = (select.value || select.dataset?.default || '').toString().trim().toLowerCase()
-        if (!value || value === 'none') return
-        counts[value] = (counts[value] || 0) + 1
-      })
-      selects.forEach((select) => {
-        const selectedValue = (select.value || select.dataset?.default || '').toString().trim().toLowerCase()
-        Array.from(select.options || []).forEach((option) => {
-          const optValue = (option.value || '').toString().trim().toLowerCase()
-          if (!optValue || optValue === 'none') {
-            option.disabled = false
-            return
-          }
-          if (optValue === selectedValue) {
-            option.disabled = false
-            return
-          }
-          option.disabled = (counts[optValue] || 0) > 0
-        })
-      })
-      const hasDuplicate = Object.values(counts).some(count => count > 1)
-      const existing = cfg.container.querySelector('.rating-unique-warning')
-      if (hasDuplicate) {
-        if (!existing) {
-          const anchor = selects[0].closest('.input-group') || selects[0].parentElement
-          if (anchor) {
-            const warning = document.createElement('div')
-            warning.className = 'alert alert-warning py-1 px-2 mt-2 small rating-unique-warning'
-            warning.textContent = 'Each rating source can only be used once. Please choose unique values.'
-            anchor.insertAdjacentElement('afterend', warning)
-          }
-        }
-      } else if (existing) {
-        existing.remove()
-      }
+      enforceUniqueRatingSlots(selects, cfg.container)
     }
 
     const setMassRatingSource = (libraryId, prefix, source, opts = {}) => {
       if (!libraryId || !prefix) return
-      const preserveExisting = Boolean(opts.preserveExisting)
+      const preserveExisting = opts.preserveExisting !== false
       const current = getCurrentMassToggleValue(libraryId, prefix)
       if (preserveExisting && current) return current
       if (current && current === source) return current
@@ -5184,12 +5150,13 @@ const OverlayHandler = {
       const libraryId = cfg.container.dataset.libraryId
       const ratingSelect = getTemplateInput(cfg, slot.ratingKey)
       const imageSelect = getTemplateInput(cfg, slot.imageKey)
-      const ratingVal = (ratingSelect?.value || ratingSelect?.dataset?.default || '').toString().trim().toLowerCase()
+      const ratingVal = getRatingChoice(ratingSelect)
       const group = overlayType === 'episode'
         ? RATING_MASS_GROUP_MAP_EPISODE[ratingVal]
         : RATING_MASS_GROUP_MAP[ratingVal]
       if (!group) return
-      const imageVal = imageSelect?.value || imageSelect?.dataset?.default
+      const imageVal = getRatingChoice(imageSelect)
+      if (!imageVal || imageVal === 'none') return
       const imageLabel = imageSelect?.selectedOptions?.[0]?.textContent
       const imageKey = normalizeRatingImageKey(imageVal, imageLabel)
       const sourceMap = overlayType === 'episode'
@@ -7938,22 +7905,10 @@ const OverlayHandler = {
         }
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
-          const runRatingsUpdate = (event, forceSync = false, preserveExistingSources = false) => {
+          const runRatingsUpdate = (forceSync = false, preserveExistingSources = true) => {
             if (cfg.container?.dataset?.resetting === 'true') return
             enforceUniqueRatingTypes(cfg)
-            if (event && event.target && cfg.container) {
-              const targetName = event.target.name || ''
-              if (targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')) {
-                cfg.container.dataset.ratingFontForce = 'true'
-              }
-              if (
-                targetName.includes('[rating1]') || targetName.includes('[rating2]') || targetName.includes('[rating3]') ||
-                targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')
-              ) {
-                forceSync = true
-              }
-            }
-            if (forceSync) {
+            if (forceSync && cfg.toggle?.checked) {
               captureRatingBeforeMap(cfg)
               const slots = [
                 { ratingKey: 'rating1', imageKey: 'rating1_image' },
@@ -7991,8 +7946,11 @@ const OverlayHandler = {
             renderRatingMappingModal(cfg)
             refreshRatingsOverlayPreview(cfg)
           }
-          const scheduleRatingsUpdate = (event, forceSync = false, preserveExistingSources = false) => {
+          const scheduleRatingsUpdate = (event, forceSync = false, preserveExistingSources = true) => {
             if (!cfg.container) return
+            const targetName = event?.target?.name || ''
+            if (/\[rating[123]_image\]$/.test(targetName)) cfg.container.dataset.ratingFontForce = 'true'
+            if (/\[rating[123](?:_image)?\]$/.test(targetName)) forceSync = true
             if (cfg.container.dataset.ratingRefreshScheduled === 'true') {
               if (forceSync) cfg.container.dataset.ratingRefreshForce = 'true'
               if (preserveExistingSources) cfg.container.dataset.ratingRefreshPreserve = 'true'
@@ -8009,7 +7967,7 @@ const OverlayHandler = {
                 delete cfg.container.dataset.ratingRefreshForce
                 delete cfg.container.dataset.ratingRefreshPreserve
               }
-              runRatingsUpdate(null, doForce, doPreserve)
+              runRatingsUpdate(doForce, doPreserve)
             })
           }
           const overlayTemplateName = cfg.container.dataset.overlayTemplate

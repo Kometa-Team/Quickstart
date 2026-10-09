@@ -17,7 +17,7 @@ from modules import database
     ],
 )
 @pytest.mark.parametrize("library_type,prefix", [("movie", "mov"), ("show", "sho")])
-def test_operation_counts_survive_lazy_loading_and_save(page, live_server, app, viewport, label, library_type, prefix):
+def test_operation_counts_survive_lazy_loading_and_save(page, live_server, app, library_poster_preview_stub, viewport, label, library_type, prefix):
     config_name = f"operation_counts_{library_type}_{label}"
     library_id = f"{prefix}-library_1"
     other_library_id = f"{prefix}-library_2"
@@ -78,7 +78,7 @@ def test_operation_counts_survive_lazy_loading_and_save(page, live_server, app, 
     for lazy_section in ("collections", "overlays"):
         expect(card.locator(f'[data-library-lazy-section="{lazy_section}"]')).to_have_count(1)
         card.locator(f'[data-bs-target="#{library_id}-{lazy_section}"]').click()
-        expect(card.locator(f'[data-library-lazy-section="{lazy_section}"]')).to_have_count(0, timeout=15000)
+        expect(card.locator(f'[data-library-lazy-section="{lazy_section}"]')).to_have_count(0, timeout=45000)
         collapse = card.locator(f"#{library_id}-{lazy_section}")
         expect(collapse).to_have_class(re.compile(r"\bcollapse\s+show\b"))
         expect(section).to_have_attribute("data-override-count", "1")

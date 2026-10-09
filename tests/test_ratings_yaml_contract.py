@@ -1,4 +1,7 @@
+import pytest
 from ruamel.yaml import YAML
+
+from modules.rating_sources import RATING_SOURCE_DETAILS
 
 
 def _template_vars_from_yaml(yaml_content):
@@ -187,6 +190,18 @@ def test_ratings_yaml_contract_bottom_horizontal_prunes_default_offsets(monkeypa
     assert "back_height" not in template_vars
     assert "back_width" not in template_vars
     assert "addon_position" not in template_vars
+
+
+@pytest.mark.parametrize("source", list(RATING_SOURCE_DETAILS))
+def test_direct_rating_sources_survive_yaml_generation(monkeypatch, qs_module, source):
+    payload = _build_library_payload({"rating1": source, "rating1_image": "imdb", "rating2": "none", "rating3": "none"})
+    if source == "serializd":
+        payload["libraries"] = {key.replace("mov-library_", "sho-library_").replace("-movie-", "-show-"): value for key, value in payload["libraries"].items()}
+    template_vars = _template_vars_from_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+    assert template_vars["rating1"] == source
+    assert template_vars["rating1_image"] == "imdb"
+    assert "rating2" not in template_vars
+    assert "rating3" not in template_vars
 
 
 def test_generated_playlist_files_get_header_without_legacy_playlist_page(monkeypatch, qs_module):

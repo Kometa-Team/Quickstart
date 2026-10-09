@@ -142,6 +142,27 @@ describe('EventHandler.attachLibraryListeners: setup', () => {
 })
 
 describe('EventHandler.restoreTemplateVariableSelects', () => {
+  it.each(['', 'tmdb', 'plex_tomatoes', 'floppy'])('preserves an edited value %j when lazy loading reinitializes the card', (editedValue) => {
+    document.body.innerHTML = '<select class="template-variable-select" data-selected="user"><option value="">None</option><option value="user">User</option><option value="tmdb">TMDb</option><option value="plex_tomatoes">RT via Plex</option><option value="floppy">Floppy</option></select>'
+    const select = document.querySelector('select')
+    window.EventHandler.restoreTemplateVariableSelects()
+    expect(select.value).toBe('user')
+    select.value = editedValue
+    window.EventHandler.restoreTemplateVariableSelects()
+    expect(select.value).toBe(editedValue)
+  })
+
+  it('restores newly loaded controls without overwriting existing controls', () => {
+    document.body.innerHTML = '<select class="template-variable-select" data-selected="user"><option value="">None</option><option value="user">User</option></select>'
+    const original = document.querySelector('select')
+    window.EventHandler.restoreTemplateVariableSelects()
+    original.value = ''
+    document.body.insertAdjacentHTML('beforeend', '<select class="template-variable-select" data-selected="imdb"><option value="">None</option><option value="imdb">IMDb</option></select>')
+    window.EventHandler.restoreTemplateVariableSelects()
+    expect(original.value).toBe('')
+    expect(document.querySelectorAll('select')[1].value).toBe('imdb')
+  })
+
   it('restores a saved value in dynamically inserted template controls', () => {
     const scope = document.createElement('div')
     scope.innerHTML = '<select class="template-variable-select" name="rating1_image" data-selected="letterboxd"><option value="default" selected>Default</option><option value="letterboxd">Letterboxd</option></select>'

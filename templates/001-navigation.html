@@ -73,6 +73,7 @@
   {% set omdb_reasons = omdb_requirement_reasons if omdb_requirement_reasons is defined else [] %}
   {% set mdblist_reasons = mdblist_requirement_reasons if mdblist_requirement_reasons is defined else [] %}
   {% set floppy_reasons = floppy_requirement_reasons if floppy_requirement_reasons is defined else [] %}
+  {% set serializd_reasons = serializd_requirement_reasons if serializd_requirement_reasons is defined else [] %}
   {% set anidb_reasons = anidb_requirement_reasons if anidb_requirement_reasons is defined else [] %}
   {% set radarr_reasons = radarr_requirement_reasons if radarr_requirement_reasons is defined else [] %}
   {% set sonarr_reasons = sonarr_requirement_reasons if sonarr_requirement_reasons is defined else [] %}
@@ -147,6 +148,17 @@
                     {% endfor %}
                     {% if floppy_reasons|length > 2 %}
                     <div class="qs-dependency-hint-line">+{{ floppy_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-serializd-required-hint {% if not serializd_reasons %}d-none{% endif %}" data-qs-dependency-hint="serializd" data-qs-dependency-short="S">
+                  <div class="qs-dependency-hint-title">Serializd required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in serializd_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if serializd_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ serializd_reasons|length - 2 }} more...</div>
                     {% endif %}
                   </div>
                 </div>
