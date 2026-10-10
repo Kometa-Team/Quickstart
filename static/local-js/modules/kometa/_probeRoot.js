@@ -40,6 +40,7 @@
 //   }
 
 import { kometaState } from './_state.js'
+import { renderKometaIntegrity } from './_integrity.js'
 import {
   getConfiguredKometaRootPosix,
   getConfiguredKometaRootDisplay,
@@ -75,6 +76,7 @@ export function probeKometaRoot () {
   // server successfully responded, so the probe was technically
   // successful; the payload just tells us "no install found".
   const handleProbeSuccess = (res) => {
+    renderKometaIntegrity(res.integrity, res.integrity_lines)
     kometaState.kometaLocalCheckCompleted = true
     kometaState.kometaInstalled = !!res.kometa_installed
     if (Array.isArray(res.log)) res.log.forEach(line => appendKometaStatusLine(line))

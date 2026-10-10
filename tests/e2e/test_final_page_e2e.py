@@ -1,4 +1,6 @@
 import re
+import io
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -67,6 +69,54 @@ def _allow_final_gate(qs_module, monkeypatch):
 
 
 @pytest.mark.e2e
+@pytest.mark.parametrize("width", [1280, 390])
+def test_integrity_refresh_warns_without_disabling_run(page, live_server, monkeypatch, qs_module, tmp_path, width):
+    from blueprints import kometa_updates
+    from modules import kometa_integrity as integrity
+
+    _allow_final_gate(qs_module, monkeypatch)
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (True, None, {}, "test: true\n", []))
+    monkeypatch.setattr(qs_module.persistence, "check_minimum_settings", lambda: (True, True, True, True))
+    root = tmp_path / "managed"
+    shipped = {"kometa.py": b"vanilla", "requirements.txt": b"requests", "VERSION": b"1.0.0", "defaults/overlays/images/rating.png": b"original image"}
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, content in shipped.items():
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+            archive.writestr(f"Kometa-test/{name}", content)
+    commit = "a" * 40
+    (root / ".kometa_sha").write_text(commit, encoding="utf-8")
+    integrity.write_manifest(root, integrity.manifest_from_zip(buffer.getvalue(), commit, "develop"))
+    monkeypatch.setattr(qs_module, "current_integrity", lambda: integrity.check_integrity(root))
+    monkeypatch.setattr(kometa_updates, "current_integrity", lambda *_args, **_kwargs: integrity.check_integrity(root))
+    page.set_viewport_size({"width": width, "height": 900})
+    page.route("**/validate-kometa-root", _stub_validate_root)
+    page.route("**/kometa-status", lambda route: _stub_status(route))
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
+    _wait_for_run_now_enabled(page)
+    panel = page.locator("#kometa-integrity-panel")
+    expect(panel).to_contain_text("Kometa Integrity: CLEAN")
+    (root / "defaults/overlays/images/rating.png").write_bytes(b"modified image")
+    page.locator("#refresh-kometa-integrity").click()
+    expect(panel).to_contain_text("Kometa Integrity: MODIFIED")
+    expect(panel).to_contain_text("Modified: defaults/overlays/images/rating.png")
+    expect(panel).to_contain_text("entire runtime config/ directory is preserved")
+    expect(page.locator("#run-now")).to_be_enabled()
+    expect(page.locator("#refresh-kometa-integrity")).to_be_enabled()
+    assert panel.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+    panel.scroll_into_view_if_needed()
+    screenshot = Path("artifacts") / f"kometa-integrity-{width}.png"
+    screenshot.parent.mkdir(exist_ok=True)
+    page.screenshot(path=str(screenshot))
+    (root / "defaults/overlays/images/rating.png").write_bytes(shipped["defaults/overlays/images/rating.png"])
+    page.locator("#refresh-kometa-integrity").click()
+    expect(panel).to_contain_text("Kometa Integrity: CLEAN")
+    expect(panel).not_to_contain_text("Modified:")
+
+
+@pytest.mark.e2e
 def test_run_now_queued_toast(page, live_server, monkeypatch, qs_module):
     _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
@@ -95,7 +145,7 @@ def test_run_now_queued_toast(page, live_server, monkeypatch, qs_module):
     run_now.click()
 
     expect(run_now).to_have_text(re.compile("Waiting"))
-    toast = page.locator(".toast .toast-body").filter(has_text="Kometa will start automatically")
+    toast = page.locator(".toast .toast-body").filter(has_text="Quickstart will launch Kometa when it ends.")
     expect(toast).to_be_visible()
 
 

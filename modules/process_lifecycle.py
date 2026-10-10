@@ -48,6 +48,7 @@ from pathlib import Path
 import psutil
 
 from modules import helpers
+from modules.kometa_integrity import current_integrity, stamp_integrity_comments
 from modules.process_control_state import normalize_kometa_start_mode
 from modules.process_markers import (
     extract_kometa_config_path,
@@ -171,6 +172,9 @@ def launch_kometa_command(command, config_name=None, start_mode="current"):
     helpers.normalize_flag_values(command_parts)
 
     config_path = extract_kometa_config_path(command_parts, kometa_root)
+    integrity_report = current_integrity(kometa_root)
+    if config_path and not stamp_integrity_comments(config_path, integrity_report):
+        helpers.ts_log("Unable to refresh Kometa integrity comments; diagnostics will still be included in the run marker.", level="WARNING")
     stamp_quickstart_config_marker(config_path, config_name)
 
     helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
@@ -193,7 +197,7 @@ def launch_kometa_command(command, config_name=None, start_mode="current"):
     with open(helpers.get_kometa_pid_file(), "w", encoding="utf-8") as f:
         f.write(str(proc.pid))
 
-    schedule_quickstart_run_marker(kometa_root, config_name, start_mode=normalize_kometa_start_mode(start_mode))
+    schedule_quickstart_run_marker(kometa_root, config_name, start_mode=normalize_kometa_start_mode(start_mode), integrity_report=integrity_report)
     return True, proc.pid
 
 

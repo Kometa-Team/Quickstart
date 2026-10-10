@@ -23,6 +23,7 @@ from pathlib import Path
 import requests
 
 from modules.helpers._constants import CONFIG_DIR
+from modules.kometa_integrity import MANIFEST_NAME, check_integrity, format_integrity, manifest_from_zip, write_manifest
 
 GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/Kometa/branches/{branch}"
 GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"
@@ -102,9 +103,11 @@ def _get_upstream_sha(branch: str, logs: list[str], api_url_template: str = GITH
         return None
 
 
-def _download_zip(branch: str, logs: list[str], zip_url_template: str = GITHUB_ZIP_URL, label: str = "Kometa") -> bytes | None:
+def _download_zip(branch: str, logs: list[str], zip_url_template: str = GITHUB_ZIP_URL, label: str = "Kometa", commit: str | None = None) -> bytes | None:
     try:
         url = zip_url_template.format(branch=branch)
+        if label == "Kometa" and commit:
+            url = f"https://codeload.github.com/kometa-team/Kometa/zip/{commit}"
         if label == "Kometa":
             logs.append(f"📥 Downloading {branch}.zip from: {url}")
         else:
@@ -121,63 +124,40 @@ def _download_zip(branch: str, logs: list[str], zip_url_template: str = GITHUB_Z
 
 def _backup_kometa_runtime_assets(kometa_dir: Path, logs: list[str]) -> Path | None:
     config_dir = kometa_dir / "config"
+    if config_dir.is_symlink():
+        raise ValueError("Cannot safely back up a symbolic-link Kometa config directory")
     if not config_dir.exists():
-        return None
-
-    logs_dir = config_dir / "logs"
-    cache_files = list(config_dir.glob("*.cache"))
-    if not logs_dir.is_dir() and not cache_files:
         return None
 
     backup_root = Path(CONFIG_DIR) / "kometa-backup"
     backup_root.mkdir(parents=True, exist_ok=True)
     stamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d-%H%M%S")
-    backup_dir = backup_root / f"kometa-config-{stamp}"
-    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_dir = Path(tempfile.mkdtemp(prefix=f"kometa-config-{stamp}-", dir=backup_root))
 
     try:
-        if logs_dir.is_dir():
-            shutil.copytree(logs_dir, backup_dir / "logs", dirs_exist_ok=True)
-        if cache_files:
-            cache_dir = backup_dir / "cache"
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            for cache_file in cache_files:
-                shutil.copy2(cache_file, cache_dir / cache_file.name)
-        logs.append(f"?? Backed up Kometa logs/cache to {backup_dir}")
+        shutil.copytree(config_dir, backup_dir / "config", symlinks=True)
+        logs.append(f"Backed up the entire Kometa config/ directory to {backup_dir}")
         return backup_dir
     except Exception as e:
-        logs.append(f"? Failed to back up Kometa logs/cache: {e}")
-        return None
+        logs.append(f"Failed to back up Kometa config/: {e}")
+        raise
 
 
 def _restore_kometa_runtime_assets(kometa_dir: Path, backup_dir: Path, logs: list[str]) -> bool:
     if not backup_dir or not backup_dir.exists():
         return False
 
-    restored = False
     try:
         config_dir = kometa_dir / "config"
-        config_dir.mkdir(parents=True, exist_ok=True)
-
-        logs_backup = backup_dir / "logs"
-        if logs_backup.is_dir():
-            target_logs = config_dir / "logs"
-            if target_logs.exists():
-                shutil.rmtree(target_logs, ignore_errors=True)
-            shutil.copytree(logs_backup, target_logs, dirs_exist_ok=True)
-            restored = True
-
-        cache_backup = backup_dir / "cache"
-        if cache_backup.is_dir():
-            for cache_file in cache_backup.glob("*.cache"):
-                shutil.copy2(cache_file, config_dir / cache_file.name)
-            restored = True
-
-        if restored:
-            logs.append(f"?? Restored Kometa logs/cache from {backup_dir}")
-        return restored
+        if config_dir.is_symlink() or not (backup_dir / "config").is_dir():
+            raise ValueError("Cannot safely restore Kometa config/")
+        if config_dir.exists():
+            shutil.rmtree(config_dir)
+        shutil.copytree(backup_dir / "config", config_dir, symlinks=True)
+        logs.append(f"Restored the entire Kometa config/ directory from {backup_dir}")
+        return True
     except Exception as e:
-        logs.append(f"? Failed to restore Kometa logs/cache: {e}")
+        logs.append(f"Failed to restore Kometa config/: {e}. Backup retained at {backup_dir}")
         return False
 
 
@@ -188,12 +168,14 @@ def _cleanup_kometa_backup(backup_dir: Path, logs: list[str]):
         logs.append(f"? Failed to remove Kometa backup: {e}")
 
 
-def _clear_directory_contents(dest_dir: Path, logs: list[str], label: str = "Kometa") -> bool:
+def _clear_directory_contents(dest_dir: Path, logs: list[str], label: str = "Kometa", preserve_entries=()) -> bool:
     logs.append(f"🧹 Removing existing {label} contents from: {dest_dir}")
     removed_count = 0
     failed_paths = []
 
     for child in list(dest_dir.iterdir()):
+        if child.name in preserve_entries:
+            continue
         try:
             if child.is_file() or child.is_symlink():
                 child.unlink()
@@ -204,7 +186,7 @@ def _clear_directory_contents(dest_dir: Path, logs: list[str], label: str = "Kom
             failed_paths.append((child, e))
             logs.append(f"❌ Failed to remove existing path: {child} ({e})")
 
-    leftovers = list(dest_dir.iterdir())
+    leftovers = [child for child in dest_dir.iterdir() if child.name not in preserve_entries]
     if leftovers:
         for leftover in leftovers:
             if all(str(leftover) != str(path) for path, _err in failed_paths):
@@ -216,7 +198,7 @@ def _clear_directory_contents(dest_dir: Path, logs: list[str], label: str = "Kom
     return True
 
 
-def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str], label: str = "Kometa") -> bool:
+def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str], label: str = "Kometa", preserve_entries=()) -> bool:
     try:
         _ensure_dir(dest_dir)
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
@@ -230,10 +212,12 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str], label:
             with tempfile.TemporaryDirectory(dir=tmp_base) as td:
                 tmp_root = Path(td) / root_name
                 zf.extractall(Path(td))
-                if not _clear_directory_contents(dest_dir, logs, label=label):
+                if not _clear_directory_contents(dest_dir, logs, label=label, preserve_entries=preserve_entries):
                     return False
                 # Copy over
                 for item in tmp_root.iterdir():
+                    if item.name in preserve_entries:
+                        continue
                     target = dest_dir / item.name
                     if item.is_dir():
                         shutil.copytree(item, target, dirs_exist_ok=True)
@@ -400,77 +384,25 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "devel
     Uses upstream commit SHA to skip when up-to-date unless force is True.
     Works identically for local, PyInstaller, and Docker installs.
     """
-    logs = logs if logs is not None else []
-    try:
-        config_root = Path(config_root).resolve()
-        kometa_dir = config_root / "kometa"
-        sha_file = kometa_dir / ".kometa_sha"
-        branch_file = kometa_dir / ".kometa_branch"
-
-        logs.append(f"⚙️ ZIP updater → branch '{branch}'")
-        _ensure_dir(kometa_dir)
-
-        upstream_sha = _get_upstream_sha(branch, logs)
-        if not upstream_sha:
-            return {"success": False, "log": logs}
-
-        local_sha = _read_text(sha_file)
-        if local_sha == upstream_sha and not force:
-            if _read_text(branch_file).strip().lower() != branch.strip().lower():
-                _write_text(branch_file, branch)
-                logs.append(f"✅ Updated Kometa branch metadata to '{branch}'.")
-            logs.append("✅ Up to date (SHA matches). Skipping download.")
-            return {"success": True, "log": logs, "up_to_date": True, "skipped": True}
-        if force:
-            logs.append("Force update requested; proceeding without SHA match check.")
-
-        zip_bytes = _download_zip(branch, logs)
-        if not zip_bytes:
-            return {"success": False, "log": logs}
-
-        backup_dir = _backup_kometa_runtime_assets(kometa_dir, logs)
-
-        if not _extract_zip_bytes(zip_bytes, kometa_dir, logs):
-            if backup_dir:
-                restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
-                if restored:
-                    _cleanup_kometa_backup(backup_dir, logs)
-            return {"success": False, "log": logs}
-
-        if backup_dir:
-            restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
-            if restored:
-                _cleanup_kometa_backup(backup_dir, logs)
-
-        res = _ensure_venv(kometa_dir, logs)
-        if not res:
-            return {"success": False, "log": logs}
-        python_bin, _pip_bin_unused = res
-        if not _pip_install(python_bin, kometa_dir, logs):
-            return {"success": False, "log": logs}
-
-        _write_text(sha_file, upstream_sha)
-        _write_text(branch_file, branch)
-        logs.append("✅ Kometa updated via ZIP.")
-        return {"success": True, "log": logs}
-
-    except Exception as e:
-        logs.append(f"❌ Exception: {e}")
-        return {"success": False, "log": logs}
+    return _perform_managed_kometa_update(Path(config_root).resolve() / "kometa", branch, force, logs)
 
 
 def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str = "develop", force: bool = False, logs=None):
     """
     Update Kometa by downloading/extracting the branch ZIP into an explicit Kometa root.
     """
+    return _perform_managed_kometa_update(Path(kometa_root).resolve(), branch, force, logs)
+
+
+def _perform_managed_kometa_update(kometa_dir, branch, force, logs):
     logs = logs if logs is not None else []
     try:
-        kometa_dir = Path(kometa_root).resolve()
         sha_file = kometa_dir / ".kometa_sha"
         branch_file = kometa_dir / ".kometa_branch"
 
         logs.append(f"⚙️ ZIP updater → branch '{branch}'")
         _ensure_dir(kometa_dir)
+        logs.extend(format_integrity(check_integrity(kometa_dir)))
 
         upstream_sha = _get_upstream_sha(branch, logs)
         if not upstream_sha:
@@ -478,7 +410,7 @@ def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str 
 
         local_sha = _read_text(sha_file)
         if local_sha == upstream_sha and not force:
-            if _read_text(branch_file).strip().lower() != branch.strip().lower():
+            if (_read_text(branch_file) or "").lower() != branch.strip().lower():
                 _write_text(branch_file, branch)
                 logs.append(f"✅ Updated Kometa branch metadata to '{branch}'.")
             logs.append("✅ Up to date (SHA matches). Skipping download.")
@@ -486,23 +418,26 @@ def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str 
         if force:
             logs.append("Force update requested; proceeding without SHA match check.")
 
-        zip_bytes = _download_zip(branch, logs)
+        zip_bytes = _download_zip(branch, logs, commit=upstream_sha)
         if not zip_bytes:
             return {"success": False, "log": logs}
 
+        manifest = manifest_from_zip(zip_bytes, upstream_sha, branch)
         backup_dir = _backup_kometa_runtime_assets(kometa_dir, logs)
+        preserved = (MANIFEST_NAME, ".kometa_sha", ".kometa_branch")
+        if backup_dir:
+            # Keep runtime data in place, including a directly mounted Docker config volume.
+            preserved += ("config",)
 
-        if not _extract_zip_bytes(zip_bytes, kometa_dir, logs):
-            if backup_dir:
-                restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
-                if restored:
-                    _cleanup_kometa_backup(backup_dir, logs)
+        if not _extract_zip_bytes(zip_bytes, kometa_dir, logs, preserve_entries=preserved):
+            if backup_dir and not (kometa_dir / "config").is_dir():
+                _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
             return {"success": False, "log": logs}
 
-        if backup_dir:
+        if backup_dir and not (kometa_dir / "config").is_dir():
             restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
-            if restored:
-                _cleanup_kometa_backup(backup_dir, logs)
+            if not restored:
+                return {"success": False, "log": logs}
 
         res = _ensure_venv(kometa_dir, logs, venv_name="kometa-venv")
         if not res:
@@ -513,6 +448,10 @@ def perform_kometa_update_zip_only_at_root(kometa_root: str | Path, branch: str 
 
         _write_text(sha_file, upstream_sha)
         _write_text(branch_file, branch)
+        write_manifest(kometa_dir, manifest)
+        if backup_dir:
+            _cleanup_kometa_backup(backup_dir, logs)
+        logs.extend(format_integrity(check_integrity(kometa_dir)))
         logs.append("✅ Kometa updated via ZIP.")
         return {"success": True, "log": logs}
 

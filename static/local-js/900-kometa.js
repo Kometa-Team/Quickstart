@@ -77,6 +77,7 @@ import {
 import { validateKometaRoot } from './modules/kometa/_validateRoot.js'
 import { runKometaStatusPass } from './modules/kometa/_statusPass.js'
 import { callUpdateKometa } from './modules/kometa/_kometaUpdate.js'
+import { refreshKometaIntegrity } from './modules/kometa/_integrity.js'
 import {
   renderRunProgress,
   clearRunProgress,
@@ -647,6 +648,7 @@ function stopProgressPolling () {
 
 // Kometa Update Button Click
 updateKometaBtn?.addEventListener('click', callUpdateKometa)
+document.getElementById('refresh-kometa-integrity')?.addEventListener('click', refreshKometaIntegrity)
 forceUpdateToggle?.addEventListener('change', function() {
   if (!kometaState.kometaUpdating) syncUpdateButtonLabel()
 })

@@ -35,6 +35,17 @@
   data-bulk-fresh="{{ 'true' if final_gate and final_gate.bulk_validation_fresh else 'false' }}">
 </div>
 <div id="header-style-wait" class="form-text text-info mt-2 d-none">Updating header style... please wait.</div>
+{% if page_info.kometa_integrity %}
+<div id="kometa-integrity-panel" class="alert {{ 'alert-success' if page_info.kometa_integrity.state == 'clean' else ('alert-secondary' if page_info.kometa_integrity.state == 'not_applicable' else 'alert-warning') }}" role="status">
+  <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+    <strong>Kometa Integrity</strong>
+    <button id="refresh-kometa-integrity" type="button" class="btn btn-outline-secondary btn-sm" title="Check Kometa integrity" aria-label="Check Kometa integrity" data-bs-toggle="tooltip">
+      <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div id="kometa-integrity-details" class="small qs-kometa-integrity-details">{{ page_info.kometa_integrity_lines | join('\n') }}</div>
+</div>
+{% endif %}
 {% if not final_gate or final_gate.stage != 'todo' %}
 <div class="accordion mt-2 mb-2" id="header-style-grid-accordion">
   <div class="accordion-item">
@@ -503,7 +514,7 @@
                 {% if page_info.kometa_install_mode == 'existing' %}
                 Quickstart will only check status and version information here. If an update is available, update this Kometa install manually outside Quickstart.
                 {% else %}
-                Force update re-downloads Kometa even if it is already up to date.
+                Force update replaces Kometa's installed files with a fresh upstream copy, even if up to date. The entire runtime config/ directory is preserved.
                 {% endif %}
               </div>
               <div id="kometa-update-box" class="alert alert-warning mt-2 mb-0 d-none" role="alert">
