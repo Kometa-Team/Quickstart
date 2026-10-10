@@ -1026,7 +1026,7 @@ def _merge_active_library_payload_with_saved_libraries(library_id, incoming_libr
     """Merge one active-card autosave with the full persisted libraries map.
 
     The browser only posts the mounted library card during lazy switching. The
-    backend must validate and save against the whole libraries map or unrelated
+    backend must save against the whole libraries map or unrelated
     libraries lose their ``*-library`` selection flags and disappear from final
     output.
     """
@@ -1406,11 +1406,12 @@ def autosave_library(library_id):
         settings = persistence.retrieve_settings("025-libraries")
         existing_libraries = settings.get("libraries", {}) if isinstance(settings, dict) else {}
         merged_libraries = _merge_active_library_payload_with_saved_libraries(library_id, incoming_libraries, existing_libraries)
-        selected_library_ids = _qs._selected_library_ids_from_libraries_data(merged_libraries)
-        collection_errors = _qs._validate_library_collection_files(merged_libraries, selected_library_ids)
-        metadata_errors = _qs._validate_library_metadata_files(merged_libraries, selected_library_ids)
-        overlay_errors = _qs._validate_library_overlay_files(merged_libraries, selected_library_ids)
-        auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(merged_libraries, selected_library_ids)
+        active_libraries = {key: value for key, value in merged_libraries.items() if key.startswith(f"{library_id}-")}
+        selected_library_ids = [lib_id for lib_id in _qs._selected_library_ids_from_libraries_data(active_libraries) if lib_id == library_id]
+        collection_errors = _qs._validate_library_collection_files(active_libraries, selected_library_ids)
+        metadata_errors = _qs._validate_library_metadata_files(active_libraries, selected_library_ids)
+        overlay_errors = _qs._validate_library_overlay_files(active_libraries, selected_library_ids)
+        auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(active_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
         if metadata_errors:
@@ -1419,13 +1420,15 @@ def autosave_library(library_id):
             return jsonify({"success": False, "error": "Invalid overlay files.", "errors": overlay_errors}), 400
         if auto_sort_hubs_errors:
             return jsonify({"success": False, "error": "Invalid library settings.", "errors": auto_sort_hubs_errors}), 400
-        normalized_libraries, normalization_errors, changed = _qs._normalize_library_file_entries_payload(
-            merged_libraries,
+        normalized_active, normalization_errors, changed = _qs._normalize_library_file_entries_payload(
+            active_libraries,
             config_name,
             validate_local=False,
         )
         if normalization_errors:
             return jsonify({"success": False, "error": "Unable to organize library files.", "errors": normalization_errors}), 400
+        normalized_libraries = dict(merged_libraries)
+        normalized_libraries.update(normalized_active)
         save_payload = dict(normalized_libraries)
         save_payload["config_name"] = config_name
         persistence.save_settings("025-libraries", save_payload)
