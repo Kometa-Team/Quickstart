@@ -8,6 +8,7 @@ from pathlib import Path
 from flask import Blueprint, jsonify, request, session
 
 from modules import database, helpers, kometa_install, persistence
+from modules.kometa_integrity import current_integrity, format_integrity
 from modules.background_jobs import (
     JOB_TARGET_PAGES,
     clear_active_background_job,
@@ -20,6 +21,12 @@ from modules.background_jobs import (
 )
 
 bp = Blueprint("kometa_updates", __name__)
+
+
+@bp.route("/kometa-integrity", methods=["GET"])
+def kometa_integrity():
+    report = current_integrity()
+    return jsonify(integrity=report, integrity_lines=format_integrity(report))
 
 
 def _kometa_root_validation_error(error, logs, status_code=200):
@@ -169,6 +176,10 @@ def validate_kometa_root():
         return fail(target["error"])
     install_mode = target["install_mode"]
     p = target["path_obj"]
+    integrity_report = current_integrity(p, install_mode)
+    integrity_lines = format_integrity(integrity_report)
+    for line in integrity_lines:
+        log(line)
     config_dir = target.get("config_dir")
     log_dir = target.get("log_dir")
 
@@ -206,6 +217,8 @@ def validate_kometa_root():
                 venv_python_display="",
                 kometa_version="External / unmanaged",
                 external_mode=True,
+                integrity=integrity_report,
+                integrity_lines=integrity_lines,
                 log=logs,
                 synced_config=str(sync_result.get("destination")),
             ),
@@ -365,6 +378,8 @@ def validate_kometa_root():
             kometa_root_display=kometa_root_display,
             venv_python_display=str(python_bin),
             kometa_version=kometa_version,
+            integrity=integrity_report,
+            integrity_lines=integrity_lines,
             log=logs,
         ),
         200,
@@ -386,6 +401,7 @@ def probe_kometa_root():
     if target.get("install_mode") == kometa_install.KOMETA_INSTALL_MODE_EXTERNAL:
         config_dir = target.get("config_dir")
         log_dir = target.get("log_dir")
+        integrity_report = current_integrity(None, target["install_mode"])
         state = {
             "kometa_root": "",
             "kometa_root_display": "",
@@ -404,6 +420,8 @@ def probe_kometa_root():
             "venv_python_exists": False,
             "kometa_running": False,
             "external_mode": True,
+            "integrity": integrity_report,
+            "integrity_lines": format_integrity(integrity_report),
         }
         log(f"🔍 Probing external Kometa config path: {state['kometa_config_dir_display']}")
         if state["config_dir_exists"]:
@@ -434,6 +452,10 @@ def probe_kometa_root():
     import quickstart
 
     state = quickstart._probe_kometa_root_state(p)
+    state["integrity"] = current_integrity(p, target["install_mode"])
+    state["integrity_lines"] = format_integrity(state["integrity"])
+    for line in state["integrity_lines"]:
+        log(line)
     log(f"🔍 Probing Kometa path: {state['kometa_root_display']}")
     if not state["root_exists"]:
         log("ℹ️ Kometa root does not exist yet. Install required.")

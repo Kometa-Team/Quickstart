@@ -64,6 +64,7 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.wrappers import Request
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database, logscan, path_validation, url_validation
+from modules.kometa_integrity import current_integrity, format_integrity, integrity_comments
 from modules import importer  # noqa: F401 (load-bearing: tests do monkeypatch.setattr(qs_module.importer, ...))
 from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/legacy in-module callers)
     QS_ANIDB_DEP_SOURCE_PREFIXES,
@@ -2659,6 +2660,8 @@ def step(name):
         page_info["imagemaid_supports_overlays_only"] = bool(imagemaid_state.get("supports_overlays_only"))
 
     if name == "900-kometa":
+        page_info["kometa_integrity"] = current_integrity()
+        page_info["kometa_integrity_lines"] = format_integrity(page_info["kometa_integrity"])
         validation_meta = []
         validation_groups = []
         validation_bulk_rollup = None
@@ -7472,6 +7475,7 @@ def support_info():
     lines.extend(helpers.get_quickstart_settings_summary())
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
+    lines.extend(integrity_comments(current_integrity()).splitlines())
     lines.append("###")
     lines.append(f"# Libraries configured with Quickstart: {len(movie_libraries)} movie, {len(show_libraries)} show")
     if library_details:

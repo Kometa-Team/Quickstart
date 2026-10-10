@@ -28,6 +28,7 @@ import psutil
 from flask import current_app as app, has_request_context, session
 
 from modules import helpers
+from modules.kometa_integrity import current_integrity, integrity_comments
 from modules.output_headers import add_border_to_ascii_art, section_heading
 
 # Header styles that skip the ASCII art border wrapping.
@@ -198,6 +199,7 @@ def render_yaml_header(header_style, config_name, movie_libraries, show_librarie
 
     return (
         f"{schema_header}\n\n"
+        f"{integrity_comments(current_integrity())}\n\n"
         f"{ascii_heading}\n\n"
         f"#==================== {config_name} ====================#\n"
         f"# {config_name} config created by Quickstart on {timestamp}\n"

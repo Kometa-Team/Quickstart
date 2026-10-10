@@ -377,7 +377,7 @@ def flush_imagemaid_pending_markers(imagemaid_root, log_path=None, require_proce
     )
 
 
-def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current", version_info=None):
+def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current", version_info=None, integrity_report=None):
     try:
         qs_version, qs_branch = _resolve_version_fields(version_info)
         safe_config = (config_name or "default").strip() or "default"
@@ -388,7 +388,13 @@ def write_quickstart_run_marker(kometa_root, config_name=None, start_mode="curre
             f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
             f"maintenance_markers=1 start_mode={safe_start_mode}"
         )
-        return _write_quickstart_marker_line(kometa_root, marker, marker_kind="run")
+        written = _write_quickstart_marker_line(kometa_root, marker, marker_kind="run")
+        if integrity_report is not None:
+            from modules.kometa_integrity import format_integrity
+
+            for line in format_integrity(integrity_report):
+                written = _write_quickstart_marker_line(kometa_root, f"[Quickstart] {line}", marker_kind="integrity") and written
+        return written
     except Exception as exc:
         helpers.ts_log(f"Failed to write Quickstart run marker: {exc}", level="WARNING")
         return False
@@ -529,11 +535,11 @@ def write_quickstart_imagemaid_maintenance_marker(
         return False
 
 
-def schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20, start_mode="current"):
+def schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20, start_mode="current", integrity_report=None):
     version_info = dict(_get_version_info())
 
     def worker():
-        write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode, version_info=version_info)
+        write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode, version_info=version_info, integrity_report=integrity_report)
 
     threading.Thread(target=worker, daemon=True).start()
 

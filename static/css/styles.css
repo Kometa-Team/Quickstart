@@ -7641,3 +7641,7 @@ html[data-qs-viewport="mobile"] .logscan-confirm-modal-dialog {
     max-width: calc(100vw - 1rem);
     margin: 0.5rem auto;
 }
+.qs-kometa-integrity-details {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

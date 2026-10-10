@@ -149,9 +149,10 @@ export function validateKometaRoot (options = {}) {
   // ---- Response handlers ------------------------------------------
 
   const handleValidateSuccess = (res) => {
+    renderKometaIntegrity(res.integrity, res.integrity_lines)
     kometaState.kometaLocalCheckCompleted = true
     if (Array.isArray(res.log)) {
-      res.log.forEach(line => logBox.insertAdjacentHTML('beforeend', `${line}\n`))
+      res.log.forEach(line => logBox.append(document.createTextNode(`${line}\n`)))
     }
 
     if (res.success) {
@@ -270,3 +271,4 @@ export function validateKometaRoot (options = {}) {
     .catch(() => handleValidateError(null))
     .finally(handleValidateComplete)
 }
+import { renderKometaIntegrity } from './_integrity.js'
