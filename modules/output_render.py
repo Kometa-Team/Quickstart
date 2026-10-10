@@ -68,6 +68,7 @@ from modules.output_playlists import apply_playlist_libraries_toggle
 from modules.output_postprocess import _rewrite_custom_font_paths, clean_section_data
 from modules.output_yaml_header import render_yaml_header
 from modules.jsonschema_compat import stringify_mapping_keys_for_jsonschema
+from modules.rating_sources import extend_rating_source_schema
 
 
 def retrieve_config_sections(header_style):
@@ -281,6 +282,8 @@ def _load_config_schema():
     schema_path = os.path.join(helpers.JSON_SCHEMA_DIR, "config-schema.json")
     with open(schema_path, "r") as file:
         schema = yaml.load(file)
+
+    extend_rating_source_schema(schema)
 
     return yaml, schema
 

@@ -6,6 +6,7 @@ import os
 import re
 
 from modules.helpers._constants import JSON_SETTINGS
+from modules.rating_sources import rating_source_options
 
 _QUICKSTART_CONFIG_CACHE: dict[str, tuple[float, int, object]] = {}
 _QUICKSTART_OVERLAY_CONFIG_CACHE: tuple[float, int, object] | None = None
@@ -127,6 +128,13 @@ def enrich_quickstart_overlay_config(config):
                 continue
 
             existing_keys = _overlay_template_var_keys(template_variables)
+            if overlay.get("id") == "overlay_ratings":
+                rating_fields = (
+                    template_variables.items() if isinstance(template_variables, dict) else ((item.get("key"), item) for item in template_variables if isinstance(item, dict))
+                )
+                for key, details in rating_fields:
+                    if key in {"rating1", "rating2", "rating3"} and isinstance(details, dict):
+                        details["options"] = rating_source_options(overlay.get("media_types") or ["movie", "show"])
             default_offsets = overlay.get("default_offsets")
             offsets_by_type = overlay.get("default_offsets_by_type")
 

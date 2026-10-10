@@ -110,6 +110,7 @@ def test_kometa_run_command_accordion_allows_multiple_panels_open():
                 "sho-library_anime-library": "Anime Shows",
                 MAL_OVERLAY_ENABLED_KEY: True,
                 MAL_OVERLAY_IMAGE_KEY: "mal",
+                MAL_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "mal",
             },
             True,
             "show ratings overlay uses mal",
@@ -202,6 +203,7 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
                 "mov-library_movies-library": "Movies",
                 MDBLIST_OVERLAY_ENABLED_KEY: True,
                 MDBLIST_OVERLAY_IMAGE_KEY: "mdb",
+                MDBLIST_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "mdb",
             },
             True,
             "movie ratings overlay uses mdb",
@@ -233,6 +235,7 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
                 "sho-library_anime-library": "Anime Shows",
                 ANIDB_OVERLAY_ENABLED_KEY: True,
                 ANIDB_OVERLAY_IMAGE_KEY: "anidb",
+                ANIDB_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "anidb",
             },
             True,
             "show ratings overlay uses anidb",
@@ -811,6 +814,7 @@ def test_workspace_context_promotes_mal_to_required_from_overlay(monkeypatch, qs
                     "sho-library_anime-library": "Anime Shows",
                     MAL_OVERLAY_ENABLED_KEY: True,
                     MAL_OVERLAY_IMAGE_KEY: "mal",
+                    MAL_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "mal",
                 }
             },
         )
@@ -1399,6 +1403,7 @@ def test_libraries_mal_dependency_hint_endpoint_overlay_returns_reasons(client, 
                 "sho-library_anime-library": "Anime Shows",
                 MAL_OVERLAY_ENABLED_KEY: "true",
                 MAL_OVERLAY_IMAGE_KEY: "mal",
+                MAL_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "mal",
             },
         },
     )
@@ -1524,6 +1529,7 @@ def test_libraries_mdblist_dependency_hint_endpoint_overlay_returns_reasons(clie
                 "mov-library_movies-library": "Movies",
                 MDBLIST_OVERLAY_ENABLED_KEY: "true",
                 MDBLIST_OVERLAY_IMAGE_KEY: "letterboxd",
+                MDBLIST_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "mdb_letterboxd",
             },
         },
     )
@@ -1532,7 +1538,7 @@ def test_libraries_mdblist_dependency_hint_endpoint_overlay_returns_reasons(clie
     payload = resp.get_json()
     assert payload["success"] is True
     assert payload["required"] is True
-    assert any("movie ratings overlay uses letterboxd" in reason for reason in payload["reasons"])
+    assert any("movie ratings overlay uses mdb_letterboxd" in reason for reason in payload["reasons"])
 
 
 def test_libraries_mdblist_dependency_hint_endpoint_non_matching_source_returns_empty(client, monkeypatch, qs_module):
@@ -1588,6 +1594,7 @@ def test_libraries_anidb_dependency_hint_endpoint_overlay_returns_reasons(client
                 "sho-library_anime-library": "Anime Shows",
                 ANIDB_OVERLAY_ENABLED_KEY: "true",
                 ANIDB_OVERLAY_IMAGE_KEY: "anidb",
+                ANIDB_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "anidb",
             },
         },
     )

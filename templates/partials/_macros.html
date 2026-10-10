@@ -2359,8 +2359,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                 {% set skip_var = (var_name == 'builder_level') %}
                                                 {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
                                                 {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
-                                                {% if overlay.id == 'overlay_ratings' and var_name in ['rating1', 'rating2', 'rating3'] and flat_key in data.libraries and selected_value is none %}
-                                                {% set selected_value = 'none' %}
+                                                {% if overlay.id == 'overlay_ratings' and var_name in ['rating1', 'rating1_image', 'rating2', 'rating2_image', 'rating3', 'rating3_image'] and flat_key in data.libraries and (selected_value is none or selected_value|string|lower == 'none') %}
+                                                {% set selected_value = '' %}
                                                 {% endif %}
                                                 {% if selected_value is boolean %}
                                                 {% set selected_value = 'true' if selected_value else 'false' %}
@@ -2427,9 +2427,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                                             {% set opt_value = option.value %}
                                                             {% set opt_label = option.label %}
                                                             {% endif %}
+                                                            {% if option is string or not option.media_types or type in option.media_types %}
                                                             <option value="{{ opt_value }}" {% if selected_value == opt_value %}selected{% endif %}>
                                                                 {{ opt_label }}
                                                             </option>
+                                                            {% endif %}
                                                             {% endfor %}
                                                             {% endif %}
                                                         </select>

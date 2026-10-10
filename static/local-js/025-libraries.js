@@ -124,6 +124,11 @@ const dependencyHintConfigs = {
     endpoint: '/libraries_floppy_dependency_hint',
     windowKey: 'QS_FLOPPY_REQUIREMENT_REASONS'
   },
+  serializd: {
+    stepKey: '065-serializd',
+    endpoint: '/libraries_serializd_dependency_hint',
+    windowKey: 'QS_SERIALIZD_REQUIREMENT_REASONS'
+  },
   anidb: {
     stepKey: '100-anidb',
     endpoint: '/libraries_anidb_dependency_hint',
@@ -7266,6 +7271,7 @@ function isUncheckedTemplateParentToggle (field) {
 
 function shouldOmitDefaultFieldFromLibraryPayload (field) {
   if (!field || !field.dataset || field.dataset.default === undefined) return false
+  if (/-template_overlay_ratings\[rating[123](?:_image)?\]$/.test(String(field.name || '')) && !field.value && field.dataset.default) return false
   if (field.classList?.contains('include-library-toggle') || field.classList?.contains('playlist-library-toggle')) return false
   if (String(field.name || '').endsWith('-library') || String(field.name || '').endsWith('-playlist')) return false
   if (isInternalTemplateMetadataField(field)) return false

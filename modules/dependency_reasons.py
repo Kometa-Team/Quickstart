@@ -25,6 +25,8 @@ from __future__ import annotations
 import json
 import re
 
+from modules.rating_sources import rating_sources_for_service
+
 # --- value helpers ---------------------------------------------------------
 
 
@@ -73,6 +75,7 @@ QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
 QS_TRACEARR_REQUIRED_STEP_KEY = "035-tracearr"
 QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
 QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
+QS_SERIALIZD_REQUIRED_STEP_KEY = "065-serializd"
 QS_FLOPPY_REQUIRED_STEP_KEY = "067-floppy"
 QS_ANIDB_REQUIRED_STEP_KEY = "100-anidb"
 QS_RADARR_REQUIRED_STEP_KEY = "110-radarr"
@@ -369,6 +372,10 @@ def _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, sou
         if prefix not in active_prefixes or not _is_truthy_setting_value(libraries_data.get(f"{prefix}-{builder}-overlay_ratings")):
             continue
 
+        image_key = f"{key[:-1]}_image]"
+        if image_key in libraries_data and not _is_truthy_setting_value(libraries_data[image_key]):
+            continue
+
         _append_dependency_reason(reasons, seen, libraries_data, prefix, f"{builder} ratings overlay uses {selected_source}")
 
     return reasons
@@ -488,10 +495,12 @@ def _libraries_data_trakt_dependency_reasons(libraries_data):
 
 
 def _libraries_data_omdb_dependency_reasons(libraries_data):
-    return _attribute_dependency_source_reasons(
+    attribute_reasons = _attribute_dependency_source_reasons(
         libraries_data,
         QS_OMDB_DEP_SOURCE_PREFIXES,
     )
+    overlay_reasons = _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, rating_sources_for_service("omdb"))
+    return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
 
 def _libraries_data_mdblist_dependency_reasons(libraries_data):
@@ -499,10 +508,7 @@ def _libraries_data_mdblist_dependency_reasons(libraries_data):
         libraries_data,
         QS_MDBLIST_DEP_SOURCE_PREFIXES,
     )
-    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
-        libraries_data,
-        QS_MDBLIST_OVERLAY_IMAGE_VALUES,
-    )
+    overlay_reasons = _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, rating_sources_for_service("mdblist"))
     return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
 
@@ -518,15 +524,18 @@ def _libraries_data_floppy_dependency_reasons(libraries_data):
     return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
 
+def _libraries_data_serializd_dependency_reasons(libraries_data):
+    attribute_reasons = _attribute_dependency_source_reasons(libraries_data, ("serializd",))
+    overlay_reasons = _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, rating_sources_for_service("serializd"))
+    return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
+
+
 def _libraries_data_anidb_dependency_reasons(libraries_data):
     attribute_reasons = _attribute_dependency_source_reasons(
         libraries_data,
         QS_ANIDB_DEP_SOURCE_PREFIXES,
     )
-    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
-        libraries_data,
-        QS_ANIDB_OVERLAY_IMAGE_VALUES,
-    )
+    overlay_reasons = _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, rating_sources_for_service("anidb"))
     return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
 
@@ -596,10 +605,7 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
             detail = f"{operation} order includes {joined_sources}"
             _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
 
-    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
-        libraries_data,
-        QS_MAL_OVERLAY_IMAGE_VALUES,
-    )
+    overlay_reasons = _libraries_data_overlay_rating_source_dependency_reasons(libraries_data, rating_sources_for_service("mal"))
     return reasons + [reason for reason in overlay_reasons if reason not in reasons]
 
 
@@ -654,6 +660,10 @@ def _config_mdblist_dependency_reasons(section_rows):
 
 def _config_floppy_dependency_reasons(section_rows):
     return _config_dependency_reasons(section_rows, _libraries_data_floppy_dependency_reasons)
+
+
+def _config_serializd_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_serializd_dependency_reasons)
 
 
 def _config_anidb_dependency_reasons(section_rows):

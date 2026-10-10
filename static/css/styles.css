@@ -1112,6 +1112,41 @@ body.qs-has-workspace .footer {
     height: 100%;
 }
 
+@media (max-width: 767.98px) {
+    .rating-image-input-group {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 36px;
+    }
+
+    .rating-image-input-group > .input-group-text:first-child {
+        width: auto !important;
+        min-width: 0;
+        white-space: normal;
+    }
+
+    .rating-image-input-group > .rating-image-dropdown {
+        grid-row: 2;
+        grid-column: 1 / -1;
+    }
+
+    .rating-image-input-group > .rating-sync-status {
+        grid-row: 1;
+        grid-column: 2;
+        justify-content: center;
+        padding: 6px;
+    }
+
+    .rating-image-dropdown-label {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .rating-image-dropdown-toggle {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+}
+
 .rating-image-dropdown-item .rating-image-dropdown-icon {
     width: 20px;
     height: 20px;

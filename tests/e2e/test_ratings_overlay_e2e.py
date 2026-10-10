@@ -604,7 +604,7 @@ def test_ratings_toggle_preserves_existing_rt_mass_sources(page, live_server):
     )
 
     checked = _rating_toggle_map(page)
-    assert checked[f"{library_id}-attribute_mass_critic_rating_update_mdb_tomatoes"] is True
-    assert checked.get(f"{library_id}-attribute_mass_critic_rating_update_plex_tomatoes", False) is False
-    assert checked[f"{library_id}-attribute_mass_audience_rating_update_mdb_tomatoesaudience"] is True
-    assert checked.get(f"{library_id}-attribute_mass_audience_rating_update_plex_tomatoesaudience", False) is False
+    assert checked[f"{library_id}-attribute_mass_critic_rating_update_plex_tomatoes"] is True
+    assert checked.get(f"{library_id}-attribute_mass_critic_rating_update_mdb_tomatoes", False) is False
+    assert checked[f"{library_id}-attribute_mass_audience_rating_update_plex_tomatoesaudience"] is True
+    assert checked.get(f"{library_id}-attribute_mass_audience_rating_update_mdb_tomatoesaudience", False) is False

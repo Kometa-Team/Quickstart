@@ -198,7 +198,11 @@ def clean_form_data(form_data):
                     except Exception:
                         value = value
             lc_value = value.lower().strip()
-            if lc_value == "none" and key.endswith(("[rating1]", "[rating1_image]", "[rating2]", "[rating2_image]", "[rating3]", "[rating3_image]")):
+            if (
+                lc_value in {"", "none"}
+                and "-template_overlay_ratings[" in key
+                and key.endswith(("[rating1]", "[rating1_image]", "[rating2]", "[rating2_image]", "[rating3]", "[rating3_image]"))
+            ):
                 # Rating selectors need an explicit disabled sentinel. Treating
                 # "none" as absent makes the UI restore the template default
                 # when this library is loaded again.

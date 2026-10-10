@@ -1,5 +1,6 @@
 import threading
 import sys
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
@@ -172,6 +173,14 @@ def _configure_page(page):
 
     page.route("**/*", _block_external)
     yield
+
+
+@pytest.fixture
+def library_poster_preview_stub(page):
+    # Keep control/persistence tests independent of remote poster-compositing assets.
+    image = Path(__file__).resolve().parents[2] / "static/images/default-1000x1500.png"
+    page.route("**/generate_preview", lambda route: route.fulfill(json={"status": "success"}))
+    page.route("**/config/previews/*", lambda route: route.fulfill(path=str(image)))
 
 
 @pytest.fixture()

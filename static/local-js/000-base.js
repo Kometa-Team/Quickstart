@@ -2232,6 +2232,11 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_FLOPPY_REQUIREMENT_REASONS',
       label: 'Floppy'
     },
+    serializd: {
+      stepKey: '065-serializd',
+      windowKey: 'QS_SERIALIZD_REQUIREMENT_REASONS',
+      label: 'Serializd'
+    },
     anidb: {
       stepKey: '100-anidb',
       windowKey: 'QS_ANIDB_REQUIREMENT_REASONS',
@@ -2452,6 +2457,7 @@ function qsApplyWorkspaceStatus (payload) {
   const omdbReasons = qsArrayFromKeys(payload.omdb_requirement_reasons)
   const mdblistReasons = qsArrayFromKeys(payload.mdblist_requirement_reasons)
   const floppyReasons = qsArrayFromKeys(payload.floppy_requirement_reasons)
+  const serializdReasons = qsArrayFromKeys(payload.serializd_requirement_reasons)
   const anidbReasons = qsArrayFromKeys(payload.anidb_requirement_reasons)
   const radarrReasons = qsArrayFromKeys(payload.radarr_requirement_reasons)
   const sonarrReasons = qsArrayFromKeys(payload.sonarr_requirement_reasons)
@@ -2465,6 +2471,7 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_OMDB_REQUIREMENT_REASONS = omdbReasons
   window.QS_MDBLIST_REQUIREMENT_REASONS = mdblistReasons
   window.QS_FLOPPY_REQUIREMENT_REASONS = floppyReasons
+  window.QS_SERIALIZD_REQUIREMENT_REASONS = serializdReasons
   window.QS_ANIDB_REQUIREMENT_REASONS = anidbReasons
   window.QS_RADARR_REQUIREMENT_REASONS = radarrReasons
   window.QS_SONARR_REQUIREMENT_REASONS = sonarrReasons
@@ -2477,6 +2484,7 @@ function qsApplyWorkspaceStatus (payload) {
     omdb: omdbReasons,
     mdblist: mdblistReasons,
     floppy: floppyReasons,
+    serializd: serializdReasons,
     anidb: anidbReasons,
     radarr: radarrReasons,
     sonarr: sonarrReasons,

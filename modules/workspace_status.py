@@ -43,6 +43,7 @@ from modules.dependency_reasons import (
     QS_OMDB_REQUIRED_STEP_KEY,
     QS_RADARR_REQUIRED_STEP_KEY,
     QS_SONARR_REQUIRED_STEP_KEY,
+    QS_SERIALIZD_REQUIRED_STEP_KEY,
     QS_TAUTULLI_REQUIRED_STEP_KEY,
     QS_TRACEARR_REQUIRED_STEP_KEY,
     _config_anidb_dependency_reasons,
@@ -52,6 +53,7 @@ from modules.dependency_reasons import (
     _config_omdb_dependency_reasons,
     _config_radarr_dependency_reasons,
     _config_sonarr_dependency_reasons,
+    _config_serializd_dependency_reasons,
     _config_tautulli_dependency_reasons,
     _config_tracearr_dependency_reasons,
 )
@@ -288,6 +290,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
     omdb_requirement_reasons = _config_omdb_dependency_reasons(section_rows) if QS_OMDB_REQUIRED_STEP_KEY in template_keys else []
     mdblist_requirement_reasons = _config_mdblist_dependency_reasons(section_rows) if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys else []
     floppy_requirement_reasons = _config_floppy_dependency_reasons(section_rows) if QS_FLOPPY_REQUIRED_STEP_KEY in template_keys else []
+    serializd_requirement_reasons = _config_serializd_dependency_reasons(section_rows) if QS_SERIALIZD_REQUIRED_STEP_KEY in template_keys else []
     anidb_requirement_reasons = _config_anidb_dependency_reasons(section_rows) if QS_ANIDB_REQUIRED_STEP_KEY in template_keys else []
     radarr_requirement_reasons = _config_radarr_dependency_reasons(section_rows) if QS_RADARR_REQUIRED_STEP_KEY in template_keys else []
     sonarr_requirement_reasons = _config_sonarr_dependency_reasons(section_rows) if QS_SONARR_REQUIRED_STEP_KEY in template_keys else []
@@ -302,6 +305,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
         required_seed.add(QS_MDBLIST_REQUIRED_STEP_KEY)
     if QS_FLOPPY_REQUIRED_STEP_KEY in template_keys and floppy_requirement_reasons:
         required_seed.add(QS_FLOPPY_REQUIRED_STEP_KEY)
+    if QS_SERIALIZD_REQUIRED_STEP_KEY in template_keys and serializd_requirement_reasons:
+        required_seed.add(QS_SERIALIZD_REQUIRED_STEP_KEY)
     if QS_ANIDB_REQUIRED_STEP_KEY in template_keys and anidb_requirement_reasons:
         required_seed.add(QS_ANIDB_REQUIRED_STEP_KEY)
     if QS_RADARR_REQUIRED_STEP_KEY in template_keys and radarr_requirement_reasons:
@@ -341,6 +346,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
             "omdb_requirement_reasons": omdb_requirement_reasons,
             "mdblist_requirement_reasons": mdblist_requirement_reasons,
             "floppy_requirement_reasons": floppy_requirement_reasons,
+            "serializd_requirement_reasons": serializd_requirement_reasons,
             "anidb_requirement_reasons": anidb_requirement_reasons,
             "radarr_requirement_reasons": radarr_requirement_reasons,
             "sonarr_requirement_reasons": sonarr_requirement_reasons,
@@ -436,6 +442,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "omdb_requirement_reasons": omdb_requirement_reasons,
         "mdblist_requirement_reasons": mdblist_requirement_reasons,
         "floppy_requirement_reasons": floppy_requirement_reasons,
+        "serializd_requirement_reasons": serializd_requirement_reasons,
         "anidb_requirement_reasons": anidb_requirement_reasons,
         "radarr_requirement_reasons": radarr_requirement_reasons,
         "sonarr_requirement_reasons": sonarr_requirement_reasons,
