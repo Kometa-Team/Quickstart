@@ -252,13 +252,13 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
             return "ok"
 
         if validation_status == "failed":
-            return "error"
+            return "warn" if group == "optional" else "error"
 
         if validation_status == "skipped":
             if template_key == "027-playlist_files" and validation_reason == "no_libraries":
                 return "unknown"
             if validation_reason in QS_ERROR_REASONS:
-                return "error"
+                return "warn" if group == "optional" else "error"
             if group == "optional":
                 # Optional sections should remain neutral when users simply pass through
                 # or when validation is skipped due to missing optional inputs.
@@ -277,7 +277,7 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
         if not user_entered and not was_previously_validated and not validation_status:
             return "unknown"
         if was_previously_validated:
-            return "error"
+            return "warn"
         return "warn" if user_entered else "ok"
 
     if group == "required":

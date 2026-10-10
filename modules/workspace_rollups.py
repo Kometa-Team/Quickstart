@@ -207,6 +207,10 @@ def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at
         seen.add(key)
 
     for key in optional_keys:
+        # Unvalidated optional services are omitted from generated YAML.
+        # Active dependencies are promoted to required_keys by workspace status.
+        if key in QS_VALIDATION_STEP_KEYS:
+            continue
         state = step_statuses.get(key, "unknown")
         if state not in {"warn", "error"} or key in seen:
             continue
