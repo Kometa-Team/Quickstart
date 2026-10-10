@@ -233,6 +233,65 @@ def test_clear_data_removes_db_entries(client, isolated_config_dir):
 # ===========================================================================
 
 
+@pytest.mark.parametrize("kind", ["collection_files", "metadata_files", "overlay_files"])
+@pytest.mark.parametrize("replacement", ["[]", '[{"type":"url","location":"https://example.test/fixed.yml"}]'])
+def test_autosave_file_list_clear_or_edit_ignores_other_library_failures(
+    client,
+    isolated_config_dir,
+    qs_module,
+    monkeypatch,
+    kind,
+    replacement,
+):
+    from modules import database
+
+    config_name = f"pytest_file_clear_{kind}"
+    broken = '[{"type":"url","location":"https://example.test/missing.yml"}]'
+    database.save_section_data(
+        name=config_name,
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                f"mov-library_movies-{kind}": broken,
+                "sho-library_tv-library": "TV Shows",
+                f"sho-library_tv-{kind}": broken,
+            }
+        },
+    )
+
+    def validate(libraries, selected):
+        return [f"{library} {kind}[1]: missing" for library in selected if libraries.get(f"{library}-{kind}") == broken]
+
+    monkeypatch.setattr(qs_module, f"_validate_library_{kind}", validate)
+    for other in {"collection_files", "metadata_files", "overlay_files"} - {kind}:
+        monkeypatch.setattr(qs_module, f"_validate_library_{other}", lambda *_: [])
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda *_: [])
+
+    def normalize(libraries, _config_name, **_kwargs):
+        assert all(key.startswith("mov-library_movies-") for key in libraries)
+        return libraries, [], False
+
+    monkeypatch.setattr(qs_module, "_normalize_library_file_entries_payload", normalize)
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+    response = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__loaded_sections": [],
+            "mov-library_movies-library": "Movies",
+            f"mov-library_movies-{kind}": replacement,
+        },
+    )
+    assert response.status_code == 200
+    _, _, saved = database.retrieve_section_data(config_name, "libraries")
+    assert saved["libraries"][f"mov-library_movies-{kind}"] == replacement
+    assert saved["libraries"][f"sho-library_tv-{kind}"] == broken
+
+
 def test_autosave_library_returns_success_for_empty_payload(client, isolated_config_dir, qs_module, monkeypatch):
     """Empty libraries payload (no fields) should autosave without error."""
     monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: set())

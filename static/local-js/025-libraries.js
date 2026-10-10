@@ -6,6 +6,7 @@
 // delegates to.
 import { updateAccordionHighlights } from '/static/local-js/modules/accordionHighlights.js'
 import { nbspLeadingSpaces } from '/static/local-js/modules/kometa/_util.js'
+import { applyLibraryFileServerErrors, libraryFileRowMatches } from '/static/local-js/modules/libraryFileErrors.js'
 
 // Load all helper modules in parallel. These publish their symbols
 // via window.* shims (same pattern as pathValidation.js).
@@ -1715,22 +1716,8 @@ function updateMetadataFilesAccordionState (editor) {
   }
 }
 
-function applyMetadataFileServerErrors (editor, errors) {
-  if (!editor || !Array.isArray(errors) || !errors.length) return false
-  const rows = Array.from(editor.querySelectorAll('[data-metadata-file-row]'))
-  rows.forEach(row => setMetadataFileStatus(row, '', ''))
-  let applied = false
-  errors.forEach(error => {
-    const text = String(error || '').trim()
-    const match = text.match(/metadata_files\[(\d+)\]:\s*(.+)$/i)
-    if (!match) return
-    const index = Number(match[1]) - 1
-    const message = match[2] || 'Validation failed.'
-    if (!Number.isInteger(index) || index < 0 || index >= rows.length) return
-    setMetadataFileStatus(rows[index], 'error', message)
-    applied = true
-  })
-  return applied
+function applyMetadataFileServerErrors (editor, errors, submittedEntries) {
+  return applyLibraryFileServerErrors(editor, errors, 'metadata_files', submittedEntries, setMetadataFileStatus)
 }
 
 function syncMetadataFilesEditor (editor, emitEvents = true) {
@@ -2092,22 +2079,8 @@ function updateCollectionFilesAccordionState (editor) {
   }
 }
 
-function applyCollectionFileServerErrors (editor, errors) {
-  if (!editor || !Array.isArray(errors) || !errors.length) return false
-  const rows = Array.from(editor.querySelectorAll('[data-collection-file-row]'))
-  rows.forEach(row => setCollectionFileStatus(row, '', ''))
-  let applied = false
-  errors.forEach(error => {
-    const text = String(error || '').trim()
-    const match = text.match(/collection_files\[(\d+)\]:\s*(.+)$/i)
-    if (!match) return
-    const index = Number(match[1]) - 1
-    const message = match[2] || 'Validation failed.'
-    if (!Number.isInteger(index) || index < 0 || index >= rows.length) return
-    setCollectionFileStatus(rows[index], 'error', message)
-    applied = true
-  })
-  return applied
+function applyCollectionFileServerErrors (editor, errors, submittedEntries) {
+  return applyLibraryFileServerErrors(editor, errors, 'collection_files', submittedEntries, setCollectionFileStatus)
 }
 
 function syncCollectionFilesEditor (editor, emitEvents = true) {
@@ -2216,6 +2189,7 @@ document.addEventListener('click', async function (event) {
         })
       })
       const payload = await response.json().catch(() => ({}))
+      if (!row.isConnected || !libraryFileRowMatches(row, 'metadata_files', { type, location })) return
       if (!response.ok || !payload.valid) {
         setMetadataFileStatus(row, 'error', payload.error_details || {
           text: payload.error || 'Validation failed.',
@@ -2230,7 +2204,9 @@ document.addEventListener('click', async function (event) {
         syncMetadataFilesEditor(editor, false)
       }
     } catch {
-      setMetadataFileStatus(row, 'error', 'Validation request failed.')
+      if (row.isConnected && libraryFileRowMatches(row, 'metadata_files', { type, location })) {
+        setMetadataFileStatus(row, 'error', 'Validation request failed.')
+      }
     } finally {
       if (row.dataset.metadataFileState !== 'success' && row.dataset.metadataFileDependency !== 'repo-missing') {
         setMetadataFileButtonState(row, 'idle')
@@ -2314,11 +2290,13 @@ document.addEventListener('click', async function (event) {
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok || !payload.valid) {
+        if (!row.isConnected || !libraryFileRowMatches(row, 'collection_files', { type, location })) return
         setCollectionFileStatus(row, 'error', payload.error_details || {
           text: payload.error || 'Validation failed.',
           files: Array.isArray(payload.files) ? payload.files : []
         })
       } else {
+        if (!row.isConnected || !libraryFileRowMatches(row, 'collection_files', { type, location })) return
         applyNormalizedLibraryFileLocation(row, '[data-collection-file-location]', payload, editor, syncCollectionFilesEditor)
         setCollectionFileStatus(row, 'success', {
           text: payload.message || 'Collection source looks valid.',
@@ -2327,7 +2305,9 @@ document.addEventListener('click', async function (event) {
         syncCollectionFilesEditor(editor, false)
       }
     } catch {
-      setCollectionFileStatus(row, 'error', 'Validation request failed.')
+      if (row.isConnected && libraryFileRowMatches(row, 'collection_files', { type, location })) {
+        setCollectionFileStatus(row, 'error', 'Validation request failed.')
+      }
     } finally {
       if (row.dataset.collectionFileState !== 'success' && row.dataset.collectionFileDependency !== 'repo-missing') {
         setCollectionFileButtonState(row, 'idle')
@@ -2722,22 +2702,8 @@ function updateOverlayFilesAccordionState (editor) {
   }
 }
 
-function applyOverlayFileServerErrors (editor, errors) {
-  if (!editor || !Array.isArray(errors) || !errors.length) return false
-  const rows = Array.from(editor.querySelectorAll('[data-overlay-file-row]'))
-  rows.forEach(row => setOverlayFileStatus(row, '', ''))
-  let applied = false
-  errors.forEach(error => {
-    const text = String(error || '').trim()
-    const match = text.match(/overlay_files\[(\d+)\]:\s*(.+)$/i)
-    if (!match) return
-    const index = Number(match[1]) - 1
-    const message = match[2] || 'Validation failed.'
-    if (!Number.isInteger(index) || index < 0 || index >= rows.length) return
-    setOverlayFileStatus(rows[index], 'error', message)
-    applied = true
-  })
-  return applied
+function applyOverlayFileServerErrors (editor, errors, submittedEntries) {
+  return applyLibraryFileServerErrors(editor, errors, 'overlay_files', submittedEntries, setOverlayFileStatus)
 }
 
 function syncOverlayFilesEditor (editor, emitEvents = true) {
@@ -2845,11 +2811,13 @@ document.addEventListener('click', async function (event) {
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok || !payload.valid) {
+        if (!row.isConnected || !libraryFileRowMatches(row, 'overlay_files', { type, location })) return
         setOverlayFileStatus(row, 'error', payload.error_details || {
           text: payload.error || 'Validation failed.',
           files: Array.isArray(payload.files) ? payload.files : []
         })
       } else {
+        if (!row.isConnected || !libraryFileRowMatches(row, 'overlay_files', { type, location })) return
         applyNormalizedLibraryFileLocation(row, '[data-overlay-file-location]', payload, editor, syncOverlayFilesEditor)
         setOverlayFileStatus(row, 'success', {
           text: payload.message || 'Overlay source looks valid.',
@@ -2858,7 +2826,9 @@ document.addEventListener('click', async function (event) {
         syncOverlayFilesEditor(editor, false)
       }
     } catch {
-      setOverlayFileStatus(row, 'error', 'Validation request failed.')
+      if (row.isConnected && libraryFileRowMatches(row, 'overlay_files', { type, location })) {
+        setOverlayFileStatus(row, 'error', 'Validation request failed.')
+      }
     } finally {
       if (row.dataset.overlayFileState !== 'success' && row.dataset.overlayFileDependency !== 'repo-missing') {
         setOverlayFileButtonState(row, 'idle')
@@ -7271,6 +7241,7 @@ function isUncheckedTemplateParentToggle (field) {
 
 function shouldOmitDefaultFieldFromLibraryPayload (field) {
   if (!field || !field.dataset || field.dataset.default === undefined) return false
+  if (/-(?:collection_files|metadata_files|overlay_files)$/.test(String(field.name || ''))) return false
   if (/-template_overlay_ratings\[rating[123](?:_image)?\]$/.test(String(field.name || '')) && !field.value && field.dataset.default) return false
   if (field.classList?.contains('include-library-toggle') || field.classList?.contains('playlist-library-toggle')) return false
   if (String(field.name || '').endsWith('-library') || String(field.name || '').endsWith('-playlist')) return false
@@ -7563,6 +7534,7 @@ function autosaveActiveLibrary (options = {}) {
   }
 
   const payload = lookupLabelsOnly ? buildLookupLabelPayloadFromCard(card) : buildPayloadFromCard(card)
+  const submittedPayload = JSON.stringify(payload)
   const collectionEditor = card.querySelector('[data-collection-files-editor]')
   const metadataEditor = card.querySelector('[data-metadata-files-editor]')
   const overlayEditor = card.querySelector('[data-overlay-files-editor]')
@@ -7577,15 +7549,18 @@ function autosaveActiveLibrary (options = {}) {
   })
     .then(res => {
       if (!res.ok) {
+        if (!lookupLabelsOnly && (card !== libraryContainer.firstElementChild || JSON.stringify(buildPayloadFromCard(card)) !== submittedPayload)) {
+          return { success: false, stale: true }
+        }
         return res.json().catch(() => ({})).then(body => {
           if (collectionEditor) {
-            applyCollectionFileServerErrors(collectionEditor, body && body.errors)
+            applyCollectionFileServerErrors(collectionEditor, body && body.errors, parseMetadataFilesValue(payload[`${collectionEditor.dataset.libraryId}-collection_files`]))
           }
           if (metadataEditor) {
-            applyMetadataFileServerErrors(metadataEditor, body && body.errors)
+            applyMetadataFileServerErrors(metadataEditor, body && body.errors, parseMetadataFilesValue(payload[`${metadataEditor.dataset.libraryId}-metadata_files`]))
           }
           if (overlayEditor) {
-            applyOverlayFileServerErrors(overlayEditor, body && body.errors)
+            applyOverlayFileServerErrors(overlayEditor, body && body.errors, parseMetadataFilesValue(payload[`${overlayEditor.dataset.libraryId}-overlay_files`]))
           }
           const message = body && body.error ? body.error : `Autosave failed: ${res.status}`
           throw new Error(message)
