@@ -1211,7 +1211,7 @@ def test_github_optional_placeholder_stays_unknown_even_with_failed_marker(qs_mo
     assert state == "unknown"
 
 
-def test_github_optional_with_token_and_failed_marker_is_error(qs_module):
+def test_github_optional_with_token_and_failed_marker_is_warn(qs_module):
     section_rows = {
         "github": {
             "validated": False,
@@ -1227,7 +1227,7 @@ def test_github_optional_with_token_and_failed_marker_is_error(qs_module):
     }
 
     state = qs_module._derive_step_status("040-github", "optional", section_rows, config_exists=True)
-    assert state == "error"
+    assert state == "warn"
 
 
 def test_webhooks_optional_provider_selection_counts_as_configured(qs_module):
