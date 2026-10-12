@@ -7242,6 +7242,7 @@ function isUncheckedTemplateParentToggle (field) {
 function shouldOmitDefaultFieldFromLibraryPayload (field) {
   if (!field || !field.dataset || field.dataset.default === undefined) return false
   if (/-(?:collection_files|metadata_files|overlay_files)$/.test(String(field.name || ''))) return false
+  if (/-template_overlay_runtimes\[text\]$/.test(String(field.name || '')) && String(field.value ?? '') === '') return false
   if (/-template_overlay_ratings\[rating[123](?:_image)?\]$/.test(String(field.name || '')) && !field.value && field.dataset.default) return false
   if (field.classList?.contains('include-library-toggle') || field.classList?.contains('playlist-library-toggle')) return false
   if (String(field.name || '').endsWith('-library') || String(field.name || '').endsWith('-playlist')) return false

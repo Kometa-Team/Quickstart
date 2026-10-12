@@ -439,6 +439,41 @@ def test_autosave_library_reports_normalized_flag(client, isolated_config_dir, q
     assert data["normalized"] is True
 
 
+def test_autosave_library_preserves_explicit_blank_runtime_text(client, isolated_config_dir, qs_module, monkeypatch):
+    from modules import database
+
+    config_name = "pytest_runtime_text_blank_autosave"
+    monkeypatch.setattr(qs_module, "_selected_library_ids_from_libraries_data", lambda libs: {"mov-library_movies"})
+    monkeypatch.setattr(qs_module, "_validate_library_collection_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_metadata_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_overlay_files", lambda libs, ids: [])
+    monkeypatch.setattr(qs_module, "_validate_library_auto_sort_hubs", lambda libs, ids: [])
+    monkeypatch.setattr(
+        qs_module,
+        "_normalize_library_file_entries_payload",
+        lambda libs, config_name, **kw: (libs, [], False),
+    )
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/autosave_library/mov-library_movies",
+        json={
+            "config_name": config_name,
+            "__loaded_sections": ["overlays"],
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-movie-overlay_runtimes": "true",
+            "mov-library_movies-movie-template_overlay_runtimes[text]": None,
+        },
+    )
+
+    assert resp.status_code == 200
+    _validated, _user_entered, saved = database.retrieve_section_data(config_name, "libraries")
+    libraries = saved["libraries"]
+    assert libraries["mov-library_movies-movie-template_overlay_runtimes[text]"] == ""
+
+
 def test_autosave_library_stores_exact_plex_name_for_checkbox_placeholder(
     client,
     isolated_config_dir,
