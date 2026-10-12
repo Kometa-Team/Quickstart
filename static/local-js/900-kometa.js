@@ -97,6 +97,7 @@ import {
 } from './modules/kometa/_cliFlags.js'
 import { buildRunStatusText } from './modules/kometa/_runStatusFormat.js'
 import { setKometaPrepareRunningState } from './modules/kometa/_prepareState.js'
+import { initLogscanUpload } from './modules/kometa/_logscanUpload.js'
 
 // Kometa runtime status flags migrated to modules/kometa/_state.js
 // (kometaState.kometaInstalled, kometaValidated, kometaStatus, etc.).
@@ -336,6 +337,7 @@ document.addEventListener('qs:maintenance-status', function (event) {
 updateValidationGate()
 document.addEventListener('DOMContentLoaded', function () {
   syncIncompleteRunActions()
+  initLogscanUpload()
 }, { once: true })
 
 if (tailSelect) {

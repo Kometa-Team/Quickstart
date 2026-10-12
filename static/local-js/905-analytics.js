@@ -2,6 +2,9 @@
 import { getAppConfig } from './modules/appConfig.js'
 import { elementGroup } from './modules/elementGroup.js'
 import { nbspLeadingSpaces } from './modules/kometa/_util.js'
+import { initLogscanUpload } from './modules/kometa/_logscanUpload.js'
+
+const logscanUpload = initLogscanUpload({ historical: true })
 
 const tableBody = document.querySelector('#logscan-trends-table tbody')
 const tableSummary = document.getElementById('logscan-table-summary')
@@ -20,6 +23,8 @@ const tableSelectIncomplete = document.getElementById('logscan-table-select-inco
 const tableClearSelection = document.getElementById('logscan-table-clear-selection')
 const tableCompressSelected = document.getElementById('logscan-table-compress-selected')
 const tableDeleteSelected = document.getElementById('logscan-table-delete-selected')
+const tableUploadSelected = document.getElementById('logscan-table-upload-selected')
+const tableUploadFilter = document.getElementById('logscan-table-upload-filter')
 const tableSelectionSummary = document.getElementById('logscan-table-selection-summary')
 const tableCollapseEl = document.getElementById('logscan-recent-runs-collapse')
 const summaryEl = document.getElementById('logscan-trends-summary')
@@ -119,6 +124,7 @@ let allIncompleteRunsTotal = 0
 let latestArchiveStorage = null
 let tablePage = 1
 let tableStatusFilter = 'all'
+let analyticsControlsDisabled = false
 const selectedRunKeys = new Set()
 const sortState = { key: 'finished_at', dir: 'desc' }
 let lastIngestState = null
@@ -2045,7 +2051,15 @@ function getTablePageSize () {
 }
 
 function isRunSelectable (run) {
-  return Boolean(run && run.run_key && run.log_can_delete)
+  return Boolean(run && run.run_key && (run.log_can_delete || isRunUploadable(run)))
+}
+
+function isRunUploadable (run) {
+  return Boolean(run?.run_key && run.log_available && (run.tool_name || 'kometa') === 'kometa')
+}
+
+function getSelectedUploadableRuns () {
+  return allTableRuns.filter(run => selectedRunKeys.has(run.run_key) && isRunUploadable(run))
 }
 
 function getSelectableRuns (runs) {
@@ -2085,17 +2099,20 @@ function updateSelectionSummary () {
   const visibleCompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, false).length
   const visibleIncompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, true).length
   const selectedCompressibleCount = getSelectedCompressibleRuns().length
+  const selectedUploadableCount = getSelectedUploadableRuns().length
+  const selectedDeletableCount = getSelectedRuns().length
   if (!selectedCount) {
     tableSelectionSummary.textContent = 'No logs selected.'
   } else {
-    tableSelectionSummary.textContent = `${selectedCount} selected. ${selectedCompressibleCount} compressible. ${visibleSelectable} deletable in current view.`
+    tableSelectionSummary.textContent = `${selectedCount} selected. ${selectedUploadableCount} uploadable, ${selectedCompressibleCount} compressible, ${selectedDeletableCount} deletable.`
   }
   if (tableCompressSelected) {
     tableCompressSelected.disabled = selectedCompressibleCount === 0
   }
   if (tableDeleteSelected) {
-    tableDeleteSelected.disabled = selectedCount === 0
+    tableDeleteSelected.disabled = analyticsControlsDisabled || selectedDeletableCount === 0
   }
+  if (tableUploadSelected) tableUploadSelected.disabled = analyticsControlsDisabled || selectedUploadableCount === 0 || logscanUpload?.isBusy()
   if (tableClearSelection) {
     tableClearSelection.disabled = selectedCount === 0
   }
@@ -2114,6 +2131,14 @@ function updateSelectionSummary () {
 
 function filterTableRunsByStatus (runs) {
   if (!Array.isArray(runs) || !runs.length) return []
+  const uploadFilter = tableUploadFilter?.value || 'all'
+  if (uploadFilter !== 'all') {
+    runs = runs.filter(run => {
+      if ((run.tool_name || 'kometa') !== 'kometa') return false
+      const uploaded = Boolean(logscanUpload?.hasResult(run.run_key, run.portal_upload))
+      return uploadFilter === 'uploaded' ? uploaded : !uploaded
+    })
+  }
   if (tableStatusFilter === 'complete') {
     return runs.filter(run => !run.is_incomplete)
   }
@@ -2229,8 +2254,20 @@ function renderTable (runs) {
           Download
         </a>
       `)
+      if ((run.tool_name || 'kometa') === 'kometa') {
+        logActions.push(`
+          <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-upload-log"
+            data-run-key="${escapeHtml(runKey)}" data-run-label="${escapeHtml(runLabel)}"
+            title="Upload this log to online Logscan" ${logscanUpload?.isBusy() ? 'disabled' : ''}>
+            <i class="bi bi-cloud-upload" aria-hidden="true"></i> Upload to Logscan
+          </button>
+        `)
+      }
     } else {
       logActions.push('<span class="small text-muted">Unavailable</span>')
+    }
+    if ((run.tool_name || 'kometa') === 'kometa') {
+      logActions.push(`<div class="logscan-upload-feedback logscan-action-stack d-none" data-run-key="${escapeHtml(runKey)}" role="status" aria-live="polite"></div>`)
     }
     if (run.log_can_compress) {
       logActions.push(`
@@ -2263,7 +2300,7 @@ function renderTable (runs) {
     ].filter(Boolean).join(' ')
     return `
       <tr class="${rowClasses}">
-        ${renderRunCardCell('Select', 'Select this archived log for bulk actions.', `
+        ${renderRunCardCell('Select', 'Select this log for bulk actions.', `
           <span class="logscan-select-wrap">
             <span class="form-check form-switch logscan-select-switch">
               <input type="checkbox" class="form-check-input logscan-select-toggle-input"
@@ -2301,6 +2338,7 @@ function renderTable (runs) {
     `
   })
   tableBody.innerHTML = rows.join('')
+  logscanUpload?.refresh(pageRuns)
 }
 
 function renderRuntimeDistribution (runs) {
@@ -3344,6 +3382,7 @@ function setCompressModalBusy (busy) {
 }
 
 function setControlsDisabled (disabled) {
+  analyticsControlsDisabled = disabled
   reset.disabled = disabled
   reingest.disabled = disabled
   clearInvalidArchived.disabled = disabled || clearInvalidArchived.classList.contains('d-none')
@@ -3367,7 +3406,9 @@ function setControlsDisabled (disabled) {
   tableSelectIncomplete.disabled = disabled || getSelectableRunsByCompletion(currentTableRuns, true).length === 0
   tableClearSelection.disabled = disabled || selectedRunKeys.size === 0
   tableCompressSelected.disabled = disabled || getSelectedCompressibleRuns().length === 0
-  tableDeleteSelected.disabled = disabled || selectedRunKeys.size === 0
+  tableDeleteSelected.disabled = disabled || getSelectedRuns().length === 0
+  if (tableUploadSelected) tableUploadSelected.disabled = disabled || getSelectedUploadableRuns().length === 0 || logscanUpload?.isBusy()
+  if (tableUploadFilter) tableUploadFilter.disabled = disabled
 }
 
 function setMissingDownloadVisible (visible, count, logCount) {
@@ -4106,7 +4147,7 @@ function refreshAnalyticsPage (options = {}) {
 }
 function getSelectedRuns () {
   if (!selectedRunKeys.size) return []
-  return getSelectableRuns(allTableRuns).filter(run => selectedRunKeys.has(run.run_key))
+  return allTableRuns.filter(run => run.log_can_delete && selectedRunKeys.has(run.run_key))
 }
 
 function openCompressLogModal (runKeys, runLabel) {
@@ -4477,6 +4518,7 @@ resetFilters.on('click', function () {
   limit.setValue('500')
   tablePage = 1
   tableStatusFilter = 'all'
+  if (tableUploadFilter) tableUploadFilter.value = 'all'
   setSelectedValues(configFilter, [])
   setSelectedValues(toolFilter, [])
   setSelectedValues(toolVersionFilter, [])
@@ -4652,6 +4694,18 @@ tableCompressSelected.addEventListener('click', function () {
   const selectedRuns = getSelectedCompressibleRuns()
   if (!selectedRuns.length) return
   openCompressLogModal(selectedRuns.map(run => run.run_key), `${selectedRuns.length} selected logs`)
+})
+tableUploadSelected?.addEventListener('click', () => logscanUpload?.uploadSelected(getSelectedUploadableRuns()))
+tableUploadFilter?.addEventListener('change', () => {
+  tablePage = 1
+  applyFiltersAndRender()
+})
+document.addEventListener('logscan-upload-change', event => {
+  updateSelectionSummary()
+  if (event.detail?.resultsChanged) {
+    const filtered = filterTableRunsByStatus(filterRuns(allTableRuns, getFilterState()))
+    renderTable(sortRuns(filtered))
+  }
 })
 delegate(tableBody, 'click', '[data-section-details="1"]', function () {
   const runKey = this.dataset.runKey || this.getAttribute('data-run-key')

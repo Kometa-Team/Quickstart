@@ -1289,6 +1289,17 @@
             <div id="logscan-accordion-collapse" class="accordion-collapse collapse"
               aria-labelledby="logscan-accordion-heading" data-bs-parent="#logscan-accordion">
               <div class="accordion-body" id="logscan-panel">
+                <div class="mb-3">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="logscan-upload"><i class="bi bi-cloud-upload" aria-hidden="true"></i> Upload current log to Logscan</button>
+                  <div class="small" id="logscan-upload-status" role="status" aria-live="polite"></div>
+                  <div id="logscan-upload-links" class="d-none mt-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                      <a id="logscan-upload-result" target="_blank" rel="noopener noreferrer">Open support result</a>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="logscan-upload-copy"><i class="bi bi-clipboard" aria-hidden="true"></i> Copy support link</button>
+                      <a id="logscan-upload-management" target="_blank" rel="noopener noreferrer">Manage/delete upload (private)</a>
+                    </div>
+                  </div>
+                </div>
                 <div class="small mt-2" id="logscan-recommendations"></div>
                 <div class="small mt-3" id="logscan-sections"></div>
                 <div class="small mt-3 d-none" id="logscan-missing-people"></div>

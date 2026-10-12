@@ -581,9 +581,14 @@ function qsConfirmAction (options = {}) {
   return new Promise((resolve) => {
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl)
     let settled = false
+    let shown = false
+    let approved = false
+    let closing = false
     const cleanup = () => {
       confirmBtn.removeEventListener('click', onConfirm)
+      cancelBtn.removeEventListener('click', onCancel)
       modalEl.removeEventListener('hidden.bs.modal', onHidden)
+      modalEl.removeEventListener('shown.bs.modal', onShown)
     }
     const settle = (value) => {
       if (settled) return
@@ -592,12 +597,26 @@ function qsConfirmAction (options = {}) {
       resolve(value)
     }
     const onConfirm = () => {
-      settle(true)
-      modal.hide()
+      if (closing) return
+      approved = true
+      closing = true
+      if (shown) modal.hide()
     }
-    const onHidden = () => settle(false)
+    const onCancel = () => {
+      if (closing) return
+      closing = true
+      if (shown) modal.hide()
+    }
+    // Bootstrap ignores hide requests while its opening transition is active.
+    const onShown = () => {
+      shown = true
+      if (closing) modal.hide()
+    }
+    const onHidden = () => settle(approved)
     confirmBtn.addEventListener('click', onConfirm)
+    cancelBtn.addEventListener('click', onCancel)
     modalEl.addEventListener('hidden.bs.modal', onHidden)
+    modalEl.addEventListener('shown.bs.modal', onShown)
     modal.show()
   })
 }
