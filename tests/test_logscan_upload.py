@@ -366,6 +366,10 @@ def test_invalid_historical_run_id_is_rejected(client, monkeypatch, run_key):
     [("missing_run", 404), ("missing_log", 404), ("outside", 400), ("imagemaid", 400)],
 )
 def test_unavailable_or_unsupported_historical_logs_are_not_uploaded(client, qs_module, monkeypatch, tmp_path, case, expected):
+    if case == "imagemaid":
+        from blueprints import logscan_upload_routes as routes
+
+        monkeypatch.setattr(routes.portal_uploader, "supports_tool", lambda tool: False)
     start = historical_route(
         monkeypatch,
         qs_module,
@@ -383,6 +387,64 @@ def test_unavailable_or_unsupported_historical_logs_are_not_uploaded(client, qs_
     )
     assert result.status_code == expected
     start.assert_not_called()
+
+
+def test_historical_imagemaid_upload_when_portal_supports_it(client, qs_module, monkeypatch, tmp_path):
+    from blueprints import logscan_upload_routes as routes
+
+    path = tmp_path / "imagemaid-old.log.gz"
+    start = historical_route(monkeypatch, qs_module, path, tool_name="imagemaid")
+    monkeypatch.setattr(routes.portal_uploader, "supports_tool", lambda tool: tool == "imagemaid")
+    assert client.post("/logscan/upload", json={"confirm": True, "run_key": "old-run"}).status_code == 202
+    start.assert_called_once_with(path, config_name="Old Movies", run_key="old-run")
+
+
+def test_portal_capabilities_cached_and_kometa_needs_no_probe(monkeypatch):
+    get = Mock(return_value=response(200, {"tools": ["kometa", "imagemaid"]}))
+    monkeypatch.setattr(upload.requests, "get", get)
+    manager = upload.LogscanUploader()
+    assert manager.supports_tool("kometa")
+    get.assert_not_called()
+    assert manager.supports_tool("imagemaid") and manager.supports_tool("imagemaid")
+    get.assert_called_once_with(upload.PORTAL_URL + "/api/capabilities", timeout=(10, 15), allow_redirects=False)
+
+
+@pytest.mark.parametrize("code,payload", [(404, {}), (302, {}), (200, {}), (200, {"tools": "imagemaid"}), (200, {"tools": [1]})])
+def test_unconfirmed_imagemaid_capability_does_not_enable_upload(monkeypatch, code, payload):
+    get = Mock(return_value=response(code, payload))
+    monkeypatch.setattr(upload.requests, "get", get)
+    manager = upload.LogscanUploader()
+    assert not manager.supports_tool("imagemaid")
+    assert not manager.supports_tool("imagemaid")
+    get.assert_called_once()
+
+
+def test_imagemaid_live_log_not_blocked_by_kometa_startup(client, qs_module, monkeypatch, tmp_path):
+    from blueprints import logscan_upload_routes as routes
+
+    start = historical_route(monkeypatch, qs_module, tmp_path / "meta.log", tool_name="imagemaid")
+    monkeypatch.setattr(routes.portal_uploader, "supports_tool", lambda tool: True)
+    wait = Mock(return_value={"status": "waiting_for_kometa_log"})
+    monkeypatch.setattr(qs_module, "_get_kometa_log_wait_payload", wait)
+    assert client.post("/logscan/upload", json={"confirm": True, "run_key": "old-run"}).status_code == 202
+    start.assert_called_once()
+    wait.assert_not_called()
+
+
+def test_portal_capability_is_rechecked_after_short_negative_cache(monkeypatch):
+    get = Mock(side_effect=[response(200, {"tools": ["kometa"]}), response(200, {"tools": ["kometa", "imagemaid"]})])
+    monkeypatch.setattr(upload.requests, "get", get)
+    manager = upload.LogscanUploader()
+    assert not manager.supports_tool("imagemaid")
+    monkeypatch.setattr(upload.time, "monotonic", lambda: manager.capabilities_checked_at + 31)
+    assert manager.supports_tool("imagemaid")
+    assert get.call_count == 2
+
+
+def test_server_duplicate_response_reuses_remote_result(monkeypatch):
+    manager, client, _ = worker(monkeypatch, response(200, {**RESULT, "already_uploaded": True}))
+    assert manager.status("test-job")["already_uploaded"]
+    client.post.assert_called_once()
 
 
 def prepare_job(manager, job_id, content, compressed=False, run_key=None):

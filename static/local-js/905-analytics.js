@@ -2055,7 +2055,7 @@ function isRunSelectable (run) {
 }
 
 function isRunUploadable (run) {
-  return Boolean(run?.run_key && run.log_available && (run.tool_name || 'kometa') === 'kometa')
+  return Boolean(run?.run_key && run.log_available && ['kometa', 'imagemaid'].includes(getRunToolName(run)))
 }
 
 function getSelectedUploadableRuns () {
@@ -2134,7 +2134,7 @@ function filterTableRunsByStatus (runs) {
   const uploadFilter = tableUploadFilter?.value || 'all'
   if (uploadFilter !== 'all') {
     runs = runs.filter(run => {
-      if ((run.tool_name || 'kometa') !== 'kometa') return false
+      if (!['kometa', 'imagemaid'].includes(getRunToolName(run))) return false
       const uploaded = Boolean(logscanUpload?.hasResult(run.run_key, run.portal_upload))
       return uploadFilter === 'uploaded' ? uploaded : !uploaded
     })
@@ -2254,7 +2254,7 @@ function renderTable (runs) {
           Download
         </a>
       `)
-      if ((run.tool_name || 'kometa') === 'kometa') {
+      if (isRunUploadable(run)) {
         logActions.push(`
           <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-upload-log"
             data-run-key="${escapeHtml(runKey)}" data-run-label="${escapeHtml(runLabel)}"
@@ -2266,7 +2266,7 @@ function renderTable (runs) {
     } else {
       logActions.push('<span class="small text-muted">Unavailable</span>')
     }
-    if ((run.tool_name || 'kometa') === 'kometa') {
+    if (['kometa', 'imagemaid'].includes(getRunToolName(run))) {
       logActions.push(`<div class="logscan-upload-feedback logscan-action-stack d-none" data-run-key="${escapeHtml(runKey)}" role="status" aria-live="polite"></div>`)
     }
     if (run.log_can_compress) {

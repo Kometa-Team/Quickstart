@@ -1,4 +1,4 @@
-"""Upload current or resolved historical Kometa logs."""
+"""Upload current Kometa or resolved historical Kometa and ImageMaid logs."""
 
 from flask import Blueprint, current_app, jsonify, request, session
 from pathlib import Path
@@ -21,16 +21,19 @@ def resolve_run_log(run_key):
     run = quickstart.database.get_log_run(run_key) or quickstart._get_logscan_incomplete_run(run_key)
     if not run:
         raise RunLogError("The selected run could not be found.", 404)
-    if quickstart._normalize_logscan_tool_name(run.get("tool_name")) != "kometa":
-        raise RunLogError("Online Logscan uploads currently support Kometa logs only.")
+    tool_name = quickstart._normalize_logscan_tool_name(run.get("tool_name"))
+    if tool_name not in ("kometa", "imagemaid"):
+        raise RunLogError("The selected log type is not supported by online Logscan.")
     info = quickstart._resolve_logscan_run_log_info(run_key, run_record=run)
     if not info or not info.get("path"):
         raise RunLogError("The log for this run is no longer available.", 404)
     path = info["path"]
     if quickstart._classify_logscan_file_location(path) not in ("live", "archive"):
         raise RunLogError("The selected log is outside Quickstart's managed log locations.")
-    if Path(path).name.lower() == "meta.log" and quickstart._get_kometa_log_wait_payload(path):
+    if tool_name == "kometa" and Path(path).name.lower() == "meta.log" and quickstart._get_kometa_log_wait_payload(path):
         raise RunLogError("The current run's log is not ready yet.", 409)
+    if not portal_uploader.supports_tool(tool_name):
+        raise RunLogError("ImageMaid support is not yet available on online Logscan. Nothing was uploaded.")
     return path, run.get("config_name")
 
 
@@ -61,7 +64,7 @@ def upload_log():
         except RunLogError as exc:
             return jsonify(error=str(exc)), exc.status
     # A new run may still be replacing the previous run's live meta.log.
-    if Path(path).name.lower() == "meta.log" and quickstart._get_kometa_log_wait_payload(path):
+    if not run_key and Path(path).name.lower() == "meta.log" and quickstart._get_kometa_log_wait_payload(path):
         return jsonify(error="The current run's log is not ready yet."), 409
     try:
         if run_key:
@@ -69,11 +72,11 @@ def upload_log():
         else:
             job_id = portal_uploader.start(path, config_name=config_name)
     except FileNotFoundError:
-        return jsonify(error="The selected Kometa log is not available."), 404
+        return jsonify(error="The selected log is not available."), 404
     except UploadError as exc:
         return jsonify(error=str(exc)), 409
     except OSError:
-        return jsonify(error="The selected Kometa log could not be read."), 500
+        return jsonify(error="The selected log could not be read."), 500
     session["logscan_upload_job"] = job_id
     return jsonify(portal_uploader.status(job_id)), 202
 

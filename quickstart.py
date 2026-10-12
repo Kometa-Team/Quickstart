@@ -2024,7 +2024,7 @@ def _annotate_logscan_runs(runs, context=None):
         row["log_is_compressed"] = bool(info and (info.get("is_compressed") or (info.get("path") and _is_logscan_gzip_path(info["path"]))))
         row["log_can_delete"] = row["log_location"] == "archive" and row["log_available"]
         row["log_can_compress"] = row["log_location"] == "archive" and row["log_available"] and not row["log_is_compressed"]
-        if _normalize_logscan_tool_name(row.get("tool_name")) == "kometa":
+        if _normalize_logscan_tool_name(row.get("tool_name")) in ("kometa", "imagemaid"):
             row["portal_upload"] = upload_results.get(row.get("run_key"))
             if not row["portal_upload"] and row["log_available"] and row["log_location"] in ("live", "archive"):
                 row["portal_upload_pending"] = portal_uploader.restore_run_result(row.get("run_key"), info["path"])
