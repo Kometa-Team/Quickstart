@@ -47,14 +47,14 @@ jobs:
           fi
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Checkout Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
@@ -118,21 +118,21 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
 
@@ -210,13 +210,13 @@ jobs:
     steps:
 
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
 
@@ -241,14 +241,14 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -316,7 +316,7 @@ jobs:
     steps:
 
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -327,7 +327,7 @@ jobs:
       # See modules/helpers/_vite_manifest.py for how templates consume
       # this at request time; roadmap #1334 Step 4.
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -338,7 +338,7 @@ jobs:
           npm run build
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
 
@@ -360,7 +360,7 @@ jobs:
           mv "dist/Quickstart${EXT}" "dist/${filename}"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         id: artifact-upload-step
         with:
           name: ${{ steps.build-executable.outputs.filename }}
@@ -387,14 +387,14 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.2.0
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Checkout Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Print Links
         env:

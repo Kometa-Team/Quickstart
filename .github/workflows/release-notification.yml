@@ -15,7 +15,7 @@ jobs:
     steps:
 
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -56,7 +56,7 @@ jobs:
     steps:
 
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -65,7 +65,7 @@ jobs:
       # See modules/helpers/_vite_manifest.py for how templates consume
       # this at request time; roadmap #1334 Step 4.
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -76,7 +76,7 @@ jobs:
           npm run build
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
 
