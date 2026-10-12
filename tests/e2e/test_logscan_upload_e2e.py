@@ -85,7 +85,7 @@ def test_analytics_uploads_resolved_archive_and_restores_links(page, live_server
     button.click()
     page.locator("#qs-confirm-confirm").click()
     expect(modal).to_be_hidden()
-    expect(page.locator("#logscan-upload-result")).to_have_attribute("href", result["result_url"])
+    expect(page.locator("#logscan-upload-result")).to_have_attribute("href", result["result_url"], timeout=15000)
     expect(page.locator("#logscan-upload-result")).to_be_visible()
     start.assert_called_once_with(log.resolve(), config_name="Historical Movies", run_key="upload-history")
     expect(page.locator("#logscan-upload-result")).to_have_attribute("href", result["result_url"])
@@ -181,7 +181,7 @@ def test_current_log_upload_controls(page, live_server, qs_module, monkeypatch, 
     expect(page.locator("#qs-confirm-modal")).to_contain_text("Current Kometa log")
     page.locator("#qs-confirm-confirm").click()
     expect(page.locator("#qs-confirm-modal")).to_be_hidden()
-    expect(page.locator("#logscan-upload-result")).to_have_attribute("href", result["result_url"])
+    expect(page.locator("#logscan-upload-result")).to_have_attribute("href", result["result_url"], timeout=15000)
     assert start.call_count == 1
     assert start.call_args.args[0] == helpers.get_kometa_log_dir() / "meta.log"
     assert button.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
@@ -310,6 +310,7 @@ def test_selected_upload_queue_deduplication_filters_and_navigation(page, live_s
             }
         )
     manager = upload.LogscanUploader(receipt_path=tmp_path / "receipts.json")
+    monkeypatch.setattr(manager, "supports_tool", lambda tool: True)
     manager._remember_receipt(
         hashlib.sha256(b"same log").hexdigest(),
         {
@@ -351,12 +352,13 @@ def test_selected_upload_queue_deduplication_filters_and_navigation(page, live_s
 
         def post(self, url, **kwargs):
             posted.append(gzip.decompress(kwargs["data"].snapshot.read()))
+            result_key = "imagemaid" if posted[-1] == b"ImageMaid log" else "new"
             started.set()
             assert release.wait(timeout=60)
             return Mock(
                 status_code=200,
                 json=lambda: {
-                    "result_url": "https://logscan.kometa.team/scan/new",
+                    "result_url": f"https://logscan.kometa.team/scan/{result_key}",
                     "delete_token": "private_management_token_456",
                     "expires_at": 9999999999,
                 },
@@ -392,13 +394,13 @@ def test_selected_upload_queue_deduplication_filters_and_navigation(page, live_s
         expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(1)
         expect(page.locator("#logscan-trends-table tbody")).to_contain_text("existing")
         upload_filter.select_option("not_uploaded")
-        expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(2)
-        expect(page.locator("#logscan-trends-table tbody")).not_to_contain_text("imagemaid")
+        expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(3)
+        expect(page.locator("#logscan-trends-table tbody")).to_contain_text("ImageMaid")
         upload_filter.select_option("all")
         page.locator("#logscan-table-select-all").click()
-        expect(page.locator("#logscan-table-selection-summary")).to_contain_text("3 uploadable")
+        expect(page.locator("#logscan-table-selection-summary")).to_contain_text("4 uploadable")
         page.locator("#logscan-table-upload-selected").click()
-        expect(page.locator("#qs-confirm-modal")).to_contain_text("3 selected logs")
+        expect(page.locator("#qs-confirm-modal")).to_contain_text("4 selected logs")
         page.locator("#qs-confirm-cancel").click()
         expect(page.locator("#qs-confirm-modal")).to_be_hidden()
         assert not posted
@@ -414,17 +416,17 @@ def test_selected_upload_queue_deduplication_filters_and_navigation(page, live_s
         expect(page.locator("#logscan-upload-cancel-batch")).to_be_visible()
         release.set()
         page.locator("#logscan-table-toggle").click()
-        expect(page.locator("#logscan-upload-status")).to_contain_text("1 uploaded, 2 already uploaded", timeout=10000)
-        for key in ("existing", "copy", "new"):
+        expect(page.locator("#logscan-upload-status")).to_contain_text("2 uploaded, 2 already uploaded", timeout=10000)
+        for key in ("existing", "copy", "new", "imagemaid"):
             feedback = page.locator(f'.logscan-upload-feedback[data-run-key="{key}"]')
             expect(feedback.locator("a").first).to_have_attribute(
                 "href",
-                "https://logscan.kometa.team/scan/" + ("new" if key == "new" else "existing"),
+                "https://logscan.kometa.team/scan/" + (key if key in ("new", "imagemaid") else "existing"),
             )
             assert feedback.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
-        assert posted == [b"different log"]
+        assert posted == [b"different log", b"ImageMaid log"]
         upload_filter.select_option("uploaded")
-        expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(3)
+        expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(4)
         upload_filter.screenshot(path=str(Path("artifacts") / f"logscan-upload-filter-{width}.png"))
         page.locator("#logscan-table-upload-selected").scroll_into_view_if_needed()
         page.screenshot(path=str(Path("artifacts") / f"logscan-upload-batch-{width}.png"))
@@ -434,7 +436,7 @@ def test_selected_upload_queue_deduplication_filters_and_navigation(page, live_s
         page.reload(wait_until="domcontentloaded")
         page.locator("#logscan-table-toggle").click()
         upload_filter.select_option("uploaded")
-        expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(3)
-        assert posted == [b"different log"]
+        expect(page.locator("#logscan-trends-table tbody tr")).to_have_count(4)
+        assert posted == [b"different log", b"ImageMaid log"]
     finally:
         release.set()

@@ -1,4 +1,4 @@
-"""Manual uploads of current and historical Kometa logs to Logscan."""
+"""Manual uploads of current and historical runtime logs to Logscan."""
 
 import os
 import copy
@@ -80,7 +80,7 @@ def compress_source(source, size, digest=None):
 
 def validate_size(size):
     if not size:
-        raise UploadError("The selected Kometa log is empty.")
+        raise UploadError("The selected log is empty.")
     if size > MAX_UPLOAD_BYTES:
         raise UploadError("The selected log exceeds Logscan's 1 GiB upload limit.")
 
@@ -152,6 +152,33 @@ class LogscanUploader:
         self.restore_queue = {}
         self.restore_checked = set()
         self.restore_thread = None
+        self.capabilities = None
+        self.capabilities_checked_at = 0
+
+    def supports_tool(self, tool_name):
+        if tool_name == "kometa":
+            return True
+        if tool_name != "imagemaid":
+            return False
+        with self.lock:
+            if self.capabilities is not None and time.monotonic() - self.capabilities_checked_at < (300 if tool_name in self.capabilities else 30):
+                return tool_name in self.capabilities
+        tools = []
+        try:
+            response = requests.get(PORTAL_URL + "/api/capabilities", timeout=(10, 15), allow_redirects=False)
+            try:
+                payload = response.json() if response.status_code == 200 else None
+            finally:
+                response.close()
+            advertised = payload.get("tools") if isinstance(payload, dict) else None
+            if isinstance(advertised, list) and all(isinstance(tool, str) for tool in advertised):
+                tools = advertised
+        except (requests.RequestException, ValueError):
+            pass
+        with self.lock:
+            self.capabilities = set(tools)
+            self.capabilities_checked_at = time.monotonic()
+        return tool_name in tools
 
     def _receipt_file(self):
         value = self.receipt_path() if callable(self.receipt_path) else self.receipt_path
@@ -625,7 +652,7 @@ class LogscanUploader:
                 fingerprint = self.status(job_id).get("content_sha256")
                 if fingerprint:
                     self._remember_receipt(fingerprint, payload, self.status(job_id).get("run_key"))
-                self._update(job_id, phase="complete", already_uploaded=False, **links)
+                self._update(job_id, phase="complete", already_uploaded=payload.get("already_uploaded") is True, **links)
         except UploadError as exc:
             self._update(job_id, phase="failed", error=str(exc), uncertain=exc.uncertain)
         except (
