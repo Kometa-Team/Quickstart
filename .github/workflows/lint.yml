@@ -22,15 +22,15 @@ jobs:
 
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Set Up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
 
       - name: Set Up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -39,7 +39,7 @@ jobs:
         run: npm ci --no-fund --no-audit
 
       - name: Cache Pre-commit Environments
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -61,10 +61,10 @@ jobs:
 
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Set Up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -88,10 +88,10 @@ jobs:
     # already works.
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Set Up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
