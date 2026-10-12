@@ -290,6 +290,19 @@
         </button>
       </div>
     </div>
+    <div class="my-2">
+      <div class="small" id="logscan-upload-status" role="status" aria-live="polite"></div>
+      <button id="logscan-upload-cancel-batch" type="button" class="btn nav-button btn-sm d-none mt-2" title="Stop remaining uploads">
+        <i class="bi bi-stop-circle" aria-hidden="true"></i> Stop remaining
+      </button>
+      <div id="logscan-upload-links" class="d-none mt-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <a id="logscan-upload-result" target="_blank" rel="noopener noreferrer">Open support result</a>
+          <button type="button" class="btn nav-button btn-sm" id="logscan-upload-copy"><i class="bi bi-clipboard" aria-hidden="true"></i> Copy support link</button>
+          <a id="logscan-upload-management" target="_blank" rel="noopener noreferrer">Manage/delete upload (private)</a>
+        </div>
+      </div>
+    </div>
     <div class="logscan-table-filter-shell">
       <div class="small text-muted logscan-table-filter-note">These filters mirror the controls above.</div>
       <div class="logscan-control-grid">
@@ -369,9 +382,18 @@
           <button id="logscan-table-select-incomplete" type="button" class="btn nav-button btn-sm">Incomplete</button>
           <button id="logscan-table-clear-selection" type="button" class="btn nav-button btn-sm">Clear</button>
           <button id="logscan-table-compress-selected" type="button" class="btn nav-button btn-sm" disabled>Compress selected</button>
+          <button id="logscan-table-upload-selected" type="button" class="btn nav-button btn-sm" disabled title="Upload selected Kometa logs">
+            <i class="bi bi-cloud-upload" aria-hidden="true"></i> Upload selected
+          </button>
           <button id="logscan-table-delete-selected" type="button" class="btn nav-button nav-button-danger btn-sm" disabled>Delete selected</button>
           <div id="logscan-table-selection-summary" class="small text-muted">No logs selected.</div>
         </div>
+        <label class="small text-muted" for="logscan-table-upload-filter">Logscan upload</label>
+        <select id="logscan-table-upload-filter" class="form-select form-select-sm w-auto" title="Logscan upload status">
+          <option value="all">All logs</option>
+          <option value="uploaded">Uploaded</option>
+          <option value="not_uploaded">Not uploaded</option>
+        </select>
         <label class="small text-muted" for="logscan-table-sort-key">Sort by</label>
           <select id="logscan-table-sort-key" class="form-select form-select-sm w-auto">
             <option value="cache_line_count">Cache lines</option>

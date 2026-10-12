@@ -1187,6 +1187,9 @@ def _nbsp_leading_spaces(s: str) -> str:
 
 app.jinja_env.filters["nbsp_leading_spaces"] = _nbsp_leading_spaces
 
+from blueprints.logscan_upload_routes import logscan_upload_bp, portal_uploader
+
+app.register_blueprint(logscan_upload_bp)
 app.register_blueprint(validation_routes_bp)
 app.register_blueprint(plex_auth_routes_bp)
 app.register_blueprint(asset_routes_bp)
@@ -2005,6 +2008,7 @@ def _annotate_logscan_runs(runs, context=None):
         return [] if isinstance(runs, list) else []
     context = context or _build_logscan_resolution_context()
     annotated = []
+    upload_results = portal_uploader.saved_run_results()
     for run in runs:
         if not isinstance(run, dict):
             continue
@@ -2020,6 +2024,10 @@ def _annotate_logscan_runs(runs, context=None):
         row["log_is_compressed"] = bool(info and (info.get("is_compressed") or (info.get("path") and _is_logscan_gzip_path(info["path"]))))
         row["log_can_delete"] = row["log_location"] == "archive" and row["log_available"]
         row["log_can_compress"] = row["log_location"] == "archive" and row["log_available"] and not row["log_is_compressed"]
+        if _normalize_logscan_tool_name(row.get("tool_name")) == "kometa":
+            row["portal_upload"] = upload_results.get(row.get("run_key"))
+            if not row["portal_upload"] and row["log_available"] and row["log_location"] in ("live", "archive"):
+                row["portal_upload_pending"] = portal_uploader.restore_run_result(row.get("run_key"), info["path"])
         annotated.append(row)
     return annotated
 
