@@ -154,6 +154,9 @@ def clean_form_data(form_data):
     for key, value in form_data.items():
         if key in TRANSIENT_FORM_FIELDS:
             continue
+        if _is_runtime_overlay_text_key(key) and value is None:
+            clean_data[key] = ""
+            continue
         # Handle asset_directory as a list
         if key == "asset_directory" or key.endswith("-attribute_asset_directory"):
             if isinstance(value, list):
@@ -185,7 +188,7 @@ def clean_form_data(form_data):
             if key == "plex_db_cache":
                 clean_data[key] = _normalize_plex_db_cache_value(value)
                 continue
-            if key.endswith("template_overlay_runtimes[text]") and value == "":
+            if _is_runtime_overlay_text_key(key) and value == "":
                 clean_data[key] = ""
                 continue
             if url_validation.is_url_key(key):
@@ -240,6 +243,10 @@ def clean_form_data(form_data):
             clean_data[key] = default_value
 
     return clean_data
+
+
+def _is_runtime_overlay_text_key(key):
+    return isinstance(key, str) and "-template_overlay_runtimes[text]" in key
 
 
 def _preserve_kometa_install_selection(data, clean_data):

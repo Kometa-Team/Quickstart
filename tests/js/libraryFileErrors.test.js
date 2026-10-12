@@ -44,6 +44,14 @@ describe.each(['collection_files', 'metadata_files', 'overlay_files'])('%s error
     expect(shouldOmit(field)).toBe(true)
   })
 
+  it('keeps an explicit blank runtime prefix in the save payload', () => {
+    const field = document.createElement('input')
+    field.name = 'mov-library_1-movie-template_overlay_runtimes[text]'
+    field.dataset.default = 'Runtime: '
+    field.value = ''
+    expect(shouldOmit(field)).toBe(false)
+  })
+
   it('ignores another library error at the same row index', () => {
     const editor = editorWith([file])
     const setStatus = vi.fn()

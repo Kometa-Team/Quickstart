@@ -6557,6 +6557,66 @@ def test_copy_library_settings_auto_includes_safe_targets_when_source_is_include
     assert "Other Movies" in libraries["libraries"]
 
 
+def test_copy_library_settings_preserves_explicit_blank_runtime_text(client, isolated_config_dir, monkeypatch, app, library_routes_module):
+    from modules import database
+    from flask import session
+
+    config_name = "pytest_copy_runtime_blank_text"
+    database.save_section_data(
+        section="libraries",
+        validated=False,
+        user_entered=True,
+        name=config_name,
+        data={
+            "libraries": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_target-library": "",
+                "libraries": "Movies",
+            },
+            "validated": False,
+        },
+    )
+    monkeypatch.setattr(
+        library_routes_module,
+        "_build_library_lists",
+        lambda: (
+            [
+                {"id": "mov-library_movies", "name": "Movies"},
+                {"id": "mov-library_target", "name": "Other Movies"},
+            ],
+            [],
+            {},
+        ),
+    )
+
+    with app.test_request_context("/copy_library_settings"):
+        session["config_name"] = config_name
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = config_name
+
+    resp = client.post(
+        "/copy_library_settings",
+        json={
+            "source_library_id": "mov-library_movies",
+            "target_library_ids": ["mov-library_target"],
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-movie-overlay_runtimes": "true",
+                "mov-library_movies-movie-template_overlay_runtimes[text]": None,
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json()["success"] is True
+
+    _validated, _user_entered, stored = database.retrieve_section_data(config_name, "libraries")
+    libraries = stored["libraries"]
+    assert libraries["mov-library_movies-movie-template_overlay_runtimes[text]"] == ""
+    assert libraries["mov-library_target-movie-template_overlay_runtimes[text]"] == ""
+
+
 def test_copy_library_settings_reports_placeholder_missing_from_target(client, isolated_config_dir, monkeypatch, app, qs_module, library_routes_module):
     from modules import database
     from flask import session
