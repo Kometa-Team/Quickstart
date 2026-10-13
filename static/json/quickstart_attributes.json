@@ -355,7 +355,7 @@
       ],
       "title": "Asset Directory",
       "wiki": "https://kometa.wiki/en/develop/kometa/guides/assets/",
-      "description": "Specify the library-level asset directory Kometa should search for posters and backgrounds in this library. Enter one path per line if you want to provide multiple asset directories.",
+      "description": "Set separate asset paths for movies, shows, music, and collections. Libraries use the group matching their Plex media type. Leave a library group blank to inherit global paths. Collections use the library's item paths when no collection paths are configured. Add one path per field; each group supports multiple paths.",
       "tooltip_variant": "info",
       "placeholder": "e.g. C:\\\\Users\\\\bullmoose20\\\\ppm\\\\assets5\\\\test_tv_lib",
       "multiline": true,

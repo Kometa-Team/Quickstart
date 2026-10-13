@@ -14,7 +14,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from werkzeug.utils import secure_filename
 
 from modules import helpers, path_validation
-from modules.jsonschema_compat import find_non_string_mapping_key_paths, stringify_mapping_keys_for_jsonschema
+from modules.jsonschema_compat import extend_asset_directory_schema, find_non_string_mapping_key_paths, stringify_mapping_keys_for_jsonschema
 from modules.validations_shared import _saved_custom_repo_base
 
 EXTERNAL_YAML_KINDS = {
@@ -322,6 +322,8 @@ def validate_external_yaml_content(kind, content):
         helpers.ensure_json_schema()
         schema_path = Path(helpers.JSON_SCHEMA_DIR) / info["schema"]
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        if kind == "collection_files":
+            extend_asset_directory_schema(schema)
         parsed_with_lines = parse_external_yaml_with_lines(content)
         non_string_key_paths = find_non_string_mapping_key_paths(parsed)
         if non_string_key_paths:

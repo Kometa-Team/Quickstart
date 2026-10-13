@@ -11,8 +11,7 @@ sections need light preprocessing before the copy:
 * ``apprise``   -- coerces the various historical shapes
                    (``config`` string / nested dict) into a single
                    ``{location: str}`` mapping.
-* ``settings``  -- normalizes ``asset_directory`` from multiline
-                   string OR list into a list of stripped strings.
+* ``settings``  -- normalizes shared or grouped ``asset_directory`` paths.
 * ``anidb``     -- auto-adds ``enable: true`` when non-empty values
                    are present but the flag is missing (legacy configs).
 
@@ -27,6 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from modules.import_redaction import is_redacted_credential_value
+from modules.output_values import _normalize_asset_directory_values
 
 if TYPE_CHECKING:
     from modules.importer import ImportReport
@@ -145,16 +145,12 @@ def _record_apprise_source_paths(section_payload: Any, report: ImportReport) -> 
 
 
 def _normalize_settings_section(section_payload: dict) -> dict:
-    """Normalize the settings section's asset_directory (str-or-list to list)."""
+    """Normalize shared or grouped asset paths in the settings section."""
     asset_directory = section_payload.get("asset_directory")
-    if not isinstance(asset_directory, (str, list)):
+    if not isinstance(asset_directory, (str, list, dict)):
         return section_payload
 
-    if isinstance(asset_directory, str):
-        normalized = [line.strip() for line in asset_directory.splitlines()]
-    else:
-        normalized = [str(item).strip() for item in asset_directory]
-    normalized = [entry for entry in normalized if entry]
+    normalized = _normalize_asset_directory_values(asset_directory)
 
     updated = dict(section_payload)
     updated["asset_directory"] = normalized

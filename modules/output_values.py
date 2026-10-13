@@ -207,7 +207,7 @@ def _playlist_scalar_or_list(values):
 
 # --- asset directory path normalization -----------------------------------
 #
-# Kometa's ``asset_directory:`` config accepts multi-line strings or lists.
+# Kometa's ``asset_directory:`` accepts shared paths or grouped path mappings.
 # On Windows, users often paste YAML-escaped paths like ``C:\\Users\\me``
 # where the double-backslashes are the YAML wire form of a single one.
 # UNC paths keep their leading ``\\`` prefix (that's the UNC marker).
@@ -238,6 +238,13 @@ def _normalize_asset_directory_entry(value):
 
 
 def _normalize_asset_directory_values(value):
+    if isinstance(value, dict):
+        return {
+            group: paths
+            for group in ("movies", "shows", "music", "collections")
+            if isinstance(value.get(group), (str, list))
+            if (paths := _normalize_asset_directory_values(value.get(group)))
+        }
     normalized = []
     if isinstance(value, str):
         items = value.splitlines()
@@ -247,7 +254,7 @@ def _normalize_asset_directory_values(value):
         items = []
 
     for item in items:
-        cleaned = _normalize_asset_directory_entry(item)
+        cleaned = _normalize_asset_directory_entry(item) if isinstance(item, str) else None
         if cleaned:
             normalized.append(cleaned)
     return normalized

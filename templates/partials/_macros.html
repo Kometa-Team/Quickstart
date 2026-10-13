@@ -1,3 +1,30 @@
+{% macro grouped_asset_directory_fields(raw_value, full_id, full_name, library=false) %}
+{% for group, label in [('movies', 'Movies'), ('shows', 'Shows'), ('music', 'Music'), ('collections', 'Collections')] %}
+{% set group_value = raw_value.get(group, []) if raw_value is mapping else raw_value %}
+{% set field_values = group_value.splitlines() if group_value is string else (group_value if group_value is sequence else []) %}
+{% set input_name = full_name ~ '[' ~ group ~ ']' %}
+{% set container_id = full_id ~ '_' ~ group ~ '_container' %}
+<div class="mb-3">
+    <label class="form-label" for="{{ full_id }}_{{ group }}_blank">{{ label }} Asset Directories</label>
+    <div id="{{ container_id }}" {% if library %}data-library-asset-directory-container{% else %}data-settings-asset-directory-container{% endif %} data-input-name="{{ input_name }}" data-asset-group="{{ group }}">
+        {% for directory in field_values %}
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" name="{{ input_name }}" id="{{ full_id }}_{{ group }}_{{ loop.index }}"
+                data-path-rule="asset_directory" placeholder="Add Asset Directory" value="{{ directory }}">
+            <button class="btn btn-danger {{ 'library-remove-asset-directory' if library else 'remove-asset-directory' }}" type="button">Remove</button>
+        </div>
+        {% endfor %}
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" name="{{ input_name }}" id="{{ full_id }}_{{ group }}_blank"
+                data-path-rule="asset_directory" placeholder="Add Asset Directory">
+            <button class="btn btn-danger {{ 'library-remove-asset-directory' if library else 'remove-asset-directory' }}" type="button">Remove</button>
+        </div>
+    </div>
+    <button class="btn btn-primary" {{ 'data-add-asset-directory' if library else 'data-add-settings-asset-directory' }}="{{ container_id }}" type="button">Add Directory</button>
+</div>
+{% endfor %}
+{% endmacro %}
+
 {% macro mass_update_section(
 library, data, version_info, prefix, title, wiki_url, description,
 sources=None, has_custom_string=False, custom_string_placeholder=None,
@@ -1110,15 +1137,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 {% set full_name = library.id ~ "-attribute_" ~ prefix %}
 {% set legacy_name = library.id ~ "-" ~ prefix %}
 {% set raw_value = data.libraries.get(full_name, data.libraries.get(legacy_name, [])) %}
-{% if raw_value is string %}
-{% set field_values = [raw_value] if raw_value.strip() else [] %}
-{% elif raw_value is sequence and raw_value is not string %}
-{% set field_values = raw_value %}
-{% else %}
-{% set field_values = [] %}
-{% endif %}
 <div class="{{ container_class }}">
-    <label class="form-label d-flex align-items-center gap-2 flex-wrap" for="{{ full_id }}_1">
+    <label class="form-label d-flex align-items-center gap-2 flex-wrap" for="{{ full_id }}_movies_blank">
         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
         <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
             <i class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -1128,21 +1148,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
     </label>
-    <div id="{{ full_id }}_container" data-library-asset-directory-container data-input-name="{{ full_name }}">
-        {% for directory in field_values %}
-        <div class="input-group mb-2">
-            <input type="text" class="form-control" name="{{ full_name }}" id="{{ full_id }}_{{ loop.index }}"
-                data-path-rule="asset_directory" placeholder="{{ placeholder }}" value="{{ directory }}">
-            <button class="btn btn-danger library-remove-asset-directory" type="button">Remove</button>
-        </div>
-        {% endfor %}
-        <div class="input-group mb-2">
-            <input type="text" class="form-control" name="{{ full_name }}" id="{{ full_id }}_blank"
-                data-path-rule="asset_directory" placeholder="{{ placeholder }}">
-            <button class="btn btn-danger library-remove-asset-directory" type="button">Remove</button>
-        </div>
-    </div>
-    <button class="btn btn-primary" data-add-asset-directory="{{ full_id }}_container" type="button">Add Directory</button>
+    <p class="small text-muted">Leave a group blank to inherit global paths. Collections without a configured group use the library's item paths.</p>
+    {{ grouped_asset_directory_fields(raw_value, full_id, full_name, true) }}
 </div>
 {% endmacro %}
 

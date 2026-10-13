@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from werkzeug.datastructures import MultiDict
 
 from modules import database, helpers, iso, url_validation
+from modules.output_values import _normalize_asset_directory_values
 
 _ISO_639_1_LANGUAGES = None
 _ISO_3166_1_REGIONS = None
@@ -157,8 +158,16 @@ def clean_form_data(form_data):
         if _is_runtime_overlay_text_key(key) and value is None:
             clean_data[key] = ""
             continue
-        # Handle asset_directory as a list
-        if key == "asset_directory" or key.endswith("-attribute_asset_directory"):
+        asset_group = re.fullmatch(r"(asset_directory|.+-attribute_asset_directory)\[(movies|shows|music|collections)\]", key)
+        if asset_group:
+            base, group = asset_group.groups()
+            value_list = value if isinstance(value, list) else form_data.getlist(key)
+            clean_data.setdefault(base, {})[group] = _normalize_asset_directory_values(value_list)
+        # Handle shared asset_directory values from older clients.
+        elif key == "asset_directory" or key.endswith("-attribute_asset_directory"):
+            if isinstance(value, dict):
+                clean_data[key] = _normalize_asset_directory_values(value)
+                continue
             if isinstance(value, list):
                 value_list = value
             else:
@@ -701,10 +710,8 @@ def retrieve_settings(target):
 
     if source_name == "settings" and isinstance(data[source_name], dict):
         asset_directory = data[source_name].get("asset_directory")
-        if isinstance(asset_directory, str):
-            data[source_name]["asset_directory"] = [line.strip() for line in asset_directory.splitlines() if line.strip()]
-        elif isinstance(asset_directory, list):
-            data[source_name]["asset_directory"] = [str(item).strip() for item in asset_directory if str(item).strip()]
+        if isinstance(asset_directory, (str, list, dict)):
+            data[source_name]["asset_directory"] = _normalize_asset_directory_values(asset_directory)
 
     if source_name == "trakt":
         section = data[source_name]

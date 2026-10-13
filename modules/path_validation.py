@@ -145,6 +145,8 @@ def _iter_payload_items(payload):
 
 
 def _match_rule_for_key(key, rules):
+    if re.fullmatch(r"(?:asset_directory|.+-attribute_asset_directory)(?:\[(?:movies|shows|music|collections)\])?", str(key)):
+        return next((rule for rule in rules if rule.get("id") == "asset_directory"), None)
     for rule in rules:
         rule_id = rule.get("id")
         if not rule_id:
@@ -166,9 +168,14 @@ def validate_payload(payload, platform_key=None):
         rule = _match_rule_for_key(key, rules)
         if not rule:
             continue
-        valid, message = validate_path(value, rule, platform_key)
-        if not valid:
-            label = rule.get("label") or rule.get("id", "Path")
-            errors.append(f"{label}: {message}")
+        if rule.get("id") == "asset_directory" and isinstance(value, dict):
+            values = [path for paths in value.values() for path in (paths if isinstance(paths, list) else [paths])]
+        else:
+            values = value if isinstance(value, list) else [value]
+        for path in values:
+            valid, message = validate_path(path, rule, platform_key)
+            if not valid:
+                label = rule.get("label") or rule.get("id", "Path")
+                errors.append(f"{label}: {message}")
 
     return errors
