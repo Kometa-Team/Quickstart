@@ -229,6 +229,8 @@ Sponsor
         data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}"
         data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
         data-current-imagemaid-log-keep="{{ page_info.qs_imagemaid_log_keep }}"
+        data-current-auto-upload-kometa="{{ 'true' if page_info.qs_logscan_auto_upload_kometa else 'false' }}"
+        data-current-auto-upload-imagemaid="{{ 'true' if page_info.qs_logscan_auto_upload_imagemaid else 'false' }}"
         data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
         data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
         data-current-session-lifetime="{{ page_info.qs_session_lifetime_days }}"

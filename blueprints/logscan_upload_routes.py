@@ -5,6 +5,7 @@ from pathlib import Path
 
 from modules import helpers
 from modules.logscan_upload import MAX_BATCH_LOGS, UploadError, portal_uploader
+from modules.logscan_auto_upload import AUTO_UPLOAD_KEYS
 
 logscan_upload_bp = Blueprint("logscan_upload", __name__)
 
@@ -130,6 +131,9 @@ def upload_status():
     status = portal_uploader.status(session.get("logscan_upload_job")) or {"phase": "idle"}
     if request.args.get("history") == "1":
         status["run_results"] = portal_uploader.saved_run_results()
+        status["automatic_results"] = portal_uploader.automatic_results()
+        status["automatic_pending"] = portal_uploader.automatic_pending()
+        status["automatic_enabled"] = any(current_app.config.get(key, False) for key in AUTO_UPLOAD_KEYS.values())
         status["restoring"] = portal_uploader.restoring_results()
     response = jsonify(status)
     response.headers["Cache-Control"] = "no-store"

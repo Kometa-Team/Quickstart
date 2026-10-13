@@ -1,4 +1,4 @@
-// Manual portal upload: local analytics and scanning are independent.
+// Portal uploads: local analytics and scanning are independent.
 export function initLogscanUpload ({ historical = false } = {}) {
   const status = document.getElementById('logscan-upload-status')
   if (!status || status.dataset.uploadBound) return
@@ -46,6 +46,9 @@ export function initLogscanUpload ({ historical = false } = {}) {
     updateButtons()
     document.querySelectorAll('.logscan-upload-feedback').forEach(container => {
       const data = runFeedback.get(container.dataset.runKey)
+      const signature = JSON.stringify(data ? [data.phase, data.already_uploaded, data.result_url, data.management_url, data.error] : null)
+      if (container.dataset.uploadFeedback === signature && (!data || container.childElementCount > 0)) return
+      container.dataset.uploadFeedback = signature
       container.replaceChildren()
       container.classList.toggle('d-none', !data)
       if (!data) return
@@ -85,8 +88,11 @@ export function initLogscanUpload ({ historical = false } = {}) {
 
   function render (data) {
     clearTimeout(timer)
-    busy = !['idle', 'complete', 'failed'].includes(data.phase)
+    busy = !['idle', 'complete', 'failed'].includes(data.phase) || Boolean(data.automatic_pending)
     let resultsChanged = false
+    Object.entries(data.automatic_results || {}).forEach(([runKey, saved]) => {
+      runFeedback.set(runKey, data.run_results?.[runKey] || saved)
+    })
     if (data.run_results) {
       historyLoaded = true
       confirmedRuns.forEach(runKey => {
@@ -136,9 +142,13 @@ export function initLogscanUpload ({ historical = false } = {}) {
       status.textContent = data.error || 'Upload failed.'
     } else if (data.phase !== 'idle') {
       status.textContent = labels[data.phase] || 'Logscan is processing the upload...'
+    } else if (data.automatic_pending) {
+      status.textContent = 'Automatic log uploads in progress...'
+    } else if (status.textContent === 'Automatic log uploads in progress...') {
+      status.textContent = 'Automatic log uploads finished.'
     }
     document.dispatchEvent(new CustomEvent('logscan-upload-change', { detail: { resultsChanged } }))
-    if (busy || data.restoring) timer = setTimeout(poll, 2000)
+    if (busy || data.restoring || (historical && data.automatic_enabled)) timer = setTimeout(poll, busy || data.restoring ? 2000 : 15000)
   }
 
   async function poll () {
@@ -153,6 +163,12 @@ export function initLogscanUpload ({ historical = false } = {}) {
       status.textContent = 'Cannot retrieve upload status. Retrying...'
       timer = setTimeout(poll, 5000)
     }
+  }
+
+  if (historical) {
+    document.addEventListener('quickstart-settings-change', () => {
+      if (root.isConnected) poll()
+    })
   }
 
   root.addEventListener('click', async event => {

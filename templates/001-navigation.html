@@ -565,6 +565,29 @@
                 </div>
               </div>
               <div class="accordion-item">
+                <h2 class="accordion-header" id="qs-settings-logscan-heading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#qs-settings-logscan" aria-expanded="false" aria-controls="qs-settings-logscan">
+                    Logscan Uploads
+                  </button>
+                </h2>
+                <div id="qs-settings-logscan" class="accordion-collapse collapse"
+                  aria-labelledby="qs-settings-logscan-heading" data-bs-parent="#quickstart-settings-accordion">
+                  <div class="accordion-body">
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" role="switch" id="quickstart-settings-auto-upload-kometa">
+                      <label class="form-check-label" for="quickstart-settings-auto-upload-kometa">Automatically upload Kometa logs</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" role="switch" id="quickstart-settings-auto-upload-imagemaid">
+                      <label class="form-check-label" for="quickstart-settings-auto-upload-imagemaid">Automatically upload ImageMaid logs</label>
+                    </div>
+                    <div class="form-text">New completed logs only. Destination: <a href="https://logscan.kometa.team" target="_blank" rel="noopener noreferrer">logscan.kometa.team</a>.</div>
+                    <div class="form-text">Uploads are anonymous and include the log contents. Web copies expire after 48 hours. Local history stays local.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
                 <h2 class="accordion-header" id="qs-settings-session-heading">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     data-bs-target="#qs-settings-session" aria-expanded="false" aria-controls="qs-settings-session">

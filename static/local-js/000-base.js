@@ -3717,6 +3717,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const historyInput = document.getElementById('quickstart-settings-config-history')
   const logKeepInput = document.getElementById('quickstart-settings-log-keep')
   const imagemaidLogKeepInput = document.getElementById('quickstart-settings-imagemaid-log-keep')
+  const autoUploadInputs = ['kometa', 'imagemaid'].map(tool => ({
+    tool,
+    input: document.getElementById(`quickstart-settings-auto-upload-${tool}`),
+    key: `QS_LOGSCAN_AUTO_UPLOAD_${tool.toUpperCase()}`,
+    field: `logscan_auto_upload_${tool}`,
+    dataset: `currentAutoUpload${tool === 'kometa' ? 'Kometa' : 'Imagemaid'}`
+  }))
   const testLibsTmpInput = document.getElementById('quickstart-settings-test-libs-tmp')
   const testLibsPathInput = document.getElementById('quickstart-settings-test-libs-path')
   const sessionLifetimeInput = document.getElementById('quickstart-settings-session-lifetime')
@@ -3848,6 +3855,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (historyInput) historyInput.value = getCurrentConfigHistory()
     if (logKeepInput) logKeepInput.value = getCurrentLogKeep()
     if (imagemaidLogKeepInput) imagemaidLogKeepInput.value = getCurrentImageMaidLogKeep()
+    autoUploadInputs.forEach(({ input, key, dataset }) => {
+      if (input) input.checked = String(triggerBtn?.dataset[dataset] ?? getAppConfig(key, false)).toLowerCase() === 'true'
+    })
     if (testLibsTmpInput) testLibsTmpInput.value = getCurrentTestLibsTmp()
     if (testLibsPathInput) testLibsPathInput.value = getCurrentTestLibsPath()
     if (sessionLifetimeInput) sessionLifetimeInput.value = getCurrentSessionLifetimeDays()
@@ -4009,6 +4019,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (debugInput) payload.debug = debugInput.checked
       if (optimizeInput) payload.optimize_defaults = desiredOptimize
       if (themeInput) payload.theme = themeInput.value
+      autoUploadInputs.forEach(({ input, field }) => {
+        if (input) payload[field] = input.checked
+      })
 
       applyBtn.disabled = true
       setStatus('Saving settings...', false)
@@ -4063,6 +4076,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to update settings.')
         }
+        autoUploadInputs.forEach(({ key, field, dataset }) => {
+          if (typeof data[field] !== 'boolean') return
+          setAppConfig({ [key]: data[field] })
+          if (triggerBtn) triggerBtn.dataset[dataset] = String(data[field])
+        })
+        document.dispatchEvent(new CustomEvent('quickstart-settings-change'))
 
         if (!data.restart) {
           if (data.theme) {
