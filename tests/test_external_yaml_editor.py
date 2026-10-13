@@ -1,6 +1,35 @@
 from pathlib import Path
+import shutil
 
 import pytest
+
+
+@pytest.mark.parametrize(
+    ("paths", "valid"),
+    [
+        ("{collections: [/art/collections], movies: /art/movies, shows: null}", True),
+        ("[/art/shared]", True),
+        ("{unknown: /art/invalid}", False),
+        ("{collections: [42]}", False),
+    ],
+)
+def test_collection_editor_validates_asset_overrides_with_older_schema(client, isolated_config_dir, monkeypatch, tmp_path, paths, valid):
+    from modules import helpers
+
+    fixture = Path(__file__).parent / "fixtures/schema/collection-schema.json"
+    schema_path = tmp_path / "collection-schema.json"
+    shutil.copyfile(fixture, schema_path)
+    original = schema_path.read_bytes()
+    monkeypatch.setattr(helpers, "JSON_SCHEMA_DIR", str(tmp_path))
+    monkeypatch.setattr(helpers, "ensure_json_schema", lambda: None)
+    response = client.post(
+        "/external_yaml_file/validate",
+        json={"kind": "collection_files", "content": f"collections:\n  Example:\n    plex_all: true\n    asset_directory: {paths}\n"},
+    )
+    assert response.status_code == 200
+    validation = response.get_json()["validation"]
+    assert validation["schema_valid"] is valid, validation["warnings"]
+    assert schema_path.read_bytes() == original
 
 
 @pytest.mark.parametrize(

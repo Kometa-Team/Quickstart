@@ -1,4 +1,9 @@
+import io
 import json
+from pathlib import Path
+
+import jsonschema
+from ruamel.yaml import YAML
 
 from modules import importer
 from modules import dependency_reasons
@@ -154,6 +159,16 @@ def test_build_libraries_section_emits_mass_metadata_update(app):
     assert "mass_genre_update" not in operations
     assert "mass_content_rating_update" not in operations
     assert "metadata_backup" not in operations
+
+    # Validate the serialized result against the checked-in schema, independently
+    # of the builder's internal field names and the runtime schema cache.
+    stream = io.StringIO()
+    yaml = YAML()
+    yaml.dump(libraries_section, stream)
+    config = yaml.load(stream.getvalue())
+    config.update({"plex": {"url": "http://localhost:32400", "token": "test-token"}, "tmdb": {"apikey": "test-key"}})
+    schema = json.loads((Path(__file__).parent / "fixtures/schema/config-schema.json").read_text())
+    jsonschema.Draft7Validator(schema).validate(config)
 
 
 def test_trakt_dependency_detects_mass_metadata_image_sources():

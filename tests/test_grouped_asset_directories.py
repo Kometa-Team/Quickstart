@@ -133,3 +133,22 @@ def test_schema_accepts_grouped_global_and_library_paths_but_rejects_unknown_gro
     assert not list(validator.iter_errors(config))
     config["settings"]["asset_directory"]["unknown"] = "/unknown"
     assert list(validator.iter_errors(config))
+
+
+@pytest.mark.parametrize("entry", [{"file": "config/collections.yml"}, {"default": "basic"}, {"url": "https://example.com/collections.yml"}])
+def test_schema_accepts_grouped_collection_file_overrides(entry):
+    schema = json.loads(Path("tests/fixtures/schema/config-schema.json").read_text())
+    extend_asset_directory_schema(schema)
+    original = json.dumps(schema, sort_keys=True)
+    extend_asset_directory_schema(schema)
+    assert json.dumps(schema, sort_keys=True) == original
+    validator = jsonschema.Draft7Validator(schema)
+    entry = {**entry, "asset_directory": {"collections": ["/art/collections"]}}
+    config = {
+        "plex": {"url": "http://localhost:32400", "token": "test-token"},
+        "tmdb": {"apikey": "test-key"},
+        "libraries": {"Movies": {"collection_files": [entry]}},
+    }
+    assert not list(validator.iter_errors(config))
+    entry["asset_directory"]["unknown"] = "/invalid"
+    assert list(validator.iter_errors(config))
