@@ -17,7 +17,8 @@ def connection(monkeypatch, post, polls=()):
     client = Mock()
     client.post.return_value = post
     client.head.return_value = response(200, {})
-    client.get.side_effect = list(polls)
+    client.get.return_value = response(404, {})
+    client.get.side_effect = list(polls) if polls else None
     client.__enter__ = Mock(return_value=client)
     client.__exit__ = Mock(return_value=False)
     monkeypatch.setattr(upload.requests, "Session", lambda: client)
@@ -32,11 +33,12 @@ RESULT = {
 }
 
 
-def worker(monkeypatch, post, polls=()):
+def worker(monkeypatch, post, polls=(), post_error=None):
     manager = upload.LogscanUploader()
     manager.jobs["test-job"] = {"phase": "uploading", "created_at": 0}
     manager.active = True
     client = connection(monkeypatch, post, polls)
+    client.post.side_effect = post_error
     source = io.BytesIO(b"[kometa.py:1] [ERROR] test\n")
     manager._prepare_and_run("test-job", source, len(source.getvalue()), "qs-default-meta.gz")
     snapshot = client.post.call_args.kwargs["data"].snapshot
@@ -71,6 +73,118 @@ def test_synchronous_response_supported(monkeypatch):
     client.get.assert_not_called()
 
 
+@pytest.mark.parametrize("error", [requests.ReadTimeout("private token"), requests.ConnectionError("private token")])
+def test_lost_upload_response_recovers_existing_job_without_resending(monkeypatch, error, caplog):
+    manager, client, snapshot = worker(
+        monkeypatch,
+        response(200, RESULT),
+        [response(200, {"phase": "queued"}), response(200, {"phase": "complete", "result": RESULT})],
+        post_error=error,
+    )
+    assert manager.status("test-job")["phase"] == "complete"
+    assert manager.status("test-job")["result_url"] == RESULT["result_url"]
+    assert client.post.call_count == 1 and client.get.call_count == 2
+    assert all(call.args[0] == upload.PORTAL_URL + "/api/scan-jobs/test-job" for call in client.get.call_args_list)
+    assert client.post.call_args.kwargs["timeout"] == (10, 900)
+    assert "private token" not in caplog.text
+    assert snapshot.closed and not manager.active
+
+
+@pytest.mark.parametrize("code", [408, 500, 501, 502, 503, 504, 507, 599])
+def test_proxy_upload_error_recovers_accepted_result(monkeypatch, code):
+    manager, client, _ = worker(monkeypatch, response(code, {}), [response(200, {"phase": "complete", "result": RESULT})])
+    assert manager.status("test-job")["phase"] == "complete"
+    assert client.post.call_count == client.get.call_count == 1
+
+
+def test_unreadable_upload_response_recovers_job(monkeypatch):
+    unreadable = response(200, {})
+    unreadable.json = Mock(side_effect=ValueError("proxy HTML"))
+    manager, client, _ = worker(monkeypatch, unreadable, [response(200, {"phase": "complete", "result": RESULT})])
+    assert manager.status("test-job")["phase"] == "complete"
+    assert client.post.call_count == 1
+
+
+def test_polling_tolerates_timeouts_connection_errors_and_gateway_errors(monkeypatch):
+    manager, client, _ = worker(
+        monkeypatch,
+        response(202, {"job_id": "test-job", "phase": "queued"}),
+        [requests.ReadTimeout(), requests.ConnectionError(), response(504, {}), response(200, {"phase": "scanning"}), response(200, {"phase": "complete", "result": RESULT})],
+    )
+    assert manager.status("test-job")["phase"] == "complete"
+    assert manager.status("test-job")["status_retry_count"] == 0
+    assert client.post.call_count == 1 and client.get.call_count == 5
+
+
+def test_status_failure_counter_resets_after_successful_check(monkeypatch):
+    polls = [requests.ReadTimeout()] * 4 + [response(200, {"phase": "scanning"})] + [response(503, {})] * 4 + [response(200, {"phase": "complete", "result": RESULT})]
+    manager, client, _ = worker(monkeypatch, response(202, {"job_id": "test-job"}), polls)
+    assert manager.status("test-job")["phase"] == "complete"
+    assert client.get.call_count == 10 and client.post.call_count == 1
+
+
+def test_repeated_status_timeouts_fail_uncertain_with_clear_reason(monkeypatch):
+    manager, client, snapshot = worker(monkeypatch, response(202, {"job_id": "test-job"}), [requests.ReadTimeout("private details")] * upload.MAX_STATUS_FAILURES)
+    status = manager.status("test-job")
+    assert status["phase"] == "failed" and status["uncertain"]
+    assert "status request timed out" in status["error"]
+    assert "not resent" in status["error"] and "private details" not in status["error"]
+    assert client.get.call_count == upload.MAX_STATUS_FAILURES and client.post.call_count == 1
+    assert "result_url" not in status and snapshot.closed and not manager.active
+
+
+def test_connect_timeout_does_not_claim_upload_was_accepted(monkeypatch):
+    manager, client, _ = worker(monkeypatch, response(200, RESULT), post_error=requests.ConnectTimeout())
+    status = manager.status("test-job")
+    assert status["phase"] == "failed" and status["uncertain"] is False
+    assert "connect" in status["error"] and "Nothing was uploaded" in status["error"]
+    client.get.assert_not_called()
+    assert client.post.call_count == 1
+
+
+def test_untracked_job_does_not_resend_upload(monkeypatch):
+    manager, client, _ = worker(monkeypatch, response(200, RESULT), post_error=requests.ReadTimeout())
+    assert manager.status("test-job")["uncertain"]
+    assert "HTTP 404" in manager.status("test-job")["error"]
+    assert client.get.call_count == upload.MAX_STATUS_FAILURES and client.post.call_count == 1
+
+
+def test_unexpected_job_id_is_not_polled(monkeypatch):
+    manager, client, _ = worker(monkeypatch, response(202, {"job_id": "someone-else"}))
+    assert manager.status("test-job")["phase"] == "failed"
+    client.get.assert_not_called()
+
+
+def test_recovered_job_result_still_validates_links_before_success(monkeypatch):
+    manager, client, _ = worker(monkeypatch, response(504, {}), [response(200, {"phase": "complete", "result": {**RESULT, "result_url": "https://evil.test/scan/no"}})])
+    assert manager.status("test-job")["phase"] == "failed" and manager.status("test-job")["uncertain"]
+    assert "result_url" not in manager.status("test-job") and not manager.saved_run_results()
+    assert client.post.call_count == 1
+
+
+def test_status_retry_stays_bounded_by_overall_scan_deadline(monkeypatch):
+    elapsed = {"time": 0}
+    client = connection(monkeypatch, response(202, {"job_id": "test-job"}))
+    monkeypatch.setattr(upload, "SCAN_JOB_TIMEOUT", 1)
+    monkeypatch.setattr(upload.time, "monotonic", lambda: elapsed["time"])
+    monkeypatch.setattr(upload.time, "sleep", lambda seconds: elapsed.update(time=elapsed["time"] + seconds))
+    manager = upload.LogscanUploader()
+    manager.jobs["test-job"] = {"phase": "uploading"}
+    manager._prepare_and_run("test-job", io.BytesIO(b"log"), 3, "qs-default-meta.gz")
+    assert manager.status("test-job")["phase"] == "failed" and manager.status("test-job")["uncertain"]
+    client.get.assert_not_called()
+    assert client.post.call_count == 1
+
+
+def test_multipart_stream_uses_small_chunks_for_slow_connections():
+    contents = b"x" * (upload.UPLOAD_CHUNK_BYTES * 3 + 5)
+    body = upload.MultipartLog(io.BytesIO(contents), len(contents))
+    chunks = list(body)
+    assert max(map(len, chunks)) <= upload.UPLOAD_CHUNK_BYTES
+    assert b"".join(chunks[1:-1]) == contents
+    assert sum(map(len, chunks)) == len(body)
+
+
 @pytest.mark.parametrize("code", [400, 413, 429, 500, 302])
 def test_rejected_upload_does_not_return_result_or_retry(monkeypatch, code):
     manager, client, snapshot = worker(monkeypatch, response(code, {}))
@@ -90,7 +204,8 @@ def test_connection_failure_releases_lock_and_warns_about_ambiguous_upload(monke
     snapshot = io.BytesIO(b"log")
     manager._prepare_and_run("test-job", snapshot, 3, "qs-default-meta.gz")
     assert manager.status("test-job")["phase"] == "failed"
-    assert "duplicate" in manager.status("test-job")["error"]
+    assert "timed out" in manager.status("test-job")["error"]
+    assert "not resent" in manager.status("test-job")["error"]
     assert "private details" not in manager.status("test-job")["error"]
     assert snapshot.closed and not manager.active
 
