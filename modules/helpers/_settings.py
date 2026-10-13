@@ -53,6 +53,8 @@ def get_quickstart_settings_summary():
         "QS_CONFIG_HISTORY",
         "QS_KOMETA_LOG_KEEP",
         "QS_IMAGEMAID_LOG_KEEP",
+        "QS_LOGSCAN_AUTO_UPLOAD_KOMETA",
+        "QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID",
         "QS_TEST_LIBS_TMP",
         "QS_TEST_LIBS_PATH",
     }
@@ -66,6 +68,8 @@ def get_quickstart_settings_summary():
         ("QS_CONFIG_HISTORY", "Quickstart Config Archive History", format_keep),
         ("QS_KOMETA_LOG_KEEP", "Quickstart Kometa Log Retention", format_keep),
         ("QS_IMAGEMAID_LOG_KEEP", "Quickstart ImageMaid Log Retention", format_keep),
+        ("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", "Quickstart Automatic Kometa Log Upload", format_bool),
+        ("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", "Quickstart Automatic ImageMaid Log Upload", format_bool),
         ("QS_TEST_LIBS_TMP", "Quickstart Test Libraries Temp Path", lambda v: v or "Default"),
         ("QS_TEST_LIBS_PATH", "Quickstart Test Libraries Install Path", lambda v: v or "Default"),
     ]

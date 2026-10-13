@@ -1,7 +1,7 @@
 """Tests for blueprints.app_config_routes.
 
 Covers the read-only ``GET /api/app-config`` endpoint that exposes the
-11 app-level config keys to the front end (roadmap #1334 Step 5,
+app-level config keys to the front end (roadmap #1334 Step 5,
 Phase A).
 
 Two layers of testing here:
@@ -22,7 +22,7 @@ import pytest
 
 from blueprints.app_config_routes import APP_CONFIG_KEYS, collect_app_config
 
-# The exact 11 keys we expect, in declaration order. Pinning this
+# The exact keys we expect, in declaration order. Pinning this
 # explicitly catches accidental additions/removals in a code review.
 EXPECTED_KEYS = (
     "QS_DEBUG",
@@ -31,6 +31,8 @@ EXPECTED_KEYS = (
     "QS_CONFIG_HISTORY",
     "QS_KOMETA_LOG_KEEP",
     "QS_IMAGEMAID_LOG_KEEP",
+    "QS_LOGSCAN_AUTO_UPLOAD_KOMETA",
+    "QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID",
     "QS_TEST_LIBS_PATH",
     "QS_TEST_LIBS_TMP",
     "QS_SESSION_LIFETIME_DAYS",
@@ -120,6 +122,8 @@ def test_api_app_config_endpoint_reflects_live_config_changes(app, client, monke
         ("QS_CONFIG_HISTORY", 0),
         ("QS_KOMETA_LOG_KEEP", 0),
         ("QS_IMAGEMAID_LOG_KEEP", 0),
+        ("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False),
+        ("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False),
         ("QS_TEST_LIBS_PATH", ""),
         ("QS_TEST_LIBS_TMP", ""),
         ("QS_SESSION_LIFETIME_DAYS", 30),

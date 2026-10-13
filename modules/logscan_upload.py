@@ -1,4 +1,4 @@
-"""Manual uploads of current and historical runtime logs to Logscan."""
+"""Manual and opt-in automatic uploads of runtime logs to Logscan."""
 
 import os
 import copy
@@ -149,6 +149,9 @@ class LogscanUploader:
         self.receipts = {}
         self.receipts_loaded = False
         self.receipt_lock = threading.RLock()
+        self.automatic = {}
+        self.auto_queue = {}
+        self.auto_thread = None
         self.restore_queue = {}
         self.restore_checked = set()
         self.restore_thread = None
@@ -194,6 +197,14 @@ class LogscanUploader:
                 return
             data = json.loads(path.read_text(encoding="utf-8"))
             receipts = data.get("receipts", {}) if isinstance(data, dict) else {}
+            automatic = data.get("automatic", {}) if isinstance(data, dict) else {}
+            if isinstance(automatic, dict):
+                for key, value in automatic.items():
+                    if not isinstance(key, str) or not 0 < len(key) <= 256 or not isinstance(value, dict):
+                        continue
+                    if value.get("phase") not in {"complete", "failed", "not_uploaded"}:
+                        value = {"phase": "failed", "error": "Automatic upload was interrupted. Check Logscan before uploading manually.", "uncertain": True}
+                    self.automatic[key] = {**value, "run_key": key}
             if isinstance(receipts, dict):
                 for key, value in receipts.items():
                     if not isinstance(key, str) or not re.fullmatch(r"[a-f0-9]{64}", key) or not isinstance(value, dict):
@@ -312,6 +323,97 @@ class LogscanUploader:
                         }
             return results
 
+    def automatic_results(self):
+        with self.receipt_lock:
+            self._load_receipts()
+            results = copy.deepcopy(self.automatic)
+            saved = self.saved_run_results()
+            for key, value in results.items():
+                if key in saved:
+                    results[key] = saved[key]
+                elif value.get("phase") == "complete":
+                    results[key] = {"run_key": key, "phase": "expired"}
+            return results
+
+    def automatic_pending(self):
+        with self.receipt_lock:
+            return self.auto_thread is not None
+
+    def enqueue_auto(self, path, *, config_name, run_key, tool_name, enabled):
+        if not isinstance(run_key, str) or not 0 < len(run_key) <= 256 or tool_name not in {"kometa", "imagemaid"}:
+            return False
+        with self.receipt_lock:
+            self._load_receipts()
+            if run_key in self.automatic or run_key in self.saved_run_results():
+                return False
+            self.automatic[run_key] = {"run_key": run_key, "phase": "waiting"}
+            self.auto_queue[run_key] = (path, config_name, tool_name, enabled)
+            self._save_receipts()
+            if self.auto_thread is None:
+                self.auto_thread = threading.Thread(target=self._run_automatic, daemon=True, name="logscan-auto-upload")
+                try:
+                    self.auto_thread.start()
+                except Exception:
+                    self.auto_thread = None
+                    self.auto_queue.pop(run_key, None)
+                    self.automatic[run_key] = {"run_key": run_key, "phase": "failed", "error": "Automatic upload could not start. Nothing was uploaded."}
+                    self._save_receipts()
+                    raise
+            return True
+
+    def _set_automatic_result(self, run_key, data):
+        with self.receipt_lock:
+            self.automatic[run_key] = {key: value for key, value in data.items() if key in {"phase", "error", "uncertain", "already_uploaded"}}
+            self.automatic[run_key]["run_key"] = run_key
+            self._save_receipts()
+
+    def _run_automatic(self):
+        while True:
+            with self.receipt_lock:
+                if not self.auto_queue:
+                    self.auto_thread = None
+                    return
+                run_key = next(iter(self.auto_queue))
+                path, config_name, tool_name, enabled = self.auto_queue.pop(run_key)
+            try:
+                while True:
+                    if not enabled():
+                        self._set_automatic_result(run_key, {"phase": "not_uploaded"})
+                        break
+                    with self.lock:
+                        active = self.active
+                    if active:
+                        time.sleep(0.25)
+                        continue
+                    if not self.supports_tool(tool_name):
+                        raise UploadError("Online Logscan does not currently accept this log type. Nothing was uploaded.")
+                    if not enabled():
+                        continue
+                    try:
+                        job_id = self.start(path, config_name=config_name, run_key=run_key)
+                    except UploadError:
+                        with self.lock:
+                            if self.active:
+                                continue
+                        raise
+                    previous_phase = None
+                    while True:
+                        status = self.status(job_id)
+                        if status["phase"] != previous_phase:
+                            self._set_automatic_result(run_key, status)
+                            previous_phase = status["phase"]
+                        if status["phase"] in {"complete", "failed"}:
+                            break
+                        time.sleep(0.25)
+                    break
+            except (OSError, UploadError) as exc:
+                error = str(exc) if isinstance(exc, UploadError) else "The local log could not be read. Nothing was uploaded."
+                self._set_automatic_result(run_key, {"phase": "failed", "error": error})
+            except Exception:
+                self._set_automatic_result(
+                    run_key, {"phase": "failed", "uncertain": True, "error": "Automatic upload could not be confirmed. Check Logscan before uploading manually."}
+                )
+
     def restore_run_result(self, run_key, path):
         """Recover pre-association receipts locally, without delaying Analytics."""
         if not isinstance(run_key, str) or not 0 < len(run_key) <= 256:
@@ -383,7 +485,7 @@ class LogscanUploader:
             path.parent.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as handle:
                 temporary = Path(handle.name)
-                json.dump({"version": 2, "receipts": self.receipts}, handle)
+                json.dump({"version": 3, "receipts": self.receipts, "automatic": dict(list(self.automatic.items())[-500:])}, handle)
             temporary.replace(path)
         except OSError:
             logging.getLogger(__name__).warning("Could not save the local Logscan upload receipt.")

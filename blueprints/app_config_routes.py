@@ -52,7 +52,7 @@ from flask import Blueprint, current_app, jsonify
 bp = Blueprint("app_config_routes", __name__)
 
 
-# The 11 app-level config keys exposed by /api/app-config, paired with
+# The app-level config keys exposed by /api/app-config, paired with
 # the fallback value to use when the key is missing from app.config.
 #
 # Keep this list in sync with templates/000-base.html. The follow-up PR
@@ -64,6 +64,8 @@ APP_CONFIG_KEYS: tuple[tuple[str, object], ...] = (
     ("QS_CONFIG_HISTORY", 0),
     ("QS_KOMETA_LOG_KEEP", 0),
     ("QS_IMAGEMAID_LOG_KEEP", 0),
+    ("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False),
+    ("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False),
     ("QS_TEST_LIBS_PATH", ""),
     ("QS_TEST_LIBS_TMP", ""),
     ("QS_SESSION_LIFETIME_DAYS", 30),

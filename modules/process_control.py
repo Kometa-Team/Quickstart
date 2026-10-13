@@ -167,6 +167,12 @@ def maintenance_guard_loop(app_in):
     with app_in.app_context():
         while True:
             time.sleep(interval)
+            try:
+                from modules.logscan_auto_upload import ingest_auto_upload_logs
+
+                ingest_auto_upload_logs()
+            except Exception:
+                helpers.ts_log("Automatic Logscan completion check failed; local logs are unchanged.", level="WARNING")
             maintenance_config_name = get_active_maintenance_lookup_config_name()
             start_min, end_min, window_str = resolve_maintenance_window_live(config_name=maintenance_config_name)
             if start_min is None or end_min is None:

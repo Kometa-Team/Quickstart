@@ -289,6 +289,7 @@ from modules.logscan_resume import (
     build_recovery_suggestions as _build_recovery_suggestions,  # noqa: F401 (used directly by tests as qs_module._build_recovery_suggestions)
     build_resume_explanation as _build_resume_explanation,  # noqa: F401 (used directly by tests as qs_module._build_resume_explanation)
 )
+from modules.logscan_auto_upload import AUTO_UPLOAD_KEYS, initialize_auto_upload_settings, queue_completed_log, update_auto_upload_setting
 
 build_resume_library_scope = _build_resume_library_scope
 build_recovery_command = _build_recovery_command
@@ -1276,6 +1277,7 @@ def inject_version_info():
 app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QS_THEME"] = os.getenv("QS_THEME", "kometa").strip() or "kometa"
 app.config["QS_OPTIMIZE_DEFAULTS"] = helpers.booler(os.getenv("QS_OPTIMIZE_DEFAULTS", "1"))
+initialize_auto_upload_settings(app)
 try:
     app.config["QS_CONFIG_HISTORY"] = max(0, int(str(os.getenv("QS_CONFIG_HISTORY", "0")).strip()))
 except (TypeError, ValueError):
@@ -2356,6 +2358,8 @@ def step(name):
     page_info["qs_config_history"] = app.config.get("QS_CONFIG_HISTORY", 0)
     page_info["qs_kometa_log_keep"] = app.config.get("QS_KOMETA_LOG_KEEP", 0)
     page_info["qs_imagemaid_log_keep"] = app.config.get("QS_IMAGEMAID_LOG_KEEP", 0)
+    page_info["qs_logscan_auto_upload_kometa"] = app.config.get("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False)
+    page_info["qs_logscan_auto_upload_imagemaid"] = app.config.get("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False)
     page_info["qs_session_lifetime_days"] = app.config.get("QS_SESSION_LIFETIME_DAYS", 30)
     page_info["qs_flask_session_dir"] = app.config.get("QS_FLASK_SESSION_DIR", "")
     _, test_libs_path, test_libs_tmp, _, _ = _resolve_test_libraries_paths(helpers.get_app_root())
@@ -6091,7 +6095,7 @@ def _run_logscan_live_ingest_job(job_id, tool_name, raw_log_dir=None):
                 total=1,
                 scanned=0,
             )
-            result = _ingest_completed_live_logs(tool_name, log_dir=log_dir)
+            result = _ingest_completed_live_logs(tool_name, log_dir=log_dir, ingest_lock_held=True)
             ingested = int(result.get("ingested") or 0) if isinstance(result, dict) else 0
             archived = int(result.get("archived") or 0) if isinstance(result, dict) else 0
             _update_logscan_reingest_state(
@@ -6119,7 +6123,17 @@ def _run_logscan_live_ingest_job(job_id, tool_name, raw_log_dir=None):
         logscan_ingest_lock.release()
 
 
-def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
+def _ingest_completed_live_logs(tool_name="kometa", log_dir=None, *, ingest_lock_held=False):
+    if not ingest_lock_held and not logscan_ingest_lock.acquire(blocking=False):
+        return {"ingested": 0, "archived": 0}
+    try:
+        return _ingest_completed_live_logs_unlocked(tool_name, log_dir=log_dir)
+    finally:
+        if not ingest_lock_held:
+            logscan_ingest_lock.release()
+
+
+def _ingest_completed_live_logs_unlocked(tool_name="kometa", log_dir=None):
     tool_name = _normalize_logscan_tool_name(tool_name)
     if tool_name == "kometa" and helpers.is_kometa_running():
         return {"ingested": 0, "archived": 0}
@@ -6220,9 +6234,11 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
                     analyzer=analyzer,
                 )
             cached_run_key = cached_entry.get("run_key")
-            if not (cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")):
+            saved_complete_run = cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")
+            if not saved_complete_run:
                 if database.save_log_run(summary, recommendations=recommendations):
                     ingested += 1
+                    saved_complete_run = True
 
             cache_logs[cache_key] = {
                 "mtime": stats.st_mtime,
@@ -6259,6 +6275,8 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
                     cache_logs[str(archived_path.resolve())] = archive_entry
                     cache_dirty = True
                     archived += 1
+                    if saved_complete_run:
+                        queue_completed_log(archived_path, summary, tool_name, source_mtime=stats.st_mtime)
                 except Exception:
                     pass
         except Exception:
@@ -6338,6 +6356,15 @@ if logscan_archive_result.get("errors"):
 
 
 def _archive_finished_live_meta_log_if_idle(log_dir=None):
+    if not logscan_ingest_lock.acquire(blocking=False):
+        return None
+    try:
+        return _archive_finished_live_meta_log_if_idle_unlocked(log_dir=log_dir)
+    finally:
+        logscan_ingest_lock.release()
+
+
+def _archive_finished_live_meta_log_if_idle_unlocked(log_dir=None):
     log_dir = Path(log_dir) if log_dir else helpers.get_kometa_log_dir()
     live_path = (log_dir / "meta.log").resolve()
     if helpers.is_kometa_running():
@@ -7250,6 +7277,8 @@ def logscan_trends_page():
         "qs_config_history": app.config.get("QS_CONFIG_HISTORY", 0),
         "qs_kometa_log_keep": app.config.get("QS_KOMETA_LOG_KEEP", 0),
         "qs_imagemaid_log_keep": app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
+        "qs_logscan_auto_upload_kometa": app.config.get("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False),
+        "qs_logscan_auto_upload_imagemaid": app.config.get("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False),
         "qs_session_lifetime_days": app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
         "qs_flask_session_dir": app.config.get("QS_FLASK_SESSION_DIR", ""),
         "shutdown_nonce": session["shutdown_nonce"],
@@ -7562,6 +7591,15 @@ def update_quickstart_settings():
     if optimize_raw is not None:
         optimize_value = helpers.booler(str(optimize_raw))
 
+    auto_upload_values = {}
+    for tool in AUTO_UPLOAD_KEYS:
+        field = f"logscan_auto_upload_{tool}"
+        if field in data:
+            if not isinstance(data[field], bool):
+                errors.append(f"{tool.title()} automatic log upload must be enabled or disabled.")
+            else:
+                auto_upload_values[tool] = data[field]
+
     history_raw = data.get("config_history")
     history_value = None
     if history_raw is not None:
@@ -7654,6 +7692,10 @@ def update_quickstart_settings():
         app.config["QS_OPTIMIZE_DEFAULTS"] = optimize_value
         changes_applied = True
 
+    for tool, enabled in auto_upload_values.items():
+        if update_auto_upload_setting(tool, enabled):
+            changes_applied = True
+
     if history_value is not None and history_value != app.config.get("QS_CONFIG_HISTORY", 0):
         helpers.update_env_variable("QS_CONFIG_HISTORY", str(history_value))
         app.config["QS_CONFIG_HISTORY"] = history_value
@@ -7721,6 +7763,8 @@ def update_quickstart_settings():
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
             kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
             imagemaid_log_keep=app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
+            logscan_auto_upload_kometa=app.config.get("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False),
+            logscan_auto_upload_imagemaid=app.config.get("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False),
             session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
             session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
         )
@@ -7737,6 +7781,8 @@ def update_quickstart_settings():
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
             kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
             imagemaid_log_keep=app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
+            logscan_auto_upload_kometa=app.config.get("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False),
+            logscan_auto_upload_imagemaid=app.config.get("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False),
             session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
             session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
         )
@@ -7751,6 +7797,8 @@ def update_quickstart_settings():
         config_history=app.config.get("QS_CONFIG_HISTORY", 0),
         kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
         imagemaid_log_keep=app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
+        logscan_auto_upload_kometa=app.config.get("QS_LOGSCAN_AUTO_UPLOAD_KOMETA", False),
+        logscan_auto_upload_imagemaid=app.config.get("QS_LOGSCAN_AUTO_UPLOAD_IMAGEMAID", False),
         session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
         session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
     )
