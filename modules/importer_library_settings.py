@@ -5,8 +5,8 @@ other per-library sub-handlers.  Kometa's ``libraries.<name>.settings:``
 block accepts many keys but only two are importable into Quickstart's
 form-oriented model today:
 
-* ``asset_directory`` -- accepts either a list of paths or a
-  multi-line string; both shapes normalize to a stripped list.
+* ``asset_directory`` -- accepts shared paths or a grouped mapping;
+  paths normalize to stripped lists within each group.
   Emitted as ``libraries_data[lib_id-attribute_asset_directory]``.
 * ``prioritize_assets`` -- boolean.  Accepts native ``bool`` or
   the string variants ``"true" / "yes" / "1"`` / ``"false" / "no" / "0"``
@@ -23,6 +23,8 @@ marked unmapped so users see an explicit "empty" report entry.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+
+from modules.output_values import _normalize_asset_directory_values
 
 if TYPE_CHECKING:
     from modules.importer import ImportReport
@@ -100,18 +102,13 @@ def _handle_asset_directory(
     libraries_data: dict[str, Any],
     report: ImportReport,
 ) -> bool:
-    """Normalize an ``asset_directory`` value to a stripped list.
+    """Normalize shared or grouped ``asset_directory`` paths.
 
-    Accepts a list of path-like items or a multi-line string.  Empty
+    Accepts a list, multi-line string, or media/collection mapping. Empty
     lists / all-empty strings record an unmapped report.  Returns
     ``True`` when a non-empty list was written to ``libraries_data``.
     """
-    if isinstance(value, list):
-        normalized = [str(item).strip() for item in value if str(item).strip()]
-    elif isinstance(value, str):
-        normalized = [line.strip() for line in value.splitlines() if line.strip()]
-    else:
-        normalized = []
+    normalized = _normalize_asset_directory_values(value)
 
     if normalized:
         libraries_data[f"{lib_id}-attribute_{key}"] = normalized

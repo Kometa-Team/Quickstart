@@ -67,7 +67,7 @@ from modules.output_optimize import optimize_template_variables
 from modules.output_playlists import apply_playlist_libraries_toggle
 from modules.output_postprocess import _rewrite_custom_font_paths, clean_section_data
 from modules.output_yaml_header import render_yaml_header
-from modules.jsonschema_compat import stringify_mapping_keys_for_jsonschema
+from modules.jsonschema_compat import extend_asset_directory_schema, stringify_mapping_keys_for_jsonschema
 from modules.rating_sources import extend_rating_source_schema
 
 
@@ -284,6 +284,7 @@ def _load_config_schema():
         schema = yaml.load(file)
 
     extend_rating_source_schema(schema)
+    extend_asset_directory_schema(schema)
 
     return yaml, schema
 

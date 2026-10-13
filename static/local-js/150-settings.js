@@ -333,46 +333,41 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   }
 
-  const assetDirectoryContainer = document.getElementById('asset_directory_container')
-  const addAssetDirectoryButton = document.getElementById('add-asset-directory')
-
-  // Add new asset directory input field
-  addAssetDirectoryButton.addEventListener('click', () => {
-    const newFieldGroup = document.createElement('div')
-    newFieldGroup.className = 'input-group mb-2'
-
-    const input = document.createElement('input')
-    input.type = 'text'
-    input.className = 'form-control'
-    input.name = 'asset_directory'
-    input.placeholder = 'Add Asset Directory'
-
-    const removeButton = document.createElement('button')
-    removeButton.className = 'btn btn-danger remove-asset-directory'
-    removeButton.type = 'button'
-    removeButton.textContent = 'Remove'
-
-    newFieldGroup.append(input, removeButton)
-    assetDirectoryContainer.appendChild(newFieldGroup)
-    const newField = newFieldGroup.querySelector('input[name="asset_directory"]')
-    if (newField && typeof PathValidation !== 'undefined' && PathValidation.attach) {
-      PathValidation.attach(newFieldGroup)
-    }
-  })
-
-  // Remove an asset directory input field
-  assetDirectoryContainer.addEventListener('click', (event) => {
-    if (event.target.classList.contains('remove-asset-directory')) {
-      const fieldGroup = event.target.closest('.input-group')
-      if (!fieldGroup) return
-      let next = fieldGroup.nextElementSibling
-      while (next && next.dataset && next.dataset.pathHint) {
-        const toRemove = next
+  document.querySelectorAll('[data-settings-asset-directory-container]').forEach(container => {
+    let counter = container.querySelectorAll('input').length
+    const addButton = document.querySelector(`[data-add-settings-asset-directory="${container.id}"]`)
+    addButton.addEventListener('click', () => {
+      const row = document.createElement('div')
+      row.className = 'input-group mb-2'
+      const input = document.createElement('input')
+      input.type = 'text'
+      input.className = 'form-control'
+      input.name = container.dataset.inputName
+      input.id = `${container.id}_${++counter}`
+      input.placeholder = 'Add Asset Directory'
+      input.dataset.pathRule = 'asset_directory'
+      const removeButton = document.createElement('button')
+      removeButton.className = 'btn btn-danger remove-asset-directory'
+      removeButton.type = 'button'
+      removeButton.textContent = 'Remove'
+      row.append(input, removeButton)
+      container.appendChild(row)
+      if (typeof PathValidation !== 'undefined' && PathValidation.attach) PathValidation.attach(row)
+      settingsTouched = true
+    })
+    container.addEventListener('click', event => {
+      if (!event.target.classList.contains('remove-asset-directory')) return
+      const row = event.target.closest('.input-group')
+      if (!row) return
+      let next = row.nextElementSibling
+      while (next?.dataset?.pathHint) {
+        const hint = next
         next = next.nextElementSibling
-        toRemove.remove()
+        hint.remove()
       }
-      assetDirectoryContainer.removeChild(fieldGroup)
-    }
+      row.remove()
+      settingsTouched = true
+    })
   })
 
   // Validate form before submission

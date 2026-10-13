@@ -435,7 +435,7 @@ def _apply_settings_normalization(cleaned_data):
         else:
             settings_block[setting_key] = normalized_value
 
-    if "asset_directory" in settings_block and isinstance(settings_block["asset_directory"], (str, list)):
+    if "asset_directory" in settings_block and isinstance(settings_block["asset_directory"], (str, list, dict)):
         settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
 
     for setting_key in _SETTINGS_KEEP_EMPTY_KEYS:

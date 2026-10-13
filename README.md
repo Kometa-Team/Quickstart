@@ -134,6 +134,8 @@ docker inspect --format='{{json .State.Health}}' quickstart
 ![ImageMaid Runner](static/images/readme/imagemaid-runner.png)
 
 ### Live Previews & Assets
+
+- **Grouped Asset Directories:** Settings and library overrides support separate `movies`, `shows`, `music`, and `collections` paths. Existing shared paths populate all four groups when edited. Blank library groups inherit global settings; collection artwork uses item paths when no collection paths are configured. Requires a Kometa version supporting grouped `asset_directory` mappings.
 - **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
 - **Custom Artwork Uploads:** Drag-and-drop or fetch library images from a URL so you can see what the overlays look like on your favorite poster.
 - **Overlay Image Source Overrides:** Supported overlay families can override built-in badge images per key using `file`, `url`, `git`, or `repo` sources, validate those images before save, preview the result live on the canvas, and optionally convert remote sources into managed local files with `Make Local`.

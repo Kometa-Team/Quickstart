@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 
-from ruamel.yaml.comments import CommentedSeq
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from modules import helpers
 from modules.output_collections import _LOOKUP_LABELS_SUFFIX, _TEMPLATE_VARIABLE_COMMENTS_KEY, _parse_template_lookup_labels
@@ -785,8 +785,13 @@ def build_library_settings(attr_group, library_type, lib_id):
         value = attr_group.get(legacy_key)
     normalized = _normalize_asset_directory_values(value)
     if normalized:
-        asset_dirs = CommentedSeq(normalized)
-        asset_dirs.fa.set_block_style()
+        if isinstance(normalized, dict):
+            asset_dirs = CommentedMap({group: CommentedSeq(paths) for group, paths in normalized.items()})
+            for paths in asset_dirs.values():
+                paths.fa.set_block_style()
+        else:
+            asset_dirs = CommentedSeq(normalized)
+            asset_dirs.fa.set_block_style()
         result["asset_directory"] = asset_dirs
 
     # prioritize_assets (bool coerce)

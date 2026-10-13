@@ -1,3 +1,4 @@
+{% import "partials/_macros.html" as macros %}
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
@@ -34,19 +35,9 @@
                   </a>
                 </label>
 
-                {% for directory in data['settings']['asset_directory'] %}
-                <div class="input-group mb-2">
-                  <input type="text" class="form-control" name="asset_directory" id="asset_directory_{{ loop.index }}"
-                    placeholder="Add Asset Directory" value="{{ directory }}">
-                  <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
-                </div>
-                {% endfor %}
-                <div class="input-group mb-2">
-                  <input type="text" class="form-control" name="asset_directory" placeholder="Add Asset Directory">
-                  <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
-                </div>
+                <p class="small text-muted">Choose paths by media type and separate collection artwork. Blank collection paths use each library's item paths.</p>
+                {{ macros.grouped_asset_directory_fields(data['settings'].get('asset_directory', []), 'asset_directory', 'asset_directory') }}
               </div>
-              <button class="btn btn-primary" id="add-asset-directory" type="button">Add Directory</button>
             </div>
           </div>
 

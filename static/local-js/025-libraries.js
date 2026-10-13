@@ -7351,7 +7351,7 @@ function buildPayloadFromCard (card) {
       return
     }
 
-    if (el.name.endsWith('-attribute_asset_directory')) {
+    if (/-attribute_asset_directory(?:\[(movies|shows|music|collections)\])?$/.test(el.name)) {
       if (!Array.isArray(payload[el.name])) payload[el.name] = []
       payload[el.name].push(el.value ?? '')
       return
@@ -9933,7 +9933,7 @@ function isCollectionSectionFieldConfigured (fields) {
   const primaryField = visibleFields[0] || enabledFields[0]
   if (!primaryField) return false
 
-  if (String(primaryField.name || '').endsWith('-attribute_asset_directory')) {
+  if (/-attribute_asset_directory(?:\[(movies|shows|music|collections)\])?$/.test(String(primaryField.name || ''))) {
     return visibleFields.some(field => String(field.value ?? '').trim())
   }
 
