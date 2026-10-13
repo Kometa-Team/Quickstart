@@ -21,7 +21,7 @@ export function initLogscanUpload ({ historical = false } = {}) {
   let historyLoaded = false
   const runFeedback = new Map()
   const confirmedRuns = new Set()
-  const labels = { preparing: 'Preparing archived log...', compressing: 'Compressing log snapshot...', checking: 'Checking for a previous upload...', uploading: 'Uploading compressed log...', queued: 'Logscan is queued...', validating: 'Logscan is validating the log...', scanning: 'Logscan is scanning...', saving: 'Logscan is saving results...' }
+  const labels = { preparing: 'Preparing archived log...', compressing: 'Compressing log snapshot...', checking: 'Checking for a previous upload...', checking_status: 'Checking the existing upload with Logscan...', uploading: 'Uploading compressed log...', queued: 'Logscan is queued...', validating: 'Logscan is validating the log...', scanning: 'Logscan is scanning...', saving: 'Logscan is saving results...' }
 
   function updateButtons () {
     document.querySelectorAll(selector).forEach(button => { button.disabled = busy || submitting })
