@@ -104,7 +104,7 @@ def test_only_new_completed_opted_in_runs_are_queued(app, monkeypatch, tmp_path,
     monkeypatch.setattr(automatic, "portal_uploader", uploader)
     summary = {"run_key": "new-run", "run_complete": complete, "config_name": "movies", "finished_at": datetime.fromtimestamp(finished, timezone.utc).isoformat()}
     with app.app_context():
-        assert automatic.queue_completed_log(tmp_path / "archive.log.gz", summary, tool) is expected
+        assert automatic.queue_completed_log(tmp_path / "archive.log.gz", summary, tool, source_mtime=finished) is expected
     assert uploader.enqueue_auto.called is expected
     if expected:
         kwargs = uploader.enqueue_auto.call_args.kwargs
@@ -121,6 +121,21 @@ def test_background_checks_enabled_tools_without_browser(app, qs_module, monkeyp
     with app.app_context():
         automatic.ingest_auto_upload_logs()
     check.assert_called_once_with("imagemaid")
+
+
+def test_log_timezone_and_archive_marker_writes_do_not_change_opt_in_boundary(app, monkeypatch, tmp_path):
+    key = automatic.AUTO_UPLOAD_KEYS["kometa"]
+    monkeypatch.setitem(app.config, key, True)
+    monkeypatch.setitem(app.config, f"{key}_SINCE", 1000)
+    uploader = Mock()
+    uploader.enqueue_auto.return_value = True
+    monkeypatch.setattr(automatic, "portal_uploader", uploader)
+    summary = {"run_key": "run", "run_complete": True, "finished_at": "1970-01-01T00:01:00-12:00"}
+    with app.app_context():
+        assert automatic.queue_completed_log(tmp_path / "archive.log.gz", summary, "kometa", source_mtime=1001)
+        summary["finished_at"] = "2100-01-01T00:00:00+12:00"
+        assert not automatic.queue_completed_log(tmp_path / "archive.log.gz", summary, "kometa", source_mtime=999)
+    assert uploader.enqueue_auto.call_count == 1
 
 
 def test_status_requests_cannot_archive_during_background_ingest(qs_module, monkeypatch):

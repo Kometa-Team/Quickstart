@@ -3,7 +3,6 @@
 import math
 import os
 import time
-from datetime import datetime
 
 from flask import current_app
 
@@ -37,17 +36,18 @@ def update_auto_upload_setting(tool, enabled):
     return True
 
 
-def queue_completed_log(path, summary, tool):
+def queue_completed_log(path, summary, tool, *, source_mtime=None):
     key = AUTO_UPLOAD_KEYS.get(tool)
     if not key or not current_app.config.get(key, False) or not summary.get("run_complete") or not summary.get("run_key"):
         return False
     try:
-        finished_at = datetime.fromisoformat(str(summary.get("finished_at", "")).replace("Z", "+00:00")).timestamp()
+        updated_at = float(path.stat().st_mtime if source_mtime is None else source_mtime)
         since = float(current_app.config[f"{key}_SINCE"])
-    except (KeyError, TypeError, ValueError, OverflowError):
+    except (OSError, KeyError, TypeError, ValueError, OverflowError):
         return False
-    # Viewing/reingesting historical logs must never opt them into an upload.
-    if not math.isfinite(finished_at) or not math.isfinite(since) or since <= 0 or finished_at < since:
+    # Filesystem timestamps are timezone-independent; use the pre-archive value
+    # so flushing local markers cannot opt an old log into an upload.
+    if not math.isfinite(updated_at) or not math.isfinite(since) or since <= 0 or updated_at < since:
         return False
     app = current_app._get_current_object()
     return portal_uploader.enqueue_auto(

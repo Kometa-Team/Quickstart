@@ -6276,7 +6276,7 @@ def _ingest_completed_live_logs_unlocked(tool_name="kometa", log_dir=None):
                     cache_dirty = True
                     archived += 1
                     if saved_complete_run:
-                        queue_completed_log(archived_path, summary, tool_name)
+                        queue_completed_log(archived_path, summary, tool_name, source_mtime=stats.st_mtime)
                 except Exception:
                     pass
         except Exception:
