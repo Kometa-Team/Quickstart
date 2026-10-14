@@ -505,6 +505,32 @@ class LogscanUploader:
             job = self.batches.get(job_id) or self.jobs.get(job_id)
             return copy.deepcopy(job) if job else None
 
+    def active_background_job(self):
+        with self.receipt_lock:
+            pending = self.auto_thread is not None
+        with self.lock:
+            batches = [job for job in self.batches.values() if job.get("phase") not in {"complete", "failed"}]
+            jobs = [job for job in self.jobs.values() if job.get("phase") not in {"complete", "failed"}]
+            if not pending and not self.active:
+                return None
+            job = jobs[-1] if jobs else batches[-1] if batches else {}
+            phase = job.get("phase", "waiting")
+            started = job.get("created_at")
+            batch = batches[-1] if batches else None
+            text = "Sending logs to logscan.kometa.team"
+            if batch:
+                finished = sum(item.get("phase") in {"complete", "failed", "not_uploaded"} for item in batch["items"])
+                text = f"{finished}/{len(batch['items'])} logs processed by logscan.kometa.team"
+            return {
+                "job_id": "logscan-web-upload",
+                "job_type": "logscan_upload",
+                "status": "queued" if phase == "waiting" else "running",
+                "phase": phase,
+                "started_at": datetime.fromtimestamp(started, timezone.utc).isoformat() if started else None,
+                "target_page": "/step/905-analytics",
+                "text": text,
+            }
+
     def _update(self, job_id, **values):
         with self.lock:
             self.jobs[job_id].update(values)

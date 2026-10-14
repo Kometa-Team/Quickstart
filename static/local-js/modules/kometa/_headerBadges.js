@@ -135,6 +135,7 @@ export function updateRunOptionHeaderBadge () {
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value || ''
   const libSelect = document.getElementById('library-multiselect')
   const selectedLibs = libSelect ? Array.from(libSelect.selectedOptions || []).map(o => o.value) : []
+  updateLibraryMultiselectCount(selectedLibs)
   if (getMaintenanceScheduleConflict(mainOption)) {
     setHeaderRollupBadge('heading-runopt-rollup-badge', 'error', 'Maintenance overlap')
     return
@@ -161,6 +162,32 @@ export function updateRunOptionHeaderBadge () {
     return
   }
   setHeaderRollupBadge('heading-runopt-rollup-badge', 'unknown', 'Scheduled')
+}
+
+/**
+ * Quickstart-owned selected-library count. Mobile Safari renders a
+ * multiple <select> as a native picker with its own "0 Items" summary,
+ * which can lag while the picker sheet is open. This badge gives the
+ * page a deterministic count whenever the DOM selection has committed.
+ *
+ * @param {Array<string>} [selectedLibs]
+ */
+export function updateLibraryMultiselectCount (selectedLibs) {
+  const countEl = document.getElementById('library-multiselect-count')
+  if (!countEl) return
+  const libSelect = document.getElementById('library-multiselect')
+  const libs = Array.isArray(selectedLibs)
+    ? selectedLibs
+    : (libSelect ? Array.from(libSelect.selectedOptions || []).map(o => o.value) : [])
+  const count = libs.length
+  countEl.textContent = `${count} selected`
+  countEl.classList.remove(
+    'qs-validation-rollup-badge--unknown',
+    'qs-validation-rollup-badge--ok',
+    'qs-validation-rollup-badge--warn',
+    'qs-validation-rollup-badge--error'
+  )
+  countEl.classList.add(count ? 'qs-validation-rollup-badge--ok' : 'qs-validation-rollup-badge--warn')
 }
 
 /**

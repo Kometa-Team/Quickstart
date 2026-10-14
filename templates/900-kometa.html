@@ -623,7 +623,10 @@
             </fieldset>
             {% if movie_libraries or show_libraries %}
             <div class="mb-2 mt-3 d-none" id="library-selection-block">
-              <label for="library-multiselect" class="form-label">Target Libraries (required)</label>
+              <label for="library-multiselect" class="form-label d-flex align-items-center gap-2 flex-wrap">
+                <span>Target Libraries (required)</span>
+                <span id="library-multiselect-count" class="badge qs-validation-rollup-badge qs-validation-rollup-badge--warn" aria-live="polite">0 selected</span>
+              </label>
               <select multiple class="form-select" id="library-multiselect">
                 {% set dropdown_libraries = library_dropdown if library_dropdown else (movie_libraries + show_libraries) %}
                 {% for lib in dropdown_libraries %}
@@ -858,6 +861,9 @@
                 Open Prepare Kometa
               </button>
             </div>
+            {% with tool='kometa', tool_label='Kometa' %}
+              {% include 'partials/_logscan_auto_upload.html' %}
+            {% endwith %}
             <div id="run-command-box" class="position-relative border rounded bg-body-tertiary p-3 d-none">
               <div id="run-command-placeholder" class="alert alert-secondary mb-3 d-none" role="status">
                 <div class="fw-semibold mb-1" id="run-command-placeholder-title">Run command is not ready yet</div>
@@ -1273,6 +1279,20 @@
         </div>
         <div class="bg-dark text-light rounded qs-log-code" id="run-output-log"
           style="height: 300px;" role="log" aria-label="Kometa log output"></div>
+        <div class="mt-3" id="logscan-upload-controls">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="logscan-upload"><i class="bi bi-cloud-upload" aria-hidden="true"></i> Upload current log to Logscan</button>
+            <a class="btn btn-outline-secondary btn-sm" href="https://logscan.kometa.team" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Open Logscan</a>
+          </div>
+          <div class="small mt-2" id="logscan-upload-status" role="status" aria-live="polite"></div>
+          <div id="logscan-upload-links" class="d-none mt-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <a id="logscan-upload-result" target="_blank" rel="noopener noreferrer">Open support result</a>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="logscan-upload-copy"><i class="bi bi-clipboard" aria-hidden="true"></i> Copy support link</button>
+              <a id="logscan-upload-management" target="_blank" rel="noopener noreferrer">Manage/delete upload (private)</a>
+            </div>
+          </div>
+        </div>
         <div class="accordion mt-3" id="logscan-accordion">
           <div class="accordion-item">
             <h2 class="accordion-header" id="logscan-accordion-heading">
@@ -1289,17 +1309,6 @@
             <div id="logscan-accordion-collapse" class="accordion-collapse collapse"
               aria-labelledby="logscan-accordion-heading" data-bs-parent="#logscan-accordion">
               <div class="accordion-body" id="logscan-panel">
-                <div class="mb-3">
-                  <button type="button" class="btn btn-outline-primary btn-sm" id="logscan-upload"><i class="bi bi-cloud-upload" aria-hidden="true"></i> Upload current log to Logscan</button>
-                  <div class="small" id="logscan-upload-status" role="status" aria-live="polite"></div>
-                  <div id="logscan-upload-links" class="d-none mt-2">
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                      <a id="logscan-upload-result" target="_blank" rel="noopener noreferrer">Open support result</a>
-                      <button type="button" class="btn btn-outline-secondary btn-sm" id="logscan-upload-copy"><i class="bi bi-clipboard" aria-hidden="true"></i> Copy support link</button>
-                      <a id="logscan-upload-management" target="_blank" rel="noopener noreferrer">Manage/delete upload (private)</a>
-                    </div>
-                  </div>
-                </div>
                 <div class="small mt-2" id="logscan-recommendations"></div>
                 <div class="small mt-3" id="logscan-sections"></div>
                 <div class="small mt-3 d-none" id="logscan-missing-people"></div>

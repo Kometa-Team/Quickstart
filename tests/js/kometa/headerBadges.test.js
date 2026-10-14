@@ -38,6 +38,7 @@ import {
   updateSectionStyleHeaderBadge,
   updateModeHeaderBadge,
   updateRunOptionHeaderBadge,
+  updateLibraryMultiselectCount,
   updateModeFlagsHeaderBadge,
   updateLogFlagsHeaderBadge,
   updateValidationFlagsHeaderBadge,
@@ -247,6 +248,7 @@ describe('updateRunOptionHeaderBadge', () => {
         <option value="TV Shows">TV Shows</option>
         <option value="Anime">Anime</option>
       </select>
+      <span id="library-multiselect-count" class="qs-validation-rollup-badge qs-validation-rollup-badge--warn">0 selected</span>
       <input type="text" id="times-input" value="${timesValue}" />
       <div id="plex-maintenance-window" data-window=""></div>
     `
@@ -280,6 +282,22 @@ describe('updateRunOptionHeaderBadge', () => {
     const badge = document.getElementById('heading-runopt-rollup-badge')
     expect(badge.textContent).toBe('2 libraries')
     expect(badge.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+
+  it('updates the mobile-friendly selected-library count', () => {
+    installRunOptionDom('--run-libraries', ['Movies', 'Anime'])
+    updateRunOptionHeaderBadge()
+    const count = document.getElementById('library-multiselect-count')
+    expect(count.textContent).toBe('2 selected')
+    expect(count.classList.contains('qs-validation-rollup-badge--ok')).toBe(true)
+  })
+
+  it('marks the selected-library count as needing input at zero', () => {
+    installRunOptionDom('--run-libraries', [])
+    updateLibraryMultiselectCount()
+    const count = document.getElementById('library-multiselect-count')
+    expect(count.textContent).toBe('0 selected')
+    expect(count.classList.contains('qs-validation-rollup-badge--warn')).toBe(true)
   })
 
   it('--times with empty input: shows "Times needed" (warn)', () => {

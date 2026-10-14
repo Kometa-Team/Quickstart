@@ -289,7 +289,7 @@ from modules.logscan_resume import (
     build_recovery_suggestions as _build_recovery_suggestions,  # noqa: F401 (used directly by tests as qs_module._build_recovery_suggestions)
     build_resume_explanation as _build_resume_explanation,  # noqa: F401 (used directly by tests as qs_module._build_resume_explanation)
 )
-from modules.logscan_auto_upload import AUTO_UPLOAD_KEYS, initialize_auto_upload_settings, queue_completed_log, update_auto_upload_setting
+from modules.logscan_auto_upload import AUTO_UPLOAD_KEYS, initialize_auto_upload_settings, queue_completed_log, queue_saved_completed_log, update_auto_upload_setting
 
 build_resume_library_scope = _build_resume_library_scope
 build_recovery_command = _build_recovery_command
@@ -6391,6 +6391,7 @@ def _archive_finished_live_meta_log_if_idle_unlocked(log_dir=None):
     if existing_archive_key:
         existing_archive_path = Path(existing_archive_key)
         if existing_archive_path.exists() and _classify_logscan_file_location(existing_archive_path) == "archive":
+            queue_saved_completed_log(existing_archive_path, live_entry, "kometa")
             return existing_archive_path
 
     archive_dir = _get_logscan_archive_dir()
@@ -6425,6 +6426,7 @@ def _archive_finished_live_meta_log_if_idle_unlocked(log_dir=None):
     ingest_cache["logs"] = cache_logs
     _save_logscan_ingest_cache(ingest_cache)
     _prune_logscan_archive(archive_dir)
+    queue_saved_completed_log(archived_path, live_entry, "kometa")
     return archived_path
 
 
@@ -7161,11 +7163,12 @@ def logscan_trends_reingest_status():
 @app.route("/background-jobs/active", methods=["GET"])
 def background_jobs_active():
     job_type = str(request.args.get("job_type", "") or request.args.get("type", "")).strip()
+    upload_job = portal_uploader.active_background_job() if not job_type or job_type == "logscan_upload" else None
     if job_type:
-        active = _get_active_background_job(job_type)
+        active = upload_job if job_type == "logscan_upload" else _get_active_background_job(job_type)
         return jsonify(success=True, active=bool(active), job=active)
     jobs = sorted(
-        _get_active_background_jobs(),
+        _get_active_background_jobs() + ([upload_job] if upload_job else []),
         key=lambda job: str(job.get("started_at") or ""),
         reverse=True,
     )
@@ -7174,7 +7177,7 @@ def background_jobs_active():
 
 @app.route("/background-jobs/<job_id>", methods=["GET"])
 def background_job_status(job_id):
-    job = _get_background_job(job_id)
+    job = portal_uploader.active_background_job() if job_id == "logscan-web-upload" else _get_background_job(job_id)
     if not job:
         return jsonify(success=False, error="Unknown job_id."), 404
     since = request.args.get("since", "0").strip()
