@@ -172,9 +172,9 @@ def test_current_log_upload_controls(page, live_server, qs_module, monkeypatch, 
     )
     page.set_viewport_size({"width": width, "height": 900})
     page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
-    page.locator('[data-bs-target="#logscan-accordion-collapse"]').click()
     button = page.locator("#logscan-upload")
     expect(button).to_be_visible()
+    expect(page.locator("#logscan-accordion-collapse")).to_be_hidden()
     expect(page.locator("#logscan-upload-links")).to_be_hidden()
     assert start.call_count == 0
     button.click()
@@ -185,7 +185,7 @@ def test_current_log_upload_controls(page, live_server, qs_module, monkeypatch, 
     assert start.call_count == 1
     assert start.call_args.args[0] == helpers.get_kometa_log_dir() / "meta.log"
     assert button.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
-    page.locator("#logscan-panel").scroll_into_view_if_needed()
+    page.locator("#logscan-upload-controls").scroll_into_view_if_needed()
     screenshot = Path("artifacts") / f"logscan-upload-current-{width}.png"
     screenshot.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(screenshot))

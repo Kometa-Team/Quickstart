@@ -18,6 +18,7 @@ import { kometaState } from './modules/kometa/_state.js'
 import {
   updateConfigOutputHeaderBadges,
   updateLogscanHeaderBadge,
+  updateLibraryMultiselectCount,
   syncFinalAccordionRollups
 } from './modules/kometa/_headerBadges.js'
 import {
@@ -427,7 +428,19 @@ document.querySelectorAll('input[name="run-option"]').forEach(el => el.addEventL
 
 document.getElementById('times-input')?.addEventListener('input', rebuildRunCommandAfterControlChange)
 
-document.getElementById('library-multiselect')?.addEventListener('change', rebuildRunCommandAfterControlChange)
+const libraryMultiSelect = document.getElementById('library-multiselect')
+function refreshLibrarySelectionState () {
+  updateLibraryMultiselectCount()
+  rebuildRunCommandAfterControlChange()
+}
+function scheduleLibrarySelectionRefresh () {
+  window.setTimeout(refreshLibrarySelectionState, 0)
+}
+if (libraryMultiSelect) {
+  ;['change', 'input', 'blur', 'focusout', 'keyup'].forEach(eventName => {
+    libraryMultiSelect.addEventListener(eventName, scheduleLibrarySelectionRefresh)
+  })
+}
 document.querySelectorAll('input[name="mode-flag"]').forEach(el => el.addEventListener('change', rebuildRunCommandAfterControlChange))
 document.querySelectorAll('input[name="log-flag"]').forEach(el => el.addEventListener('change', rebuildRunCommandAfterControlChange))
 
@@ -477,7 +490,6 @@ checkboxFlags.forEach(opt => {
   const checkbox = document.getElementById(`opt-${opt}`)
   if (checkbox) checkbox.addEventListener('change', rebuildRunCommandAfterControlChange)
 })
-
 
 if (document.getElementById('run-command-output')) {
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value

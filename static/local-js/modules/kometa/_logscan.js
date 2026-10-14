@@ -87,6 +87,8 @@ export function renderLogscan (data, opts = {}) {
   const dom = resolvePanel()
   if (!dom.panel) return
 
+  document.dispatchEvent(new CustomEvent('logscan-analysis', { detail: { runKey: data?.summary?.run_key || null } }))
+
   if (!data || data.error) {
     if (dom.summary) dom.summary.textContent = ''
     if (dom.recommendations) dom.recommendations.innerHTML = '<div class="text-muted">Logscan unavailable.</div>'

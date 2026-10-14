@@ -41,6 +41,41 @@ describe('manual compressed Logscan upload', () => {
     expect(fetch.mock.calls.every(([, options]) => !options?.method)).toBe(true)
   })
 
+  it('shows the current Kometa automatic upload and keeps polling until its support link is ready', async () => {
+    initLogscanUpload()
+    await flush()
+    fetch.mockResolvedValueOnce(reply({ phase: 'idle', automatic_enabled: true, automatic_pending: true, automatic_results: { current: { phase: 'uploading' } } }))
+      .mockResolvedValueOnce(reply({ phase: 'idle', automatic_enabled: true, run_results: { current: completed } }))
+    document.dispatchEvent(new CustomEvent('logscan-analysis', { detail: { runKey: 'current' } }))
+    await flush()
+    expect(fetch).toHaveBeenLastCalledWith('/logscan/upload/status?history=1')
+    expect(document.getElementById('logscan-upload-status').textContent).toContain('Uploading')
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(document.getElementById('logscan-upload-result').href).toBe(completed.result_url)
+    expect(document.getElementById('logscan-upload-links').classList.contains('d-none')).toBe(false)
+    expect(fetch.mock.calls.every(([, options]) => !options?.method)).toBe(true)
+    await vi.advanceTimersByTimeAsync(15000)
+    expect(fetch).toHaveBeenCalledTimes(4)
+  })
+
+  it('does not show an older session upload as the new Kometa run result', async () => {
+    fetch.mockResolvedValue(reply({ ...completed, run_key: 'old', run_results: { old: completed } }))
+    initLogscanUpload()
+    await flush()
+    document.dispatchEvent(new CustomEvent('logscan-analysis', { detail: { runKey: 'new' } }))
+    await flush()
+    expect(document.getElementById('logscan-upload-links').classList.contains('d-none')).toBe(true)
+  })
+
+  it('shows automatic upload failures on the Kometa run page', async () => {
+    fetch.mockResolvedValue(reply({ phase: 'idle', automatic_results: { current: { phase: 'failed', error: 'Logscan unavailable.' } } }))
+    initLogscanUpload()
+    await flush()
+    document.dispatchEvent(new CustomEvent('logscan-analysis', { detail: { runKey: 'current' } }))
+    await flush()
+    expect(document.getElementById('logscan-upload-status').textContent).toBe('Logscan unavailable.')
+  })
+
   it('restores automatic failures without marking them uploaded', async () => {
     document.getElementById('logscan-upload').remove()
     document.body.insertAdjacentHTML('beforeend', '<table id="logscan-trends-table"><tbody><tr><td><div class="logscan-upload-feedback" data-run-key="failed"></div></td></tr></tbody></table>')

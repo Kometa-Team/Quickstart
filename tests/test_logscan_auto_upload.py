@@ -277,3 +277,69 @@ def test_completion_pipeline_saves_and_archives_before_automatic_upload(app, qs_
         qs_module._ingest_completed_live_logs(tool)
         qs_module._ingest_completed_live_logs(tool)
     assert events == (["saved", "queued"] if complete and saved else ["saved"] if complete else [])
+
+
+@pytest.mark.parametrize("saved,new_log", [(True, True), (False, True), (True, False)])
+def test_kometa_page_analysis_queues_archived_completed_run(client, isolated_config_dir, app, qs_module, monkeypatch, tmp_path, saved, new_log):
+    live = tmp_path / "logs"
+    live.mkdir()
+    path = live / "meta.log"
+    path.write_bytes(b"completed Kometa log")
+    mtime = path.stat().st_mtime
+    key = automatic.AUTO_UPLOAD_KEYS["kometa"]
+    monkeypatch.setitem(app.config, key, True)
+    monkeypatch.setitem(app.config, f"{key}_SINCE", mtime - 1 if new_log else mtime + 1)
+    summary = {"run_key": "page-run", "run_complete": True, "finished_at": "2026-10-14T11:00:00Z", "config_name": "movies"}
+    analyzer = Mock()
+    analyzer.analyze_log_file.return_value = {"summary": summary, "recommendations": []}
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", lambda: analyzer)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_log_dir", lambda: live)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module, "_get_kometa_log_wait_payload", lambda *_: None)
+    monkeypatch.setattr(qs_module, "_build_completed_log_progress_snapshot", lambda **_: {})
+    monkeypatch.setattr(qs_module, "_flush_quickstart_pending_markers", lambda *_args, **_kwargs: {"flushed": True})
+    monkeypatch.setattr(qs_module, "_archive_rotated_logs", lambda *_: None)
+    monkeypatch.setattr(qs_module, "_logscan_needs_reingest", lambda *_: False)
+    monkeypatch.setattr(qs_module.database, "save_log_run", lambda *_args, **_kwargs: saved)
+    monkeypatch.setattr(qs_module.database, "get_log_run", lambda *_: summary if saved else None)
+    uploader = Mock()
+    monkeypatch.setattr(automatic, "portal_uploader", uploader)
+    response = client.get("/logscan/analyze")
+    assert response.status_code == 200
+    assert uploader.enqueue_auto.called is (saved and new_log)
+    if saved and new_log:
+        archived = uploader.enqueue_auto.call_args.args[0]
+        assert archived.suffix == ".gz" and gzip.decompress(archived.read_bytes()) == path.read_bytes()
+        assert uploader.enqueue_auto.call_args.kwargs["run_key"] == "page-run"
+    # This page has now cached the file, so the background worker would skip it.
+    assert not qs_module._logscan_live_ingest_has_work("kometa", log_dir=live)
+
+
+def test_upload_activity_is_visible_without_session_job_and_excludes_private_links(client, qs_module, monkeypatch, tmp_path):
+    manager = upload.LogscanUploader(receipt_path=tmp_path / "receipts.json")
+    monkeypatch.setattr(qs_module, "portal_uploader", manager)
+    manager.active = True
+    manager.jobs["private-job"] = {"phase": "uploading", "created_at": 123, "run_key": "run", "management_url": "private-token"}
+    response = client.get("/background-jobs/active")
+    job = next(job for job in response.json["jobs"] if job["job_type"] == "logscan_upload")
+    assert job["phase"] == "uploading" and job["target_page"] == "/step/905-analytics"
+    assert "private-token" not in response.text and "private-job" not in response.text
+    assert client.get("/background-jobs/active?job_type=logscan_upload").json["active"] is True
+    assert client.get(f"/background-jobs/{job['job_id']}").json["job"]["phase"] == "uploading"
+    manager.jobs["private-job"]["phase"] = "scanning"
+    assert client.get("/background-jobs/active?job_type=logscan_upload").json["job"]["phase"] == "scanning"
+    manager.active = False
+    assert client.get("/background-jobs/active?job_type=logscan_upload").json["active"] is False
+
+
+def test_automatic_queue_and_batch_report_activity_before_and_between_uploads(tmp_path):
+    manager = upload.LogscanUploader(receipt_path=tmp_path / "receipts.json")
+    manager.auto_thread = object()
+    assert manager.active_background_job()["phase"] == "waiting"
+    manager.auto_thread = None
+    manager.active = True
+    manager.batches["batch"] = {"phase": "uploading", "items": [{"phase": "complete"}, {"phase": "waiting"}]}
+    job = manager.active_background_job()
+    assert job["phase"] == "uploading" and "1/2 logs" in job["text"]
+    manager.active = False
+    assert manager.active_background_job() is None

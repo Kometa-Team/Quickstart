@@ -17,6 +17,9 @@ export function initLogscanUpload ({ historical = false } = {}) {
   let busy = false
   let pollSequence = 0
   let selectedRunKey = null
+  let currentRunKey = null
+  let latestStatus = null
+  let manualCurrentUpload = false
   let restorationRequested = false
   let historyLoaded = false
   const runFeedback = new Map()
@@ -88,6 +91,7 @@ export function initLogscanUpload ({ historical = false } = {}) {
 
   function render (data) {
     clearTimeout(timer)
+    latestStatus = data
     busy = !['idle', 'complete', 'failed'].includes(data.phase) || Boolean(data.automatic_pending)
     let resultsChanged = false
     Object.entries(data.automatic_results || {}).forEach(([runKey, saved]) => {
@@ -127,34 +131,36 @@ export function initLogscanUpload ({ historical = false } = {}) {
       cancel.classList.toggle('d-none', !busy || data.kind !== 'batch')
       cancel.disabled = Boolean(data.cancel_requested)
     }
+    const currentUpload = !historical && currentRunKey
+      ? data.run_results?.[currentRunKey] || data.automatic_results?.[currentRunKey]
+      : null
+    const displayed = currentUpload || (!historical && currentRunKey && data.run_key !== currentRunKey && !manualCurrentUpload ? { phase: 'idle' } : data)
     if (data.kind === 'batch') {
       const uploaded = items.filter(item => item.phase === 'complete' && !item.already_uploaded).length
       const reused = items.filter(item => item.phase === 'complete' && item.already_uploaded).length
       const failed = items.filter(item => item.phase === 'failed').length
       const notUploaded = items.filter(item => item.phase === 'not_uploaded').length
       status.textContent = `${busy ? `Uploading selected logs: ${uploaded + reused + failed}/${items.length}.` : 'Uploads finished.'} ${uploaded} uploaded, ${reused} already uploaded, ${failed} failed, ${notUploaded} not uploaded.${data.cancel_requested ? ' Remaining uploads stopped.' : ''}${data.error ? ` ${data.error}` : ''}`
-    } else if (data.phase === 'complete') {
-      result.href = data.result_url
-      management.href = data.management_url
+    } else if (displayed.phase === 'complete') {
+      result.href = displayed.result_url
+      management.href = displayed.management_url
       links.classList.remove('d-none')
-      status.textContent = message(data)
-    } else if (data.phase === 'failed') {
-      status.textContent = data.error || 'Upload failed.'
-    } else if (data.phase !== 'idle') {
-      status.textContent = labels[data.phase] || 'Logscan is processing the upload...'
+      status.textContent = message(displayed)
+    } else if (displayed.phase !== 'idle') {
+      status.textContent = message(displayed)
     } else if (data.automatic_pending) {
       status.textContent = 'Automatic log uploads in progress...'
     } else if (status.textContent === 'Automatic log uploads in progress...') {
       status.textContent = 'Automatic log uploads finished.'
     }
     document.dispatchEvent(new CustomEvent('logscan-upload-change', { detail: { resultsChanged } }))
-    if (busy || data.restoring || (historical && data.automatic_enabled)) timer = setTimeout(poll, busy || data.restoring ? 2000 : 15000)
+    if (busy || data.restoring || data.automatic_enabled) timer = setTimeout(poll, busy || data.restoring ? 2000 : 15000)
   }
 
   async function poll () {
     const sequence = ++pollSequence
     try {
-      const response = await fetch(historical ? '/logscan/upload/status?history=1' : '/logscan/upload/status')
+      const response = await fetch(historical || currentRunKey ? '/logscan/upload/status?history=1' : '/logscan/upload/status')
       if (!response.ok) throw new Error('Cannot retrieve upload status.')
       const data = await response.json()
       if (!submitting && sequence === pollSequence) render(data)
@@ -165,9 +171,20 @@ export function initLogscanUpload ({ historical = false } = {}) {
     }
   }
 
-  if (historical) {
-    document.addEventListener('quickstart-settings-change', () => {
-      if (root.isConnected) poll()
+  document.addEventListener('quickstart-settings-change', () => {
+    if (root.isConnected) poll()
+  })
+  if (!historical) {
+    document.addEventListener('logscan-analysis', event => {
+      if (!root.isConnected) return
+      const runKey = event.detail?.runKey || null
+      if (runKey === currentRunKey) return
+      currentRunKey = runKey
+      manualCurrentUpload = false
+      status.textContent = ''
+      links.classList.add('d-none')
+      if (latestStatus) render(latestStatus)
+      poll()
     })
   }
 
@@ -217,6 +234,7 @@ export function initLogscanUpload ({ historical = false } = {}) {
     clearTimeout(timer)
     pollSequence++
     submitting = true
+    if (!historical) manualCurrentUpload = true
     selectedRunKey = runKey
     if (runKeys) runKeys.forEach(key => runFeedback.set(key, { phase: 'waiting', run_key: key }))
     else updateRunFeedback({ phase: 'preparing', run_key: runKey })

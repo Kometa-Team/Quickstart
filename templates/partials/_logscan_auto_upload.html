@@ -1,0 +1,11 @@
+<div class="mb-3">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="form-check form-switch mb-0">
+      <input class="form-check-input" type="checkbox" role="switch" id="{{ tool }}-auto-upload" data-logscan-auto-upload="{{ tool }}" aria-label="Automatically upload {{ tool_label }} logs to Logscan" aria-describedby="{{ tool }}-auto-upload-status">
+      <label class="form-check-label" for="{{ tool }}-auto-upload">Automatically upload logs to Logscan</label>
+    </div>
+    <a href="https://logscan.kometa.team" target="_blank" rel="noopener noreferrer" class="small"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Logscan</a>
+  </div>
+  <div class="small text-muted">Completed logs are sent to logscan.kometa.team for a scan and support link.</div>
+  <div class="small" id="{{ tool }}-auto-upload-status" role="status" aria-live="polite"></div>
+</div>

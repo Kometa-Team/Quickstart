@@ -295,6 +295,9 @@
           <div class="small mb-0" id="imagemaid-run-gate-text">Install or prepare ImageMaid before Quickstart can build the run command.</div>
         </div>
 
+        {% with tool='imagemaid', tool_label='ImageMaid' %}
+          {% include 'partials/_logscan_auto_upload.html' %}
+        {% endwith %}
         <div id="imagemaid-run-surface" class="d-none">
           <label class="form-label small text-uppercase text-muted" for="imagemaid-command-preview">Command preview</label>
           <textarea id="imagemaid-command-preview" class="form-control font-monospace mb-3" rows="4" readonly>Preview unavailable until the page validates.</textarea>

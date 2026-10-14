@@ -1,4 +1,5 @@
 import { getAppConfig, setAppConfig } from './modules/appConfig.js'
+import { initLogscanAutoUpload } from './modules/logscanAutoUpload.js'
 import {
   findYamlMajorSections,
   renderLogRows
@@ -38,6 +39,8 @@ import {
     // console.error = () => {} // optionally disable this too
   }
 })()
+
+document.addEventListener('DOMContentLoaded', initLogscanAutoUpload)
 
 document.addEventListener('DOMContentLoaded', function () {
   // Prevent form submission on "Enter" key press, except for textarea
@@ -681,7 +684,7 @@ let qsLastMaintenanceToastAt = 0
 let qsLastMaintenancePaused = false
 let qsLastQueuedStartedAt = null
 const QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS = 15000
-const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 15000
+const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 3000
 const QS_BULK_VALIDATION_POLL_INTERVAL_MS = 7000
 const QS_KOMETA_PROGRESS_POLL_INTERVAL_MS = 15000
 const qsCurrentTemplate = String(window.QS_CURRENT_TEMPLATE || document.documentElement.dataset.qsTemplate || '').trim()
@@ -1017,6 +1020,7 @@ function qsGetBackgroundJobLabel (job) {
     if (trigger.endsWith('_run_complete')) return 'Analytics ingest'
     return trigger === 'startup_migration' ? 'Analytics migration' : 'Analytics reingest'
   }
+  if (jobType === 'logscan_upload') return 'Logscan web upload'
   if (jobType === 'kometa_update') return 'Kometa update'
   if (jobType === 'imagemaid_update') return 'ImageMaid update'
   if (jobType === 'test_library_install') return 'Test library install'
@@ -1044,6 +1048,10 @@ function qsGetBackgroundJobChip (job) {
   if (status === 'queued') return 'Queued'
 
   const phase = String(job && job.phase ? job.phase : '').trim().toLowerCase()
+  if (job?.job_type === 'logscan_upload') {
+    const chips = { waiting: 'Queued', preparing: 'Preparing', compressing: 'Compressing', checking: 'Checking', checking_status: 'Checking', uploading: 'Uploading', queued: 'Queued', validating: 'Validating', scanning: 'Scanning', saving: 'Saving' }
+    return chips[phase] || 'Uploading'
+  }
   if (phase === 'download') return 'Downloading'
   if (phase === 'extract') return 'Extracting'
   if (phase === 'finalize') return 'Finalizing'
@@ -1161,6 +1169,7 @@ function qsBuildBackgroundJobEntries () {
       return {
         key: `job-${job.job_id || label}`,
         jobId: String(job.job_id || '').trim() || null,
+        jobType: String(job.job_type || '').trim(),
         title: label,
         chip,
         state: qsGetBackgroundJobState(job),
@@ -1272,7 +1281,7 @@ function qsRenderBackgroundJobPills () {
     return `
       <a class="qs-header-status-pill qs-background-job-pill"${hrefAttr}${titleAttr}${targetLabelAttr}>
         <span class="badge rounded-pill ${escapeHtml(entry.badgeClasses || 'text-bg-primary')} px-3 py-2">
-          <i class="bi bi-arrow-repeat me-1"></i> ${escapeHtml(entry.title)}
+          <i class="bi ${entry.jobType === 'logscan_upload' ? 'bi-cloud-upload' : 'bi-arrow-repeat'} me-1"></i> ${escapeHtml(entry.title)}${entry.jobType === 'logscan_upload' ? `: ${escapeHtml(entry.chip)}` : ''}
         </span>
       </a>`
   }).join('')

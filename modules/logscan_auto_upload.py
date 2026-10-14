@@ -4,7 +4,7 @@ import math
 import os
 import time
 
-from flask import current_app
+from flask import current_app, has_app_context
 
 from modules import helpers
 from modules.logscan_upload import portal_uploader
@@ -65,3 +65,15 @@ def ingest_auto_upload_logs():
     for tool, key in AUTO_UPLOAD_KEYS.items():
         if current_app.config.get(key, False):
             quickstart._start_logscan_live_ingest(tool)
+
+
+def queue_saved_completed_log(path, cache_entry, tool):
+    key = AUTO_UPLOAD_KEYS.get(tool)
+    if not has_app_context() or not key or not current_app.config.get(key, False):
+        return False
+    from modules import database
+
+    summary = database.get_log_run(cache_entry.get("run_key"))
+    if not summary or not summary.get("finished_at"):
+        return False
+    return queue_completed_log(path, {**summary, "run_complete": True}, tool, source_mtime=cache_entry.get("mtime"))
