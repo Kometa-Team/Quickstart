@@ -107,6 +107,9 @@ const DEFAULT_MESSAGES = {
  *                                               additional UI state derived from validatedField (e.g. TMDB
  *                                               re-runs its Next-button gating after every validation
  *                                               attempt to reflect the new validatedField value).
+ * @param {() => void} [config.onValidationReset] Clears derived UI on edits or unavailable responses.
+ * @param {() => void} [config.onValidationStart] Clears derived UI before a fresh request.
+ * @param {boolean} [config.allowRevalidation=false] Keeps Validate available after success.
  * @param {() => boolean} [config.onPreSubmit]   Called on form submit BEFORE the normal empty-value
  *                                               normalisation. Return false to call event.preventDefault()
  *                                               and block the submit. Used by wizards that gate navigation
@@ -145,8 +148,11 @@ export function createApiKeyValidator (config) {
     messages: messageOverrides = {},
     onValidationSuccess,
     onValidationFailure,
+    onValidationReset,
+    onValidationStart,
     onPreSubmit,
     revalidateOnLoad = false,
+    allowRevalidation = false,
     isValid = (data) => !!data.valid,
     spinnerKey = 'validate',
     maskPrimaryField = true
@@ -202,14 +208,17 @@ export function createApiKeyValidator (config) {
   }
 
   // ── initial button state ────────────────────────────────────────────
-  validateButton.disabled = validatedField.value.toLowerCase() === 'true'
+  validateButton.disabled = !allowRevalidation && validatedField.value.toLowerCase() === 'true'
 
   // ── reset validation state when the user types ──────────────────────
+  let validationGeneration = 0
   function resetValidation () {
+    validationGeneration += 1
     validatedField.value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
     refreshValidationCallout(validatedFieldId)
+    if (typeof onValidationReset === 'function') onValidationReset()
   }
 
   apiKeyInput.addEventListener('input', resetValidation)
@@ -249,6 +258,8 @@ export function createApiKeyValidator (config) {
 
   // ── validate click handler ──────────────────────────────────────────
   validateButton.addEventListener('click', function () {
+    const generation = ++validationGeneration
+    if (typeof onValidationStart === 'function') onValidationStart()
     const credentialValue = apiKeyInput.value
     const additionalValues = collectAdditionalValues()
 
@@ -272,12 +283,13 @@ export function createApiKeyValidator (config) {
     })
       .then(response => response.json())
       .then(data => {
+        if (generation !== validationGeneration) return
         if (isValid(data)) {
           validatedField.value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
           refreshValidationCallout(validatedFieldId)
           showStatus(resolveMessage(messages.success, data), STATUS_COLOR_SUCCESS)
-          validateButton.disabled = true
+          validateButton.disabled = !allowRevalidation
           if (typeof onValidationSuccess === 'function') onValidationSuccess(data)
         } else {
           validatedField.value = 'false'
@@ -288,9 +300,12 @@ export function createApiKeyValidator (config) {
         }
       })
       .catch(() => {
+        if (generation !== validationGeneration) return
+        validatedField.value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
         refreshValidationCallout(validatedFieldId)
         showStatus(resolveMessage(messages.networkError, {}), STATUS_COLOR_ERROR)
+        if (typeof onValidationReset === 'function') onValidationReset()
       })
       .finally(() => {
         if (typeof hideSpinner === 'function') hideSpinner(spinnerKey)
@@ -319,6 +334,8 @@ export function createApiKeyValidator (config) {
       ({ id }) => additionalValues[id]
     )
     if (credentialValue && additionalAllPresent) {
+      const generation = ++validationGeneration
+      if (typeof onValidationStart === 'function') onValidationStart()
       fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -326,9 +343,13 @@ export function createApiKeyValidator (config) {
       })
         .then(response => response.json())
         .then(data => {
+          if (generation !== validationGeneration) return
           if (isValid(data)) onValidationSuccess(data)
+          else if (typeof onValidationReset === 'function') onValidationReset()
         })
-        .catch(() => { /* swallowed; see comment above */ })
+        .catch(() => {
+          if (generation === validationGeneration && typeof onValidationReset === 'function') onValidationReset()
+        })
     }
   }
 

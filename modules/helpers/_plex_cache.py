@@ -63,3 +63,9 @@ def set_cached_plex_refresh(plex_url, plex_token, payload):
 
 def clear_plex_discovery_cache():
     _PLEX_DISCOVERY_CACHE.clear()
+
+
+def invalidate_plex_discovery_cache(plex_url, plex_token):
+    """Discard all discovery payloads for a connection before revalidation."""
+    for kind in ("validation", "metadata", "refresh"):
+        _PLEX_DISCOVERY_CACHE.pop(_plex_discovery_cache_key(kind, plex_url, plex_token), None)
