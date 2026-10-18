@@ -1,5 +1,6 @@
 import { createApiKeyValidator } from './modules/createApiKeyValidator.js'
 import { setupPlexSignIn } from './modules/plexSignIn.js'
+import { renderPlexSecurity } from './modules/plexSecurity.js'
 
 // ── pre-config wizard init ──────────────────────────────────────────
 // The "hidden" section + plexDbCache element are revealed for users
@@ -28,6 +29,7 @@ function normalizeDbCacheValue (value) {
 //   - plex-pass status banners
 //   - user list + 3 library lists (movie / show / music) into hidden inputs
 function applyPlexResponse (data) {
+  renderPlexSecurity(data.plex_security)
   // Plex-pass status banners. Only updated on a successful validate --
   // the legacy code updated them unconditionally (so a failed validate
   // would briefly show "no plex pass" even though no token was checked).
@@ -122,7 +124,12 @@ createApiKeyValidator({
   // `{valid: false, error: '...'}` on failure (asymmetric naming
   // preserved from the legacy API endpoint).
   isValid: (data) => data.validated === true,
-  onValidationSuccess: applyPlexResponse
+  onValidationSuccess: applyPlexResponse,
+  onValidationReset: () => renderPlexSecurity(),
+  onValidationStart: () => renderPlexSecurity(),
+  onValidationFailure: () => renderPlexSecurity(),
+  revalidateOnLoad: true,
+  allowRevalidation: true
 })
 
 setupPlexSignIn()

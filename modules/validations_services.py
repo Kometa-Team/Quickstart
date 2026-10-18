@@ -59,6 +59,7 @@ from flask import jsonify, flash
 from plexapi.server import PlexServer
 
 from modules import helpers, url_validation
+from modules._vendor.plex_security import evaluate_advisories
 from modules.validations_yaml_files import _validate_yaml_location
 
 # ---------------------------------------------------------------------------
@@ -90,7 +91,12 @@ def validate_plex_server(data):
 
     # Validate Plex URL and Token
     try:
-        cached = helpers.get_cached_plex_validation(plex_url, plex_token)
+        # Explicit validation must observe the current server, including upgrades
+        # using unchanged credentials. Other discovery callers may reuse cache.
+        fresh = data.get("force_refresh") is True
+        if fresh:
+            helpers.invalidate_plex_discovery_cache(plex_url, plex_token)
+        cached = None if fresh else helpers.get_cached_plex_validation(plex_url, plex_token)
         if cached:
             helpers.ts_log("Using cached Plex validation payload.", level="DEBUG")
             return jsonify(cached)
@@ -144,6 +150,8 @@ def validate_plex_server(data):
         "movie_libraries": movie_libraries,
         "show_libraries": show_libraries,
         "has_plex_pass": has_plex_pass,
+        "version": getattr(plex, "version", None),
+        "plex_security": evaluate_advisories(getattr(plex, "version", None)),
     }
     helpers.set_cached_plex_validation(plex_url, plex_token, payload)
     return jsonify(payload)

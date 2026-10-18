@@ -24,9 +24,8 @@ used.  Two branches are richer than simple string matches:
   tuples).  Only fires on ``mass_user_rating_update`` /
   ``mass_episode_user_ratings_update`` lines.
 
-* ``security_vuln_hits`` -- runs the PMS version regex from
-  ``modules.logscan_pms_versions`` on any ``Connected to server``
-  line and reports vulnerable versions.
+* ``security_vuln_hits`` remains an empty compatibility bucket. The
+  recommendation engine uses the shared offline advisory core for security.
 
 Everything else is a straight substring/regex check that pushes
 the current line index onto its bucket.
@@ -45,8 +44,6 @@ so review can focus on the file split.
 from __future__ import annotations
 
 import re
-
-from modules.logscan_pms_versions import is_vulnerable_pms_version
 
 
 def scan_content(analyzer, content):
@@ -149,14 +146,6 @@ def scan_content(analyzer, content):
                     rounding_errors.append((server_name, server_version, idx))
                     # Add the identifier to unique_entries set to mark it as processed
                     unique_entries.add(identifier)
-
-        # Detect PMS versions in "Connected to server ..." lines and flag the vulnerable range
-        m = re.search(r"Connected to server\s+(.+?)\s+(?:\(?\s*(?:version|Version:)\s+)(\d+\.\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?)", line)
-        if m:
-            sn = m.group(1).strip()
-            ver = m.group(2).strip()
-            if is_vulnerable_pms_version(ver):
-                security_vuln_hits.append((sn, ver, idx))
 
         if "Config Error: anidb sub-attribute" in line or "AniDB Error: Login failed" in line:
             anidb_auth_errors.append(idx)

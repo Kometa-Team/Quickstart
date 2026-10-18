@@ -39,6 +39,7 @@ import re
 from modules.logscan_advisory_messages import build_advisory_messages
 from modules.logscan_issue_counts import build_issue_counts
 from modules.logscan_line_scan import scan_content
+from modules._vendor.plex_security import assess_log, assessment_message
 
 # Backward-compat alias: this module used to define the advisory-message
 # builder as a private function; the extraction to
@@ -82,6 +83,9 @@ def make_recommendations(analyzer, content, incomplete_message):
     analyzer.checkfiles_flg = None
     special_check_lines = []
     buckets = scan_content(analyzer, content)
+    security_assessments = assess_log(enumerate(content.splitlines(), 1))
+    # The line scanner retains its legacy security bucket for API compatibility.
+    # Security detection and grouping live exclusively in the shared core.
 
     # ------------------------------------------------------------------
     # PHASE 3 -- build advisory messages from the populated buckets
@@ -104,6 +108,20 @@ def make_recommendations(analyzer, content, incomplete_message):
     # PHASE 5 -- assemble the {first_line, message} dict list
     # ------------------------------------------------------------------
     recommendation_messages = []
+    for assessment in security_assessments:
+        message = assessment_message(assessment)
+        prefix = "\U0001f4a5" if assessment["status"] == "affected" else "\u2139"
+        recommendation_messages.append(
+            {
+                "first_line": f"{prefix} {message.splitlines()[0]}",
+                "message": message,
+                "severity": "critical" if assessment["status"] == "affected" else "advice",
+                "security_assessment": assessment,
+                "evidence_lines": assessment["evidence_lines"],
+                "occurrence_count": assessment["occurrence_count"],
+                "evidence_truncated": assessment["evidence_truncated"],
+            }
+        )
     for idx, message in enumerate(special_check_lines, start=1):
         # Split the message into lines and log the first line with a label
         message_lines = message.split("\n")
@@ -118,6 +136,7 @@ def make_recommendations(analyzer, content, incomplete_message):
         buckets=buckets,
         platform_recs=platform_recs,
     )
+    issue_counts["plex_security"] = sum(item["status"] == "affected" for item in security_assessments)
 
     return recommendation_messages, issue_counts
 

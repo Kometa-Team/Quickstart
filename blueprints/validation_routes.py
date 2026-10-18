@@ -95,7 +95,7 @@ def validate_plex():
     valid, message = url_validation.validate_url(data.get("plex_url"), allow_local=True)
     if not valid:
         return jsonify({"valid": False, "error": f"Plex URL: {message}"}), 400
-    plex_response = validations.validate_plex_server(data)
+    plex_response = validations.validate_plex_server({**data, "force_refresh": True})
     plex_data = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
     if not isinstance(plex_data, dict) or not plex_data.get("validated"):
         return plex_response

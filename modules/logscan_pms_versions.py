@@ -26,6 +26,8 @@ known-bad range (currently 1.41.7.x -- 1.42.0.x).  This module owns:
 
 from __future__ import annotations
 
+from modules._vendor.plex_security import LEGACY_HIGH, LEGACY_LOW, legacy_affected
+
 
 def parse_version_tuple(ver: str) -> tuple[int, int, int, int]:
     """Return a 4-int tuple for PMS versions like ``'1.41.7.9100'``.
@@ -53,13 +55,13 @@ def version_in_inclusive_range(ver: str, low: tuple, high: tuple) -> bool:
 # Currently-flagged vulnerable PMS version window.  When a new CVE
 # needs flagging, update these two constants and the recommendation
 # text in :func:`modules.logscan.LogscanAnalyzer.make_recommendations`.
-VULNERABLE_RANGE_LOW: tuple[int, int, int, int] = (1, 41, 7, 0)  # 1.41.7.x
-VULNERABLE_RANGE_HIGH: tuple[int, int, int, int] = (1, 42, 0, 99999)  # through 1.42.0.x
+VULNERABLE_RANGE_LOW: tuple[int, int, int, int] = LEGACY_LOW
+VULNERABLE_RANGE_HIGH: tuple[int, int, int, int] = LEGACY_HIGH
 
 
 def is_vulnerable_pms_version(ver: str) -> bool:
     """Return True when *ver* falls inside the current vulnerable window."""
-    return version_in_inclusive_range(ver, VULNERABLE_RANGE_LOW, VULNERABLE_RANGE_HIGH)
+    return legacy_affected(ver)
 
 
 def format_version_tuple(version: tuple) -> str:
