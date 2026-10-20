@@ -1,5 +1,5 @@
 black==26.10.1
-playwright>=1.63.0
+playwright>=1.64.0
 pytest>=9.1.1
 pytest-playwright>=0.10.0
 ruff==0.17.0
