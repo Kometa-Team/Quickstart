@@ -44,14 +44,17 @@ jobs:
           printf '\n' > PART
           git config user.email action@github.com
           git config user.name 'GitHub Action'
-          export GIT_AUTHOR_DATE="$(git show -s --format=%aI "$MERGED_SHA")"
+          GIT_AUTHOR_DATE="$(git show -s --format=%aI "$MERGED_SHA")"
+          export GIT_AUTHOR_DATE
           export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
           git add BUILDNUM PART
           git -c core.hooksPath=/dev/null commit -m "Prepare development build after PR $PR_NUMBER"
           git bundle create "$RUNNER_TEMP/build.bundle" HEAD
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "branch=automation/build-$PR_NUMBER-$MERGED_SHA" >> "$GITHUB_OUTPUT"
-          echo 'changed=true' >> "$GITHUB_OUTPUT"
+          {
+            echo "sha=$(git rev-parse HEAD)"
+            echo "branch=automation/build-$PR_NUMBER-$MERGED_SHA"
+            echo 'changed=true'
+          } >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.build.outputs.changed == 'true'
         with:

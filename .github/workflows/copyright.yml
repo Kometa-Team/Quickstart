@@ -18,7 +18,7 @@ jobs:
 
       - name: Get current year
         id: date
-        run: echo "year=$(date +'%Y')" >> $GITHUB_OUTPUT
+        run: echo "year=$(date +'%Y')" >> "$GITHUB_OUTPUT"
 
       - name: Create App Token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
@@ -39,7 +39,7 @@ jobs:
       - name: Check Diff
         id: verify_diff
         run: |
-          git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet . || echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Commit & Push Changes
         if: steps.verify_diff.outputs.changed == 'true'
