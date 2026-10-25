@@ -1,10 +1,8 @@
-# Reusable test workflow: called by ci.yml for PRs and runs on push to develop; single job for now since Quickstart has no schema/pyright surface yet to justify more stages.
+# Reusable test workflow: ci.yml calls this for PRs and integration/candidate pushes.
 name: Tests
 
 on:
   workflow_call:
-  push:
-    branches: [develop]
 
 env:
   PYTHON_VERSION: "3.13"

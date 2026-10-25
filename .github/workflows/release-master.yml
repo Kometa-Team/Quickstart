@@ -1,25 +1,40 @@
-name: Master Release
+﻿name: Master Release
 
 on:
   workflow_dispatch:
     inputs:
+      base_version:
+        type: string
+        required: true
+        description: Fixed starting version; reuse on every retry. For resume, the existing release version.
       release_type:
         type: choice
-        description: Choose which type of release to perform.
-        options: [ major, minor, patch ]
+        options: [major, minor, patch, resume]
         default: patch
-      reconcile_0_10_9:
-        type: boolean
-        description: Reconcile the interrupted 0.10.9 release without incrementing the version.
-        default: false
+        description: Resume preserves the existing VERSION and BUILDNUM=0.
+      stage:
+        type: choice
+        options: [prepare, promote]
+        default: prepare
+        description: Prepare a checked candidate first; promote only after review.
+      approved_sha:
+        type: string
+        description: Exact reviewed candidate SHA, required for promotion.
+
+# Also shared by the remaining automatic writer to develop.
+concurrency:
+  group: quickstart-release-writer
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-
   release-master:
-    name: Create Master Release
+    name: Validate and Stage Master Release
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
-
       - name: Create App Token
         uses: actions/create-github-app-token@v3.3.0
         id: app-token
@@ -34,52 +49,81 @@ jobs:
           ref: develop
           fetch-depth: 0
 
-      - name: Create Release Commit and Synchronize Branches
+      - name: Prepare reconciled source tree
+        env:
+          BASE_VERSION: ${{ inputs.base_version }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
         run: |
-          if [[ "${{ github.event.inputs.reconcile_0_10_9 }}" == "true" ]]; then
-              git config --local user.email "action@github.com"
-              git config --local user.name "GitHub Action"
-              git fetch origin master hotfix backup/master-before-0.10.9
+          git config user.email action@github.com
+          git config user.name 'GitHub Action'
+          python scripts/release.py prepare --base-version "$BASE_VERSION" \
+            --release-type "$RELEASE_TYPE" --state "$RUNNER_TEMP/release.json"
 
-              test "$(cat VERSION)" = "0.10.9"
-              test "$(cat BUILDNUM)" = "0"
-              test "$(git rev-parse origin/master)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
-              test "$(git rev-parse origin/hotfix)" = "a75002c887eff73532efbf7031d3581a3629ce06"
-              test "$(git rev-parse origin/backup/master-before-0.10.9)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
 
-              git merge --strategy=ours --no-edit origin/master -m "Reconcile master history for 0.10.9 release"
-              git diff --exit-code HEAD^1 HEAD
-              git merge-base --is-ancestor origin/master HEAD
-              git merge-base --is-ancestor origin/hotfix HEAD
+      - name: Install and check dependencies
+        run: |
+          npm ci --no-fund --no-audit
+          python -m pip install -r requirements.txt -r requirements-dev.txt pip-audit
+          python -m pip check
+          python -m pip_audit -r requirements.txt -r requirements-dev.txt
+          npm audit --audit-level=low
+          sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
 
-              git push origin HEAD:develop
-              git push origin HEAD:master
-              git push origin HEAD:hotfix
-              exit 0
+      - name: Fetch Kometa defaults for contract tests
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse --branch nightly https://github.com/Kometa-Team/Kometa.git "$RUNNER_TEMP/kometa-defaults"
+          git -C "$RUNNER_TEMP/kometa-defaults" sparse-checkout set defaults
+          mkdir -p config/kometa
+          cp -r "$RUNNER_TEMP/kometa-defaults/defaults" config/kometa/defaults
+
+      - name: Validate reconciled tree before release commit
+        env:
+          SKIP: no-commit-to-branch
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+          npm test
+          npm run build
+          python scripts/check_release_build.py
+          python -m pytest
+
+      - name: Finalize validated candidate
+        run: python scripts/release.py finalize --state "$RUNNER_TEMP/release.json"
+
+      - name: Publish candidate for review
+        if: inputs.stage == 'prepare'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          python scripts/release.py publish --state "$RUNNER_TEMP/release.json"
+          candidate=$(jq -r .candidate "$RUNNER_TEMP/release.json")
+          target=$(jq -r .target "$RUNNER_TEMP/release.json")
+          branch="release-candidates/$target"
+          count=$(gh pr list --head "$branch" --base develop --json number --jq length)
+          if [ "$count" -eq 0 ]; then
+            printf 'Review candidate `%s` for release %s. Keep this PR open for review; promote the exact SHA through Master Release after approval. VERSION=%s, BUILDNUM=0.\n' "$candidate" "$target" "$target" > "$RUNNER_TEMP/release-pr.md"
+            gh pr create --base develop --head "$branch" --title "Review release $target" --body-file "$RUNNER_TEMP/release-pr.md"
           fi
+          printf 'Reviewed candidate required for promotion: `%s`\n' "$candidate" >> "$GITHUB_STEP_SUMMARY"
 
-          version=$(cat VERSION)
-          echo "CURRENT_VERSION: '${version}'"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
+      - name: Promote approved candidate with protection checks
+        if: inputs.stage == 'promote'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: |
+          python scripts/release.py promote --state "$RUNNER_TEMP/release.json" --approved-sha "$APPROVED_SHA"
 
-          if [[ "${{ github.event.inputs.release_type }}" == "major" ]]; then
-              NEW_VERSION="$((MAJOR+1)).0.0"
-          elif [[ "${{ github.event.inputs.release_type }}" == "minor" ]]; then
-              NEW_VERSION="${MAJOR}.$((MINOR+1)).0"
-          else
-              NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH+1))"
-          fi
-
-          echo "NEW_VERSION='${NEW_VERSION}'"
-          echo "new_ver=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "$NEW_VERSION" > "VERSION"
-          echo "0" > "BUILDNUM"
-
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add VERSION
-          git add BUILDNUM
-          git commit -m "${{ vars.NAME }} Release ${NEW_VERSION}"
-          git push origin develop
-          git push origin refs/heads/develop:refs/heads/master
-          git push origin refs/heads/develop:refs/heads/hotfix
+      - name: Save recovery plan
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: release-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release.json

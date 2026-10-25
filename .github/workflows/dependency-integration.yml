@@ -1,0 +1,33 @@
+name: Route Dependency Updates
+
+# Metadata only: never check out or execute pull request code with this token.
+on:
+  pull_request_target:
+    types: [opened, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-route-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  route:
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.base.ref != 'develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create App Token
+        uses: actions/create-github-app-token@v3.3.0
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+      - name: Route security updates to integration
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api --method PATCH "repos/$REPOSITORY/pulls/$PR_NUMBER" -f base=develop

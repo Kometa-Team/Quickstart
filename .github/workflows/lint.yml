@@ -2,6 +2,7 @@ name: Lint
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches:
       - develop
       - master
@@ -9,6 +10,7 @@ on:
     branches:
       - develop
       - master
+      - 'release-candidates/**'
   workflow_dispatch:
 
 concurrency:

@@ -3,6 +3,8 @@
 # Please see the documentation for all configuration options:
 # https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
+# Version updates integrate through develop. Security updates target the GitHub
+# default branch regardless of target-branch; see docs/releasing.md for routing.
 version: 2
 updates:
   - package-ecosystem: "pip"

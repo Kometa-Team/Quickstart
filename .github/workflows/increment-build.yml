@@ -6,7 +6,7 @@ on:
     types: [ closed ]
 
 concurrency:
-  group: increment-build-develop
+  group: quickstart-release-writer
   cancel-in-progress: false
 
 jobs:
@@ -14,17 +14,26 @@ jobs:
   verify-changes:
     name: Verify Changes
     runs-on: ubuntu-latest
-    if: github.base_ref == 'develop' && github.event.pull_request.merged
+    # GitHub may mark the review PR merged when its exact candidate is promoted.
+    # A release promotion must retain BUILDNUM=0 rather than queue a dev build.
+    if: >-
+      github.base_ref == 'develop' && github.event.pull_request.merged &&
+      !startsWith(github.event.pull_request.head.ref, 'release-candidates/')
     outputs:
       build: ${{ steps.list-changes.outputs.build }}
     steps:
 
       - name: Display Refs
+        env:
+          BASE_REPO: ${{ github.event.pull_request.base.repo.full_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          echo "Base Repo: ${{ github.event.pull_request.base.repo.full_name }}"
-          echo "Base Ref: ${{ github.base_ref }}"
-          echo "Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
-          echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
+          echo "Base Repo: $BASE_REPO"
+          echo "Base Ref: $BASE_REF"
+          echo "Head Repo: $HEAD_REPO"
+          echo "Head Ref: $HEAD_REF"
 
       - name: Check Out Repo
         uses: actions/checkout@v7.0.1
@@ -79,9 +88,12 @@ jobs:
 
       - name: Update VERSION File
         id: update-version
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
-          branch_name=${{ github.event.pull_request.head.ref }}
-          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          branch_name="$HEAD_REF"
+          repo_name="$HEAD_REPO"
           base_name="${repo_name%/*}"
           if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
               pr_tag="${base_name}"
@@ -109,7 +121,7 @@ jobs:
           git add BUILDNUM
           git add PART
 
-          # Plain commit + push, not --amend/--force-with-lease -- concurrency group increment-build-develop already serializes runs, so a normal push is safe; retry loop is just a safety net.
+          # A shared writer lock serializes releases and build-number updates.
           git commit -m "${new_msg}"
 
           push_ok=false

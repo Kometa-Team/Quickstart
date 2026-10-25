@@ -6,6 +6,7 @@ CDNs
 CentOS
 chazlarson
 chmod
+CI
 CLI
 config
 configs
@@ -19,7 +20,10 @@ Emby
 exe
 executables
 Frontend
+GiB
 Gotify
+gzip
+healthcheck
 Homebrew
 https
 ImageMaid
@@ -29,6 +33,7 @@ Jinja
 jQuery
 JS
 jsdom
+JSON
 kometa
 KStatusNotifierItem
 localhost
@@ -42,6 +47,7 @@ MyAnimeList
 NAS
 notifiarr
 ntfy
+OAuth
 OMDb
 OpenSSL
 Personalization
@@ -59,10 +65,12 @@ PyInstaller
 PyQt
 pytest
 quickstart
+Quickstart's
 Radarr
 Reingest
 reingests
 repo
+resending
 RHEL
 roadmap
 scm
@@ -80,6 +88,10 @@ truthy
 txt
 ui
 unreferenced
+unselect
+Unraid
+upload's
+uploaders
 venv
 venvs
 Vite
