@@ -13,6 +13,15 @@ version update. It committed 0.10.15 to develop, then failed because master had
 three unique Dependabot commits (#1924, #1925, #1927). Sequential pushes left the
 release incomplete. Neither a new version nor history replacement is needed.
 
+The old CI also had a concrete enforcement gap: an unrelated label event skipped
+guard, validation and tests, while ci-status accepted skipped jobs as successful.
+All three dependency PR heads show an initial failed master guard followed by a
+successful ci-status with the guard skipped. The new aggregator executes the guard
+on every event and requires actual success for every mandatory job. A regression
+runs the real Bash/jq gate against success, failure, cancellation and skipped-job
+inputs. Windows contributors running these release tests need Git Bash and jq on
+PATH; Ubuntu CI supplies both.
+
 Legacy production Hotfix Release ran when any PR targeting hotfix closed, without
 checking that it merged. It incremented hotfix's patch version, pushed hotfix to
 master, rebased develop onto master, and force-pushed develop. Legacy Master

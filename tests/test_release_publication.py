@@ -3,6 +3,9 @@
 import copy
 import hashlib
 import json
+import os
+import shutil
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -343,6 +346,32 @@ def test_publication_credentials_triggers_and_hotfix_contracts():
     assert publish["jobs"]["tag"]["environment"] == "release-publication"
     hotfix = release.run("git", "-C", str(root), "show", "80e7b95531aad71ac8fdaa5cd47342ebaa6cd811:.github/workflows/release-hotfix.yml")
     assert hotfix == (root / ".github/workflows/release-hotfix.yml").read_text().strip()
+
+
+@pytest.mark.parametrize(
+    "results,passes",
+    [
+        (("success", "success", "success"), True),
+        (("skipped", "success", "success"), False),
+        (("success", "skipped", "success"), False),
+        (("success", "success", "skipped"), False),
+        (("skipped", "skipped", "skipped"), False),
+        (("failure", "success", "success"), False),
+        (("cancelled", "success", "success"), False),
+    ],
+)
+def test_actual_ci_aggregator_cannot_mask_skipped_guard_or_tests(results, passes):
+    root = Path(__file__).resolve().parents[1]
+    workflow = yaml.safe_load((root / ".github/workflows/ci.yml").read_text())
+    gate = workflow["jobs"]["ci-status"]
+    assert set(gate["needs"]) == {"guard", "tests", "quality"}
+    assert "if" not in workflow["jobs"]["guard"]  # Label events must still run it.
+    script = gate["steps"][0]["run"]
+    bash = str(Path(os.environ["ProgramFiles"]) / "Git/usr/bin/bash.exe") if os.name == "nt" else shutil.which("bash")
+    assert bash and shutil.which("jq"), "The real CI-gate regression requires Bash and jq."
+    environment = {**os.environ, "RESULTS": json.dumps({name: {"result": result} for name, result in zip(("guard", "tests", "quality"), results)})}
+    completed = subprocess.run([bash, "-e", "-c", script], env=environment, capture_output=True)
+    assert (completed.returncode == 0) is passes
 
 
 def test_environment_without_independent_review_or_with_bypass_is_rejected(monkeypatch):
