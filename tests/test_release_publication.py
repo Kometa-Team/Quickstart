@@ -360,18 +360,33 @@ def test_publication_credentials_triggers_and_hotfix_contracts():
         (("cancelled", "success", "success"), False),
     ],
 )
-def test_actual_ci_aggregator_cannot_mask_skipped_guard_or_tests(results, passes):
+@pytest.mark.parametrize("candidate", [False, True])
+def test_actual_ci_aggregator_cannot_mask_skipped_guard_or_tests(results, passes, candidate):
+    jobs = {name: {"result": result} for name, result in zip(("guard", "tests", "quality"), results)}
+    jobs.update({name: {"result": "success" if candidate else "skipped"} for name in ("candidate-vars", "candidate-images", "candidate-executables")})
+    assert run_ci_aggregator(jobs, candidate) is passes
+
+
+def run_ci_aggregator(jobs, candidate):
     root = Path(__file__).resolve().parents[1]
     workflow = yaml.safe_load((root / ".github/workflows/ci.yml").read_text())
     gate = workflow["jobs"]["ci-status"]
-    assert set(gate["needs"]) == {"guard", "tests", "quality"}
+    assert set(gate["needs"]) == {"guard", "tests", "quality", "candidate-vars", "candidate-images", "candidate-executables"}
     assert "if" not in workflow["jobs"]["guard"]  # Label events must still run it.
     script = gate["steps"][0]["run"]
     bash = str(Path(os.environ["ProgramFiles"]) / "Git/usr/bin/bash.exe") if os.name == "nt" else shutil.which("bash")
     assert bash and shutil.which("jq"), "The real CI-gate regression requires Bash and jq."
-    environment = {**os.environ, "RESULTS": json.dumps({name: {"result": result} for name, result in zip(("guard", "tests", "quality"), results)})}
+    environment = {**os.environ, "RESULTS": json.dumps(jobs), "IS_CANDIDATE": json.dumps(candidate)}
     completed = subprocess.run([bash, "-e", "-c", script], env=environment, capture_output=True)
-    assert (completed.returncode == 0) is passes
+    return completed.returncode == 0
+
+
+@pytest.mark.parametrize("job", ["candidate-images", "candidate-executables"])
+@pytest.mark.parametrize("result", ["failure", "skipped", "cancelled"])
+def test_actual_ci_aggregator_requires_candidate_artifact_builds(job, result):
+    jobs = {name: {"result": "success"} for name in ("guard", "tests", "quality", "candidate-vars", "candidate-images", "candidate-executables")}
+    jobs[job]["result"] = result
+    assert run_ci_aggregator(jobs, True) is False
 
 
 def test_environment_without_independent_review_or_with_bypass_is_rejected(monkeypatch):

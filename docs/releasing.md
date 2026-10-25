@@ -48,6 +48,13 @@ suite and full-directory actionlint run with contents:read and no App token.
 The configured Python suite excludes browser E2E, matching repository CI.
 Validation must leave the prepared tree unchanged.
 
+Candidate CI additionally builds all three Docker archives and all four executable
+artifacts without write credentials. Its required ci-status includes these jobs;
+failed, cancelled or skipped candidate builds block promotion. Ordinary integration
+PRs may skip these candidate-only jobs, while their guard/tests/quality still must
+succeed. Container and platform build validation therefore precede production
+branch updates, even when the operator's local host cannot run those builders.
+
 A separate job publishes the candidate and opens a draft develop PR. It runs no
 dependency installation. Keep the review PR open; do not squash/rebase/merge it
 as a substitute for identical-tip promotion. Review the graph, dependency fixes,

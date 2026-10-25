@@ -24,6 +24,41 @@ jobs:
   quality:
     needs: guard
     uses: ./.github/workflows/release-validation.yml
+  candidate-vars:
+    if: startsWith(github.head_ref || github.ref_name, 'release-candidates/')
+    needs: [tests, quality]
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.identity.outputs.source }}
+      tag: ${{ steps.identity.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: identity
+        env:
+          SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [[ "$SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          version=$(cat VERSION)
+          RELEASE_VERSION="$version" python -c "from scripts.release import version; import os; version(os.environ['RELEASE_VERSION'])"
+          test "$(cat BUILDNUM)" = 0
+          test "$(git ls-remote --refs origin "refs/heads/release-candidates/$version" | cut -f1)" = "$SOURCE"
+          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+  candidate-images:
+    needs: candidate-vars
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      source_sha: ${{ needs.candidate-vars.outputs.source }}
+  candidate-executables:
+    needs: candidate-vars
+    uses: ./.github/workflows/release-executables.yml
+    with:
+      source_sha: ${{ needs.candidate-vars.outputs.source }}
+      tag: ${{ needs.candidate-vars.outputs.tag }}
   pr-identity:
     if: >-
       github.event_name == 'pull_request' &&
@@ -53,11 +88,12 @@ jobs:
       artifact_prefix: ${{ needs.pr-identity.outputs.namespace }}
   ci-status:
     runs-on: ubuntu-latest
-    needs: [guard, tests, quality]
+    needs: [guard, tests, quality, candidate-vars, candidate-images, candidate-executables]
     if: always()
     steps:
       - name: Require complete validation
         env:
           RESULTS: ${{ toJSON(needs) }}
+          IS_CANDIDATE: ${{ startsWith(github.head_ref || github.ref_name, 'release-candidates/') }}
         run: |
-          echo "$RESULTS" | jq -e 'all(.[]; .result == "success")'
+          echo "$RESULTS" | jq -e --argjson candidate "$IS_CANDIDATE" 'all(to_entries[]; if (.key | startswith("candidate-")) and ($candidate | not) then .value.result == "skipped" else .value.result == "success" end)'
