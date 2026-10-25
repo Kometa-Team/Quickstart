@@ -255,7 +255,10 @@ def _mirror_separator_placeholder_issues(libraries_data, library_id, library_nam
             "template_variables[placeholder_tvdb_show]",
         ] + placeholder_keys
 
-    placeholder = _find_library_value(libraries_data, library_id, placeholder_keys)
+    placeholder = next(
+        (value for key in placeholder_keys if not _is_blank_library_value(value := _find_library_value(libraries_data, library_id, [key]))),
+        None,
+    )
     if _is_blank_library_value(placeholder):
         return [f"{library_name}: separator placeholders are enabled but no placeholder ID is selected."]
 

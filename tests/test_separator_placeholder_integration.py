@@ -3,6 +3,7 @@
 import json
 import re
 from html.parser import HTMLParser
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -24,12 +25,15 @@ class _Controls(HTMLParser):
     def __init__(self, html):
         super().__init__()
         self.by_name = {}
+        self.by_id = {}
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if tag in {"select", "input"} and attrs.get("name"):
             self.by_name[attrs["name"]] = attrs
+            if attrs.get("id"):
+                self.by_id[attrs["id"]] = attrs
 
 
 def _render_separator(app, prefix, data):
@@ -45,6 +49,22 @@ def _render_separator(app, prefix, data):
                 wiki="https://kometa.wiki/en/develop/defaults/separators/",
                 options=[("", "None"), ("gray", "Gray")],
                 yml_location="template_variables",
+            )
+        )
+
+
+def _render_separator_collections(app, prefix, data):
+    definitions = json.loads(Path("static/json/quickstart_collections.json").read_text(encoding="utf-8"))
+    separators = [collection for group in definitions for collection in group["collections"] if collection["id"] in {"collection_separator_award", "collection_separator_chart"}]
+    with app.test_request_context():
+        macro = app.jinja_env.get_template("partials/_macros.html").module.collection_group_section
+        return str(
+            macro(
+                library={"id": prefix, "name": "Library", "type": "movie" if prefix.startswith("mov-") else "show"},
+                data={"libraries": data},
+                version_info={},
+                group={"accordion": "Separators", "collections": separators},
+                telemetry={},
             )
         )
 
@@ -65,7 +85,10 @@ def test_separator_template_preserves_selected_id_and_title(app, kind, media_typ
 
 
 @pytest.mark.parametrize("kind,media_type,library_name,source,value,title", SOURCES)
-def test_separator_selection_survives_lookup_save_validation_and_yaml(client, app, isolated_config_dir, monkeypatch, kind, media_type, library_name, source, value, title):
+@pytest.mark.parametrize("award,chart", [(False, False), (True, False), (False, True), (True, True)])
+def test_separator_selection_survives_lookup_save_validation_and_yaml(
+    client, app, isolated_config_dir, monkeypatch, kind, media_type, library_name, source, value, title, award, chart
+):
     prefix = f"{kind}-library_test"
     config_name = f"separator_{kind}_{source}"
     with client.session_transaction() as session:
@@ -121,6 +144,8 @@ def test_separator_selection_survives_lookup_save_validation_and_yaml(client, ap
         f"{prefix}-attribute_template_variables[placeholder_{secondary}]": "",
         field: value,
         f"{field}__lookup_labels": json.dumps({value: title}),
+        f"{prefix}-collection_separator_award": award,
+        f"{prefix}-collection_separator_chart": chart,
     }
     saved = client.post(f"/autosave_library/{prefix}", json=form)
     assert saved.status_code == 200, saved.json
@@ -128,6 +153,8 @@ def test_separator_selection_survives_lookup_save_validation_and_yaml(client, ap
     _, _, stored = database.retrieve_section_data(config_name, "libraries")
     assert str(stored["libraries"][field]) == value
     assert json.loads(stored["libraries"][f"{field}__lookup_labels"]) == {value: title}
+    assert stored["libraries"][f"{prefix}-collection_separator_award"] is award
+    assert stored["libraries"][f"{prefix}-collection_separator_chart"] is chart
 
     validated = client.post("/validate_all_services")
     assert validated.status_code == 200
@@ -142,9 +169,13 @@ def test_separator_selection_survives_lookup_save_validation_and_yaml(client, ap
         controls = _Controls(_render_separator(app, prefix, restored)).by_name
         assert controls[field]["data-separator-placeholder-value"] == value
         assert json.loads(controls[f"{field}__lookup_labels"]["value"]) == {value: title}
+        toggles = _Controls(_render_separator_collections(app, prefix, restored)).by_id
+        assert ("checked" in toggles[f"{prefix}-collection_separator_award"]) is award
+        assert ("checked" in toggles[f"{prefix}-collection_separator_chart"]) is chart
         arguments = {
             f'{"movie" if kind == "mov" else "show"}_libraries': {f"{prefix}-library": library_name},
             f'{"movie" if kind == "mov" else "show"}_templates': {"test": restored},
+            f'{"movie" if kind == "mov" else "show"}_collections': {"test": {key: restored[key] for key in form if "-collection_" in key}},
         }
         libraries = output.build_libraries_section(**arguments)["libraries"]
         yaml_text = dump_section("", "libraries", libraries, "none", None)
@@ -152,6 +183,10 @@ def test_separator_selection_survives_lookup_save_validation_and_yaml(client, ap
     assert re.search(rf"placeholder_{source}: ['\"]?{value}['\"]?\s+# {re.escape(title)}", yaml_text), yaml_text
     assert "__lookup_labels" not in yaml_text
     assert "__template_variable_comments" not in yaml_text
+    assert {key for key in libraries[library_name]["template_variables"] if key.startswith("placeholder_")} == {f"placeholder_{source}"}
+    defaults = {entry["default"] for entry in libraries[library_name].get("collection_files", [])}
+    assert ("separator_award" in defaults) is award
+    assert ("separator_chart" in defaults) is chart
 
 
 @pytest.mark.parametrize("kind,wrong_source", [("mov", "tvdb_show"), ("sho", "tmdb_movie")])
@@ -174,3 +209,31 @@ def test_separator_validation_rejects_empty_or_wrong_media_source(client, qs_mod
     result = response.json["results"]["025-libraries"]
     assert result["status"] == "failed"
     assert result["reason"] == "missing_separator_placeholder"
+
+
+@pytest.mark.parametrize("kind,media_type,library_name,source,value,title", SOURCES)
+def test_mirror_separator_selection_ignores_blank_inactive_source(kind, media_type, library_name, source, value, title):
+    prefix = f"{kind}-library_test"
+    secondary = "tmdb_movie" if kind == "mov" else "tvdb_show"
+    data = {
+        f"{prefix}-template_variables[use_separator]": "gray",
+        f"{prefix}-attribute_template_variables[placeholder_imdb_id]": "",
+        f"{prefix}-attribute_template_variables[placeholder_{secondary}]": "",
+    }
+    data[f"{prefix}-attribute_template_variables[placeholder_{source}]"] = value
+    verified = {"valid": True, "verified": True, "label": title, "result_type": media_type}
+    quickstart = SimpleNamespace(
+        _lookup_tmdb_numeric_id=lambda *_args, **_kwargs: verified,
+        _lookup_tmdb_by_imdb_id=lambda *_args, **_kwargs: verified,
+        helpers=SimpleNamespace(
+            find_item_by_title=lambda *_args, **_kwargs: {"title": title},
+            find_item_by_imdb_id=lambda *_args, **_kwargs: {"title": title},
+        ),
+    )
+    issues = library_routes._mirror_separator_placeholder_issues(data, prefix, library_name, kind, quickstart)
+    if source == "tvdb_show":
+        # Keep the existing manual-review policy for copied TVDb placeholders.
+        assert len(issues) == 1
+        assert f"TVDb placeholder {value} cannot be verified automatically" in issues[0]
+    else:
+        assert issues == []

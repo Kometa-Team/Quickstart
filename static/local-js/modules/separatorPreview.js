@@ -50,13 +50,11 @@ function updateSeparatorToggles (libraryId, isEnabled) {
 
   if (awardToggle) {
     awardToggle.disabled = !isEnabled
-    awardToggle.checked = isEnabled
     console.log(`[DEBUG] Award Separator Toggle is now ${isEnabled ? 'ENABLED' : 'DISABLED'}`)
   }
 
   if (chartToggle) {
     chartToggle.disabled = !isEnabled
-    chartToggle.checked = isEnabled
     console.log(`[DEBUG] Chart Separator Toggle is now ${isEnabled ? 'ENABLED' : 'DISABLED'}`)
   }
 }
@@ -148,6 +146,13 @@ function setPlaceholderPicklistOptions (select, items, lookupError = '') {
   if (!select) return
   const source = String(select.dataset.separatorPlaceholderInput || '').trim()
   const savedValue = String(select.dataset.separatorPlaceholderValue || select.value || '').trim()
+  let savedLabel = ''
+  try {
+    const labels = JSON.parse(document.getElementById(`${select.id}__lookup_labels`)?.value || '{}')
+    if (typeof labels?.[savedValue] === 'string') savedLabel = labels[savedValue].trim()
+  } catch {
+    // Invalid saved metadata must not prevent selecting a placeholder ID.
+  }
   const options = []
   const seen = new Set()
 
@@ -168,17 +173,20 @@ function setPlaceholderPicklistOptions (select, items, lookupError = '') {
   blank.textContent = lookupError || (options.length ? '-- Choose a top audience-rated item --' : `No top items with ${placeholderValueLabel(source)} IDs found`)
   select.appendChild(blank)
 
-  if (savedValue && !seen.has(savedValue)) {
+  const visibleOptions = options.slice(0, 10)
+  if (savedValue && !visibleOptions.some(item => item.value === savedValue)) {
+    const savedItem = options.find(item => item.value === savedValue)
     const saved = document.createElement('option')
     saved.value = savedValue
-    saved.textContent = lookupError
-      ? `Saved ${placeholderValueLabel(source)} ID: ${savedValue} (not revalidated)`
-      : `Saved ${placeholderValueLabel(source)} ID: ${savedValue}`
-    saved.dataset.lookupLabel = ''
+    saved.dataset.lookupLabel = savedItem?.label || savedLabel
+    const savedText = savedItem?.text || (savedLabel
+      ? optionTextForItem({ title: savedLabel }, source, savedValue)
+      : `Saved ${placeholderValueLabel(source)} ID: ${savedValue}`)
+    saved.textContent = lookupError ? `${savedText} (not revalidated)` : savedText
     select.appendChild(saved)
   }
 
-  options.slice(0, 10).forEach(item => {
+  visibleOptions.forEach(item => {
     const option = document.createElement('option')
     option.value = item.value
     option.textContent = item.text
@@ -372,13 +380,11 @@ export function updateHiddenInputs (libraryId, isMovie) {
   if (awardSeparatorToggle) {
     // Only depend on sep_style being set to enable/disable
     awardSeparatorToggle.disabled = !isEnabled
-    awardSeparatorToggle.checked = isEnabled
   }
 
   if (chartSeparatorToggle) {
     // Only depend on sep_style being set to enable/disable
     chartSeparatorToggle.disabled = !isEnabled
-    chartSeparatorToggle.checked = isEnabled
   }
 
   const fieldId = `${libraryId}-template_variables[use_separator]`

@@ -628,6 +628,37 @@ describe('ValidationHandler.validateForm (integration surface)', () => {
     `
   })
 
+  it.each([
+    ['mov', 'imdb', 'tt0133093'],
+    ['mov', 'tmdb_movie', '603'],
+    ['sho', 'imdb', 'tt0944947'],
+    ['sho', 'tvdb_show', '121361']
+  ])('validates the selected %s/%s placeholder independently', (kind, source, value) => {
+    const prefix = `${kind}-library_placeholder`
+    const secondary = kind === 'mov' ? 'tmdb_movie' : 'tvdb_show'
+    const inactiveSource = source === 'imdb' ? secondary : 'imdb'
+    document.getElementById('configForm').insertAdjacentHTML('beforeend', `
+      <input id="${prefix}-library-value" value="Library">
+      <div id="${prefix}-container">
+        <div class="accordion-header selected"></div>
+        <select name="${prefix}-template_variables[use_separator]"><option value="gray" selected>Gray</option></select>
+        <div data-separator-placeholder-wrapper="true" data-library-prefix="${prefix}">
+          <select class="separator-placeholder-source"><option value="${source}" selected>${source}</option></select>
+          <div class="separator-placeholder-field">
+            <select data-separator-placeholder-input="${source}" id="active-placeholder"><option value=""></option><option value="${value}" selected>Selected</option></select>
+          </div>
+          <div class="separator-placeholder-field d-none">
+            <select data-separator-placeholder-input="${inactiveSource}" id="inactive-placeholder"><option value=""></option><option value="other">Other</option></select>
+          </div>
+        </div>
+      </div>`)
+    expect(window.ValidationHandler.validateForm()).toBe(true)
+    document.getElementById('active-placeholder').value = ''
+    expect(window.ValidationHandler.validateForm()).toBe(false)
+    document.getElementById('inactive-placeholder').value = 'other'
+    expect(window.ValidationHandler.validateForm()).toBe(false)
+  })
+
   it('returns false and shows a danger message when no libraries are selected', () => {
     // No library-value inputs at all
     const result = window.ValidationHandler.validateForm()
