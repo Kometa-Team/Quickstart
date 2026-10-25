@@ -45,7 +45,9 @@ def get_top_imdb_items_route(library_name):
 
     tmp_key = f"tmp_{media_type}_libraries"
     raw_libraries = plex_settings.get(tmp_key, "")
-    library_names = [lib for lib in raw_libraries.split(",") if lib]
+    library_name_map = persistence.get_library_names("010-plex")
+    # Current settings store section IDs; legacy settings store library names.
+    library_names = [library_name_map.get(lib_id, lib_id) for lib_id in persistence.decode_library_ids(raw_libraries)]
 
     helpers.ts_log(f"Searching for library name: {library_name}", level="DEBUG")
     helpers.ts_log(f"Available libraries of type '{media_type}': {library_names}", level="DEBUG")
