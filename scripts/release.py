@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 BRANCHES = ("develop", "master", "hotfix")
@@ -99,7 +100,8 @@ def guarded_push(remote: str, expected: dict[str, str], targets: dict[str, str])
         script = shlex.quote(guard.as_posix())
         hook.write_text(f"#!/bin/sh\nexec {executable} {script}\n", encoding="utf-8", newline="\n")
         hook.chmod(0o755)
-        git("-c", f"core.hooksPath={hooks.as_posix()}", "push", "--atomic", remote, *(f"{sha}:{ref}" for ref, sha in targets.items()))
+        credentials = ("-c", "credential.helper=", "-c", "credential.helper=!gh auth git-credential") if os.environ.get("GH_TOKEN") else ()
+        git(*credentials, "-c", f"core.hooksPath={hooks.as_posix()}", "push", "--atomic", remote, *(f"{sha}:{ref}" for ref, sha in targets.items()))
 
 
 def metadata(commit: str) -> tuple[str, str]:
@@ -110,6 +112,16 @@ def require_fast_forwards(heads: dict[str, str], candidate: str) -> None:
     for branch, sha in heads.items():
         if not ancestor(sha, candidate):
             raise RuntimeError(f"{branch} has commits outside the candidate; reconcile and validate again.")
+
+
+def validate_state(state: dict) -> None:
+    version(state["target"])
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", state["remote"]):
+        raise RuntimeError("Recovery state must name a configured Git remote, not a URL or Git option.")
+    if set(state["heads"]) != set(BRANCHES) or any(not re.fullmatch(r"[0-9a-f]{40}", value) for value in (*state["heads"].values(), state["tree"], state["candidate"])):
+        raise RuntimeError("Recovery state contains invalid object IDs or branch names.")
+    if state["ref"] != f"refs/heads/release-candidates/{state['target']}":
+        raise RuntimeError("Recovery state is not a versioned candidate ref.")
 
 
 def prepare(args: argparse.Namespace) -> None:
@@ -171,12 +183,21 @@ def finalize(state: dict) -> None:
     state["candidate"] = git("rev-parse", "HEAD")
 
 
-def publish(state: dict) -> None:
+def publish(state: dict, approved_previous: str = "") -> None:
+    validate_state(state)
+    version(state["target"])
+    if state["ref"] != f"refs/heads/release-candidates/{state['target']}" or metadata(state["candidate"]) != (state["target"], "0"):
+        raise RuntimeError("Invalid candidate publication identity or metadata.")
+    if git("rev-parse", state["candidate"] + "^{tree}") != state["tree"]:
+        raise RuntimeError("Candidate publication tree differs from validation.")
     unchanged(state["remote"], state["heads"])
     require_fast_forwards(state["heads"], state["candidate"])
     existing = remote_refs(state["remote"], state["ref"])
     if existing and existing[state["ref"]] != state["candidate"]:
-        raise RuntimeError("Candidate changed; review the new candidate instead.")
+        old = existing[state["ref"]]
+        if old != approved_previous or not ancestor(old, state["candidate"]):
+            raise RuntimeError("Candidate changed; review the new candidate instead. A reviewed descendant requires explicit approval of the previous SHA.")
+        guarded_push(state["remote"], {state["ref"]: old}, {state["ref"]: state["candidate"]})
     if not existing:
         guarded_push(state["remote"], {state["ref"]: "0" * 40}, {state["ref"]: state["candidate"]})
     print(f"Review candidate {state['candidate']} for {state['target']}; production branches were not updated.")
@@ -189,7 +210,7 @@ def api(path: str) -> object:
 def check_protection(repository: str, candidate: str) -> None:
     checks = [check for page in api(f"repos/{repository}/commits/{candidate}/check-runs?per_page=100") for check in page["check_runs"]]
     # Always require our complete CI, even if a repository rule is removed.
-    required = {("ci-status", 15368)}
+    required = {("ci-status", 15368), ("master-dependency-policy", 15368)}
     for branch in BRANCHES:
         rules = [rule for page in api(f"repos/{repository}/rules/branches/{branch}?per_page=100") for rule in page]
         for rule in rules:
@@ -204,9 +225,52 @@ def check_protection(repository: str, candidate: str) -> None:
         latest = max(matching, key=lambda check: check["id"], default=None)
         if not latest or latest["status"] != "completed" or latest["conclusion"] != "success":
             raise RuntimeError(f"Required check {name} (integration {integration}) is not green on {candidate}. Use the candidate PR; do not bypass.")
+        if latest.get("head_sha") != candidate:
+            raise RuntimeError("Required check belongs to a different candidate.")
+        finished = datetime.fromisoformat(latest["completed_at"].replace("Z", "+00:00"))
+        age = (datetime.now(timezone.utc) - finished).total_seconds()
+        if not -300 <= age <= 7 * 86400:
+            raise RuntimeError("Required check is stale; validate the same candidate again before promotion.")
+    # Do not infer absence from REST 404 (which can also mean no permission).
+    owner, name = repository.split("/")
+    query = "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){branchProtectionRules(first:1){totalCount}}}"
+    classic = json.loads(run("gh", "api", "graphql", "-f", f"query={query}", "-f", f"owner={owner}", "-f", f"name={name}"))
+    if classic["data"]["repository"]["branchProtectionRules"]["totalCount"]:
+        raise RuntimeError("Classic branch protection requires manual review and the approved PR path.")
+    # Fail closed even for an unrelated bypass grant. Never use the old release App.
+    for page in api(f"repos/{repository}/rulesets?includes_parents=true&per_page=100"):
+        for ruleset in page:
+            if ruleset["enforcement"] != "active":
+                continue
+            detail = api(f"repos/{repository}/rulesets/{ruleset['id']}")[0]
+            if detail.get("current_user_can_bypass") != "never":
+                raise RuntimeError("Promotion identity may bypass protections or bypass permissions could not be verified.")
+
+
+def release_tag(remote: str, target: str, approved: str) -> tuple[str, str]:
+    version(target)
+    ref = f"refs/tags/v{target}"
+    refs = dict(line.split()[::-1] for line in git("ls-remote", remote, ref, ref + "^{}").splitlines())
+    if refs and refs.get(ref + "^{}", refs.get(ref)) != approved:
+        raise RuntimeError(f"Existing release tag {ref} conflicts with approved SHA; never move it.")
+    return ref, refs.get(ref, "0" * 40)
+
+
+def verify_remote(repository: str, remote: str) -> None:
+    url = git("remote", "get-url", "--push", remote)
+    if url.removesuffix(".git").lower() != f"https://github.com/{repository}".lower():
+        raise RuntimeError("Promotion requires the expected HTTPS repository and the same GH_TOKEN identity used for protection inspection.")
+    if not os.environ.get("GH_TOKEN"):
+        raise RuntimeError("Set GH_TOKEN to a non-bypassing identity; Git and protection API must use the same credential.")
+    headers = subprocess.run(["git", "config", "--get-regexp", r"^http\..*extraheader$"], capture_output=True)
+    if headers.returncode not in (0, 1) or headers.stdout.strip():
+        raise RuntimeError("Remove persisted Git HTTP authentication headers before promotion; only GH_TOKEN may authenticate this transaction.")
+    if os.environ.get("GH_HOST", "github.com") != "github.com":
+        raise RuntimeError("Promotion must authenticate to github.com.")
 
 
 def promote(state: dict, approved: str, repository: str) -> None:
+    validate_state(state)
     if not re.fullmatch(r"[0-9a-f]{40}", approved) or approved != state["candidate"]:
         raise RuntimeError("Promotion requires the exact reviewed candidate SHA.")
     if git("status", "--porcelain"):
@@ -217,14 +281,27 @@ def promote(state: dict, approved: str, repository: str) -> None:
         raise RuntimeError("The published candidate changed or is missing.")
     require_fast_forwards(state["heads"], approved)
     check_protection(repository, approved)
-    unchanged(state["remote"], state["heads"])
+    verify_remote(repository, state["remote"])
+    tag, existing_tag = release_tag(state["remote"], state["target"], approved)
+    actual = remote_refs(state["remote"], *(f"refs/heads/{branch}" for branch in BRANCHES))
+    already_promoted = actual == {f"refs/heads/{branch}": approved for branch in BRANCHES}
+    if not already_promoted and approved in actual.values():
+        raise RuntimeError("Partial promotion requires a newly reviewed descendant candidate so every branch participates in the atomic transaction.")
+    if not already_promoted:
+        unchanged(state["remote"], state["heads"])
     # One transaction: protection or concurrent non-FF rejection leaves ALL
     # three refs unchanged. Never fall back to sequential or forced pushes.
-    expected = {f"refs/heads/{branch}": sha for branch, sha in state["heads"].items()}
-    guarded_push(state["remote"], expected, {ref: approved for ref in expected})
+    expected = actual if already_promoted else {f"refs/heads/{branch}": sha for branch, sha in state["heads"].items()}
+    targets = {ref: approved for ref in expected}
+    if existing_tag == "0" * 40:
+        expected[tag] = existing_tag
+        targets[tag] = approved
+    guarded_push(state["remote"], expected, targets)
     actual = remote_refs(state["remote"], *(f"refs/heads/{branch}" for branch in BRANCHES))
     if set(actual.values()) != {approved}:
         raise RuntimeError("Post-promotion heads differ; inspect remote state before retrying.")
+    if release_tag(state["remote"], state["target"], approved)[1] == "0" * 40:
+        raise RuntimeError("Promotion tag is missing; inspect remote state before retrying.")
 
 
 def main() -> None:
@@ -235,6 +312,7 @@ def main() -> None:
     parser.add_argument("--release-type", choices=("major", "minor", "patch", "resume"), default="patch")
     parser.add_argument("--state", required=True)
     parser.add_argument("--approved-sha", default="")
+    parser.add_argument("--approved-previous-sha", default="", help="Explicitly authorize a reviewed fast-forward candidate revision; never a production update.")
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     args = parser.parse_args()
     if args.command == "prepare":
@@ -245,7 +323,7 @@ def main() -> None:
         finalize(state)
         Path(args.state).write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     elif args.command == "publish":
-        publish(state)
+        publish(state, args.approved_previous_sha)
     else:
         promote(state, args.approved_sha, args.repository)
 

@@ -11,6 +11,7 @@ from scripts import release
 
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
+    monkeypatch.setattr(release, "verify_remote", lambda *args: None)
     remote = tmp_path / "remote.git"
     local = tmp_path / "checkout"
     release.run("git", "init", "--bare", str(remote))
@@ -81,6 +82,10 @@ def test_reruns_and_partial_promotions_reuse_exact_candidate(repo, monkeypatch, 
     assert rerun["candidate"] == plan["candidate"]
     assert release.metadata("HEAD") == ("1.2.4", "0")
     monkeypatch.setattr(release, "check_protection", lambda *args: None)
+    if promoted and len(promoted) != 3:
+        with pytest.raises(RuntimeError, match="newly reviewed descendant"):
+            release.promote(rerun, rerun["candidate"], "example/repo")
+        return
     release.promote(rerun, rerun["candidate"], "example/repo")
     assert set(release.snapshot("origin").values()) == {plan["candidate"]}
 

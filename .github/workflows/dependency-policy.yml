@@ -1,0 +1,30 @@
+name: Master Dependency Policy
+on:
+  workflow_dispatch:
+  pull_request_target:
+    branches: [master]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: ['release-candidates/**']
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+concurrency:
+  group: dependency-policy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  controller:
+    if: github.event_name == 'pull_request_target' || startsWith(github.ref, 'refs/heads/release-candidates/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # PR-target jobs execute only the trusted base policy, never PR code.
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Inspect commit metadata and emit the master-specific required check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/dependency_policy.py

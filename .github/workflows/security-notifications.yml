@@ -1,0 +1,29 @@
+name: Production Security Notifications
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [master]
+permissions:
+  contents: read
+concurrency:
+  group: production-security-notifications
+  cancel-in-progress: false
+jobs:
+  monitor:
+    if: github.ref == 'refs/heads/master' && vars.SECURITY_TRACKER_REPOSITORY != ''
+    environment: security-monitor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      # Trusted stdlib code only. No dependency installation or PR checkout.
+      - name: Update deduplicated private production-security notifications
+        env:
+          SECURITY_ALERTS_READ_TOKEN: ${{ secrets.SECURITY_ALERTS_READ_TOKEN }}
+          SECURITY_TRACKER_WRITE_TOKEN: ${{ secrets.SECURITY_TRACKER_WRITE_TOKEN }}
+          SECURITY_TRACKER_REPOSITORY: ${{ vars.SECURITY_TRACKER_REPOSITORY }}
+        run: python scripts/security_notifications.py

@@ -1,14 +1,8 @@
-name: Docker Latest Build
-
-on:
-  push:
-    branches: [ master ]
-
+name: Docker Latest Build (retired)
+on: workflow_dispatch
+permissions: {}
 jobs:
-
-  docker-build-latest:
-    name: Docker
-    uses: ./.github/workflows/docker-build.yml
-    secrets: inherit
-    with:
-      tag_name: latest
+  instructions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Use Release Publication with the exact promoted SHA. Moving-branch publication is retired.'

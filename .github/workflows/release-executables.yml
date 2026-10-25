@@ -1,0 +1,72 @@
+name: Release Executable Artifacts
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            build_os: windows
+            suffix: Windows.exe
+            ext: .exe
+          - runner: ubuntu-latest
+            build_os: ubuntu
+            suffix: Linux
+            ext: ''
+          - runner: macos-15-intel
+            build_os: macos
+            suffix: macOS-x86_64
+            ext: ''
+          - runner: macos-15
+            build_os: macos
+            suffix: macOS-arm64
+            ext: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - name: Build without publication credentials
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          TAG: ${{ inputs.tag }}
+          EXT: ${{ matrix.ext }}
+          SUFFIX: ${{ matrix.suffix }}
+          BUILD_OS: ${{ matrix.build_os }}
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$TAG" = "v$(cat VERSION)"
+          test "$(cat BUILDNUM)" = 0
+          npm ci --no-fund --no-audit
+          npm run build
+          python -m pip install -r requirements.txt pyinstaller==6.22.3
+          pyinstaller -y ./quickstart.spec -- --build "$BUILD_OS"
+          mv "dist/Quickstart$EXT" "dist/Quickstart-$TAG-$SUFFIX"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: executable-${{ matrix.suffix }}
+          path: dist/Quickstart-${{ inputs.tag }}-${{ matrix.suffix }}
+          if-no-files-found: error
+          retention-days: 30
