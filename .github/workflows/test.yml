@@ -22,6 +22,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha || github.sha }}
+          # History contracts inspect earlier commits, including release baselines.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup Node

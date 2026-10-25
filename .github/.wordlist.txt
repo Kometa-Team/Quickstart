@@ -13,7 +13,9 @@ configs
 CPython
 Deduped
 deduplicated
+deduplication
 dev
+Docker's
 DOM
 else's
 Emby
@@ -23,6 +25,7 @@ Frontend
 GiB
 Gotify
 gzip
+handoff
 healthcheck
 Homebrew
 https
