@@ -482,6 +482,9 @@ prefix if yml_location == "top_level" else
                         {% endif %}
                     </select>
                 </div>
+                <input type="hidden" id="{{ tvdb_id }}__lookup_labels" name="{{ tvdb_name }}__lookup_labels"
+                    value="{{ data['libraries'].get(tvdb_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+                    data-template-metadata="lookup-labels" data-skip-override-count="true">
                 {% endif %}
             </div>
             {% endif %}

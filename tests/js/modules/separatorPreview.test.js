@@ -60,6 +60,61 @@ describe('separatorPreview module surface', () => {
 })
 
 describe('separatorPreview: smoke tests', () => {
+  it.each([
+    ['mov', 'movie', 'imdb', 'imdb_id', 'tt0133093', 'The Matrix'],
+    ['mov', 'movie', 'tmdb_movie', 'tmdb_movie', '603', 'The Matrix'],
+    ['sho', 'show', 'imdb', 'imdb_id', 'tt0944947', 'Game of Thrones'],
+    ['sho', 'show', 'tvdb_show', 'tvdb_show', '121361', 'Game of Thrones']
+  ])('submits the selected %s/%s/%s ID and title with the inactive source empty', async (kind, type, source, key, value, title) => {
+    const prefix = `${kind}-library_selection`
+    const libraryName = `${type} & ${source}`
+    const secondary = type === 'movie' ? 'tmdb_movie' : 'tvdb_show'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'success', items: [{ title, [key]: value }] })
+    }))
+    document.body.innerHTML = `
+      <form id="configForm">
+        <select name="${prefix}-template_variables[use_separator]">
+          <option value="gray" selected>Gray</option>
+        </select>
+        <div data-separator-placeholder-wrapper="true" data-library-id="${libraryName}" data-library-prefix="${prefix}" data-library-type="${type}">
+          <select class="separator-placeholder-source">
+            <option value="imdb" selected>IMDb</option>
+            <option value="${secondary}">${secondary}</option>
+          </select>
+          ${['imdb', secondary].map(optionSource => {
+            const optionKey = optionSource === 'imdb' ? 'imdb_id' : optionSource
+            const name = `${prefix}-attribute_template_variables[placeholder_${optionKey}]`
+            return `
+              <div class="separator-placeholder-field" data-placeholder-source="${optionSource}">
+                <select id="${optionSource}_selection" name="${name}" class="separator-placeholder-picklist" data-separator-placeholder-input="${optionSource}"></select>
+                <input type="hidden" id="${optionSource}_selection__lookup_labels" name="${name}__lookup_labels">
+              </div>`
+          }).join('')}
+        </div>
+      </form>`
+
+    separatorPreview.initializeOverlays(prefix, type === 'movie')
+    await flushAsyncWork()
+    const sourceSelect = document.querySelector('.separator-placeholder-source')
+    sourceSelect.value = source
+    sourceSelect.dispatchEvent(new Event('change'))
+    await flushAsyncWork()
+    const picklist = document.getElementById(`${source}_selection`)
+    expect(Array.from(picklist.options).map(option => option.value)).toContain(value)
+    picklist.value = value
+    picklist.dispatchEvent(new Event('change'))
+
+    const form = new FormData(document.getElementById('configForm'))
+    const field = `${prefix}-attribute_template_variables[placeholder_${key}]`
+    expect(form.get(field)).toBe(value)
+    expect(JSON.parse(form.get(`${field}__lookup_labels`))).toEqual({ [value]: title })
+    const inactiveKey = source === 'imdb' ? secondary : 'imdb_id'
+    expect(form.get(`${prefix}-attribute_template_variables[placeholder_${inactiveKey}]`)).toBe('')
+    expect(fetch).toHaveBeenCalledWith(`/get_top_imdb_items/${encodeURIComponent(libraryName)}?type=${type}`, { credentials: 'same-origin' })
+  })
+
   // Each test builds the minimum DOM the function needs and asserts
   // one visible behavior. Exhaustive behavior coverage is elsewhere;
   // these prove the module works without needing overlayHandler.js.
