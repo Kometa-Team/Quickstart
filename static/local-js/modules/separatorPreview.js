@@ -50,11 +50,13 @@ function updateSeparatorToggles (libraryId, isEnabled) {
 
   if (awardToggle) {
     awardToggle.disabled = !isEnabled
+    awardToggle.classList.toggle('readonly-toggle', !isEnabled)
     console.log(`[DEBUG] Award Separator Toggle is now ${isEnabled ? 'ENABLED' : 'DISABLED'}`)
   }
 
   if (chartToggle) {
     chartToggle.disabled = !isEnabled
+    chartToggle.classList.toggle('readonly-toggle', !isEnabled)
     console.log(`[DEBUG] Chart Separator Toggle is now ${isEnabled ? 'ENABLED' : 'DISABLED'}`)
   }
 }
@@ -347,9 +349,6 @@ export function updateHiddenInputs (libraryId, isMovie) {
   let useSeparatorsInput = document.getElementById(`${libraryId}-template_variables_use_separator`)
   let sepStyleInput = document.getElementById(`${libraryId}-template_variables_sep_style`)
 
-  const awardSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_award`)
-  const chartSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_chart`)
-
   const selectedValue = useSeparatorsDropdown.value
   const isEnabled = selectedValue !== 'none'
 
@@ -377,15 +376,7 @@ export function updateHiddenInputs (libraryId, isMovie) {
   }
   sepStyleInput.value = isEnabled ? selectedValue : ''
 
-  if (awardSeparatorToggle) {
-    // Only depend on sep_style being set to enable/disable
-    awardSeparatorToggle.disabled = !isEnabled
-  }
-
-  if (chartSeparatorToggle) {
-    // Only depend on sep_style being set to enable/disable
-    chartSeparatorToggle.disabled = !isEnabled
-  }
+  updateSeparatorToggles(libraryId, isEnabled)
 
   const fieldId = `${libraryId}-template_variables[use_separator]`
   updateSeparatorPreview(fieldId, selectedValue)
@@ -436,6 +427,9 @@ export function initializeOverlays (libraryId, isMovie) {
     updateHiddenInputs(libraryId, isMovie)
     updateAccordionHighlights()
   }
+
+  // Collection groups can arrive after the style dropdown listener was attached.
+  if (separatorDropdown) updateSeparatorToggles(libraryId, separatorDropdown.value !== 'none')
 
   const placeholderWrapper = getSeparatorPlaceholderWrapper(libraryId)
   const sourceSelect = placeholderWrapper?.querySelector('.separator-placeholder-source')

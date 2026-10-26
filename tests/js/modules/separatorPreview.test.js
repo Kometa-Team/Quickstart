@@ -136,6 +136,26 @@ describe('separator selection persistence', () => {
 })
 
 describe('independent award and chart separator toggles', () => {
+  it.each(['mov', 'sho'])('enables editable %s separator toggles loaded after initialization', kind => {
+    const prefix = `${kind}-library_late`
+    document.body.innerHTML = `<form id="configForm"><select name="${prefix}-template_variables[use_separator]"><option value="gray">Gray</option><option value="none">None</option></select></form>`
+    separatorPreview.initializeOverlays(prefix, kind === 'mov')
+    document.getElementById('configForm').insertAdjacentHTML('beforeend', `
+      <input type="checkbox" class="readonly-toggle" id="${prefix}-collection_separator_chart" checked disabled>
+      <input type="checkbox" class="readonly-toggle" id="${prefix}-collection_separator_award" disabled>`)
+    separatorPreview.initializeOverlays(prefix, kind === 'mov')
+    const chart = document.getElementById(`${prefix}-collection_separator_chart`)
+    const award = document.getElementById(`${prefix}-collection_separator_award`)
+    expect([chart.disabled, award.disabled]).toEqual([false, false])
+    expect(chart.classList.contains('readonly-toggle')).toBe(false)
+    expect(award.classList.contains('readonly-toggle')).toBe(false)
+    expect([chart.checked, award.checked]).toEqual([true, false])
+    document.querySelector('select').value = 'none'
+    separatorPreview.updateHiddenInputs(prefix, kind === 'mov')
+    expect([chart.disabled, award.disabled]).toEqual([true, true])
+    expect([chart.checked, award.checked]).toEqual([true, false])
+  })
+
   it.each(['mov', 'sho'].flatMap(kind => ['gray', 'none'].flatMap(style => [false, true].flatMap(award => [false, true].map(chart => [kind, style, award, chart])))))(
     'preserves %s saved choices with style=%s, award=%s and chart=%s',
     (kind, style, award, chart) => {
