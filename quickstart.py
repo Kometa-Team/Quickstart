@@ -3723,8 +3723,7 @@ def validate_all_services():
                                     "template_variables[placeholder_tvdb_show]",
                                 ]
                             )
-                        placeholder = find_library_value(lib_id, placeholder_keys)
-                        if is_blank_value(placeholder):
+                        if all(is_blank_value(find_library_value(lib_id, [key])) for key in placeholder_keys):
                             missing_placeholders.append(library_names.get(lib_id, lib_id))
                 if libraries_reason is None and missing_placeholders:
                     libraries_reason = "missing_separator_placeholder"

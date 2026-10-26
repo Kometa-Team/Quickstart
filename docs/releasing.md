@@ -169,6 +169,16 @@ remain excluded, preserving BUILDNUM=0. Automatic moving-prerelease replacement
 and development-image publication are removed from that writer; future development
 publication needs a separately reviewed immutable-source procedure.
 
+Development build notes use `scripts/build_changelog.py`. The old prerelease
+writer failed after the interrupted release because it assumed `vVERSION`
+already existed. The helper selects the latest reachable stable version tag
+at or below VERSION; if none exists, it includes the source's complete history.
+It ignores prerelease tags and unrelated histories, pins the requested source,
+and never creates tags. The build-number review includes these notes without
+restoring the retired prerelease publisher. Any future prerelease caller can use
+`python scripts/build_changelog.py --repository Kometa-Team/Quickstart --version 0.10.15 --source HEAD --output changelog.md`
+before publication; an existing tag for that version is not a prerequisite.
+
 ## Urgent production security notifications
 
 Production Security Notifications runs twice hourly, on master pushes, and on

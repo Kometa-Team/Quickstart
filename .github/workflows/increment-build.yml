@@ -49,6 +49,7 @@ jobs:
           export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
           git add BUILDNUM PART
           git -c core.hooksPath=/dev/null commit -m "Prepare development build after PR $PR_NUMBER"
+          python scripts/build_changelog.py --repository "$GITHUB_REPOSITORY" --version "$(cat VERSION)" --source "$MERGED_SHA" --output "$RUNNER_TEMP/changelog.md"
           git bundle create "$RUNNER_TEMP/build.bundle" HEAD
           {
             echo "sha=$(git rev-parse HEAD)"
@@ -59,7 +60,9 @@ jobs:
         if: steps.build.outputs.changed == 'true'
         with:
           name: build-number
-          path: ${{ runner.temp }}/build.bundle
+          path: |
+            ${{ runner.temp }}/build.bundle
+            ${{ runner.temp }}/changelog.md
   review:
     needs: verify-changes
     if: needs.verify-changes.outputs.changed == 'true'
@@ -89,5 +92,5 @@ jobs:
           test "$files" = "$(printf 'BUILDNUM\nPART')"
           git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin "$COMMIT:refs/heads/$BRANCH"
           if [ "$(gh pr list --head "$BRANCH" --base develop --json number --jq length)" -eq 0 ]; then
-            gh pr create --draft --head "$BRANCH" --base develop --title 'Review development build number' --body 'Only BUILDNUM and PART change. Normal CI and branch protections apply. No prerelease or Docker publication is triggered.'
+            gh pr create --draft --head "$BRANCH" --base develop --title 'Review development build number' --body-file "$RUNNER_TEMP/changelog.md"
           fi
