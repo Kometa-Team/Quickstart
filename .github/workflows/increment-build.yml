@@ -1,203 +1,96 @@
 name: Increment Build
-
 on:
   pull_request_target:
-    branches: [ develop ]
-    types: [ closed ]
-
+    branches: [develop]
+    types: [closed]
+permissions:
+  contents: read
 concurrency:
-  group: increment-build-develop
+  group: quickstart-release-writer
   cancel-in-progress: false
-
 jobs:
-
   verify-changes:
-    name: Verify Changes
+    if: >-
+      github.base_ref == 'develop' && github.event.pull_request.merged &&
+      !startsWith(github.event.pull_request.head.ref, 'release-candidates/') &&
+      !startsWith(github.event.pull_request.head.ref, 'automation/build-')
     runs-on: ubuntu-latest
-    if: github.base_ref == 'develop' && github.event.pull_request.merged
     outputs:
-      build: ${{ steps.list-changes.outputs.build }}
+      changed: ${{ steps.build.outputs.changed }}
+      sha: ${{ steps.build.outputs.sha }}
+      branch: ${{ steps.build.outputs.branch }}
     steps:
-
-      - name: Display Refs
-        run: |
-          echo "Base Repo: ${{ github.event.pull_request.base.repo.full_name }}"
-          echo "Base Ref: ${{ github.base_ref }}"
-          echo "Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
-          echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
-
-      - name: Check Out Repo
-        uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
-          ref: develop
-
-      - name: Get changes
-        id: get-changes
-        run: echo "files=$(git diff --name-only HEAD^ | xargs)" >> $GITHUB_OUTPUT
-
-      - name: List changed files
-        id: list-changes
-        run: |
-          for file in ${{ steps.get-changes.outputs.files }}; do
-              if [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
-                  echo "$file will trigger docker build"
-                  echo "build=true" >> $GITHUB_OUTPUT
-              else
-                  echo "$file will not trigger docker build"
-              fi
-          done
-
-
-  increment-build:
-    name: Increment Build
-    runs-on: ubuntu-latest
-    needs: [ verify-changes ]
-    if: needs.verify-changes.outputs.build == 'true'
-    outputs:
-      version: ${{ steps.update-version.outputs.version }}
-      build-value: ${{ steps.update-version.outputs.build-value }}
-      commit-msg: ${{ steps.update-version.outputs.commit-msg }}
-      commit-hash: ${{ steps.update-version.outputs.commit-hash }}
-      commit-short: ${{ steps.update-version.outputs.commit-short }}
-      pr-tag: ${{ steps.update-version.outputs.pr-tag }}
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v3.3.0
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v7.0.1
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          ref: develop
-          fetch-depth: 0
-
-      - name: Update VERSION File
-        id: update-version
-        run: |
-          branch_name=${{ github.event.pull_request.head.ref }}
-          repo_name=${{ github.event.pull_request.head.repo.full_name }}
-          base_name="${repo_name%/*}"
-          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
-              pr_tag="${base_name}"
-          else
-              pr_tag="${branch_name}"
-          fi
-          echo "pr-tag=${pr_tag}" >> $GITHUB_OUTPUT
-
-          version=$(cat VERSION)
-          build_value=$(cat BUILDNUM)
-          next_build_value="$((${build_value} + 1))"
-
-          old_msg=$(git log -1 HEAD --pretty=format:%s)
-          new_msg="[${next_build_value}] ${old_msg}"
-
-          echo "version=${version}" >> $GITHUB_OUTPUT
-          echo "build-value=${next_build_value}" >> $GITHUB_OUTPUT
-          echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
-          echo "commit-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-          echo "$next_build_value" > "BUILDNUM"
-          echo "" > "PART"
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add BUILDNUM
-          git add PART
-
-          # Plain commit + push, not --amend/--force-with-lease -- concurrency group increment-build-develop already serializes runs, so a normal push is safe; retry loop is just a safety net.
-          git commit -m "${new_msg}"
-
-          push_ok=false
-          for attempt in 1 2 3; do
-            if git push origin develop; then
-              push_ok=true
-              break
-            fi
-            echo "Push rejected (attempt ${attempt}); fetching and rebasing before retry."
-            git fetch origin develop
-            git rebase origin/develop
-          done
-
-          if [ "$push_ok" != "true" ]; then
-            echo "::error::Could not push the build-number commit to develop after 3 attempts."
-            exit 1
-          fi
-
-          hash=$(git rev-parse HEAD)
-          echo "$hash"
-          echo "commit-hash=${hash}" >> $GITHUB_OUTPUT
-
-
-  create-pre-release:
-    name: Create Pre-Release
-    runs-on: ubuntu-latest
-    needs: [ increment-build ]
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v3.3.0
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-          ref: develop
-
-      - name: Build Changelog
-        run: |
-          {
-            echo "## Commits"
-            echo ""
-            git log v${{ needs.increment-build.outputs.version }}..HEAD --pretty=format:'* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)'
-            echo ""
-            echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/v${{ needs.increment-build.outputs.version }}...prerelease)"
-          } > changelog.md
-
-      - name: Create Pre-Release
+          persist-credentials: false
+      - name: Prepare a reviewable build-number PR, never write develop
+        id: build
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          MERGED_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          cat changelog.md
-
-          if gh release view prerelease > /dev/null 2>&1; then
-            gh release delete prerelease --cleanup-tag
-            sleep 60
+          set -euo pipefail
+          current=$(git ls-remote --refs origin refs/heads/develop | cut -f1)
+          if [ "$current" != "$MERGED_SHA" ]; then
+            echo 'Integration moved; skip this stale build-number event.'
+            exit 0
           fi
-
-          gh release create prerelease --prerelease \
-            --title "${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}" \
-            --notes-file changelog.md \
-            --target "${{ needs.increment-build.outputs.commit-hash }}"
-
-      - name: Discord Failure Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: failure()
+          if ! git diff --name-only HEAD^ HEAD | grep -Eq '^(modules/|static/|templates/|quickstart.py$|requirements.txt$|Dockerfile|\.dockerignore$)'; then exit 0; fi
+          build=$(cat BUILDNUM)
+          [[ "$build" =~ ^[0-9]+$ ]]
+          printf '%s\n' "$((10#$build + 1))" > BUILDNUM
+          printf '\n' > PART
+          git config user.email action@github.com
+          git config user.name 'GitHub Action'
+          GIT_AUTHOR_DATE="$(git show -s --format=%aI "$MERGED_SHA")"
+          export GIT_AUTHOR_DATE
+          export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+          git add BUILDNUM PART
+          git -c core.hooksPath=/dev/null commit -m "Prepare development build after PR $PR_NUMBER"
+          python scripts/build_changelog.py --repository "$GITHUB_REPOSITORY" --version "$(cat VERSION)" --source "$MERGED_SHA" --output "$RUNNER_TEMP/changelog.md"
+          git bundle create "$RUNNER_TEMP/build.bundle" HEAD
+          {
+            echo "sha=$(git rev-parse HEAD)"
+            echo "branch=automation/build-$PR_NUMBER-$MERGED_SHA"
+            echo 'changed=true'
+          } >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.build.outputs.changed == 'true'
         with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: ${{ vars.BUILD_FAILURE_ROLE }}
-          title: "${{ vars.NAME }} develop: **Release Failed**"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_FAILURE }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}
-
-  docker-build-develop:
-    name: Docker
-    uses: ./.github/workflows/docker-build.yml
-    secrets: inherit
-    needs: [ increment-build ]
-    with:
-      branch: develop
-      branch_name: develop
-      tag_name: develop
+          name: build-number
+          path: |
+            ${{ runner.temp }}/build.bundle
+            ${{ runner.temp }}/changelog.md
+  review:
+    needs: verify-changes
+    if: needs.verify-changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: build-number
+          path: ${{ runner.temp }}
+      - name: Publish only the metadata review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ needs.verify-changes.outputs.sha }}
+          BRANCH: ${{ needs.verify-changes.outputs.branch }}
+          MERGED_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          git fetch "$RUNNER_TEMP/build.bundle" HEAD
+          test "$(git rev-parse "$COMMIT^")" = "$MERGED_SHA"
+          test "$(git ls-remote --refs origin refs/heads/develop | cut -f1)" = "$MERGED_SHA"
+          files=$(git diff --name-only "$COMMIT^" "$COMMIT")
+          test "$files" = "$(printf 'BUILDNUM\nPART')"
+          git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin "$COMMIT:refs/heads/$BRANCH"
+          if [ "$(gh pr list --head "$BRANCH" --base develop --json number --jq length)" -eq 0 ]; then
+            gh pr create --draft --head "$BRANCH" --base develop --title 'Review development build number' --body-file "$RUNNER_TEMP/changelog.md"
+          fi

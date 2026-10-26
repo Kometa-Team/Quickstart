@@ -1,0 +1,44 @@
+name: Release Validation
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - name: Dependencies and security audits
+        run: |
+          npm ci --no-fund --no-audit
+          python -m pip install -r requirements.txt -r requirements-dev.txt pip-audit
+          python -m pip check
+          python -m pip_audit -r requirements.txt -r requirements-dev.txt
+          npm audit --audit-level=low
+          sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
+      - name: Complete lint, JavaScript tests and build
+        env:
+          SKIP: no-commit-to-branch
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+          npm test
+          npm run build
+          python scripts/check_release_build.py
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          "$(go env GOPATH)/bin/actionlint" -color
+          git diff --exit-code

@@ -1,17 +1,8 @@
-name: Docker Develop Build
-
-on:
-  workflow_run:
-    workflows: [ "Master Release" ]
-    types: [ completed ]
-
+name: Docker Develop Build (retired)
+on: workflow_dispatch
+permissions: {}
 jobs:
-
-  docker-build-develop:
-    name: Docker
-    uses: ./.github/workflows/docker-build.yml
-    secrets: inherit
-    with:
-      branch: develop
-      branch_name: develop
-      tag_name: develop
+  instructions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Use Release Publication after approved promotion. Release preparation never publishes images.'

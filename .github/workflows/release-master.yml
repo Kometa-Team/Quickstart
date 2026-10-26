@@ -1,85 +1,160 @@
 name: Master Release
-
 on:
   workflow_dispatch:
     inputs:
+      base_version:
+        type: string
+        required: true
+        description: Fixed starting version; reuse on retry. For resume use the existing release version.
       release_type:
         type: choice
-        description: Choose which type of release to perform.
-        options: [ major, minor, patch ]
+        options: [major, minor, patch, resume]
         default: patch
-      reconcile_0_10_9:
-        type: boolean
-        description: Reconcile the interrupted 0.10.9 release without incrementing the version.
-        default: false
-
+      stage:
+        type: choice
+        options: [prepare, promote]
+        default: prepare
+      approved_sha:
+        type: string
+        description: Exact reviewed SHA, required for promotion.
+permissions:
+  contents: read
+concurrency:
+  group: quickstart-release-writer
+  cancel-in-progress: false
 jobs:
-
-  release-master:
-    name: Create Master Release
+  validate:
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    outputs:
+      candidate: ${{ steps.finalize.outputs.candidate }}
     steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v3.3.0
-        id: app-token
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v7.0.1
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          ref: develop
+          ref: ${{ github.sha }}
           fetch-depth: 0
-
-      - name: Create Release Commit and Synchronize Branches
+          persist-credentials: false
+      - name: Prepare without write credentials
+        env:
+          BASE_VERSION: ${{ inputs.base_version }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
         run: |
-          if [[ "${{ github.event.inputs.reconcile_0_10_9 }}" == "true" ]]; then
-              git config --local user.email "action@github.com"
-              git config --local user.name "GitHub Action"
-              git fetch origin master hotfix backup/master-before-0.10.9
-
-              test "$(cat VERSION)" = "0.10.9"
-              test "$(cat BUILDNUM)" = "0"
-              test "$(git rev-parse origin/master)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
-              test "$(git rev-parse origin/hotfix)" = "a75002c887eff73532efbf7031d3581a3629ce06"
-              test "$(git rev-parse origin/backup/master-before-0.10.9)" = "17f81218442b7fb9541dff4cbdb3a19d7909669e"
-
-              git merge --strategy=ours --no-edit origin/master -m "Reconcile master history for 0.10.9 release"
-              git diff --exit-code HEAD^1 HEAD
-              git merge-base --is-ancestor origin/master HEAD
-              git merge-base --is-ancestor origin/hotfix HEAD
-
-              git push origin HEAD:develop
-              git push origin HEAD:master
-              git push origin HEAD:hotfix
-              exit 0
+          git config user.email action@github.com
+          git config user.name 'GitHub Action'
+          python scripts/release.py prepare --base-version "$BASE_VERSION" --release-type "$RELEASE_TYPE" --state "$RUNNER_TEMP/release.json"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - name: Install and audit dependencies
+        run: |
+          npm ci --no-fund --no-audit
+          python -m pip install -r requirements.txt -r requirements-dev.txt pip-audit
+          python -m pip check
+          python -m pip_audit -r requirements.txt -r requirements-dev.txt
+          npm audit --audit-level=low
+          sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
+      - name: Test fixtures
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse --branch nightly https://github.com/Kometa-Team/Kometa.git "$RUNNER_TEMP/kometa-defaults"
+          git -C "$RUNNER_TEMP/kometa-defaults" sparse-checkout set defaults
+          mkdir -p config/kometa
+          cp -r "$RUNNER_TEMP/kometa-defaults/defaults" config/kometa/defaults
+      - name: Complete validation before any write-capable job
+        env:
+          SKIP: no-commit-to-branch
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+          npm test
+          npm run build
+          python scripts/check_release_build.py
+          python -m pytest
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          "$(go env GOPATH)/bin/actionlint"
+      - name: Finalize and export validated objects
+        id: finalize
+        env:
+          STAGE: ${{ inputs.stage }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: |
+          python scripts/release.py finalize --state "$RUNNER_TEMP/release.json"
+          candidate=$(jq -r .candidate "$RUNNER_TEMP/release.json")
+          if [ "$STAGE" = promote ]; then test "$candidate" = "$APPROVED_SHA"; fi
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
+          git bundle create "$RUNNER_TEMP/candidate.bundle" HEAD
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: validated-candidate
+          path: |
+            ${{ runner.temp }}/release.json
+            ${{ runner.temp }}/candidate.bundle
+          if-no-files-found: error
+  review:
+    needs: validate
+    if: inputs.stage == 'prepare'
+    environment: release-candidate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: validated-candidate
+          path: ${{ runner.temp }}/candidate
+      - name: Publish a draft candidate without running dependency code
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE: ${{ needs.validate.outputs.candidate }}
+        run: |
+          cp scripts/release.py "$RUNNER_TEMP/trusted-release.py"
+          git fetch "$RUNNER_TEMP/candidate/candidate.bundle" HEAD
+          git checkout --detach "$CANDIDATE"
+          python "$RUNNER_TEMP/trusted-release.py" publish --state "$RUNNER_TEMP/candidate/release.json"
+          target=$(jq -r .target "$RUNNER_TEMP/candidate/release.json")
+          branch="release-candidates/$target"
+          count=$(gh pr list --head "$branch" --base develop --json number --jq length)
+          if [ "$count" -eq 0 ]; then
+            printf 'Review exact SHA %s. VERSION=%s BUILDNUM=0. Production promotion requires separate approval.\n' "$CANDIDATE" "$target" > "$RUNNER_TEMP/body.md"
+            gh pr create --draft --base develop --head "$branch" --title "Review release $target" --body-file "$RUNNER_TEMP/body.md"
           fi
-
-          version=$(cat VERSION)
-          echo "CURRENT_VERSION: '${version}'"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
-
-          if [[ "${{ github.event.inputs.release_type }}" == "major" ]]; then
-              NEW_VERSION="$((MAJOR+1)).0.0"
-          elif [[ "${{ github.event.inputs.release_type }}" == "minor" ]]; then
-              NEW_VERSION="${MAJOR}.$((MINOR+1)).0"
-          else
-              NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH+1))"
-          fi
-
-          echo "NEW_VERSION='${NEW_VERSION}'"
-          echo "new_ver=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "$NEW_VERSION" > "VERSION"
-          echo "0" > "BUILDNUM"
-
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add VERSION
-          git add BUILDNUM
-          git commit -m "${{ vars.NAME }} Release ${NEW_VERSION}"
-          git push origin develop
-          git push origin refs/heads/develop:refs/heads/master
-          git push origin refs/heads/develop:refs/heads/hotfix
+          # GITHUB_TOKEN pushes intentionally do not fan out push workflows.
+          # Explicit dispatch starts only these read-only/checks-only validators.
+          gh workflow run ci.yml --ref "$branch"
+          gh workflow run dependency-policy.yml --ref "$branch"
+  promote:
+    needs: validate
+    if: inputs.stage == 'promote' && inputs.approved_sha == needs.validate.outputs.candidate
+    environment:
+      name: release-promotion
+      url: https://github.com/${{ github.repository }}/commit/${{ inputs.approved_sha }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.approved_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: validated-candidate
+          path: ${{ runner.temp }}/candidate
+      - name: Enforce independent approval and non-bypassing atomic promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: |
+          python -c "from scripts.release_publication import environment_gate; import os; environment_gate(os.environ['GITHUB_REPOSITORY'], 'release-promotion')"
+          python scripts/release.py promote --state "$RUNNER_TEMP/candidate/release.json" --approved-sha "$APPROVED_SHA"
+          echo 'Promotion is complete. Release Publication requires a separate approved dispatch on master.' >> "$GITHUB_STEP_SUMMARY"

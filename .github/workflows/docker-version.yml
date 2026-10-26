@@ -1,95 +1,150 @@
-name: Docker Version Build
-
+name: Release Publication
 on:
-  create:
-    tags: [ v* ]
-
+  workflow_dispatch:
+    inputs:
+      approved_sha:
+        type: string
+        required: true
+        description: Exact promoted and separately approved commit SHA.
+      artifact_run_id:
+        type: string
+        default: ''
+        description: On retry, reuse the original Release Publication artifact run; never rebuild uploaded assets.
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: quickstart-release-writer
+  cancel-in-progress: false
 jobs:
-
-  get-version:
-    if: ${{ startsWith(github.ref, 'refs/tags/v0') || startsWith(github.ref, 'refs/tags/v1') || startsWith(github.ref, 'refs/tags/v2') }}
+  verify:
+    if: github.ref == 'refs/heads/master' && inputs.approved_sha == github.sha
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_version.outputs.VERSION }}
+      tag: ${{ steps.verify.outputs.tag }}
     steps:
-
-      - name: Get the version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-
-
-  docker-build-version:
-    name: Docker
-    uses: ./.github/workflows/docker-build.yml
-    secrets: inherit
-    needs: [ get-version ]
-    with:
-      tag_name: ${{ needs.get-version.outputs.version }}
-
-
-  make-releases:
-    name: Make Releases
-    runs-on: ubuntu-latest
-    needs: [ get-version ]
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v3.3.0
-        id: app-token
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v7.0.1
-        with:
+          ref: ${{ inputs.approved_sha }}
           fetch-depth: 0
-          ref: develop
-
-      - name: Build Changelog
-        run: |
-          latest_tag="$(git describe --tags --abbrev=0 --match "v*" ${{ needs.get-version.outputs.version }}^)"
-          echo "${latest_tag}"
-
-          {
-            echo "## Commits"
-            echo ""
-            git log "${latest_tag}..${{ needs.get-version.outputs.version }}" --pretty=format:'* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)'
-            echo ""
-            echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...${{ needs.get-version.outputs.version }})"
-          } > changelog.md
-
-      - name: Create Releases
+          persist-credentials: false
+      - name: Verify promotion, approval, protections and retry provenance
+        id: verify
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+          ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
         run: |
-          cat changelog.md
-
-          if gh release view prerelease > /dev/null 2>&1; then
-            gh release delete prerelease --cleanup-tag
-            sleep 60
+          tag=$(python scripts/release_publication.py verify --approved-sha "$APPROVED_SHA")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          python -c "from scripts.release_publication import environment_gate; import os; environment_gate(os.environ['GITHUB_REPOSITORY'], 'release-publication')"
+          if [ -n "$ARTIFACT_RUN_ID" ]; then
+            [[ "$ARTIFACT_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ARTIFACT_RUN_ID" > "$RUNNER_TEMP/source-run.json"
+            jq -e --arg sha "$APPROVED_SHA" '.head_sha == $sha and .path == ".github/workflows/docker-version.yml" and .event == "workflow_dispatch"' "$RUNNER_TEMP/source-run.json"
           fi
-
-          gh release create prerelease --prerelease \
-            --title "${{ vars.NAME }} ${{ github.event.ref }} Develop Build 0" \
-            --notes "No current changes from the Master branch. Using this version will trigger updates based on the Develop branch." \
-            --target "${{ needs.increment-build.outputs.commit-hash }}"
-
-          gh release create ${{ github.event.ref }} \
-            --title "${{ vars.NAME }} ${{ github.event.ref }}" \
-            --notes-file changelog.md \
-            --target "${{ needs.increment-build.outputs.commit-hash }}"
-
-      - name: Discord Failure Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: failure()
+  tests:
+    needs: verify
+    uses: ./.github/workflows/test.yml
+    with:
+      source_sha: ${{ inputs.approved_sha }}
+  quality:
+    needs: verify
+    uses: ./.github/workflows/release-validation.yml
+    with:
+      source_sha: ${{ inputs.approved_sha }}
+  images:
+    needs: [tests, quality]
+    if: inputs.artifact_run_id == ''
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      source_sha: ${{ inputs.approved_sha }}
+  executables:
+    needs: [verify, tests, quality]
+    if: inputs.artifact_run_id == ''
+    uses: ./.github/workflows/release-executables.yml
+    with:
+      source_sha: ${{ inputs.approved_sha }}
+      tag: ${{ needs.verify.outputs.tag }}
+  tag:
+    needs: [verify, tests, quality, images, executables]
+    if: >-
+      always() && needs.verify.result == 'success' &&
+      needs.tests.result == 'success' && needs.quality.result == 'success' &&
+      ((needs.images.result == 'success' && needs.executables.result == 'success') ||
+       (inputs.artifact_run_id != '' && needs.images.result == 'skipped' && needs.executables.result == 'skipped'))
+    environment: release-publication
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: ${{ vars.BUILD_FAILURE_ROLE }}
-          title: "${{ vars.NAME }} ${{ needs.get-version.outputs.version }}: **Release Failed**"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_FAILURE }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}
+          ref: ${{ inputs.approved_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Create only a missing, verified release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: python scripts/release_publication.py tag --approved-sha "$APPROVED_SHA"
+  publish-images:
+    needs: tag
+    environment: release-publication
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.approved_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: image-*
+          path: images
+          merge-multiple: true
+          run-id: ${{ inputs.artifact_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Verify before exposing registry credentials
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: python scripts/release_publication.py verify --approved-sha "$APPROVED_SHA"
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Publish immutable images and guarded aliases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+          IMAGE: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}
+          ATTEMPT: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: python scripts/release_publication.py images --approved-sha "$APPROVED_SHA" --image "$IMAGE" --directory images --attempt "$ATTEMPT"
+  publish-release:
+    needs: publish-images
+    environment: release-publication
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.approved_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: executable-*
+          path: executables
+          merge-multiple: true
+          run-id: ${{ inputs.artifact_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+      - name: Resume draft uploads, verify existing digests, publish once complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+          IMAGE: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}
+        run: python scripts/release_publication.py complete --approved-sha "$APPROVED_SHA" --directory executables --image "$IMAGE"

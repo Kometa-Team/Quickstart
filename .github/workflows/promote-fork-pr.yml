@@ -31,7 +31,7 @@ jobs:
       # Do not use context.actor/sender here -- on synchronize that's the PR author, not the labeler -- so check the timeline for who last applied internal-test instead.
       - name: Verify a maintainer applied the current internal-test label
         id: permission
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const owner = context.repo.owner;
@@ -82,14 +82,14 @@ jobs:
       # Use the GitHub App token, not GITHUB_TOKEN, so the created PR/push actually triggers downstream workflows.
       - name: Create GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v3.3.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       # This checks out only the trusted base repository/default branch.
       - name: Check out trusted base repository
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
@@ -99,7 +99,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}
+          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
 
@@ -117,13 +117,13 @@ jobs:
           fi
 
           # Copy the commit object only -- never checked out or executed.
-          git push --force origin \
+          git push origin \
             "${FETCHED_SHA}:refs/heads/${INTERNAL_BRANCH}"
 
       - name: Create or update internal pull request
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}
+          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
           SOURCE_PR_NUMBER: ${{ github.event.pull_request.number }}
           SOURCE_PR_TITLE: ${{ github.event.pull_request.title }}
           SOURCE_PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -144,8 +144,8 @@ jobs:
               `Original author: @${process.env.SOURCE_PR_AUTHOR}`,
               `Copied commit: \`${process.env.SOURCE_PR_SHA}\``,
               ``,
-              `This branch is force-updated when the original fork PR changes`,
-              `and a maintainer keeps the \`internal-test\` label applied.`,
+              `This branch records one immutable source commit. A new source`,
+              `commit gets a separate branch and review PR.`,
               ``,
               `The \`build\`/\`build-full\` label is NOT copied automatically --`,
               `a maintainer must re-add it here after reviewing this exact`,
@@ -172,9 +172,9 @@ jobs:
             }
 
       - name: Comment on source pull request
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}
+          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -226,15 +226,15 @@ jobs:
     steps:
       - name: Create GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v3.3.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Delete internal branch
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}
+          INTERNAL_BRANCH: automation/fork-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
