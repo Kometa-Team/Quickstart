@@ -387,6 +387,10 @@ prefix if yml_location == "top_level" else
             <div class="form-text text-warning">Requires Plex Pass. Validate Plex first if this should be available.</div>
             {% endif %}
             {% if prefix == "use_separator" %}
+            <p class="form-text mb-2">
+                Choose a separator style and placeholder here. Then enable Award Separator under
+                Collections &rarr; Award Collections, or Chart Separator under Collections &rarr; Chart Collections.
+            </p>
             <div class="separator-placeholder-wrapper visually-hidden mt-2"
                 data-separator-placeholder-wrapper="true"
                 data-library-id="{{ library.name }}"
@@ -482,6 +486,9 @@ prefix if yml_location == "top_level" else
                         {% endif %}
                     </select>
                 </div>
+                <input type="hidden" id="{{ tvdb_id }}__lookup_labels" name="{{ tvdb_name }}__lookup_labels"
+                    value="{{ data['libraries'].get(tvdb_name ~ '__lookup_labels', '{}') | default('{}', true) }}"
+                    data-template-metadata="lookup-labels" data-skip-override-count="true">
                 {% endif %}
             </div>
             {% endif %}
