@@ -96669,35 +96669,38 @@
           {
             "key": "visible_home",
             "label": "Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "automation_defaults"
+            "section": "automation_defaults",
+            "allow_boolean": true
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "automation_defaults"
+            "section": "automation_defaults",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "automation_defaults"
+            "section": "automation_defaults",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority",
@@ -96911,35 +96914,38 @@
           {
             "key": "visible_home_years",
             "label": "New Year's Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the New Year's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the New Year's Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_years"
+            "section": "holiday_years",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_years",
             "label": "New Year's Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the New Year's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the New Year's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_years"
+            "section": "holiday_years",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_years",
             "label": "New Year's Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the New Year's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the New Year's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_years"
+            "section": "holiday_years",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_years",
@@ -97041,35 +97047,38 @@
           {
             "key": "visible_home_valentine",
             "label": "Valentine's Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Valentine's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Valentine's Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_valentine"
+            "section": "holiday_valentine",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_valentine",
             "label": "Valentine's Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Valentine's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Valentine's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_valentine"
+            "section": "holiday_valentine",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_valentine",
             "label": "Valentine's Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Valentine's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Valentine's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_valentine"
+            "section": "holiday_valentine",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_valentine",
@@ -97171,35 +97180,38 @@
           {
             "key": "visible_home_patrick",
             "label": "St. Patrick's Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_patrick"
+            "section": "holiday_patrick",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_patrick",
             "label": "St. Patrick's Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_patrick"
+            "section": "holiday_patrick",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_patrick",
             "label": "St. Patrick's Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the St. Patrick's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_patrick"
+            "section": "holiday_patrick",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_patrick",
@@ -97301,35 +97313,38 @@
           {
             "key": "visible_home_easter",
             "label": "Easter Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Easter Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Easter Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_easter"
+            "section": "holiday_easter",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_easter",
             "label": "Easter Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Easter Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Easter Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_easter"
+            "section": "holiday_easter",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_easter",
             "label": "Easter Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Easter Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Easter Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_easter"
+            "section": "holiday_easter",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_easter",
@@ -97431,35 +97446,38 @@
           {
             "key": "visible_home_mother",
             "label": "Mother's Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Mother's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Mother's Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_mother"
+            "section": "holiday_mother",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_mother",
             "label": "Mother's Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Mother's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Mother's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_mother"
+            "section": "holiday_mother",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_mother",
             "label": "Mother's Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Mother's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Mother's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_mother"
+            "section": "holiday_mother",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_mother",
@@ -97561,35 +97579,38 @@
           {
             "key": "visible_home_memorial",
             "label": "Memorial Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Memorial Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Memorial Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_memorial"
+            "section": "holiday_memorial",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_memorial",
             "label": "Memorial Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Memorial Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Memorial Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_memorial"
+            "section": "holiday_memorial",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_memorial",
             "label": "Memorial Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Memorial Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Memorial Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_memorial"
+            "section": "holiday_memorial",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_memorial",
@@ -97691,35 +97712,38 @@
           {
             "key": "visible_home_father",
             "label": "Father's Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Father's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Father's Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_father"
+            "section": "holiday_father",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_father",
             "label": "Father's Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Father's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Father's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_father"
+            "section": "holiday_father",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_father",
             "label": "Father's Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Father's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Father's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_father"
+            "section": "holiday_father",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_father",
@@ -97821,35 +97845,38 @@
           {
             "key": "visible_home_independence",
             "label": "Independence Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Independence Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Independence Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_independence"
+            "section": "holiday_independence",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_independence",
             "label": "Independence Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Independence Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Independence Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_independence"
+            "section": "holiday_independence",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_independence",
             "label": "Independence Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Independence Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Independence Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_independence"
+            "section": "holiday_independence",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_independence",
@@ -97951,35 +97978,38 @@
           {
             "key": "visible_home_labor",
             "label": "Labor Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Labor Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Labor Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_labor"
+            "section": "holiday_labor",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_labor",
             "label": "Labor Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Labor Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Labor Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_labor"
+            "section": "holiday_labor",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_labor",
             "label": "Labor Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Labor Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Labor Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_labor"
+            "section": "holiday_labor",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_labor",
@@ -98081,35 +98111,38 @@
           {
             "key": "visible_home_halloween",
             "label": "Halloween Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Halloween Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Halloween Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_halloween"
+            "section": "holiday_halloween",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_halloween",
             "label": "Halloween Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Halloween Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Halloween Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_halloween"
+            "section": "holiday_halloween",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_halloween",
             "label": "Halloween Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Halloween Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Halloween Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_halloween"
+            "section": "holiday_halloween",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_halloween",
@@ -98211,35 +98244,38 @@
           {
             "key": "visible_home_veteran",
             "label": "Veteran's Day Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Veteran's Day Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Veteran's Day Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_veteran"
+            "section": "holiday_veteran",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_veteran",
             "label": "Veteran's Day Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Veteran's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Veteran's Day Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_veteran"
+            "section": "holiday_veteran",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_veteran",
             "label": "Veteran's Day Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Veteran's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Veteran's Day Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_veteran"
+            "section": "holiday_veteran",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_veteran",
@@ -98341,35 +98377,38 @@
           {
             "key": "visible_home_thanksgiving",
             "label": "Thanksgiving Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Thanksgiving Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Thanksgiving Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_thanksgiving"
+            "section": "holiday_thanksgiving",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_thanksgiving",
             "label": "Thanksgiving Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Thanksgiving Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Thanksgiving Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_thanksgiving"
+            "section": "holiday_thanksgiving",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_thanksgiving",
             "label": "Thanksgiving Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Thanksgiving Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Thanksgiving Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_thanksgiving"
+            "section": "holiday_thanksgiving",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_thanksgiving",
@@ -98471,35 +98510,38 @@
           {
             "key": "visible_home_christmas",
             "label": "Christmas Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Christmas Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Christmas Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_christmas"
+            "section": "holiday_christmas",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_christmas",
             "label": "Christmas Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Christmas Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Christmas Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_christmas"
+            "section": "holiday_christmas",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_christmas",
             "label": "Christmas Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Christmas Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Christmas Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_christmas"
+            "section": "holiday_christmas",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_christmas",
@@ -98601,35 +98643,38 @@
           {
             "key": "visible_home_aapi",
             "label": "Asian American Pacific Islander Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_aapi"
+            "section": "holiday_aapi",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_aapi",
             "label": "Asian American Pacific Islander Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_aapi"
+            "section": "holiday_aapi",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_aapi",
             "label": "Asian American Pacific Islander Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Asian American Pacific Islander Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_aapi"
+            "section": "holiday_aapi",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_aapi",
@@ -98731,35 +98776,38 @@
           {
             "key": "visible_home_disabilities",
             "label": "Disability Month Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Disability Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Disability Month Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_disabilities"
+            "section": "holiday_disabilities",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_disabilities",
             "label": "Disability Month Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Disability Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Disability Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_disabilities"
+            "section": "holiday_disabilities",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_disabilities",
             "label": "Disability Month Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Disability Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Disability Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_disabilities"
+            "section": "holiday_disabilities",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_disabilities",
@@ -98861,35 +98909,38 @@
           {
             "key": "visible_home_black_history",
             "label": "Black History Month Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Black History Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Black History Month Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_black_history"
+            "section": "holiday_black_history",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_black_history",
             "label": "Black History Month Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Black History Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Black History Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_black_history"
+            "section": "holiday_black_history",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_black_history",
             "label": "Black History Month Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Black History Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Black History Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_black_history"
+            "section": "holiday_black_history",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_black_history",
@@ -98991,35 +99042,38 @@
           {
             "key": "visible_home_lgbtq",
             "label": "LGBTQ Month Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the LGBTQ Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the LGBTQ Month Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_lgbtq"
+            "section": "holiday_lgbtq",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_lgbtq",
             "label": "LGBTQ Month Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the LGBTQ Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the LGBTQ Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_lgbtq"
+            "section": "holiday_lgbtq",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_lgbtq",
             "label": "LGBTQ Month Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the LGBTQ Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the LGBTQ Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_lgbtq"
+            "section": "holiday_lgbtq",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_lgbtq",
@@ -99121,35 +99175,38 @@
           {
             "key": "visible_home_latinx",
             "label": "National Hispanic Heritage Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_latinx"
+            "section": "holiday_latinx",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_latinx",
             "label": "National Hispanic Heritage Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_latinx"
+            "section": "holiday_latinx",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_latinx",
             "label": "National Hispanic Heritage Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the National Hispanic Heritage Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_latinx"
+            "section": "holiday_latinx",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_latinx",
@@ -99251,35 +99308,38 @@
           {
             "key": "visible_home_women",
             "label": "Women's History Month Movies Visible Home",
-            "type": "toggle",
-            "tooltip": "Changes the Women's History Month Movies collection visible on Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Women's History Month Movies collection visible on Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_women"
+            "section": "holiday_women",
+            "allow_boolean": true
           },
           {
             "key": "visible_library_women",
             "label": "Women's History Month Movies Visible Library",
-            "type": "toggle",
-            "tooltip": "Changes the Women's History Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Women's History Month Movies collection visible on Library Recommended Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_women"
+            "section": "holiday_women",
+            "allow_boolean": true
           },
           {
             "key": "visible_shared_women",
             "label": "Women's History Month Movies Visible Shared",
-            "type": "toggle",
-            "tooltip": "Changes the Women's History Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "type": "schedule",
+            "tooltip": "Changes the Women's History Month Movies collection visible on Shared Users' Home Tab (Only works with Plex Pass). Choose always visible, hidden, or any Kometa visibility schedule.",
             "default": false,
             "media_types": [
               "movie"
             ],
-            "section": "holiday_women"
+            "section": "holiday_women",
+            "allow_boolean": true
           },
           {
             "key": "hub_priority_women",

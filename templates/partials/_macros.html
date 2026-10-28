@@ -1759,14 +1759,22 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 data-default="{{ item.default | default('', true) }}">
                         </div>
                         {% elif item.type == 'schedule' or (item.key is defined and item.key.startswith('schedule_')) %}
-                        {% set schedule_label = 'Schedule' %}
-                        {% set schedule_tooltip = "Configure when this collection updates." %}
-                        {% set label_width = 140 %}
-                        {% set stored_val = data['libraries'].get(input_name, item.default) | default('', true) %}
+                        {% set allow_boolean = item.allow_boolean | default(false) %}
+                        {% set schedule_label = item.label if allow_boolean else 'Schedule' %}
+                        {% set schedule_tooltip = item.tooltip if allow_boolean else "Configure when this collection updates." %}
+                        {% set label_width = 240 if allow_boolean else 140 %}
+                        {% set schedule_default = (item.default | string | lower) if allow_boolean and item.default is boolean else (item.default | default('', true)) %}
+                        {% set stored_val = data['libraries'].get(input_name, schedule_default) %}
+                        {% if allow_boolean and stored_val is boolean %}
+                        {% set stored_val = stored_val | string | lower %}
+                        {% else %}
+                        {% set stored_val = stored_val | default('', true) %}
+                        {% endif %}
                         <div class="schedule-builder mb-2"
                             data-schedule-builder
+                            data-allow-boolean="{{ 'true' if allow_boolean else 'false' }}"
                             data-hidden-input="{{ input_name }}"
-                            data-default-value="{{ item.default | default('', true) }}">
+                            data-default-value="{{ schedule_default }}">
                             <div class="input-group mb-2 schedule-builder-header">
                                 <span class="input-group-text" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
                                     {{ schedule_label }}
@@ -1777,7 +1785,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 </span>
                                 <select class="form-select"
                                     id="{{ input_name }}_schedule_mode"
-                                    data-schedule-mode-select {% if disable_toggle %}disabled{% endif %}>
+                                    data-schedule-mode-select {% if field_disabled %}disabled{% endif %}>
+                                    {% if allow_boolean %}
+                                    <option value="true">Always visible</option>
+                                    <option value="false">Hidden</option>
+                                    {% endif %}
                                     <option value="range">Range</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
@@ -1795,8 +1807,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     <div class="input-group">
                                         <input type="text" class="form-control"
                                             id="{{ input_name }}_schedule_range_values"
-                                            data-schedule-range-values placeholder="12/01-12/31" aria-label="Date range values" {% if disable_toggle %}disabled{% endif %}>
-                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            data-schedule-range-values placeholder="12/01-12/31" aria-label="Date range values" {% if field_disabled %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if field_disabled %}disabled{% endif %}>
                                             Add range
                                         </button>
                                     </div>
@@ -1811,7 +1823,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                         <label class="schedule-day">
                                             <input type="checkbox"
                                                 id="{{ input_name }}_schedule_week_{{ day }}"
-                                                value="{{ day }}" data-schedule-week-day {% if disable_toggle %}disabled{% endif %}>
+                                                value="{{ day }}" data-schedule-week-day {% if field_disabled %}disabled{% endif %}>
                                             <span>{{ day|capitalize }}</span>
                                         </label>
                                         {% endfor %}
@@ -1821,8 +1833,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     <div class="input-group">
                                         <input type="text" class="form-control"
                                             id="{{ input_name }}_schedule_month_values"
-                                            data-schedule-month-values placeholder="1 or 1-7 or last" {% if disable_toggle %}disabled{% endif %}>
-                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            data-schedule-month-values placeholder="1 or 1-7 or last" {% if field_disabled %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if field_disabled %}disabled{% endif %}>
                                             Add option
                                         </button>
                                     </div>
@@ -1836,8 +1848,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                         <input type="text" class="form-control"
                                             id="{{ input_name }}_schedule_year_values"
                                             data-schedule-year-values
-                                            placeholder="01/30" aria-label="Yearly date values" {% if disable_toggle %}disabled{% endif %}>
-                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            placeholder="01/30" aria-label="Yearly date values" {% if field_disabled %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if field_disabled %}disabled{% endif %}>
                                             Add option
                                         </button>
                                     </div>
@@ -1850,14 +1862,14 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     <input type="date" class="form-control"
                                         id="{{ input_name }}_schedule_date"
                                         data-schedule-date
-                                        aria-label="Exact date" {% if disable_toggle %}disabled{% endif %}>
+                                        aria-label="Exact date" {% if field_disabled %}disabled{% endif %}>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="hourly">
                                     <div class="input-group">
                                         <input type="text" class="form-control"
                                             id="{{ input_name }}_schedule_hour_values"
-                                            data-schedule-hour-values placeholder="2 or 5-7" {% if disable_toggle %}disabled{% endif %}>
-                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if disable_toggle %}disabled{% endif %}>
+                                            data-schedule-hour-values placeholder="2 or 5-7" {% if field_disabled %}disabled{% endif %}>
+                                        <button class="btn nav-button" type="button" data-schedule-add-option {% if field_disabled %}disabled{% endif %}>
                                             Add option
                                         </button>
                                     </div>
@@ -1867,10 +1879,10 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                     </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="daily">
-                                    <div class="form-text">Runs once per day.</div>
+                                    <div class="form-text">{{ 'Visible every day.' if allow_boolean else 'Runs once per day.' }}</div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="never">
-                                    <div class="form-text">Never updates automatically.</div>
+                                    <div class="form-text">{{ 'Never visible.' if allow_boolean else 'Never updates automatically.' }}</div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="non_existing">
                                     <div class="form-text">Runs only if the collection does not exist.</div>
@@ -1888,10 +1900,11 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                                 <input type="text" class="form-control"
                                     id="{{ input_name }}_schedule_raw"
                                     data-schedule-raw
-                                    value="{{ stored_val }}" {% if disable_toggle %}disabled{% endif %}>
+                                    value="{{ stored_val }}" {% if field_disabled %}disabled{% endif %}>
                             </details>
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}"
-                                data-default="{{ item.default | default('', true) }}">
+                                {% if item.key is defined %}data-template-variable-key="{{ item.key }}"{% endif %}
+                                data-default="{{ schedule_default }}" {% if field_disabled %}disabled{% endif %}>
                         </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}

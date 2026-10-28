@@ -587,6 +587,10 @@ def _template_value_is_configured(value, default=None, field_type=""):
     field_type = str(field_type or "").strip().lower()
     if value is None:
         return False
+    if field_type == "schedule":
+        if not _has_saved_value(value):
+            return False
+        return str(value).strip().lower() != str(default if default is not None else "").strip().lower()
     if field_type == "toggle" or isinstance(default, bool) or isinstance(value, bool):
         return _coerce_bool(value) != _coerce_bool(default)
     if field_type in {"string_list", "list"} or isinstance(default, list):
