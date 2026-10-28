@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -144,3 +146,100 @@ def test_seasonal_halloween_fields_are_grouped_in_holiday_section():
     assert fields["visible_library_halloween"]["section"] == section_id
     assert fields["visible_shared_halloween"]["section"] == section_id
     assert fields["hub_priority_halloween"]["section"] == section_id
+
+
+def test_seasonal_visibility_uses_schedule_builder_with_boolean_options():
+    collection = _load_seasonal_collection()
+    assert collection["media_types"] == ["movie"]
+    fields = _field_map(collection)
+    for suffix in [""] + [f"_{key}" for key in _seasonal_keys()]:
+        for target in ("home", "library", "shared"):
+            field = fields[f"visible_{target}{suffix}"]
+            assert field["type"] == "schedule"
+            assert field["allow_boolean"] is True
+            assert field["default"] is False
+
+
+@pytest.mark.parametrize("value, expected", [(False, "false"), (True, "true"), ("range(02/01-02/21)", "range(02/01-02/21)"), ("weekly(friday)", "weekly(friday)")])
+def test_seasonal_visibility_renders_saved_boolean_and_schedule_values(value, expected):
+    from html.parser import HTMLParser
+
+    class Inputs(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.by_id = {}
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if "id" in attrs:
+                self.by_id[attrs["id"]] = attrs
+
+    field_name = "mov-library_movies-template_collection_seasonal_visible_home_valentine"
+    env = Environment(loader=FileSystemLoader(str(ROOT / "templates")))
+    macros = env.get_template("partials/_macros.html").module
+    collection = _load_seasonal_collection()
+    html = macros.collection_group_section(
+        {"id": "mov-library_movies", "name": "Movies", "type": "movie"},
+        {"libraries": {field_name: value}},
+        {},
+        {"accordion": "Time Collections", "collections": [collection]},
+        {"plex_pass": True, "libraries": {}},
+    )
+    parsed = Inputs()
+    parsed.feed(str(html))
+    hidden = parsed.by_id[field_name]
+    assert hidden["type"] == "hidden"
+    assert hidden["value"] == expected
+    assert hidden["data-default"] == "false"
+    assert hidden["data-template-variable-key"] == "visible_home_valentine"
+    assert 'value="true">Always visible</option>' in html
+    assert 'value="false">Hidden</option>' in html
+
+
+def test_seasonal_visibility_import_export_round_trip():
+    from io import StringIO
+
+    from modules import importer, output_collections
+    from modules.output_optimize import optimize_template_variables
+
+    template_vars = {
+        "use_valentine": True,
+        "schedule_valentine": "daily",
+        "visible_home_valentine": "range(02/01-02/21)",
+        "visible_shared_valentine": "range(02/01-02/21)",
+        "visible_library_valentine": True,
+        "visible_home": "weekly(friday)",
+        "visible_shared": False,
+    }
+    payload, report = importer.prepare_import_payload(
+        {"libraries": {"Movies": {"collection_files": [{"default": "seasonal", "template_variables": template_vars}]}}},
+        {"Movies"},
+        set(),
+    )
+    libraries = payload["libraries"]["libraries"]
+    for key, value in template_vars.items():
+        assert libraries[f"mov-library_movies-template_collection_seasonal_{key}"] == value
+    entries, _ = output_collections.build_collection_files(
+        "mov-library_movies-library",
+        "mov",
+        {"movies": libraries},
+        {},
+        {},
+        {},
+    )
+    assert entries[0]["template_variables"] == template_vars
+    optimized = optimize_template_variables({"libraries": {"Movies": {"collection_files": entries}}}, {"Movies": "movie"})
+    stream = StringIO()
+    yaml = YAML()
+    yaml.dump(optimized, stream)
+    exported = yaml.load(stream.getvalue())["libraries"]["Movies"]["collection_files"][0]["template_variables"]
+    assert exported["schedule_valentine"] == "daily"
+    assert exported["visible_home_valentine"] == "range(02/01-02/21)"
+    assert exported["visible_shared_valentine"] == "range(02/01-02/21)"
+    assert exported["visible_library_valentine"] is True
+    assert exported["visible_home"] == "weekly(friday)"
+
+
+@pytest.mark.parametrize("value, expected", [(False, False), ("false", False), (True, True), ("true", True), ("range(02/01-02/21)", True), ("weekly(friday)", True)])
+def test_seasonal_visibility_schedules_count_as_overrides(library_routes_module, value, expected):
+    assert library_routes_module._template_value_is_configured(value, False, "schedule") is expected

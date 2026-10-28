@@ -3805,6 +3805,7 @@ function setupCollectionTemplateFieldRules (scope) {
   function isActiveField (input) {
     if (!input) return false
     if (input.type === 'checkbox') return !!input.checked
+    if (input.closest('[data-allow-boolean="true"]') && ['false', 'never'].includes(String(input.value).trim().toLowerCase())) return false
     return String(input.value || '').trim().length > 0
   }
 
@@ -4387,6 +4388,7 @@ function initScheduleBuilders (scope) {
     const hourStart = builder.querySelector('[data-schedule-hour-start]')
     const hourEnd = builder.querySelector('[data-schedule-hour-end]')
     const defaultValue = String(builder.dataset.defaultValue || '').trim()
+    const allowBoolean = builder.dataset.allowBoolean === 'true'
 
     if (!hidden || !modeSelect) return
 
@@ -4428,6 +4430,9 @@ function initScheduleBuilders (scope) {
       const raw = String(rawValue || '').trim()
       if (!raw || ['none', 'null'].includes(raw.toLowerCase())) return { mode: 'range', raw: '' }
       const lower = raw.toLowerCase()
+      if (allowBoolean && ['true', 'false'].includes(lower)) {
+        return { mode: lower, raw: lower }
+      }
       if (['daily', 'never', 'non_existing'].includes(lower)) {
         return { mode: lower, raw }
       }
@@ -4584,6 +4589,7 @@ function initScheduleBuilders (scope) {
       setScheduleFieldValidity(hourValues, true)
       setScheduleFieldValidity(rangeValues, true)
       setScheduleFieldValidity(yearlyValues, true)
+      if (allowBoolean && ['true', 'false'].includes(mode)) return mode
       if (mode === 'range') {
         const values = String(rangeValues?.value || '').trim()
         if (values) {
@@ -4677,11 +4683,13 @@ function initScheduleBuilders (scope) {
       } else {
         nextValue = buildValueFromInputs(mode) || ''
       }
+      const changed = hidden.value !== nextValue
       hidden.value = nextValue
       updatePreview(nextValue)
       if (rawInput && mode !== 'custom') {
         rawInput.value = nextValue
       }
+      if (changed) hidden.dispatchEvent(new Event('input', { bubbles: true }))
     }
 
     function applyParsed (parsed) {
@@ -4752,12 +4760,7 @@ function initScheduleBuilders (scope) {
         const raw = String(rawInput.value || '').trim()
         const parsedRaw = parseSchedule(raw)
         applyParsed(parsedRaw)
-        if (parsedRaw.mode === 'custom') {
-          hidden.value = raw
-          updatePreview(raw)
-        } else {
-          updateFromBuilder()
-        }
+        updateFromBuilder()
       })
     }
 
