@@ -57,13 +57,13 @@ from werkzeug.utils import secure_filename
 
 from modules import helpers, importer, validations
 from modules.library_file_entries import (
-    LIBRARY_FILE_KINDS,
     LOCAL_LIBRARY_FILE_TYPES,
     _is_bundled_library_archive_member,
     _normalized_managed_library_relative_path,
     _parse_managed_library_relative_path,
     _resolve_local_library_source,
 )
+from modules.managed_file_paths import iter_config_file_entries
 
 
 def yaml_path_suffix(path_value):
@@ -103,8 +103,15 @@ def managed_bundle_location_for_path(path):
     config_root = Path(helpers.CONFIG_DIR).resolve()
     try:
         relative = Path(path).resolve().relative_to(config_root)
-    except Exception:
-        return None
+    except ValueError:
+        from flask import has_app_context
+
+        if not has_app_context():
+            return None
+        try:
+            relative = Path(path).resolve().relative_to(helpers.get_kometa_config_dir().resolve())
+        except ValueError:
+            return None
     normalized_relative = _normalized_managed_library_relative_path(Path(*relative.parts).as_posix())
     if not normalized_relative:
         return None
@@ -237,36 +244,22 @@ def normalize_overlay_source_override_entries_payload(libraries_data, config_nam
 
 
 def rewrite_bundle_library_paths(config_data, bundle_root):
-    if not isinstance(config_data, dict):
-        return config_data
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return config_data
     root = Path(bundle_root).resolve()
-    for lib_cfg in libraries.values():
-        if not isinstance(lib_cfg, dict):
-            continue
-        for kind in LIBRARY_FILE_KINDS:
-            entries = lib_cfg.get(kind)
-            if not isinstance(entries, list):
+    for entry in iter_config_file_entries(config_data):
+        for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+            location = entry.get(entry_type)
+            if not location:
                 continue
-            for entry in entries:
-                if not isinstance(entry, dict):
-                    continue
-                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
-                    location = entry.get(entry_type)
-                    if not location:
-                        continue
-                    raw_location = str(location).strip()
-                    candidate = root / Path(raw_location)
-                    if not candidate.exists():
-                        normalized_relative = _normalized_managed_library_relative_path(raw_location)
-                        if normalized_relative:
-                            candidate = root / Path(normalized_relative)
-                    if not candidate.exists():
-                        continue
-                    entry[entry_type] = str(candidate.resolve())
-                    break
+            raw_location = str(location).strip()
+            candidate = root / Path(raw_location)
+            if not candidate.exists():
+                normalized_relative = _normalized_managed_library_relative_path(raw_location)
+                if normalized_relative:
+                    candidate = root / Path(normalized_relative)
+            if not candidate.exists():
+                continue
+            entry[entry_type] = str(candidate.resolve())
+            break
     return config_data
 
 
@@ -306,49 +299,25 @@ def rewrite_bundle_overlay_image_paths(config_data, bundle_root):
 
 def iter_bundle_artifacts(config_data):
     seen = set()
-    if not isinstance(config_data, dict):
-        return []
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return []
     artifacts = []
-    for lib_cfg in libraries.values():
-        if not isinstance(lib_cfg, dict):
-            continue
-        for kind in LIBRARY_FILE_KINDS:
-            entries = lib_cfg.get(kind)
-            if not isinstance(entries, list):
+    for entry in iter_config_file_entries(config_data):
+        for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+            location = entry.get(entry_type)
+            if not location or not str(location).strip():
                 continue
-            for entry in entries:
-                if not isinstance(entry, dict):
-                    continue
-                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
-                    location = entry.get(entry_type)
-                    if not location:
-                        continue
-                    raw_location = str(location).strip()
-                    if not raw_location:
-                        continue
-                    source_path = _resolve_local_library_source(raw_location)
-                    if source_path is None:
-                        continue
-                    if not source_path.exists():
-                        continue
-                    archive_path = managed_bundle_location_for_path(source_path)
-                    if not archive_path:
-                        archive_path = _normalized_managed_library_relative_path(raw_location) or Path(raw_location).as_posix()
-                    dedupe_key = (str(source_path), archive_path)
-                    if dedupe_key in seen:
-                        break
-                    seen.add(dedupe_key)
-                    artifacts.append(
-                        {
-                            "source": source_path,
-                            "archive": archive_path,
-                            "type": entry_type,
-                        }
-                    )
-                    break
+            raw_location = str(location).strip()
+            source_path = _resolve_local_library_source(raw_location, runtime_target=True)
+            if source_path is None or not source_path.exists():
+                continue
+            archive_path = managed_bundle_location_for_path(source_path)
+            if not archive_path:
+                archive_path = _normalized_managed_library_relative_path(raw_location) or Path(raw_location).as_posix()
+            dedupe_key = (str(source_path), archive_path)
+            if dedupe_key in seen:
+                break
+            seen.add(dedupe_key)
+            artifacts.append({"source": source_path, "archive": archive_path, "type": entry_type})
+            break
     return artifacts
 
 
@@ -479,9 +448,19 @@ def bundle_artifacts_from_yaml(yaml_text, config_name=None):
     if not parsed:
         return [], yaml_text
     artifact_files = list(iter_bundle_artifacts(parsed))
+    paths_changed = False
+    for entry in iter_config_file_entries(parsed):
+        for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+            location = entry.get(entry_type)
+            source = _resolve_local_library_source(location, runtime_target=True) if location else None
+            archive = managed_bundle_location_for_path(source) if source else None
+            if archive:
+                portable = f"config/{archive}"
+                paths_changed = paths_changed or portable != location
+                entry[entry_type] = portable
     overlay_artifacts, overlay_changed = iter_overlay_source_bundle_artifacts(parsed, config_name)
     artifact_files.extend(overlay_artifacts)
-    if overlay_changed:
+    if overlay_changed or paths_changed:
         return artifact_files, dump_yaml_text(parsed)
     return artifact_files, yaml_text
 
@@ -511,7 +490,9 @@ def build_config_bundle(
         readme_lines.append(f"- {name}/fonts/ (custom fonts uploaded in Quickstart)")
         readme_lines.append(f"- Fonts included: {', '.join(font_names)}")
     if has_artifacts:
-        readme_lines.append(f"- {name}/metadata_files/, {name}/collection_files/, {name}/overlay_files/, {name}/overlay_images/ (config-owned library files and overlay images)")
+        readme_lines.append(
+            f"- {name}/metadata_files/, {name}/collection_files/, {name}/overlay_files/, {name}/playlist_files/, {name}/overlay_images/ (config-owned YAML files and overlay images)"
+        )
     readme_lines += [
         "",
         "Install steps:",

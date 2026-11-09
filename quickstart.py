@@ -173,6 +173,7 @@ from modules.library_file_entries import (  # noqa: F401 (re-exports for tests/l
     _managed_library_file_root,
     _managed_library_folder_slug,
     _normalize_imported_libraries_payload,
+    _normalize_shared_playlist_file_entries_payload,
     _normalize_library_external_entry,
     _normalize_library_file_entries_payload,
     _normalized_managed_library_relative_path,
@@ -776,58 +777,33 @@ def _safe_int(value, default=0):
 
 
 def _normalize_generated_config_library_files(config_data, config_name):
-    if not isinstance(config_data, dict):
-        return config_data, False, []
-    libraries = config_data.get("libraries")
-    if not isinstance(libraries, dict):
-        return config_data, False, []
+    from modules.managed_file_paths import iter_config_file_blocks, managed_file_location_for_output
 
-    changed = False
-    errors = []
-    for library_name, lib_cfg in libraries.items():
-        if not isinstance(lib_cfg, dict):
-            continue
-        for kind in LIBRARY_FILE_KINDS:
-            entries = lib_cfg.get(kind)
-            if not isinstance(entries, list):
+    changed, errors = False, []
+    for kind, scope, entries in iter_config_file_blocks(config_data):
+        for idx, entry in enumerate(entries, start=1):
+            if not isinstance(entry, dict):
                 continue
-            new_entries = []
-            for idx, entry in enumerate(entries, start=1):
-                if not isinstance(entry, dict):
-                    new_entries.append(entry)
+            for entry_type in LOCAL_LIBRARY_FILE_TYPES:
+                location = entry.get(entry_type)
+                if not location:
                     continue
-                handled = False
-                for entry_type in LOCAL_LIBRARY_FILE_TYPES:
-                    location = entry.get(entry_type)
-                    if not location:
-                        continue
-                    normalized_entry, entry_changed, entry_error = _normalize_library_external_entry(
-                        kind,
-                        {"type": entry_type, "location": location},
-                        config_name,
-                        library_name,
-                        validate_local=True,
-                        require_managed_context=True,
-                    )
-                    if entry_error:
-                        errors.append(
-                            _format_library_file_validation_error(
-                                library_name,
-                                kind,
-                                idx,
-                                entry_error,
-                                {"type": entry_type, "location": location},
-                            )
-                        )
-                        new_entries.append(entry)
-                    else:
-                        new_entries.append({entry_type: normalized_entry["location"]})
-                        changed = changed or bool(entry_changed)
-                    handled = True
-                    break
-                if not handled:
-                    new_entries.append(entry)
-            lib_cfg[kind] = new_entries
+                source = _resolve_local_library_source(location, runtime_target=True)
+                normalized_entry, _entry_changed, entry_error = _normalize_library_external_entry(
+                    kind,
+                    {"type": entry_type, "location": str(source) if source else location},
+                    config_name,
+                    scope,
+                    validate_local=True,
+                    require_managed_context=True,
+                )
+                if entry_error:
+                    errors.append(_format_library_file_validation_error(scope, kind, idx, entry_error, {"type": entry_type, "location": location}))
+                else:
+                    normalized_location = managed_file_location_for_output(normalized_entry["location"])
+                    changed = changed or normalized_location != location
+                    entry[entry_type] = normalized_location
+                break
     return config_data, changed, errors
 
 
@@ -1032,32 +1008,7 @@ def _validate_and_organize_library_file_request(kind, data, type_key, location_k
 
 
 def _parse_shared_playlist_file_entries(raw_value):
-    if raw_value in [None, "", "[]"]:
-        return []
-    if isinstance(raw_value, list):
-        parsed = raw_value
-    else:
-        try:
-            parsed = json.loads(str(raw_value))
-        except Exception:
-            return None
-    if not isinstance(parsed, list):
-        return None
-
-    entries = []
-    for entry in parsed:
-        if not isinstance(entry, dict):
-            continue
-        entry_type = str(entry.get("type") or "").strip().lower()
-        location = str(entry.get("location") or "").strip()
-        validated = helpers.booler(entry.get("validated"))
-        if not entry_type and not location:
-            continue
-        normalized = {"type": entry_type, "location": location}
-        if validated:
-            normalized["validated"] = True
-        entries.append(normalized)
-    return entries
+    return _parse_metadata_file_entries(raw_value)
 
 
 def _validate_shared_playlist_files(libraries_data):
@@ -1080,39 +1031,6 @@ def _validate_shared_playlist_files(libraries_data):
         if not valid:
             errors.append(_format_library_file_validation_error("playlist_files", "playlist_files", idx, message, entry, details))
     return errors
-
-
-def _normalize_shared_playlist_file_entries_payload(libraries_data, config_name, validate_local=False):
-    if not isinstance(libraries_data, dict):
-        return {}, []
-    normalized = dict(libraries_data)
-    entries = _parse_shared_playlist_file_entries(normalized.get("playlist_files_entries"))
-    if entries is None:
-        return normalized, ["playlist_files_entries must be a valid list."]
-
-    if not entries:
-        normalized["playlist_files_entries"] = "[]"
-        return normalized, []
-
-    new_entries = []
-    errors = []
-    for idx, entry in enumerate(entries, start=1):
-        normalized_entry, _changed, entry_error = _normalize_library_external_entry(
-            "playlist_files",
-            entry,
-            config_name,
-            "shared_playlist_files",
-            validate_local=validate_local,
-            require_managed_context=True,
-        )
-        if entry_error:
-            errors.append(_format_library_file_validation_error("playlist_files", "playlist_files", idx, entry_error, entry))
-            continue
-        if normalized_entry:
-            new_entries.append(normalized_entry)
-
-    normalized["playlist_files_entries"] = json.dumps(new_entries, ensure_ascii=True)
-    return normalized, errors
 
 
 def _library_save_prefix_from_key(key):
@@ -2807,7 +2725,7 @@ def step(name):
                 if normalization_errors:
                     validation_errors = list(validation_errors or []) + normalization_errors
                     validated = False
-                if not isinstance(yaml_content, str) or not yaml_content.strip():
+                if _normalized_changed or not isinstance(yaml_content, str) or not yaml_content.strip():
                     yaml_content = _dump_yaml_text(config_data)
             validation_summary = build_validation_summary(validation_errors)
             used_fonts = helpers.collect_font_references(config_data)
@@ -7899,7 +7817,7 @@ def validate_playlist_file():
     config_name = _resolve_request_config_name(data if isinstance(data, dict) else {})
     entry_type = str((data or {}).get("playlist_file_type") or "").strip().lower()
     entry_location = str((data or {}).get("playlist_file_location") or "").strip()
-    if entry_type == "file" and entry_location and config_name:
+    if entry_type in LOCAL_LIBRARY_FILE_TYPES and entry_location and config_name:
         normalized_entry, changed, normalize_error = _normalize_library_external_entry(
             "playlist_files",
             {"type": entry_type, "location": entry_location},

@@ -38,6 +38,7 @@ import json
 import re
 
 from modules import persistence
+from modules.managed_file_paths import managed_file_location_for_output
 from modules.output_values import (
     _coerce_bool,
     _parse_comma_string_list,
@@ -100,7 +101,7 @@ def _normalize_playlist_file_entry_for_output(entry):
         entry_type, location = direct_entry
         location = str(location or "").strip()
         if location:
-            normalized = {entry_type: location}
+            normalized = {entry_type: managed_file_location_for_output(location) if entry_type in {"file", "folder"} else location}
             schedule = _schedule_for_playlist_file_entry(entry)
             if schedule:
                 normalized["schedule"] = schedule
@@ -113,7 +114,7 @@ def _normalize_playlist_file_entry_for_output(entry):
     location = str(entry.get("location") or "").strip()
     if entry_type not in {"file", "folder", "url", "git", "repo"} or not location:
         return None
-    normalized = {entry_type: location}
+    normalized = {entry_type: managed_file_location_for_output(location) if entry_type in {"file", "folder"} else location}
     schedule = _schedule_for_playlist_file_entry(entry)
     if schedule:
         normalized["schedule"] = schedule
