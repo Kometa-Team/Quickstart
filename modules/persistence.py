@@ -181,11 +181,13 @@ def clean_form_data(form_data):
                 value_list = form_data.getlist(key)
             clean_data[key] = [v.strip() for v in value_list if isinstance(v, str) and v.strip()]
 
-        elif key.endswith("use_separator"):
+        # Collection overrides belong to their library/family and must bypass
+        # the legacy global separator migration (including separator styles).
+        elif key.endswith("use_separator") and "-template_collection_" not in key:
             prefix = "mov" if key.startswith("mov") else "sho"
             clean_data.setdefault(f"{prefix}-template_variables", {})["use_separator"] = value if value != "none" else None
 
-        elif key.endswith("sep_style"):
+        elif key.endswith("sep_style") and "-template_collection_" not in key:
             prefix = "mov" if key.startswith("mov") else "sho"
             if form_data.get(f"{prefix}-template_variables[use_separator]", "false") != "none":
                 clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()
