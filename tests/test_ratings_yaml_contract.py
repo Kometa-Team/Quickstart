@@ -66,6 +66,92 @@ def _run_build_config_with_payload(qs_module, monkeypatch, payload):
     return yaml_content
 
 
+@pytest.mark.parametrize("show_position", ["left", "center", "right"])
+@pytest.mark.parametrize("episode_position", ["left", "center", "right"])
+def test_show_and_episode_ratings_positions_are_independent(monkeypatch, qs_module, show_position, episode_position):
+    libraries = {
+        "sho-library_tv-library": "TV Shows",
+        "sho-library_tv-collection_collectionless": True,
+    }
+    for level, position in (("show", show_position), ("episode", episode_position)):
+        libraries[f"sho-library_tv-{level}-overlay_ratings"] = True
+        template = f"sho-library_tv-{level}-template_overlay_ratings"
+        for key, value in {"rating1": "critic", "rating1_image": "imdb", "horizontal_position": position}.items():
+            libraries[f"{template}[{key}]"] = value
+
+    payload = {"validated": True, "libraries": libraries}
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+    entries = parsed["libraries"]["TV Shows"]["overlay_files"]
+    assert len(entries) == 2
+    positions = {entry["template_variables"].get("builder_level", "show"): entry["template_variables"]["horizontal_position"] for entry in entries}
+    assert positions == {"show": show_position, "episode": episode_position}
+
+
+def test_episode_ratings_yaml_preserves_reported_right_position_and_custom_offsets(monkeypatch, qs_module):
+    expected = {
+        "builder_level": "episode",
+        "rating1": "critic",
+        "rating1_image": "imdb",
+        "rating1_font_size": 70,
+        "rating1_vertical_offset": -32,
+        "rating2": "audience",
+        "rating2_image": "tmdb",
+        "rating2_font_size": 70,
+        "rating2_vertical_offset": 178,
+        "horizontal_position": "right",
+    }
+    libraries = {
+        "sho-library_tv-library": "TV Shows",
+        "sho-library_tv-collection_collectionless": True,
+        "sho-library_tv-episode-overlay_ratings": True,
+    }
+    libraries.update({f"sho-library_tv-episode-template_overlay_ratings[{key}]": value for key, value in expected.items()})
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, {"validated": True, "libraries": libraries}))
+    assert parsed["libraries"]["TV Shows"]["overlay_files"] == [{"default": "ratings", "template_variables": expected}]
+
+
+@pytest.mark.parametrize("level", ["show", "episode"])
+def test_omitted_ratings_position_uses_the_preview_default(monkeypatch, qs_module, level):
+    from modules import helpers
+
+    overlay = next(
+        overlay
+        for group in helpers.load_quickstart_overlay_config()
+        for overlay in group.get("overlays", [])
+        if overlay["id"] == "overlay_ratings" and level in overlay["media_types"]
+    )
+    expected_position = overlay["template_variables"]["horizontal_position"]["default"]
+    libraries = {
+        "sho-library_tv-library": "TV Shows",
+        "sho-library_tv-collection_collectionless": True,
+        f"sho-library_tv-{level}-overlay_ratings": True,
+        f"sho-library_tv-{level}-template_overlay_ratings[rating1]": "critic",
+        f"sho-library_tv-{level}-template_overlay_ratings[rating1_image]": "imdb",
+    }
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, {"validated": True, "libraries": libraries}))
+    tv = parsed["libraries"]["TV Shows"]["overlay_files"][0]["template_variables"]
+    # Kometa supplies left only when the anchor is absent from YAML.
+    assert tv.get("horizontal_position", "left") == expected_position
+
+
+@pytest.mark.parametrize("position", ["left", "center", "right"])
+def test_missing_episode_anchor_follows_schema_instead_of_a_hardcoded_position(monkeypatch, position):
+    from modules import helpers
+    from modules.output_optimize import optimize_template_variables
+
+    monkeypatch.setattr(
+        helpers,
+        "load_quickstart_overlay_config",
+        lambda: [{"overlays": [{"id": "overlay_ratings", "media_types": ["episode"], "template_variables": {"horizontal_position": {"default": position}}}]}],
+    )
+    config = {
+        "libraries": {"TV Shows": {"overlay_files": [{"default": "ratings", "template_variables": {"builder_level": "episode", "rating1": "critic", "rating1_image": "imdb"}}]}}
+    }
+    optimize_template_variables(config, {"TV Shows": "show"})
+    tv = config["libraries"]["TV Shows"]["overlay_files"][0]["template_variables"]
+    assert tv.get("horizontal_position", "left") == position
+
+
 def test_ratings_yaml_contract_keeps_three_slot_horizontal_order(monkeypatch, qs_module):
     payload = _build_library_payload(
         {
