@@ -41,6 +41,7 @@ import ast
 import json
 import re
 
+from modules.hub_sort import normalize_auto_sort_hubs
 from modules import helpers
 from modules.output_file_entries import _parse_collection_file_block_entries
 from modules.output_values import (
@@ -332,6 +333,8 @@ def _expand_franchise_dynamic_child_overrides(template_vars):
 
 
 def _normalize_settings_section_value(key, value):
+    if key == "auto_sort_hubs":
+        return normalize_auto_sort_hubs(value)
     if key == "ignore_ids":
         list_values = _parse_string_list(value)
         normalized = []

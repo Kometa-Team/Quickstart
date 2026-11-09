@@ -24,6 +24,7 @@ import json
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
+from modules.hub_sort import normalize_auto_sort_hubs
 from modules import helpers
 from modules.output_collections import _LOOKUP_LABELS_SUFFIX, _TEMPLATE_VARIABLE_COMMENTS_KEY, _parse_template_lookup_labels
 from modules.output_values import _coerce_bool, _normalize_asset_directory_values
@@ -329,6 +330,8 @@ def build_top_level_fields(top_group, library_type, lib_id):
 
     for field in _TOP_LEVEL_SIMPLE_FIELDS:
         value = top_group.get(_top_level_key(library_type, lib_id, field))
+        if field == "auto_sort_hubs":
+            value = normalize_auto_sort_hubs(value)
         if value not in (None, ""):
             result[field] = value
 

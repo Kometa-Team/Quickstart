@@ -328,6 +328,12 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   if (configForm) {
+    configForm.addEventListener('click', event => {
+      if (event.target.closest('[data-clear-auto-sort-hubs]')) {
+        settingsTouched = true
+        setSettingsValidated(false)
+      }
+    })
     configForm.addEventListener('qs:template-string-list-change', function () {
       settingsTouched = true
     })

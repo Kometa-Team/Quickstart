@@ -1,4 +1,5 @@
 import { getAppConfig, setAppConfig } from './modules/appConfig.js'
+import { initAutoSortHubs } from './modules/autoSortHubs.js'
 import { initLogscanAutoUpload } from './modules/logscanAutoUpload.js'
 import {
   findYamlMajorSections,
@@ -55,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 
 document.addEventListener('DOMContentLoaded', function () {
+  initAutoSortHubs()
   // Track user-modified <select> fields
   trackModifiedSelects()
 })
