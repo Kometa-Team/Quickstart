@@ -347,7 +347,7 @@ def _summarize_folder_validation_failures(label, yaml_files, failures):
     return False, summary, {"message": summary, "files": failures}
 
 
-def _validate_yaml_folder(location, label):
+def _validate_yaml_folder(location, label, *, text_validator=_validate_metadata_yaml_text):
     resolved_location = _resolve_managed_library_path(location)
     valid, message = path_validation.validate_path(
         resolved_location,
@@ -376,7 +376,7 @@ def _validate_yaml_folder(location, label):
             failures.append(f"Unable to read `{os.path.basename(yaml_file)}`. {exc}")
             continue
 
-        valid, message = _validate_metadata_yaml_text(yaml_text, label, os.path.basename(yaml_file))
+        valid, message = text_validator(yaml_text, label, os.path.basename(yaml_file))
         if not valid:
             failures.append(message)
 
@@ -669,6 +669,11 @@ def validate_playlist_file_payload(data):
         if playlist_file_location.lower().startswith(("http://", "https://")):
             return False, "Playlist file path must be a local file path.", {}
         return _normalize_metadata_validation_result(_validate_playlist_yaml_location(playlist_file_location, "Playlist file path"))
+
+    if playlist_file_type == "folder":
+        if playlist_file_location.lower().startswith(("http://", "https://")):
+            return False, "Playlist folder path must be a local folder path.", {}
+        return _normalize_metadata_validation_result(_validate_yaml_folder(playlist_file_location, "Playlist folder path", text_validator=_validate_playlist_yaml_text))
 
     if playlist_file_type == "git":
         valid, message = _validate_yaml_location_suffix(playlist_file_location, "Playlist file git path")

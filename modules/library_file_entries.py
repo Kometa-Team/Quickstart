@@ -32,10 +32,10 @@ from pathlib import Path
 from werkzeug.utils import secure_filename
 
 from modules import helpers, validations
+from modules.managed_file_paths import LIBRARY_FILE_KINDS, MANAGED_YAML_FILE_KINDS, parse_managed_yaml_path
 
 # --- constants -------------------------------------------------------------
 
-LIBRARY_FILE_KINDS = ("metadata_files", "collection_files", "overlay_files")
 LOCAL_LIBRARY_FILE_TYPES = {"file", "folder"}
 
 LIBRARY_FILE_VALIDATORS = {
@@ -54,6 +54,7 @@ LIBRARY_FILE_VALIDATORS = {
         "overlay_file_location",
         validations.validate_overlay_file_payload,
     ),
+    "playlist_files": ("playlist_file_type", "playlist_file_location", validations.validate_playlist_file_payload),
 }
 
 SETTINGS_AUTO_SORT_HUBS_VALUES = {
@@ -168,7 +169,7 @@ def _safe_external_artifact_slug(value, fallback="artifact"):
 def _managed_library_folder_slug(source_path, kind):
     raw_name = str(getattr(source_path, "name", "") or "").strip().lower()
     folder_name = _safe_external_artifact_slug(getattr(source_path, "name", ""), "folder")
-    if raw_name in set(LIBRARY_FILE_KINDS):
+    if raw_name in MANAGED_YAML_FILE_KINDS:
         parent_name = _safe_external_artifact_slug(getattr(source_path.parent, "name", ""), "")
         if parent_name:
             return f"{parent_name}_{folder_name}"
@@ -185,34 +186,7 @@ def _managed_library_file_root(kind, config_name):
 
 
 def _parse_managed_library_relative_path(path_value):
-    raw = str(path_value or "").strip().replace("\\", "/")
-    if not raw:
-        return None
-    parts = [part for part in raw.split("/") if part]
-    if not parts:
-        return None
-    has_config_prefix = parts[0] == "config"
-    if has_config_prefix:
-        parts = parts[1:]
-    if len(parts) >= 3 and parts[1] in LIBRARY_FILE_KINDS:
-        return {
-            "layout": "config_first",
-            "config_name": parts[0],
-            "kind": parts[1],
-            "remainder": parts[2:],
-            "has_config_prefix": has_config_prefix,
-            "parts": parts,
-        }
-    if len(parts) >= 3 and parts[0] in LIBRARY_FILE_KINDS:
-        return {
-            "layout": "type_first",
-            "config_name": parts[1],
-            "kind": parts[0],
-            "remainder": parts[2:],
-            "has_config_prefix": has_config_prefix,
-            "parts": parts,
-        }
-    return None
+    return parse_managed_yaml_path(path_value)
 
 
 def _normalized_managed_library_relative_path(path_value):
@@ -226,12 +200,23 @@ def _is_bundled_library_archive_member(path_value):
     return _normalized_managed_library_relative_path(str(path_value or "").replace("\\", "/").lstrip("/")) is not None
 
 
-def _resolve_local_library_source(location):
+def _resolve_local_library_source(location, *, runtime_target=False):
     raw = str(location or "").strip()
     if not raw:
         return None
     expanded = Path(os.path.expandvars(os.path.expanduser(raw)))
     if expanded.is_absolute():
+        from flask import has_app_context
+
+        if runtime_target and has_app_context():
+            try:
+                relative = expanded.resolve().relative_to(helpers.get_kometa_config_dir().resolve())
+                if parse_managed_yaml_path(relative):
+                    source = Path(helpers.CONFIG_DIR) / relative
+                    if source.exists():
+                        return source.resolve()
+            except ValueError:
+                pass
         try:
             return expanded.resolve()
         except OSError:
@@ -247,7 +232,7 @@ def _resolve_local_library_source(location):
         except OSError:
             return Path(helpers.CONFIG_DIR) / managed_relative
     normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
-    if normalized_parts and normalized_parts[0] in LIBRARY_FILE_KINDS:
+    if normalized_parts and normalized_parts[0] in MANAGED_YAML_FILE_KINDS:
         try:
             return (Path(helpers.CONFIG_DIR) / expanded).resolve()
         except OSError:
@@ -262,6 +247,9 @@ def _display_library_managed_location(location):
     raw = str(location or "").strip().replace("\\", "/")
     if not raw:
         return raw
+    info = _parse_managed_library_relative_path(raw)
+    if info and info["layout"] == "type_first":
+        return Path("config", *info["parts"]).as_posix()
     normalized_relative = _normalized_managed_library_relative_path(raw)
     if normalized_relative:
         return Path("config", *normalized_relative.split("/")).as_posix()
@@ -307,8 +295,10 @@ def _copy_library_artifact_to_managed_store(kind, entry_type, location, config_n
         raise RuntimeError("Path is required.")
 
     managed_location = bundle_artifacts.managed_bundle_location_for_path(source_path)
-    if managed_location and not force_clone_managed:
-        return managed_location
+    if managed_location and source_path.is_relative_to(Path(helpers.CONFIG_DIR).resolve()) and not force_clone_managed:
+        # Bundle layout can differ from an older on-disk layout. Reusing an
+        # existing file must retain its actual location, without migrating it.
+        return source_path.relative_to(Path(helpers.CONFIG_DIR).resolve()).as_posix()
 
     managed_root = _managed_library_file_root(kind, config_name)
     library_slug = _safe_external_artifact_slug(library_scope, "library")
@@ -461,6 +451,8 @@ def _normalize_imported_libraries_payload(payload_section, config_name):
     if not isinstance(libraries_data, dict):
         return payload_section, []
     normalized, errors, _changed = _normalize_library_file_entries_payload(libraries_data, config_name, validate_local=True)
+    normalized, playlist_errors = _normalize_shared_playlist_file_entries_payload(normalized, config_name, validate_local=True)
+    errors.extend(playlist_errors)
     normalized, overlay_errors, _overlay_changed = bundle_artifacts.normalize_overlay_source_override_entries_payload(normalized, config_name)
     errors.extend(overlay_errors)
     if errors:
@@ -471,6 +463,29 @@ def _normalize_imported_libraries_payload(payload_section, config_name):
     else:
         updated = normalized
     return updated, []
+
+
+def _normalize_shared_playlist_file_entries_payload(libraries_data, config_name, validate_local=False):
+    """Normalize top-level playlist entries using the same managed store as libraries."""
+    if not isinstance(libraries_data, dict):
+        return {}, []
+    normalized = dict(libraries_data)
+    if "playlist_files_entries" not in normalized:
+        return normalized, []
+    entries = _parse_library_file_entries(normalized.get("playlist_files_entries"))
+    if entries is None:
+        return normalized, ["playlist_files_entries must be a valid list."]
+    new_entries, errors = [], []
+    for idx, entry in enumerate(entries, start=1):
+        normalized_entry, _changed, entry_error = _normalize_library_external_entry(
+            "playlist_files", entry, config_name, "shared_playlist_files", validate_local=validate_local, require_managed_context=True
+        )
+        if entry_error:
+            errors.append(_format_library_file_validation_error("playlist_files", "playlist_files", idx, entry_error, entry))
+        elif normalized_entry:
+            new_entries.append(normalized_entry)
+    normalized["playlist_files_entries"] = json.dumps(new_entries, ensure_ascii=True)
+    return normalized, errors
 
 
 # --- list-level validators (per-kind + auto_sort_hubs) --------------------

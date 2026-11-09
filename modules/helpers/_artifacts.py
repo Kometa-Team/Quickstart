@@ -7,10 +7,12 @@ import shutil
 from pathlib import Path
 
 from modules.helpers._constants import CONFIG_DIR
+from modules.managed_file_paths import LIBRARY_FILE_KINDS, MANAGED_YAML_FILE_KINDS
 
-MANAGED_LIBRARY_FILE_DIRS = ("metadata_files", "collection_files", "overlay_files")
+MANAGED_LIBRARY_FILE_DIRS = LIBRARY_FILE_KINDS
+MANAGED_YAML_FILE_DIRS = MANAGED_YAML_FILE_KINDS
 MANAGED_OVERLAY_IMAGE_DIR = "overlay_images"
-MANAGED_SYNC_ARTIFACT_DIRS = MANAGED_LIBRARY_FILE_DIRS + (MANAGED_OVERLAY_IMAGE_DIR,)
+MANAGED_SYNC_ARTIFACT_DIRS = MANAGED_YAML_FILE_DIRS + (MANAGED_OVERLAY_IMAGE_DIR,)
 MANAGED_CONFIG_ARTIFACT_DIRS = ("fonts",) + MANAGED_SYNC_ARTIFACT_DIRS
 RESERVED_RUNTIME_BUNDLE_NAMES = frozenset({"kometa", "imagemaid"})
 
@@ -172,15 +174,22 @@ def sync_managed_library_artifacts_to_kometa(
                     synced.append(str(destination_dir))
                     continue
                 destination_dir.parent.mkdir(parents=True, exist_ok=True)
-                if destination_dir.exists():
-                    shutil.rmtree(destination_dir, onerror=handle_remove_readonly)
-                shutil.copytree(source_dir, destination_dir)
+                # Playlists were not synced before. Existing target trees may
+                # contain user files, so adopt them without destructive mirroring.
+                if folder == "playlist_files":
+                    shutil.copytree(source_dir, destination_dir, dirs_exist_ok=True)
+                else:
+                    if destination_dir.exists():
+                        shutil.rmtree(destination_dir, onerror=handle_remove_readonly)
+                    shutil.copytree(source_dir, destination_dir)
                 synced.append(str(destination_dir))
             except Exception as exc:
                 errors.append(f"Failed to sync {source_dir} -> {destination_dir}: {exc}")
             continue
 
         missing.append(folder)
+        if folder == "playlist_files":
+            continue
         if not destination_dir.exists():
             continue
         try:

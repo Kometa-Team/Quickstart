@@ -48,12 +48,12 @@ def _resolve_managed_library_path(location: str | None) -> str:
     normalized_parts = [part for part in str(expanded).replace("\\", "/").split("/") if part]
     if normalized_parts and normalized_parts[0] == "config":
         return str((_config_dir_path() / Path(*normalized_parts[1:])).resolve())
-    if len(normalized_parts) >= 3 and normalized_parts[1] in helpers.MANAGED_LIBRARY_FILE_DIRS:
+    if len(normalized_parts) >= 3 and normalized_parts[1] in helpers.MANAGED_YAML_FILE_DIRS:
         return str((_config_dir_path() / Path(*normalized_parts)).resolve())
     if len(normalized_parts) >= 3 and normalized_parts[1] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
         return str((_config_dir_path() / Path(*normalized_parts)).resolve())
-    if normalized_parts and normalized_parts[0] in helpers.MANAGED_LIBRARY_FILE_DIRS:
-        return str((_config_dir_path() / expanded).resolve())
+    if normalized_parts and normalized_parts[0] in helpers.MANAGED_YAML_FILE_DIRS:
+        return str((_config_dir_path() / Path(*normalized_parts)).resolve())
     if normalized_parts and normalized_parts[0] == helpers.MANAGED_OVERLAY_IMAGE_DIR:
         return str((_config_dir_path() / expanded).resolve())
     return raw

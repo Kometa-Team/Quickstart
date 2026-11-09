@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import json
 
+from modules.managed_file_paths import managed_file_location_for_output
+
 _ACCEPTED_ENTRY_TYPES = frozenset({"file", "folder", "url", "git", "repo"})
 
 
@@ -54,7 +56,7 @@ def _parse_config_file_block_entries(raw_value, *, allow_schedule=False, allow_t
         location = str(entry.get("location") or "").strip()
         if entry_type not in _ACCEPTED_ENTRY_TYPES or not location:
             continue
-        normalized_entry = {entry_type: location}
+        normalized_entry = {entry_type: managed_file_location_for_output(location) if entry_type in {"file", "folder"} else location}
         if allow_schedule:
             schedule = str(entry.get("schedule") or "").strip()
             if schedule:
