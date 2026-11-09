@@ -659,6 +659,12 @@ def _optimize_overlay_files(library_data, overlay_defaults, library_type):
         defaults = _pick_overlay_defaults(defaults_entry, tv, library_type)
 
         if _is_ratings_entry(entry.get("default")):
+            # Older saves may omit UI-default anchors. The preview restores
+            # those per-level defaults, so export them when Kometa would use
+            # a different anchor. Keep explicit choices untouched.
+            for key, kometa_default in (("horizontal_position", "left"), ("vertical_position", "center")):
+                if key not in tv and key in defaults and defaults[key] != kometa_default:
+                    tv[key] = defaults[key]
             _ensure_explicit_ratings_offsets(tv, defaults)
 
         pruned = _prune_template_variables(tv, defaults)

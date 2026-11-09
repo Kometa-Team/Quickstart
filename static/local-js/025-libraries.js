@@ -7249,6 +7249,10 @@ function shouldOmitDefaultFieldFromLibraryPayload (field) {
   // These UI defaults differ from Kometa's disabled defaults; save each slot
   // and badge explicitly so pruning cannot remove untouched ratings.
   if (/-template_overlay_ratings\[rating[123](?:_image)?\]$/.test(String(field.name || ''))) return false
+  // UI defaults are reset/preview values, not necessarily Kometa defaults:
+  // episode ratings start on the right while Kometa defaults to the left.
+  // Keep both anchors, matching the YAML optimizer's ratings always-keep keys.
+  if (/-template_overlay_ratings\[(?:horizontal|vertical)_position\]$/.test(String(field.name || ''))) return false
   if (field.classList?.contains('include-library-toggle') || field.classList?.contains('playlist-library-toggle')) return false
   if (String(field.name || '').endsWith('-library') || String(field.name || '').endsWith('-playlist')) return false
   if (isInternalTemplateMetadataField(field)) return false

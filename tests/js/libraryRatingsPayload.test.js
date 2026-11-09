@@ -8,7 +8,22 @@ const shouldOmit = new Function('isInternalTemplateMetadataField', 'isCollection
 
 beforeEach(() => { document.body.replaceChildren() })
 
-describe.each(['movie', 'show', 'episode'])('%s rating payload completeness', builder => {
+describe.each(['movie', 'show', 'season', 'episode'])('%s rating payload completeness', builder => {
+  it.each([
+    ['horizontal_position', 'left'],
+    ['horizontal_position', 'center'],
+    ['horizontal_position', 'right'],
+    ['vertical_position', 'top'],
+    ['vertical_position', 'center'],
+    ['vertical_position', 'bottom']
+  ])('keeps %s=%s even when it matches the preview default', (key, value) => {
+    const field = document.createElement('select')
+    field.name = `sho-library_1-${builder}-template_overlay_ratings[${key}]`
+    field.dataset.default = value
+    field.add(new Option(value, value))
+    expect(shouldOmit(field)).toBe(false)
+  })
+
   it.each(['rating1', 'rating1_image', 'rating2', 'rating2_image', 'rating3', 'rating3_image'])('keeps %s even when it matches the Quickstart default', key => {
     const field = document.createElement('select')
     field.name = `mov-library_1-${builder}-template_overlay_ratings[${key}]`
