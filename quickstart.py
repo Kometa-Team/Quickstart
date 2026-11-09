@@ -40,6 +40,8 @@ from threading import Thread
 from pathlib import Path
 from collections import deque
 
+from modules.hub_sort import normalize_auto_sort_hubs as _normalize_auto_sort_hubs_value
+
 import namesgenerator
 import requests
 from cachelib.file import FileSystemCache
@@ -661,16 +663,11 @@ LIBRARY_SONARR_MONITOR_VALUES = {"all", "none", "future", "missing", "existing",
 LIBRARY_SONARR_SERIES_TYPE_VALUES = {"standard", "daily", "anime"}
 
 
-def _normalize_auto_sort_hubs_value(value):
-    text = str(value or "").strip()
-    return text or None
-
-
 def _is_valid_auto_sort_hubs_value(value):
     normalized = _normalize_auto_sort_hubs_value(value)
     if normalized is None:
         return True
-    return normalized in SETTINGS_AUTO_SORT_HUBS_VALUES
+    return isinstance(normalized, str) and normalized in SETTINGS_AUTO_SORT_HUBS_VALUES
 
 
 def build_validation_summary(errors):
@@ -1172,6 +1169,9 @@ def _load_playlist_default_entries():
 
     _PLAYLIST_DEFAULT_ENTRIES_CACHE = entries
     return [dict(entry) for entry in entries]
+
+
+app.jinja_env.globals.update(normalize_auto_sort_hubs=_normalize_auto_sort_hubs_value, auto_sort_hubs_values=SETTINGS_AUTO_SORT_HUBS_VALUES)
 
 
 @app.context_processor

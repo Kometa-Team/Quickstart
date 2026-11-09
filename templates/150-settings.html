@@ -608,7 +608,8 @@
       </h2>
       <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
         <div class="accordion-body">
-          {% set auto_sort_hubs_value = data['settings'].get('auto_sort_hubs', '') %}
+          {% set auto_sort_hubs_value = normalize_auto_sort_hubs(data['settings'].get('auto_sort_hubs')) %}
+          {% set auto_sort_hubs_value = '' if auto_sort_hubs_value is none else auto_sort_hubs_value|string %}
           <div class="row mb-2">
             <div class="col-md-12">
               <div class="input-group">
@@ -621,6 +622,9 @@
 
                 <select class="form-select" id="auto_sort_hubs" {% if has_plex_pass %}name="auto_sort_hubs"{% endif %}
                   {% if not has_plex_pass %}disabled aria-disabled="true"{% endif %}>
+                  {% if auto_sort_hubs_value and auto_sort_hubs_value not in auto_sort_hubs_values %}
+                  <option value="{{ auto_sort_hubs_value }}" selected>Invalid saved value: {{ auto_sort_hubs_value }}</option>
+                  {% endif %}
                   <option value="" {% if not auto_sort_hubs_value %}selected{% endif %}>Disabled / Not Set</option>
                   <option value="sort_title" {% if auto_sort_hubs_value == 'sort_title' %}selected{% endif %}>Sort Title Ascending</option>
                   <option value="sort_title.desc" {% if auto_sort_hubs_value == 'sort_title.desc' %}selected{% endif %}>Sort Title Descending</option>
@@ -631,7 +635,8 @@
                   <option value="random" {% if auto_sort_hubs_value == 'random' %}selected{% endif %}>Random</option>
                 </select>
                 {% if not has_plex_pass %}
-                <input type="hidden" name="auto_sort_hubs" value="{{ auto_sort_hubs_value }}">
+                <input type="hidden" id="auto_sort_hubs_preserved" name="auto_sort_hubs" value="{{ auto_sort_hubs_value }}">
+                <button type="button" class="btn btn-outline-secondary" data-clear-auto-sort-hubs="auto_sort_hubs">Clear saved value</button>
                 {% endif %}
                 <a href="https://kometa.wiki/en/develop/config/settings/?h=auto_sort#auto-sort-hubs" target="_blank"
                   class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Open Kometa auto_sort_hubs documentation">

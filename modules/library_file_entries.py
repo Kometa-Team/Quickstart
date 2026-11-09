@@ -32,6 +32,7 @@ from pathlib import Path
 from werkzeug.utils import secure_filename
 
 from modules import helpers, validations
+from modules.hub_sort import SETTINGS_AUTO_SORT_HUBS_VALUES as SETTINGS_AUTO_SORT_HUBS_VALUES
 from modules.managed_file_paths import LIBRARY_FILE_KINDS, MANAGED_YAML_FILE_KINDS, parse_managed_yaml_path
 
 # --- constants -------------------------------------------------------------
@@ -55,16 +56,6 @@ LIBRARY_FILE_VALIDATORS = {
         validations.validate_overlay_file_payload,
     ),
     "playlist_files": ("playlist_file_type", "playlist_file_location", validations.validate_playlist_file_payload),
-}
-
-SETTINGS_AUTO_SORT_HUBS_VALUES = {
-    "sort_title",
-    "sort_title.desc",
-    "alpha",
-    "alpha.desc",
-    "configured",
-    "configured.desc",
-    "random",
 }
 
 
