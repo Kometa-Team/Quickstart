@@ -11,7 +11,7 @@
 # on hosts missing libsqlite3-dev / libssl-dev) would otherwise die
 # with a confusing traceback deep inside stdlib the moment `requests`
 # touches ssl or `modules.database` touches sqlite3. This surfaces a
-# friendly message instead. See modules/_preflight.py.
+# friendly message instead. See modules/_preflight.py!
 from modules._preflight import enforce_preflight
 
 enforce_preflight()
