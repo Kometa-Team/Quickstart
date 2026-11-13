@@ -261,12 +261,12 @@ def _ensure_venv(kometa_dir: Path, logs: list[str], venv_name: str = "kometa-ven
         if is_windows and shutil.which("py"):
             cmd = ["py", "-3", "-m", "venv", str(venv_dir)]
         else:
-            for cand in ("python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"):
+            for cand in ("python3.13", "python3.12", "python3.11", "python3", "python"):
                 if shutil.which(cand):
                     cmd = [cand, "-m", "venv", str(venv_dir)]
                     break
         if cmd is None:
-            logs.append("❌ Could not find a system Python 3 (3.10+) to create a virtualenv. " "Please install Python and ensure it is on PATH.")
+            logs.append("❌ Could not find a system Python 3 (3.11+) to create a virtualenv. " "Please install Python and ensure it is on PATH.")
             return None
     else:
         # Non-frozen: current interpreter is fine
