@@ -33,7 +33,7 @@ jobs:
         id: set-matrix
         run: |
           build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" } ] }'
-          full_build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" }, { "platform": "linux/arm/v7", "dockerfile": "Dockerfile.arm7", "tag": "armv7"} ] }'
+          full_build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" } ] }'
 
           if ${{ inputs.full_build }}; then
             echo "matrix=$full_build_matrix" >> "$GITHUB_OUTPUT"
@@ -120,8 +120,7 @@ jobs:
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-amd64"
 
           if ${{ inputs.full_build }}; then
-            manifest_command+=" --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-arm64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-armv7"
+            manifest_command+=" --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }}-arm64"
           fi
 
           echo "$manifest_command"
@@ -158,9 +157,6 @@ jobs:
           if ${{ inputs.full_build }}; then
             curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
             https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ inputs.tag_name }}-arm64/
-
-            curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-            https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ inputs.tag_name }}-armv7/
           fi
 
 

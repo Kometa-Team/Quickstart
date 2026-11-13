@@ -668,10 +668,10 @@ The fallback is deliberate: `python quickstart.py` after a fresh `git clone` wor
 | Local dev (Python only) | Nobody — falls back to `/static/local-js/` source files. Fully functional. |
 | Local dev (JS work) | You, via `npm run build` when you want to test optimized output |
 | CI | `Vite Build` job in `.github/workflows/lint.yml` on every push/PR (validates that bundling works; output not deployed) |
-| Docker images | `jsbuild` stage of `Dockerfile` / `Dockerfile.arm7` (Node 22, runs on `$BUILDPLATFORM` for fast multi-arch builds) |
+| Docker images | `jsbuild` stage of `Dockerfile` (Node 22, runs on `$BUILDPLATFORM` for fast multi-arch builds) |
 | Windows/macOS/Linux binaries | `Setup Node` + `Build JS Bundles` steps in `validate-pull.yml` and `release-notification.yml`, before PyInstaller runs |
 
-The end result is that **every shipped Quickstart instance** — Docker (amd64/arm64/arm7) and every native binary — ships with hashed, minified JS bundles baked in. Users see ~40-50% smaller JS downloads and get proper cache invalidation on every deploy.
+The end result is that **every shipped Quickstart instance** — Docker (amd64/arm64) and every native binary — ships with hashed, minified JS bundles baked in. Users see ~40-50% smaller JS downloads and get proper cache invalidation on every deploy.
 
 ### For contributors editing JavaScript
 
