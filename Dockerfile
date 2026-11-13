@@ -5,7 +5,7 @@
 # Stage 1 (jsbuild) runs the Vite bundle so shipped images serve
 # hashed, minified, cache-busted JS from /static/dist/. Runs on
 # ``$BUILDPLATFORM`` -- the platform doing the build -- rather than
-# ``$TARGETPLATFORM``. That means arm64 and arm7 image builds do the
+# ``$TARGETPLATFORM``. That means arm64 image builds do the
 # Node work natively on the amd64 build host instead of under qemu
 # emulation, cutting build time from minutes to seconds.
 #
