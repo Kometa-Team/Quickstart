@@ -1,5 +1,8 @@
 name: Tag Cleanup
 
+# Runs from the default branch with the Docker Hub credentials in scope, so it must never put PR-controlled text into a shell line
+# and never check out PR code. Everything the PR controls (branch name, repo) reaches the scripts through env: only.
+
 on:
   pull_request_target:
     types: [ closed, unlabeled ]
@@ -9,24 +12,67 @@ jobs:
   tag-cleanup:
     name: Cleanup Docker Tags
     runs-on: ubuntu-latest
-    if: github.event.action == 'closed' || contains(github.event.pull_request.labels.*.name, 'docker') == false
+    # Same-repo PRs only: ci.yml never builds an image for a fork PR, so there is nothing to delete. On unlabel, only when the last build label was removed.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action == 'closed' ||
+       ((github.event.label.name == 'build' || github.event.label.name == 'build-full') &&
+        !contains(github.event.pull_request.labels.*.name, 'build') &&
+        !contains(github.event.pull_request.labels.*.name, 'build-full')))
+    permissions:
+      contents: read
     steps:
+
+      # The default branch, not the PR head: this file and the script it calls then always come from the same release.
+      - name: Check Out Scripts
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: .github/scripts
+          persist-credentials: false
 
       - name: Get Tag Name
         id: get-tag-name
-        run: |
-          branch_name=${{ github.event.pull_request.head.ref }}
-          base_name="${repo_name%/*}"
-          if [[ "${branch_name}" =~ ^(master|develop|nightly)$ ]]; then
-              tag_name="${base_name}"
-          else
-              tag_name="${branch_name}"
-          fi
-          echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: python3 .github/scripts/derive_tag.py
 
       - name: Remove Docker Tag
+        env:
+          TAG_NAME: ${{ steps.get-tag-name.outputs.tag-name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          DOCKER_TEAM: ${{ vars.DOCKER_TEAM }}
+          DOCKER_REPO: ${{ vars.DOCKER_REPO }}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
         run: |
-          HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
+          set -euo pipefail
 
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ steps.get-tag-name.outputs.tag-name }}/
+          # Never delete a tag that is not a PR build: the release tags, latest/develop/master, or the owner-named tag that master/develop branches map to.
+          case "${TAG_NAME}" in
+              latest|develop|master|v[0-9]*|[0-9]*|"${HEAD_REPO%/*}")
+                  echo "::notice::Refusing to delete protected tag ${TAG_NAME}"
+                  exit 0
+                  ;;
+          esac
+
+          HUB_TOKEN=$(jq -n --arg username "${DOCKER_HUB_USERNAME}" --arg password "${DOCKER_HUB_ACCESS_TOKEN}" '{username: $username, password: $password}' \
+              | curl -sS --fail-with-body -X POST -H "Content-Type: application/json" -d @- https://hub.docker.com/v2/users/login/ \
+              | jq -r .token)
+          if [[ -z "${HUB_TOKEN}" || "${HUB_TOKEN}" == "null" ]]; then
+              echo "::error::Docker Hub login did not return a token"
+              exit 1
+          fi
+          echo "::add-mask::${HUB_TOKEN}"
+
+          status=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE -H "Accept: application/json" -H "Authorization: JWT ${HUB_TOKEN}" \
+              "https://hub.docker.com/v2/repositories/${DOCKER_TEAM}/${DOCKER_REPO}/tags/${TAG_NAME}/")
+          case "${status}" in
+              2??) echo "Deleted tag ${TAG_NAME} (HTTP ${status})" ;;
+              404) echo "Tag ${TAG_NAME} does not exist; nothing to delete" ;;
+              *)
+                  echo "::error::Docker Hub returned HTTP ${status} deleting ${TAG_NAME}"
+                  exit 1
+                  ;;
+          esac

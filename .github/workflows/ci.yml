@@ -39,24 +39,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get changes
-        id: get-changes
-        # HEAD^1 is the base tip on the PR's auto-generated merge commit, so this is always the full PR-vs-base diff.
-        run: |
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          git diff --name-only HEAD^1 HEAD >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: List changed files
         id: list-changes
+        # HEAD^1 is the base tip on the PR's auto-generated merge commit, so this is always the full PR-vs-base diff.
+        # File names come straight from git (NUL-separated) and never pass through a step output or an inline expression.
         run: |
-          readarray -t files <<< "${{ steps.get-changes.outputs.files }}"
-          for file in "${files[@]}"; do
-              if [[ -n "$file" ]] && [[ "$file" =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]]; then
-                  echo "$file will trigger a build"
-                  echo "build=true" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          git diff -z --name-only HEAD^1 HEAD | while IFS= read -r -d '' file; do
+              if [[ "$file" =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]]; then
+                  echo "build trigger: $file"
+                  echo "build=true" >> "$GITHUB_OUTPUT"
               else
-                  echo "$file will not trigger a build"
+                  echo "no build: $file"
               fi
           done
 
@@ -88,21 +82,16 @@ jobs:
       - name: Compute build variables
         id: vars
         env:
+          HEAD_REF: ${{ github.head_ref }}
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           COMMITS: ${{ github.event.pull_request.commits }}
           FULL_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'build-full') }}
         run: |
-          branch_name="${GITHUB_HEAD_REF}"
-          branch_name=$(echo "${branch_name}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          # The one place the image tag is derived (also used by tag-cleanup.yml); writes tag-name to $GITHUB_OUTPUT.
+          python3 .github/scripts/derive_tag.py
+
           repo_name="${HEAD_REPO}"
           base_name="${repo_name%/*}"
-          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
-              tag_name="${base_name}"
-          else
-              tag_name="${branch_name}"
-          fi
-          echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
-
           if [[ "${base_name}" == "Kometa-Team" ]]; then
               extra=""
           else
