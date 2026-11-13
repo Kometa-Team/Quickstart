@@ -21,10 +21,9 @@ repos:
         files: ^static/local-js/.*\.js$
       - id: spellcheck
         name: spellcheck (pyspelling)
-        # Mirrors the .github/workflows/validate-pull.yml "Run Spellcheck
-        # on Changed Files" job so that the same class of failure that
-        # tripped PR #1555 (missing technical terms in .github/.wordlist.txt)
-        # can be caught locally before push. Uses `language: python` so
+        # Mirrors the pyspelling check that .github/workflows/lint.yml runs, so the
+        # same class of failure that tripped PR #1555 (missing technical terms in
+        # .github/.wordlist.txt) can be caught locally before push. Uses `language: python` so
         # pre-commit auto-installs pyspelling into an isolated venv --
         # devs don't need to `pip install` anything. Aspell itself is a
         # system binary and must be installed separately (apt/brew/dnf);
