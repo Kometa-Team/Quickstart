@@ -150,6 +150,11 @@ def build_libraries_section(
             entry["settings"] = library_settings
         if service_overrides:
             entry[service_name] = service_overrides
+        from modules.seerr import build_library_connection
+
+        seerr_connection = build_library_connection(attr_group, library_type, lib_id)
+        if seerr_connection:
+            entry["seerr"] = seerr_connection
         if operations:
             entry["operations"] = operations
 

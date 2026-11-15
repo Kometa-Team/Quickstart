@@ -54,6 +54,12 @@ def build_simple_dict(source, form_data):
         else:
             # Handle individual scalar values
             if value is not None and not isinstance(value, bool):
+                if source == "seerr" or final_key.endswith("-attribute_seerr_apikey"):
+                    if final_key in ["validated", "validated_at"]:
+                        data[final_key] = value
+                    else:
+                        data[source][final_key] = value
+                    continue
                 if final_key.endswith("-library") or final_key == "libraries":
                     # Library display names from Plex — preserve exactly (leading/trailing spaces are significant)
                     pass

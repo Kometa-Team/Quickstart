@@ -437,6 +437,14 @@ def build_template_variables(templates, library_type, library_key, has_collectio
     if has_collectionless:
         template_vars["collection_mode"] = "hide"
 
+    from modules.seerr import normalize_option
+
+    prefix = f"{library_type}-library_{template_key}-template_variables["
+    for key, value in template_data.items():
+        if key.startswith(prefix + "seerr_") and value not in (None, ""):
+            option = key[len(prefix) :].rstrip("]")
+            template_vars[option] = normalize_option(option, value)
+
     if lookup_labels:
         template_vars[_TEMPLATE_VARIABLE_COMMENTS_KEY] = lookup_labels
 

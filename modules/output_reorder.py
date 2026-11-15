@@ -31,6 +31,7 @@ _LIBRARY_KEY_ORDER = (
     "settings",
     "radarr",
     "sonarr",
+    "seerr",
     # 5. Operations -- special-cased below with its own inner ordering
     "operations",
     # 6. File lists (metadata comes before collections comes before overlays)

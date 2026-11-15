@@ -6,6 +6,37 @@ from modules import database, helpers, persistence, url_validation, validations
 bp = Blueprint("validation_routes", __name__)
 
 
+@bp.route("/validate_seerr", methods=["POST"])
+def validate_seerr():
+    return validations.validate_seerr_server(request.get_json(silent=True) or {})
+
+
+@bp.route("/validate_library_seerr/<library_id>", methods=["POST"])
+def validate_library_seerr(library_id):
+    from modules.seerr import global_settings, library_connection, validate_connection
+
+    if not library_id.startswith(("mov-library_", "sho-library_")):
+        return jsonify(valid=False, error="Select a movie or show library."), 400
+    data = request.get_json(silent=True) or {}
+    _settings, global_connection = global_settings()
+    overrides = {f"{library_id}-attribute_seerr_{key}": data.get(key) for key in ("url", "apikey")}
+    result, status = validate_connection(library_connection(library_id, overrides, global_connection))
+    return jsonify(result), status
+
+
+@bp.route("/seerr-context", methods=["GET"])
+def seerr_context():
+    from modules.seerr import runtime_support
+
+    return jsonify(
+        compatibility=runtime_support(),
+        direct_add_missing={
+            service: helpers.booler(persistence.retrieve_settings(f"{stem}-{service}").get(service, {}).get("add_missing", False))
+            for service, stem in (("radarr", "110"), ("sonarr", "120"))
+        },
+    )
+
+
 def _telemetry_with_validated_plex_pass(telemetry, plex_data):
     """Keep Libraries telemetry aligned with the authoritative Plex validation result."""
     normalized = dict(telemetry) if isinstance(telemetry, dict) else {}

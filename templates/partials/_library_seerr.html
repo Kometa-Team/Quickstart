@@ -1,0 +1,21 @@
+{% from 'partials/_seerr_options.html' import options with context %}
+<div class="accordion-item library-advanced-section d-none" data-advanced-section>
+  <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{ library.id }}-seerr">Seerr connection and shared requests</button></h2>
+  <div class="accordion-collapse collapse" id="{{ library.id }}-seerr">
+    <div class="accordion-body" data-seerr-library="{{ library.id }}">
+      {% set extra = data['libraries'].get(library.id ~ '-attribute_seerr_extra') %}
+      {% if extra %}<input type="hidden" name="{{ library.id }}-attribute_seerr_extra" value="{{ extra|tojson if extra is mapping else extra }}">{% endif %}
+      <p>Blank values inherit the matching global Seerr value. Filled values override it for this library. Clear both fields to restore inheritance.</p>
+      {% for field, label in [('url', 'Seerr URL override'), ('apikey', 'Seerr API key override')] %}
+      {% set name = library.id ~ '-attribute_seerr_' ~ field %}
+      <label class="form-label" for="{{ name }}">{{ label }}</label>
+      <input class="form-control mb-2" type="{{ 'password' if field == 'apikey' else 'url' }}" id="{{ name }}" name="{{ name }}" value="{{ data['libraries'].get(name) or '' }}" data-default="" placeholder="Inherit global {{ field }}" autocomplete="off">
+      {% endfor %}
+      <button class="btn btn-outline-secondary btn-sm mb-2" type="button" data-seerr-inherit>Restore global credentials</button>
+      <button class="btn btn-outline-secondary btn-sm mb-2" type="button" data-seerr-validate>Validate effective connection</button>
+      <div role="status" data-seerr-status></div>
+      <p class="form-text">Shared request options apply to this library's collection defaults unless a collection overrides them. Direct Radarr/Sonarr connections remain independent.</p>
+      {{ options(library.id ~ '-template_variables[', ']', data['libraries']) }}
+    </div>
+  </div>
+</div>

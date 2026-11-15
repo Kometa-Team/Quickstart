@@ -155,6 +155,15 @@ def clean_form_data(form_data):
     for key, value in form_data.items():
         if key in TRANSIENT_FORM_FIELDS:
             continue
+        if key == "seerr_apikey" or key.endswith("-attribute_seerr_apikey"):
+            clean_data[key] = value if value else None
+            continue
+        if key.endswith("-attribute_seerr_extra") and isinstance(value, str):
+            try:
+                clean_data[key] = json.loads(value)
+            except ValueError:
+                clean_data[key] = value
+            continue
         if _is_runtime_overlay_text_key(key) and value is None:
             clean_data[key] = ""
             continue
@@ -311,7 +320,9 @@ def save_settings(raw_source, form_data):
         os.makedirs(debug_dir, exist_ok=True)
         debug_path = os.path.join(debug_dir, f"{source}_form_data.json")
         with open(debug_path, "w", encoding="utf-8") as f:
-            json.dump(clean_dict, f, indent=2, ensure_ascii=False)
+            from modules.seerr import redact_seerr_secrets
+
+            json.dump(redact_seerr_secrets(clean_dict), f, indent=2, ensure_ascii=False)
         helpers.ts_log(f"Form data saved to: {debug_path}", level="DEBUG")
 
     # Respect config_name from form
@@ -335,6 +346,9 @@ def save_settings(raw_source, form_data):
         helpers.ts_log(f"Cleaned asset_directory: {clean_data['asset_directory']}", level="DEBUG")
 
     data = helpers.build_config_dict(source_name, clean_data)
+    if source_name == "seerr":
+        stored = retrieve_settings("125-seerr").get("seerr", {})
+        data["seerr"] = {**stored, **data.get("seerr", {})}
     if source_name == "kometa":
         data = _preserve_kometa_install_selection(data, clean_data)
 
@@ -770,6 +784,9 @@ def get_dummy_data(target):
     """
     Load dummy data from config.yml.template while handling duplicate keys gracefully.
     """
+
+    if target == "seerr":
+        return {}
 
     global _DUMMY_CONFIG_CACHE
 

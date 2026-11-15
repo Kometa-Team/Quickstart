@@ -11,6 +11,44 @@
         "external_templates": { "$ref": "#/definitions/external-templates-list" }
     },
     "definitions": {
+        "seerr-overrides": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "standard": {
+                    "$ref": "#/definitions/seerr-request-overrides"
+                },
+                "4k": {
+                    "$ref": "#/definitions/seerr-request-overrides"
+                }
+            }
+        },
+        "seerr-request-overrides": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "server_id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "quality_profile": {
+                    "oneOf": [
+                        {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        {
+                            "type": "string",
+                            "minLength": 1
+                        }
+                    ]
+                },
+                "root_folder": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            }
+        },
 
         "collections-map": {
             "title": "collections",
@@ -796,6 +834,10 @@
                 "tmdb_deathday": { "type": "string", "description": "TMDb person death-date used in template conditionals." },
                 "smart_url": { "type": "string", "description": "Raw Plex smart-collection URL (advanced/legacy use)." },
 
+                "seerr_add_missing": {"type": "boolean"},
+                "seerr_add_existing": {"type": "boolean"},
+                "seerr_instance": {"type": "string", "enum": ["standard", "4k", "both"]},
+                "seerr_overrides": {"$ref": "#/definitions/seerr-overrides"},
                 "radarr_add_missing": { "type": "boolean" },
                 "radarr_add_existing": { "type": "boolean" },
                 "radarr_upgrade_existing": { "type": "boolean" },

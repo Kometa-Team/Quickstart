@@ -89,6 +89,9 @@ def _has_meaningful_optional_input(template_key, payload):
             return False
         return _is_meaningful_optional_status_input(apprise.get("location"))
 
+    if template_key == "125-seerr" and not helpers.booler(payload.get("seerr", {}).get("tmp_enabled", True)):
+        return False
+
     simple_key_requirements = {
         "030-tautulli": ("tautulli", ("url", "apikey")),
         "035-tracearr": ("tracearr", ("url", "apikey")),
@@ -104,6 +107,7 @@ def _has_meaningful_optional_input(template_key, payload):
         "090-webhooks": ("webhooks", ("notifiarr", "gotify", "ntfy", "slack", "discord", "webhook", "url")),
         "110-radarr": ("radarr", ("url", "token")),
         "120-sonarr": ("sonarr", ("url", "token")),
+        "125-seerr": ("seerr", ("url", "apikey")),
     }
 
     req = simple_key_requirements.get(template_key)

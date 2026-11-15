@@ -50,6 +50,7 @@ SIMPLE_SECTIONS: frozenset[str] = frozenset(
         "github",
         "radarr",
         "sonarr",
+        "seerr",
         "mal",
         "anidb",
         "webhooks",

@@ -114,6 +114,7 @@ const moduleFiles = [
   'static/local-js/100-anidb.js',
   'static/local-js/110-radarr.js',
   'static/local-js/120-sonarr.js',
+  'static/local-js/125-seerr.js',
   'static/local-js/130-trakt.js',
   'static/local-js/140-mal.js',
   'static/local-js/150-settings.js',

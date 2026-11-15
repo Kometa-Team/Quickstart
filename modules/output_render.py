@@ -110,7 +110,11 @@ def retrieve_config_sections(header_style):
         # in-memory persistence cache for this request lifecycle.
         section_data = copy.deepcopy(persistence.retrieve_settings(persistence_key))
 
-        if "validated" in section_data and section_data["validated"]:
+        if config_attribute == "seerr":
+            connection = section_data.get("seerr", {})
+            if isinstance(connection, dict) and helpers.booler(connection.get("tmp_enabled", True)) and connection:
+                config_data[config_attribute] = clean_section_data(section_data, config_attribute)
+        elif "validated" in section_data and section_data["validated"]:
             config_data[config_attribute] = clean_section_data(section_data, config_attribute)
 
     return config_data, header_art
@@ -193,6 +197,7 @@ ORDERED_CONFIG_SECTIONS = (
     ("anidb", "090-anidb"),
     ("radarr", "100-radarr"),
     ("sonarr", "110-sonarr"),
+    ("seerr", "125-seerr"),
     ("mal", "130-mal"),
 )
 
@@ -366,4 +371,12 @@ def emit_and_validate_config(
     yaml_content += _dump_config_sections(config_data, header_art, header_style, config_name)
 
     validated, first_error, sorted_errors = _validate_yaml_content(yaml_content, yaml_parser, schema)
+    from modules.seerr import configuration_errors, global_settings
+
+    seerr_settings, _connection = global_settings()
+    confirmed = helpers.booler(seerr_settings.get("seerr", {}).get("tmp_compatibility_confirmed", False))
+    seerr_errors = [jsonschema.ValidationError(message) for message in configuration_errors(config_data, compatibility_confirmed=confirmed)]
+    if seerr_errors:
+        sorted_errors.extend(seerr_errors)
+        validated, first_error = False, sorted_errors[0]
     return validated, first_error, config_data, yaml_content, sorted_errors

@@ -235,7 +235,7 @@ def _prune_template_variables(template_vars, defaults):
         return template_vars
     pruned = {}
     for key, value in template_vars.items():
-        if key in defaults and _values_match(defaults.get(key), value):
+        if not key.startswith("seerr_") and key in defaults and _values_match(defaults.get(key), value):
             continue
         pruned[key] = value
     return pruned

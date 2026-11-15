@@ -54,6 +54,8 @@ def initialize_logging():
 def redact_string(text):
     redacted = text
     sensitive_keys = [
+        "seerr_apikey",
+        r"(?:mov|sho)-library_[a-zA-Z0-9_-]+-attribute_seerr_apikey",
         "token",
         "access_token",
         "refresh_token",
@@ -71,7 +73,7 @@ def redact_string(text):
     ]
 
     for key in sensitive_keys:
-        key_escaped = re.escape(key)
+        key_escaped = key if key.startswith("(?:mov|sho)") else re.escape(key)
 
         patterns = [
             # JSON-style quoted
@@ -102,6 +104,8 @@ def ts_log(*args, level="INFO"):
         user_tag = f"[{session['qs_session_id']}] "
 
     message = " ".join(str(arg) for arg in args)
+    if "seerr" in message.lower():
+        message = redact_string(message)
 
     # Console (NOT redacted)
     line_console = f"[{now}] {level_str}{padding}| {user_tag}{message}"

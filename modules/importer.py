@@ -461,7 +461,7 @@ def prepare_import_payload(
             lib_template_vars = lib_cfg.get("template_variables")
             if isinstance(lib_template_vars, dict):
                 for key, value in lib_template_vars.items():
-                    if key in template_vars or key in special_template_vars:
+                    if key in template_vars or key in special_template_vars or key.startswith("seerr_"):
                         if key in {"placeholder_imdb_id", "placeholder_tmdb_movie", "placeholder_tvdb_show"}:
                             name = f"{lib_id}-attribute_template_variables[{key}]"
                             libraries_data[name] = value
@@ -540,7 +540,7 @@ def prepare_import_payload(
                 toggle_select_defs=toggle_select_defs,
             )
 
-            handled_keys = {"collection_files", "overlay_files", "metadata_files", "template_variables", "settings", "operations", "radarr", "sonarr"}
+            handled_keys = {"collection_files", "overlay_files", "metadata_files", "template_variables", "settings", "operations", "radarr", "sonarr", "seerr"}
             handled_keys.update(top_level_map.keys())
             for key in lib_cfg.keys():
                 if key in handled_keys:

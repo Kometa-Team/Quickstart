@@ -124,6 +124,7 @@ from modules.validations_services import (  # noqa: F401
     validate_sonarr_server,
     validate_tautulli_server,
     validate_tracearr_server,
+    validate_seerr_server,
     validate_tmdb_server,
     validate_trakt_server,
     validate_yamtrack_server,

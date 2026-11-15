@@ -56,6 +56,7 @@ from modules.dependency_reasons import (
     _config_serializd_dependency_reasons,
     _config_tautulli_dependency_reasons,
     _config_tracearr_dependency_reasons,
+    _config_seerr_dependency_reasons,
 )
 from modules.imagemaid import (
     get_imagemaid_settings_section as _get_imagemaid_settings_section,
@@ -285,6 +286,10 @@ def _build_workspace_status_context(config_name, template_list, available_config
     config_exists = bool(config_name) and (config_name in available_set or bool(section_rows))
 
     required_seed = set(QS_REQUIRED_STEP_KEYS)
+    seerr_requirement_reasons = _config_seerr_dependency_reasons(section_rows)
+    seerr_row = section_rows.get("seerr", {}).get("data", {}).get("seerr", {})
+    if "125-seerr" in template_keys and (seerr_requirement_reasons or (seerr_row and helpers.booler(seerr_row.get("tmp_enabled", True)))):
+        required_seed.add("125-seerr")
     tautulli_requirement_reasons = _config_tautulli_dependency_reasons(section_rows) if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys else []
     tracearr_requirement_reasons = _config_tracearr_dependency_reasons(section_rows) if QS_TRACEARR_REQUIRED_STEP_KEY in template_keys else []
     omdb_requirement_reasons = _config_omdb_dependency_reasons(section_rows) if QS_OMDB_REQUIRED_STEP_KEY in template_keys else []
@@ -343,6 +348,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
             "review_keys": list(review_keys),
             "tautulli_requirement_reasons": tautulli_requirement_reasons,
             "tracearr_requirement_reasons": tracearr_requirement_reasons,
+            "seerr_requirement_reasons": seerr_requirement_reasons,
             "omdb_requirement_reasons": omdb_requirement_reasons,
             "mdblist_requirement_reasons": mdblist_requirement_reasons,
             "floppy_requirement_reasons": floppy_requirement_reasons,
@@ -439,6 +445,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "review_keys": review_keys,
         "tautulli_requirement_reasons": tautulli_requirement_reasons,
         "tracearr_requirement_reasons": tracearr_requirement_reasons,
+        "seerr_requirement_reasons": seerr_requirement_reasons,
         "omdb_requirement_reasons": omdb_requirement_reasons,
         "mdblist_requirement_reasons": mdblist_requirement_reasons,
         "floppy_requirement_reasons": floppy_requirement_reasons,

@@ -5,6 +5,7 @@
 // URL), so importing here is the same object EventHandler.updateAccordionHighlights
 // delegates to.
 import { updateAccordionHighlights } from '/static/local-js/modules/accordionHighlights.js'
+import './modules/seerrOptions.js'
 import { nbspLeadingSpaces } from '/static/local-js/modules/kometa/_util.js'
 import { applyLibraryFileServerErrors, libraryFileRowMatches } from '/static/local-js/modules/libraryFileErrors.js'
 

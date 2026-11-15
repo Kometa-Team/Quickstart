@@ -22,6 +22,10 @@ def load_quickstart_config(filename: str):
 
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
+    if filename == "quickstart_collections.json":
+        from modules.seerr import enrich_collection_config
+
+        data = enrich_collection_config(data)
     _QUICKSTART_CONFIG_CACHE[cache_key] = (stat.st_mtime, stat.st_size, data)
     return copy.deepcopy(data)
 

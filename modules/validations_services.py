@@ -192,6 +192,13 @@ def validate_tautulli_server(data):
     return jsonify({"valid": is_valid})
 
 
+def validate_seerr_server(data):
+    from modules.seerr import validate_connection
+
+    payload, status = validate_connection({"url": data.get("seerr_url"), "apikey": data.get("seerr_apikey")})
+    return jsonify(payload), status
+
+
 def validate_tracearr_server(data):
     tracearr_url = str(data.get("tracearr_url") or "").strip().rstrip("/")
     tracearr_apikey = str(data.get("tracearr_apikey") or "").strip()
