@@ -116,6 +116,54 @@ def test_global_save_reopen_disable_preserves_unknown_fields_and_opaque_keys(app
     assert b"125-seerr" in page.data
 
 
+@pytest.mark.parametrize(
+    "connection,validation_status",
+    [
+        ({}, ""),
+        ({"url": "http://seerr:5055", "tmp_enabled": True}, ""),
+        ({"url": "http://seerr:5055", "apikey": "saved-key"}, "failed"),
+        ({"url": "http://seerr:5055", "tmp_enabled": False}, "skipped"),
+    ],
+)
+def test_unused_unvalidated_seerr_never_blocks_final_setup_or_yaml(app, connection, validation_status):
+    from modules.workspace_rollups import _build_final_gate
+    from modules.workspace_status import _build_workspace_status_context
+
+    name = "seerr_optional_gate"
+    payload = {"seerr": connection, "validation_status": validation_status}
+    database.save_section_data(name=name, section="seerr", validated=False, user_entered=True, data=payload)
+    templates = [("125-seerr.html", "Seerr"), ("900-kometa.html", "Kometa")]
+    with app.test_request_context("/step/900-kometa"):
+        session["config_name"] = name
+        status = _build_workspace_status_context(name, templates, available_configs=[name], include_app_readiness_overrides=False)
+        gate = _build_final_gate(status, templates, helpers.utc_now_iso())
+        config, _headers = output.retrieve_config_sections("single line")
+        assert "125-seerr" in status["optional_keys"]
+        assert "125-seerr" not in status["required_keys"]
+        assert gate["stage"] == "config"
+        assert gate["todo_blockers"] == []
+        assert "seerr" not in config
+        assert seerr.configuration_errors(config) == []
+        assert persistence.retrieve_settings("125-seerr")["seerr"] == connection
+
+
+def test_seerr_is_required_only_when_enabled_requests_inherit_global_credentials(app):
+    from modules.workspace_status import _build_workspace_status_context
+
+    name = "seerr_request_dependency"
+    libraries = {"mov-library_1-library": "Movies", "mov-library_1-collection_imdb": True, "mov-library_1-template_collection_imdb_seerr_add_missing": True}
+    templates = [("125-seerr.html", "Seerr"), ("900-kometa.html", "Kometa")]
+    with app.test_request_context():
+        session["config_name"] = name
+        database.save_section_data(name=name, section="libraries", validated=True, user_entered=True, data={"libraries": libraries})
+        status = _build_workspace_status_context(name, templates, available_configs=[name], include_app_readiness_overrides=False)
+        assert "125-seerr" in status["required_keys"]
+        libraries.update({"mov-library_1-attribute_seerr_url": "http://library-seerr", "mov-library_1-attribute_seerr_apikey": "library-key"})
+        database.save_section_data(name=name, section="libraries", validated=True, user_entered=True, data={"libraries": libraries})
+        status = _build_workspace_status_context(name, templates, available_configs=[name], include_app_readiness_overrides=False)
+        assert "125-seerr" in status["optional_keys"]
+
+
 def test_import_and_yaml_round_trip_preserve_connections_options_and_other_services(app, monkeypatch):
     overrides = {"standard": {"server_id": 1, "quality_profile": "HD-1080p"}, "4k": {"quality_profile": 4, "root_folder": "/movies-4k"}}
     imported = {

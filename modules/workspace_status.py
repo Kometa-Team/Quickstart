@@ -287,8 +287,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
 
     required_seed = set(QS_REQUIRED_STEP_KEYS)
     seerr_requirement_reasons = _config_seerr_dependency_reasons(section_rows)
-    seerr_row = section_rows.get("seerr", {}).get("data", {}).get("seerr", {})
-    if "125-seerr" in template_keys and (seerr_requirement_reasons or (seerr_row and helpers.booler(seerr_row.get("tmp_enabled", True)))):
+    if "125-seerr" in template_keys and seerr_requirement_reasons:
         required_seed.add("125-seerr")
     tautulli_requirement_reasons = _config_tautulli_dependency_reasons(section_rows) if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys else []
     tracearr_requirement_reasons = _config_tracearr_dependency_reasons(section_rows) if QS_TRACEARR_REQUIRED_STEP_KEY in template_keys else []

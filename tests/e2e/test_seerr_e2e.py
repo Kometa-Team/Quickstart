@@ -21,6 +21,17 @@ def test_seerr_browser_edits_preserve_false_tier_overrides_and_inheritance(page,
     database.save_section_data(section="libraries", validated=False, user_entered=True, name=name, data={"libraries": {f"{library_id}-library": "Movies"}})
     page.goto(f"{live_server}/step/125-seerr", wait_until="domcontentloaded")
     expect(page.locator("#seerr_apikey")).to_have_attribute("type", "password")
+    guidance = page.locator(".qs-validation-accordion")
+    expect(guidance).to_have_count(1)
+    guidance_toggle = guidance.locator(".accordion-button")
+    expect(guidance_toggle).to_contain_text("Optional page guidance")
+    expect(guidance_toggle).to_have_attribute("aria-expanded", "false")
+    guidance_toggle.click()
+    expect(guidance.locator(".accordion-collapse.show")).to_be_visible()
+    expect(guidance.get_by_role("link", name="Kometa Seerr documentation")).to_be_visible()
+    guidance_toggle.click()
+    expect(guidance.get_by_role("link", name="Kometa Seerr documentation")).to_be_hidden()
+    expect(page.locator("#seerr_url")).to_be_visible()
     values = {f"{library_id}-attribute_seerr_url": "http://override-seerr", f"{library_id}-attribute_seerr_apikey": "override-key"}
     with app.test_request_context():
         html = render_template("partials/_library_seerr.html", library={"id": library_id, "type": "movie"}, data={"libraries": values})

@@ -3,8 +3,7 @@
 {% include "001-navigation.html" %}
 {% set connection = data.get('seerr', {}) %}
 {% set support = seerr_runtime_support() %}
-<p>Seerr sends movie and show requests to the Radarr/Sonarr servers configured inside Seerr. A direct Radarr or Sonarr connection in Quickstart is optional and remains independent.</p>
-<div class="alert {{ 'alert-success' if support.supported is sameas true else 'alert-warning' }}">{{ support.message }}</div>
+{% include "modals/125-seerr.html" %}
 <div class="form-check form-switch mb-3">
   <input class="form-check-input" type="checkbox" id="seerr_tmp_enabled" name="seerr_tmp_enabled" value="true" {% if connection.get('tmp_enabled', true)|string|lower == 'true' %}checked{% endif %}>
   <input type="hidden" name="seerr_tmp_enabled" value="false">
@@ -33,8 +32,6 @@
   <label class="form-check-label" for="seerr_tmp_compatibility_confirmed">I have verified that my external Kometa runtime supports Seerr (PR #3738), including Seerr template variables if I use collection defaults.</label>
 </div>
 {% endif %}
-<p>Configure library credentials and collection request options on Libraries. Blank library credentials inherit the corresponding global value. Kometa requests all seasons for shows.</p>
-<p><a href="https://kometa.wiki/en/develop/config/seerr/" target="_blank" rel="noopener">Kometa Seerr documentation</a> · <a href="https://github.com/Kometa-Team/Kometa/pull/3738" target="_blank" rel="noopener">Kometa PR #3738</a></p>
 </div>
 </form>
 {% endblock %}

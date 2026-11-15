@@ -9,6 +9,12 @@ This reads the authenticated `/api/v1/auth/me` endpoint; it never creates a medi
 request. The API key is masked. Disabling the global connection preserves its
 settings while omitting that connection from generated YAML.
 
+The expandable optional-page guidance contains setup notes and documentation
+links. Leaving Seerr incomplete or unvalidated does not block the final Kometa
+page; the connection is omitted from generated YAML and its saved values are
+retained. As with other optional services, enabling collection requests that
+inherit the global Seerr connection makes that connection a required dependency.
+
 On **Libraries**, expand **Seerr connection and shared requests**. Blank URL and
 API key fields inherit their corresponding global values independently. Enter
 either field to override it; **Restore global credentials** clears just those

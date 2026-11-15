@@ -112,7 +112,7 @@ def retrieve_config_sections(header_style):
 
         if config_attribute == "seerr":
             connection = section_data.get("seerr", {})
-            if isinstance(connection, dict) and helpers.booler(connection.get("tmp_enabled", True)) and connection:
+            if section_data.get("validated") and isinstance(connection, dict) and helpers.booler(connection.get("tmp_enabled", True)) and connection:
                 config_data[config_attribute] = clean_section_data(section_data, config_attribute)
         elif "validated" in section_data and section_data["validated"]:
             config_data[config_attribute] = clean_section_data(section_data, config_attribute)
