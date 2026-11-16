@@ -1,0 +1,259 @@
+{
+  "repository": "Kometa-Team/Kometa",
+  "revision": "1ec206b4c9dd0e9f9ea7b9e7a4e2e56b349e68d0",
+  "path": "modules/config.py",
+  "function": "check_for_attribute",
+  "sha256": "f3f491acee0ad9b44d4226080ec0a020050afac16b2ca2b0e1aac9fb054a2951",
+  "null_default_calls": [
+    {
+      "section": "settings",
+      "attribute": "asset_directory",
+      "var_type": "asset_paths"
+    },
+    {
+      "section": "settings",
+      "attribute": "default_collection_order",
+      "var_type": "str"
+    },
+    {
+      "section": "settings",
+      "attribute": "auto_sort_hubs",
+      "var_type": "str"
+    },
+    {
+      "section": "settings",
+      "attribute": "ignore_ids",
+      "var_type": "int_list"
+    },
+    {
+      "section": "settings",
+      "attribute": "ignore_imdb_ids",
+      "var_type": "lower_list"
+    },
+    {
+      "section": "settings",
+      "attribute": "playlist_sync_to_users",
+      "var_type": "str"
+    },
+    {
+      "section": "settings",
+      "attribute": "playlist_exclude_users",
+      "var_type": "str"
+    },
+    {
+      "section": "settings",
+      "attribute": "custom_repo",
+      "var_type": "str"
+    },
+    {
+      "section": "webhooks",
+      "attribute": "error",
+      "var_type": "list"
+    },
+    {
+      "section": "webhooks",
+      "attribute": "version",
+      "var_type": "list"
+    },
+    {
+      "section": "webhooks",
+      "attribute": "run_start",
+      "var_type": "list"
+    },
+    {
+      "section": "webhooks",
+      "attribute": "run_end",
+      "var_type": "list"
+    },
+    {
+      "section": "webhooks",
+      "attribute": "changes",
+      "var_type": "list"
+    },
+    {
+      "section": "webhooks",
+      "attribute": "delete",
+      "var_type": "list"
+    },
+    {
+      "section": "github",
+      "attribute": "token",
+      "var_type": "str"
+    },
+    {
+      "section": "tmdb",
+      "attribute": "region",
+      "var_type": "str"
+    },
+    {
+      "section": "plex",
+      "attribute": "url",
+      "var_type": "url"
+    },
+    {
+      "section": "plex",
+      "attribute": "token",
+      "var_type": "str"
+    },
+    {
+      "section": "plex",
+      "attribute": "verify_ssl",
+      "var_type": "bool"
+    },
+    {
+      "section": "plex",
+      "attribute": "db_cache",
+      "var_type": "int"
+    },
+    {
+      "section": "radarr",
+      "attribute": "url",
+      "var_type": "url"
+    },
+    {
+      "section": "radarr",
+      "attribute": "token",
+      "var_type": "str"
+    },
+    {
+      "section": "radarr",
+      "attribute": "root_folder_path",
+      "var_type": "str"
+    },
+    {
+      "section": "radarr",
+      "attribute": "quality_profile",
+      "var_type": "str"
+    },
+    {
+      "section": "radarr",
+      "attribute": "tag",
+      "var_type": "lower_list"
+    },
+    {
+      "section": "radarr",
+      "attribute": "radarr_path",
+      "var_type": "str"
+    },
+    {
+      "section": "radarr",
+      "attribute": "plex_path",
+      "var_type": "str"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "url",
+      "var_type": "url"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "token",
+      "var_type": "str"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "root_folder_path",
+      "var_type": "str"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "quality_profile",
+      "var_type": "str"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "language_profile",
+      "var_type": "str"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "tag",
+      "var_type": "lower_list"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "sonarr_path",
+      "var_type": "str"
+    },
+    {
+      "section": "sonarr",
+      "attribute": "plex_path",
+      "var_type": "str"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "url",
+      "var_type": "url"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "token",
+      "var_type": "str"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "root_folder_path",
+      "var_type": "str"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "quality_profile",
+      "var_type": "str"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "tag",
+      "var_type": "lower_list"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "lidarr_path",
+      "var_type": "str"
+    },
+    {
+      "section": "lidarr",
+      "attribute": "plex_path",
+      "var_type": "str"
+    },
+    {
+      "section": "tautulli",
+      "attribute": "url",
+      "var_type": "url"
+    },
+    {
+      "section": "tautulli",
+      "attribute": "apikey",
+      "var_type": "str"
+    },
+    {
+      "section": "tracearr",
+      "attribute": "url",
+      "var_type": "url"
+    },
+    {
+      "section": "tracearr",
+      "attribute": "apikey",
+      "var_type": "str"
+    },
+    {
+      "section": "tracearr",
+      "attribute": "server_id",
+      "var_type": "str"
+    },
+    {
+      "section": "mal",
+      "attribute": "localhost_url",
+      "var_type": "str"
+    },
+    {
+      "section": "floppy",
+      "attribute": "token",
+      "var_type": "str"
+    },
+    {
+      "section": "wetrakr",
+      "attribute": "client_id",
+      "var_type": "str"
+    }
+  ]
+}
