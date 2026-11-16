@@ -49,6 +49,19 @@ describe('processing mode contract', () => {
     change(root.querySelector('[data-processing-ids]'), 'imdb:tt0133093, tmdb:550\nplex:42')
     expect(processingModeValue(root)).toBe('items(imdb:tt0133093|tmdb:550|plex:42)')
   })
+  it('disables unused parameters so they cannot block native form validation', () => {
+    document.body.innerHTML = modeMarkup
+    const root = document.querySelector('[data-processing-mode]')
+    const amount = root.querySelector('[data-processing-amount]')
+    amount.type = 'number'
+    amount.min = '1'
+    initProcessingMode(root, 'added(7)')
+    change(amount, '0')
+    expect(amount.checkValidity()).toBe(false)
+    change(root.querySelector('[data-processing-kind]'), 'full')
+    expect(amount.disabled).toBe(true)
+    expect(amount.checkValidity()).toBe(true)
+  })
 })
 
 describe('ordered library schedules', () => {
@@ -88,6 +101,14 @@ describe('ordered library schedules', () => {
     const { hidden, format } = mount(rules)
     change(format, 'none')
     expect(hidden.value).toBe('')
+  })
+  it('disables processing parameters in basic scheduling mode', () => {
+    const { format, rows } = mount(rules)
+    change(rows()[0].querySelector('[data-processing-amount]'), '0')
+    change(format, 'basic')
+    expect(rows()[0].querySelector('[data-processing-amount]').disabled).toBe(true)
+    change(format, 'rules')
+    expect(rows()[0].querySelector('[data-processing-amount]').disabled).toBe(false)
   })
   it('refreshes controls after a mirror or reset changes the hidden value', () => {
     const { hidden, rows } = mount(rules)

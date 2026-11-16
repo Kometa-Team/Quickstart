@@ -59,7 +59,11 @@ export function initProcessingMode (root, initial = 'full', onChange = () => {})
     set('[data-processing-custom]', initial)
   }
   const refresh = () => {
-    root.querySelectorAll('[data-processing-fields]').forEach(el => el.classList.toggle('d-none', el.dataset.processingFields !== kind.value))
+    root.querySelectorAll('[data-processing-fields]').forEach(el => {
+      const active = el.dataset.processingFields === kind.value
+      el.classList.toggle('d-none', !active)
+      el.querySelectorAll('input, select, textarea').forEach(input => { input.disabled = !active })
+    })
     const error = root.querySelector('[data-processing-error]')
     try {
       validateProcessingMode(processingModeValue(root))

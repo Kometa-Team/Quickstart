@@ -35,7 +35,11 @@ export function initLibraryScheduling (scope = document) {
     const showFormat = () => {
       editor.classList.toggle('d-none', format.value === 'none')
       allRows().forEach((row, index) => {
-        row.querySelector('[data-schedule-rule-mode]').classList.toggle('d-none', format.value !== 'rules')
+        const mode = row.querySelector('[data-schedule-rule-mode]')
+        mode.classList.toggle('d-none', format.value !== 'rules')
+        mode.querySelectorAll('input, select, textarea').forEach(input => {
+          input.disabled = format.value !== 'rules' || Boolean(input.closest('[data-processing-fields]')?.classList.contains('d-none'))
+        })
         row.querySelector('[data-schedule-row-number]').textContent = `Rule ${index + 1}`
         row.querySelector('[data-schedule-up]').disabled = index === 0
         row.querySelector('[data-schedule-down]').disabled = index === rows.children.length - 1
