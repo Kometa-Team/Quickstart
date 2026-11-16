@@ -44,6 +44,7 @@ from flask import session
 
 from modules import helpers, logscan
 from modules.logscan_cache import normalize_logscan_tool_name
+from modules.logscan_pms_versions import filter_patched_security_recommendations
 from modules.logscan_progress import (
     build_incomplete_progress_snapshot,
     get_progress_library_list,
@@ -283,9 +284,7 @@ def build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_nam
     cache_entry = cache_entry if isinstance(cache_entry, dict) else {}
     summary = cache_entry.get("summary") if isinstance(cache_entry.get("summary"), dict) else {}
     tool_name = normalize_logscan_tool_name(summary.get("tool_name") or cache_entry.get("tool_name"))
-    recommendations = cache_entry.get("recommendations")
-    if not isinstance(recommendations, list):
-        recommendations = []
+    recommendations = filter_patched_security_recommendations(cache_entry.get("recommendations"))
     try:
         stats = path.stat()
         mtime = stats.st_mtime

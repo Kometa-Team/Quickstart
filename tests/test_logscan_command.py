@@ -3,6 +3,8 @@
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from modules import logscan_command
 
 # ---------------------------------------------------------------------------
@@ -77,6 +79,30 @@ def test_parse_server_info_returns_empty_when_no_match():
     info, lines = logscan_command.parse_server_info("nothing to see here")
     assert info == {}
     assert lines == ["nothing to see here"]
+
+
+def test_parse_server_info_uses_connection_parser_and_keeps_full_version():
+    section = "Connected to server \"Plex-Server.1\" (Version: '1.43.3.10896-cb3ebc72d') |\nRunning on Windows version 10.0.19045.6036"
+    info, lines = logscan_command.parse_server_info(section)
+    assert info == {"server_name": "Plex-Server.1", "version": "1.43.3.10896-cb3ebc72d"}
+    assert lines == section.splitlines()
+
+
+@pytest.mark.parametrize(
+    "version,flagged",
+    [
+        ("1.40.0.7998-fffffffff", False),
+        ("1.40.0.8000", True),
+        ("'1.40.2.10000-abcdef'", True),
+        ("1.40.3.9000-abcdef", False),
+        ("1.40.3.8555-aaaaaaaaa", False),
+        ("'1.40.2.10000-junk'", False),
+    ],
+)
+def test_rounding_version_range_compares_numbers_not_hashes_or_strings(version, flagged):
+    content = f"Plex Configuration\nConnected to server Plex-Server.1 version {version}\nLibrary Connection Failed"
+    versions = logscan_command.extract_plex_config(content)["server_versions"]
+    assert bool(versions) is flagged
 
 
 # ---------------------------------------------------------------------------

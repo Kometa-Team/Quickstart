@@ -21,6 +21,20 @@ is retained in the assessment without a second warning. Existing raw log-level
 counts and the compatibility version parser API retain their meaning. Strict
 advisory parsing never substitutes zeros for missing or malformed components.
 
+Log parsing accepts matching quotes around a complete Plex version and keeps
+the build hash. Connection details and advisory checks use the same parser;
+operating system versions cannot become Plex versions. Patched observations
+do not create log recommendations. Affected historical observations still
+produce an update warning even if another observation is patched, and unknown
+versions retain neutral advice.
+
+The live analysis cache version refreshes existing results. Retained completed
+and incomplete reports hide old patched-version cards and exclude them from
+recommendation counts without rewriting stored runs or raw log counts. Restart
+Quickstart and revisit the Kometa page to refresh the live report; no cache or
+history reset is required. The Plex connection page still shows its small
+status after validating the current server version.
+
 ## Source ownership and updates
 
 The audit found independent Quickstart and online Logscan analyzers. There is no

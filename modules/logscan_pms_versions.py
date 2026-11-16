@@ -64,6 +64,17 @@ def is_vulnerable_pms_version(ver: str) -> bool:
     return legacy_affected(ver)
 
 
+def filter_patched_security_recommendations(recommendations: object) -> list:
+    """Hide obsolete patched-version cards in retained results without rewriting history."""
+    if not isinstance(recommendations, list):
+        return []
+    return [
+        item
+        for item in recommendations
+        if not (isinstance(item, dict) and isinstance(item.get("security_assessment"), dict) and item["security_assessment"].get("status") == "patched")
+    ]
+
+
 def format_version_tuple(version: tuple) -> str:
     """Render a version tuple as a dotted string.
 

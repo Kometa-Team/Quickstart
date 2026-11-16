@@ -7,6 +7,7 @@ from flask import current_app as app, has_app_context
 from contextlib import closing
 
 from modules import helpers
+from modules.logscan_pms_versions import filter_patched_security_recommendations
 
 LOG_LINE_COUNT_COLUMNS = (
     "debug_count",
@@ -497,7 +498,7 @@ def _decode_log_run_row(row):
         except json.JSONDecodeError:
             recommendations = None
     if isinstance(recommendations, list):
-        decoded["recommendations_count"] = len(recommendations)
+        decoded["recommendations_count"] = len(filter_patched_security_recommendations(recommendations))
     else:
         decoded["recommendations_count"] = 0
     analysis_counts = decoded.get("analysis_counts")
@@ -619,7 +620,7 @@ def get_log_run_recommendations(run_key):
                     recs = json.loads(recs)
                 except json.JSONDecodeError:
                     recs = None
-            return recs if isinstance(recs, list) else []
+            return filter_patched_security_recommendations(recs)
 
 
 def delete_log_run(run_key):
