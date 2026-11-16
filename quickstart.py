@@ -1203,6 +1203,7 @@ def inject_version_info():
 
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
+app.config["QS_AUTO_OPEN"] = helpers.booler(os.getenv("QS_AUTO_OPEN", "1"))
 app.config["QS_THEME"] = os.getenv("QS_THEME", "kometa").strip() or "kometa"
 app.config["QS_OPTIMIZE_DEFAULTS"] = helpers.booler(os.getenv("QS_OPTIMIZE_DEFAULTS", "1"))
 initialize_auto_upload_settings(app)
@@ -7529,6 +7530,10 @@ def update_quickstart_settings():
     if debug_raw is not None:
         debug_value = helpers.booler(str(debug_raw))
 
+    auto_open_value = data.get("auto_open")
+    if "auto_open" in data and not isinstance(auto_open_value, bool):
+        errors.append("Open browser on startup must be enabled or disabled.")
+
     optimize_raw = data.get("optimize_defaults")
     optimize_value = None
     if optimize_raw is not None:
@@ -7624,6 +7629,11 @@ def update_quickstart_settings():
         app.config["QS_DEBUG"] = debug_value
         changes_applied = True
 
+    if auto_open_value is not None and auto_open_value != app.config.get("QS_AUTO_OPEN", True):
+        helpers.update_env_variable("QS_AUTO_OPEN", "1" if auto_open_value else "0")
+        app.config["QS_AUTO_OPEN"] = auto_open_value
+        changes_applied = True
+
     if theme_value and theme_value != app.config.get("QS_THEME", "kometa"):
         helpers.update_env_variable("QS_THEME", theme_value)
         app.config["QS_THEME"] = theme_value
@@ -7701,6 +7711,7 @@ def update_quickstart_settings():
             success=True,
             message="No changes applied.",
             restart=False,
+            auto_open=app.config.get("QS_AUTO_OPEN", True),
             theme=app.config.get("QS_THEME", "kometa"),
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
@@ -7717,6 +7728,7 @@ def update_quickstart_settings():
             success=True,
             message="Settings updated. Restarting Quickstart...",
             restart=True,
+            auto_open=app.config.get("QS_AUTO_OPEN", True),
             new_port=new_port or running_port,
             theme=app.config.get("QS_THEME", "kometa"),
             theme_changed=theme_changed,
@@ -7734,6 +7746,7 @@ def update_quickstart_settings():
         success=True,
         message="Settings updated.",
         restart=False,
+        auto_open=app.config.get("QS_AUTO_OPEN", True),
         theme=app.config.get("QS_THEME", "kometa"),
         theme_changed=theme_changed,
         optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
@@ -8059,11 +8072,7 @@ if __name__ == "__main__":
                     f"Port and Debug Settings can be amended via the Settings cog in the UI, " f"right-clicking the system tray icon, or by editing your {DOTENV} file",
                     level="INFO",
                 )
-                if app.config.get("QS_SKIP_AUTO_OPEN"):
-                    helpers.ts_log("Skipping auto-open after update restart.", level="INFO")
-                else:
-                    # Open the browser automatically
-                    webbrowser.open(f"http://localhost:{running_port}")
+                helpers.auto_open_browser(f"http://localhost:{running_port}", app.config)
 
                 # Keep the invisible parent alive
                 self.dialog_parent.showMinimized()

@@ -3722,6 +3722,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const portInput = document.getElementById('quickstart-settings-port')
   const debugInput = document.getElementById('quickstart-settings-debug')
+  const autoOpenInput = document.getElementById('quickstart-settings-auto-open')
   const themeInput = document.getElementById('quickstart-settings-theme')
   const themeButton = document.getElementById('quickstart-settings-theme-btn')
   const optimizeInput = document.getElementById('quickstart-settings-optimize')
@@ -3862,6 +3863,7 @@ document.addEventListener('DOMContentLoaded', () => {
   modalEl.addEventListener('show.bs.modal', () => {
     if (portInput) portInput.value = getCurrentPort()
     if (debugInput) debugInput.checked = getCurrentDebug()
+    if (autoOpenInput) autoOpenInput.checked = getAppConfig('QS_AUTO_OPEN', true)
     if (optimizeInput) optimizeInput.checked = getCurrentOptimizeDefaults()
     if (historyInput) historyInput.value = getCurrentConfigHistory()
     if (logKeepInput) logKeepInput.value = getCurrentLogKeep()
@@ -4028,6 +4030,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (debugInput) payload.debug = debugInput.checked
+      if (autoOpenInput) payload.auto_open = autoOpenInput.checked
       if (optimizeInput) payload.optimize_defaults = desiredOptimize
       if (themeInput) payload.theme = themeInput.value
       autoUploadInputs.forEach(({ input, field }) => {
@@ -4087,6 +4090,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to update settings.')
         }
+        if (typeof data.auto_open === 'boolean') setAppConfig({ QS_AUTO_OPEN: data.auto_open })
         autoUploadInputs.forEach(({ key, field, dataset }) => {
           if (typeof data[field] !== 'boolean') return
           setAppConfig({ [key]: data[field] })

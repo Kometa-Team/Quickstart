@@ -558,6 +558,12 @@ Quickstart runs on port 7171 by default. You can change it in one of four ways:
 
 - Use the Settings button in the Utilities menu within the Web UI to choose a new port (restarts automatically).
 
+### Browser on Startup
+
+Quickstart opens your browser automatically when starting in desktop mode. To disable this, set `QS_AUTO_OPEN=0` in `config/.env`, or turn off **Open browser on startup** under **Utilities > Settings > General**. The preference applies to future starts and restarts on Windows, macOS, and Linux. The tray icon and its **Open Quickstart** action remain available. Set `QS_AUTO_OPEN=1` or enable the switch to restore automatic opening.
+
+Update restarts continue to suppress automatic opening, even when this preference is enabled. `QS_SKIP_AUTO_OPEN` is an internal update-restart flag, not a supported `.env` setting. Docker and headless mode do not launch a browser.
+
 ## Testing
 
 Quickstart uses pytest for unit/integration tests and Playwright for E2E tests. For the JavaScript test suite (Vitest) and the Vite bundle build, see the [Frontend Tooling](#frontend-tooling) section.
