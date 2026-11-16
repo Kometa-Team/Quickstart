@@ -19,6 +19,8 @@ import shlex
 from pathlib import Path
 from typing import Iterable
 
+from modules._vendor.plex_security import parse_pms_version, server_observation
+
 _logger = logging.getLogger("logscan")
 
 
@@ -29,13 +31,12 @@ _logger = logging.getLogger("logscan")
 _PLEX_CONFIG_START_MARKER = "Plex Configuration"
 _PLEX_CONFIG_END_MARKERS = (" Scanning ", "Library Connection Failed")
 _PLEX_TRACEBACK_MARKER = "Traceback (most recent call last):"
-_SERVER_INFO_RE = re.compile(r"Connected to server\s+([\w\s]+)\s+version\s+(\d+\.\d+\.\d+\.\d+-[\w\d]+)")
 
 # Versions inside (stable_version, good_version) are flagged as potentially
 # affected by the Plex "rounding issue" that older logscan recommendations call
 # out. The boundary versions themselves are considered safe.
-_PLEX_STABLE_VERSION = "1.40.0.7998-c29d4c0c8"
-_PLEX_GOOD_VERSION = "1.40.3.8555-fef15d30c"
+_PLEX_STABLE_VERSION = (1, 40, 0, 7998)
+_PLEX_GOOD_VERSION = (1, 40, 3, 8555)
 
 
 def extract_plex_config_section(lines: list[str], start_index: int, end_markers: Iterable[str]) -> str | None:
@@ -79,10 +80,9 @@ def parse_server_info(config_section: str) -> tuple[dict, list[str]]:
 
     for line in config_section.splitlines():
         all_lines.append(line)
-        match = _SERVER_INFO_RE.search(line)
-        if match:
-            server_info["server_name"] = match.group(1).strip()
-            server_info["version"] = match.group(2).strip()
+        observation = server_observation(line)
+        if observation:
+            server_info["server_name"], server_info["version"] = observation
 
     if not server_info:
         _logger.debug("Failed to extract server info from config_section")
@@ -118,7 +118,8 @@ def extract_plex_config(content: str) -> dict:
                     my_server_name = server_info["server_name"]
                     my_server_version = server_info["version"]
 
-                    if _PLEX_STABLE_VERSION < my_server_version < _PLEX_GOOD_VERSION:
+                    version = parse_pms_version(my_server_version)
+                    if version is not None and _PLEX_STABLE_VERSION < version < _PLEX_GOOD_VERSION:
                         _logger.debug(
                             f"Server Name: {my_server_name} has Version: "
                             f"{my_server_version}. Potential Rounding Issue "

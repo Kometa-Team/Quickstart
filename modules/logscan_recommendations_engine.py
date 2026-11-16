@@ -109,6 +109,8 @@ def make_recommendations(analyzer, content, incomplete_message):
     # ------------------------------------------------------------------
     recommendation_messages = []
     for assessment in security_assessments:
+        if assessment["status"] == "patched":
+            continue
         message = assessment_message(assessment)
         prefix = "\U0001f4a5" if assessment["status"] == "affected" else "\u2139"
         recommendation_messages.append(

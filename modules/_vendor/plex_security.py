@@ -16,9 +16,23 @@ LEGACY_LOW = (1, 41, 7, 0)
 LEGACY_HIGH = (1, 42, 0, 99999)
 
 
+def _unquote(value: str) -> str:
+    value = value.strip()
+    return value[1:-1].strip() if len(value) >= 2 and value[0] in {"'", '"'} and value[-1] == value[0] else value
+
+
+def normalized_pms_version(value: object) -> str | None:
+    """Remove matching field quotes without accepting partial or malformed versions."""
+    if not isinstance(value, str):
+        return None
+    value = _unquote(value)
+    return value if _VERSION.fullmatch(value) else None
+
+
 def parse_pms_version(value: object) -> tuple[int, int, int, int] | None:
     """Require four numeric components and, optionally, a hexadecimal hash."""
-    if not isinstance(value, str) or not (match := _VERSION.fullmatch(value.strip())):
+    normalized = normalized_pms_version(value)
+    if normalized is None or not (match := _VERSION.fullmatch(normalized)):
         return None
     try:
         return int(match[1]), int(match[2]), int(match[3]), int(match[4])
@@ -64,12 +78,23 @@ def evaluate_advisories(value: object) -> list[dict]:
         patched = parse_pms_version(advisory.minimum_patched_version)
         if patched is None:
             raise ValueError(f"Invalid patched version in advisory {advisory.advisory_id}")
+        status = "unknown" if version is None else "affected" if version < patched else "patched"
+        remediation = (
+            advisory.remediation
+            if status == "affected"
+            else (
+                "The version recorded in this log is not affected by this advisory. No advisory-related update is needed."
+                if status == "patched"
+                else "The Plex version could not be determined from this log. Check the server version to assess this advisory."
+            )
+        )
         assessments.append(
             {
                 **asdict(advisory),
                 "detected_version": value if isinstance(value, str) else None,
                 "normalized_version": normalized,
-                "status": "unknown" if version is None else "affected" if version < patched else "patched",
+                "status": status,
+                "remediation": remediation,
                 "legacy_vulnerability_affected": legacy_affected(value),
             }
         )
@@ -84,7 +109,8 @@ def server_observation(line: str) -> tuple[str, str] | None:
     if not match:
         return None
     server, opening, version = match.groups()
-    return server.strip(), (version.removesuffix(")") if opening else version).strip()
+    version = (version.removesuffix(")") if opening else version).strip()
+    return _unquote(server), normalized_pms_version(version) or version
 
 
 def assess_log(lines: Iterable[tuple[int, str]], evidence_limit: int = 10_000) -> list[dict]:
@@ -121,8 +147,12 @@ def assess_log(lines: Iterable[tuple[int, str]], evidence_limit: int = 10_000) -
                 group["evidence_truncated"] = True
             if assessment["status"] == "affected" or group["status"] == "affected":
                 group["status"] = "affected"
+                if assessment["status"] == "affected":
+                    group["remediation"] = assessment["remediation"]
             elif assessment["status"] == "unknown" or group["status"] == "unknown":
                 group["status"] = "unknown"
+                if assessment["status"] == "unknown":
+                    group["remediation"] = assessment["remediation"]
             group["legacy_vulnerability_affected"] |= assessment["legacy_vulnerability_affected"]
             # Keep version-specific traceability without copying every repeated line.
             entry = observations.get((*key, raw))
@@ -145,7 +175,7 @@ def assess_log(lines: Iterable[tuple[int, str]], evidence_limit: int = 10_000) -
 def assessment_message(assessment: dict) -> str:
     """Plain text/Markdown accepted by both existing recommendation renderers."""
     server = assessment.get("server_name") or "Unknown server"
-    versions = ", ".join(repr(item["detected_version"]) for item in assessment.get("observations", [])) or "unavailable"
+    versions = ", ".join(item["detected_version"] or "unavailable" for item in assessment.get("observations", [])) or "unavailable"
     status = assessment["status"]
     title = "Plex Media Server security update required" if status == "affected" else f"Plex advisory assessment: {status}"
     return (
@@ -154,6 +184,6 @@ def assessment_message(assessment: dict) -> str:
         "This historical log does not establish the server's current version.\n"
         f"Minimum patched version: {assessment['minimum_patched_version']}\n"
         f"Kometa advisory priority: {assessment['recommendation_severity'].capitalize()} ({assessment['severity_source']}).\n"
-        f"Proposed solution: {assessment['remediation'] if status == 'affected' else 'Validate the current server version to assess this advisory.'}\n"
+        f"Proposed solution: {assessment['remediation']}\n"
         f"Official Plex advisory: {assessment['advisory_url']}"
     )

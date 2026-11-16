@@ -468,7 +468,7 @@ ACTIVE_WORK_POLICIES = {
     ],
 }
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
-LOGSCAN_ANALYSIS_CACHE_VERSION = 3
+LOGSCAN_ANALYSIS_CACHE_VERSION = 4
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "version": LOGSCAN_ANALYSIS_CACHE_VERSION, "data": None}
 LOGSCAN_PROGRESS_SNAPSHOT_VERSION = 1
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "aux_signature": None, "data": None}
