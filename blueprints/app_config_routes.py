@@ -59,6 +59,7 @@ bp = Blueprint("app_config_routes", __name__)
 # that removes those inline injections will delete the duplication.
 APP_CONFIG_KEYS: tuple[tuple[str, object], ...] = (
     ("QS_DEBUG", False),
+    ("QS_AUTO_OPEN", True),
     ("QS_THEME", "kometa"),
     ("QS_OPTIMIZE_DEFAULTS", True),
     ("QS_CONFIG_HISTORY", 0),

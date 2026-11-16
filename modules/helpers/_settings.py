@@ -1,6 +1,7 @@
 """Quickstart settings utilities extracted from the original helpers.py monolith."""
 
 import os
+import webbrowser
 
 from flask import current_app as app
 
@@ -22,6 +23,18 @@ def booler(thing):
                 )
             return False
     return bool(thing)
+
+
+def auto_open_browser(url, config):
+    """Open the desktop UI unless the user or an update restart suppresses it."""
+    from modules.helpers._logging import ts_log
+
+    if not config.get("QS_AUTO_OPEN", True):
+        ts_log("Skipping auto-open because it is disabled in Quickstart settings.", level="INFO")
+    elif config.get("QS_SKIP_AUTO_OPEN"):
+        ts_log("Skipping auto-open after update restart.", level="INFO")
+    else:
+        webbrowser.open(url)
 
 
 def get_quickstart_settings_summary():
@@ -48,6 +61,7 @@ def get_quickstart_settings_summary():
     handled = {
         "QS_PORT",
         "QS_DEBUG",
+        "QS_AUTO_OPEN",
         "QS_THEME",
         "QS_OPTIMIZE_DEFAULTS",
         "QS_CONFIG_HISTORY",
@@ -63,6 +77,7 @@ def get_quickstart_settings_summary():
     summary = [
         ("QS_PORT", "Quickstart Port", lambda v: v or "Unknown"),
         ("QS_DEBUG", "Quickstart Debug", format_bool),
+        ("QS_AUTO_OPEN", "Quickstart Open Browser on Startup", format_bool),
         ("QS_THEME", "Quickstart Theme", lambda v: v or "kometa"),
         ("QS_OPTIMIZE_DEFAULTS", "Quickstart Optimize Template Defaults", format_bool),
         ("QS_CONFIG_HISTORY", "Quickstart Config Archive History", format_keep),

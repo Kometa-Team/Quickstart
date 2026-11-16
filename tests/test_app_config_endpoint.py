@@ -26,6 +26,7 @@ from blueprints.app_config_routes import APP_CONFIG_KEYS, collect_app_config
 # explicitly catches accidental additions/removals in a code review.
 EXPECTED_KEYS = (
     "QS_DEBUG",
+    "QS_AUTO_OPEN",
     "QS_THEME",
     "QS_OPTIMIZE_DEFAULTS",
     "QS_CONFIG_HISTORY",
@@ -117,6 +118,7 @@ def test_api_app_config_endpoint_reflects_live_config_changes(app, client, monke
     ("key", "expected_default"),
     [
         ("QS_DEBUG", False),
+        ("QS_AUTO_OPEN", True),
         ("QS_THEME", "kometa"),
         ("QS_OPTIMIZE_DEFAULTS", True),
         ("QS_CONFIG_HISTORY", 0),
