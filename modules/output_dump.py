@@ -112,7 +112,34 @@ _PLAIN_SCALAR_SECTIONS = frozenset(
 )
 
 
-_SETTINGS_KEEP_EMPTY_KEYS = frozenset({"auto_sort_hubs", "ignore_ids", "ignore_imdb_ids", "playlist_exclude_users"})
+# Kometa's global check_for_attribute(..., parent=..., default_is_none=True)
+# calls insert these keys with a None default when absent. Restore them after
+# output cleanup so Kometa doesn't add them back and warn on every rebuild.
+# Calls with save=False and library overrides are deliberately excluded.
+_KOMETA_NULL_DEFAULTS = {
+    "settings": (
+        "asset_directory",
+        "default_collection_order",
+        "auto_sort_hubs",
+        "ignore_ids",
+        "ignore_imdb_ids",
+        "playlist_sync_to_users",
+        "playlist_exclude_users",
+        "custom_repo",
+    ),
+    "webhooks": ("error", "version", "run_start", "run_end", "changes", "delete"),
+    "github": ("token",),
+    "tmdb": ("region",),
+    "plex": ("url", "token", "verify_ssl", "db_cache"),
+    "radarr": ("url", "token", "root_folder_path", "quality_profile", "tag", "radarr_path", "plex_path"),
+    "sonarr": ("url", "token", "root_folder_path", "quality_profile", "language_profile", "tag", "sonarr_path", "plex_path"),
+    "lidarr": ("url", "token", "root_folder_path", "quality_profile", "tag", "lidarr_path", "plex_path"),
+    "tautulli": ("url", "apikey"),
+    "tracearr": ("url", "apikey", "server_id"),
+    "mal": ("localhost_url",),
+    "floppy": ("token",),
+    "wetrakr": ("client_id",),
+}
 
 
 # --- pruning / cleaning ---------------------------------------------------
@@ -440,10 +467,22 @@ def _apply_settings_normalization(cleaned_data):
     if "asset_directory" in settings_block and isinstance(settings_block["asset_directory"], (str, list, dict)):
         settings_block["asset_directory"] = _normalize_asset_directory_values(settings_block["asset_directory"])
 
-    for setting_key in _SETTINGS_KEEP_EMPTY_KEYS:
-        settings_block.setdefault(setting_key, None)
-
     cleaned_data["settings"] = dict(sorted(settings_block.items()))
+
+
+def _apply_kometa_null_defaults(cleaned_data, dump_name):
+    """Fill global defaults only in sections already being exported.
+
+    Missing library overrides must inherit their global values. Unconfigured
+    service sections must remain absent instead of becoming null-only blocks.
+    """
+    section = cleaned_data.get(dump_name)
+    if not isinstance(section, dict) or (not section and dump_name != "settings"):
+        return
+    for key in _KOMETA_NULL_DEFAULTS.get(dump_name, ()):
+        section.setdefault(key, None)
+    if dump_name in _ALPHABETICALLY_SORTED_SECTIONS:
+        cleaned_data[dump_name] = dict(sorted(section.items()))
 
 
 # --- validation comment ---------------------------------------------------
@@ -566,6 +605,10 @@ def dump_section(title, dump_name, data, header_style, config_name):
 
     if dump_name == "settings":
         _apply_settings_normalization(cleaned_data)
+
+    _apply_kometa_null_defaults(cleaned_data, dump_name)
+
+    if dump_name == "settings":
         _apply_settings_lookup_comments(cleaned_data)
 
     if dump_name == "libraries":

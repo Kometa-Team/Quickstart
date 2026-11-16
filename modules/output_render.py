@@ -290,6 +290,14 @@ def _load_config_schema():
 
     extend_rating_source_schema(schema)
     extend_asset_directory_schema(schema)
+
+    # Kometa's global config reader writes language_profile: null when absent,
+    # but its schema still declares this legacy Sonarr field as string-only.
+    # Allow that runtime default without changing library overrides or other types.
+    language_profile = schema.get("definitions", {}).get("sonarr-api", {}).get("properties", {}).get("language_profile")
+    if isinstance(language_profile, dict) and language_profile.get("type") == "string":
+        language_profile["type"] = ["string", "null"]
+
     from modules.library_scheduling import extend_config_schema
 
     extend_config_schema(schema)
