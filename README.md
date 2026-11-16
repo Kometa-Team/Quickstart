@@ -558,6 +558,10 @@ Quickstart runs on port 7171 by default. You can change it in one of four ways:
 
 - Use the Settings button in the Utilities menu within the Web UI to choose a new port (restarts automatically).
 
+### Library Scheduling
+
+Each library's **Scheduling** section supports basic schedules and ordered rules with scoped processing modes. The final Kometa page also offers a one-time item processing override. See [Library scheduling and processing modes](docs/library-scheduling.md) for setup, cache requirements, compatibility, and examples.
+
 ### Browser on Startup
 
 Quickstart opens your browser automatically when starting in desktop mode. To disable this, set `QS_AUTO_OPEN=0` in `config/.env`, or turn off **Open browser on startup** under **Utilities > Settings > General**. The preference applies to future starts and restarts on Windows, macOS, and Linux. The tray icon and its **Open Quickstart** action remain available. Set `QS_AUTO_OPEN=1` or enable the switch to restore automatic opening.

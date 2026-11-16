@@ -6,6 +6,7 @@
 // delegates to.
 import { updateAccordionHighlights } from '/static/local-js/modules/accordionHighlights.js'
 import './modules/seerrOptions.js'
+import { initLibraryScheduling } from './modules/libraryScheduling.js'
 import { nbspLeadingSpaces } from '/static/local-js/modules/kometa/_util.js'
 import { applyLibraryFileServerErrors, libraryFileRowMatches } from '/static/local-js/modules/libraryFileErrors.js'
 
@@ -6854,6 +6855,7 @@ function initializeLibraryCardControls (card, libraryId) {
     initStylePreviewGrids(card)
     initRelativeYearInputs(card)
     initScheduleBuilders(card)
+    initLibraryScheduling(card)
     initLibraryAssetDirectoryInputs(card)
     wireChildToggleBulkActions(card)
     wireOffsetReset(card)

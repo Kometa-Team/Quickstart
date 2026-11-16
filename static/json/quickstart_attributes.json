@@ -207,7 +207,7 @@
       "prefix": "top_level_schedule",
       "type": "text_input",
       "input_mode": "schedule",
-      "accordion": "miscellaneous",
+      "accordion": "scheduling",
       "media_types": [
         "movie",
         "show"

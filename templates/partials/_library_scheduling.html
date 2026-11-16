@@ -1,0 +1,42 @@
+{% from 'partials/_processing_mode.html' import processing_mode %}
+{% set schedule_name = library.id ~ '-top_level_schedule' %}
+{% set schedule_value = data.get('libraries', {}).get(schedule_name) %}
+{% set support = library_schedule_runtime_support() %}
+<div class="accordion-item">
+  <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{ library.id }}-scheduling" aria-expanded="false" aria-controls="{{ library.id }}-scheduling">Scheduling</button></h2>
+  <div id="{{ library.id }}-scheduling" class="accordion-collapse collapse" data-library-override-scope="true" data-library-override-label="Scheduling">
+    <div class="accordion-body" data-library-scheduling data-library-id="{{ library.id }}">
+      <p>Library schedules control what Kometa processes after it starts. They do not start Kometa. Use Docker scheduling, Windows Task Scheduler, cron, or another launcher to start it regularly.</p>
+      <p class="form-text">Ordered rules use the first match. If no rule matches, Kometa skips this library. Plan occasional <code>full</code> runs: scoped runs preserve existing collection members and custom order, and may leave stale members or overlays outside the selected scope.</p>
+      <p><a href="https://kometa.wiki/en/latest/kometa/guides/scheduling/" target="_blank" rel="noopener noreferrer">Kometa scheduling documentation</a></p>
+      {% if support.supported is not sameas true %}<div class="alert alert-warning">{{ support.message }}</div>{% endif %}
+      {% if support.supported is none %}
+      {% set confirm_name = library.id ~ '-tmp_schedule_compatibility_confirmed' %}
+      <input type="hidden" name="{{ confirm_name }}" data-schedule-confirm-value value="{{ 'true' if data.get('libraries', {}).get(confirm_name) in [true, 'true'] else 'false' }}">
+      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="{{ library.id }}-schedule-confirm" data-schedule-confirm {% if data.get('libraries', {}).get(confirm_name) in [true, 'true'] %}checked{% endif %}><label class="form-check-label" for="{{ library.id }}-schedule-confirm">I confirm my Kometa supports library processing modes.</label></div>
+      {% endif %}
+      <input type="hidden" id="{{ schedule_name }}" name="{{ schedule_name }}" data-library-schedule-value data-default="" value="{{ (schedule_value if schedule_value is string else (schedule_value|tojson if schedule_value is not none else ''))|forceescape }}">
+      <label class="form-label" for="{{ library.id }}-schedule-format">Library scheduling</label>
+      <select class="form-select mb-3" id="{{ library.id }}-schedule-format" data-library-schedule-format><option value="none">No library schedule</option><option value="basic">Basic schedules (full processing)</option><option value="rules">Ordered schedules with processing modes</option></select>
+      <div data-library-schedule-editor class="d-none">
+        <div data-library-schedule-rows></div>
+        <button type="button" class="btn btn-outline-secondary btn-sm my-2" data-library-schedule-add>Add scheduling rule</button>
+      </div>
+      <div class="text-danger small mb-2" role="status" data-library-schedule-error></div>
+      <details class="mb-2 d-none" data-library-schedule-repair><summary>Imported schedule needs repair</summary><label class="form-label" for="{{ library.id }}-schedule-raw">Schedule JSON or expression</label><textarea class="form-control" id="{{ library.id }}-schedule-raw" rows="4" data-library-schedule-raw></textarea><button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-library-schedule-load>Load repaired schedule</button></details>
+      <details><summary>YAML preview for this library</summary><pre class="mt-2 mb-0"><code data-library-schedule-preview></code></pre></details>
+      <template data-library-schedule-row-template>
+        <div class="border rounded p-3 mb-2" data-library-schedule-row>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2"><strong data-schedule-row-number></strong><div class="btn-group btn-group-sm"><button type="button" class="btn btn-outline-secondary" data-schedule-up aria-label="Move rule up">Up</button><button type="button" class="btn btn-outline-secondary" data-schedule-down aria-label="Move rule down">Down</button><button type="button" class="btn btn-outline-danger" data-schedule-remove aria-label="Remove rule">Remove</button></div></div>
+          <label class="form-label" for="__RULE__-frequency">Frequency</label>
+          <select class="form-select mb-2" id="__RULE__-frequency" data-schedule-frequency><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="custom">Advanced expression</option></select>
+          <div class="mb-2 d-none" data-schedule-fields="weekly"><fieldset><legend class="fs-6">Days of the week</legend>{% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}<div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="__RULE__-{{ day }}" value="{{ day }}" data-schedule-day><label class="form-check-label" for="__RULE__-{{ day }}">{{ day|capitalize }}</label></div>{% endfor %}</fieldset></div>
+          <div class="mb-2 d-none" data-schedule-fields="monthly"><label class="form-label" for="__RULE__-dates">Days of the month</label><input class="form-control" id="__RULE__-dates" data-schedule-dates placeholder="1, 15, last"><div class="form-text">Use days 1–31, last, or ranges such as 1-7 and 21-last. Days that do not exist in a month are skipped.</div></div>
+          <div class="form-check mb-2 d-none" data-schedule-exclusion><input class="form-check-input" type="checkbox" id="__RULE__-not" data-schedule-not><label class="form-check-label" for="__RULE__-not">Run except on these days or dates (.not)</label></div>
+          <div class="mb-2 d-none" data-schedule-fields="custom"><label class="form-label" for="__RULE__-expression">Advanced schedule expression</label><input class="form-control" id="__RULE__-expression" data-schedule-expression placeholder="all[weekly(monday), hourly(6)]"><div class="form-text">Supports hourly, yearly, date, range, never, all[...], and supported .not exclusions.</div></div>
+          <div data-schedule-rule-mode>{{ processing_mode('__RULE__') }}</div>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>

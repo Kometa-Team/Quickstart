@@ -290,6 +290,9 @@ def _load_config_schema():
 
     extend_rating_source_schema(schema)
     extend_asset_directory_schema(schema)
+    from modules.library_scheduling import extend_config_schema
+
+    extend_config_schema(schema)
 
     return yaml, schema
 
@@ -378,5 +381,13 @@ def emit_and_validate_config(
     seerr_errors = [jsonschema.ValidationError(message) for message in configuration_errors(config_data, compatibility_confirmed=confirmed)]
     if seerr_errors:
         sorted_errors.extend(seerr_errors)
+        validated, first_error = False, sorted_errors[0]
+    from modules.library_scheduling import configuration_errors as schedule_configuration_errors
+
+    library_settings = (persistence.retrieve_settings("025-libraries") or {}).get("libraries", {})
+    generated_config = yaml_parser.load(yaml_content) or {}
+    scheduling_errors = [jsonschema.ValidationError(message) for message in schedule_configuration_errors(generated_config, library_settings)]
+    if scheduling_errors:
+        sorted_errors.extend(scheduling_errors)
         validated, first_error = False, sorted_errors[0]
     return validated, first_error, config_data, yaml_content, sorted_errors

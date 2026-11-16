@@ -1087,7 +1087,9 @@ def _preserve_unloaded_lazy_section_values(
     should_preserve_unloaded_collection_groups = "collections" in set(loaded_sections or set()) and loaded_collection_groups is not None
     should_preserve_unloaded_collection_details = should_preserve_unloaded_collection_groups and loaded_collection_details is not None
     missing_partial_fields = {
-        f"{library_id}-{suffix}" for suffix in ("collection_files", "metadata_files", "overlay_files", "playlist") if f"{library_id}-{suffix}" not in incoming_libraries
+        f"{library_id}-{suffix}"
+        for suffix in ("collection_files", "metadata_files", "overlay_files", "playlist", "top_level_schedule", "tmp_schedule_compatibility_confirmed")
+        if f"{library_id}-{suffix}" not in incoming_libraries
     }
     if not unloaded_sections and not should_preserve_unloaded_collection_groups and not should_preserve_unloaded_collection_details and not missing_partial_fields:
         return incoming_libraries
@@ -1119,7 +1121,7 @@ def _preserve_unloaded_lazy_section_values(
     def should_preserve(key):
         if not isinstance(key, str) or not key.startswith(prefix):
             return False
-        if key in missing_partial_fields and (_is_library_file_entry_key(library_id, key) or key == f"{library_id}-playlist"):
+        if key in missing_partial_fields:
             return True
         if should_preserve_unloaded_collection_groups and _collection_key_belongs_to_unloaded_group(key, collection_key_indexes, loaded_collection_groups):
             return True
@@ -1399,7 +1401,7 @@ def autosave_library(library_id):
             clean_source.pop("__loaded_collection_groups", None)
             clean_source.pop("__loaded_collection_details", None)
             clean_source.pop("__reset_collection_defaults", None)
-        clean_payload = persistence.clean_form_data(MultiDict(clean_source))
+        clean_payload = persistence.clean_form_data(clean_source)
         incoming_libraries = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
         loaded_sections = _loaded_sections_with_payload_evidence(library_id, incoming_libraries, loaded_sections)
         if reset_collection_defaults:
@@ -1424,6 +1426,7 @@ def autosave_library(library_id):
         overlay_errors = _qs._validate_library_overlay_files(active_libraries, selected_library_ids)
         auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(active_libraries, selected_library_ids)
         auto_sort_hubs_errors += _qs.seerr_support.validate_library_settings(active_libraries, selected_library_ids)
+        auto_sort_hubs_errors += _qs.library_scheduling.validate_library_settings(active_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
         if metadata_errors:

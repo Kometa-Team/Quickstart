@@ -332,6 +332,13 @@ def build_top_level_fields(top_group, library_type, lib_id):
         value = top_group.get(_top_level_key(library_type, lib_id, field))
         if field == "auto_sort_hubs":
             value = normalize_auto_sort_hubs(value)
+        if field == "schedule":
+            from modules.library_scheduling import parse_schedule
+
+            try:
+                value = parse_schedule(value)
+            except ValueError:
+                pass  # Retain invalid imports so final validation can explain them.
         if value not in (None, ""):
             result[field] = value
 
