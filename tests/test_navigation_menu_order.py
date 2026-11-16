@@ -9,10 +9,10 @@ def test_optional_navigation_groups_are_alphabetical():
     assert "('Core Setup', ['001-start', '010-plex', '020-tmdb', '025-libraries'])" in navigation
     assert (
         "('Required by Configuration', ['100-anidb', '067-floppy', '060-mdblist', '140-mal', '050-omdb', "
-        "'110-radarr', '120-sonarr', '030-tautulli', '035-tracearr'])" in navigation
+        "'110-radarr', '125-seerr', '120-sonarr', '030-tautulli', '035-tracearr'])" in navigation
     )
     assert "('Preferences', ['150-settings'])" in navigation
-    assert "('Media Integrations', ['110-radarr', '120-sonarr', '030-tautulli', '035-tracearr', '088-yamtrack'])" in navigation
+    assert "('Media Integrations', ['110-radarr', '125-seerr', '120-sonarr', '030-tautulli', '035-tracearr', '088-yamtrack'])" in navigation
     assert "('Metadata and Lists', ['100-anidb', '067-floppy', '040-github', '060-mdblist', '140-mal', '050-omdb', '065-serializd'])" in navigation
     assert "('Notifications', ['087-apprise', '080-gotify', '070-notifiarr', '085-ntfy', '090-webhooks'])" in navigation
 
