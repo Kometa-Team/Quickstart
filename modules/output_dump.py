@@ -76,6 +76,7 @@ _ALPHABETICALLY_SORTED_SECTIONS = frozenset(
         "anidb",
         "radarr",
         "sonarr",
+        "seerr",
         "trakt",
         "mal",
     }
@@ -104,6 +105,7 @@ _PLAIN_SCALAR_SECTIONS = frozenset(
         "anidb",
         "radarr",
         "sonarr",
+        "seerr",
         "trakt",
         "mal",
     }

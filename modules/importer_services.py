@@ -98,6 +98,18 @@ def process_service_overrides(
     Iterates the two services, delegating each to
     :func:`_process_single_service_override`.
     """
+    seerr = lib_cfg.get("seerr")
+    if isinstance(seerr, dict):
+        for key in ("url", "apikey"):
+            if key in seerr:
+                libraries_data[f"{lib_id}-attribute_seerr_{key}"] = seerr[key]
+        extra = {key: value for key, value in seerr.items() if key not in {"url", "apikey"}}
+        if extra:
+            libraries_data[f"{lib_id}-attribute_seerr_extra"] = extra
+        report.add("imported", f"libraries.{lib_name}.seerr")
+    elif seerr is not None:
+        report.add("unmapped", f"libraries.{lib_name}.seerr", "Seerr overrides must be an object.")
+
     for service_name, field_map in (
         ("radarr", LIBRARY_RADARR_IMPORT_FIELDS),
         ("sonarr", LIBRARY_SONARR_IMPORT_FIELDS),

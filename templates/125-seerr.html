@@ -1,0 +1,37 @@
+{% extends "000-base.html" %}
+{% block content %}
+{% include "001-navigation.html" %}
+{% set connection = data.get('seerr', {}) %}
+{% set support = seerr_runtime_support() %}
+{% include "modals/125-seerr.html" %}
+<div class="form-check form-switch mb-3">
+  <input class="form-check-input" type="checkbox" id="seerr_tmp_enabled" name="seerr_tmp_enabled" value="true" {% if connection.get('tmp_enabled', true)|string|lower == 'true' %}checked{% endif %}>
+  <input type="hidden" name="seerr_tmp_enabled" value="false">
+  <label class="form-check-label" for="seerr_tmp_enabled">Enable global Seerr connection</label>
+</div>
+<div class="mb-3">
+  <label class="form-label" for="seerr_url">Seerr URL</label>
+  <input class="form-control" type="url" id="seerr_url" name="seerr_url" value="{{ connection.get('url') or '' }}" placeholder="http://seerr:5055">
+</div>
+<div class="mb-3">
+  <label class="form-label" for="seerr_apikey">Seerr API Key</label>
+  <div class="input-group">
+    <input class="form-control" type="password" id="seerr_apikey" name="seerr_apikey" value="{{ connection.get('apikey') or '' }}" autocomplete="off">
+    <button class="btn btn-outline-secondary" type="button" id="toggleApikeyVisibility" aria-label="Toggle Seerr API key visibility"><i class="fas fa-eye"></i></button>
+    <button class="btn btn-success" type="button" id="validateButton">Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i></button>
+  </div>
+  <div class="form-text">Find this in Seerr under Settings → General. Validation checks authentication without creating requests.</div>
+</div>
+<input type="hidden" id="seerr_validated" name="seerr_validated" value="{{ data.get('validated', false)|string|lower }}">
+<input type="hidden" id="seerr_validated_at" name="seerr_validated_at" value="{{ data.get('validated_at') or '' }}">
+<div id="statusMessage" class="status-message mb-3"></div>
+{% if support.supported is none and seerr_external_mode() %}
+<div class="form-check mb-3">
+  <input class="form-check-input" type="checkbox" id="seerr_tmp_compatibility_confirmed" name="seerr_tmp_compatibility_confirmed" value="true" {% if connection.get('tmp_compatibility_confirmed') %}checked{% endif %}>
+  <input type="hidden" name="seerr_tmp_compatibility_confirmed" value="false">
+  <label class="form-check-label" for="seerr_tmp_compatibility_confirmed">I have verified that my external Kometa runtime supports Seerr (PR #3738), including Seerr template variables if I use collection defaults.</label>
+</div>
+{% endif %}
+</div>
+</form>
+{% endblock %}

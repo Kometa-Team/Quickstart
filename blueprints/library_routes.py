@@ -587,6 +587,8 @@ def _template_value_is_configured(value, default=None, field_type=""):
     field_type = str(field_type or "").strip().lower()
     if value is None:
         return False
+    if field_type in {"seerr_options", "seerr_option_marker"}:
+        return value != "" and value != {}
     if field_type == "schedule":
         if not _has_saved_value(value):
             return False
@@ -1421,6 +1423,7 @@ def autosave_library(library_id):
         metadata_errors = _qs._validate_library_metadata_files(active_libraries, selected_library_ids)
         overlay_errors = _qs._validate_library_overlay_files(active_libraries, selected_library_ids)
         auto_sort_hubs_errors = _qs._validate_library_auto_sort_hubs(active_libraries, selected_library_ids)
+        auto_sort_hubs_errors += _qs.seerr_support.validate_library_settings(active_libraries, selected_library_ids)
         if collection_errors:
             return jsonify({"success": False, "error": "Invalid collection files.", "errors": collection_errors}), 400
         if metadata_errors:

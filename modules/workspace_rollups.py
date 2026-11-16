@@ -218,6 +218,7 @@ def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at
         seen.add(key)
 
     dependency_defs = [
+        ("seerr", "125-seerr", "Seerr", "seerr_requirement_reasons", "qs-seerr-required-hint"),
         ("tautulli", QS_TAUTULLI_REQUIRED_STEP_KEY, "Tautulli", "tautulli_requirement_reasons", "qs-tautulli-required-hint"),
         ("tracearr", QS_TRACEARR_REQUIRED_STEP_KEY, "Tracearr", "tracearr_requirement_reasons", "qs-tracearr-required-hint"),
         ("omdb", QS_OMDB_REQUIRED_STEP_KEY, "OMDb", "omdb_requirement_reasons", "qs-omdb-required-hint"),

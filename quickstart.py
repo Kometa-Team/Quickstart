@@ -501,6 +501,7 @@ MODULE_PAGE_SCRIPTS = frozenset(
         "100-anidb",
         "110-radarr",
         "120-sonarr",
+        "125-seerr",
         "140-mal",
         "150-settings",
         "150-settings",
@@ -517,6 +518,7 @@ VALIDATION_DOCS = {
     "tmdb": f"{VALIDATION_DOC_BASE}020-tmdb",
     "radarr": f"{VALIDATION_DOC_BASE}110-radarr",
     "sonarr": f"{VALIDATION_DOC_BASE}120-sonarr",
+    "seerr": "https://kometa.wiki/en/develop/config/seerr/",
     "tautulli": f"{VALIDATION_DOC_BASE}030-tautulli",
     "tracearr": f"{VALIDATION_DOC_BASE}035-tracearr",
     "omdb": f"{VALIDATION_DOC_BASE}050-omdb",
@@ -1079,6 +1081,14 @@ basedir = os.path.abspath
 kometa_process = None
 
 app = Flask(__name__)
+from modules import seerr as seerr_support
+
+app.jinja_env.globals.update(
+    seerr_runtime_support=seerr_support.runtime_support,
+    seerr_display_overrides=seerr_support.display_overrides,
+    seerr_defaults_support=seerr_support.defaults_support,
+    seerr_external_mode=lambda: helpers.get_kometa_install_mode() == "external",
+)
 
 # Register the Vite manifest lookup as a Jinja global so templates can
 # say ``{{ asset_url('000-base') }}`` instead of ``url_for('static',
@@ -2154,6 +2164,7 @@ def step(name):
             validation_errors += _validate_library_overlay_files(incoming_libraries, selected_library_ids)
             validation_errors += _validate_shared_playlist_files(incoming_libraries)
             validation_errors += _validate_library_auto_sort_hubs(incoming_libraries, selected_library_ids)
+            validation_errors += seerr_support.validate_library_settings(incoming_libraries, selected_library_ids)
             for lib_id in selected_library_ids:
                 override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
                 if not override_result.get("valid") and not override_result.get("skipped"):
@@ -3322,6 +3333,17 @@ def validate_all_services():
             lambda s: {"sonarr_url": s.get("sonarr", {}).get("url"), "sonarr_token": s.get("sonarr", {}).get("token")},
             ["sonarr_url", "sonarr_token"],
         ),
+        (
+            "125-seerr",
+            "seerr",
+            validations.validate_seerr_server,
+            lambda s: (
+                {"seerr_url": s.get("seerr", {}).get("url"), "seerr_apikey": s.get("seerr", {}).get("apikey")}
+                if helpers.booler(s.get("seerr", {}).get("tmp_enabled", True))
+                else {}
+            ),
+            ["seerr_url", "seerr_apikey"],
+        ),
     ]
 
     label_map = {}
@@ -3568,6 +3590,7 @@ def validate_all_services():
             metadata_file_errors = _validate_library_metadata_files(libraries_data, selected_library_ids)
             overlay_file_errors = _validate_library_overlay_files(libraries_data, selected_library_ids)
             auto_sort_hubs_errors = _validate_library_auto_sort_hubs(libraries_data, selected_library_ids)
+            auto_sort_hubs_errors += seerr_support.validate_library_settings(libraries_data, selected_library_ids)
             arr_override_errors = []
             if path_errors:
                 libraries_reason = "invalid_paths"

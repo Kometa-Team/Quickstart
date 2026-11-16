@@ -238,7 +238,7 @@ def _apply_collection_template_variables(
 
     # -- Emit each override into libraries_data if the schema allows it.
     for key, value in expanded_template_values.items():
-        if key in allowed:
+        if key in allowed or key.startswith("seerr_"):
             child_name = f"{lib_id}-template_collection_{clean_id}_{key}"
             if isinstance(value, list):
                 libraries_data[child_name] = json.dumps(value, ensure_ascii=True)

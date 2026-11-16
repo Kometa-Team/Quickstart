@@ -48,6 +48,7 @@ QS_VALIDATION_STEP_KEYS = {
     "100-anidb",
     "110-radarr",
     "120-sonarr",
+    "125-seerr",
     "140-mal",
     "150-settings",
 }

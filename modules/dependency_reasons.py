@@ -557,6 +557,25 @@ def _libraries_data_sonarr_dependency_reasons(libraries_data):
     )
 
 
+def _config_seerr_dependency_reasons(section_rows):
+    row = section_rows.get("libraries", {}) if isinstance(section_rows, dict) else {}
+    libraries = row.get("data", {}).get("libraries", {})
+    reasons = []
+    for prefix in _active_library_prefixes(libraries):
+        # A complete library connection needs no global connection.
+        if all(libraries.get(f"{prefix}-attribute_seerr_{field}") for field in ("url", "apikey")):
+            continue
+        for key, value in libraries.items():
+            if key.startswith(prefix + "-") and ("seerr_add_missing" in key or "seerr_add_existing" in key) and _is_truthy_setting_value(value):
+                if "-template_collection_" in key:
+                    collection = key.split("-template_collection_", 1)[1].split("_seerr_", 1)[0]
+                    if not _is_truthy_setting_value(libraries.get(f"{prefix}-collection_{collection}")):
+                        continue
+                reasons.append(f"{libraries.get(prefix + '-library', prefix)}: Seerr requests enabled")
+                break
+    return reasons
+
+
 def _libraries_data_mal_dependency_reasons(libraries_data):
     if not isinstance(libraries_data, dict):
         return []

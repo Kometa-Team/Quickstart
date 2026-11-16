@@ -223,6 +223,10 @@ def _sort_id_values(values):
 
 
 def _normalize_collection_template_var_value(key, value):
+    from modules.seerr import is_seerr_option, normalize_option
+
+    if is_seerr_option(key):
+        return normalize_option(key, value)
     if key == "collection_section" and value in (None, ""):
         return None
     if key in {"ignore_ids", "ignore_imdb_ids"}:

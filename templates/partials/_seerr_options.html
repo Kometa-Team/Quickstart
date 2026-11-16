@@ -1,0 +1,72 @@
+{% macro options(prefix, suffix, values) %}
+<div class="qs-seerr-options border rounded p-3 my-2" data-seerr-options>
+  {% set keyed = {} %}
+  {% for name, value in values.items() if name.startswith(prefix ~ 'seerr_') %}
+  {% set option = name[prefix|length:]|replace(']', '') %}
+  {% if option not in ['seerr_add_missing', 'seerr_add_existing', 'seerr_instance', 'seerr_overrides'] %}
+  {% if option.startswith('seerr_add_missing_') or option.startswith('seerr_add_existing_') or option.startswith('seerr_instance_') or option.startswith('seerr_overrides_') %}
+  {% if value is not none and value != '' %}{% set _ = keyed.update({option: value}) %}{% endif %}
+  <input type="hidden" name="{{ name }}" data-seerr-keyed-output value="{{ value|tojson if value is mapping else value|string|lower if value is boolean else value }}">
+  {% else %}
+  <input type="hidden" name="{{ name }}" value="{{ value|tojson if value is mapping else value|string|lower if value is boolean else value }}">
+  {% endif %}
+  {% endif %}
+  {% endfor %}
+  <p class="mb-2">Seerr requests</p>
+  {% if seerr_defaults_support() is sameas false %}
+  <div class="alert alert-warning">This Kometa installation's defaults do not forward Seerr options yet. Update to compatible defaults or use direct <code>seerr_*</code> attributes in a custom collection YAML file. Quickstart preserves these settings and reports the compatibility problem during export validation.</div>
+  {% endif %}
+  {% for key, label in [('seerr_add_missing', 'Request media missing from Plex'), ('seerr_add_existing', 'Request media already present in Plex')] %}
+  {% set name = prefix ~ key ~ suffix %}
+  {% set saved = values.get(name) %}
+  <div class="d-flex gap-3 align-items-center mb-2" data-seerr-switch>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="{{ name }}_override" data-seerr-explicit {% if saved is not none and saved != '' %}checked{% endif %}>
+      <label class="form-check-label" for="{{ name }}_override">Override</label>
+    </div>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="{{ name }}_toggle" data-seerr-value {% if saved|string|lower == 'true' %}checked{% endif %}>
+      <label class="form-check-label" for="{{ name }}_toggle">{{ label }}</label>
+    </div>
+    <input type="hidden" name="{{ name }}" id="{{ name }}" data-seerr-switch-output data-default="" value="{{ saved|string|lower if saved is not none else '' }}">
+  </div>
+  {% endfor %}
+  <div class="form-text text-warning mb-2">Requesting existing media can create requests for items already in Plex, for example a 4K upgrade. Enable it deliberately.</div>
+  {% set name = prefix ~ 'seerr_instance' ~ suffix %}
+  <label class="form-label" for="{{ name }}">Request tier</label>
+  <select class="form-select mb-2" id="{{ name }}" name="{{ name }}" data-default="">
+    {% for value, label in [('', 'Inherit (Kometa default: standard)'), ('standard', 'Standard'), ('4k', '4K'), ('both', 'Both')] %}
+    <option value="{{ value }}" {% if values.get(name, '') == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+    {% if values.get(name) and values.get(name) not in ['standard', '4k', 'both'] %}<option selected value="{{ values[name] }}">{{ values[name] }} (imported)</option>{% endif %}
+  </select>
+  <div class="form-text">Both sends separate standard and 4K requests. A duplicate or failure in one tier does not prevent the other attempt. Set up each tier's server in Seerr; Kometa requests all seasons for shows.</div>
+  <div class="alert alert-warning mt-2" data-seerr-duplicate-warning hidden>Seerr and direct Radarr/Sonarr add_missing are enabled together. Both paths may independently submit requests for the same collection.</div>
+  <details class="mt-3" data-seerr-overrides>
+    <summary>Advanced tier overrides</summary>
+    {% set name = prefix ~ 'seerr_overrides' ~ suffix %}
+    {% set raw = values.get(name) %}
+    {% set overrides = seerr_display_overrides(raw) %}
+    {% for tier, label in [('standard', 'Standard'), ('4k', '4K')] %}
+    {% set fields = overrides.get(tier, {}) %}
+    <fieldset class="border rounded p-2 mt-2">
+      <legend class="float-none w-auto fs-6">{{ label }}</legend>
+      {% for field, field_label in [('server_id', 'Server ID'), ('quality_profile', 'Quality profile ID or name'), ('root_folder', 'Root folder')] %}
+      <label class="form-label" for="{{ name }}_{{ tier }}_{{ field }}">{{ field_label }}</label>
+      <input class="form-control mb-2" id="{{ name }}_{{ tier }}_{{ field }}" data-seerr-tier="{{ tier }}" data-seerr-field="{{ field }}" value="{{ fields.get(field, '') if fields is mapping else '' }}" {% if field == 'server_id' %}type="number" min="1" step="1"{% else %}type="text"{% endif %}>
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+    <div class="form-text">Leave values blank to use Seerr's defaults. Profile IDs are numbers; names remain strings.</div>
+    <details class="mt-2"><summary>Override JSON (preserves additional imported fields)</summary>
+      <textarea class="form-control" id="{{ name }}" name="{{ name }}" rows="5" data-seerr-json data-default="">{{ raw|tojson if raw is mapping else (raw or '') }}</textarea>
+    </details>
+  </details>
+  <details class="mt-3">
+    <summary>Overrides for individual collection keys</summary>
+    <p class="form-text">Use a defaults collection key, for example <code>{"seerr_add_missing_popular": true, "seerr_instance_popular": "4k"}</code>. These override the shared values for that collection. Explicit false values are retained.</p>
+    <textarea class="form-control" rows="4" data-seerr-keyed data-seerr-prefix="{{ prefix }}" data-seerr-suffix="{{ suffix }}">{{ keyed|tojson if keyed else '' }}</textarea>
+    <div class="form-text" data-seerr-keyed-error role="status"></div>
+  </details>
+</div>
+{% endmacro %}

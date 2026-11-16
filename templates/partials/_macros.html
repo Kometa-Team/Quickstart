@@ -1474,7 +1474,10 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         {% set season.open = true %}
                         {% endif %}
 
-                        {% if item.type == 'toggle' %}
+                        {% if item.type == 'seerr_options' %}
+                        {% from 'partials/_seerr_options.html' import options with context %}
+                        {{ options(library.id ~ '-template_collection_' ~ clean_id ~ '_', '', data['libraries']) }}
+                        {% elif item.type == 'toggle' %}
                         {% set stored_val = data['libraries'].get(input_name) %}
                         {% set stored_true = stored_val|string|lower == 'true' %}
                         {% set has_stored = stored_val is not none and stored_val|string|length > 0 %}
