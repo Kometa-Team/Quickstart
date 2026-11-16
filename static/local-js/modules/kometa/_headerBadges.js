@@ -49,6 +49,7 @@
 
 import { formatHeaderStyleLabel, isValidTimesFormat, computeYamlLineCount, isRunCommandValid } from './_util.js'
 import { kometaState } from './_state.js'
+import { processingModeValue } from '../processingMode.js'
 import { syncKometaBranchRollupBadge } from './_kometaBranch.js'
 import { getMaintenanceScheduleConflict } from './_maintenanceWindow.js'
 
@@ -196,7 +197,11 @@ export function updateLibraryMultiselectCount (selectedLibs) {
  */
 export function updateModeFlagsHeaderBadge () {
   const modeFlag = (document.querySelector('input[name="mode-flag"]:checked') || {}).value || ''
-  setHeaderRollupBadge('heading-modeflags-rollup-badge', modeFlag ? 'ok' : 'unknown', prettifyFlag(modeFlag))
+  const processingMode = processingModeValue(document.querySelector('#processing-mode-override [data-processing-mode]'))
+  const processingLabel = processingMode.startsWith('items(') ? `Specific items (${processingMode.slice(6, -1).split('|').length})` : processingMode
+  const labels = [modeFlag ? prettifyFlag(modeFlag) : '', processingLabel].filter(Boolean)
+  const invalid = Boolean(document.querySelector('#processing-mode-override [data-processing-error]')?.textContent)
+  setHeaderRollupBadge('heading-modeflags-rollup-badge', invalid ? 'error' : labels.length ? 'ok' : 'unknown', invalid ? 'Fix processing mode' : labels.join(' · ') || prettifyFlag(''))
 }
 
 /**

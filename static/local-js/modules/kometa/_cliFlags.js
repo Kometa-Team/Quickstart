@@ -56,6 +56,10 @@ export const KOMETA_CLI_FLAGS = Object.freeze({
     label: 'Time to Run',
     description: 'Run at these times. Kometa wakes up at 5:00 AM to process the config file. If you want to change that time, or tell Kometa to wake up at multiple times, use this flag.'
   },
+  '--mode': {
+    label: 'Item Processing Mode',
+    description: 'Override library processing modes for one run. Collection and overlay schedules still apply. Environment variable: KOMETA_MODE.'
+  },
   '--operations-only': {
     label: 'Operations Only',
     description: 'Only perform operations (e.g., rating/poster updates).'
@@ -186,6 +190,7 @@ const VALIDATION_FLAGS = [
   '--validate-level', '--validate-schema', '--schema-path'
 ]
 const OTHER_FLAGS = [
+  '--mode',
   '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
   '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
   '--ignore-schedules', '--no-verify-ssl', '--tests', '--timeout', '--divider', '--width'

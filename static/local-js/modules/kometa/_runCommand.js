@@ -54,6 +54,7 @@
 //      error div shows the exact rule that was violated.
 
 import { kometaState } from './_state.js'
+import { processingModeValue, validateProcessingMode } from '../processingMode.js'
 import { quoteIfNeeded, isValidTimesFormat } from './_util.js'
 import { toggleTimesInputVisibility, checkMaintenanceWarning } from './_maintenanceWindow.js'
 import { updateRunNowState } from './_runControls.js'
@@ -347,6 +348,26 @@ export function buildCommand () {
   }
 
   // ---- Mode + log flag radios (optional, mutually exclusive) ------
+  const processingRoot = document.getElementById('processing-mode-override')
+  const processingError = processingRoot?.querySelector('[data-processing-error]')
+  try {
+    const processingMode = processingModeValue(processingRoot?.querySelector('[data-processing-mode]'))
+    validateProcessingMode(processingMode)
+    if (processingMode) {
+      const supported = processingRoot.dataset.runtimeSupported
+      if (supported === 'false' || (supported === 'null' && !document.getElementById('processing-mode-confirm')?.checked)) {
+        throw new Error('Select a Kometa runtime with library processing modes before using this override.')
+      }
+      cli += ` --mode '${processingMode}'`
+    }
+    if (processingError) processingError.textContent = ''
+  } catch (err) {
+    if (processingError) processingError.textContent = err.message
+    runCmdOutput.textContent = `⚠️ ${err.message}`
+    notify()
+    return false
+  }
+
   const modeFlag = (document.querySelector('input[name="mode-flag"]:checked') || {}).value
   if (modeFlag) cli += ` ${modeFlag}`
 

@@ -645,7 +645,7 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#collapse-modeflags" aria-expanded="false" aria-controls="collapse-modeflags">
             Optional Mode Flags
-            <span id="heading-modeflags-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+            <span id="heading-modeflags-rollup-badge" class="badge text-wrap ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
               Default
             </span>
           </button>
@@ -664,6 +664,16 @@
               </div>
               {% endfor %}
             </fieldset>
+            {% from 'partials/_processing_mode.html' import processing_mode %}
+            {% set schedule_support = library_schedule_runtime_support() %}
+            <div class="mt-3 border-top pt-3" id="processing-mode-override" data-runtime-supported="{{ schedule_support.supported|tojson }}">
+              <h6>Item processing override (one run)</h6>
+              <p class="form-text">Overrides the saved library processing rules for this run, including libraries with no matching rule. Select <strong>Run Specific Libraries</strong> above to limit the target libraries. Without this override, selecting libraries or ignoring schedules uses full processing. Individual collection schedules and <code>schedule_overlays</code> still apply unless you also ignore schedules.</p>
+              {{ processing_mode('run-processing', optional=true) }}
+              {% if schedule_support.supported is not sameas true %}<p class="text-warning small">{{ schedule_support.message }}</p>{% endif %}
+              {% if schedule_support.supported is none %}<div class="form-check"><input class="form-check-input" type="checkbox" id="processing-mode-confirm"><label class="form-check-label" for="processing-mode-confirm">I confirm my external Kometa supports processing modes.</label></div>{% endif %}
+              <p class="form-text">Diff needs a persistent Kometa cache. Schedule occasional full runs to reconcile stale collection members and overlays. This override does not change saved library rules.</p>
+            </div>
           </div>
         </div>
       </div>

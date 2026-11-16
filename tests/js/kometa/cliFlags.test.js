@@ -46,7 +46,7 @@ import {
 describe('KOMETA_CLI_FLAGS', () => {
   it('contains all documented flags', () => {
     const expected = [
-      '--run', '--run-libraries', '--times',
+      '--run', '--run-libraries', '--times', '--mode',
       '--operations-only', '--metadata-only', '--collections-only',
       '--playlists-only', '--overlays-only',
       '--debug', '--trace', '--log-requests',

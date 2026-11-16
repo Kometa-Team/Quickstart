@@ -65,7 +65,7 @@ from werkzeug.datastructures import MultiDict
 
 from werkzeug.wrappers import Request
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database, logscan, path_validation, url_validation
+from modules import validations, output, persistence, helpers, database, logscan, path_validation, url_validation, library_scheduling
 from modules.kometa_integrity import current_integrity, format_integrity, integrity_comments
 from modules import importer  # noqa: F401 (load-bearing: tests do monkeypatch.setattr(qs_module.importer, ...))
 from modules.dependency_reasons import (  # noqa: F401 (re-exports for tests/legacy in-module callers)
@@ -1088,6 +1088,7 @@ app.jinja_env.globals.update(
     seerr_display_overrides=seerr_support.display_overrides,
     seerr_defaults_support=seerr_support.defaults_support,
     seerr_external_mode=lambda: helpers.get_kometa_install_mode() == "external",
+    library_schedule_runtime_support=library_scheduling.runtime_support,
 )
 
 # Register the Vite manifest lookup as a Jinja global so templates can
@@ -2166,6 +2167,7 @@ def step(name):
             validation_errors += _validate_shared_playlist_files(incoming_libraries)
             validation_errors += _validate_library_auto_sort_hubs(incoming_libraries, selected_library_ids)
             validation_errors += seerr_support.validate_library_settings(incoming_libraries, selected_library_ids)
+            validation_errors += library_scheduling.validate_library_settings(incoming_libraries, selected_library_ids)
             for lib_id in selected_library_ids:
                 override_result = _validate_library_service_overrides(lib_id, incoming_libraries)
                 if not override_result.get("valid") and not override_result.get("skipped"):
@@ -3592,6 +3594,7 @@ def validate_all_services():
             overlay_file_errors = _validate_library_overlay_files(libraries_data, selected_library_ids)
             auto_sort_hubs_errors = _validate_library_auto_sort_hubs(libraries_data, selected_library_ids)
             auto_sort_hubs_errors += seerr_support.validate_library_settings(libraries_data, selected_library_ids)
+            auto_sort_hubs_errors += library_scheduling.validate_library_settings(libraries_data, selected_library_ids)
             arr_override_errors = []
             if path_errors:
                 libraries_reason = "invalid_paths"
@@ -4115,6 +4118,10 @@ def start_kometa():
     start_mode = _normalize_kometa_start_mode(data.get("start_mode"))
     if not command:
         return jsonify({"error": "No command provided"}), 400
+    try:
+        library_scheduling.validate_command_mode(_split_kometa_command_parts(command))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
     config_name = session.get("config_name") if has_request_context() else None
     _settings, kometa_section = _get_kometa_settings_section(config_name)
     selection = _resolve_kometa_selection(kometa_section)

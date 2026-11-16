@@ -15,6 +15,7 @@ import {
   checkMaintenanceWarning
 } from './modules/kometa/_maintenanceWindow.js'
 import { kometaState } from './modules/kometa/_state.js'
+import { initProcessingMode } from './modules/processingMode.js'
 import {
   updateConfigOutputHeaderBadges,
   updateLogscanHeaderBadge,
@@ -490,6 +491,9 @@ checkboxFlags.forEach(opt => {
   const checkbox = document.getElementById(`opt-${opt}`)
   if (checkbox) checkbox.addEventListener('change', rebuildRunCommandAfterControlChange)
 })
+
+initProcessingMode(document.querySelector('#processing-mode-override [data-processing-mode]'), '', rebuildRunCommandAfterControlChange)
+document.getElementById('processing-mode-confirm')?.addEventListener('change', rebuildRunCommandAfterControlChange)
 
 if (document.getElementById('run-command-output')) {
   const mainOption = (document.querySelector('input[name="run-option"]:checked') || {}).value

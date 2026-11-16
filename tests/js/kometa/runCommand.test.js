@@ -154,6 +154,42 @@ beforeEach(() => {
   syncFinalAccordionRollups.mockClear()
 })
 
+describe('one-time processing override', () => {
+  function installOverride (value, supported = 'true') {
+    installRunCommandDom({ runOption: '--run-libraries' })
+    document.querySelector('#library-multiselect option').selected = true
+    const root = document.createElement('div')
+    root.id = 'processing-mode-override'
+    root.dataset.runtimeSupported = supported
+    root.innerHTML = '<div data-processing-mode><select data-processing-kind><option value="custom">custom</option></select><input data-processing-custom><div data-processing-error></div></div>'
+    root.querySelector('[data-processing-custom]').value = value
+    document.body.append(root)
+    return root
+  }
+  it.each(['Linux', 'Windows'])('quotes mode parentheses and pipes for %s', platform => {
+    installOverride('items(imdb:tt0133093|plex:42)')
+    document.getElementById('qs-env').dataset.runningOn = platform
+    expect(buildCommand()).toBe(true)
+    const command = document.getElementById('run-command-output').dataset.builtCommand
+    expect(command).toContain('--run-libraries "Movies"')
+    expect(command).toContain("--mode 'items(imdb:tt0133093|plex:42)'")
+  })
+  it.each(['added(0)', 'index(Z-A)', 'items(plex:0)'])('blocks an invalid override: %s', value => {
+    installOverride(value)
+    expect(buildCommand()).toBe(false)
+  })
+  it('blocks modes unsupported by the selected runtime', () => {
+    installOverride('full', 'false')
+    expect(buildCommand()).toBe(false)
+  })
+  it('does not append a processing override in validate-and-exit mode', () => {
+    installOverride('diff')
+    document.querySelector('input[name="validate-mode"][value="--validate"]').checked = true
+    expect(buildCommand()).toBe(true)
+    expect(document.getElementById('run-command-output').dataset.builtCommand).not.toContain('--mode')
+  })
+})
+
 afterEach(() => {
   document.body.innerHTML = ''
   kometaState.activeRunCommandOverride = null

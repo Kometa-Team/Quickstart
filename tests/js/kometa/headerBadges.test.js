@@ -359,6 +359,21 @@ describe('updateRunOptionHeaderBadge', () => {
 // label) so we test them side-by-side to keep the tests DRY.
 
 describe('updateModeFlagsHeaderBadge', () => {
+  it('summarizes item overrides without putting long ID lists in the badge', () => {
+    document.body.innerHTML = '<div id="processing-mode-override"><div data-processing-mode><select data-processing-kind><option value="items">items</option></select><textarea data-processing-ids>imdb:tt0133093|tmdb:550|plex:42</textarea><div data-processing-error></div></div></div>'
+    installBadge('heading-modeflags-rollup-badge')
+    updateModeFlagsHeaderBadge()
+    expect(document.getElementById('heading-modeflags-rollup-badge').textContent).toBe('Specific items (3)')
+  })
+
+  it('marks an invalid processing override as an error', () => {
+    document.body.innerHTML = '<div id="processing-mode-override"><div data-processing-mode><select data-processing-kind><option value="full">full</option></select><div data-processing-error>Unsupported runtime.</div></div></div>'
+    installBadge('heading-modeflags-rollup-badge')
+    updateModeFlagsHeaderBadge()
+    expect(document.getElementById('heading-modeflags-rollup-badge').textContent).toBe('Fix processing mode')
+    expect(document.getElementById('heading-modeflags-rollup-badge').classList.contains('qs-validation-rollup-badge--error')).toBe(true)
+  })
+
   it('shows the prettified flag name (ok) when a radio is checked', () => {
     document.body.innerHTML = `
       <input type="radio" name="mode-flag" value="--collections" checked />

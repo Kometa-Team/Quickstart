@@ -1,0 +1,30 @@
+{% macro processing_mode(id, optional=false) %}
+{% set mode_id = 'opt-mode' if optional else id ~ '-mode' %}
+<div data-processing-mode>
+  <label class="form-label" for="{{ mode_id }}">Processing mode</label>
+  <select class="form-select mb-2" id="{{ mode_id }}" data-processing-kind>
+    {% if optional %}<option value="">Use library scheduling</option>{% endif %}
+    <option value="full">Full library</option>
+    <option value="added">Recently added items</option>
+    <option value="diff">Changes since previous cached snapshot</option>
+    <option value="index">Alphabetical range</option>
+    <option value="items">Specific item IDs</option>
+    <option value="custom" hidden>Imported mode (edit to repair)</option>
+  </select>
+  <div class="row g-2 mb-2 d-none" data-processing-fields="added">
+    <div class="col-6"><label class="form-label" for="{{ id }}-amount">Look back</label><input class="form-control" id="{{ id }}-amount" type="number" min="1" step="1" value="7" data-processing-amount></div>
+    <div class="col-6"><label class="form-label" for="{{ id }}-unit">Unit</label><select class="form-select" id="{{ id }}-unit" data-processing-unit><option value="">Days</option><option value="d">Days (explicit unit)</option><option value="h">Hours</option><option value="m">Minutes</option></select></div>
+  </div>
+  <div class="row g-2 mb-2 d-none" data-processing-fields="index">
+    <div class="col-6"><label class="form-label" for="{{ id }}-first">First letter</label><input class="form-control" id="{{ id }}-first" maxlength="1" value="A" data-processing-first></div>
+    <div class="col-6"><label class="form-label" for="{{ id }}-last">Last letter (optional)</label><input class="form-control" id="{{ id }}-last" maxlength="1" value="F" data-processing-last></div>
+    <div class="col-12 form-check ms-2"><input class="form-check-input" id="{{ id }}-symbols" type="checkbox" data-processing-symbols><label class="form-check-label" for="{{ id }}-symbols">Include numeric and special-character titles</label></div>
+    <p class="form-text">Matches Plex Sort Titles, falling back to the title. Enter an ascending range.</p>
+  </div>
+  <div class="mb-2 d-none" data-processing-fields="items"><label class="form-label" for="{{ id }}-ids">Item IDs</label><textarea class="form-control" id="{{ id }}-ids" rows="2" data-processing-ids placeholder="imdb:tt0133093 | tmdb:550 | tvdb:350396 | plex:42"></textarea><div class="form-text">Separate IDs with pipes, commas, or new lines. Only items already in the library are selected. Plex IDs must identify a top-level movie or show. Selecting a show includes its seasons and episodes.</div></div>
+  <div class="mb-2 d-none" data-processing-fields="custom"><label class="form-label" for="{{ id }}-custom">Imported mode</label><input class="form-control" id="{{ id }}-custom" data-processing-custom></div>
+  <p class="form-text d-none" data-processing-fields="diff">Diff requires a persistent Kometa cache. Movies use the previous item snapshot; shows also compare season update times.</p>
+  <p class="form-text d-none" data-processing-fields="added">Show libraries also include shows with recently added episodes.</p>
+  <div class="text-danger small" role="status" data-processing-error></div>
+</div>
+{% endmacro %}

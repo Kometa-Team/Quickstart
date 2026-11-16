@@ -146,6 +146,7 @@ def apply_validation_metadata(stored_data, status, reason=None, details=None, up
 
 
 def clean_form_data(form_data):
+    schedule_values = {key: value for key, value in form_data.items() if key.endswith("-top_level_schedule")}
     # Make sure form_data is MultiDict for compatibility
     if not hasattr(form_data, "getlist"):
         form_data = MultiDict(form_data)
@@ -154,6 +155,17 @@ def clean_form_data(form_data):
 
     for key, value in form_data.items():
         if key in TRANSIENT_FORM_FIELDS:
+            continue
+        if key.endswith("-top_level_schedule"):
+            from modules.library_scheduling import parse_schedule
+
+            value = schedule_values.get(key, value)
+            if len(form_data.getlist(key)) > 1:
+                value = form_data.getlist(key)
+            try:
+                clean_data[key] = parse_schedule(value)
+            except ValueError:
+                clean_data[key] = value
             continue
         if key == "seerr_apikey" or key.endswith("-attribute_seerr_apikey"):
             clean_data[key] = value if value else None
@@ -336,7 +348,7 @@ def save_settings(raw_source, form_data):
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"All asset_directory values from form: {asset_directories}", level="DEBUG")
 
-    clean_data = clean_form_data(form_data if is_form else MultiDict(form_data))
+    clean_data = clean_form_data(form_data)
 
     for field in ["plex_url", "plex_token"]:
         if app.config["QS_DEBUG"]:
