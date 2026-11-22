@@ -55,6 +55,54 @@ def test_prepare_import_payload_accepts_mass_metadata_update():
     assert any("libraries.Movies.operations.mass_metadata_update" in line for line in report.lines)
 
 
+def test_mal_all_genre_source_round_trips_in_order(app):
+    from modules import output
+
+    payload, report = importer.prepare_import_payload(
+        {"libraries": {"Movies": {"operations": {"mass_metadata_update": {"genre": {"source": ["mal_all", "tmdb"]}}}}}},
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-attribute_mass_genre_update_order"] == '["mal_all", "tmdb"]'
+    assert libraries["mov-library_movies-attribute_mass_genre_update_mal_all"] is True
+    assert "mov-library_movies-attribute_mass_genre_update_custom" not in libraries
+    assert "imported: libraries.Movies.operations.mass_metadata_update.genre.source" in report.lines
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_attributes={"movies": {"mov-library_movies-attribute_mass_genre_update_order": libraries["mov-library_movies-attribute_mass_genre_update_order"]}},
+        )
+
+    assert libraries_section["libraries"]["Movies"]["operations"]["mass_metadata_update"]["genre"]["source"] == ["mal_all", "tmdb"]
+
+
+def test_custom_genre_still_exports_as_nested_list(app):
+    from modules import output
+
+    payload, _report = importer.prepare_import_payload(
+        {"libraries": {"Movies": {"operations": {"mass_metadata_update": {"genre": {"source": ["tmdb", ["Thriller"]]}}}}}},
+        {"Movies"},
+        set(),
+    )
+
+    libraries = payload["libraries"]["libraries"]
+    assert libraries["mov-library_movies-attribute_mass_genre_update_order"] == '["tmdb"]'
+    assert json.loads(libraries["mov-library_movies-attribute_mass_genre_update_custom"]) == ["Thriller"]
+
+    with app.app_context():
+        libraries_section = output.build_libraries_section(
+            movie_libraries={"mov-library_movies-library": "Movies"},
+            movie_attributes={"movies": {key: value for key, value in libraries.items() if key.startswith("mov-library_movies-attribute_mass_genre_update_")}},
+        )
+
+    source = libraries_section["libraries"]["Movies"]["operations"]["mass_metadata_update"]["genre"]["source"]
+    assert list(source[:1]) == ["tmdb"]
+    assert [list(item) for item in source[1:]] == [["Thriller"]]
+
+
 def test_mass_metadata_update_source_lines_annotate_as_imported():
     raw_yaml = (
         "libraries:\n"

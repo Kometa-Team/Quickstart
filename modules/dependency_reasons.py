@@ -114,7 +114,7 @@ QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_critic_rating_update",
     "mass_user_rating_update",
 }
-QS_MAL_DEP_ATTRIBUTE_VALUES = {"mal", "mal_english", "mal_japanese"}
+QS_MAL_DEP_ATTRIBUTE_VALUES = {"mal", "mal_all", "mal_english", "mal_japanese"}
 
 
 # --- library prefix helpers ------------------------------------------------
@@ -599,7 +599,7 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
                 _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", "MyAnimeList Charts collection enabled")
                 continue
 
-        attr_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_(mal(?:_english|_japanese)?)$", key)
+        attr_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_(mal(?:_all|_english|_japanese)?)$", key)
         if attr_match and _is_truthy_setting_value(raw_value):
             operation = attr_match.group(1)
             source_value = attr_match.group(2)
