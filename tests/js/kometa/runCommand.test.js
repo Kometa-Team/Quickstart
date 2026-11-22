@@ -704,6 +704,23 @@ describe('buildCommand --divider validation', () => {
     expect(buildCommand()).toBe(false)
   })
 
+  it.each(['"', '\\'])('rejects %s because it breaks the run command', (ch) => {
+    installRunCommandDom()
+    document.getElementById('opt-divider').checked = true
+    document.getElementById('opt-divider-val').value = ch
+    expect(buildCommand()).toBe(false)
+    expect(document.getElementById('divider-error').classList.contains('d-none')).toBe(false)
+    expect(document.getElementById('run-command-output').textContent).toMatch(/double quote.*backslash/)
+  })
+
+  it.each(["'", '#', '$', '='])('still accepts %s', (ch) => {
+    installRunCommandDom()
+    document.getElementById('opt-divider').checked = true
+    document.getElementById('opt-divider-val').value = ch
+    expect(buildCommand()).toBe(true)
+    expect(document.getElementById('run-command-output').dataset.builtCommand).toContain(`--divider "${ch}"`)
+  })
+
   it('rejects empty divider even when checkbox is checked', () => {
     installRunCommandDom()
     document.getElementById('opt-divider').checked = true

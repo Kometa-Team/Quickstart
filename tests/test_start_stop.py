@@ -773,6 +773,49 @@ def test_launch_kometa_command_sets_branch_name_from_local_branch_metadata(tmp_p
     assert popen_calls["env"]["BRANCH_NAME"] == "develop"
 
 
+def _fake_kometa_install(qs_module, tmp_path, monkeypatch):
+    is_win = qs_module.sys.platform.startswith("win")
+    kometa_root = tmp_path / "kometa"
+    venv_dir = kometa_root / "kometa-venv" / ("Scripts" if is_win else "bin")
+    venv_dir.mkdir(parents=True, exist_ok=True)
+    (kometa_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
+    (venv_dir / ("python.exe" if is_win else "python3")).write_text("", encoding="utf-8")
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "ts_log", lambda *_args, **_kwargs: None)
+    popen_calls = []
+    monkeypatch.setattr(qs_module.subprocess, "Popen", lambda *args, **kwargs: popen_calls.append((args, kwargs)))
+    return popen_calls
+
+
+def test_launch_kometa_command_rejects_unparseable_command(tmp_path, monkeypatch, qs_module):
+    popen_calls = _fake_kometa_install(qs_module, tmp_path, monkeypatch)
+
+    ok, result = qs_module._launch_kometa_command('python kometa.py --divider """', config_name="cfg", start_mode="current")
+
+    assert ok is False
+    assert "invalid run command" in result.lower()
+    assert popen_calls == []
+
+
+def test_start_kometa_returns_invalid_command_message(client, tmp_path, monkeypatch, qs_module):
+    popen_calls = _fake_kometa_install(qs_module, tmp_path, monkeypatch)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (None, None, None))
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda: (None, None, None))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
+
+    resp = client.post("/start-kometa", json={"command": 'python kometa.py --divider """'})
+
+    assert resp.status_code == 400
+    assert "invalid run command" in resp.get_json()["error"].lower()
+    assert popen_calls == []
+
+
 def test_launch_kometa_command_clears_inherited_branch_name_without_local_metadata(tmp_path, monkeypatch, qs_module):
     is_win = qs_module.sys.platform.startswith("win")
     kometa_root = tmp_path / "kometa"

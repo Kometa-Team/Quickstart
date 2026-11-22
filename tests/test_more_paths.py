@@ -143,6 +143,51 @@ def test_maintenance_guard_starts_queued_run(monkeypatch, qs_module):
         assert qs_module.MAINTENANCE_STATE["queued_started_at"] is not None
 
 
+def test_maintenance_guard_logs_malformed_queued_command_and_keeps_running(monkeypatch, qs_module, tmp_path):
+    _reset_maintenance_state(qs_module)
+    qs_module._clear_pending_kometa_start()
+
+    is_win = qs_module.sys.platform.startswith("win")
+    kometa_root = tmp_path / "kometa"
+    venv_dir = kometa_root / "kometa-venv" / ("Scripts" if is_win else "bin")
+    venv_dir.mkdir(parents=True, exist_ok=True)
+    (kometa_root / "kometa.py").write_text("print('kometa')\n", encoding="utf-8")
+    (venv_dir / ("python.exe" if is_win else "python3")).write_text("", encoding="utf-8")
+    popen_calls = []
+    logs = []
+
+    qs_module._set_pending_kometa_start('python kometa.py --divider """', "ConfigName")
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "ts_log", lambda msg, level="INFO", **_kw: logs.append((level, msg)))
+    monkeypatch.setattr(qs_module.subprocess, "Popen", lambda *args, **kwargs: popen_calls.append(args))
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda: (60, 120, "01:00-02:00"))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
+
+    ticks = {"count": 0}
+
+    def fake_sleep(_):
+        ticks["count"] += 1
+        if ticks["count"] > 2:
+            raise StopIteration()
+        return None
+
+    monkeypatch.setattr(qs_module.time, "sleep", fake_sleep)
+
+    try:
+        qs_module._maintenance_guard_loop(qs_module.app)
+    except StopIteration:
+        pass
+
+    # The loop survived the bad command and went on to a further iteration.
+    assert ticks["count"] > 2
+    assert popen_calls == []
+    assert qs_module._peek_pending_kometa_start() is None
+    assert any(level == "ERROR" and "Failed to start Kometa after maintenance" in msg and "nvalid run command" in msg for level, msg in logs)
+
+
 def test_maintenance_guard_pauses_running_imagemaid(monkeypatch, qs_module, tmp_path):
     _reset_maintenance_state(qs_module)
 

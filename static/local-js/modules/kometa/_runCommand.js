@@ -425,6 +425,12 @@ export function buildCommand () {
       notify()
       return false
     }
+    if (dividerValue === '"' || dividerValue === '\\') {
+      document.getElementById('divider-error').classList.remove('d-none')
+      runCmdOutput.textContent = '⚠️ Divider cannot be a double quote (") or a backslash (\\).'
+      notify()
+      return false
+    }
     document.getElementById('divider-error').classList.add('d-none')
     cli += ` --divider "${dividerValue}"`
   }
