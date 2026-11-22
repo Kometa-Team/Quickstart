@@ -55,7 +55,7 @@ describe('KOMETA_CLI_FLAGS', () => {
       '--delete-collections', '--delete-labels', '--read-only-config',
       '--low-priority', '--no-report', '--no-missing', '--no-countdown',
       '--ignore-ghost', '--ignore-schedules', '--no-verify-ssl',
-      '--tests', '--timeout', '--divider', '--width'
+      '--tests', '--timings', '--timeout', '--divider', '--width'
     ]
     expect(Object.keys(KOMETA_CLI_FLAGS).sort()).toEqual(expected.sort())
   })
@@ -93,6 +93,7 @@ describe('updateFlagLabels', () => {
       <label for="opt-operations-only">placeholder</label>
       <label for="opt-validate">placeholder</label>
       <label for="opt-no-verify-ssl">placeholder</label>
+      <label for="opt-timings">placeholder</label>
     `
   })
 
@@ -161,6 +162,18 @@ describe('updateFlagLabels', () => {
     expect(document.querySelector('label[for="opt-debug"]').textContent).toContain('Debug Logging')
     expect(document.querySelector('label[for="opt-validate"]').textContent).toContain('Validate Generated Config')
     expect(document.querySelector('label[for="opt-no-verify-ssl"]').textContent).toContain('No Verify SSL')
+  })
+
+  it('shows the --timings help in both friendly-label and CLI-label modes', () => {
+    for (const showCli of [false, true]) {
+      updateFlagLabels(showCli)
+      const label = document.querySelector('label[for="opt-timings"]')
+      expect(label.textContent).toContain(showCli ? '--timings' : 'Timings')
+      expect(label.innerHTML).toContain('data-bs-toggle="tooltip"')
+      expect(label.innerHTML).toContain('before July 2026 ignore this flag')
+      expect(label.innerHTML).toContain('before mid-October 2026 can crash on startup')
+      expect(label.innerHTML).toContain('Update Kometa before enabling it')
+    }
   })
 
   it('produces info-icon markup regardless of showCli', () => {

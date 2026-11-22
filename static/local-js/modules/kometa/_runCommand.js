@@ -194,7 +194,7 @@ export function clearActiveRunCommandState () {
 const CHECKBOX_FLAGS = [
   'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
   'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-  'ignore-schedules', 'no-verify-ssl', 'tests'
+  'ignore-schedules', 'no-verify-ssl', 'tests', 'timings'
 ]
 
 /**

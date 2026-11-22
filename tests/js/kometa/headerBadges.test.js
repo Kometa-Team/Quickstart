@@ -478,7 +478,7 @@ describe('updateOtherFlagsHeaderBadge', () => {
     const flags = [
       'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
       'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-      'ignore-schedules', 'no-verify-ssl', 'tests',
+      'ignore-schedules', 'no-verify-ssl', 'tests', 'timings',
       'timeout', 'divider', 'width'
     ]
     const html = flags.map(f =>
@@ -537,18 +537,25 @@ describe('updateOtherFlagsHeaderBadge', () => {
     expect(badge.textContent).toBe('3 enabled')
   })
 
-  it('counts all 11 core flags + 3 extras when everything is on', () => {
+  it('counts all 12 core flags + 3 extras when everything is on', () => {
     // Full-house: verifies the two counting paths sum correctly
     installOtherFlagsDom({
       'delete-collections': true, 'delete-labels': true, 'read-only-config': true,
       'low-priority': true, 'no-report': true, 'no-missing': true,
       'no-countdown': true, 'ignore-ghost': true, 'ignore-schedules': true,
-      'no-verify-ssl': true, tests: true,
+      'no-verify-ssl': true, tests: true, timings: true,
       timeout: true, divider: true, width: true
     })
     updateOtherFlagsHeaderBadge()
     const badge = document.getElementById('heading-otherflags-rollup-badge')
-    expect(badge.textContent).toBe('14 enabled')
+    expect(badge.textContent).toBe('15 enabled')
+  })
+
+  it('counts the timings flag', () => {
+    installOtherFlagsDom({ timings: true })
+    updateOtherFlagsHeaderBadge()
+    const badge = document.getElementById('heading-otherflags-rollup-badge')
+    expect(badge.textContent).toBe('1 enabled')
   })
 })
 

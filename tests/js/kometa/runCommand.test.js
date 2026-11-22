@@ -124,6 +124,7 @@ function installRunCommandDom (opts = {}) {
     <input type="checkbox" id="opt-ignore-schedules">
     <input type="checkbox" id="opt-no-verify-ssl">
     <input type="checkbox" id="opt-tests">
+    <input type="checkbox" id="opt-timings">
 
     <input type="checkbox" id="opt-timeout">
     <input id="opt-timeout-val" value="">
@@ -534,6 +535,28 @@ describe('buildCommand no-value checkboxes', () => {
     // Not checked -> not in command
     expect(out).not.toContain('--delete-labels')
     expect(out).not.toContain('--tests')
+  })
+
+  it('appends --timings when ticked and leaves it out when not', () => {
+    installRunCommandDom()
+    const out = () => document.getElementById('run-command-output').dataset.builtCommand
+    buildCommand()
+    expect(out()).not.toContain('--timings')
+    document.getElementById('opt-timings').checked = true
+    buildCommand()
+    expect(out()).toContain('--timings')
+  })
+
+  it('rebuilds the command when the --timings checkbox is toggled', () => {
+    installRunCommandDom()
+    const box = document.getElementById('opt-timings')
+    const out = () => document.getElementById('run-command-output').dataset.builtCommand
+    box.checked = true
+    buildCommand()
+    expect(out()).toContain('--timings')
+    box.checked = false
+    buildCommand()
+    expect(out()).not.toContain('--timings')
   })
 
   it('is silent when a checkbox element is missing (no throw)', () => {
