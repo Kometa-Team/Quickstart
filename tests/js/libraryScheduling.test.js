@@ -32,15 +32,26 @@ function change (input, value) {
 beforeEach(() => document.body.replaceChildren())
 
 describe('processing mode contract', () => {
-  it.each(['full', 'diff', 'added(7)', 'added(30m)', 'added(1h)', 'added(12d)', 'index(A-F#)', 'index(A)', 'items(imdb:tt0133093|plex:42)'])('restores and validates %s', mode => {
+  it.each(['full', 'diff', 'added(7)', 'added(30m)', 'added(1h)', 'added(12d)', 'index(A-F#)', 'index(A)', 'index(A-F)', 'items(imdb:tt0133093|plex:42)'])('restores and validates %s', mode => {
     document.body.innerHTML = modeMarkup
     const root = document.querySelector('[data-processing-mode]')
     initProcessingMode(root, mode)
     expect(processingModeValue(root)).toBe(mode)
     expect(validateProcessingMode(mode)).toBe(mode)
   })
-  it.each(['added(0)', 'added(-1)', 'added(1w)', 'added(999999999999)', 'index(Z-A)', 'items(42)', 'items(plex:0)', 'items(imdb:123)', 'full; ls'])('rejects %s', mode => {
+  it.each(['index(a-f)', 'index(a)', 'index(A-f#)'])('accepts lowercase range letters in %s', mode => {
+    expect(validateProcessingMode(mode)).toBe(mode)
+  })
+  it.each(['added(0)', 'added(-1)', 'added(1w)', 'added(999999999999)', 'index(Z-A)', 'INDEX(A-F)', 'Index(a)', 'items(42)', 'items(plex:0)', 'items(imdb:123)', 'full; ls'])('rejects %s', mode => {
     expect(() => validateProcessingMode(mode)).toThrow()
+  })
+  it.each(['INDEX(A-F)', 'INDEX(a-f#)', 'Index(b)'])('still restores a saved %s into the dropdowns and rebuilds it as index(...)', saved => {
+    document.body.innerHTML = modeMarkup
+    const root = document.querySelector('[data-processing-mode]')
+    initProcessingMode(root, saved)
+    expect(root.querySelector('[data-processing-kind]').value).toBe('index')
+    expect(processingModeValue(root)).toMatch(/^index\([A-Z](-[A-Z]#?)?\)$/)
+    expect(() => validateProcessingMode(processingModeValue(root))).not.toThrow()
   })
   it('accepts comma and newline separated provider IDs', () => {
     document.body.innerHTML = modeMarkup
