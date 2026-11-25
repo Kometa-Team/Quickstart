@@ -6,7 +6,8 @@ export function validateProcessingMode (value) {
     if (Number.isSafeInteger(seconds) && seconds <= Date.now() / 1000 + 62135596800) return value
     throw new Error('Added duration is too large.')
   }
-  const index = value.match(/^index\(([a-z])(?:-([a-z])(#)?)?\)$/i)
+  // The keyword must be lowercase (server and Kometa schema); range letters may be either case.
+  const index = value.match(/^index\(([A-Za-z])(?:-([A-Za-z])(#)?)?\)$/)
   if (index) {
     if (index[1].toLowerCase() <= (index[2] || index[1]).toLowerCase()) return value
     throw new Error('Alphabetical range must be ascending, such as A-F.')

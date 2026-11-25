@@ -50,6 +50,7 @@ def test_finalized_processing_modes(mode):
         "added(1w)",
         "added(999999999999999999999)",
         "index(Z-A)",
+        "INDEX(A-F)",
         "index(A#)",
         "index(1-9)",
         "items(42)",
