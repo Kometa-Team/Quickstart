@@ -507,6 +507,11 @@
           "Fetch genres from <b>MyAnimeList</b> (MAL)."
         ],
         [
+          "mal_all",
+          "Use MyAnimeList for All Genres",
+          "Fetch genres from <b>MyAnimeList</b> (MAL), including <b>Explicit Genres, Themes and Demographics</b>."
+        ],
+        [
           "lock",
           "Lock all Genre Field",
           "Prevent genre field from being modified after this operation."

@@ -108,6 +108,15 @@ def test_kometa_run_command_accordion_allows_multiple_panels_open():
         pytest.param(
             {
                 "sho-library_anime-library": "Anime Shows",
+                "sho-library_anime-attribute_mass_genre_update_order": '["mal_all", "tmdb"]',
+            },
+            True,
+            "mass_genre_update order includes mal_all",
+            id="mal_all_genre_source_in_order",
+        ),
+        pytest.param(
+            {
+                "sho-library_anime-library": "Anime Shows",
                 MAL_OVERLAY_ENABLED_KEY: True,
                 MAL_OVERLAY_IMAGE_KEY: "mal",
                 MAL_OVERLAY_IMAGE_KEY.replace("_image]", "]"): "mal",
