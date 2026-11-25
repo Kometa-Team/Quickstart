@@ -160,6 +160,10 @@ export const KOMETA_CLI_FLAGS = Object.freeze({
     label: 'Run Tests',
     description: 'If you set this flag to true, Kometa will run only collections that you have marked as test immediately, like KOMETA_RUN.<br><strong>NOTE</strong>:<br>This will only run collections with <code>test: true</code> in the definition.'
   },
+  '--timings': {
+    label: 'Timings',
+    description: 'Run with timing instrumentation enabled. Kometa writes a timings summary and a JSON/CSV breakdown to the logs directory.<br><strong>NOTE</strong>:<br>Kometa builds from before July 2026 ignore this flag, and builds from before mid-October 2026 can crash on startup with it. Update Kometa before enabling it.'
+  },
   '--timeout': {
     label: 'Timeout',
     description: 'Change the timeout in seconds for all non-Plex services (such as TMDb, Radarr, and Trakt). This will default to <code>180</code> when not specified and is overwritten by any timeouts mentioned for specific services in the Configuration File.'
@@ -193,7 +197,7 @@ const OTHER_FLAGS = [
   '--mode',
   '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
   '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
-  '--ignore-schedules', '--no-verify-ssl', '--tests', '--timeout', '--divider', '--width'
+  '--ignore-schedules', '--no-verify-ssl', '--tests', '--timings', '--timeout', '--divider', '--width'
 ]
 
 /**

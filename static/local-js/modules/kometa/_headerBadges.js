@@ -253,7 +253,7 @@ export function updateOtherFlagsHeaderBadge () {
   const coreCount = [
     'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
     'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-    'ignore-schedules', 'no-verify-ssl', 'tests'
+    'ignore-schedules', 'no-verify-ssl', 'tests', 'timings'
   ].filter(opt => isChecked(`opt-${opt}`)).length
   const extrasCount = (isChecked('opt-timeout') ? 1 : 0) +
     (isChecked('opt-divider') ? 1 : 0) +

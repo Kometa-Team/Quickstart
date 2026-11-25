@@ -484,7 +484,7 @@ document.getElementById('opt-schema-path')?.addEventListener('input', rebuildRun
 const checkboxFlags = [
   'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
   'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-  'ignore-schedules', 'no-verify-ssl', 'tests'
+  'ignore-schedules', 'no-verify-ssl', 'tests', 'timings'
 ]
 
 checkboxFlags.forEach(opt => {
