@@ -4203,6 +4203,8 @@ def start_kometa():
     code = 500
     if isinstance(result, str) and result.lower().startswith("kometa.py not found"):
         code = 404
+    elif isinstance(result, str) and result.startswith("Invalid run command"):
+        code = 400
     return jsonify({"error": result}), code
 
 

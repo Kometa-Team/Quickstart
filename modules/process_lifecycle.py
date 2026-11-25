@@ -154,7 +154,10 @@ def launch_kometa_command(command, config_name=None, start_mode="current"):
         return False, f"Kometa venv python not found at: {venv_python}"
 
     # Use posix=False so Windows backslashes/quotes are preserved
-    command_parts = shlex.split(command, posix=not is_win)
+    try:
+        command_parts = shlex.split(command, posix=not is_win)
+    except ValueError as exc:
+        return False, f"Invalid run command: it could not be parsed ({exc}). Check for unbalanced quotes or a stray backslash."
 
     # Clean up double-wrapped args (affects --run-libraries, --times, etc.)
     helpers.normalize_cli_args_inplace(command_parts)
